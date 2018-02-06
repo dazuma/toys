@@ -48,7 +48,7 @@ module Toys
       self
     end
 
-    def remaining_args(key, accept: nil, default: nil, doc: nil)
+    def remaining_args(key, accept: nil, default: [], doc: nil)
       raise "Cannot define a tool here" unless @allow_toplevel
       @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
       self
