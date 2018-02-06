@@ -63,9 +63,9 @@ module Toys
         word = remaining_words.first
         next_words = words + [word]
         next_remaining_words = remaining_words.slice(1..-1)
+        lookup_file(File.join(path, @index_file_name), words, remaining_words, false) if @index_file_name
         lookup_file(File.join(path, "#{word}.rb"), next_words, next_remaining_words, true)
         lookup_dir(File.join(path, word), next_words, next_remaining_words)
-        lookup_file(File.join(path, @index_file_name), words, remaining_words, false) if @index_file_name
       end
     end
 
