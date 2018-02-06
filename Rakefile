@@ -16,9 +16,8 @@ end
 ::YARD::Rake::YardocTask.new
 
 task :run, :args do |t, args|
-  args = Shellwords.split(args[:args])
-  toys = Toys::Exec.new(include_builtin: true)
-  toys.run(args)
+  args = Shellwords.split(args[:args] || "")
+  Toys::Cli.new(include_builtin: true, include_current_config: true).run(args)
 end
 
 task :install => :build do

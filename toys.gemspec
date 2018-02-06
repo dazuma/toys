@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.license = "Apache 2.0"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*") + ["builtin/system.rb"]
+  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*")
   spec.required_ruby_version = ">= 2.0.0"
   spec.require_paths = ["lib"]
 

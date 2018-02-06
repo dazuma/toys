@@ -1,23 +1,22 @@
 module Toys
   class Parser
-    def initialize(words, saver, allow_toplevel: false, path_adder: nil)
-      @words = words
-      @tool = Tool.new(words)
+    def initialize(lookup, tool, remaining_words, allow_toplevel)
+      @lookup = lookup
+      @tool = tool
+      @remaining_words = remaining_words
       @allow_toplevel = allow_toplevel
-      @path_adder = path_adder
-      @saver = saver
     end
 
     def name(word, &block)
-      subparser = Parser.new(@words + [word.to_s], @saver, allow_toplevel: true)
-      subparser.instance_eval(&block)
-      subparser._finish
-      self
+      word = word.to_s
+      tool = @lookup.get_tool(@tool.full_name + [word])
+      remaining = @remaining_words.first == word ? @remaining_words[1..-1] : []
+      parser = Parser.new(@lookup, tool, remaining, true)
+      parser.instance_eval(&block)
     end
 
-    def path(path)
-      raise "Cannot add a path here" unless @path_adder
-      @path_adder.call(path)
+    def include(path)
+      @lookup.lookup_dir(path, @tool.full_name, @remaining_words)
       self
     end
 
@@ -31,27 +30,27 @@ module Toys
       self
     end
 
-    def switch(key, default, *opts)
+    def switch(key, *switches, accept: nil, default: nil, doc: nil)
       raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_switch(key, default, *opts)
+      @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
       self
     end
 
-    def required_arg(key, *opts)
+    def required_arg(key, accept: nil, doc: nil)
       raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_required_arg(key, *opts)
+      @tool.add_required_arg(key, accept: accept, doc: doc)
       self
     end
 
-    def optional_arg(key, default, *opts)
+    def optional_arg(key, accept: nil, default: nil, doc: nil)
       raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_optional_arg(key, default, *opts)
+      @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
       self
     end
 
-    def remaining_args(key, *opts)
+    def remaining_args(key, accept: nil, default: nil, doc: nil)
       raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.set_remaining_args(key, *opts)
+      @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
       self
     end
 
@@ -61,14 +60,16 @@ module Toys
       self
     end
 
-    def _parse(path)
-      str = IO.read(path)
-      eval(str, binding, path, 1)
-      _finish
+    def helper(name, shared: false, &block)
+      @tool.add_helper(name, shared: shared, &block)
     end
 
-    def _finish
-      @saver.call(@words, @tool)
+    def helper_module(mod, shared: false)
+      @tool.add_helper_module(mod, shared: shared)
+    end
+
+    def _binding
+      binding
     end
   end
 end
