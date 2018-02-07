@@ -18,21 +18,21 @@ module Toys
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
         index_file_name: index_file_name)
-      add_special_paths(BUILTINS_PATH) if include_builtin
-      add_config_path_hierarchy(Dir.pwd) if include_current_config
+      prepend_paths(BUILTINS_PATH) if include_builtin
+      prepend_config_path_hierarchy(Dir.pwd) if include_current_config
     end
 
-    def add_special_paths(paths)
-      @lookup.add_special_paths(paths)
+    def prepend_paths(paths)
+      @lookup.prepend_paths(paths)
       self
     end
 
-    def add_config_paths(paths)
-      @lookup.add_config_paths(paths)
+    def prepend_config_paths(paths)
+      @lookup.prepend_config_paths(paths)
       self
     end
 
-    def add_config_path_hierarchy(path, base="/")
+    def prepend_config_path_hierarchy(path, base="/")
       paths = []
       loop do
         paths << path
@@ -41,7 +41,7 @@ module Toys
         break if next_path == path
         path = next_path
       end
-      @lookup.add_config_paths(paths.reverse)
+      @lookup.prepend_config_paths(paths)
       self
     end
 

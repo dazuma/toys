@@ -1,71 +1,95 @@
 module Toys
   class Parser
-    def initialize(lookup, tool, remaining_words, allow_toplevel)
+    def initialize(lookup, tool, remaining_words, priority)
       @lookup = lookup
       @tool = tool
       @remaining_words = remaining_words
-      @allow_toplevel = allow_toplevel
+      @priority = priority
     end
 
     def name(word, &block)
       word = word.to_s
-      tool = @lookup.get_tool(@tool.full_name + [word])
-      remaining = @remaining_words.first == word ? @remaining_words[1..-1] : []
-      parser = Parser.new(@lookup, tool, remaining, true)
+      subtool = @lookup.get_tool(@tool.full_name + [word])
+      next_remaining = @remaining_words
+      if next_remaining && !next_remaining.empty?
+        if next_remaining.first == word
+          next_remaining = next_remaining.slice(1..-1)
+        else
+          next_remaining = nil
+        end
+      end
+      parser = Parser.new(@lookup, subtool, next_remaining, @priority)
       parser.instance_eval(&block)
     end
 
     def include(path)
-      @lookup.lookup_dir(path, @tool.full_name, @remaining_words)
+      @lookup.include_path(path, @tool.full_name, @remaining_words, @priority + 1)
       self
     end
 
     def long_desc(desc)
-      @tool.long_desc = desc
+      if @tool.check_priority(@priority)
+        @tool.long_desc = desc
+      end
       self
     end
 
     def short_desc(desc)
-      @tool.short_desc = desc
+      if @tool.check_priority(@priority)
+        @tool.short_desc = desc
+      end
       self
     end
 
     def switch(key, *switches, accept: nil, default: nil, doc: nil)
-      raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
+      if @tool.check_priority(@priority)
+        @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
+      end
       self
     end
 
     def required_arg(key, accept: nil, doc: nil)
-      raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_required_arg(key, accept: accept, doc: doc)
+      if @tool.check_priority(@priority)
+        @tool.add_required_arg(key, accept: accept, doc: doc)
+      end
       self
     end
 
     def optional_arg(key, accept: nil, default: nil, doc: nil)
-      raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
+      if @tool.check_priority(@priority)
+        @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
+      end
       self
     end
 
     def remaining_args(key, accept: nil, default: [], doc: nil)
-      raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
+      if @tool.check_priority(@priority)
+        @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
+      end
       self
     end
 
     def execute(&block)
-      raise "Cannot define a tool here" unless @allow_toplevel
-      @tool.executor = block
+      if @tool.check_priority(@priority)
+        @tool.executor = block
+      end
       self
     end
 
-    def helper(name, shared: false, &block)
-      @tool.add_helper(name, shared: shared, &block)
+    def helper(name, &block)
+      if @tool.check_priority(@priority)
+        @tool.add_helper(name, &block)
+      end
     end
 
-    def helper_module(mod, shared: false)
-      @tool.add_helper_module(mod, shared: shared)
+    def helper_module(mod, &block)
+      if block
+        @tool.define_helper_module(mod, &block)
+      else
+        if @tool.check_priority(@priority)
+          @tool.use_helper_module(mod)
+        end
+      end
     end
 
     def _binding

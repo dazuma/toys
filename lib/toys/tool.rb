@@ -10,18 +10,9 @@ module Toys
       @full_name = name ? [name] : []
       @full_name = parent.full_name + @full_name if parent
       @binary_name = binary_name
-      @long_desc = nil
-      @short_desc = nil
-      @default_data = {}
-      @switches = []
-      @required_args = []
-      @optional_args = []
-      @remaining_args = nil
-      @executor = nil
-      @helpers = {}
-      @shared_helpers = {}
-      @modules = []
-      @shared_modules = []
+      @cur_priority = 0
+      @defined_modules = {}
+      clear_fields
     end
 
     attr_reader :simple_name
@@ -31,16 +22,44 @@ module Toys
     attr_accessor :long_desc
     attr_accessor :executor
 
-    def default_desc
-      @executor ? "(No description available)" : "(A collection of commands)"
+    def check_priority(priority)
+      return false if @cur_priority > priority
+      if @cur_priority < priority
+        clear_fields
+        @cur_priority = priority
+      end
+      true
     end
 
-    def add_helper(name, shared: false, &block)
-      (shared ? @shared_helpers : @helpers)[name.to_sym] = block
+    def add_helper(name, &block)
+      @helpers[name.to_sym] = block
     end
 
-    def add_helper_module(mod, shared: false)
-      (shared ? @shared_modules : @modules) << resolve_module(mod)
+    def define_helper_module(name, &block)
+      unless name.is_a?(String)
+        raise "Helper module name #{name.inspect} is not a string"
+      end
+      if @defined_modules.key?(name)
+        raise "Helper module #{name.inspect} is already defined"
+      end
+      @defined_modules[name] = Module.new(&block)
+    end
+
+    def use_helper_module(mod)
+      case mod
+      when Module
+        @modules << mod
+      when Symbol
+        mod = mod.to_s
+        file_name = mod.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
+        require "toys/helpers/#{file_name}"
+        const_name = mod.gsub(/_([a-zA-Z0-9])/){ |m| $1.upcase }.capitalize
+        @modules << Toys::Helpers.const_get(const_name)
+      when String
+        @modules << mod
+      else
+        raise "Illegal helper module name: #{mod.inspect}"
+      end
     end
 
     def add_switch(key, *switches, accept: nil, default: nil, doc: nil)
@@ -83,33 +102,33 @@ module Toys
       end
     end
 
-    def define_shared_helpers_on(context)
-      if @parent
-        @parent.define_shared_helpers_on(context)
-      end
-      context.extend(*@shared_modules) unless @shared_modules.empty?
-      @shared_helpers.each do |name, block|
-        context.define_singleton_method(name, &block)
-      end
+    protected
+
+    def default_desc
+      @executor ? "(No description available)" : "(A collection of commands)"
+    end
+
+    def find_module_named(name)
+      return @defined_modules[name] if @defined_modules.key?(name)
+      return @parent.find_module_named(name) if @parent
+      nil
     end
 
     private
 
     SPECIAL_FLAGS = ["-q", "--quiet", "-v", "--verbose", "-?", "-h", "--help"]
 
-    def resolve_module(mod)
-      return mod if Module === mod
-      mod = mod.to_s
-      require "toys/helpers/#{to_snake(mod)}"
-      Toys::Helpers.const_get(to_camel(mod))
-    end
-
-    def to_snake(str)
-      str.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
-    end
-
-    def to_camel(str)
-      str.gsub(/_([a-zA-Z0-9])/){ |m| $1.upcase }.capitalize
+    def clear_fields
+      @long_desc = nil
+      @short_desc = nil
+      @default_data = {}
+      @switches = []
+      @required_args = []
+      @optional_args = []
+      @remaining_args = nil
+      @executor = nil
+      @helpers = {}
+      @modules = []
     end
 
     def leaf_option_parser(execution_data)
@@ -270,8 +289,14 @@ module Toys
           Logger::DEBUG
         end
       context.options = options
-      define_shared_helpers_on(context)
-      context.extend(*@modules) unless @modules.empty?
+      @modules.each do |mod|
+        unless Module === mod
+          found = find_module_named(mod)
+          raise "Unable to find module #{mod}" unless found
+          mod = found
+        end
+        context.extend(mod)
+      end
       @helpers.each do |name, block|
         context.define_singleton_method(name, &block)
       end
