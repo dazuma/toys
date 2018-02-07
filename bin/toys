@@ -8,4 +8,4 @@ rescue LoadError
   require "toys"
 end
 
-Toys::Cli.new(include_builtin: true, include_current_config: true).run(ARGV)
+Toys::Cli.create_standard.run(ARGV)

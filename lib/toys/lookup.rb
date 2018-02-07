@@ -2,9 +2,7 @@ module Toys
   class Lookup
     DEPTH_LIMIT = 1000
 
-    def initialize(binary_name,
-                   config_dir_name: nil, config_file_name: nil, index_file_name: nil)
-      @binary_name = binary_name
+    def initialize(config_dir_name: nil, config_file_name: nil, index_file_name: nil)
       @config_dir_name = config_dir_name
       if @config_dir_name && File.extname(@config_dir_name) == ".rb"
         raise "Illegal config dir name #{@config_dir_name.inspect}"
@@ -20,7 +18,7 @@ module Toys
       @paths = []
       @load_state = nil
       @load_worklist = nil
-      @tools = {[] => Tool.new(nil, nil, @binary_name)}
+      @tools = {[] => Tool.new(nil, nil)}
     end
 
     def prepend_paths(paths)
@@ -63,7 +61,7 @@ module Toys
     end
 
     def get_tool(words)
-      @tools[words] ||= Tool.new(get_tool(words[0..-2]), words.last, @binary_name)
+      @tools[words] ||= Tool.new(get_tool(words[0..-2]), words.last)
     end
 
     def list_subtools(words, recursive)

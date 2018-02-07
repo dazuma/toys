@@ -6,20 +6,20 @@ module Toys
     DEFAULT_BINARY_NAME = "toys"
 
     def initialize(
-      binary_name: DEFAULT_BINARY_NAME,
-      config_dir_name: DEFAULT_DIR_NAME,
-      config_file_name: DEFAULT_FILE_NAME,
-      index_file_name: DEFAULT_FILE_NAME,
-      include_builtin: false,
-      include_current_config: false
+      binary_name: nil,
+      logger: nil,
+      config_dir_name: nil,
+      config_file_name: nil,
+      index_file_name: nil
     )
       @lookup = Toys::Lookup.new(
-        binary_name,
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
         index_file_name: index_file_name)
-      prepend_paths(BUILTINS_PATH) if include_builtin
-      prepend_config_path_hierarchy(Dir.pwd) if include_current_config
+      @context = Context.new(
+        @lookup,
+        logger: logger || self.class.default_logger,
+        binary_name: binary_name)
     end
 
     def prepend_paths(paths)
@@ -32,7 +32,8 @@ module Toys
       self
     end
 
-    def prepend_config_path_hierarchy(path, base="/")
+    def prepend_config_path_hierarchy(path=nil, base="/")
+      path ||= Dir.pwd
       paths = []
       loop do
         paths << path
@@ -45,27 +46,41 @@ module Toys
       self
     end
 
-    def run(args, logger: nil, verbosity: 0)
-      context = Context.new(@lookup, logger: logger || default_logger, verbosity: verbosity)
-      context.run(*args)
+    def run(*args)
+      @context.run(*args)
     end
 
-    def default_logger
-      logger = Logger.new(STDERR)
-      logger.formatter = ->(severity, time, progname, msg) {
-        msg_str =
-          case msg
-          when String
-            msg
-          when Exception
-            "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
-          else
-            msg.inspect
-          end
-        timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-        "[%s %5s]  %s\n" % [timestr, severity, msg_str]
-      }
-      logger
+    class << self
+      def create_standard
+        cli = new(
+          binary_name: DEFAULT_BINARY_NAME,
+          config_dir_name: DEFAULT_DIR_NAME,
+          config_file_name: DEFAULT_FILE_NAME,
+          index_file_name: DEFAULT_FILE_NAME
+        )
+        cli.prepend_paths(BUILTINS_PATH)
+        cli.prepend_config_path_hierarchy
+        cli
+      end
+
+      def default_logger
+        logger = Logger.new(STDERR)
+        logger.formatter = ->(severity, time, progname, msg) {
+          msg_str =
+            case msg
+            when String
+              msg
+            when Exception
+              "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
+            else
+              msg.inspect
+            end
+          timestr = time.strftime("%Y-%m-%d %H:%M:%S")
+          "[%s %5s]  %s\n" % [timestr, severity, msg_str]
+        }
+        logger.level = Logger::WARN
+        logger
+      end
     end
   end
 end

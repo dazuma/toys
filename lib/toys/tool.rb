@@ -4,12 +4,11 @@ require "optparse"
 module Toys
   class Tool
 
-    def initialize(parent, name, binary_name)
+    def initialize(parent, name)
       @parent = parent
       @simple_name = name
       @full_name = name ? [name] : []
       @full_name = parent.full_name + @full_name if parent
-      @binary_name = binary_name
       @cur_priority = 0
       @defined_modules = {}
       clear_fields
@@ -86,9 +85,8 @@ module Toys
     end
 
     def execute(context, args)
-      context.tool_name = full_name
-      context.args = args
-      execution_data = parse_args(args)
+      execution_data = parse_args(args, context.binary_name)
+      context = create_child_context(context, args, execution_data)
       if execution_data[:usage_error]
         puts(execution_data[:usage_error])
         puts("")
@@ -98,7 +96,7 @@ module Toys
         show_usage(context, execution_data[:optparse], recursive: execution_data[:recursive])
         0
       else
-        execute_leaf(context, execution_data[:options], execution_data[:delta_verbosity])
+        process_result(context.instance_eval(&@executor))
       end
     end
 
@@ -131,9 +129,9 @@ module Toys
       @modules = []
     end
 
-    def leaf_option_parser(execution_data)
+    def leaf_option_parser(execution_data, binary_name)
       optparse = OptionParser.new
-      banner = ["Usage:", @binary_name] + full_name
+      banner = ["Usage:", binary_name] + full_name
       banner << "[<options...>]" unless @switches.empty?
       @required_args.each do |key, opts|
         banner << "<#{canonical_switch(key)}>"
@@ -162,13 +160,13 @@ module Toys
       flags = ["-v", "--verbose"] - found_special_flags
       unless flags.empty?
         optparse.on(*(flags + ["Increase verbosity"])) do
-          execution_data[:delta_verbosity] += 1
+          execution_data[:delta_severity] -= 1
         end
       end
       flags = ["-q", "--quiet"] - found_special_flags
       unless flags.empty?
         optparse.on(*(flags + ["Decrease verbosity"])) do
-          execution_data[:delta_verbosity] -= 1
+          execution_data[:delta_severity] += 1
         end
       end
       flags = ["-?", "-h", "--help"] - found_special_flags
@@ -180,9 +178,9 @@ module Toys
       optparse
     end
 
-    def collection_option_parser(execution_data)
+    def collection_option_parser(execution_data, binary_name)
       optparse = OptionParser.new
-      optparse.banner = (["Usage:", @binary_name] + full_name + ["<command>", "[<options...>]"]).join(" ")
+      optparse.banner = (["Usage:", binary_name] + full_name + ["<command>", "[<options...>]"]).join(" ")
       desc = long_desc || short_desc || default_desc
       unless desc.empty?
         optparse.separator("")
@@ -198,18 +196,20 @@ module Toys
       optparse
     end
 
-    def parse_args(args)
+    def parse_args(args, binary_name)
       optdata = @default_data.dup
       execution_data = {
         show_help: false,
         usage_error: nil,
-        delta_verbosity: 0,
+        delta_severity: 0,
         recursive: false,
         options: optdata
       }
       begin
+        binary_name ||= File.basename($0)
         option_parser = @executor ?
-          leaf_option_parser(execution_data) : collection_option_parser(execution_data)
+          leaf_option_parser(execution_data, binary_name) :
+          collection_option_parser(execution_data, binary_name)
         execution_data[:optparse] = option_parser
         remaining = option_parser.parse(args)
         @required_args.each do |key, accept, doc|
@@ -246,6 +246,23 @@ module Toys
       execution_data
     end
 
+    def create_child_context(parent_context, args, execution_data)
+      context = parent_context._create_child(full_name, args, execution_data[:options])
+      context.logger.level += execution_data[:delta_severity]
+      @modules.each do |mod|
+        unless Module === mod
+          found = find_module_named(mod)
+          raise "Unable to find module #{mod}" unless found
+          mod = found
+        end
+        context.extend(mod)
+      end
+      @helpers.each do |name, block|
+        context.define_singleton_method(name, &block)
+      end
+      context
+    end
+
     def show_usage(context, optparse, recursive: false)
       puts(optparse.to_s)
       if @executor
@@ -265,44 +282,12 @@ module Toys
         puts("")
         puts("Commands:")
         name_len = full_name.length
-        context.lookup.list_subtools(full_name, recursive).each do |tool|
+        context._lookup.list_subtools(full_name, recursive).each do |tool|
           desc = tool.short_desc || tool.default_desc
           tool_name = tool.full_name.slice(name_len..-1).join(' ').ljust(31)
           puts("    #{tool_name}  #{desc}")
         end
       end
-    end
-
-    def execute_leaf(context, options, delta_verbosity)
-      verbosity = context.verbosity += delta_verbosity
-      old_level = context.logger.level
-      context.logger.level =
-        if verbosity <= -2
-          Logger::UNKNOWN
-        elsif verbosity == -1
-          Logger::FATAL
-        elsif verbosity == 0
-          Logger::WARN
-        elsif verbosity == 1
-          Logger::INFO
-        elsif verbosity >= 2
-          Logger::DEBUG
-        end
-      context.options = options
-      @modules.each do |mod|
-        unless Module === mod
-          found = find_module_named(mod)
-          raise "Unable to find module #{mod}" unless found
-          mod = found
-        end
-        context.extend(mod)
-      end
-      @helpers.each do |name, block|
-        context.define_singleton_method(name, &block)
-      end
-      result = context.instance_eval(&@executor)
-      context.logger.level = old_level
-      process_result(result)
     end
 
     def build_arg_data(opts)
