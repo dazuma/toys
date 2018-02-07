@@ -48,10 +48,11 @@ module Toys
     end
 
     def lookup(args)
-      @load_state ||= {}
-      @load_worklist ||= []
-      @paths.each_with_index do |path, index|
-        @load_worklist << [path, [], index * DEPTH_LIMIT + 1]
+      unless @load_state
+        @load_state = {}
+        @load_worklist = @paths.each_with_index.map do |path, index|
+          [path, [], index * DEPTH_LIMIT + 1]
+        end
       end
       prefix = args.take_while{ |arg| !arg.start_with?("-") }
       loop do
