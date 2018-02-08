@@ -33,13 +33,13 @@ module Toys
         if !File.directory?(path) || !File.readable?(path)
           raise "Cannot read config directory #{path}"
         end
-        if @config_dir_name
-          p = File.join(path, @config_dir_name)
-          @paths << p if File.directory?(p) && File.readable?(p)
-        end
         if @config_file_name
           p = File.join(path, @config_file_name)
           @paths << p if !File.directory?(p) && File.readable?(p)
+        end
+        if @config_dir_name
+          p = File.join(path, @config_dir_name)
+          @paths << p if File.directory?(p) && File.readable?(p)
         end
       end
       self
