@@ -31,17 +31,28 @@ module Toys
     end
 
     def add_helper(name, &block)
+      name_str = name.to_s
+      unless name_str =~ /^[a-z]\w+$/
+        raise ArgumentError, "Illegal helper name: #{name_str.inspect}"
+      end
       @helpers[name.to_sym] = block
     end
 
     def define_helper_module(name, &block)
       unless name.is_a?(String)
-        raise "Helper module name #{name.inspect} is not a string"
+        raise ArgumentError, "Helper module name #{name.inspect} is not a string"
       end
       if @defined_modules.key?(name)
-        raise "Helper module #{name.inspect} is already defined"
+        raise ArgumentError, "Helper module #{name.inspect} is already defined"
       end
-      @defined_modules[name] = Module.new(&block)
+      mod = Module.new(&block)
+      mod.instance_methods.each do |meth|
+        name_str = meth.to_s
+        unless name_str =~ /^[a-z]\w+$/
+          raise ArgumentError, "Illegal helper method name: #{name_str.inspect}"
+        end
+      end
+      @defined_modules[name] = mod
     end
 
     def use_helper_module(mod)
@@ -57,7 +68,7 @@ module Toys
       when String
         @modules << mod
       else
-        raise "Illegal helper module name: #{mod.inspect}"
+        raise ArgumentError, "Illegal helper module name: #{mod.inspect}"
       end
     end
 
