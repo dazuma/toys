@@ -25,6 +25,10 @@ module Toys
       tool.execute(self, args.slice(tool.full_name.length..-1))
     end
 
+    def exit_with_code(code)
+      throw :result, code
+    end
+
     attr_reader :_lookup
 
     def _create_child(tool_name, args, options)

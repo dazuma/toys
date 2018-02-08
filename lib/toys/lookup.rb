@@ -64,6 +64,10 @@ module Toys
       @tools[words] ||= Tool.new(get_tool(words[0..-2]), words.last)
     end
 
+    def tool_defined?(words)
+      @tools.key?([words])
+    end
+
     def list_subtools(words, recursive)
       found_tools = []
       len = words.length

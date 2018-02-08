@@ -5,6 +5,5 @@ name :version do
   short_desc "Print current toys version"
   execute do
     puts Toys::VERSION
-    0
   end
 end

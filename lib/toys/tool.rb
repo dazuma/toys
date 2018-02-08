@@ -96,7 +96,10 @@ module Toys
         show_usage(context, execution_data[:optparse], recursive: execution_data[:recursive])
         0
       else
-        process_result(context.instance_eval(&@executor))
+        catch(:result) do
+          context.instance_eval(&@executor)
+          0
+        end
       end
     end
 
@@ -215,7 +218,7 @@ module Toys
         @required_args.each do |key, accept, doc|
           if !execution_data[:show_help] && remaining.empty?
             error = OptionParser::ParseError.new(*args)
-            error.reason = "No value given for required argument <#{canonical_switch(key)}>"
+            error.reason = "No value given for required argument named <#{canonical_switch(key)}>"
             raise error
           end
           optdata[key] = process_value(key, remaining.shift, accept)
@@ -275,7 +278,7 @@ module Toys
             puts("    #{canonical_switch(key).ljust(31)}  #{doc.first}")
             doc[1..-1].each do |d|
               puts("                                     #{d}")
-            end
+            end unless doc.empty?
           end
         end
       else
@@ -315,13 +318,6 @@ module Toys
       optparse.on("--#{n}=VALUE", accept){ |v| result = v }
       optparse.parse(["--#{n}", val])
       result
-    end
-
-    def process_result(result)
-      return result if result.is_a?(Integer)
-      return 0 if result == true
-      return 1 if result == false
-      0
     end
   end
 end
