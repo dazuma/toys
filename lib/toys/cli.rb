@@ -22,17 +22,17 @@ module Toys
         binary_name: binary_name)
     end
 
-    def prepend_paths(paths)
-      @lookup.prepend_paths(paths)
+    def add_paths(paths)
+      @lookup.add_paths(paths)
       self
     end
 
-    def prepend_config_paths(paths)
-      @lookup.prepend_config_paths(paths)
+    def add_config_paths(paths)
+      @lookup.add_config_paths(paths)
       self
     end
 
-    def prepend_config_path_hierarchy(path=nil, base="/")
+    def add_config_path_hierarchy(path=nil, base="/")
       path ||= Dir.pwd
       paths = []
       loop do
@@ -42,7 +42,7 @@ module Toys
         break if next_path == path
         path = next_path
       end
-      @lookup.prepend_config_paths(paths)
+      @lookup.add_config_paths(paths)
       self
     end
 
@@ -58,8 +58,8 @@ module Toys
           config_file_name: DEFAULT_FILE_NAME,
           index_file_name: DEFAULT_FILE_NAME
         )
-        cli.prepend_paths(BUILTINS_PATH)
-        cli.prepend_config_path_hierarchy
+        cli.add_paths(BUILTINS_PATH)
+        cli.add_config_path_hierarchy
         cli
       end
 

@@ -9,53 +9,87 @@ module Toys
       @simple_name = name
       @full_name = name ? [name] : []
       @full_name = parent.full_name + @full_name if parent
-      @cur_priority = 0
+
+      @defined_in = nil
+      @cur_path = nil
+
+      @long_desc = nil
+      @short_desc = nil
+      @default_data = {}
+      @switches = []
+      @required_args = []
+      @optional_args = []
+      @remaining_args = nil
+      @executor = nil
+      @helpers = {}
+      @modules = []
+
       @defined_modules = {}
-      clear_fields
     end
 
     attr_reader :simple_name
     attr_reader :full_name
+    attr_reader :short_desc
+    attr_reader :long_desc
+    attr_reader :executor
 
-    attr_accessor :short_desc
-    attr_accessor :long_desc
-    attr_accessor :executor
-
-    def check_priority(priority)
-      return false if @cur_priority > priority
-      if @cur_priority < priority
-        clear_fields
-        @cur_priority = priority
+    def defining_from(path)
+      raise ToolDefinitionError, "Already being defined" if @cur_path
+      @cur_path = path
+      begin
+        yield
+      ensure
+        @defined_in = @cur_path if has_definition?
+        @cur_path = nil
       end
-      true
     end
 
-    def add_helper(name, &block)
-      name_str = name.to_s
-      unless name_str =~ /^[a-z]\w+$/
-        raise ArgumentError, "Illegal helper name: #{name_str.inspect}"
+    def yield_definition
+      saved_path = @cur_path
+      @cur_path = nil
+      begin
+        yield
+      ensure
+        @cur_path = saved_path
       end
-      @helpers[name.to_sym] = block
+    end
+
+    def has_definition?
+      @long_desc || @short_desc ||
+        !@default_data.empty? || !@switches.empty? ||
+        !@required_args.empty? || !@optional_args.empty? ||
+        @remaining_args || @executor ||
+        !@helpers.empty? || !@modules.empty?
     end
 
     def define_helper_module(name, &block)
       unless name.is_a?(String)
-        raise ArgumentError, "Helper module name #{name.inspect} is not a string"
+        raise ToolDefinitionError, "Helper module name #{name.inspect} is not a string"
       end
       if @defined_modules.key?(name)
-        raise ArgumentError, "Helper module #{name.inspect} is already defined"
+        raise ToolDefinitionError, "Helper module #{name.inspect} is already defined"
       end
       mod = Module.new(&block)
       mod.instance_methods.each do |meth|
         name_str = meth.to_s
         unless name_str =~ /^[a-z]\w+$/
-          raise ArgumentError, "Illegal helper method name: #{name_str.inspect}"
+          raise ToolDefinitionError, "Illegal helper method name: #{name_str.inspect}"
         end
       end
       @defined_modules[name] = mod
     end
 
+    def add_helper(name, &block)
+      check_definition_state
+      name_str = name.to_s
+      unless name_str =~ /^[a-z]\w+$/
+        raise ToolDefinitionError, "Illegal helper name: #{name_str.inspect}"
+      end
+      @helpers[name.to_sym] = block
+    end
+
     def use_helper_module(mod)
+      check_definition_state
       case mod
       when Module
         @modules << mod
@@ -68,11 +102,12 @@ module Toys
       when String
         @modules << mod
       else
-        raise ArgumentError, "Illegal helper module name: #{mod.inspect}"
+        raise ToolDefinitionError, "Illegal helper module name: #{mod.inspect}"
       end
     end
 
     def add_switch(key, *switches, accept: nil, default: nil, doc: nil)
+      check_definition_state
       @default_data[key] = default
       switches << "--#{canonical_switch(key)}=VALUE" if switches.empty?
       switches << accept unless accept.nil?
@@ -81,18 +116,36 @@ module Toys
     end
 
     def add_required_arg(key, accept: nil, doc: nil)
+      check_definition_state
       @default_data[key] = nil
       @required_args << [key, accept, Array(doc)]
     end
 
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
+      check_definition_state
       @default_data[key] = default
       @optional_args << [key, accept, Array(doc)]
     end
 
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
+      check_definition_state
       @default_data[key] = default
       @remaining_args = [key, accept, Array(doc)]
+    end
+
+    def short_desc=(str)
+      check_definition_state
+      @short_desc = str
+    end
+
+    def long_desc=(str)
+      check_definition_state
+      @long_desc = str
+    end
+
+    def executor=(executor)
+      check_definition_state
+      @executor = executor
     end
 
     def execute(context, args)
@@ -130,17 +183,11 @@ module Toys
 
     SPECIAL_FLAGS = ["-q", "--quiet", "-v", "--verbose", "-?", "-h", "--help"]
 
-    def clear_fields
-      @long_desc = nil
-      @short_desc = nil
-      @default_data = {}
-      @switches = []
-      @required_args = []
-      @optional_args = []
-      @remaining_args = nil
-      @executor = nil
-      @helpers = {}
-      @modules = []
+    def check_definition_state
+      if @defined_in
+        in_clause = @cur_path ? "in #{@cur_path}" : ""
+        raise ToolDefinitionError, "Cannot redefine tool #{full_name.inspect} #{in_clause} (already defined in #{@defined_in})"
+      end
     end
 
     def leaf_option_parser(execution_data, binary_name)
@@ -266,7 +313,7 @@ module Toys
       @modules.each do |mod|
         unless Module === mod
           found = find_module_named(mod)
-          raise "Unable to find module #{mod}" unless found
+          raise StandardError, "Unable to find module #{mod}" unless found
           mod = found
         end
         context.extend(mod)
@@ -302,19 +349,6 @@ module Toys
           puts("    #{tool_name}  #{desc}")
         end
       end
-    end
-
-    def build_arg_data(opts)
-      descriptions = []
-      opts.each do |opt|
-        case opt
-        when String
-          descriptions << opt
-        else
-          raise ArgumentError, "Unexpected argument: #{opt.inspect}"
-        end
-      end
-      descriptions
     end
 
     def canonical_switch(name)

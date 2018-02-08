@@ -1,10 +1,10 @@
 module Toys
   class Parser
-    def initialize(lookup, tool, remaining_words, priority)
-      @lookup = lookup
+    def initialize(path, tool, remaining_words, lookup)
+      @path = path
       @tool = tool
       @remaining_words = remaining_words
-      @priority = priority
+      @lookup = lookup
     end
 
     def name(word, &block)
@@ -18,82 +18,80 @@ module Toys
           next_remaining = nil
         end
       end
-      parser = Parser.new(@lookup, subtool, next_remaining, @priority)
-      parser.instance_eval(&block)
+      Parser.parse(@path, subtool, next_remaining, @lookup, block)
+      self
     end
 
     def include(path)
-      @lookup.include_path(path, @tool.full_name, @remaining_words, @priority + 1)
+      @tool.yield_definition do
+        @lookup.include_path(path, @tool.full_name, @remaining_words)
+      end
       self
     end
 
     def long_desc(desc)
-      if @tool.check_priority(@priority)
-        @tool.long_desc = desc
-      end
+      @tool.long_desc = desc
       self
     end
 
     def short_desc(desc)
-      if @tool.check_priority(@priority)
-        @tool.short_desc = desc
-      end
+      @tool.short_desc = desc
       self
     end
 
     def switch(key, *switches, accept: nil, default: nil, doc: nil)
-      if @tool.check_priority(@priority)
-        @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
-      end
+      @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
       self
     end
 
     def required_arg(key, accept: nil, doc: nil)
-      if @tool.check_priority(@priority)
-        @tool.add_required_arg(key, accept: accept, doc: doc)
-      end
+      @tool.add_required_arg(key, accept: accept, doc: doc)
       self
     end
 
     def optional_arg(key, accept: nil, default: nil, doc: nil)
-      if @tool.check_priority(@priority)
-        @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
-      end
+      @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
       self
     end
 
     def remaining_args(key, accept: nil, default: [], doc: nil)
-      if @tool.check_priority(@priority)
-        @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
-      end
+      @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
       self
     end
 
     def execute(&block)
-      if @tool.check_priority(@priority)
-        @tool.executor = block
-      end
+      @tool.executor = block
       self
     end
 
     def helper(name, &block)
-      if @tool.check_priority(@priority)
-        @tool.add_helper(name, &block)
-      end
+      @tool.add_helper(name, &block)
+      self
     end
 
     def helper_module(mod, &block)
       if block
         @tool.define_helper_module(mod, &block)
       else
-        if @tool.check_priority(@priority)
-          @tool.use_helper_module(mod)
-        end
+        @tool.use_helper_module(mod)
       end
+      self
     end
 
     def _binding
       binding
+    end
+
+    def self.parse(path, tool, remaining_words, lookup, source)
+      parser = new(path, tool, remaining_words, lookup)
+      tool.defining_from(path) do
+        if String === source
+          eval(source, parser._binding, path, 1)
+        elsif Proc === source
+          parser.instance_eval(&source)
+        end
+      end
+      tool
     end
   end
 end

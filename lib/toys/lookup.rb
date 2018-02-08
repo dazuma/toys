@@ -1,57 +1,45 @@
 module Toys
   class Lookup
-    DEPTH_LIMIT = 1000
-
     def initialize(config_dir_name: nil, config_file_name: nil, index_file_name: nil)
       @config_dir_name = config_dir_name
       if @config_dir_name && File.extname(@config_dir_name) == ".rb"
-        raise "Illegal config dir name #{@config_dir_name.inspect}"
+        raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
       end
       @config_file_name = config_file_name
       if @config_file_name && File.extname(@config_file_name) != ".rb"
-        raise "Illegal config file name #{@config_file_name.inspect}"
+        raise LookupError, "Illegal config file name #{@config_file_name.inspect}"
       end
       @index_file_name = index_file_name
       if @index_file_name && File.extname(@index_file_name) != ".rb"
-        raise "Illegal index file name #{@index_file_name.inspect}"
+        raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
       end
-      @paths = []
-      @load_state = nil
-      @load_worklist = nil
+      @load_worklist = []
       @tools = {[] => Tool.new(nil, nil)}
     end
 
-    def prepend_paths(paths)
-      raise "Cannot change paths once loading has started" if @load_state
-      @paths += Array(paths).reverse.map{ |path| check_path(path) }
+    def add_paths(paths)
+      @load_worklist += Array(paths).map{ |path| [check_path(path), []] }
       self
     end
 
-    def prepend_config_paths(paths)
-      raise "Cannot change paths once loading has started" if @load_state
-      Array(paths).reverse.each do |path|
+    def add_config_paths(paths)
+      Array(paths).each do |path|
         if !File.directory?(path) || !File.readable?(path)
-          raise "Cannot read config directory #{path}"
+          raise LookupError, "Cannot read config directory #{path}"
         end
         if @config_file_name
           p = File.join(path, @config_file_name)
-          @paths << p if !File.directory?(p) && File.readable?(p)
+          @load_worklist << [p, []] if !File.directory?(p) && File.readable?(p)
         end
         if @config_dir_name
           p = File.join(path, @config_dir_name)
-          @paths << p if File.directory?(p) && File.readable?(p)
+          @load_worklist << [p, []] if File.directory?(p) && File.readable?(p)
         end
       end
       self
     end
 
     def lookup(args)
-      unless @load_state
-        @load_state = {}
-        @load_worklist = @paths.each_with_index.map do |path, index|
-          [path, [], index * DEPTH_LIMIT + 1]
-        end
-      end
       prefix = args.take_while{ |arg| !arg.start_with?("-") }
       loop do
         load_for_prefix(prefix)
@@ -90,8 +78,8 @@ module Toys
       end
     end
 
-    def include_path(path, words, remaining_words, priority)
-      handle_path(check_path(path), words, remaining_words, priority)
+    def include_path(path, words, remaining_words)
+      handle_path(check_path(path), words, remaining_words)
     end
 
     private
@@ -99,42 +87,30 @@ module Toys
     def load_for_prefix(prefix)
       cur_worklist = @load_worklist
       @load_worklist = []
-      cur_worklist.each do |path, words, priority|
-        handle_path(path, words, calc_remaining_words(prefix, words), priority)
+      cur_worklist.each do |path, words|
+        handle_path(path, words, calc_remaining_words(prefix, words))
       end
     end
 
-    def handle_path(path, words, remaining_words, priority)
+    def handle_path(path, words, remaining_words)
       if remaining_words
-        load_path(path, words, remaining_words, priority)
+        load_path(path, words, remaining_words)
       else
-        @load_worklist << [path, words, priority]
+        @load_worklist << [path, words]
       end
     end
 
-    def load_path(path, words, remaining_words, priority)
-      key = [path] + words
-      return if @load_state[key].to_i > priority
-      @load_state[key] = priority
-
+    def load_path(path, words, remaining_words)
       if File.extname(path) == ".rb"
-        parser = Parser.new(self, get_tool(words), remaining_words, priority)
-        eval(IO.read(path), parser._binding, path, 1)
+        Parser.parse(path, get_tool(words), remaining_words, self, IO.read(path))
       else
         children = Dir.entries(path) - [".", ".."]
         children.each do |child|
           child_path = File.join(path, child)
           if child == @index_file_name
-            load_path(check_path(child_path), words, remaining_words, priority)
+            load_path(check_path(child_path), words, remaining_words)
           else
-            if File.extname(child) == ".rb"
-              check_path(child_path)
-              next_priority = priority + 1
-            elsif File.directory?(child_path) && File.readable?(child_path)
-              next_priority = priority + 2
-            else
-              next
-            end
+            next unless check_path(child_path, strict: false)
             child_word = File.basename(child, ".rb")
             next_words = words + [child_word]
             next_remaining_words =
@@ -145,20 +121,24 @@ module Toys
               else
                 nil
               end
-            handle_path(child_path, next_words, next_remaining_words, next_priority)
+            handle_path(child_path, next_words, next_remaining_words)
           end
         end
       end
     end
 
-    def check_path(path)
+    def check_path(path, strict: true)
       if File.extname(path) == ".rb"
         if File.directory?(path) || !File.readable?(path)
-          raise "Cannot read file #{path}"
+          raise LookupError, "Cannot read file #{path}"
         end
       else
         if !File.directory?(path) || !File.readable?(path)
-          raise "Cannot read directory #{path}"
+          if strict
+            raise LookupError, "Cannot read directory #{path}"
+          else
+            return nil
+          end
         end
       end
       path

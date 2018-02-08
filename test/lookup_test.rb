@@ -12,37 +12,37 @@ describe Toys::Lookup do
 
   describe "config path with config items" do
     before do
-      lookup.prepend_config_paths(File.join(cases_dir, "config-items"))
+      lookup.add_config_paths(File.join(cases_dir, "config-items"))
     end
 
     it "finds a tool directly defined in a config file" do
       tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "tool-1 short description"
-      tool.long_desc.must_equal "tool-1 long description"
+      tool.short_desc.must_equal "file tool-1 short description"
+      tool.long_desc.must_equal "file tool-1 long description"
     end
 
-    it "prefers a tool in a directory over a tool in a config file" do
+    it "finds a subtool directly defined in a config file" do
+      tool = lookup.lookup(["collection-1", "tool-1-1"])
+      tool.short_desc.must_equal "file tool-1-1 short description"
+      tool.long_desc.must_equal "file tool-1-1 long description"
+      tool.full_name.must_equal ["collection-1", "tool-1-1"]
+    end
+
+    it "finds a collection directly defined in a config file" do
+      tool = lookup.lookup(["collection-1"])
+      tool.short_desc.must_equal "file collection-1 short description"
+      tool.full_name.must_equal ["collection-1"]
+    end
+
+    it "finds a tool defined in a file in a config directory" do
       tool = lookup.lookup(["tool-2"])
       tool.short_desc.must_equal "directory tool-2 short description"
       tool.long_desc.must_equal "directory tool-2 long description"
     end
 
-    it "finds a subtool directly defined in a config file" do
-      tool = lookup.lookup(["collection-1", "tool-1-2"])
-      tool.short_desc.must_equal "tool-1-2 short description"
-      tool.long_desc.must_equal "tool-1-2 long description"
-      tool.full_name.must_equal ["collection-1", "tool-1-2"]
-    end
-
-    it "finds a collection directly defined in a config file" do
-      tool = lookup.lookup(["collection-1"])
-      tool.short_desc.must_equal "collection-1 short description"
-      tool.full_name.must_equal ["collection-1"]
-    end
-
     it "finds the nearest collection directly defined if a query doesn't match" do
       tool = lookup.lookup(["collection-1", "tool-blah"])
-      tool.short_desc.must_equal "collection-1 short description"
+      tool.short_desc.must_equal "file collection-1 short description"
       tool.full_name.must_equal ["collection-1"]
     end
 
@@ -53,21 +53,9 @@ describe Toys::Lookup do
     end
   end
 
-  describe "ordinary path with one index file" do
-    before do
-      lookup.prepend_paths(File.join(cases_dir, "index-file-only"))
-    end
-
-    it "finds a tool directly defined" do
-      tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "tool-1 short description"
-      tool.long_desc.must_equal "tool-1 long description"
-    end
-  end
-
   describe "ordinary path with some hierarchical files" do
     before do
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
+      lookup.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
     it "finds a tool directly defined" do
@@ -118,107 +106,46 @@ describe Toys::Lookup do
     end
   end
 
-  describe "priorities between index files and normal files" do
+  describe "collisions between definitions" do
     before do
-      lookup.prepend_paths(File.join(cases_dir, "hierarchy-with-indexes"))
+      lookup.add_config_paths(File.join(cases_dir, "config-items"))
+      lookup.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
-    it "chooses an item from a normal file over an index file" do
-      tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "normal tool-1 short description"
-      tool.long_desc.must_equal "normal tool-1 long description"
-    end
-
-    it "chooses a sub-item from a normal file over a toplevel index file" do
-      tool = lookup.lookup(["collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "normal tool-1-1 short description"
-      tool.long_desc.must_equal "normal tool-1-1 long description"
-    end
-
-    it "chooses a sub-item from a normal file over a sub-index file" do
-      tool = lookup.lookup(["collection-1", "tool-1-3"])
-      tool.short_desc.must_equal "normal tool-1-3 short description"
-      tool.long_desc.must_equal "normal tool-1-3 long description"
-    end
-
-    it "chooses a sub-item from a sub-index file over a toplevel index file" do
-      tool = lookup.lookup(["collection-1", "tool-1-2"])
-      tool.short_desc.must_equal "subindex tool-1-2 short description"
-      tool.long_desc.must_equal "subindex tool-1-2 long description"
-    end
-  end
-
-  describe "priorities between separate paths" do
-    it "finds a conflicting tool with priority given to a config file" do
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "tool-1 short description"
-      tool.long_desc.must_equal "tool-1 long description"
-    end
-
-    it "finds a conflicting tool with priority given to a normal file" do
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "normal tool-1 short description"
-      tool.long_desc.must_equal "normal tool-1 long description"
-    end
-
-    it "finds a conflicting subtool with priority given to a config file" do
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      tool = lookup.lookup(["collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "tool-1-1 short description"
-      tool.long_desc.must_equal "tool-1-1 long description"
-    end
-
-    it "finds a conflicting subtool with priority given to a normal file" do
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      tool = lookup.lookup(["collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "normal tool-1-1 short description"
-      tool.long_desc.must_equal "normal tool-1-1 long description"
-    end
-
-    it "finds a tool defined only in the lower priority path" do
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      tool = lookup.lookup(["tool-3"])
-      tool.short_desc.must_equal "normal tool-3 short description"
-      tool.long_desc.must_equal "normal tool-3 long description"
-    end
-
-    it "finds a subtool defined only in the lower priority path but with a conflicting parent" do
-      lookup.prepend_paths(File.join(cases_dir, "normal-file-hierarchy"))
-      lookup.prepend_config_paths(File.join(cases_dir, "index-file-only"))
-      tool = lookup.lookup(["collection-1", "tool-1-3"])
-      tool.short_desc.must_equal "normal tool-1-3 short description"
-      tool.long_desc.must_equal "normal tool-1-3 long description"
-    end
-  end
-
-  describe "includes with priorities" do
-    before do
-      lookup.prepend_paths(File.join(cases_dir, "index-file-with-includes"))
-    end
-
-    it "gets an item from a root-level include" do
+    it "allows loading if the collision isn't actually traversed" do
       tool = lookup.lookup(["tool-2"])
-      tool.short_desc.must_equal "tool-2 short description"
-      tool.long_desc.must_equal "tool-2 long description"
+      tool.short_desc.must_equal "directory tool-2 short description"
+      tool.long_desc.must_equal "directory tool-2 long description"
+    end
+
+    it "reports error if a tool is defined multiple times" do
+      proc do
+        lookup.lookup(["tool-1"])
+      end.must_raise(Toys::ToolDefinitionError)
+    end
+  end
+
+  describe "includes" do
+    before do
+      lookup.add_paths(File.join(cases_dir, "items-with-includes"))
+    end
+
+    it "gets an item from a root-level directory include" do
+      tool = lookup.lookup(["tool-2"])
+      tool.short_desc.must_equal "directory tool-2 short description"
+      tool.long_desc.must_equal "directory tool-2 long description"
+    end
+
+    it "gets an item from a root-level file include" do
+      tool = lookup.lookup(["collection-1", "tool-1-1"])
+      tool.short_desc.must_equal "file tool-1-1 short description"
+      tool.long_desc.must_equal "file tool-1-1 long description"
     end
 
     it "gets an item from non-root-level include" do
       tool = lookup.lookup(["collection-0", "collection-1", "tool-1-1"])
       tool.short_desc.must_equal "normal tool-1-1 short description"
       tool.long_desc.must_equal "normal tool-1-1 long description"
-    end
-
-    it "prioritizes items in an include" do
-      tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "tool-1 short description"
-      tool.long_desc.must_equal "tool-1 long description"
     end
 
     it "does not load an include if not needed" do

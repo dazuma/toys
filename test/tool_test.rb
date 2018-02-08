@@ -30,35 +30,21 @@ describe Toys::Tool do
     end
   end
 
-  describe "field setting" do
+  describe "definition state" do
     it "defaults fields to nil" do
       tool.short_desc.must_be_nil
       tool.long_desc.must_be_nil
       tool.executor.must_be_nil
     end
 
-    it "detects priority decreases" do
-      tool.short_desc = "hi"
-      tool.long_desc = "hiho"
-      tool.check_priority(-1).must_equal false
-      tool.short_desc.must_equal "hi"
-      tool.long_desc.must_equal "hiho"
-    end
-
-    it "detects priority equality" do
-      tool.short_desc = "hi"
-      tool.long_desc = "hiho"
-      tool.check_priority(0).must_equal true
-      tool.short_desc.must_equal "hi"
-      tool.long_desc.must_equal "hiho"
-    end
-
-    it "detects priority increases" do
-      tool.short_desc = "hi"
-      tool.long_desc = "hiho"
-      tool.check_priority(1).must_equal true
-      tool.short_desc.must_be_nil
-      tool.long_desc.must_be_nil
+    it "prevents defining from multiple paths" do
+      tool.defining_from("path1") do
+        tool.short_desc = "hi"
+        tool.long_desc = "hiho"
+      end
+      proc do
+        tool.short_desc = "ho"
+      end.must_raise(Toys::ToolDefinitionError)
     end
   end
 
@@ -243,7 +229,7 @@ describe Toys::Tool do
     it "cannot begin with an underscore" do
       proc do
         tool.add_helper("_hello_helper") { |val| val * 2 }
-      end.must_raise(ArgumentError)
+      end.must_raise(Toys::ToolDefinitionError)
     end
   end
 
@@ -289,7 +275,7 @@ describe Toys::Tool do
             val * 2
           end
         end
-      end.must_raise(ArgumentError)
+      end.must_raise(Toys::ToolDefinitionError)
     end
 
   end
