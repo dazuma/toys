@@ -65,7 +65,7 @@ module Toys
     end
 
     def tool_defined?(words)
-      @tools.key?([words])
+      @tools.key?(words)
     end
 
     def list_subtools(words, recursive)
