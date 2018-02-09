@@ -40,11 +40,16 @@ module Toys
     end
 
     def lookup(args)
-      prefix = args.take_while{ |arg| !arg.start_with?("-") }
+      orig_prefix = args.take_while{ |arg| !arg.start_with?("-") }
+      cur_prefix = orig_prefix.dup
       loop do
-        load_for_prefix(prefix)
-        return @tools[prefix] if @tools.key?(prefix)
-        raise "Bug: No tools found" unless prefix.pop
+        load_for_prefix(cur_prefix)
+        p = orig_prefix.dup
+        while p.length >= cur_prefix.length
+          return @tools[p] if @tools.key?(p)
+          p.pop
+        end
+        raise "Bug: No tools found" unless cur_prefix.pop
       end
     end
 

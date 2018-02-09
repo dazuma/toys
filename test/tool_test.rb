@@ -3,9 +3,11 @@ require "helper"
 describe Toys::Tool do
   let(:tool_name) { "foo" }
   let(:subtool_name) { "bar" }
+  let(:subtool2_name) { "baz" }
   let(:root_tool) { Toys::Tool.new(nil, nil) }
   let(:tool) { Toys::Tool.new(root_tool, tool_name) }
   let(:subtool) { Toys::Tool.new(tool, subtool_name) }
+  let(:subtool2) { Toys::Tool.new(tool, subtool2_name) }
   let(:logger) {
     logger = Logger.new(StringIO.new)
     logger.level = Logger::WARN
@@ -31,10 +33,10 @@ describe Toys::Tool do
   end
 
   describe "definition state" do
-    it "defaults fields to nil" do
-      tool.short_desc.must_be_nil
-      tool.long_desc.must_be_nil
-      tool.executor.must_be_nil
+    it "defaults to empty" do
+      tool.has_description?.must_equal false
+      tool.has_definition?.must_equal false
+      tool.only_collection?.must_equal false
     end
 
     it "prevents defining from multiple paths" do
@@ -277,6 +279,8 @@ describe Toys::Tool do
         end
       end.must_raise(Toys::ToolDefinitionError)
     end
+  end
 
+  describe "aliases" do
   end
 end

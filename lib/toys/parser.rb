@@ -7,9 +7,24 @@ module Toys
       @lookup = lookup
     end
 
-    def name(word, &block)
+    def name(word, alias_of: nil, &block)
       word = word.to_s
       subtool = @lookup.get_tool(@tool.full_name + [word])
+      if alias_of
+        if block
+          raise Toys::ToysDefinitionError, "Cannot take a block with alias_of"
+        end
+        unless alias_of.is_a?(Array)
+          alias_of = @tool.full_name + [alias_of.to_s]
+        end
+        target = @lookup.lookup(alias_of)
+        if target.full_path != alias_of
+          raise Toys::ToysDefinitionError,
+            "Cannot find alias target #{alias_of.join(' ').inspect}"
+        end
+        subtool.alias_target = target
+        return self
+      end
       next_remaining = @remaining_words
       if next_remaining && !next_remaining.empty?
         if next_remaining.first == word
@@ -19,6 +34,14 @@ module Toys
         end
       end
       Parser.parse(@path, subtool, next_remaining, @lookup, block)
+      self
+    end
+
+    def alias_as(word)
+      unless @tool.root?
+        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word])
+        alias_tool.alias_target = @tool
+      end
       self
     end
 

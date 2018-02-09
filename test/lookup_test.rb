@@ -17,32 +17,32 @@ describe Toys::Lookup do
 
     it "finds a tool directly defined in a config file" do
       tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "file tool-1 short description"
-      tool.long_desc.must_equal "file tool-1 long description"
+      tool.effective_short_desc.must_equal "file tool-1 short description"
+      tool.effective_long_desc.must_equal "file tool-1 long description"
     end
 
     it "finds a subtool directly defined in a config file" do
       tool = lookup.lookup(["collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "file tool-1-1 short description"
-      tool.long_desc.must_equal "file tool-1-1 long description"
+      tool.effective_short_desc.must_equal "file tool-1-1 short description"
+      tool.effective_long_desc.must_equal "file tool-1-1 long description"
       tool.full_name.must_equal ["collection-1", "tool-1-1"]
     end
 
     it "finds a collection directly defined in a config file" do
       tool = lookup.lookup(["collection-1"])
-      tool.short_desc.must_equal "file collection-1 short description"
+      tool.effective_short_desc.must_equal "file collection-1 short description"
       tool.full_name.must_equal ["collection-1"]
     end
 
     it "finds a tool defined in a file in a config directory" do
       tool = lookup.lookup(["tool-2"])
-      tool.short_desc.must_equal "directory tool-2 short description"
-      tool.long_desc.must_equal "directory tool-2 long description"
+      tool.effective_short_desc.must_equal "directory tool-2 short description"
+      tool.effective_long_desc.must_equal "directory tool-2 long description"
     end
 
     it "finds the nearest collection directly defined if a query doesn't match" do
       tool = lookup.lookup(["collection-1", "tool-blah"])
-      tool.short_desc.must_equal "file collection-1 short description"
+      tool.effective_short_desc.must_equal "file collection-1 short description"
       tool.full_name.must_equal ["collection-1"]
     end
 
@@ -60,26 +60,26 @@ describe Toys::Lookup do
 
     it "finds a tool directly defined" do
       tool = lookup.lookup(["tool-1"])
-      tool.short_desc.must_equal "normal tool-1 short description"
-      tool.long_desc.must_equal "normal tool-1 long description"
+      tool.effective_short_desc.must_equal "normal tool-1 short description"
+      tool.effective_long_desc.must_equal "normal tool-1 long description"
     end
 
     it "finds a subtool directly defined" do
       tool = lookup.lookup(["collection-1", "tool-1-3"])
-      tool.short_desc.must_equal "normal tool-1-3 short description"
-      tool.long_desc.must_equal "normal tool-1-3 long description"
+      tool.effective_short_desc.must_equal "normal tool-1-3 short description"
+      tool.effective_long_desc.must_equal "normal tool-1-3 long description"
       tool.full_name.must_equal ["collection-1", "tool-1-3"]
     end
 
     it "finds a collection directly defined" do
       tool = lookup.lookup(["collection-1"])
-      tool.short_desc.must_be_nil
+      tool.only_collection?.must_equal true
       tool.full_name.must_equal ["collection-1"]
     end
 
     it "finds the nearest collection directly defined if a query doesn't match" do
       tool = lookup.lookup(["collection-1", "tool-blah"])
-      tool.short_desc.must_be_nil
+      tool.only_collection?.must_equal true
       tool.full_name.must_equal ["collection-1"]
     end
 
@@ -114,8 +114,8 @@ describe Toys::Lookup do
 
     it "allows loading if the collision isn't actually traversed" do
       tool = lookup.lookup(["tool-2"])
-      tool.short_desc.must_equal "directory tool-2 short description"
-      tool.long_desc.must_equal "directory tool-2 long description"
+      tool.effective_short_desc.must_equal "directory tool-2 short description"
+      tool.effective_long_desc.must_equal "directory tool-2 long description"
     end
 
     it "reports error if a tool is defined multiple times" do
@@ -132,20 +132,20 @@ describe Toys::Lookup do
 
     it "gets an item from a root-level directory include" do
       tool = lookup.lookup(["tool-2"])
-      tool.short_desc.must_equal "directory tool-2 short description"
-      tool.long_desc.must_equal "directory tool-2 long description"
+      tool.effective_short_desc.must_equal "directory tool-2 short description"
+      tool.effective_long_desc.must_equal "directory tool-2 long description"
     end
 
     it "gets an item from a root-level file include" do
       tool = lookup.lookup(["collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "file tool-1-1 short description"
-      tool.long_desc.must_equal "file tool-1-1 long description"
+      tool.effective_short_desc.must_equal "file tool-1-1 short description"
+      tool.effective_long_desc.must_equal "file tool-1-1 long description"
     end
 
     it "gets an item from non-root-level include" do
       tool = lookup.lookup(["collection-0", "collection-1", "tool-1-1"])
-      tool.short_desc.must_equal "normal tool-1-1 short description"
-      tool.long_desc.must_equal "normal tool-1-1 long description"
+      tool.effective_short_desc.must_equal "normal tool-1-1 short description"
+      tool.effective_long_desc.must_equal "normal tool-1-1 long description"
     end
 
     it "does not load an include if not needed" do
