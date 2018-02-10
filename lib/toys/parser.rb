@@ -18,11 +18,8 @@ module Toys
           alias_of = @tool.full_name + [alias_of.to_s]
         end
         target = @lookup.lookup(alias_of)
-        if target.full_path != alias_of
-          raise Toys::ToysDefinitionError,
-            "Cannot find alias target #{alias_of.join(' ').inspect}"
-        end
-        subtool.alias_target = target
+        target_args = alias_of.slice(target.full_name.length..-1)
+        subtool.set_alias_target(target, target_args)
         return self
       end
       next_remaining = @remaining_words
@@ -40,9 +37,15 @@ module Toys
     def alias_as(word)
       unless @tool.root?
         alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word])
-        alias_tool.alias_target = @tool
+        alias_tool.set_alias_target(@tool)
       end
       self
+    end
+
+    def alias_of(target)
+      target_tool = @lookup.lookup(target)
+      target_args = alias_of.slice(target_tool.full_name.length..-1)
+      @tool.set_alias_target(target_tool, target_args)
     end
 
     def include(path)
