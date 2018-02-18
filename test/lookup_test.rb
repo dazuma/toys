@@ -108,20 +108,39 @@ describe Toys::Lookup do
 
   describe "collisions between definitions" do
     before do
-      lookup.add_config_paths(File.join(cases_dir, "config-items"))
-      lookup.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
+      lookup.add_paths(File.join(cases_dir, "collision"))
     end
 
     it "allows loading if the collision isn't actually traversed" do
       tool = lookup.lookup(["tool-2"])
-      tool.effective_short_desc.must_equal "directory tool-2 short description"
-      tool.effective_long_desc.must_equal "directory tool-2 long description"
+      tool.effective_short_desc.must_equal "index tool-2 short description"
+      tool.effective_long_desc.must_equal "index tool-2 long description"
     end
 
     it "reports error if a tool is defined multiple times" do
       proc do
         lookup.lookup(["tool-1"])
       end.must_raise(Toys::ToolDefinitionError)
+    end
+  end
+
+  describe "priority between definitions" do
+    it "chooses from the config path if that has higher priority" do
+      lookup.add_config_paths(File.join(cases_dir, "config-items"))
+      lookup.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
+
+      tool = lookup.lookup(["tool-1"])
+      tool.effective_short_desc.must_equal "file tool-1 short description"
+      tool.effective_long_desc.must_equal "file tool-1 long description"
+    end
+
+    it "chooses from the directory path if that has higher priority" do
+      lookup.add_config_paths(File.join(cases_dir, "config-items"))
+      lookup.add_paths(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+
+      tool = lookup.lookup(["tool-1"])
+      tool.effective_short_desc.must_equal "normal tool-1 short description"
+      tool.effective_long_desc.must_equal "normal tool-1 long description"
     end
   end
 

@@ -14,7 +14,6 @@ module Toys
       @cur_path = nil
 
       @alias_target = nil
-      @alias_target_args = nil
 
       @long_desc = nil
       @short_desc = nil
@@ -86,7 +85,7 @@ module Toys
       end
     end
 
-    def set_alias_target(target_tool, target_args=[])
+    def set_alias_target(target_tool)
       unless target_tool.is_a?(Toys::Tool)
         raise ArgumentError, "Illegal target type"
       end
@@ -104,7 +103,6 @@ module Toys
       end
       @parent.ensure_collection_only(full_name) if @parent
       @alias_target = target_tool
-      @alias_target_args = target_args
     end
 
     def define_helper_module(name, &block)
@@ -245,7 +243,7 @@ module Toys
 
     def default_desc
       if @alias_target
-        "(Alias of #{(@alias_target.full_name + @alias_target_args).join(' ').inspect})"
+        "(Alias of #{@alias_target.display_name.inspect})"
       elsif @executor
         "(No description available)"
       else

@@ -14,26 +14,40 @@ module Toys
         raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
       end
       @load_worklist = []
-      @tools = {[] => Tool.new(nil, nil)}
+      @tools = {[] => [Tool.new(nil, nil), nil]}
+      @max_priority = @min_priority = 0
     end
 
-    def add_paths(paths)
-      @load_worklist += Array(paths).map{ |path| [check_path(path), []] }
+    def add_paths(paths, high_priority: false)
+      paths = Array(paths)
+      paths = paths.reverse if high_priority
+      paths.each do |path|
+        path = check_path(path)
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        @load_worklist << [path, [], priority]
+      end
       self
     end
 
-    def add_config_paths(paths)
-      Array(paths).each do |path|
+    def add_config_paths(paths, high_priority: false)
+      paths = Array(paths)
+      paths = paths.reverse if high_priority
+      paths.each do |path|
         if !File.directory?(path) || !File.readable?(path)
           raise LookupError, "Cannot read config directory #{path}"
         end
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         if @config_file_name
           p = File.join(path, @config_file_name)
-          @load_worklist << [p, []] if !File.directory?(p) && File.readable?(p)
+          if !File.directory?(p) && File.readable?(p)
+            @load_worklist << [p, [], priority]
+          end
         end
         if @config_dir_name
           p = File.join(path, @config_dir_name)
-          @load_worklist << [p, []] if File.directory?(p) && File.readable?(p)
+          if File.directory?(p) && File.readable?(p)
+            @load_worklist << [p, [], priority]
+          end
         end
       end
       self
@@ -46,15 +60,24 @@ module Toys
         load_for_prefix(cur_prefix)
         p = orig_prefix.dup
         while p.length >= cur_prefix.length
-          return @tools[p] if @tools.key?(p)
+          return @tools[p].first if @tools.key?(p)
           p.pop
         end
         raise "Bug: No tools found" unless cur_prefix.pop
       end
     end
 
-    def get_tool(words)
-      @tools[words] ||= Tool.new(get_tool(words[0..-2]), words.last)
+    def get_tool(words, priority)
+      if @tools.key?(words)
+        tool, tool_priority = @tools[words]
+        return tool if tool_priority.nil? || tool_priority == priority
+        return nil if tool_priority > priority
+      end
+      parent = get_tool(words[0..-2], priority)
+      return nil if parent.nil?
+      tool = Tool.new(parent, words.last)
+      @tools[words] = [tool, priority]
+      tool
     end
 
     def tool_defined?(words)
@@ -64,11 +87,11 @@ module Toys
     def list_subtools(words, recursive)
       found_tools = []
       len = words.length
-      @tools.each do |n, t|
+      @tools.each do |n, tp|
         if n.length > 0
           if !recursive && n.slice(0..-2) == words ||
               recursive && n.length > len && n.slice(0, len) == words
-            found_tools << t
+            found_tools << tp.first
           end
         end
       end
@@ -83,8 +106,8 @@ module Toys
       end
     end
 
-    def include_path(path, words, remaining_words)
-      handle_path(check_path(path), words, remaining_words)
+    def include_path(path, words, remaining_words, priority)
+      handle_path(check_path(path), words, remaining_words, priority)
     end
 
     private
@@ -92,28 +115,31 @@ module Toys
     def load_for_prefix(prefix)
       cur_worklist = @load_worklist
       @load_worklist = []
-      cur_worklist.each do |path, words|
-        handle_path(path, words, calc_remaining_words(prefix, words))
+      cur_worklist.each do |path, words, priority|
+        handle_path(path, words, calc_remaining_words(prefix, words), priority)
       end
     end
 
-    def handle_path(path, words, remaining_words)
+    def handle_path(path, words, remaining_words, priority)
       if remaining_words
-        load_path(path, words, remaining_words)
+        load_path(path, words, remaining_words, priority)
       else
-        @load_worklist << [path, words]
+        @load_worklist << [path, words, priority]
       end
     end
 
-    def load_path(path, words, remaining_words)
+    def load_path(path, words, remaining_words, priority)
       if File.extname(path) == ".rb"
-        Parser.parse(path, get_tool(words), remaining_words, self, IO.read(path))
+        tool = get_tool(words, priority)
+        if tool
+          Parser.parse(path, tool, remaining_words, priority, self, IO.read(path))
+        end
       else
         children = Dir.entries(path) - [".", ".."]
         children.each do |child|
           child_path = File.join(path, child)
           if child == @index_file_name
-            load_path(check_path(child_path), words, remaining_words)
+            load_path(check_path(child_path), words, remaining_words, priority)
           else
             next unless check_path(child_path, strict: false)
             child_word = File.basename(child, ".rb")
@@ -126,7 +152,7 @@ module Toys
               else
                 nil
               end
-            handle_path(child_path, next_words, next_remaining_words)
+            handle_path(child_path, next_words, next_remaining_words, priority)
           end
         end
       end

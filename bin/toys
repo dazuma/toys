@@ -1,11 +1,6 @@
 #!/usr/bin/env ruby
 
-begin
-  require "toys"
-rescue LoadError
-  libdir = File.absolute_path(File.join(File.dirname(__dir__), "lib"))
-  $:.unshift(libdir)
-  require "toys"
-end
+$:.unshift(File.absolute_path(File.join(File.dirname(__dir__), "lib")))
+require "toys"
 
 Toys::Cli.create_standard.run(ARGV)

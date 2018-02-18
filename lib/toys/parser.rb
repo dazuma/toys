@@ -1,25 +1,27 @@
 module Toys
   class Parser
-    def initialize(path, tool, remaining_words, lookup)
+    def initialize(path, tool, remaining_words, priority, lookup)
       @path = path
       @tool = tool
       @remaining_words = remaining_words
+      @priority = priority
       @lookup = lookup
     end
 
     def name(word, alias_of: nil, &block)
       word = word.to_s
-      subtool = @lookup.get_tool(@tool.full_name + [word])
+      subtool = @lookup.get_tool(@tool.full_name + [word], @priority)
+      return self if subtool.nil?
       if alias_of
         if block
           raise Toys::ToysDefinitionError, "Cannot take a block with alias_of"
         end
-        unless alias_of.is_a?(Array)
-          alias_of = @tool.full_name + [alias_of.to_s]
+        target = @tool.full_name + [alias_of.to_s]
+        target_tool = @lookup.lookup(target)
+        unless target_tool.full_name == target
+          raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
         end
-        target = @lookup.lookup(alias_of)
-        target_args = alias_of.slice(target.full_name.length..-1)
-        subtool.set_alias_target(target, target_args)
+        subtool.set_alias_target(target)
         return self
       end
       next_remaining = @remaining_words
@@ -30,27 +32,30 @@ module Toys
           next_remaining = nil
         end
       end
-      Parser.parse(@path, subtool, next_remaining, @lookup, block)
+      Parser.parse(@path, subtool, next_remaining, @priority, @lookup, block)
       self
     end
 
     def alias_as(word)
       unless @tool.root?
-        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word])
-        alias_tool.set_alias_target(@tool)
+        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word], @priority)
+        alias_tool.set_alias_target(@tool) if alias_tool
       end
       self
     end
 
     def alias_of(target)
       target_tool = @lookup.lookup(target)
-      target_args = alias_of.slice(target_tool.full_name.length..-1)
-      @tool.set_alias_target(target_tool, target_args)
+      unless target_tool.full_name == target
+        raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
+      end
+      @tool.set_alias_target(target_tool)
+      self
     end
 
     def include(path)
       @tool.yield_definition do
-        @lookup.include_path(path, @tool.full_name, @remaining_words)
+        @lookup.include_path(path, @tool.full_name, @remaining_words, @priority)
       end
       self
     end
@@ -108,8 +113,8 @@ module Toys
       binding
     end
 
-    def self.parse(path, tool, remaining_words, lookup, source)
-      parser = new(path, tool, remaining_words, lookup)
+    def self.parse(path, tool, remaining_words, priority, lookup, source)
+      parser = new(path, tool, remaining_words, priority, lookup)
       tool.defining_from(path) do
         if String === source
           eval(source, parser._binding, path, 1)

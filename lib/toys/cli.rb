@@ -4,6 +4,7 @@ module Toys
     DEFAULT_DIR_NAME = ".toys"
     DEFAULT_FILE_NAME = ".toys.rb"
     DEFAULT_BINARY_NAME = "toys"
+    ETC_PATH = "/etc"
 
     def initialize(
       binary_name: nil,
@@ -58,8 +59,11 @@ module Toys
           config_file_name: DEFAULT_FILE_NAME,
           index_file_name: DEFAULT_FILE_NAME
         )
-        cli.add_paths(BUILTINS_PATH)
         cli.add_config_path_hierarchy
+        if !File.directory?(ETC_PATH) || !File.readable?(ETC_PATH)
+          cli.add_config_paths(ETC_PATH)
+        end
+        cli.add_paths(BUILTINS_PATH)
         cli
       end
 
