@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Command line tool framework"
   spec.description = "Command line tool framework"
-  spec.license = "Apache 2.0"
+  spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*")
