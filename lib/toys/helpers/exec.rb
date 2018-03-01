@@ -40,7 +40,7 @@ module Toys
 
         def handle_status(status)
           if status != 0 && @config[:report_subprocess_errors]
-            @context.exit_with_code(status)
+            @context.exit(status)
           end
           status
         end

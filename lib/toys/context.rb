@@ -25,7 +25,7 @@ module Toys
       tool.execute(self, args.slice(tool.full_name.length..-1))
     end
 
-    def exit_with_code(code)
+    def exit(code)
       throw :result, code
     end
 

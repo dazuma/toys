@@ -156,7 +156,7 @@ module Toys
         mod = mod.to_s
         file_name = mod.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
         require "toys/helpers/#{file_name}"
-        const_name = mod.gsub(/_([a-zA-Z0-9])/){ |m| $1.upcase }.capitalize
+        const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/){ |m| $2.upcase }
         @modules << Toys::Helpers.const_get(const_name)
       when String
         @modules << mod

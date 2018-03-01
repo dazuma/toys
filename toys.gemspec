@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["dazuma@gmail.com"]
 
   spec.summary = "Command line tool framework"
-  spec.description = "Command line tool framework"
+  spec.description = "A simple command line tool framework"
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 

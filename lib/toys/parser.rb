@@ -60,6 +60,20 @@ module Toys
       self
     end
 
+    def expand(template, opts={})
+      if template.is_a?(Symbol)
+        template = template.to_s
+        file_name = template.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
+        require "toys/templates/#{file_name}"
+        const_name = template.gsub(/(^|_)([a-zA-Z0-9])/){ |m| $2.upcase }
+        template = Toys::Templates.const_get(const_name)
+      end
+      opts = template.opts_initializer.call(opts)
+      yield opts if block_given?
+      instance_exec(opts, &template.expander)
+      self
+    end
+
     def long_desc(desc)
       @tool.long_desc = desc
       self
