@@ -17,7 +17,7 @@ name "update" do
 
   short_desc "Update toys if a newer version is available"
 
-  helper_module :exec
+  use :exec
 
   execute do
     version_info = capture("gem query -q -r -e toys")

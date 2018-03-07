@@ -32,8 +32,8 @@ module Toys
       name toy_name do
         short_desc "#{push_gem ? 'Release' : 'Build'} the gem: #{gem_name}"
 
-        helper_module :file_utils
-        helper_module :exec
+        use :file_utils
+        use :exec
 
         execute do
           gemspec = Gem::Specification.load "#{gem_name}.gemspec"

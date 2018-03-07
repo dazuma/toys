@@ -30,7 +30,7 @@ module Toys
       name toy_name do
         short_desc "Run minitest"
 
-        helper_module :exec
+        use :exec
 
         execute do
           sh(cmd, report_subprocess_errors: true)

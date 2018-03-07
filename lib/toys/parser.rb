@@ -114,12 +114,8 @@ module Toys
       self
     end
 
-    def helper_module(mod, &block)
-      if block
-        @tool.define_helper_module(mod, &block)
-      else
-        @tool.use_helper_module(mod)
-      end
+    def use(mod)
+      @tool.use_helper_module(mod)
       self
     end
 

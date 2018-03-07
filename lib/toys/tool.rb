@@ -26,8 +26,6 @@ module Toys
       @helpers = {}
       @modules = []
       @executor = nil
-
-      @defined_modules = {}
     end
 
     attr_reader :simple_name
@@ -105,29 +103,6 @@ module Toys
       @alias_target = target_tool
     end
 
-    def define_helper_module(name, &block)
-      if @alias_target
-        raise ToolDefinitionError, "Tool #{display_name.inspect} is an alias"
-      end
-      unless name.is_a?(String)
-        raise ToolDefinitionError,
-          "Helper module name #{name.inspect} is not a string"
-      end
-      if @defined_modules.key?(name)
-        raise ToolDefinitionError,
-          "Helper module #{name.inspect} is already defined"
-      end
-      mod = Module.new(&block)
-      mod.instance_methods.each do |meth|
-        name_str = meth.to_s
-        unless name_str =~ /^[a-z]\w+$/
-          raise ToolDefinitionError,
-            "Illegal helper method name: #{name_str.inspect}"
-        end
-      end
-      @defined_modules[name] = mod
-    end
-
     def short_desc=(str)
       check_definition_state
       @short_desc = str
@@ -158,8 +133,6 @@ module Toys
         require "toys/helpers/#{file_name}"
         const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/){ |m| $2.upcase }
         @modules << Toys::Helpers.const_get(const_name)
-      when String
-        @modules << mod
       else
         raise ToolDefinitionError, "Illegal helper module name: #{mod.inspect}"
       end
@@ -219,12 +192,6 @@ module Toys
     end
 
     protected
-
-    def find_module_named(name)
-      return @defined_modules[name] if @defined_modules.key?(name)
-      return @parent.find_module_named(name) if @parent
-      nil
-    end
 
     def ensure_collection_only(source_name)
       if has_definition?
@@ -393,11 +360,6 @@ module Toys
         full_name, args, execution_data[:options])
       context.logger.level += execution_data[:delta_severity]
       @modules.each do |mod|
-        unless Module === mod
-          found = find_module_named(mod)
-          raise StandardError, "Unable to find module #{mod}" unless found
-          mod = found
-        end
         context.extend(mod)
       end
       @helpers.each do |name, block|

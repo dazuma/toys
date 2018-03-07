@@ -7,7 +7,7 @@ expand(:gem_build, name: "release", push_gem: true, tag: true)
 name "install" do
   short_desc "Build and install the current code as a gem"
 
-  helper_module :exec
+  use :exec
 
   execute do
     run("build")
@@ -18,7 +18,7 @@ end
 name "clean" do
   short_desc "Clean built artifacts"
 
-  helper_module :file_utils
+  use :file_utils
 
   execute do
     rm_rf("pkg")
