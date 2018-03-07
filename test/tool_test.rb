@@ -236,48 +236,12 @@ describe Toys::Tool do
   end
 
   describe "helper module" do
-    it "can be used in the same tool" do
-      tool.define_helper_module("hello_module") do
-        def hello_helper(val)
-          val * 2
-        end
-        def foo_helper(val)
-          val * 3
-        end
-      end
-      tool.use_helper_module("hello_module")
+    it "can be looked up from standard helpers" do
+      tool.use_helper_module(:file_utils)
       tool.executor = proc do
-        hello_helper(2).must_equal(4)
-        foo_helper(3).must_equal(9)
+        private_methods.include?(:rm_rf).must_equal(true)
       end
       tool.execute(context, []).must_equal(0)
-    end
-
-    it "can be used in a descendant tool" do
-      root_tool.define_helper_module("hello_module") do
-        def hello_helper(val)
-          val * 2
-        end
-        def foo_helper(val)
-          val * 3
-        end
-      end
-      subtool.use_helper_module("hello_module")
-      subtool.executor = proc do
-        hello_helper(2).must_equal(4)
-        foo_helper(3).must_equal(9)
-      end
-      subtool.execute(context, []).must_equal(0)
-    end
-
-    it "cannot define a method beginning with an underscore" do
-      proc do
-        tool.define_helper_module("hello_module") do
-          def _hello_helper(val)
-            val * 2
-          end
-        end
-      end.must_raise(Toys::ToolDefinitionError)
     end
   end
 

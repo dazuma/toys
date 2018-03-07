@@ -1,6 +1,7 @@
 module Toys
   class Lookup
-    def initialize(config_dir_name: nil, config_file_name: nil, index_file_name: nil)
+    def initialize(config_dir_name: nil, config_file_name: nil,
+                   index_file_name: nil, preload_file_name: nil)
       @config_dir_name = config_dir_name
       if @config_dir_name && File.extname(@config_dir_name) == ".rb"
         raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
@@ -12,6 +13,10 @@ module Toys
       @index_file_name = index_file_name
       if @index_file_name && File.extname(@index_file_name) != ".rb"
         raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
+      end
+      @preload_file_name = preload_file_name
+      if @preload_file_name && File.extname(@preload_file_name) != ".rb"
+        raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
       end
       @load_worklist = []
       @tools = {[] => [Tool.new(nil, nil), nil]}
@@ -33,9 +38,7 @@ module Toys
       paths = Array(paths)
       paths = paths.reverse if high_priority
       paths.each do |path|
-        if !File.directory?(path) || !File.readable?(path)
-          raise LookupError, "Cannot read config directory #{path}"
-        end
+        path = check_path(path, type: :dir)
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         if @config_file_name
           p = File.join(path, @config_file_name)
@@ -135,13 +138,23 @@ module Toys
           Parser.parse(path, tool, remaining_words, priority, self, IO.read(path))
         end
       else
-        children = Dir.entries(path) - [".", ".."]
-        children.each do |child|
-          child_path = File.join(path, child)
-          if child == @index_file_name
-            load_path(check_path(child_path), words, remaining_words, priority)
-          else
-            next unless check_path(child_path, strict: false)
+        if @preload_file_name
+          preload_path = File.join(path, @preload_file_name)
+          if File.exist?(preload_path)
+            preload_path = check_path(preload_path, type: :file)
+            require preload_path
+          end
+        end
+        if @index_file_name
+          index_path = File.join(path, @index_file_name)
+          if File.exist?(index_path)
+            index_path = check_path(index_path, type: :file)
+            load_path(index_path, words, remaining_words, priority)
+          end
+        end
+        Dir.entries(path).each do |child|
+          if !child.start_with?(".") && child != @preload_file_name && child != @index_file_name
+            child_path = check_path(File.join(path, child))
             child_word = File.basename(child, ".rb")
             next_words = words + [child_word]
             next_remaining_words =
@@ -158,19 +171,22 @@ module Toys
       end
     end
 
-    def check_path(path, strict: true)
-      if File.extname(path) == ".rb"
+    def check_path(path, lenient: false, type: nil)
+      path = File.expand_path(path)
+      type ||= File.extname(path) == ".rb" ? :file : :dir
+      case type
+      when :file
         if File.directory?(path) || !File.readable?(path)
+          return nil if lenient
           raise LookupError, "Cannot read file #{path}"
         end
-      else
+      when :dir
         if !File.directory?(path) || !File.readable?(path)
-          if strict
-            raise LookupError, "Cannot read directory #{path}"
-          else
-            return nil
-          end
+          return nil if lenient
+          raise LookupError, "Cannot read directory #{path}"
         end
+      else
+        raise ArgumentError, "Illegal type #{type}"
       end
       path
     end

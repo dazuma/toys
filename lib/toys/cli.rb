@@ -4,18 +4,21 @@ module Toys
     DEFAULT_DIR_NAME = ".toys"
     DEFAULT_FILE_NAME = ".toys.rb"
     DEFAULT_BINARY_NAME = "toys"
+    DEFAULT_PRELOAD_NAME = ".preload.rb"
 
     def initialize(
       binary_name: nil,
       logger: nil,
       config_dir_name: nil,
       config_file_name: nil,
-      index_file_name: nil
+      index_file_name: nil,
+      preload_file_name: nil
     )
       @lookup = Toys::Lookup.new(
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
-        index_file_name: index_file_name)
+        index_file_name: index_file_name,
+        preload_file_name: preload_file_name)
       @context = Context.new(
         @lookup,
         logger: logger || self.class.default_logger,
@@ -65,7 +68,8 @@ module Toys
           binary_name: DEFAULT_BINARY_NAME,
           config_dir_name: DEFAULT_DIR_NAME,
           config_file_name: DEFAULT_FILE_NAME,
-          index_file_name: DEFAULT_FILE_NAME
+          index_file_name: DEFAULT_FILE_NAME,
+          preload_file_name: DEFAULT_PRELOAD_NAME
         )
         cli.add_config_path_hierarchy
         cli.add_standard_config_paths
