@@ -3,11 +3,11 @@ require "optparse"
 
 module Toys
   class Tool
-    def initialize(parent, name)
+    def initialize(lookup, parent, name)
+      @lookup = lookup
       @parent = parent
       @simple_name = name
-      @full_name = name ? [name] : []
-      @full_name = parent.full_name + @full_name if parent
+      @full_name = parent ? parent.full_name + [name] : []
 
       @definition_path = nil
       @cur_path = nil
@@ -82,7 +82,19 @@ module Toys
       end
     end
 
-    def make_alias_of(target_tool)
+    def make_alias_of_word(target_word)
+      if root?
+        raise Toys::ToysDefinitionError, "Cannot make the root tool an alias"
+      end
+      target_name = full_name.slice(0..-2) + [target_word]
+      target_tool = @lookup.lookup(target_name)
+      unless target_tool.full_name == target_name
+        raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
+      end
+      make_alias_of_tool(target_tool)
+    end
+
+    def make_alias_of_tool(target_tool)
       if only_collection?
         raise ToolDefinitionError, "Tool #{display_name.inspect} is already" \
           " a collection and cannot be made an alias"
@@ -176,11 +188,10 @@ module Toys
       if execution_data[:usage_error]
         puts(execution_data[:usage_error])
         puts("")
-        show_usage(context, execution_data[:optparse])
+        show_usage(execution_data[:optparse])
         -1
       elsif execution_data[:show_help]
-        show_usage(context, execution_data[:optparse],
-                   recursive: execution_data[:recursive])
+        show_usage(execution_data[:optparse], recursive: execution_data[:recursive])
         0
       else
         catch(:result) do
@@ -247,6 +258,23 @@ module Toys
 
     def leaf_option_parser(execution_data, binary_name)
       optparse = OptionParser.new
+      optparse.banner = compute_leaf_banner(binary_name)
+      desc = @long_desc || @short_desc || default_desc
+      unless desc.empty?
+        optparse.separator("")
+        optparse.separator(desc)
+      end
+      optparse.separator("")
+      optparse.separator("Options:")
+      found_special_flags = []
+      configure_normal_switches(optparse, execution_data, found_special_flags)
+      configure_verbose_switch(optparse, execution_data, found_special_flags)
+      configure_quiet_switch(optparse, execution_data, found_special_flags)
+      configure_help_switch(optparse, execution_data, found_special_flags)
+      optparse
+    end
+
+    def compute_leaf_banner(binary_name)
       banner = ["Usage:", binary_name] + full_name
       banner << "[<options...>]" unless @switches.empty?
       @required_args.each do |key, _opts|
@@ -258,40 +286,40 @@ module Toys
       if @remaining_args
         banner << "[<#{canonical_switch(@remaining_args.first)}...>]"
       end
-      optparse.banner = banner.join(" ")
-      desc = @long_desc || @short_desc || default_desc
-      unless desc.empty?
-        optparse.separator("")
-        optparse.separator(desc)
-      end
-      optparse.separator("")
-      optparse.separator("Options:")
-      found_special_flags = []
+      banner.join(" ")
+    end
+
+    def configure_normal_switches(optparse, execution_data, found_special_flags)
       @switches.each do |key, opts|
         found_special_flags |= (opts & SPECIAL_FLAGS)
         optparse.on(*opts) do |val|
           execution_data[:options][key] = val
         end
       end
+    end
+
+    def configure_verbose_switch(optparse, execution_data, found_special_flags)
       flags = ["-v", "--verbose"] - found_special_flags
-      unless flags.empty?
-        optparse.on(*(flags + ["Increase verbosity"])) do
-          execution_data[:delta_severity] -= 1
-        end
+      return if flags.empty?
+      optparse.on(*(flags + ["Increase verbosity"])) do
+        execution_data[:delta_severity] -= 1
       end
+    end
+
+    def configure_quiet_switch(optparse, execution_data, found_special_flags)
       flags = ["-q", "--quiet"] - found_special_flags
-      unless flags.empty?
-        optparse.on(*(flags + ["Decrease verbosity"])) do
-          execution_data[:delta_severity] += 1
-        end
+      return if flags.empty?
+      optparse.on(*(flags + ["Decrease verbosity"])) do
+        execution_data[:delta_severity] += 1
       end
+    end
+
+    def configure_help_switch(optparse, execution_data, found_special_flags)
       flags = ["-?", "-h", "--help"] - found_special_flags
-      unless flags.empty?
-        optparse.on(*(flags + ["Show help message"])) do
-          execution_data[:show_help] = true
-        end
+      return if flags.empty?
+      optparse.on(*(flags + ["Show help message"])) do
+        execution_data[:show_help] = true
       end
-      optparse
     end
 
     def collection_option_parser(execution_data, binary_name)
@@ -313,48 +341,65 @@ module Toys
       optparse
     end
 
+    def create_option_parser(execution_data, binary_name)
+      option_parser =
+        if @executor
+          leaf_option_parser(execution_data, binary_name)
+        else
+          collection_option_parser(execution_data, binary_name)
+        end
+      execution_data[:optparse] = option_parser
+      option_parser
+    end
+
+    def parse_required_args(remaining, execution_data, args)
+      @required_args.each do |key, accept, _doc|
+        if !execution_data[:show_help] && remaining.empty?
+          reason = "No value given for required argument named <#{canonical_switch(key)}>"
+          raise create_parse_error(args, reason)
+        end
+        execution_data[:options][key] = process_value(key, remaining.shift, accept)
+      end
+      remaining
+    end
+
+    def parse_optional_args(remaining, execution_data)
+      @optional_args.each do |key, accept, _doc|
+        break if remaining.empty?
+        execution_data[:options][key] = process_value(key, remaining.shift, accept)
+      end
+      remaining
+    end
+
+    def parse_remaining_args(remaining, execution_data, args)
+      return if remaining.empty?
+      unless @remaining_args
+        if @executor
+          raise create_parse_error(remaining, "Extra arguments provided")
+        else
+          raise create_parse_error(full_name + args, "Tool not found")
+        end
+      end
+      key = @remaining_args[0]
+      accept = @remaining_args[1]
+      execution_data[:options][key] = remaining.map { |arg| process_value(key, arg, accept) }
+    end
+
     def parse_args(args, binary_name)
-      optdata = @default_data.dup
+      binary_name ||= File.basename($PROGRAM_NAME)
       execution_data = {
         show_help: false,
         usage_error: nil,
         delta_severity: 0,
         recursive: false,
-        options: optdata
+        options: @default_data.dup
       }
       begin
-        binary_name ||= File.basename($PROGRAM_NAME)
-        option_parser =
-          if @executor
-            leaf_option_parser(execution_data, binary_name)
-          else
-            collection_option_parser(execution_data, binary_name)
-          end
-        execution_data[:optparse] = option_parser
+        option_parser = create_option_parser(execution_data, binary_name)
         remaining = option_parser.parse(args)
-        @required_args.each do |key, accept, _doc|
-          if !execution_data[:show_help] && remaining.empty?
-            reason = "No value given for required argument named <#{canonical_switch(key)}>"
-            raise create_parse_error(args, reason)
-          end
-          optdata[key] = process_value(key, remaining.shift, accept)
-        end
-        @optional_args.each do |key, accept, _doc|
-          break if remaining.empty?
-          optdata[key] = process_value(key, remaining.shift, accept)
-        end
-        unless remaining.empty?
-          unless @remaining_args
-            if @executor
-              raise create_parse_error(remaining, "Extra arguments provided")
-            else
-              raise create_parse_error(full_name + args, "Tool not found")
-            end
-          end
-          key = @remaining_args[0]
-          accept = @remaining_args[1]
-          optdata[key] = remaining.map { |arg| process_value(key, arg, accept) }
-        end
+        remaining = parse_required_args(remaining, execution_data, args)
+        remaining = parse_optional_args(remaining, execution_data)
+        parse_remaining_args(remaining, execution_data, args)
       rescue OptionParser::ParseError => e
         execution_data[:usage_error] = e
       end
@@ -373,32 +418,39 @@ module Toys
       context
     end
 
-    def show_usage(context, optparse, recursive: false)
+    def show_usage(optparse, recursive: false)
       puts(optparse.to_s)
       if @executor
         if !@required_args.empty? || !@optional_args.empty? || @remaining_args
-          puts("")
-          puts("Positional arguments:")
-          args_to_display = @required_args + @optional_args
-          args_to_display << @remaining_args if @remaining_args
-          args_to_display.each do |key, _accept, doc|
-            puts("    #{canonical_switch(key).ljust(31)}  #{doc.first}")
-            unless doc.empty?
-              doc[1..-1].each do |d|
-                puts("                                     #{d}")
-              end
-            end
-          end
+          show_positional_arguments
         end
       else
-        puts("")
-        puts("Commands:")
-        name_len = full_name.length
-        context._lookup.list_subtools(full_name, recursive).each do |tool|
-          desc = tool.effective_short_desc
-          tool_name = tool.full_name.slice(name_len..-1).join(" ").ljust(31)
-          puts("    #{tool_name}  #{desc}")
+        show_command_list(recursive)
+      end
+    end
+
+    def show_positional_arguments
+      puts("")
+      puts("Positional arguments:")
+      args_to_display = @required_args + @optional_args
+      args_to_display << @remaining_args if @remaining_args
+      args_to_display.each do |key, _accept, doc|
+        puts("    #{canonical_switch(key).ljust(31)}  #{doc.first}")
+        next if doc.empty?
+        doc[1..-1].each do |d|
+          puts("                                     #{d}")
         end
+      end
+    end
+
+    def show_command_list(recursive)
+      puts("")
+      puts("Commands:")
+      name_len = full_name.length
+      @lookup.list_subtools(full_name, recursive).each do |tool|
+        desc = tool.effective_short_desc
+        tool_name = tool.full_name.slice(name_len..-1).join(" ").ljust(31)
+        puts("    #{tool_name}  #{desc}")
       end
     end
 

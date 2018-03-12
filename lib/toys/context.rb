@@ -1,7 +1,7 @@
 module Toys
   class Context
     def initialize(lookup, logger: nil, binary_name: nil, tool_name: nil, args: nil, options: nil)
-      @_lookup = lookup
+      @lookup = lookup
       @logger = logger || Logger.new(STDERR)
       @binary_name = binary_name
       @tool_name = tool_name
@@ -21,7 +21,7 @@ module Toys
 
     def run(*args)
       args = args.flatten
-      tool = @_lookup.lookup(args)
+      tool = @lookup.lookup(args)
       tool.execute(self, args.slice(tool.full_name.length..-1))
     end
 
@@ -29,11 +29,9 @@ module Toys
       throw :result, code
     end
 
-    attr_reader :_lookup
-
     def _create_child(tool_name, args, options)
       Context.new(
-        @_lookup,
+        @lookup,
         logger: @logger, binary_name: @binary_name,
         tool_name: tool_name, args: args, options: options
       )

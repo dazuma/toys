@@ -3,23 +3,12 @@ module Toys
     def initialize(config_dir_name: nil, config_file_name: nil,
                    index_file_name: nil, preload_file_name: nil)
       @config_dir_name = config_dir_name
-      if @config_dir_name && File.extname(@config_dir_name) == ".rb"
-        raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
-      end
       @config_file_name = config_file_name
-      if @config_file_name && File.extname(@config_file_name) != ".rb"
-        raise LookupError, "Illegal config file name #{@config_file_name.inspect}"
-      end
       @index_file_name = index_file_name
-      if @index_file_name && File.extname(@index_file_name) != ".rb"
-        raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
-      end
       @preload_file_name = preload_file_name
-      if @preload_file_name && File.extname(@preload_file_name) != ".rb"
-        raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
-      end
+      check_init_options
       @load_worklist = []
-      @tools = {[] => [Tool.new(nil, nil), nil]}
+      @tools = {[] => [Tool.new(self, nil, nil), nil]}
       @max_priority = @min_priority = 0
     end
 
@@ -27,10 +16,15 @@ module Toys
       paths = Array(paths)
       paths = paths.reverse if high_priority
       paths.each do |path|
-        path = check_path(path)
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        @load_worklist << [path, [], priority]
+        add_path(path, high_priority: high_priority)
       end
+      self
+    end
+
+    def add_path(path, high_priority: false)
+      path = check_path(path)
+      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      @load_worklist << [path, [], priority]
       self
     end
 
@@ -38,19 +32,24 @@ module Toys
       paths = Array(paths)
       paths = paths.reverse if high_priority
       paths.each do |path|
-        path = check_path(path, type: :dir)
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        if @config_file_name
-          p = File.join(path, @config_file_name)
-          if !File.directory?(p) && File.readable?(p)
-            @load_worklist << [p, [], priority]
-          end
+        add_config_path(path, high_priority: high_priority)
+      end
+      self
+    end
+
+    def add_config_path(path, high_priority: false)
+      path = check_path(path, type: :dir)
+      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      if @config_file_name
+        p = File.join(path, @config_file_name)
+        if !File.directory?(p) && File.readable?(p)
+          @load_worklist << [p, [], priority]
         end
-        if @config_dir_name
-          p = File.join(path, @config_dir_name)
-          if File.directory?(p) && File.readable?(p)
-            @load_worklist << [p, [], priority]
-          end
+      end
+      if @config_dir_name
+        p = File.join(path, @config_dir_name)
+        if File.directory?(p) && File.readable?(p)
+          @load_worklist << [p, [], priority]
         end
       end
       self
@@ -78,7 +77,7 @@ module Toys
       end
       parent = get_tool(words[0..-2], priority)
       return nil if parent.nil?
-      tool = Tool.new(parent, words.last)
+      tool = Tool.new(self, parent, words.last)
       @tools[words] = [tool, priority]
       tool
     end
@@ -99,22 +98,39 @@ module Toys
         end
         found_tools << tp.first
       end
-      found_tools.sort do |a, b|
-        a = a.full_name
-        b = b.full_name
-        while !a.empty? && !b.empty? && a.first == b.first
-          a = a.slice(1..-1)
-          b = b.slice(1..-1)
-        end
-        a.first.to_s <=> b.first.to_s
-      end
+      sort_tools_by_name(found_tools)
     end
 
     def include_path(path, words, remaining_words, priority)
       handle_path(check_path(path), words, remaining_words, priority)
     end
 
+    def self.next_remaining_words(remaining_words, word)
+      if remaining_words.nil?
+        nil
+      elsif remaining_words.empty?
+        remaining_words
+      elsif remaining_words.first == word
+        remaining_words.slice(1..-1)
+      end
+    end
+
     private
+
+    def check_init_options
+      if @config_dir_name && File.extname(@config_dir_name) == ".rb"
+        raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
+      end
+      if @config_file_name && File.extname(@config_file_name) != ".rb"
+        raise LookupError, "Illegal config file name #{@config_file_name.inspect}"
+      end
+      if @index_file_name && File.extname(@index_file_name) != ".rb"
+        raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
+      end
+      if @preload_file_name && File.extname(@preload_file_name) != ".rb"
+        raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
+      end
+    end
 
     def load_for_prefix(prefix)
       cur_worklist = @load_worklist
@@ -139,35 +155,36 @@ module Toys
           Builder.build(path, tool, remaining_words, priority, self, IO.read(path))
         end
       else
-        if @preload_file_name
-          preload_path = File.join(path, @preload_file_name)
-          if File.exist?(preload_path)
-            preload_path = check_path(preload_path, type: :file)
-            require preload_path
-          end
-        end
-        if @index_file_name
-          index_path = File.join(path, @index_file_name)
-          if File.exist?(index_path)
-            index_path = check_path(index_path, type: :file)
-            load_path(index_path, words, remaining_words, priority)
-          end
-        end
-        special_file_names = [@preload_file_name, @index_file_name]
+        require_preload_in(path)
+        load_index_in(path, words, remaining_words, priority)
         Dir.entries(path).each do |child|
-          next if child.start_with?(".") || special_file_names.include?(child)
-          child_path = check_path(File.join(path, child))
-          child_word = File.basename(child, ".rb")
-          next_words = words + [child_word]
-          next_remaining_words =
-            if remaining_words.empty?
-              remaining_words
-            elsif child_word == remaining_words.first
-              remaining_words.slice(1..-1)
-            end
-          handle_path(child_path, next_words, next_remaining_words, priority)
+          load_child_in(path, child, words, remaining_words, priority)
         end
       end
+    end
+
+    def require_preload_in(path)
+      return unless @preload_file_name
+      preload_path = File.join(path, @preload_file_name)
+      preload_path = check_path(preload_path, type: :file, lenient: true)
+      require preload_path if preload_path
+    end
+
+    def load_index_in(path, words, remaining_words, priority)
+      return unless @index_file_name
+      index_path = File.join(path, @index_file_name)
+      index_path = check_path(index_path, type: :file, lenient: true)
+      load_path(index_path, words, remaining_words, priority) if index_path
+    end
+
+    def load_child_in(path, child, words, remaining_words, priority)
+      return if child.start_with?(".")
+      return if [@preload_file_name, @index_file_name].include?(child)
+      child_path = check_path(File.join(path, child))
+      child_word = File.basename(child, ".rb")
+      next_words = words + [child_word]
+      next_remaining = Lookup.next_remaining_words(remaining_words, child_word)
+      handle_path(child_path, next_words, next_remaining, priority)
     end
 
     def check_path(path, lenient: false, type: nil)
@@ -188,6 +205,18 @@ module Toys
         raise ArgumentError, "Illegal type #{type}"
       end
       path
+    end
+
+    def sort_tools_by_name(tools)
+      tools.sort do |a, b|
+        a = a.full_name
+        b = b.full_name
+        while !a.empty? && !b.empty? && a.first == b.first
+          a = a.slice(1..-1)
+          b = b.slice(1..-1)
+        end
+        a.first.to_s <=> b.first.to_s
+      end
     end
 
     def calc_remaining_words(words1, words2)

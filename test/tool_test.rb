@@ -1,19 +1,20 @@
 require "helper"
 
 describe Toys::Tool do
+  let(:lookup) { Toys::Lookup.new }
   let(:tool_name) { "foo" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
-  let(:root_tool) { Toys::Tool.new(nil, nil) }
-  let(:tool) { Toys::Tool.new(root_tool, tool_name) }
-  let(:subtool) { Toys::Tool.new(tool, subtool_name) }
-  let(:subtool2) { Toys::Tool.new(tool, subtool2_name) }
+  let(:root_tool) { Toys::Tool.new(lookup, nil, nil) }
+  let(:tool) { Toys::Tool.new(lookup, root_tool, tool_name) }
+  let(:subtool) { Toys::Tool.new(lookup, tool, subtool_name) }
+  let(:subtool2) { Toys::Tool.new(lookup, tool, subtool2_name) }
   let(:logger) {
     logger = Logger.new(StringIO.new)
     logger.level = Logger::WARN
     logger
   }
-  let(:context) { Toys::Context.new(Toys::Lookup.new, logger: logger) }
+  let(:context) { Toys::Context.new(lookup, logger: logger) }
 
   describe "names" do
     it "works for a root tool" do

@@ -16,39 +16,27 @@ module Toys
         if block
           raise Toys::ToysDefinitionError, "Cannot take a block with alias_of"
         end
-        target = @tool.full_name + [alias_of.to_s]
-        target_tool = @lookup.lookup(target)
-        unless target_tool.full_name == target
-          raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
-        end
-        subtool.make_alias_of(target)
+        subtool.make_alias_of_word(alias_of.to_s)
         return self
       end
-      next_remaining = @remaining_words
-      if next_remaining && !next_remaining.empty?
-        next_remaining =
-          if next_remaining.first == word
-            next_remaining.slice(1..-1)
-          end
-      end
+      next_remaining = Lookup.next_remaining_words(@remaining_words, word)
       Builder.build(@path, subtool, next_remaining, @priority, @lookup, block)
       self
     end
 
     def alias_as(word)
+      if @tool.root?
+        raise Toys::ToysDefinitionError, "Cannot make an alias of the root tool"
+      end
       unless @tool.root?
-        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word], @priority)
-        alias_tool.make_alias_of(@tool) if alias_tool
+        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word.to_s], @priority)
+        alias_tool.make_alias_of_tool(@tool) if alias_tool
       end
       self
     end
 
-    def alias_of(target)
-      target_tool = @lookup.lookup(target)
-      unless target_tool.full_name == target
-        raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
-      end
-      @tool.make_alias_of(target_tool)
+    def alias_of(word)
+      @tool.make_alias_of_word(word.to_s)
       self
     end
 

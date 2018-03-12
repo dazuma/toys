@@ -16,6 +16,7 @@ expand :gem_build
 expand :gem_build, name: "release" do |t|
   t.push_gem = true
   t.tag = true
+  t.push_tag = true
 end
 
 name "install" do
