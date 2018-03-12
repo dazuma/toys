@@ -32,8 +32,11 @@ module Toys
     attr_reader :_lookup
 
     def _create_child(tool_name, args, options)
-      Context.new(@_lookup, logger: @logger, binary_name: @binary_name,
-        tool_name: tool_name, args: args, options: options)
+      Context.new(
+        @_lookup,
+        logger: @logger, binary_name: @binary_name,
+        tool_name: tool_name, args: args, options: options
+      )
     end
   end
 end

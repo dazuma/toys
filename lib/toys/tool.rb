@@ -3,7 +3,6 @@ require "optparse"
 
 module Toys
   class Tool
-
     def initialize(parent, name)
       @parent = parent
       @simple_name = name
@@ -47,14 +46,14 @@ module Toys
       @long_desc || @short_desc || default_desc
     end
 
-    def has_description?
+    def includes_description?
       !@long_desc.nil? || !@short_desc.nil?
     end
 
-    def has_definition?
+    def includes_definition?
       !@default_data.empty? || !@switches.empty? ||
         !@required_args.empty? || !@optional_args.empty? ||
-        !@remaining_args.nil? || !!@executor ||
+        !@remaining_args.nil? || @executor.respond_to?(:call) ||
         !@helpers.empty? || !@modules.empty?
     end
 
@@ -68,7 +67,7 @@ module Toys
       begin
         yield
       ensure
-        @definition_path = @cur_path if has_description? || has_definition?
+        @definition_path = @cur_path if includes_description? || includes_definition?
         @cur_path = nil
       end
     end
@@ -83,15 +82,12 @@ module Toys
       end
     end
 
-    def set_alias_target(target_tool)
-      unless target_tool.is_a?(Toys::Tool)
-        raise ArgumentError, "Illegal target type"
-      end
+    def make_alias_of(target_tool)
       if only_collection?
         raise ToolDefinitionError, "Tool #{display_name.inspect} is already" \
           " a collection and cannot be made an alias"
       end
-      if has_description? || has_definition?
+      if includes_description? || includes_definition?
         raise ToolDefinitionError, "Tool #{display_name.inspect} already has" \
           " a definition and cannot be made an alias"
       end
@@ -129,9 +125,12 @@ module Toys
         @modules << mod
       when Symbol
         mod = mod.to_s
-        file_name = mod.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
+        file_name =
+          mod
+          .gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }
+          .downcase
         require "toys/helpers/#{file_name}"
-        const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/){ |m| $2.upcase }
+        const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
         @modules << Toys::Helpers.const_get(const_name)
       else
         raise ToolDefinitionError, "Illegal helper module name: #{mod.inspect}"
@@ -194,7 +193,7 @@ module Toys
     protected
 
     def ensure_collection_only(source_name)
-      if has_definition?
+      if includes_definition?
         raise ToolDefinitionError, "Cannot create tool #{source_name.inspect}" \
           " because #{display_name.inspect} is already a tool."
       end
@@ -206,7 +205,15 @@ module Toys
 
     private
 
-    SPECIAL_FLAGS = ["-q", "--quiet", "-v", "--verbose", "-?", "-h", "--help"]
+    SPECIAL_FLAGS = %w[
+      -q
+      --quiet
+      -v
+      --verbose
+      -?
+      -h
+      --help
+    ].freeze
 
     def default_desc
       if @alias_target
@@ -218,21 +225,21 @@ module Toys
       end
     end
 
-    def check_definition_state(execution_field=false)
+    def check_definition_state(execution_field = false)
       if @alias_target
         raise ToolDefinitionError, "Tool #{display_name.inspect} is an alias"
       end
       if @definition_path
         in_clause = @cur_path ? "in #{@cur_path} " : ""
         raise ToolDefinitionError,
-          "Cannot redefine tool #{display_name.inspect} #{in_clause}" \
-          "(already defined in #{@definition_path})"
+              "Cannot redefine tool #{display_name.inspect} #{in_clause}" \
+              "(already defined in #{@definition_path})"
       end
       if execution_field
         if @executor == false
           raise ToolDefinitionError,
-            "Cannot make tool #{display_name.inspect} executable because a" \
-            " descendant is already executable"
+                "Cannot make tool #{display_name.inspect} executable because" \
+                " a descendant is already executable"
         end
         @parent.ensure_collection_only(full_name) if @parent
       end
@@ -242,10 +249,10 @@ module Toys
       optparse = OptionParser.new
       banner = ["Usage:", binary_name] + full_name
       banner << "[<options...>]" unless @switches.empty?
-      @required_args.each do |key, opts|
+      @required_args.each do |key, _opts|
         banner << "<#{canonical_switch(key)}>"
       end
-      @optional_args.each do |key, opts|
+      @optional_args.each do |key, _opts|
         banner << "[<#{canonical_switch(key)}>]"
       end
       if @remaining_args
@@ -289,7 +296,8 @@ module Toys
 
     def collection_option_parser(execution_data, binary_name)
       optparse = OptionParser.new
-      optparse.banner = (["Usage:", binary_name] + full_name + ["<command>", "[<options...>]"]).join(" ")
+      optparse.banner =
+        (["Usage:", binary_name] + full_name + ["<command>", "[<options...>]"]).join(" ")
       desc = @long_desc || @short_desc || default_desc
       unless desc.empty?
         optparse.separator("")
@@ -315,39 +323,37 @@ module Toys
         options: optdata
       }
       begin
-        binary_name ||= File.basename($0)
-        option_parser = @executor ?
-          leaf_option_parser(execution_data, binary_name) :
-          collection_option_parser(execution_data, binary_name)
+        binary_name ||= File.basename($PROGRAM_NAME)
+        option_parser =
+          if @executor
+            leaf_option_parser(execution_data, binary_name)
+          else
+            collection_option_parser(execution_data, binary_name)
+          end
         execution_data[:optparse] = option_parser
         remaining = option_parser.parse(args)
-        @required_args.each do |key, accept, doc|
+        @required_args.each do |key, accept, _doc|
           if !execution_data[:show_help] && remaining.empty?
-            error = OptionParser::ParseError.new(*args)
-            error.reason = "No value given for required argument named <#{canonical_switch(key)}>"
-            raise error
+            reason = "No value given for required argument named <#{canonical_switch(key)}>"
+            raise create_parse_error(args, reason)
           end
           optdata[key] = process_value(key, remaining.shift, accept)
         end
-        @optional_args.each do |key, accept, doc|
+        @optional_args.each do |key, accept, _doc|
           break if remaining.empty?
           optdata[key] = process_value(key, remaining.shift, accept)
         end
         unless remaining.empty?
-          if !@remaining_args
+          unless @remaining_args
             if @executor
-              error = OptionParser::ParseError.new(*remaining)
-              error.reason = "Extra arguments provided"
-              raise error
+              raise create_parse_error(remaining, "Extra arguments provided")
             else
-              error = OptionParser::ParseError.new(*(full_name + args))
-              error.reason = "Tool not found"
-              raise error
+              raise create_parse_error(full_name + args, "Tool not found")
             end
           end
           key = @remaining_args[0]
           accept = @remaining_args[1]
-          optdata[key] = remaining.map{ |arg| process_value(key, arg, accept) }
+          optdata[key] = remaining.map { |arg| process_value(key, arg, accept) }
         end
       rescue OptionParser::ParseError => e
         execution_data[:usage_error] = e
@@ -356,8 +362,7 @@ module Toys
     end
 
     def create_child_context(parent_context, args, execution_data)
-      context = parent_context._create_child(
-        full_name, args, execution_data[:options])
+      context = parent_context._create_child(full_name, args, execution_data[:options])
       context.logger.level += execution_data[:delta_severity]
       @modules.each do |mod|
         context.extend(mod)
@@ -376,11 +381,13 @@ module Toys
           puts("Positional arguments:")
           args_to_display = @required_args + @optional_args
           args_to_display << @remaining_args if @remaining_args
-          args_to_display.each do |key, accept, doc|
+          args_to_display.each do |key, _accept, doc|
             puts("    #{canonical_switch(key).ljust(31)}  #{doc.first}")
-            doc[1..-1].each do |d|
-              puts("                                     #{d}")
-            end unless doc.empty?
+            unless doc.empty?
+              doc[1..-1].each do |d|
+                puts("                                     #{d}")
+              end
+            end
           end
         end
       else
@@ -389,14 +396,14 @@ module Toys
         name_len = full_name.length
         context._lookup.list_subtools(full_name, recursive).each do |tool|
           desc = tool.effective_short_desc
-          tool_name = tool.full_name.slice(name_len..-1).join(' ').ljust(31)
+          tool_name = tool.full_name.slice(name_len..-1).join(" ").ljust(31)
           puts("    #{tool_name}  #{desc}")
         end
       end
     end
 
     def canonical_switch(name)
-      name.to_s.downcase.gsub("_", "-").gsub(/[^a-z0-9-]/, "")
+      name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
     end
 
     def process_value(key, val, accept)
@@ -404,9 +411,15 @@ module Toys
       n = canonical_switch(key)
       result = val
       optparse = OptionParser.new
-      optparse.on("--#{n}=VALUE", accept){ |v| result = v }
+      optparse.on("--#{n}=VALUE", accept) { |v| result = v }
       optparse.parse(["--#{n}", val])
       result
+    end
+
+    def create_parse_error(path, reason)
+      OptionParser::ParseError.new(*path).tap do |e|
+        e.reason = reason
+      end
     end
   end
 end

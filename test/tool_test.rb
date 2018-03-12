@@ -34,8 +34,8 @@ describe Toys::Tool do
 
   describe "definition state" do
     it "defaults to empty" do
-      tool.has_description?.must_equal false
-      tool.has_definition?.must_equal false
+      tool.includes_description?.must_equal false
+      tool.includes_definition?.must_equal false
       tool.only_collection?.must_equal false
     end
 

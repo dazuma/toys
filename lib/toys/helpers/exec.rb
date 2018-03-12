@@ -1,12 +1,12 @@
 module Toys
   module Helpers
     module Exec
-      def configure_exec(opts={})
+      def configure_exec(opts = {})
         @exec_config ||= {}
         @exec_config.merge!(opts)
       end
 
-      def exec(cmd, opts={}, &block)
+      def exec(cmd, opts = {}, &block)
         exec_opts = ExecOpts.new(self)
         exec_opts.add(@exec_config) if defined? @exec_config
         exec_opts.add(opts)
@@ -14,20 +14,21 @@ module Toys
         executor.execute(&block)
       end
 
-      def ruby(args, opts={}, &block)
-        if args.is_a?(Array)
-          cmd = [[Exec.ruby_binary, "ruby"]] + args
-        else
-          cmd = "#{Exec.ruby_binary} #{args}"
-        end
+      def ruby(args, opts = {}, &block)
+        cmd =
+          if args.is_a?(Array)
+            [[Exec.ruby_binary, "ruby"]] + args
+          else
+            "#{Exec.ruby_binary} #{args}"
+          end
         exec(cmd, opts, &block)
       end
 
-      def sh(cmd, opts={})
+      def sh(cmd, opts = {})
         exec(cmd, opts).exit_code
       end
 
-      def capture(cmd, opts={})
+      def capture(cmd, opts = {})
         exec(cmd, opts.merge(out_to: :capture)).captured_out
       end
 
@@ -36,15 +37,15 @@ module Toys
       end
 
       class ExecOpts
-        CONFIG_KEYS = [
-          :exit_on_nonzero_status,
-          :env,
-          :log_level,
-          :in_from,
-          :out_to,
-          :err_to,
-          :out_err_to
-        ]
+        CONFIG_KEYS = %i[
+          exit_on_nonzero_status
+          env
+          log_level
+          in_from
+          out_to
+          err_to
+          out_err_to
+        ].freeze
 
         def initialize(context)
           @context = context
@@ -68,29 +69,19 @@ module Toys
       end
 
       class Controller
-        def initialize(executor)
-          @executor = executor
+        def initialize(ins, out, err, out_err, pid)
+          @in = ins
+          @out = out
+          @err = err
+          @out_err = out_err
+          @pid = pid
         end
 
-        def in
-          @executor.controller_streams[:in]
-        end
-
-        def out
-          @executor.controller_streams[:out]
-        end
-
-        def err
-          @executor.controller_streams[:err]
-        end
-
-        def out_err
-          @executor.controller_streams[:out_err]
-        end
-
-        def pid
-          @executor.wait_thread.pid
-        end
+        attr_reader :in
+        attr_reader :out
+        attr_reader :err
+        attr_reader :out_err
+        attr_reader :pid
 
         def kill(signal)
           Process.kill(signal, pid)
@@ -98,28 +89,20 @@ module Toys
       end
 
       class Result
-        def initialize(executor)
-          @executor = executor
+        def initialize(out, err, out_err, status)
+          @captured_out = out
+          @captured_err = err
+          @captured_out_err = out_err
+          @status = status
         end
 
-        def captured_out
-          @executor.captures[:out]
-        end
-
-        def captured_err
-          @executor.captures[:err]
-        end
-
-        def captured_out_err
-          @executor.captures[:out_err]
-        end
-
-        def status
-          @executor.status
-        end
+        attr_reader :captured_out
+        attr_reader :captured_err
+        attr_reader :captured_out_err
+        attr_reader :status
 
         def exit_code
-          @executor.status.exitstatus
+          status.exitstatus
         end
       end
 
@@ -129,49 +112,64 @@ module Toys
           @config = exec_opts.config
           @context = exec_opts.context
           @spawn_opts = exec_opts.spawn_opts.dup
-          @wait_thread = nil
           @captures = {}
           @controller_streams = {}
           @join_threads = []
           @child_streams = []
-          @status = nil
         end
 
-        attr_reader :controller_streams
-        attr_reader :wait_thread
-        attr_reader :captures
-        attr_reader :status
-
-        def execute
+        def execute(&block)
           setup_in_stream
           setup_out_stream(:out, :out_to, :out)
           setup_out_stream(:err, :err_to, :err)
           setup_out_stream(:out_err, :out_err_to, [:out, :err])
+          log_command
+          wait_thread = start_process
+          status = control_process(wait_thread, &block)
+          create_result(status)
+        end
+
+        private
+
+        def log_command
           unless @config[:log_level] == false
             cmd_str = @cmd.size == 1 ? @cmd.first : @cmd.inspect
             @context.logger.add(@config[:log_level] || Logger::INFO, cmd_str)
           end
+        end
+
+        def start_process
           args = []
           args << @config[:env] if @config[:env]
           args.concat(@cmd)
           pid = Process.spawn(*args, @spawn_opts)
-          @wait_thread = Process.detach(pid)
           @child_streams.each(&:close)
+          Process.detach(pid)
+        end
+
+        def control_process(wait_thread)
           begin
-            yield(Controller.new(self)) if block_given?
+            if block_given?
+              controller = Controller.new(
+                @controller_streams[:in], @controller_streams[:out], @controller_streams[:err],
+                @controller_streams[:out_err], wait_thread.pid
+              )
+              yield controller
+            end
           ensure
             @controller_streams.each_value(&:close)
           end
           @join_threads.each(&:join)
-          @status = @wait_thread.value
-          if @config[:exit_on_nonzero_status]
-            exit_status = @status.exitstatus
-            @context.exit(exit_status) if exit_status != 0
-          end
-          Result.new(self)
+          wait_thread.value
         end
 
-        private
+        def create_result(status)
+          if @config[:exit_on_nonzero_status]
+            exit_status = status.exitstatus
+            @context.exit(exit_status) if exit_status != 0
+          end
+          Result.new(@captures[:out], @captures[:err], @captures[:out_err], status)
+        end
 
         def setup_in_stream
           setting = @config[:in_from]
@@ -184,13 +182,7 @@ module Toys
             when :controller
               @controller_streams[:in] = w
             when String
-              Thread.new do
-                begin
-                  w.write setting
-                ensure
-                  w.close
-                end
-              end
+              write_string_thread(w, setting)
             else
               raise "Unknown type for in_from"
             end
@@ -207,15 +199,29 @@ module Toys
             when :controller
               @controller_streams[stream_name] = r
             when :capture
-              @join_threads << Thread.new do
-                begin
-                  @captures[stream_name] = r.read
-                ensure
-                  r.close
-                end
-              end
+              @join_threads << capture_stream_thread(r, stream_name)
             else
               raise "Unknown type for #{config_key}"
+            end
+          end
+        end
+
+        def write_string_thread(stream, string)
+          Thread.new do
+            begin
+              stream.write string
+            ensure
+              stream.close
+            end
+          end
+        end
+
+        def capture_stream_thread(stream, name)
+          Thread.new do
+            begin
+              @captures[name] = stream.read
+            ensure
+              stream.close
             end
           end
         end

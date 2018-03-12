@@ -57,7 +57,7 @@ module Toys
     end
 
     def lookup(args)
-      orig_prefix = args.take_while{ |arg| !arg.start_with?("-") }
+      orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
       cur_prefix = orig_prefix.dup
       loop do
         load_for_prefix(cur_prefix)
@@ -91,12 +91,13 @@ module Toys
       found_tools = []
       len = words.length
       @tools.each do |n, tp|
-        if n.length > 0
-          if !recursive && n.slice(0..-2) == words ||
-              recursive && n.length > len && n.slice(0, len) == words
-            found_tools << tp.first
-          end
+        next if n.empty?
+        if recursive
+          next if n.length <= len || n.slice(0, len) != words
+        else
+          next unless n.slice(0..-2) == words
         end
+        found_tools << tp.first
       end
       found_tools.sort do |a, b|
         a = a.full_name
@@ -152,21 +153,19 @@ module Toys
             load_path(index_path, words, remaining_words, priority)
           end
         end
+        special_file_names = [@preload_file_name, @index_file_name]
         Dir.entries(path).each do |child|
-          if !child.start_with?(".") && child != @preload_file_name && child != @index_file_name
-            child_path = check_path(File.join(path, child))
-            child_word = File.basename(child, ".rb")
-            next_words = words + [child_word]
-            next_remaining_words =
-              if remaining_words.empty?
-                remaining_words
-              elsif child_word == remaining_words.first
-                remaining_words.slice(1..-1)
-              else
-                nil
-              end
-            handle_path(child_path, next_words, next_remaining_words, priority)
-          end
+          next if child.start_with?(".") || special_file_names.include?(child)
+          child_path = check_path(File.join(path, child))
+          child_word = File.basename(child, ".rb")
+          next_words = words + [child_word]
+          next_remaining_words =
+            if remaining_words.empty?
+              remaining_words
+            elsif child_word == remaining_words.first
+              remaining_words.slice(1..-1)
+            end
+          handle_path(child_path, next_words, next_remaining_words, priority)
         end
       end
     end
@@ -193,8 +192,9 @@ module Toys
 
     def calc_remaining_words(words1, words2)
       index = 0
+      lengths = [words1.length, words2.length]
       loop do
-        return words1.slice(index..-1) if index == words1.length || index == words2.length
+        return words1.slice(index..-1) if lengths.include?(index)
         return nil if words1[index] != words2[index]
         index += 1
       end

@@ -1,9 +1,9 @@
 module Toys
   module Templates
-    class Minitest < Struct.new(:name, :libs, :files, :warnings)
+    Minitest = Struct.new(:name, :libs, :files, :warnings) do
       include Toys::Template
 
-      def initialize(opts={})
+      def initialize(opts = {})
         super(opts[:name] || "test",
               opts[:libs] || ["lib"],
               opts[:files] || ["test/test*.rb"],
@@ -16,9 +16,12 @@ module Toys
 
           use :exec
 
-          switch(:warnings, "-w", "--[no-]warnings", default: template.warnings,
-                 doc: "Run Ruby with warnings")
-          switch(:test, "-t", "--test=VALUE", doc: "Run a single test file")
+          switch(
+            :warnings, "-w", "--[no-]warnings",
+            default: template.warnings,
+            doc: "Turn on Ruby warnings (defaults to #{template.warnings})"
+          )
+          remaining_args(:tests, doc: "Paths to the tests to run (defaults to all tests)")
 
           execute do
             ruby_args = []
@@ -28,18 +31,16 @@ module Toys
             end
             ruby_args << "-w" if self[:warnings]
 
-            if self[:test]
-              files = [self[:test]]
-            else
-              files = []
+            tests = self[:tests]
+            if tests.empty?
               Array(template.files).each do |pattern|
-                files.concat(Dir.glob(pattern))
+                tests.concat(Dir.glob(pattern))
               end
-              files.uniq!
+              tests.uniq!
             end
 
             ruby(ruby_args, in_from: :controller, exit_on_nonzero_status: true) do |controller|
-              files.each do |file|
+              tests.each do |file|
                 controller.in.puts("load '#{file}'")
               end
             end

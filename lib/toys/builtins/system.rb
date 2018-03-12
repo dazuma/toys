@@ -1,20 +1,14 @@
 short_desc "A collection of system commands for toys"
-long_desc "A collection of system commands for toys"
-
 
 name "version" do
-
   short_desc "Print current toys version"
 
   execute do
     puts Toys::VERSION
   end
-
 end
 
-
 name "update" do
-
   short_desc "Update toys if a newer version is available"
 
   use :exec
@@ -35,5 +29,4 @@ name "update" do
       exit(1)
     end
   end
-
 end

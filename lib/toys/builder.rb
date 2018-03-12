@@ -21,16 +21,15 @@ module Toys
         unless target_tool.full_name == target
           raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
         end
-        subtool.set_alias_target(target)
+        subtool.make_alias_of(target)
         return self
       end
       next_remaining = @remaining_words
       if next_remaining && !next_remaining.empty?
-        if next_remaining.first == word
-          next_remaining = next_remaining.slice(1..-1)
-        else
-          next_remaining = nil
-        end
+        next_remaining =
+          if next_remaining.first == word
+            next_remaining.slice(1..-1)
+          end
       end
       Builder.build(@path, subtool, next_remaining, @priority, @lookup, block)
       self
@@ -39,7 +38,7 @@ module Toys
     def alias_as(word)
       unless @tool.root?
         alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word], @priority)
-        alias_tool.set_alias_target(@tool) if alias_tool
+        alias_tool.make_alias_of(@tool) if alias_tool
       end
       self
     end
@@ -49,7 +48,7 @@ module Toys
       unless target_tool.full_name == target
         raise Toys::ToysDefinitionError, "Alias target #{target.inspect} not found"
       end
-      @tool.set_alias_target(target_tool)
+      @tool.make_alias_of(target_tool)
       self
     end
 
@@ -63,9 +62,12 @@ module Toys
     def expand(template_class, *args)
       unless template_class.is_a?(Class)
         template_class = template_class.to_s
-        file_name = template_class.gsub(/([a-zA-Z])([A-Z])/){ |m| "#{$1}_#{$2.downcase}" }.downcase
+        file_name =
+          template_class
+          .gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }
+          .downcase
         require "toys/templates/#{file_name}"
-        const_name = template_class.gsub(/(^|_)([a-zA-Z0-9])/){ |m| $2.upcase }
+        const_name = template_class.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
         template_class = Toys::Templates.const_get(const_name)
       end
       template = template_class.new(*args)
@@ -126,9 +128,12 @@ module Toys
     def self.build(path, tool, remaining_words, priority, lookup, source)
       builder = new(path, tool, remaining_words, priority, lookup)
       tool.defining_from(path) do
-        if String === source
+        case source
+        when String
+          # rubocop:disable Security/Eval
           eval(source, builder._binding, path, 1)
-        elsif Proc === source
+          # rubocop:enable Security/Eval
+        when Proc
           builder.instance_eval(&source)
         end
       end

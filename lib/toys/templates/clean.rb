@@ -1,9 +1,9 @@
 module Toys
   module Templates
-    class Clean < Struct.new(:name, :paths)
+    Clean = Struct.new(:name, :paths) do
       include Toys::Template
 
-      def initialize(opts={})
+      def initialize(opts = {})
         super(opts[:name] || "clean",
               opts[:paths] || [])
       end

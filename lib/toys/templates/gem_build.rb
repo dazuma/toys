@@ -2,10 +2,10 @@ require "rubygems/package"
 
 module Toys
   module Templates
-    class GemBuild < Struct.new(:name, :gem_name, :push_gem, :tag, :push_tag)
+    GemBuild = Struct.new(:name, :gem_name, :push_gem, :tag, :push_tag) do
       include Toys::Template
 
-      def initialize(opts={})
+      def initialize(opts = {})
         super(opts[:name] || "build",
               opts[:gem_name],
               opts[:push_gem],
@@ -16,13 +16,12 @@ module Toys
       to_expand do |template|
         unless template.gem_name
           candidates = ::Dir.glob("*.gemspec")
-          if candidates.size > 0
-            template.gem_name = candidates.first.sub(/\.gemspec$/, "")
-          else
+          if candidates.empty?
             raise Toys::ToysDefinitionError, "Could not find a gemspec"
           end
+          template.gem_name = candidates.first.sub(/\.gemspec$/, "")
         end
-        task_type = template.push_gem ? 'Release' : 'Build'
+        task_type = template.push_gem ? "Release" : "Build"
 
         name(template.name) do
           short_desc "#{task_type} the gem: #{template.gem_name}"

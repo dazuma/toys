@@ -1,10 +1,10 @@
 module Toys
   class Cli
-    BUILTINS_PATH = File.join(__dir__, "builtins")
-    DEFAULT_DIR_NAME = ".toys"
-    DEFAULT_FILE_NAME = ".toys.rb"
-    DEFAULT_BINARY_NAME = "toys"
-    DEFAULT_PRELOAD_NAME = ".preload.rb"
+    BUILTINS_PATH = File.join(__dir__, "builtins").freeze
+    DEFAULT_DIR_NAME = ".toys".freeze
+    DEFAULT_FILE_NAME = ".toys.rb".freeze
+    DEFAULT_BINARY_NAME = "toys".freeze
+    DEFAULT_PRELOAD_NAME = ".preload.rb".freeze
 
     def initialize(
       binary_name: nil,
@@ -18,11 +18,13 @@ module Toys
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
         index_file_name: index_file_name,
-        preload_file_name: preload_file_name)
+        preload_file_name: preload_file_name
+      )
       @context = Context.new(
         @lookup,
         logger: logger || self.class.default_logger,
-        binary_name: binary_name)
+        binary_name: binary_name
+      )
     end
 
     def add_paths(paths)
@@ -35,7 +37,7 @@ module Toys
       self
     end
 
-    def add_config_path_hierarchy(path=nil, base="/")
+    def add_config_path_hierarchy(path = nil, base = "/")
       path ||= Dir.pwd
       paths = []
       loop do
@@ -51,7 +53,7 @@ module Toys
 
     def add_standard_config_paths
       toys_path = ENV["TOYS_PATH"].to_s.split(File::PATH_SEPARATOR)
-      if toys_path.size == 0
+      if toys_path.empty?
         toys_path << ENV["HOME"] if ENV["HOME"]
         toys_path << "/etc" if File.directory?("/etc") && File.readable?("/etc")
       end
@@ -79,7 +81,7 @@ module Toys
 
       def default_logger
         logger = Logger.new(STDERR)
-        logger.formatter = ->(severity, time, progname, msg) {
+        logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg
             when String
@@ -90,8 +92,8 @@ module Toys
               msg.inspect
             end
           timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-          "[%s %5s]  %s\n" % [timestr, severity, msg_str]
-        }
+          format("[%s %5s]  %s\n", timestr, severity, msg_str)
+        end
         logger.level = Logger::WARN
         logger
       end

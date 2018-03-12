@@ -1,9 +1,9 @@
 module Toys
   module Templates
-    class Yardoc < Struct.new(:name, :files, :options, :stats_options)
+    Yardoc = Struct.new(:name, :files, :options, :stats_options) do
       include Toys::Template
 
-      def initialize(opts={})
+      def initialize(opts = {})
         super(opts[:name] || "yardoc",
               opts[:files] || [],
               opts[:options] || [],
@@ -11,14 +11,13 @@ module Toys
       end
 
       to_expand do |template|
-        require "yard"
-
         name(template.name) do
           short_desc "Run yardoc"
 
           use :exec
 
           execute do
+            require "yard"
             files = []
             patterns = Array(template.files)
             patterns = ["lib/**/*.rb"] if patterns.empty?
