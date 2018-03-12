@@ -1,5 +1,5 @@
 module Toys
-  class Parser
+  class Builder
     def initialize(path, tool, remaining_words, priority, lookup)
       @path = path
       @tool = tool
@@ -32,7 +32,7 @@ module Toys
           next_remaining = nil
         end
       end
-      Parser.parse(@path, subtool, next_remaining, @priority, @lookup, block)
+      Builder.build(@path, subtool, next_remaining, @priority, @lookup, block)
       self
     end
 
@@ -123,13 +123,13 @@ module Toys
       binding
     end
 
-    def self.parse(path, tool, remaining_words, priority, lookup, source)
-      parser = new(path, tool, remaining_words, priority, lookup)
+    def self.build(path, tool, remaining_words, priority, lookup, source)
+      builder = new(path, tool, remaining_words, priority, lookup)
       tool.defining_from(path) do
         if String === source
-          eval(source, parser._binding, path, 1)
+          eval(source, builder._binding, path, 1)
         elsif Proc === source
-          parser.instance_eval(&source)
+          builder.instance_eval(&source)
         end
       end
       tool

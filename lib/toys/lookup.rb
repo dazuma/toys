@@ -135,7 +135,7 @@ module Toys
       if File.extname(path) == ".rb"
         tool = get_tool(words, priority)
         if tool
-          Parser.parse(path, tool, remaining_words, priority, self, IO.read(path))
+          Builder.build(path, tool, remaining_words, priority, self, IO.read(path))
         end
       else
         if @preload_file_name
