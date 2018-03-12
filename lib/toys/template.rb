@@ -1,21 +1,15 @@
 module Toys
-  class Template
-    def initialize
-      @opts_initializer = ->(opts){opts}
-      @expander = ->(opts){}
+  module Template
+    def self.included(mod)
+      mod.extend(ClassMethods)
     end
 
-    def to_init_opts(&block)
-      @opts_initializer = block
-      self
-    end
+    module ClassMethods
+      def to_expand(&block)
+        @expander = block
+      end
 
-    def to_expand(&block)
-      @expander = block
-      self
+      attr_accessor :expander
     end
-
-    attr_reader :opts_initializer
-    attr_reader :expander
   end
 end

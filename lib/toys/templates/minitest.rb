@@ -1,39 +1,49 @@
-require "shellwords"
-
 module Toys
   module Templates
-    Minitest = Toys::Template.new
+    class Minitest < Struct.new(:name, :libs, :files, :warnings)
+      include Toys::Template
 
-    Minitest.to_init_opts do |opts|
-      {
-        name: "test",
-        libs: ["lib", "test"],
-        test_files: [],
-        warning: true
-      }.merge(opts)
-    end
+      def initialize(opts={})
+        super(opts[:name] || "test",
+              opts[:libs] || ["lib"],
+              opts[:files] || ["test/test*.rb"],
+              opts.include?(:warnings) ? opts[:warnings] : true)
+      end
 
-    Minitest.to_expand do |opts|
-      toy_name = opts[:name] || "build"
-      libs = opts[:libs] || []
-      warning = opts[:warning]
-      test_files = opts[:test_files] || []
-      lib_path = libs.join(File::PATH_SEPARATOR)
-      cmd = []
-      cmd << File.join(RbConfig::CONFIG["bindir"], RbConfig::CONFIG["ruby_install_name"])
-      cmd << "-I#{lib_path}" unless libs.empty?
-      cmd << "-w" if warning
-      cmd << "-e" << "ARGV.each{|f| load f}"
-      cmd << "--"
-      cmd = Shellwords.join(cmd + test_files)
+      to_expand do |template|
+        name(template.name) do
+          short_desc "Run minitest"
 
-      name toy_name do
-        short_desc "Run minitest"
+          use :exec
 
-        use :exec
+          switch(:warnings, "-w", "--[no-]warnings", default: template.warnings,
+                 doc: "Run Ruby with warnings")
+          switch(:test, "-t", "--test=VALUE", doc: "Run a single test file")
 
-        execute do
-          sh(cmd, report_subprocess_errors: true)
+          execute do
+            ruby_args = []
+            unless template.libs.empty?
+              lib_path = template.libs.join(File::PATH_SEPARATOR)
+              ruby_args << "-I#{lib_path}"
+            end
+            ruby_args << "-w" if self[:warnings]
+
+            if self[:test]
+              files = [self[:test]]
+            else
+              files = []
+              Array(template.files).each do |pattern|
+                files.concat(Dir.glob(pattern))
+              end
+              files.uniq!
+            end
+
+            ruby(ruby_args, in_from: :controller, exit_on_nonzero_status: true) do |controller|
+              files.each do |file|
+                controller.in.puts("load '#{file}'")
+              end
+            end
+          end
         end
       end
     end

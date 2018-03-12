@@ -2,57 +2,54 @@ require "rubygems/package"
 
 module Toys
   module Templates
-    GemBuild = Toys::Template.new
+    class GemBuild < Struct.new(:name, :gem_name, :push_gem, :tag, :push_tag)
+      include Toys::Template
 
-    GemBuild.to_init_opts do |opts|
-      {
-        name: "build",
-        gem_name: nil,
-        push_gem: false,
-        tag: false,
-        push_tag: false
-      }.merge(opts)
-    end
-
-    GemBuild.to_expand do |opts|
-      toy_name = opts[:name] || "build"
-      gem_name = opts[:gem_name]
-      unless gem_name
-        candidates = ::Dir.glob("*.gemspec")
-        if candidates.size > 0
-          gem_name = candidates.first.sub(/\.gemspec$/, "")
-        else
-          raise Toys::ToysDefinitionError, "Could not find a gemspec"
-        end
+      def initialize(opts={})
+        super(opts[:name] || "build",
+              opts[:gem_name],
+              opts[:push_gem],
+              opts[:tag],
+              opts[:push_tag])
       end
-      push_gem = opts[:push_gem]
-      tag = opts[:tag]
-      push_tag = opts[:push_tag]
 
-      name toy_name do
-        short_desc "#{push_gem ? 'Release' : 'Build'} the gem: #{gem_name}"
+      to_expand do |template|
+        unless template.gem_name
+          candidates = ::Dir.glob("*.gemspec")
+          if candidates.size > 0
+            template.gem_name = candidates.first.sub(/\.gemspec$/, "")
+          else
+            raise Toys::ToysDefinitionError, "Could not find a gemspec"
+          end
+        end
+        task_type = template.push_gem ? 'Release' : 'Build'
 
-        use :file_utils
-        use :exec
+        name(template.name) do
+          short_desc "#{task_type} the gem: #{template.gem_name}"
 
-        execute do
-          gemspec = Gem::Specification.load "#{gem_name}.gemspec"
-          version = gemspec.version
-          gemfile = "#{gem_name}-#{version}.gem"
-          Gem::Package.build gemspec
-          mkdir_p "pkg"
-          mv gemfile, "pkg"
-          if push_gem
-            if File.directory?(".git") && capture("git status -s").strip != ""
-              logger.error "Cannot push the gem when there are uncommited changes"
-              exit(1)
-            end
-            sh "gem push pkg/#{gemfile}", report_subprocess_errors: true
-            if tag
-              sh "git tag v#{version}", report_subprocess_errors: true
-              if push_tag
-                push_tag = "origin" if push_tag == true
-                sh "git push #{push_tag} v#{version}", report_subprocess_errors: true
+          use :file_utils
+          use :exec
+
+          execute do
+            configure_exec(exit_on_nonzero_status: true)
+            gemspec = Gem::Specification.load "#{template.gem_name}.gemspec"
+            version = gemspec.version
+            gemfile = "#{template.gem_name}-#{version}.gem"
+            Gem::Package.build gemspec
+            mkdir_p "pkg"
+            mv gemfile, "pkg"
+            if template.push_gem
+              if File.directory?(".git") && capture("git status -s").strip != ""
+                logger.error "Cannot push the gem when there are uncommited changes"
+                exit(1)
+              end
+              sh "gem push pkg/#{gemfile}"
+              if template.tag
+                sh "git tag v#{version}"
+                if template.push_tag
+                  template.push_tag = "origin" if template.push_tag == true
+                  sh "git push #{template.push_tag} v#{version}"
+                end
               end
             end
           end
