@@ -225,8 +225,8 @@ module Toys
       @executor = executor
     end
 
-    def execute(context, args)
-      Execution.new(self).execute(context, args)
+    def execute(context_base, args)
+      Execution.new(self).execute(context_base, args)
     end
 
     protected
@@ -331,11 +331,11 @@ module Toys
         @tool = tool
       end
 
-      def execute(context, args)
-        return execute_alias(context, args) if @tool.alias?
+      def execute(context_base, args)
+        return execute_alias(context_base, args) if @tool.alias?
 
-        parsed_args = ParsedArgs.new(@tool, context.binary_name, args)
-        context = create_child_context(context, parsed_args, args)
+        parsed_args = ParsedArgs.new(@tool, context_base.binary_name, args)
+        context = create_child_context(context_base, parsed_args, args)
 
         if parsed_args.usage_error
           puts(parsed_args.usage_error)
@@ -355,8 +355,8 @@ module Toys
 
       private
 
-      def create_child_context(parent_context, parsed_args, args)
-        context = parent_context._create_child(@tool.full_name, args, parsed_args.data)
+      def create_child_context(context_base, parsed_args, args)
+        context = context_base.create_context(@tool.full_name, args, parsed_args.data)
         context.logger.level += parsed_args.delta_severity
         @tool.modules.each do |mod|
           context.extend(mod)
@@ -406,11 +406,11 @@ module Toys
         end
       end
 
-      def execute_alias(context, args)
+      def execute_alias(context_base, args)
         target_name = @tool.full_name.slice(0..-2) + [@tool.alias_target]
         target_tool = @tool.lookup.lookup(target_name)
         if target_tool.full_name == target_name
-          target_tool.execute(context, args)
+          target_tool.execute(context_base, args)
         else
           logger.fatal("Alias target #{@tool.alias_target.inspect} not found")
           -1

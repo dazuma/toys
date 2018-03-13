@@ -101,6 +101,11 @@ module Toys
       end
     end
 
+    def execute(context_base, args)
+      tool = lookup(args)
+      tool.execute(context_base, args.slice(tool.full_name.length..-1))
+    end
+
     def exact_tool(words)
       return nil unless tool_defined?(words)
       @tools[words].first

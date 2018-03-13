@@ -34,17 +34,13 @@ module Toys
   # The object context in effect during the execution of a tool.
   #
   class Context
-    def initialize(lookup, logger: nil, binary_name: nil, tool_name: nil, args: nil, options: nil)
-      @lookup = lookup
-      @logger = logger || ::Logger.new(::STDERR)
-      @binary_name = binary_name
+    def initialize(context_base, tool_name, args, options)
+      @context_base = context_base
       @tool_name = tool_name
       @args = args
       @options = options
     end
 
-    attr_reader :logger
-    attr_reader :binary_name
     attr_reader :tool_name
     attr_reader :args
     attr_reader :options
@@ -53,22 +49,43 @@ module Toys
       @options[key]
     end
 
+    def logger
+      @context_base.logger
+    end
+
+    def binary_name
+      @context_base.binary_name
+    end
+
     def run(*args)
-      args = args.flatten
-      tool = @lookup.lookup(args)
-      tool.execute(self, args.slice(tool.full_name.length..-1))
+      @context_base.run(*args)
     end
 
     def exit(code)
       throw :result, code
     end
 
-    def _create_child(tool_name, args, options)
-      Context.new(
-        @lookup,
-        logger: @logger, binary_name: @binary_name,
-        tool_name: tool_name, args: args, options: options
-      )
+    ##
+    # Common context data
+    # @private
+    #
+    class Base
+      def initialize(lookup, binary_name, logger)
+        @lookup = lookup
+        @binary_name = binary_name
+        @logger = logger || ::Logger.new(::STDERR)
+      end
+
+      attr_reader :binary_name
+      attr_reader :logger
+
+      def run(*args)
+        @lookup.execute(self, args.flatten)
+      end
+
+      def create_context(tool_name, args, options)
+        Context.new(self, tool_name, args, options)
+      end
     end
   end
 end

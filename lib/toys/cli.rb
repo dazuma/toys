@@ -78,11 +78,7 @@ module Toys
         index_file_name: index_file_name,
         preload_file_name: preload_file_name
       )
-      @context = Context.new(
-        @lookup,
-        logger: logger || self.class.default_logger,
-        binary_name: binary_name
-      )
+      @context_base = Context::Base.new(@lookup, binary_name, logger || self.class.default_logger)
     end
 
     def add_paths(paths)
@@ -119,7 +115,7 @@ module Toys
     end
 
     def run(*args)
-      @context.run(*args)
+      @context_base.run(*args)
     end
 
     class << self
