@@ -104,6 +104,7 @@ module Toys
       @tool.short_desc = desc
       self
     end
+    alias desc short_desc
 
     def switch(key, *switches, accept: nil, default: nil, doc: nil)
       @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
