@@ -111,6 +111,14 @@ module Toys::Helpers
       def exit_code
         status.exitstatus
       end
+
+      def success?
+        exit_code.zero?
+      end
+
+      def error?
+        !exit_code.zero?
+      end
     end
 
     ##

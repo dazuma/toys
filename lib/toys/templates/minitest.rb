@@ -75,10 +75,14 @@ module Toys::Templates
             tests.uniq!
           end
 
-          ruby(ruby_args, in_from: :controller, exit_on_nonzero_status: true) do |controller|
+          result = ruby(ruby_args, in_from: :controller) do |controller|
             tests.each do |file|
               controller.in.puts("load '#{file}'")
             end
+          end
+          if result.error?
+            logger.error("Minitest failed!")
+            exit(result.exit_code)
           end
         end
       end

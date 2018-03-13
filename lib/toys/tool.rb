@@ -225,8 +225,8 @@ module Toys
       @executor = executor
     end
 
-    def execute(context_base, args)
-      Execution.new(self).execute(context_base, args)
+    def execute(context_base, base_verbosity, args)
+      Execution.new(self).execute(context_base, base_verbosity, args)
     end
 
     protected
@@ -331,12 +331,36 @@ module Toys
         @tool = tool
       end
 
-      def execute(context_base, args)
+      def execute(context_base, base_verbosity, args)
         return execute_alias(context_base, args) if @tool.alias?
 
         parsed_args = ParsedArgs.new(@tool, context_base.binary_name, args)
-        context = create_child_context(context_base, parsed_args, args)
+        verbosity = base_verbosity + parsed_args.delta_verbosity
+        context = create_child_context(context_base, args, parsed_args.data, verbosity)
 
+        original_level = context.logger.level
+        context.logger.level = context_base.base_level - verbosity
+        begin
+          perform_execution(context, parsed_args)
+        ensure
+          context.logger.level = original_level
+        end
+      end
+
+      private
+
+      def create_child_context(context_base, args, data, verbosity)
+        context = context_base.create_context(@tool.full_name, args, data, verbosity)
+        @tool.modules.each do |mod|
+          context.extend(mod)
+        end
+        @tool.helpers.each do |name, block|
+          context.define_singleton_method(name, &block)
+        end
+        context
+      end
+
+      def perform_execution(context, parsed_args)
         if parsed_args.usage_error
           puts(parsed_args.usage_error)
           puts("")
@@ -351,20 +375,6 @@ module Toys
             0
           end
         end
-      end
-
-      private
-
-      def create_child_context(context_base, parsed_args, args)
-        context = context_base.create_context(@tool.full_name, args, parsed_args.data)
-        context.logger.level += parsed_args.delta_severity
-        @tool.modules.each do |mod|
-          context.extend(mod)
-        end
-        @tool.helpers.each do |name, block|
-          context.define_singleton_method(name, &block)
-        end
-        context
       end
 
       def show_usage(optparse, recursive: false)
@@ -426,7 +436,7 @@ module Toys
         binary_name ||= ::File.basename($PROGRAM_NAME)
         @show_help = !tool.leaf?
         @usage_error = nil
-        @delta_severity = 0
+        @delta_verbosity = 0
         @recursive = false
         @data = tool.default_data.dup
         @optparse = create_option_parser(tool, binary_name)
@@ -435,7 +445,7 @@ module Toys
 
       attr_reader :show_help
       attr_reader :usage_error
-      attr_reader :delta_severity
+      attr_reader :delta_verbosity
       attr_reader :recursive
       attr_reader :data
       attr_reader :optparse
@@ -534,7 +544,7 @@ module Toys
         flags = ["-v", "--verbose"] - found_special_flags
         return if flags.empty?
         optparse.on(*(flags + ["Increase verbosity"])) do
-          @delta_severity -= 1
+          @delta_verbosity += 1
         end
       end
 
@@ -542,7 +552,7 @@ module Toys
         flags = ["-q", "--quiet"] - found_special_flags
         return if flags.empty?
         optparse.on(*(flags + ["Decrease verbosity"])) do
-          @delta_severity += 1
+          @delta_verbosity -= 1
         end
       end
 

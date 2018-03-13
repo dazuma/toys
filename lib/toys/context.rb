@@ -34,16 +34,18 @@ module Toys
   # The object context in effect during the execution of a tool.
   #
   class Context
-    def initialize(context_base, tool_name, args, options)
+    def initialize(context_base, tool_name, args, options, verbosity)
       @context_base = context_base
       @tool_name = tool_name
       @args = args
       @options = options
+      @verbosity = verbosity
     end
 
     attr_reader :tool_name
     attr_reader :args
     attr_reader :options
+    attr_reader :verbosity
 
     def [](key)
       @options[key]
@@ -58,7 +60,7 @@ module Toys
     end
 
     def run(*args)
-      @context_base.run(*args)
+      @context_base.run(verbosity, *args)
     end
 
     def exit(code)
@@ -74,17 +76,19 @@ module Toys
         @lookup = lookup
         @binary_name = binary_name
         @logger = logger || ::Logger.new(::STDERR)
+        @base_level = @logger.level
       end
 
       attr_reader :binary_name
       attr_reader :logger
+      attr_reader :base_level
 
-      def run(*args)
-        @lookup.execute(self, args.flatten)
+      def run(base_verbosity, *args)
+        @lookup.execute(self, base_verbosity, args.flatten)
       end
 
-      def create_context(tool_name, args, options)
-        Context.new(self, tool_name, args, options)
+      def create_context(tool_name, args, options, verbosity)
+        Context.new(self, tool_name, args, options, verbosity)
       end
     end
   end

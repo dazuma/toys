@@ -27,6 +27,15 @@ guidelines will be provided when the software stabilizes further.
 The source can be found on Github at
 [https://github.com/dazuma/toys](https://github.com/dazuma/toys)
 
+### TODO items
+
+* Document methods
+* Write overall documentation
+* Decide about highline integration
+* Rename tool to task
+* Standard template lookup in a templates module
+* Standard helper lookup in a helpers module
+
 ## License
 
 Copyright 2018 Daniel Azuma

@@ -87,7 +87,7 @@ describe Toys::Tool do
         options.must_equal({})
         args.must_equal []
       end
-      tool.execute(context_base, []).must_equal 0
+      tool.execute(context_base, 0, []).must_equal 0
     end
 
     it "defaults simple boolean switch to nil" do
@@ -95,7 +95,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: nil})
       end
-      tool.execute(context_base, []).must_equal 0
+      tool.execute(context_base, 0, []).must_equal 0
     end
 
     it "sets simple boolean switch" do
@@ -103,7 +103,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: true})
       end
-      tool.execute(context_base, ["--aa"]).must_equal 0
+      tool.execute(context_base, 0, ["--aa"]).must_equal 0
     end
 
     it "defaults value switch to nil" do
@@ -111,7 +111,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: nil})
       end
-      tool.execute(context_base, []).must_equal 0
+      tool.execute(context_base, 0, []).must_equal 0
     end
 
     it "honors given default of a value switch" do
@@ -119,7 +119,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: "hehe"})
       end
-      tool.execute(context_base, []).must_equal 0
+      tool.execute(context_base, 0, []).must_equal 0
     end
 
     it "sets value switch" do
@@ -127,7 +127,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: "hoho"})
       end
-      tool.execute(context_base, ["--aa", "hoho"]).must_equal 0
+      tool.execute(context_base, 0, ["--aa", "hoho"]).must_equal 0
     end
 
     it "converts a value switch" do
@@ -135,7 +135,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: 1234})
       end
-      tool.execute(context_base, ["--aa", "1234"]).must_equal 0
+      tool.execute(context_base, 0, ["--aa", "1234"]).must_equal 0
     end
 
     it "checks match of a value switch" do
@@ -144,7 +144,7 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       proc do
-        tool.execute(context_base, ["--aa", "a1234"]).wont_equal 0
+        tool.execute(context_base, 0, ["--aa", "a1234"]).wont_equal 0
       end.must_output(/invalid argument: --aa a1234/)
     end
 
@@ -153,7 +153,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a_bc: "hoho"})
       end
-      tool.execute(context_base, ["--a-bc", "hoho"]).must_equal 0
+      tool.execute(context_base, 0, ["--a-bc", "hoho"]).must_equal 0
     end
 
     it "errors on an unknown switch" do
@@ -161,7 +161,7 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       proc do
-        tool.execute(context_base, ["-a"]).wont_equal 0
+        tool.execute(context_base, 0, ["-a"]).wont_equal 0
       end.must_output(/invalid option: -a/)
     end
 
@@ -173,7 +173,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]})
       end
-      tool.execute(context_base, ["foo", "bar", "baz", "hello", "world"]).must_equal 0
+      tool.execute(context_base, 0, ["foo", "bar", "baz", "hello", "world"]).must_equal 0
     end
 
     it "omits optional args if not provided" do
@@ -184,7 +184,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: "foo", b: "bar", c: nil, d: []})
       end
-      tool.execute(context_base, ["foo", "bar"]).must_equal 0
+      tool.execute(context_base, 0, ["foo", "bar"]).must_equal 0
     end
 
     it "errors if required args are missing" do
@@ -194,7 +194,7 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       proc do
-        tool.execute(context_base, ["foo"]).wont_equal 0
+        tool.execute(context_base, 0, ["foo"]).wont_equal 0
       end.must_output(/No value given for required argument named <b>/)
     end
 
@@ -205,7 +205,7 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       proc do
-        tool.execute(context_base, ["foo", "bar", "baz"]).wont_equal 0
+        tool.execute(context_base, 0, ["foo", "bar", "baz"]).wont_equal 0
       end.must_output(/Extra arguments provided: baz/)
     end
 
@@ -215,7 +215,7 @@ describe Toys::Tool do
       tool.executor = proc do
         options.must_equal({a: "foo", b: "hello"})
       end
-      tool.execute(context_base, ["foo"]).must_equal 0
+      tool.execute(context_base, 0, ["foo"]).must_equal 0
     end
   end
 
@@ -224,14 +224,14 @@ describe Toys::Tool do
       tool.executor = proc do
         logger.level.must_equal(Logger::DEBUG)
       end
-      tool.execute(context_base, ["-v", "--verbose"]).must_equal 0
+      tool.execute(context_base, 0, ["-v", "--verbose"]).must_equal 0
     end
 
     it "honors --quiet flag" do
       tool.executor = proc do
         logger.level.must_equal(Logger::FATAL)
       end
-      tool.execute(context_base, ["-q", "--quiet"]).must_equal 0
+      tool.execute(context_base, 0, ["-q", "--quiet"]).must_equal 0
     end
 
     it "prints help for a command with an executor" do
@@ -239,13 +239,13 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       proc do
-        tool.execute(context_base, ["--help"]).must_equal 0
+        tool.execute(context_base, 0, ["--help"]).must_equal 0
       end.must_output(/Usage:/)
     end
 
     it "prints help for a command with no executor" do
       proc do
-        tool.execute(context_base, []).must_equal 0
+        tool.execute(context_base, 0, []).must_equal 0
       end.must_output(/Usage:/)
     end
   end
@@ -256,7 +256,7 @@ describe Toys::Tool do
       tool.executor = proc do
         hello_helper(2).must_equal(4)
       end
-      tool.execute(context_base, []).must_equal(0)
+      tool.execute(context_base, 0, []).must_equal(0)
     end
 
     it "cannot begin with an underscore" do
@@ -272,7 +272,7 @@ describe Toys::Tool do
       tool.executor = proc do
         private_methods.include?(:rm_rf).must_equal(true)
       end
-      tool.execute(context_base, []).must_equal(0)
+      tool.execute(context_base, 0, []).must_equal(0)
     end
   end
 

@@ -116,7 +116,7 @@ module Toys
     end
 
     def run(*args)
-      @context_base.run(*args)
+      @context_base.run(0, *args)
     end
 
     class << self
