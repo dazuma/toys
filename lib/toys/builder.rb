@@ -79,7 +79,7 @@ module Toys
     end
 
     def expand(template_class, *args)
-      unless template_class.is_a?(Class)
+      unless template_class.is_a?(::Class)
         template_class = template_class.to_s
         file_name =
           template_class
@@ -87,7 +87,7 @@ module Toys
           .downcase
         require "toys/templates/#{file_name}"
         const_name = template_class.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
-        template_class = Toys::Templates.const_get(const_name)
+        template_class = Templates.const_get(const_name)
       end
       template = template_class.new(*args)
       yield template if block_given?
@@ -152,7 +152,7 @@ module Toys
           # rubocop:disable Security/Eval
           eval(source, builder._binding, path, 1)
           # rubocop:enable Security/Eval
-        when Proc
+        when ::Proc
           builder.instance_eval(&source)
         end
       end

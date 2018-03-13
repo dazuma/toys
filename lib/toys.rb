@@ -34,6 +34,15 @@
 # individual directories.
 #
 module Toys
+  ##
+  # Namespace for common helper modules
+  #
+  module Helpers; end
+
+  ##
+  # Namespace for common templates
+  #
+  module Templates; end
 end
 
 require "toys/builder"

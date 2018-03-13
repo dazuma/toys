@@ -82,7 +82,7 @@ module Toys
     end
 
     def leaf?
-      @executor.is_a?(Proc)
+      @executor.is_a?(::Proc)
     end
 
     def alias?
@@ -177,9 +177,9 @@ module Toys
     def use_module(mod)
       check_definition_state(true)
       case mod
-      when Module
+      when ::Module
         @modules << mod
-      when Symbol
+      when ::Symbol
         mod = mod.to_s
         file_name =
           mod
@@ -187,7 +187,7 @@ module Toys
           .downcase
         require "toys/helpers/#{file_name}"
         const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
-        @modules << Toys::Helpers.const_get(const_name)
+        @modules << Helpers.const_get(const_name)
       else
         raise ToolDefinitionError, "Illegal helper module name: #{mod.inspect}"
       end
@@ -280,14 +280,38 @@ module Toys
       end
     end
 
-    SwitchInfo = Struct.new(:key, :optparse_info)
+    ##
+    # Representation of a formal switch
+    #
+    class SwitchInfo
+      def initialize(key, optparse_info)
+        @key = key
+        @optparse_info = optparse_info
+      end
 
-    ArgInfo = Struct.new(:key, :accept, :doc) do
+      attr_reader :key
+      attr_reader :optparse_info
+    end
+
+    ##
+    # Representation of a formal argument
+    #
+    class ArgInfo
+      def initialize(key, accept, doc)
+        @key = key
+        @accept = accept
+        @doc = doc
+      end
+
+      attr_reader :key
+      attr_reader :accept
+      attr_reader :doc
+
       def process_value(val)
         return val unless accept
         n = canonical_switch(key)
         result = val
-        optparse = OptionParser.new
+        optparse = ::OptionParser.new
         optparse.on("--#{n}=VALUE", accept) { |v| result = v }
         optparse.parse(["--#{n}", val])
         result
@@ -300,6 +324,7 @@ module Toys
 
     ##
     # An internal class that manages execution of a tool
+    # @private
     #
     class Execution
       def initialize(tool)
@@ -395,10 +420,11 @@ module Toys
 
     ##
     # An internal class that manages parsing of tool arguments
+    # @private
     #
     class ParsedArgs
       def initialize(tool, binary_name, args)
-        binary_name ||= File.basename($PROGRAM_NAME)
+        binary_name ||= ::File.basename($PROGRAM_NAME)
         @show_help = !tool.leaf?
         @usage_error = nil
         @delta_severity = 0
@@ -417,6 +443,10 @@ module Toys
 
       private
 
+      ##
+      # Well-known flags
+      # @private
+      #
       SPECIAL_FLAGS = %w[
         -q
         --quiet
@@ -432,12 +462,12 @@ module Toys
         remaining = parse_required_args(remaining, tool, args)
         remaining = parse_optional_args(remaining, tool)
         parse_remaining_args(remaining, tool, args)
-      rescue OptionParser::ParseError => e
+      rescue ::OptionParser::ParseError => e
         @usage_error = e
       end
 
       def create_option_parser(tool, binary_name)
-        optparse = OptionParser.new
+        optparse = ::OptionParser.new
         optparse.banner =
           if tool.leaf?
             leaf_banner(tool, binary_name)

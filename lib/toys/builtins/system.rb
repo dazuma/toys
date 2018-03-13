@@ -33,7 +33,7 @@ name "version" do
   short_desc "Print current toys version"
 
   execute do
-    puts Toys::VERSION
+    puts ::Toys::VERSION
   end
 end
 
@@ -45,8 +45,8 @@ name "update" do
   execute do
     version_info = capture("gem query -q -r -e toys")
     if version_info =~ /toys\s\((.+)\)/
-      latest_version = Gem::Version.new($1)
-      cur_version = Gem::Version.new(Toys::VERSION)
+      latest_version = ::Gem::Version.new($1)
+      cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
         logger.warn("Updating toys from #{cur_version} to #{latest_version}...")
         sh("gem install toys")

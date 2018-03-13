@@ -73,14 +73,14 @@ module Toys
       path = check_path(path, type: :dir)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
       if @config_file_name
-        p = File.join(path, @config_file_name)
-        if !File.directory?(p) && File.readable?(p)
+        p = ::File.join(path, @config_file_name)
+        if !::File.directory?(p) && ::File.readable?(p)
           @load_worklist << [p, [], priority]
         end
       end
       if @config_dir_name
-        p = File.join(path, @config_dir_name)
-        if File.directory?(p) && File.readable?(p)
+        p = ::File.join(path, @config_dir_name)
+        if ::File.directory?(p) && ::File.readable?(p)
           @load_worklist << [p, [], priority]
         end
       end
@@ -155,16 +155,16 @@ module Toys
     private
 
     def check_init_options
-      if @config_dir_name && File.extname(@config_dir_name) == ".rb"
+      if @config_dir_name && ::File.extname(@config_dir_name) == ".rb"
         raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
       end
-      if @config_file_name && File.extname(@config_file_name) != ".rb"
+      if @config_file_name && ::File.extname(@config_file_name) != ".rb"
         raise LookupError, "Illegal config file name #{@config_file_name.inspect}"
       end
-      if @index_file_name && File.extname(@index_file_name) != ".rb"
+      if @index_file_name && ::File.extname(@index_file_name) != ".rb"
         raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
       end
-      if @preload_file_name && File.extname(@preload_file_name) != ".rb"
+      if @preload_file_name && ::File.extname(@preload_file_name) != ".rb"
         raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
       end
     end
@@ -186,15 +186,15 @@ module Toys
     end
 
     def load_path(path, words, remaining_words, priority)
-      if File.extname(path) == ".rb"
+      if ::File.extname(path) == ".rb"
         tool = get_tool(words, priority)
         if tool
-          Builder.build(path, tool, remaining_words, priority, self, IO.read(path))
+          Builder.build(path, tool, remaining_words, priority, self, ::IO.read(path))
         end
       else
         require_preload_in(path)
         load_index_in(path, words, remaining_words, priority)
-        Dir.entries(path).each do |child|
+        ::Dir.entries(path).each do |child|
           load_child_in(path, child, words, remaining_words, priority)
         end
       end
@@ -202,14 +202,14 @@ module Toys
 
     def require_preload_in(path)
       return unless @preload_file_name
-      preload_path = File.join(path, @preload_file_name)
+      preload_path = ::File.join(path, @preload_file_name)
       preload_path = check_path(preload_path, type: :file, lenient: true)
       require preload_path if preload_path
     end
 
     def load_index_in(path, words, remaining_words, priority)
       return unless @index_file_name
-      index_path = File.join(path, @index_file_name)
+      index_path = ::File.join(path, @index_file_name)
       index_path = check_path(index_path, type: :file, lenient: true)
       load_path(index_path, words, remaining_words, priority) if index_path
     end
@@ -217,24 +217,24 @@ module Toys
     def load_child_in(path, child, words, remaining_words, priority)
       return if child.start_with?(".")
       return if [@preload_file_name, @index_file_name].include?(child)
-      child_path = check_path(File.join(path, child))
-      child_word = File.basename(child, ".rb")
+      child_path = check_path(::File.join(path, child))
+      child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Lookup.next_remaining_words(remaining_words, child_word)
       handle_path(child_path, next_words, next_remaining, priority)
     end
 
     def check_path(path, lenient: false, type: nil)
-      path = File.expand_path(path)
-      type ||= File.extname(path) == ".rb" ? :file : :dir
+      path = ::File.expand_path(path)
+      type ||= ::File.extname(path) == ".rb" ? :file : :dir
       case type
       when :file
-        if File.directory?(path) || !File.readable?(path)
+        if ::File.directory?(path) || !::File.readable?(path)
           return nil if lenient
           raise LookupError, "Cannot read file #{path}"
         end
       when :dir
-        if !File.directory?(path) || !File.readable?(path)
+        if !::File.directory?(path) || !::File.readable?(path)
           return nil if lenient
           raise LookupError, "Cannot read directory #{path}"
         end

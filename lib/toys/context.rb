@@ -36,7 +36,7 @@ module Toys
   class Context
     def initialize(lookup, logger: nil, binary_name: nil, tool_name: nil, args: nil, options: nil)
       @lookup = lookup
-      @logger = logger || Logger.new(STDERR)
+      @logger = logger || ::Logger.new(::STDERR)
       @binary_name = binary_name
       @tool_name = tool_name
       @args = args

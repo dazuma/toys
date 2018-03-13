@@ -27,34 +27,38 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys
-  module Templates
-    Clean = Struct.new(:name, :paths) do
-      include Toys::Template
+module Toys::Templates
+  ##
+  # A template for tools that clean build artifacts
+  #
+  class Clean
+    include ::Toys::Template
 
-      def initialize(opts = {})
-        super(opts[:name] || "clean",
-              opts[:paths] || [])
-      end
+    def initialize(opts = {})
+      @name = opts[:name] || "clean"
+      @paths = opts[:paths] || []
+    end
 
-      to_expand do |template|
-        name(template.name) do
-          short_desc "Clean built files and directories"
+    attr_accessor :name
+    attr_accessor :paths
 
-          use :file_utils
+    to_expand do |template|
+      name(template.name) do
+        short_desc "Clean built files and directories"
 
-          execute do
-            files = []
-            patterns = Array(template.paths)
-            patterns = ["lib/**/*.rb"] if patterns.empty?
-            patterns.each do |pattern|
-              files.concat(Dir.glob(pattern))
-            end
-            files.uniq!
+        use :file_utils
 
-            files.each do |file|
-              rm_rf file
-            end
+        execute do
+          files = []
+          patterns = Array(template.paths)
+          patterns = ["lib/**/*.rb"] if patterns.empty?
+          patterns.each do |pattern|
+            files.concat(::Dir.glob(pattern))
+          end
+          files.uniq!
+
+          files.each do |file|
+            rm_rf file
           end
         end
       end

@@ -34,11 +34,35 @@ module Toys
   # A Toys-based CLI
   #
   class CLI
-    BUILTINS_PATH = File.join(__dir__, "builtins").freeze
+    ##
+    # Path to default builtins
+    # @return [String]
+    #
+    BUILTINS_PATH = ::File.join(__dir__, "builtins").freeze
+
+    ##
+    # Default name of toys configuration directory
+    # @return [String]
+    #
     DEFAULT_DIR_NAME = ".toys".freeze
+
+    ##
+    # Default name of toys configuration file
+    # @return [String]
+    #
     DEFAULT_FILE_NAME = ".toys.rb".freeze
-    DEFAULT_BINARY_NAME = "toys".freeze
+
+    ##
+    # Default name of toys preload file
+    # @return [String]
+    #
     DEFAULT_PRELOAD_NAME = ".preload.rb".freeze
+
+    ##
+    # Default name of toys binary
+    # @return [String]
+    #
+    DEFAULT_BINARY_NAME = "toys".freeze
 
     def initialize(
       binary_name: nil,
@@ -72,12 +96,12 @@ module Toys
     end
 
     def add_config_path_hierarchy(path = nil, base = "/")
-      path ||= Dir.pwd
+      path ||= ::Dir.pwd
       paths = []
       loop do
         paths << path
         break if !base || path == base
-        next_path = File.dirname(path)
+        next_path = ::File.dirname(path)
         break if next_path == path
         path = next_path
       end
@@ -86,10 +110,10 @@ module Toys
     end
 
     def add_standard_config_paths
-      toys_path = ENV["TOYS_PATH"].to_s.split(File::PATH_SEPARATOR)
+      toys_path = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
       if toys_path.empty?
-        toys_path << ENV["HOME"] if ENV["HOME"]
-        toys_path << "/etc" if File.directory?("/etc") && File.readable?("/etc")
+        toys_path << ::ENV["HOME"] if ::ENV["HOME"]
+        toys_path << "/etc" if File.directory?("/etc") && ::File.readable?("/etc")
       end
       @lookup.add_config_paths(toys_path)
     end
@@ -114,13 +138,13 @@ module Toys
       end
 
       def default_logger
-        logger = Logger.new(STDERR)
+        logger = ::Logger.new(::STDERR)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg
-            when String
+            when ::String
               msg
-            when Exception
+            when ::Exception
               "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
             else
               msg.inspect
@@ -128,7 +152,7 @@ module Toys
           timestr = time.strftime("%Y-%m-%d %H:%M:%S")
           format("[%s %5s]  %s\n", timestr, severity, msg_str)
         end
-        logger.level = Logger::WARN
+        logger.level = ::Logger::WARN
         logger
       end
     end
