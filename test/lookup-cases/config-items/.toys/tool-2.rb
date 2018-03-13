@@ -1,4 +1,4 @@
-short_desc "directory tool-2 short description"
+desc "directory tool-2 short description"
 long_desc "directory tool-2 long description"
 
 execute do

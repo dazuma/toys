@@ -72,11 +72,11 @@ describe Toys::Tool do
 
     it "prevents defining from multiple paths" do
       tool.defining_from("path1") do
-        tool.short_desc = "hi"
+        tool.desc = "hi"
         tool.long_desc = "hiho"
       end
       proc do
-        tool.short_desc = "ho"
+        tool.desc = "ho"
       end.must_raise(Toys::ToolDefinitionError)
     end
   end

@@ -1,5 +1,5 @@
 name "tool-1" do
-  short_desc "file tool-1 short description"
+  desc "file tool-1 short description"
   long_desc "file tool-1 long description"
 
   execute do
@@ -8,10 +8,10 @@ name "tool-1" do
 end
 
 name "collection-1" do
-  short_desc "file collection-1 short description"
+  desc "file collection-1 short description"
 
   name "tool-1-1" do
-    short_desc "file tool-1-1 short description"
+    desc "file tool-1-1 short description"
     long_desc "file tool-1-1 long description"
 
     execute do

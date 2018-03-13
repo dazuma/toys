@@ -1,5 +1,5 @@
 name "tool-1" do
-  short_desc "index tool-1 short description"
+  desc "index tool-1 short description"
   long_desc "index tool-1 long description"
 
   execute do
@@ -8,7 +8,7 @@ name "tool-1" do
 end
 
 name "tool-2" do
-  short_desc "index tool-2 short description"
+  desc "index tool-2 short description"
   long_desc "index tool-2 long description"
 
   execute do

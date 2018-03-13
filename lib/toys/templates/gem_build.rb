@@ -61,7 +61,7 @@ module Toys::Templates
       task_type = template.push_gem ? "Release" : "Build"
 
       name(template.name) do
-        short_desc "#{task_type} the gem: #{template.gem_name}"
+        desc "#{task_type} the gem: #{template.gem_name}"
 
         use :file_utils
         use :exec

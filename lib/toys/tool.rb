@@ -43,8 +43,8 @@ module Toys
 
       @alias_target = nil
 
+      @desc = nil
       @long_desc = nil
-      @short_desc = nil
 
       @default_data = {}
       @switches = []
@@ -98,16 +98,16 @@ module Toys
       @lookup.exact_tool(full_name.slice(0..-2))
     end
 
-    def effective_short_desc
-      @short_desc || default_desc
+    def effective_desc
+      @desc || default_desc
     end
 
     def effective_long_desc
-      @long_desc || @short_desc || default_desc
+      @long_desc || @desc || default_desc
     end
 
     def includes_description?
-      !@long_desc.nil? || !@short_desc.nil?
+      !@long_desc.nil? || !@desc.nil?
     end
 
     def includes_definition?
@@ -155,9 +155,9 @@ module Toys
       self
     end
 
-    def short_desc=(str)
+    def desc=(str)
       check_definition_state
-      @short_desc = str
+      @desc = str
     end
 
     def long_desc=(str)
@@ -400,9 +400,8 @@ module Toys
         puts("Commands:")
         name_len = @tool.full_name.length
         @tool.lookup.list_subtools(@tool.full_name, recursive).each do |subtool|
-          desc = subtool.effective_short_desc
           tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
-          puts("    #{tool_name}  #{desc}")
+          puts("    #{tool_name}  #{subtool.effective_desc}")
         end
       end
 

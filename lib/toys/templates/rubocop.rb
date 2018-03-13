@@ -46,7 +46,7 @@ module Toys::Templates
 
     to_expand do |template|
       name(template.name) do
-        short_desc "Run RuboCop"
+        desc "Run RuboCop"
 
         use :exec
 

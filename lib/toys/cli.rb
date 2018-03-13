@@ -72,13 +72,14 @@ module Toys
       index_file_name: nil,
       preload_file_name: nil
     )
+      logger ||= self.class.default_logger
       @lookup = Lookup.new(
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
         index_file_name: index_file_name,
         preload_file_name: preload_file_name
       )
-      @context_base = Context::Base.new(@lookup, binary_name, logger || self.class.default_logger)
+      @context_base = Context::Base.new(@lookup, binary_name, logger)
     end
 
     def add_paths(paths)

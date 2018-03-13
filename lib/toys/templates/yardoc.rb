@@ -48,7 +48,7 @@ module Toys::Templates
 
     to_expand do |template|
       name(template.name) do
-        short_desc "Run yardoc"
+        desc "Run yardoc"
 
         use :exec
 
