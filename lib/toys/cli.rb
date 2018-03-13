@@ -1,5 +1,8 @@
 module Toys
-  class Cli
+  ##
+  # A Toys-based CLI
+  #
+  class CLI
     BUILTINS_PATH = File.join(__dir__, "builtins").freeze
     DEFAULT_DIR_NAME = ".toys".freeze
     DEFAULT_FILE_NAME = ".toys.rb".freeze

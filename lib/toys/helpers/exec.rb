@@ -1,5 +1,8 @@
 module Toys
   module Helpers
+    ##
+    # A set of helper methods for invoking subcommands
+    #
     module Exec
       def configure_exec(opts = {})
         @exec_config ||= {}
@@ -36,6 +39,9 @@ module Toys
         File.join(RbConfig::CONFIG["bindir"], RbConfig::CONFIG["ruby_install_name"])
       end
 
+      ##
+      # An internal helper class storing the configuration of a subcommand invocation
+      #
       class ExecOpts
         CONFIG_KEYS = %i[
           exit_on_nonzero_status
@@ -68,6 +74,9 @@ module Toys
         attr_reader :context
       end
 
+      ##
+      # The object passed to a subcommand control block
+      #
       class Controller
         def initialize(ins, out, err, out_err, pid)
           @in = ins
@@ -88,6 +97,9 @@ module Toys
         end
       end
 
+      ##
+      # The return result from a subcommand
+      #
       class Result
         def initialize(out, err, out_err, status)
           @captured_out = out
@@ -106,6 +118,9 @@ module Toys
         end
       end
 
+      ##
+      # An object that manages the execution of a subcommand
+      #
       class Executor
         def initialize(exec_opts, cmd)
           @cmd = Array(cmd)

@@ -1,4 +1,9 @@
+require "logger"
+
 module Toys
+  ##
+  # The object context in effect during the execution of a tool.
+  #
   class Context
     def initialize(lookup, logger: nil, binary_name: nil, tool_name: nil, args: nil, options: nil)
       @lookup = lookup

@@ -1,4 +1,7 @@
 module Toys
+  ##
+  # The object context in effect in a toys configuration file
+  #
   class Builder
     def initialize(path, tool, remaining_words, priority, lookup)
       @path = path
@@ -14,7 +17,7 @@ module Toys
       return self if subtool.nil?
       if alias_of
         if block
-          raise Toys::ToysDefinitionError, "Cannot take a block with alias_of"
+          raise ToolDefinitionError, "Cannot take a block with alias_of"
         end
         subtool.make_alias_of_word(alias_of.to_s)
         return self
@@ -26,17 +29,16 @@ module Toys
 
     def alias_as(word)
       if @tool.root?
-        raise Toys::ToysDefinitionError, "Cannot make an alias of the root tool"
+        raise ToolDefinitionError, "Cannot make an alias of the root tool"
       end
-      unless @tool.root?
-        alias_tool = @lookup.get_tool(@tool.full_name.slice(0..-2) + [word.to_s], @priority)
-        alias_tool.make_alias_of_tool(@tool) if alias_tool
-      end
+      alias_name = @tool.full_name.slice(0..-2) + [word.to_s]
+      alias_tool = @lookup.get_tool(alias_name, @priority)
+      alias_tool.make_alias_of(@tool.simple_name) if alias_tool
       self
     end
 
     def alias_of(word)
-      @tool.make_alias_of_word(word.to_s)
+      @tool.make_alias_of(word.to_s)
       self
     end
 
@@ -105,7 +107,7 @@ module Toys
     end
 
     def use(mod)
-      @tool.use_helper_module(mod)
+      @tool.use_module(mod)
       self
     end
 

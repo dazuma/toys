@@ -1,4 +1,7 @@
 module Toys
+  ##
+  # The lookup service that finds a tool given a set of arguments
+  #
   class Lookup
     def initialize(config_dir_name: nil, config_file_name: nil,
                    index_file_name: nil, preload_file_name: nil)
@@ -8,7 +11,7 @@ module Toys
       @preload_file_name = preload_file_name
       check_init_options
       @load_worklist = []
-      @tools = {[] => [Tool.new(self, nil, nil), nil]}
+      @tools = {[] => [Tool.new(self, []), nil]}
       @max_priority = @min_priority = 0
     end
 
@@ -69,15 +72,20 @@ module Toys
       end
     end
 
+    def exact_tool(words)
+      return nil unless tool_defined?(words)
+      @tools[words].first
+    end
+
     def get_tool(words, priority)
-      if @tools.key?(words)
+      if tool_defined?(words)
         tool, tool_priority = @tools[words]
         return tool if tool_priority.nil? || tool_priority == priority
         return nil if tool_priority > priority
       end
       parent = get_tool(words[0..-2], priority)
       return nil if parent.nil?
-      tool = Tool.new(self, parent, words.last)
+      tool = Tool.new(self, words)
       @tools[words] = [tool, priority]
       tool
     end

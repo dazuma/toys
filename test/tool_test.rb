@@ -5,10 +5,10 @@ describe Toys::Tool do
   let(:tool_name) { "foo" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
-  let(:root_tool) { Toys::Tool.new(lookup, nil, nil) }
-  let(:tool) { Toys::Tool.new(lookup, root_tool, tool_name) }
-  let(:subtool) { Toys::Tool.new(lookup, tool, subtool_name) }
-  let(:subtool2) { Toys::Tool.new(lookup, tool, subtool2_name) }
+  let(:root_tool) { Toys::Tool.new(lookup, []) }
+  let(:tool) { Toys::Tool.new(lookup, [tool_name]) }
+  let(:subtool) { Toys::Tool.new(lookup, [tool_name, subtool_name]) }
+  let(:subtool2) { Toys::Tool.new(lookup, [tool_name, subtool2_name]) }
   let(:logger) {
     logger = Logger.new(StringIO.new)
     logger.level = Logger::WARN
@@ -238,7 +238,7 @@ describe Toys::Tool do
 
   describe "helper module" do
     it "can be looked up from standard helpers" do
-      tool.use_helper_module(:file_utils)
+      tool.use_module(:file_utils)
       tool.executor = proc do
         private_methods.include?(:rm_rf).must_equal(true)
       end
