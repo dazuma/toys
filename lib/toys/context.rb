@@ -34,33 +34,68 @@ module Toys
   # The object context in effect during the execution of a tool.
   #
   class Context
-    def initialize(context_base, tool_name, args, options, verbosity)
-      @context_base = context_base
-      @tool_name = tool_name
-      @args = args
-      @options = options
-      @verbosity = verbosity
+    def initialize(context_base, data)
+      @_context_base = context_base
+      @_data = data
+      @_data[:__loader] = context_base.loader
+      @_data[:__binary_name] = context_base.binary_name
+      @_data[:__logger] = context_base.logger
     end
 
-    attr_reader :tool_name
-    attr_reader :args
-    attr_reader :options
-    attr_reader :verbosity
+    def verbosity
+      @_data[:__verbosity]
+    end
 
-    def [](key)
-      @options[key]
+    def tool
+      @_data[:__tool]
+    end
+
+    def tool_name
+      @_data[:__tool_name]
+    end
+
+    def args
+      @_data[:__args]
+    end
+
+    def optparse
+      @_data[:__optparse]
+    end
+
+    def usage_error
+      @_data[:__usage_error]
     end
 
     def logger
-      @context_base.logger
+      @_data[:__logger]
+    end
+
+    def loader
+      @_data[:__loader]
     end
 
     def binary_name
-      @context_base.binary_name
+      @_data[:__binary_name]
     end
 
-    def run(*args)
-      @context_base.run(verbosity, *args)
+    def [](key)
+      @_data[key]
+    end
+
+    def []=(key, value)
+      @_data[key] = value
+    end
+
+    def options
+      @_data.select do |k, _v|
+        !k.is_a?(::Symbol) || !k.to_s.start_with?("__")
+      end
+    end
+
+    def run(*args, exit_on_nonzero_status: false)
+      code = @_context_base.run(args.flatten, verbosity: @_data[:__verbosity])
+      exit(code) if exit_on_nonzero_status && !code.zero?
+      code
     end
 
     def exit(code)
@@ -72,23 +107,24 @@ module Toys
     # @private
     #
     class Base
-      def initialize(lookup, binary_name, logger)
-        @lookup = lookup
-        @binary_name = binary_name
+      def initialize(loader, binary_name, logger)
+        @loader = loader
+        @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
         @logger = logger || ::Logger.new(::STDERR)
         @base_level = @logger.level
       end
 
+      attr_reader :loader
       attr_reader :binary_name
       attr_reader :logger
       attr_reader :base_level
 
-      def run(base_verbosity, *args)
-        @lookup.execute(self, base_verbosity, args.flatten)
+      def run(args, verbosity: 0)
+        @loader.execute(self, args, verbosity: verbosity)
       end
 
-      def create_context(tool_name, args, options, verbosity)
-        Context.new(self, tool_name, args, options, verbosity)
+      def create_context(data)
+        Context.new(self, data)
       end
     end
   end

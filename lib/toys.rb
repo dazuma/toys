@@ -40,16 +40,26 @@ module Toys
   module Helpers; end
 
   ##
+  # Namespace for common middleware
+  #
+  module Middleware; end
+
+  ##
   # Namespace for common templates
   #
   module Templates; end
+
+  ##
+  # Namespace for common utility classes
+  #
+  module Utils; end
 end
 
 require "toys/builder"
 require "toys/cli"
 require "toys/context"
 require "toys/errors"
-require "toys/lookup"
+require "toys/loader"
 require "toys/template"
 require "toys/tool"
 require "toys/version"

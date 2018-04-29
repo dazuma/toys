@@ -27,43 +27,29 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-expand :clean do |t|
-  t.paths = ["pkg", "doc", ".yardoc"]
-end
+require "toys/middleware/base"
+require "toys/utils/usage"
 
-expand :minitest do |t|
-  t.libs << "test"
-  t.files << "test/*_test.rb"
-end
+module Toys::Middleware
+  ##
+  # A middleware that shows usage documentation
+  #
+  class ShowToolHelp < Base
+    def config(tool)
+      if tool.includes_executor?
+        tool.add_switch(:_help, "-?", "--help",
+                        doc: "Show help message",
+                        only_unique: true)
+      end
+      yield
+    end
 
-expand :rubocop
-
-expand :yardoc
-
-expand :gem_build
-
-expand :gem_build, name: "release" do |t|
-  t.push_gem = true
-  t.tag = true
-  t.push_tag = true
-end
-
-name "install" do
-  desc "Build and install the current code as a gem"
-
-  use :exec
-
-  execute do
-    run("build", exit_on_nonzero_status: true)
-    sh("gem install pkg/toys-#{Toys::VERSION}.gem")
-  end
-end
-
-name "ci" do
-  desc "CI target that runs tests and rubocop"
-
-  execute do
-    run("test", exit_on_nonzero_status: true)
-    run("rubocop", exit_on_nonzero_status: true)
+    def execute(context)
+      if context[:_help]
+        puts(::Toys::Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+      else
+        yield
+      end
+    end
   end
 end

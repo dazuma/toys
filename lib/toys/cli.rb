@@ -29,6 +29,11 @@
 
 require "logger"
 
+require "toys/middleware/collection_default"
+require "toys/middleware/set_verbosity"
+require "toys/middleware/show_tool_help"
+require "toys/middleware/show_usage_errors"
+
 module Toys
   ##
   # A Toys-based CLI
@@ -64,31 +69,44 @@ module Toys
     #
     DEFAULT_BINARY_NAME = "toys".freeze
 
+    ##
+    # Default middleware stack
+    # @return [Array]
+    #
+    DEFAULT_MIDDLEWARE = [
+      Middleware::ShowUsageErrors.new,
+      Middleware::CollectionDefault.new,
+      Middleware::ShowToolHelp.new,
+      Middleware::SetVerbosity.new
+    ].freeze
+
     def initialize(
       binary_name: nil,
       logger: nil,
       config_dir_name: nil,
       config_file_name: nil,
       index_file_name: nil,
-      preload_file_name: nil
+      preload_file_name: nil,
+      middleware: []
     )
       logger ||= self.class.default_logger
-      @lookup = Lookup.new(
+      @loader = Loader.new(
         config_dir_name: config_dir_name,
         config_file_name: config_file_name,
         index_file_name: index_file_name,
-        preload_file_name: preload_file_name
+        preload_file_name: preload_file_name,
+        middleware: middleware
       )
-      @context_base = Context::Base.new(@lookup, binary_name, logger)
+      @context_base = Context::Base.new(@loader, binary_name, logger)
     end
 
     def add_paths(paths)
-      @lookup.add_paths(paths)
+      @loader.add_paths(paths)
       self
     end
 
     def add_config_paths(paths)
-      @lookup.add_config_paths(paths)
+      @loader.add_config_paths(paths)
       self
     end
 
@@ -102,7 +120,7 @@ module Toys
         break if next_path == path
         path = next_path
       end
-      @lookup.add_config_paths(paths)
+      @loader.add_config_paths(paths)
       self
     end
 
@@ -112,11 +130,11 @@ module Toys
         toys_path << ::ENV["HOME"] if ::ENV["HOME"]
         toys_path << "/etc" if File.directory?("/etc") && ::File.readable?("/etc")
       end
-      @lookup.add_config_paths(toys_path)
+      @loader.add_config_paths(toys_path)
     end
 
     def run(*args)
-      @context_base.run(0, *args)
+      exit(@context_base.run(args.flatten, verbosity: 0))
     end
 
     class << self
@@ -126,7 +144,8 @@ module Toys
           config_dir_name: DEFAULT_DIR_NAME,
           config_file_name: DEFAULT_FILE_NAME,
           index_file_name: DEFAULT_FILE_NAME,
-          preload_file_name: DEFAULT_PRELOAD_NAME
+          preload_file_name: DEFAULT_PRELOAD_NAME,
+          middleware: DEFAULT_MIDDLEWARE
         )
         cli.add_config_path_hierarchy
         cli.add_standard_config_paths

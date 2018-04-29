@@ -34,20 +34,21 @@ module Toys
   # A tool definition
   #
   class Tool
-    def initialize(lookup, full_name)
-      @lookup = lookup
+    def initialize(full_name, middleware_stack)
       @full_name = full_name
+      @middleware_stack = middleware_stack.dup
 
       @definition_path = nil
       @cur_path = nil
-
       @alias_target = nil
+      @definition_finished = false
 
       @desc = nil
       @long_desc = nil
 
       @default_data = {}
       @switches = []
+      @used_switches = []
       @required_args = []
       @optional_args = []
       @remaining_args = nil
@@ -57,7 +58,6 @@ module Toys
       @executor = nil
     end
 
-    attr_reader :lookup
     attr_reader :full_name
     attr_reader :switches
     attr_reader :required_args
@@ -68,6 +68,7 @@ module Toys
     attr_reader :helpers
     attr_reader :executor
     attr_reader :alias_target
+    attr_reader :middleware_stack
 
     def simple_name
       full_name.last
@@ -81,21 +82,12 @@ module Toys
       full_name.empty?
     end
 
-    def leaf?
+    def includes_executor?
       @executor.is_a?(::Proc)
     end
 
     def alias?
       !alias_target.nil?
-    end
-
-    def only_collection?
-      @executor == false
-    end
-
-    def parent
-      return nil if root?
-      @lookup.exact_tool(full_name.slice(0..-2))
     end
 
     def effective_desc
@@ -113,7 +105,7 @@ module Toys
     def includes_definition?
       !@default_data.empty? || !@switches.empty? ||
         !@required_args.empty? || !@optional_args.empty? ||
-        !@remaining_args.nil? || leaf? ||
+        !@remaining_args.nil? || includes_executor? ||
         !@helpers.empty? || !@modules.empty?
     end
 
@@ -142,15 +134,10 @@ module Toys
       if root?
         raise ToolDefinitionError, "Cannot make the root tool an alias"
       end
-      if only_collection?
-        raise ToolDefinitionError, "Tool #{display_name.inspect} is already" \
-          " a collection and cannot be made an alias"
-      end
       if includes_description? || includes_definition?
         raise ToolDefinitionError, "Tool #{display_name.inspect} already has" \
           " a definition and cannot be made an alias"
       end
-      parent.ensure_collection_only(full_name) unless root?
       @alias_target = target_word
       self
     end
@@ -166,7 +153,7 @@ module Toys
     end
 
     def add_helper(name, &block)
-      check_definition_state(true)
+      check_definition_state
       name_str = name.to_s
       unless name_str =~ /^[a-z]\w+$/
         raise ToolDefinitionError, "Illegal helper name: #{name_str.inspect}"
@@ -175,7 +162,7 @@ module Toys
     end
 
     def use_module(mod)
-      check_definition_state(true)
+      check_definition_state
       case mod
       when ::Module
         @modules << mod
@@ -193,68 +180,81 @@ module Toys
       end
     end
 
-    def add_switch(key, *switches, accept: nil, default: nil, doc: nil)
-      check_definition_state(true)
-      @default_data[key] = default
+    def add_switch(key, *switches,
+                   accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
+      check_definition_state
       switches << "--#{Tool.canonical_switch(key)}=VALUE" if switches.empty?
       switches << accept unless accept.nil?
       switches += Array(doc)
-      @switches << SwitchInfo.new(key, switches)
+      switch_info = SwitchInfo.new(key, switches, handler)
+      if only_unique
+        switch_info.remove_switches(@used_switches)
+      end
+      if switch_info.active?
+        @default_data[key] = default
+        @switches << switch_info
+        @used_switches += switch_info.switches
+        @used_switches.uniq!
+      end
     end
 
     def add_required_arg(key, accept: nil, doc: nil)
-      check_definition_state(true)
+      check_definition_state
       @default_data[key] = nil
       @required_args << ArgInfo.new(key, accept, Array(doc))
     end
 
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
-      check_definition_state(true)
+      check_definition_state
       @default_data[key] = default
       @optional_args << ArgInfo.new(key, accept, Array(doc))
     end
 
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
-      check_definition_state(true)
+      check_definition_state
       @default_data[key] = default
       @remaining_args = ArgInfo.new(key, accept, Array(doc))
     end
 
     def executor=(executor)
-      check_definition_state(true)
+      check_definition_state
       @executor = executor
     end
 
-    def execute(context_base, base_verbosity, args)
-      Execution.new(self).execute(context_base, base_verbosity, args)
+    def finish_definition
+      unless alias?
+        config_proc = proc {}
+        middleware_stack.reverse.each do |middleware|
+          config_proc = make_config_proc(middleware, config_proc)
+        end
+        config_proc.call
+      end
+      @definition_finished = true
+      self
     end
 
-    protected
-
-    def ensure_collection_only(source_name)
-      if includes_definition?
-        raise ToolDefinitionError, "Cannot create tool #{source_name.inspect}" \
-          " because #{display_name.inspect} is already a tool."
-      end
-      unless @executor == false
-        @executor = false
-        parent.ensure_collection_only(source_name) unless root?
-      end
+    def execute(context_base, args, verbosity: 0)
+      finish_definition unless @definition_finished
+      Execution.new(self).execute(context_base, args, verbosity: verbosity)
     end
 
     private
 
+    def make_config_proc(middleware, next_config)
+      proc { middleware.config(self, &next_config) }
+    end
+
     def default_desc
       if alias?
         "(Alias of #{@alias_target.inspect})"
-      elsif leaf?
+      elsif includes_executor?
         "(No description available)"
       else
         "(A collection of commands)"
       end
     end
 
-    def check_definition_state(execution_field = false)
+    def check_definition_state
       if alias?
         raise ToolDefinitionError, "Tool #{display_name.inspect} is an alias"
       end
@@ -264,13 +264,9 @@ module Toys
               "Cannot redefine tool #{display_name.inspect} #{in_clause}" \
               "(already defined in #{@definition_path})"
       end
-      if execution_field
-        if only_collection?
-          raise ToolDefinitionError,
-                "Cannot make tool #{display_name.inspect} executable because" \
-                " a descendant is already executable"
-        end
-        parent.ensure_collection_only(full_name) unless root?
+      if @definition_finished
+        raise ToolDefinitionError,
+              "Defintion of tool #{display_name.inspect} is already finished"
       end
     end
 
@@ -284,13 +280,44 @@ module Toys
     # Representation of a formal switch
     #
     class SwitchInfo
-      def initialize(key, optparse_info)
+      def initialize(key, optparse_info, handler = nil)
         @key = key
         @optparse_info = optparse_info
+        @handler = handler || ->(val, _cur) { val }
+        @switches = nil
       end
 
       attr_reader :key
       attr_reader :optparse_info
+      attr_reader :handler
+
+      def switches
+        @switches ||= optparse_info.map { |s| extract_switch(s) }.flatten
+      end
+
+      def active?
+        !switches.empty?
+      end
+
+      def remove_switches(switches)
+        @optparse_info.select! do |s|
+          extract_switch(s).all? { |ss| !switches.include?(ss) }
+        end
+        @switches = nil
+        self
+      end
+
+      def extract_switch(str)
+        if str =~ /^(-[\?\w])/
+          [$1]
+        elsif str =~ /^--\[no-\](\w[\w-]*)/
+          ["--#{$1}", "--no-#{$1}"]
+        elsif str =~ /^(--\w[\w-]*)/
+          [$1]
+        else
+          []
+        end
+      end
     end
 
     ##
@@ -329,19 +356,21 @@ module Toys
     class Execution
       def initialize(tool)
         @tool = tool
+        @data = @tool.default_data.dup
+        @data[:__tool] = tool
+        @data[:__tool_name] = tool.full_name
       end
 
-      def execute(context_base, base_verbosity, args)
+      def execute(context_base, args, verbosity: 0)
         return execute_alias(context_base, args) if @tool.alias?
 
-        parsed_args = ParsedArgs.new(@tool, context_base.binary_name, args)
-        verbosity = base_verbosity + parsed_args.delta_verbosity
-        context = create_child_context(context_base, args, parsed_args.data, verbosity)
+        parse_args(args, verbosity)
+        context = create_child_context(context_base)
 
         original_level = context.logger.level
-        context.logger.level = context_base.base_level - verbosity
+        context.logger.level = context_base.base_level - @data[:__verbosity]
         begin
-          perform_execution(context, parsed_args)
+          perform_execution(context)
         ensure
           context.logger.level = original_level
         end
@@ -349,8 +378,74 @@ module Toys
 
       private
 
-      def create_child_context(context_base, args, data, verbosity)
-        context = context_base.create_context(@tool.full_name, args, data, verbosity)
+      def parse_args(args, base_verbosity)
+        optparse = create_option_parser
+        @data[:__optparse] = optparse
+        @data[:__verbosity] = base_verbosity
+        @data[:__args] = args
+        @data[:__usage_error] = nil
+        remaining = optparse.parse(args)
+        remaining = parse_required_args(remaining, args)
+        remaining = parse_optional_args(remaining)
+        parse_remaining_args(remaining, args)
+      rescue ::OptionParser::ParseError => e
+        @data[:__usage_error] = e.message
+      end
+
+      def create_option_parser
+        optparse = ::OptionParser.new
+        optparse.remove
+        optparse.remove
+        optparse.new
+        optparse.new
+        @tool.switches.each do |switch|
+          optparse.on(*switch.optparse_info) do |val|
+            @data[switch.key] = switch.handler.call(val, @data[switch.key])
+          end
+        end
+        optparse
+      end
+
+      def parse_required_args(remaining, args)
+        @tool.required_args.each do |arg_info|
+          if remaining.empty?
+            reason = "No value given for required argument named <#{arg_info.canonical_name}>"
+            raise create_parse_error(args, reason)
+          end
+          @data[arg_info.key] = arg_info.process_value(remaining.shift)
+        end
+        remaining
+      end
+
+      def parse_optional_args(remaining)
+        @tool.optional_args.each do |arg_info|
+          break if remaining.empty?
+          @data[arg_info.key] = arg_info.process_value(remaining.shift)
+        end
+        remaining
+      end
+
+      def parse_remaining_args(remaining, args)
+        return if remaining.empty?
+        unless @tool.remaining_args
+          if @tool.includes_executor?
+            raise create_parse_error(remaining, "Extra arguments provided")
+          else
+            raise create_parse_error(@tool.full_name + args, "Tool not found")
+          end
+        end
+        @data[@tool.remaining_args.key] =
+          remaining.map { |arg| @tool.remaining_args.process_value(arg) }
+      end
+
+      def create_parse_error(path, reason)
+        OptionParser::ParseError.new(*path).tap do |e|
+          e.reason = reason
+        end
+      end
+
+      def create_child_context(context_base)
+        context = context_base.create_context(@data)
         @tool.modules.each do |mod|
           context.extend(mod)
         end
@@ -360,245 +455,31 @@ module Toys
         context
       end
 
-      def perform_execution(context, parsed_args)
-        if parsed_args.usage_error
-          puts(parsed_args.usage_error)
-          puts("")
-          show_usage(parsed_args.optparse)
-          -1
-        elsif parsed_args.show_help
-          show_usage(parsed_args.optparse, recursive: parsed_args.recursive)
+      def perform_execution(context)
+        executor = proc do
+          context.instance_eval(&@tool.executor)
+        end
+        @tool.middleware_stack.reverse.each do |middleware|
+          executor = make_executor(middleware, context, executor)
+        end
+        catch(:result) do
+          executor.call
           0
-        else
-          catch(:result) do
-            context.instance_eval(&@tool.executor)
-            0
-          end
         end
       end
 
-      def show_usage(optparse, recursive: false)
-        puts(optparse.to_s)
-        if @tool.leaf?
-          required_args = @tool.required_args
-          optional_args = @tool.optional_args
-          remaining_args = @tool.remaining_args
-          if !required_args.empty? || !optional_args.empty? || remaining_args
-            show_positional_arguments(required_args, optional_args, remaining_args)
-          end
-        else
-          show_command_list(recursive)
-        end
-      end
-
-      def show_positional_arguments(required_args, optional_args, remaining_args)
-        puts("")
-        puts("Positional arguments:")
-        args_to_display = required_args + optional_args
-        args_to_display << remaining_args if remaining_args
-        args_to_display.each do |arg_info|
-          puts("    #{arg_info.canonical_name.ljust(31)}  #{arg_info.doc.first}")
-          next if arg_info.doc.empty?
-          arg_info.doc[1..-1].each do |d|
-            puts("                                     #{d}")
-          end
-        end
-      end
-
-      def show_command_list(recursive)
-        puts("")
-        puts("Commands:")
-        name_len = @tool.full_name.length
-        @tool.lookup.list_subtools(@tool.full_name, recursive).each do |subtool|
-          tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
-          puts("    #{tool_name}  #{subtool.effective_desc}")
-        end
+      def make_executor(middleware, context, next_executor)
+        proc { middleware.execute(context, &next_executor) }
       end
 
       def execute_alias(context_base, args)
         target_name = @tool.full_name.slice(0..-2) + [@tool.alias_target]
-        target_tool = @tool.lookup.lookup(target_name)
+        target_tool = context_base.loader.lookup(target_name)
         if target_tool.full_name == target_name
           target_tool.execute(context_base, args)
         else
-          logger.fatal("Alias target #{@tool.alias_target.inspect} not found")
+          context_base.logger.fatal("Alias target #{@tool.alias_target.inspect} not found")
           -1
-        end
-      end
-    end
-
-    ##
-    # An internal class that manages parsing of tool arguments
-    # @private
-    #
-    class ParsedArgs
-      def initialize(tool, binary_name, args)
-        binary_name ||= ::File.basename($PROGRAM_NAME)
-        @show_help = !tool.leaf?
-        @usage_error = nil
-        @delta_verbosity = 0
-        @recursive = false
-        @data = tool.default_data.dup
-        @optparse = create_option_parser(tool, binary_name)
-        parse_args(args, tool)
-      end
-
-      attr_reader :show_help
-      attr_reader :usage_error
-      attr_reader :delta_verbosity
-      attr_reader :recursive
-      attr_reader :data
-      attr_reader :optparse
-
-      private
-
-      ##
-      # Well-known flags
-      # @private
-      #
-      SPECIAL_FLAGS = %w[
-        -q
-        --quiet
-        -v
-        --verbose
-        -?
-        -h
-        --help
-      ].freeze
-
-      def parse_args(args, tool)
-        remaining = @optparse.parse(args)
-        remaining = parse_required_args(remaining, tool, args)
-        remaining = parse_optional_args(remaining, tool)
-        parse_remaining_args(remaining, tool, args)
-      rescue ::OptionParser::ParseError => e
-        @usage_error = e
-      end
-
-      def create_option_parser(tool, binary_name)
-        optparse = ::OptionParser.new
-        optparse.banner =
-          if tool.leaf?
-            leaf_banner(tool, binary_name)
-          else
-            collection_banner(tool, binary_name)
-          end
-        unless tool.effective_long_desc.empty?
-          optparse.separator("")
-          optparse.separator(tool.effective_long_desc)
-        end
-        optparse.separator("")
-        optparse.separator("Options:")
-        if tool.leaf?
-          leaf_switches(tool, optparse)
-        else
-          collection_switches(optparse)
-        end
-        optparse
-      end
-
-      def leaf_banner(tool, binary_name)
-        banner = ["Usage:", binary_name] + tool.full_name
-        banner << "[<options...>]" unless tool.switches.empty?
-        tool.required_args.each do |arg_info|
-          banner << "<#{arg_info.canonical_name}>"
-        end
-        tool.optional_args.each do |arg_info|
-          banner << "[<#{arg_info.canonical_name}>]"
-        end
-        if tool.remaining_args
-          banner << "[<#{tool.remaining_args.canonical_name}...>]"
-        end
-        banner.join(" ")
-      end
-
-      def collection_banner(tool, binary_name)
-        (["Usage:", binary_name] + tool.full_name + ["<command>", "[<options...>]"]).join(" ")
-      end
-
-      def leaf_switches(tool, optparse)
-        found_special_flags = []
-        leaf_normal_switches(tool.switches, optparse, found_special_flags)
-        leaf_verbose_switch(optparse, found_special_flags)
-        leaf_quiet_switch(optparse, found_special_flags)
-        leaf_help_switch(optparse, found_special_flags)
-      end
-
-      def collection_switches(optparse)
-        optparse.on("-?", "--help", "Show help message")
-        optparse.on("-r", "--[no-]recursive", "Show all subcommands recursively") do |val|
-          @recursive = val
-        end
-      end
-
-      def leaf_normal_switches(switches, optparse, found_special_flags)
-        switches.each do |switch|
-          found_special_flags |= (switch.optparse_info & SPECIAL_FLAGS)
-          optparse.on(*switch.optparse_info) do |val|
-            @data[switch.key] = val
-          end
-        end
-      end
-
-      def leaf_verbose_switch(optparse, found_special_flags)
-        flags = ["-v", "--verbose"] - found_special_flags
-        return if flags.empty?
-        optparse.on(*(flags + ["Increase verbosity"])) do
-          @delta_verbosity += 1
-        end
-      end
-
-      def leaf_quiet_switch(optparse, found_special_flags)
-        flags = ["-q", "--quiet"] - found_special_flags
-        return if flags.empty?
-        optparse.on(*(flags + ["Decrease verbosity"])) do
-          @delta_verbosity -= 1
-        end
-      end
-
-      def leaf_help_switch(optparse, found_special_flags)
-        flags = ["-?", "-h", "--help"] - found_special_flags
-        return if flags.empty?
-        optparse.on(*(flags + ["Show help message"])) do
-          @show_help = true
-        end
-      end
-
-      def parse_required_args(remaining, tool, args)
-        tool.required_args.each do |arg_info|
-          if !@show_help && remaining.empty?
-            reason = "No value given for required argument named <#{arg_info.canonical_name}>"
-            raise create_parse_error(args, reason)
-          end
-          @data[arg_info.key] = arg_info.process_value(remaining.shift)
-        end
-        remaining
-      end
-
-      def parse_optional_args(remaining, tool)
-        tool.optional_args.each do |arg_info|
-          break if remaining.empty?
-          @data[arg_info.key] = arg_info.process_value(remaining.shift)
-        end
-        remaining
-      end
-
-      def parse_remaining_args(remaining, tool, args)
-        return if remaining.empty?
-        unless tool.remaining_args
-          if tool.leaf?
-            raise create_parse_error(remaining, "Extra arguments provided")
-          else
-            raise create_parse_error(tool.full_name + args, "Tool not found")
-          end
-        end
-        @data[tool.remaining_args.key] =
-          remaining.map { |arg| tool.remaining_args.process_value(arg) }
-      end
-
-      def create_parse_error(path, reason)
-        OptionParser::ParseError.new(*path).tap do |e|
-          e.reason = reason
         end
       end
     end

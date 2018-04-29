@@ -31,16 +31,18 @@ module Toys
   ##
   # The lookup service that finds a tool given a set of arguments
   #
-  class Lookup
+  class Loader
     def initialize(config_dir_name: nil, config_file_name: nil,
-                   index_file_name: nil, preload_file_name: nil)
+                   index_file_name: nil, preload_file_name: nil,
+                   middleware: [])
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
+      @middleware = middleware
       check_init_options
       @load_worklist = []
-      @tools = {[] => [Tool.new(self, []), nil]}
+      @tools = {[] => [Tool.new([], middleware), nil]}
       @max_priority = @min_priority = 0
     end
 
@@ -101,9 +103,9 @@ module Toys
       end
     end
 
-    def execute(context_base, base_verbosity, args)
+    def execute(context_base, args, verbosity: 0)
       tool = lookup(args)
-      tool.execute(context_base, base_verbosity, args.slice(tool.full_name.length..-1))
+      tool.execute(context_base, args.slice(tool.full_name.length..-1), verbosity: verbosity)
     end
 
     def exact_tool(words)
@@ -119,7 +121,7 @@ module Toys
       end
       parent = get_tool(words[0..-2], priority)
       return nil if parent.nil?
-      tool = Tool.new(self, words)
+      tool = Tool.new(words, @middleware)
       @tools[words] = [tool, priority]
       tool
     end
@@ -225,7 +227,7 @@ module Toys
       child_path = check_path(::File.join(path, child))
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
-      next_remaining = Lookup.next_remaining_words(remaining_words, child_word)
+      next_remaining = Loader.next_remaining_words(remaining_words, child_word)
       handle_path(child_path, next_words, next_remaining, priority)
     end
 

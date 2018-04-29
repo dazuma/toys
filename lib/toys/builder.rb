@@ -32,17 +32,17 @@ module Toys
   # The object context in effect in a toys configuration file
   #
   class Builder
-    def initialize(path, tool, remaining_words, priority, lookup)
+    def initialize(path, tool, remaining_words, priority, loader)
       @path = path
       @tool = tool
       @remaining_words = remaining_words
       @priority = priority
-      @lookup = lookup
+      @loader = loader
     end
 
     def name(word, alias_of: nil, &block)
       word = word.to_s
-      subtool = @lookup.get_tool(@tool.full_name + [word], @priority)
+      subtool = @loader.get_tool(@tool.full_name + [word], @priority)
       return self if subtool.nil?
       if alias_of
         if block
@@ -51,8 +51,8 @@ module Toys
         subtool.make_alias_of_word(alias_of.to_s)
         return self
       end
-      next_remaining = Lookup.next_remaining_words(@remaining_words, word)
-      Builder.build(@path, subtool, next_remaining, @priority, @lookup, block)
+      next_remaining = Loader.next_remaining_words(@remaining_words, word)
+      Builder.build(@path, subtool, next_remaining, @priority, @loader, block)
       self
     end
 
@@ -61,7 +61,7 @@ module Toys
         raise ToolDefinitionError, "Cannot make an alias of the root tool"
       end
       alias_name = @tool.full_name.slice(0..-2) + [word.to_s]
-      alias_tool = @lookup.get_tool(alias_name, @priority)
+      alias_tool = @loader.get_tool(alias_name, @priority)
       alias_tool.make_alias_of(@tool.simple_name) if alias_tool
       self
     end
@@ -73,7 +73,7 @@ module Toys
 
     def include(path)
       @tool.yield_definition do
-        @lookup.include_path(path, @tool.full_name, @remaining_words, @priority)
+        @loader.include_path(path, @tool.full_name, @remaining_words, @priority)
       end
       self
     end
@@ -106,8 +106,11 @@ module Toys
     end
     alias short_desc desc
 
-    def switch(key, *switches, accept: nil, default: nil, doc: nil)
-      @tool.add_switch(key, *switches, accept: accept, default: default, doc: doc)
+    def switch(key, *switches,
+               accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
+      @tool.add_switch(key, *switches,
+                       accept: accept, default: default, doc: doc,
+                       only_unique: only_unique, handler: handler)
       self
     end
 
@@ -145,8 +148,8 @@ module Toys
       binding
     end
 
-    def self.build(path, tool, remaining_words, priority, lookup, source)
-      builder = new(path, tool, remaining_words, priority, lookup)
+    def self.build(path, tool, remaining_words, priority, loader, source)
+      builder = new(path, tool, remaining_words, priority, loader)
       tool.defining_from(path) do
         case source
         when String
@@ -156,6 +159,7 @@ module Toys
         when ::Proc
           builder.instance_eval(&source)
         end
+        tool.finish_definition
       end
       tool
     end

@@ -27,9 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-desc "Perform multiple actions"
+desc "Run multiple tools in order"
 
-switch(:delim, "-d", "--delim=VALUE", default: ",")
+switch(:delim, "-d", "--delim=VALUE", default: ",", doc: "Set the delimiter")
 
 remaining_args(:args)
 
