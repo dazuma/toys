@@ -35,8 +35,6 @@ The source can be found on Github at
 * Standard template lookup in a templates module
 * Standard helper lookup in a helpers module
 * System paths tool
-* Allow executor in group command. Change distinction from group vs leaf to default (help) executor vs custom executor
-* Factor out help implementation so it can be replaced
 * Merge
 
 ## License

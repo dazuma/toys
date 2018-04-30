@@ -52,7 +52,7 @@ module Toys::Utils
       add_switches(optparse)
       if @tool.includes_executor?
         add_positional_arguments(optparse)
-      else
+      elsif !@tool.alias?
         add_command_list(optparse, recursive)
       end
       optparse.to_s

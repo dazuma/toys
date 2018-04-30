@@ -336,7 +336,7 @@ module Toys
 
       def process_value(val)
         return val unless accept
-        n = canonical_switch(key)
+        n = canonical_name
         result = val
         optparse = ::OptionParser.new
         optparse.on("--#{n}=VALUE", accept) { |v| result = v }
