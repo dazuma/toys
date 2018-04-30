@@ -7,8 +7,8 @@ name "tool-1" do
   end
 end
 
-name "collection-1" do
-  desc "file collection-1 short description"
+name "group-1" do
+  desc "file group-1 short description"
 
   name "tool-1-1" do
     desc "file tool-1-1 short description"

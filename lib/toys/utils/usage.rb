@@ -45,7 +45,7 @@ module Toys
 
       def string(recursive: false)
         optparse = ::OptionParser.new
-        optparse.banner = @tool.includes_executor? ? tool_banner : collection_banner
+        optparse.banner = @tool.includes_executor? ? tool_banner : group_banner
         unless @tool.effective_long_desc.empty?
           optparse.separator("")
           optparse.separator(@tool.effective_long_desc)
@@ -76,7 +76,7 @@ module Toys
         banner.join(" ")
       end
 
-      def collection_banner
+      def group_banner
         (["Usage:", @binary_name] + @tool.full_name + ["<command>", "[<options...>]"]).join(" ")
       end
 

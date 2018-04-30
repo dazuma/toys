@@ -33,9 +33,9 @@ require "toys/utils/usage"
 module Toys
   module Middleware
     ##
-    # A middleware that provides a default implementation for collections
+    # A middleware that provides a default implementation for groups
     #
-    class CollectionDefault < Base
+    class GroupDefault < Base
       def config(tool)
         if tool.includes_executor?
           yield

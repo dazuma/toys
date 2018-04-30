@@ -250,7 +250,7 @@ module Toys
       elsif includes_executor?
         "(No description available)"
       else
-        "(A collection of commands)"
+        "(A group of commands)"
       end
     end
 

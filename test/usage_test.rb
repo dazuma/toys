@@ -34,7 +34,7 @@ describe Toys::Utils::Usage do
   let(:tool_name) { ["foo", "bar"] }
   let(:alias_target) { "bar" }
   let(:alias_name) { ["foo", "baz"] }
-  let(:collection_tool) do
+  let(:group_tool) do
     Toys::Tool.new(tool_name, [])
   end
   let(:normal_tool) do
@@ -66,12 +66,12 @@ describe Toys::Utils::Usage do
     end
   end
   let(:loader) { Minitest::Mock.new }
-  let(:collection_loader) do
+  let(:group_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_two], [["foo", "bar"], false])
     m
   end
-  let(:recursive_collection_loader) do
+  let(:recursive_group_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_one_a, subtool_one_b, subtool_two],
              [["foo", "bar"], true])
@@ -79,8 +79,8 @@ describe Toys::Utils::Usage do
   end
 
   describe "banner" do
-    it "is set for a collection" do
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+    it "is set for a group" do
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar <command> [<options...>]", usage_array[0])
       assert_equal("", usage_array[1])
@@ -143,10 +143,10 @@ describe Toys::Utils::Usage do
   end
 
   describe "description" do
-    it "has a default for a collection" do
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+    it "has a default for a group" do
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
-      assert_equal("(A collection of commands)", usage_array[2])
+      assert_equal("(A group of commands)", usage_array[2])
       assert_equal("", usage_array[3])
     end
 
@@ -165,17 +165,17 @@ describe Toys::Utils::Usage do
     end
 
     it "uses the long description if present" do
-      collection_tool.desc = "The short description"
-      collection_tool.long_desc = "The long description"
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+      group_tool.desc = "The short description"
+      group_tool.long_desc = "The long description"
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       assert_equal("The long description", usage_array[2])
       assert_equal("", usage_array[3])
     end
 
     it "uses the short description if no long description is available" do
-      collection_tool.desc = "The short description"
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+      group_tool.desc = "The short description"
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       assert_equal("The short description", usage_array[2])
       assert_equal("", usage_array[3])
@@ -197,22 +197,22 @@ describe Toys::Utils::Usage do
       assert_nil(index)
     end
 
-    it "is set for a collection non-recursive" do
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+    it "is set for a group non-recursive" do
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+\(A collection/, usage_array[index + 1])
+      assert_match(/one\s+\(A group/, usage_array[index + 1])
       assert_match(/two\s+\(No description/, usage_array[index + 2])
       assert_equal(index + 3, usage_array.size)
     end
 
-    it "is set for a collection non-recursive" do
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, recursive_collection_loader)
+    it "is set for a group non-recursive" do
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, recursive_group_loader)
       usage_array = usage.string(recursive: true).split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+\(A collection/, usage_array[index + 1])
+      assert_match(/one\s+\(A group/, usage_array[index + 1])
       assert_match(/one a\s+\(No description/, usage_array[index + 2])
       assert_match(/one b\s+\(No description/, usage_array[index + 3])
       assert_match(/two\s+\(No description/, usage_array[index + 4])
@@ -221,8 +221,8 @@ describe Toys::Utils::Usage do
   end
 
   describe "positional args section" do
-    it "is not present for a collection" do
-      usage = Toys::Utils::Usage.new(collection_tool, binary_name, collection_loader)
+    it "is not present for a group" do
+      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       assert_nil(index)

@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-desc "A collection of system commands for toys"
+desc "A group of system commands for toys"
 
 tool "version" do
   desc "Print current toys version"

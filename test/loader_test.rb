@@ -51,16 +51,16 @@ describe Toys::Loader do
     end
 
     it "finds a subtool directly defined in a config file" do
-      tool = loader.lookup(["collection-1", "tool-1-1"])
+      tool = loader.lookup(["group-1", "tool-1-1"])
       tool.effective_desc.must_equal "file tool-1-1 short description"
       tool.effective_long_desc.must_equal "file tool-1-1 long description"
-      tool.full_name.must_equal ["collection-1", "tool-1-1"]
+      tool.full_name.must_equal ["group-1", "tool-1-1"]
     end
 
-    it "finds a collection directly defined in a config file" do
-      tool = loader.lookup(["collection-1"])
-      tool.effective_desc.must_equal "file collection-1 short description"
-      tool.full_name.must_equal ["collection-1"]
+    it "finds a group directly defined in a config file" do
+      tool = loader.lookup(["group-1"])
+      tool.effective_desc.must_equal "file group-1 short description"
+      tool.full_name.must_equal ["group-1"]
     end
 
     it "finds a tool defined in a file in a config directory" do
@@ -69,10 +69,10 @@ describe Toys::Loader do
       tool.effective_long_desc.must_equal "directory tool-2 long description"
     end
 
-    it "finds the nearest collection directly defined if a query doesn't match" do
-      tool = loader.lookup(["collection-1", "tool-blah"])
-      tool.effective_desc.must_equal "file collection-1 short description"
-      tool.full_name.must_equal ["collection-1"]
+    it "finds the nearest group directly defined if a query doesn't match" do
+      tool = loader.lookup(["group-1", "tool-blah"])
+      tool.effective_desc.must_equal "file group-1 short description"
+      tool.full_name.must_equal ["group-1"]
     end
 
     it "finds the root if a query has no toplevel match" do
@@ -94,22 +94,22 @@ describe Toys::Loader do
     end
 
     it "finds a subtool directly defined" do
-      tool = loader.lookup(["collection-1", "tool-1-3"])
+      tool = loader.lookup(["group-1", "tool-1-3"])
       tool.effective_desc.must_equal "normal tool-1-3 short description"
       tool.effective_long_desc.must_equal "normal tool-1-3 long description"
-      tool.full_name.must_equal ["collection-1", "tool-1-3"]
+      tool.full_name.must_equal ["group-1", "tool-1-3"]
     end
 
-    it "finds a collection directly defined" do
-      tool = loader.lookup(["collection-1"])
+    it "finds a group directly defined" do
+      tool = loader.lookup(["group-1"])
       tool.includes_executor?.must_equal false
-      tool.full_name.must_equal ["collection-1"]
+      tool.full_name.must_equal ["group-1"]
     end
 
-    it "finds the nearest collection directly defined if a query doesn't match" do
-      tool = loader.lookup(["collection-1", "tool-blah"])
+    it "finds the nearest group directly defined if a query doesn't match" do
+      tool = loader.lookup(["group-1", "tool-blah"])
       tool.includes_executor?.must_equal false
-      tool.full_name.must_equal ["collection-1"]
+      tool.full_name.must_equal ["group-1"]
     end
 
     it "finds the root if a query has no toplevel match" do
@@ -119,18 +119,18 @@ describe Toys::Loader do
     end
 
     it "does not load unnecessary files" do
-      loader.lookup(["collection-1", "tool-1-3"])
-      loader.tool_defined?(["collection-1", "tool-1-3"]).must_equal true
-      loader.tool_defined?(["collection-1"]).must_equal true
-      loader.tool_defined?(["collection-1", "tool-1-1"]).must_equal false
+      loader.lookup(["group-1", "tool-1-3"])
+      loader.tool_defined?(["group-1", "tool-1-3"]).must_equal true
+      loader.tool_defined?(["group-1"]).must_equal true
+      loader.tool_defined?(["group-1", "tool-1-1"]).must_equal false
       loader.tool_defined?(["tool-1"]).must_equal false
       loader.lookup(["tool-1"])
       loader.tool_defined?(["tool-1"]).must_equal true
     end
 
-    it "loads all descendants of a collection query" do
+    it "loads all descendants of a group query" do
       loader.lookup([])
-      loader.tool_defined?(["collection-1", "tool-1-3"]).must_equal true
+      loader.tool_defined?(["group-1", "tool-1-3"]).must_equal true
       loader.tool_defined?(["tool-1"]).must_equal true
     end
   end
@@ -185,29 +185,29 @@ describe Toys::Loader do
     end
 
     it "gets an item from a root-level file include" do
-      tool = loader.lookup(["collection-1", "tool-1-1"])
+      tool = loader.lookup(["group-1", "tool-1-1"])
       tool.effective_desc.must_equal "file tool-1-1 short description"
       tool.effective_long_desc.must_equal "file tool-1-1 long description"
     end
 
     it "gets an item from non-root-level include" do
-      tool = loader.lookup(["collection-0", "collection-1", "tool-1-1"])
+      tool = loader.lookup(["group-0", "group-1", "tool-1-1"])
       tool.effective_desc.must_equal "normal tool-1-1 short description"
       tool.effective_long_desc.must_equal "normal tool-1-1 long description"
     end
 
     it "does not load an include if not needed" do
-      loader.lookup(["collection-1", "tool-1-1"])
-      loader.tool_defined?(["collection-1", "tool-1-1"]).must_equal true
-      loader.tool_defined?(["collection-0", "tool-1"]).must_equal false
-      loader.lookup(["collection-0", "tool-1"])
-      loader.tool_defined?(["collection-0", "tool-1"]).must_equal true
+      loader.lookup(["group-1", "tool-1-1"])
+      loader.tool_defined?(["group-1", "tool-1-1"]).must_equal true
+      loader.tool_defined?(["group-0", "tool-1"]).must_equal false
+      loader.lookup(["group-0", "tool-1"])
+      loader.tool_defined?(["group-0", "tool-1"]).must_equal true
     end
 
-    it "loads includes that are descendants of a collection query" do
-      loader.tool_defined?(["collection-0", "collection-1", "tool-1-1"]).must_equal false
-      loader.lookup(["collection-0"])
-      loader.tool_defined?(["collection-0", "collection-1", "tool-1-1"]).must_equal true
+    it "loads includes that are descendants of a group query" do
+      loader.tool_defined?(["group-0", "group-1", "tool-1-1"]).must_equal false
+      loader.lookup(["group-0"])
+      loader.tool_defined?(["group-0", "group-1", "tool-1-1"]).must_equal true
     end
   end
 end

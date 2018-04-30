@@ -29,7 +29,7 @@
 
 require "logger"
 
-require "toys/middleware/collection_default"
+require "toys/middleware/group_default"
 require "toys/middleware/set_verbosity"
 require "toys/middleware/show_tool_help"
 require "toys/middleware/show_usage_errors"
@@ -75,7 +75,7 @@ module Toys
     #
     DEFAULT_MIDDLEWARE = [
       Middleware::ShowUsageErrors.new,
-      Middleware::CollectionDefault.new,
+      Middleware::GroupDefault.new,
       Middleware::ShowToolHelp.new,
       Middleware::SetVerbosity.new
     ].freeze
