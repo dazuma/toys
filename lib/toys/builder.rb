@@ -108,14 +108,11 @@ module Toys
 
     def expand(template_class, *args)
       unless template_class.is_a?(::Class)
-        template_class = template_class.to_s
-        file_name =
-          template_class
-          .gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }
-          .downcase
-        require "toys/templates/#{file_name}"
-        const_name = template_class.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
-        template_class = Templates.const_get(const_name)
+        name = template_class.to_s
+        template_class = Templates.lookup(name)
+        if template_class.nil?
+          raise ToolDefinitionError, "Template not found: #{name.inspect}"
+        end
       end
       template = template_class.new(*args)
       yield template if block_given?

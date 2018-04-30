@@ -29,6 +29,8 @@
 
 require "helper"
 
+require "toys/utils/usage"
+
 describe Toys::Utils::Usage do
   let(:binary_name) { "toys" }
   let(:tool_name) { ["foo", "bar"] }

@@ -32,10 +32,8 @@ The source can be found on Github at
 * Document methods
 * Write overall documentation
 * Decide about highline integration
-* Standard template lookup in a templates module
-* Standard helper lookup in a helpers module
-* System paths tool
 * Output formats middleware
+* System paths tool
 
 ## License
 

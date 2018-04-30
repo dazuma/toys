@@ -27,27 +27,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-##
-# Toys is a Ruby library and command line tool that lets you build your own
-# command line suite of tools (with commands and subcommands) using a Ruby DSL.
-# You can define commands globally or configure special commands scoped to
-# individual directories.
-#
+require "toys/utils/module_lookup"
+
 module Toys
   ##
-  # Namespace for common utility classes
+  # Namespace for common templates
   #
-  module Utils; end
+  module Templates
+    def self.lookup(name)
+      Utils::ModuleLookup.lookup(:templates, name)
+    end
+  end
 end
-
-require "toys/builder"
-require "toys/cli"
-require "toys/context"
-require "toys/errors"
-require "toys/helpers"
-require "toys/loader"
-require "toys/middleware"
-require "toys/template"
-require "toys/templates"
-require "toys/tool"
-require "toys/version"

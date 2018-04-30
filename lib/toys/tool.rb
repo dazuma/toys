@@ -161,22 +161,19 @@ module Toys
       @helpers[name.to_sym] = block
     end
 
-    def use_module(mod)
+    def use_module(name)
       check_definition_state
-      case mod
+      case name
       when ::Module
-        @modules << mod
+        @modules << name
       when ::Symbol
-        mod = mod.to_s
-        file_name =
-          mod
-          .gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }
-          .downcase
-        require "toys/helpers/#{file_name}"
-        const_name = mod.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
-        @modules << Helpers.const_get(const_name)
+        mod = Helpers.lookup(name.to_s)
+        if mod.nil?
+          raise ToolDefinitionError, "Module not found: #{name.inspect}"
+        end
+        @modules << mod
       else
-        raise ToolDefinitionError, "Illegal helper module name: #{mod.inspect}"
+        raise ToolDefinitionError, "Illegal helper module name: #{name.inspect}"
       end
     end
 

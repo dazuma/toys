@@ -40,7 +40,7 @@ describe Toys::Tool do
   let(:tool) { Toys::Tool.new([tool_name], []) }
   let(:subtool) { Toys::Tool.new([tool_name, subtool_name], []) }
   let(:subtool2) { Toys::Tool.new([tool_name, subtool2_name], []) }
-  let(:full_tool) { Toys::Tool.new([full_tool_name], Toys::CLI::DEFAULT_MIDDLEWARE) }
+  let(:full_tool) { Toys::Tool.new([full_tool_name], Toys::CLI.default_middleware_stack) }
   let(:logger) {
     Logger.new(StringIO.new).tap do |lgr|
       lgr.level = Logger::WARN

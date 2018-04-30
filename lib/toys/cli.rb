@@ -29,11 +29,6 @@
 
 require "logger"
 
-require "toys/middleware/group_default"
-require "toys/middleware/set_verbosity"
-require "toys/middleware/show_tool_help"
-require "toys/middleware/show_usage_errors"
-
 module Toys
   ##
   # A Toys-based CLI
@@ -68,17 +63,6 @@ module Toys
     # @return [String]
     #
     DEFAULT_BINARY_NAME = "toys".freeze
-
-    ##
-    # Default middleware stack
-    # @return [Array]
-    #
-    DEFAULT_MIDDLEWARE = [
-      Middleware::ShowUsageErrors.new,
-      Middleware::GroupDefault.new,
-      Middleware::ShowToolHelp.new,
-      Middleware::SetVerbosity.new
-    ].freeze
 
     def initialize(
       binary_name: nil,
@@ -146,12 +130,21 @@ module Toys
           config_file_name: DEFAULT_FILE_NAME,
           index_file_name: DEFAULT_FILE_NAME,
           preload_file_name: DEFAULT_PRELOAD_NAME,
-          middleware: DEFAULT_MIDDLEWARE
+          middleware: default_middleware_stack
         )
         cli.add_path_hierarchy
         cli.add_standard_paths
         cli.add_config_paths(BUILTINS_PATH)
         cli
+      end
+
+      def default_middleware_stack
+        [
+          Middleware.lookup(:show_usage_errors).new,
+          Middleware.lookup(:group_default).new,
+          Middleware.lookup(:show_tool_help).new,
+          Middleware.lookup(:set_verbosity).new
+        ]
       end
 
       def default_logger

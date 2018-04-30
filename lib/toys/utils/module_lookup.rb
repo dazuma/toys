@@ -27,27 +27,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-##
-# Toys is a Ruby library and command line tool that lets you build your own
-# command line suite of tools (with commands and subcommands) using a Ruby DSL.
-# You can define commands globally or configure special commands scoped to
-# individual directories.
-#
 module Toys
-  ##
-  # Namespace for common utility classes
-  #
-  module Utils; end
-end
+  module Utils
+    ##
+    # Helper that does module lookups
+    #
+    module ModuleLookup
+      class << self
+        def to_path_name(str)
+          str.to_s.gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }.downcase
+        end
 
-require "toys/builder"
-require "toys/cli"
-require "toys/context"
-require "toys/errors"
-require "toys/helpers"
-require "toys/loader"
-require "toys/middleware"
-require "toys/template"
-require "toys/templates"
-require "toys/tool"
-require "toys/version"
+        def to_module_name(str)
+          str.to_s.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
+        end
+
+        def lookup!(collection, name)
+          require "toys/#{to_path_name(collection)}/#{to_path_name(name)}"
+          ::Toys.const_get(to_module_name(collection)).const_get(to_module_name(name))
+        end
+
+        def lookup(collection, name)
+          lookup!(collection, name)
+        rescue ::NameError, ::LoadError
+          nil
+        end
+      end
+    end
+  end
+end
