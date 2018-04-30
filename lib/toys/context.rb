@@ -34,48 +34,96 @@ module Toys
   # The object context in effect during the execution of a tool.
   #
   class Context
+    ##
+    # Context key for the verbosity value. Verbosity is an integer defaulting
+    # to 0, with higher values meaning more verbose and lower meaning quieter.
+    # @return [Symbol]
+    #
+    VERBOSITY = :__verbosity
+
+    ##
+    # Context key for the `Toys::Tool` object being executed.
+    # @return [Symbol]
+    #
+    TOOL = :__tool
+
+    ##
+    # Context key for the full name of the tool being executed. Value is an
+    # array of strings.
+    # @return [Symbol]
+    #
+    TOOL_NAME = :__tool_name
+
+    ##
+    # Context key for the active `Toys::Loader` object.
+    # @return [Symbol]
+    #
+    LOADER = :__loader
+
+    ##
+    # Context key for the active `Logger` object.
+    # @return [Symbol]
+    #
+    LOGGER = :__logger
+
+    ##
+    # Context key for the name of the toys binary. Value is a string.
+    # @return [Symbol]
+    #
+    BINARY_NAME = :__binary_name
+
+    ##
+    # Context key for the argument list passed to the current tool. Value is
+    # an array of strings.
+    # @return [Symbol]
+    #
+    ARGS = :__args
+
+    ##
+    # Context key for the usage error raised. Value is a string if there was
+    # an error, or nil if there was no error.
+    # @return [Symbol]
+    #
+    USAGE_ERROR = :__usage_error
+
     def initialize(context_base, data)
       @_context_base = context_base
       @_data = data
-      @_data[:__loader] = context_base.loader
-      @_data[:__binary_name] = context_base.binary_name
-      @_data[:__logger] = context_base.logger
+      @_data[LOADER] = context_base.loader
+      @_data[BINARY_NAME] = context_base.binary_name
+      @_data[LOGGER] = context_base.logger
     end
 
     def verbosity
-      @_data[:__verbosity]
+      @_data[VERBOSITY]
     end
 
     def tool
-      @_data[:__tool]
+      @_data[TOOL]
     end
 
     def tool_name
-      @_data[:__tool_name]
+      @_data[TOOL_NAME]
     end
 
     def args
-      @_data[:__args]
-    end
-
-    def optparse
-      @_data[:__optparse]
+      @_data[ARGS]
     end
 
     def usage_error
-      @_data[:__usage_error]
+      @_data[USAGE_ERROR]
     end
 
     def logger
-      @_data[:__logger]
+      @_data[LOGGER]
     end
 
     def loader
-      @_data[:__loader]
+      @_data[LOADER]
     end
 
     def binary_name
-      @_data[:__binary_name]
+      @_data[BINARY_NAME]
     end
 
     def [](key)
@@ -93,7 +141,7 @@ module Toys
     end
 
     def run(*args, exit_on_nonzero_status: false)
-      code = @_context_base.run(args.flatten, verbosity: @_data[:__verbosity])
+      code = @_context_base.run(args.flatten, verbosity: @_data[VERBOSITY])
       exit(code) if exit_on_nonzero_status && !code.zero?
       code
     end

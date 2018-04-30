@@ -222,7 +222,7 @@ module Toys
     end
 
     def finish_definition
-      unless alias?
+      if !alias? && !@definition_finished
         config_proc = proc {}
         middleware_stack.reverse.each do |middleware|
           config_proc = make_config_proc(middleware, config_proc)
@@ -357,8 +357,8 @@ module Toys
       def initialize(tool)
         @tool = tool
         @data = @tool.default_data.dup
-        @data[:__tool] = tool
-        @data[:__tool_name] = tool.full_name
+        @data[Context::TOOL] = tool
+        @data[Context::TOOL_NAME] = tool.full_name
       end
 
       def execute(context_base, args, verbosity: 0)
@@ -368,7 +368,7 @@ module Toys
         context = create_child_context(context_base)
 
         original_level = context.logger.level
-        context.logger.level = context_base.base_level - @data[:__verbosity]
+        context.logger.level = context_base.base_level - @data[Context::VERBOSITY]
         begin
           perform_execution(context)
         ensure
@@ -380,16 +380,15 @@ module Toys
 
       def parse_args(args, base_verbosity)
         optparse = create_option_parser
-        @data[:__optparse] = optparse
-        @data[:__verbosity] = base_verbosity
-        @data[:__args] = args
-        @data[:__usage_error] = nil
+        @data[Context::VERBOSITY] = base_verbosity
+        @data[Context::ARGS] = args
+        @data[Context::USAGE_ERROR] = nil
         remaining = optparse.parse(args)
         remaining = parse_required_args(remaining, args)
         remaining = parse_optional_args(remaining)
         parse_remaining_args(remaining, args)
       rescue ::OptionParser::ParseError => e
-        @data[:__usage_error] = e.message
+        @data[Context::USAGE_ERROR] = e.message
       end
 
       def create_option_parser

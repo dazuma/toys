@@ -32,12 +32,13 @@ module Toys
   # The object context in effect in a toys configuration file
   #
   class Builder
-    def initialize(path, tool, remaining_words, priority, loader)
+    def initialize(path, tool, remaining_words, priority, loader, type)
       @path = path
       @tool = tool
       @remaining_words = remaining_words
       @priority = priority
       @loader = loader
+      @type = type
     end
 
     def tool(word, alias_of: nil, &block)
@@ -52,14 +53,34 @@ module Toys
         return self
       end
       next_remaining = Loader.next_remaining_words(@remaining_words, word)
-      Builder.build(@path, subtool, next_remaining, @priority, @loader, block)
+      Builder.build(@path, subtool, next_remaining, @priority, @loader, block, :tool)
       self
     end
     alias name tool
 
+    def append(word, &block)
+      word = word.to_s
+      subtool = @loader.get_tool(@tool.full_name + [word], nil)
+      next_remaining = Loader.next_remaining_words(@remaining_words, word)
+      Builder.build(@path, subtool, next_remaining, @priority, @loader, block, :append)
+      self
+    end
+
+    def group(word, &block)
+      word = word.to_s
+      subtool = @loader.get_tool(@tool.full_name + [word], @priority)
+      return self if subtool.nil?
+      next_remaining = Loader.next_remaining_words(@remaining_words, word)
+      Builder.build(@path, subtool, next_remaining, @priority, @loader, block, :group)
+      self
+    end
+
     def alias_as(word)
       if @tool.root?
         raise ToolDefinitionError, "Cannot make an alias of the root tool"
+      end
+      if @type == :group || @type == :append
+        raise ToolDefinitionError, "Cannot make an alias of a group"
       end
       alias_name = @tool.full_name.slice(0..-2) + [word.to_s]
       alias_tool = @loader.get_tool(alias_name, @priority)
@@ -68,6 +89,12 @@ module Toys
     end
 
     def alias_of(word)
+      if @tool.root?
+        raise ToolDefinitionError, "Cannot make the root tool an alias"
+      end
+      if @type == :group || @type == :append
+        raise ToolDefinitionError, "Cannot make a group an alias"
+      end
       @tool.make_alias_of(word.to_s)
       self
     end
@@ -97,11 +124,17 @@ module Toys
     end
 
     def long_desc(desc)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot set the description when appending"
+      end
       @tool.long_desc = desc
       self
     end
 
     def desc(desc)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot set the description when appending"
+      end
       @tool.desc = desc
       self
     end
@@ -109,6 +142,9 @@ module Toys
 
     def switch(key, *switches,
                accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot add a switch when appending"
+      end
       @tool.add_switch(key, *switches,
                        accept: accept, default: default, doc: doc,
                        only_unique: only_unique, handler: handler)
@@ -116,31 +152,49 @@ module Toys
     end
 
     def required_arg(key, accept: nil, doc: nil)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot add an argument when appending"
+      end
       @tool.add_required_arg(key, accept: accept, doc: doc)
       self
     end
 
     def optional_arg(key, accept: nil, default: nil, doc: nil)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot add an argument when appending"
+      end
       @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
       self
     end
 
     def remaining_args(key, accept: nil, default: [], doc: nil)
+      if @type == :append
+        raise ToolDefinitionError, "Cannot add an argument when appending"
+      end
       @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
       self
     end
 
     def execute(&block)
+      if @type == :group || @type == :append
+        raise ToolDefinitionError, "Cannot set the executor of a group"
+      end
       @tool.executor = block
       self
     end
 
     def helper(name, &block)
+      if @type == :group || @type == :append
+        raise ToolDefinitionError, "Cannot add a helper to a group"
+      end
       @tool.add_helper(name, &block)
       self
     end
 
     def use(mod)
+      if @type == :group || @type == :append
+        raise ToolDefinitionError, "Cannot use a helper module in a group"
+      end
       @tool.use_module(mod)
       self
     end
@@ -149,20 +203,28 @@ module Toys
       binding
     end
 
-    def self.build(path, tool, remaining_words, priority, loader, source)
-      builder = new(path, tool, remaining_words, priority, loader)
-      tool.defining_from(path) do
-        case source
-        when String
-          # rubocop:disable Security/Eval
-          eval(source, builder._binding, path, 1)
-          # rubocop:enable Security/Eval
-        when ::Proc
-          builder.instance_eval(&source)
+    def self.build(path, tool, remaining_words, priority, loader, source, type)
+      builder = new(path, tool, remaining_words, priority, loader, type)
+      if type == :append
+        eval_source(builder, path, source)
+      else
+        tool.defining_from(path) do
+          eval_source(builder, path, source)
+          tool.finish_definition
         end
-        tool.finish_definition
       end
       tool
+    end
+
+    def self.eval_source(builder, path, source)
+      case source
+      when String
+        # rubocop:disable Security/Eval
+        eval(source, builder._binding, path, 1)
+        # rubocop:enable Security/Eval
+      when ::Proc
+        builder.instance_eval(&source)
+      end
     end
   end
 end

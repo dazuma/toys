@@ -36,11 +36,11 @@ module Toys
     #
     class SetVerbosity < Base
       def config(tool)
-        tool.add_switch(:__verbosity, "-v", "--verbose",
+        tool.add_switch(Context::VERBOSITY, "-v", "--verbose",
                         doc: "Increase verbosity",
                         handler: ->(_val, cur) { cur + 1 },
                         only_unique: true)
-        tool.add_switch(:__verbosity, "-q", "--quiet",
+        tool.add_switch(Context::VERBOSITY, "-q", "--quiet",
                         doc: "Decrease verbosity",
                         handler: ->(_val, cur) { cur - 1 },
                         only_unique: true)

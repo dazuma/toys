@@ -34,7 +34,7 @@ module Toys
     #
     class Usage
       def self.from_context(context)
-        new(context[:__tool], context[:__binary_name], context[:__loader])
+        new(context[Context::TOOL], context[Context::BINARY_NAME], context[Context::LOADER])
       end
 
       def initialize(tool, binary_name, loader)

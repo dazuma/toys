@@ -36,8 +36,6 @@ The source can be found on Github at
 * Standard helper lookup in a helpers module
 * System paths tool
 * Output formats middleware
-* Add-to collection
-* Well known keys as constants on Context
 
 ## License
 

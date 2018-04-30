@@ -37,8 +37,8 @@ module Toys
     #
     class ShowUsageErrors < Base
       def execute(context)
-        if context[:__usage_error]
-          puts(context[:__usage_error])
+        if context[Context::USAGE_ERROR]
+          puts(context[Context::USAGE_ERROR])
           puts("")
           puts(Utils::Usage.from_context(context).string)
           context.exit(-1)

@@ -46,7 +46,7 @@ module Toys
       end
 
       def execute(context)
-        if context[:__tool].includes_executor?
+        if context[Context::TOOL].includes_executor?
           yield
         else
           puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))

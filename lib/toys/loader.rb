@@ -116,7 +116,7 @@ module Toys
     def get_tool(words, priority)
       if tool_defined?(words)
         tool, tool_priority = @tools[words]
-        return tool if tool_priority.nil? || tool_priority == priority
+        return tool if priority.nil? || tool_priority.nil? || tool_priority == priority
         return nil if tool_priority > priority
       end
       parent = get_tool(words[0..-2], priority)
@@ -196,7 +196,7 @@ module Toys
       if ::File.extname(path) == ".rb"
         tool = get_tool(words, priority)
         if tool
-          Builder.build(path, tool, remaining_words, priority, self, ::IO.read(path))
+          Builder.build(path, tool, remaining_words, priority, self, ::IO.read(path), :tool)
         end
       else
         require_preload_in(path)
