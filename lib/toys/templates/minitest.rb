@@ -27,62 +27,64 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys::Templates
-  ##
-  # A template for tools that run minitest
-  #
-  class Minitest
-    include ::Toys::Template
+module Toys
+  module Templates
+    ##
+    # A template for tools that run minitest
+    #
+    class Minitest
+      include Template
 
-    def initialize(opts = {})
-      @name = opts[:name] || "test"
-      @libs = opts[:libs] || ["lib"]
-      @files = opts[:files] || ["test/test*.rb"]
-      @warnings = opts.include?(:warnings) ? opts[:warnings] : true
-    end
+      def initialize(opts = {})
+        @name = opts[:name] || "test"
+        @libs = opts[:libs] || ["lib"]
+        @files = opts[:files] || ["test/test*.rb"]
+        @warnings = opts.include?(:warnings) ? opts[:warnings] : true
+      end
 
-    attr_accessor :name
-    attr_accessor :libs
-    attr_accessor :files
-    attr_accessor :warnings
+      attr_accessor :name
+      attr_accessor :libs
+      attr_accessor :files
+      attr_accessor :warnings
 
-    to_expand do |template|
-      name(template.name) do
-        desc "Run minitest"
+      to_expand do |template|
+        name(template.name) do
+          desc "Run minitest"
 
-        use :exec
+          use :exec
 
-        switch(
-          :warnings, "-w", "--[no-]warnings",
-          default: template.warnings,
-          doc: "Turn on Ruby warnings (defaults to #{template.warnings})"
-        )
-        remaining_args(:tests, doc: "Paths to the tests to run (defaults to all tests)")
+          switch(
+            :warnings, "-w", "--[no-]warnings",
+            default: template.warnings,
+            doc: "Turn on Ruby warnings (defaults to #{template.warnings})"
+          )
+          remaining_args(:tests, doc: "Paths to the tests to run (defaults to all tests)")
 
-        execute do
-          ruby_args = []
-          unless template.libs.empty?
-            lib_path = template.libs.join(::File::PATH_SEPARATOR)
-            ruby_args << "-I#{lib_path}"
-          end
-          ruby_args << "-w" if self[:warnings]
-
-          tests = self[:tests]
-          if tests.empty?
-            Array(template.files).each do |pattern|
-              tests.concat(::Dir.glob(pattern))
+          execute do
+            ruby_args = []
+            unless template.libs.empty?
+              lib_path = template.libs.join(::File::PATH_SEPARATOR)
+              ruby_args << "-I#{lib_path}"
             end
-            tests.uniq!
-          end
+            ruby_args << "-w" if self[:warnings]
 
-          result = ruby(ruby_args, in_from: :controller) do |controller|
-            tests.each do |file|
-              controller.in.puts("load '#{file}'")
+            tests = self[:tests]
+            if tests.empty?
+              Array(template.files).each do |pattern|
+                tests.concat(::Dir.glob(pattern))
+              end
+              tests.uniq!
             end
-          end
-          if result.error?
-            logger.error("Minitest failed!")
-            exit(result.exit_code)
+
+            result = ruby(ruby_args, in_from: :controller) do |controller|
+              tests.each do |file|
+                controller.in.puts("load '#{file}'")
+              end
+            end
+            if result.error?
+              logger.error("Minitest failed!")
+              exit(result.exit_code)
+            end
           end
         end
       end

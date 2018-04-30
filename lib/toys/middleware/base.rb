@@ -27,17 +27,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys::Middleware
-  ##
-  # A base middleware with a no-op implementation
-  #
-  class Base
-    def config(_tool)
-      yield
-    end
+module Toys
+  module Middleware
+    ##
+    # A base middleware with a no-op implementation
+    #
+    class Base
+      def config(_tool)
+        yield
+      end
 
-    def execute(_context)
-      yield
+      def execute(_context)
+        yield
+      end
     end
   end
 end

@@ -27,90 +27,92 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys::Utils
-  ##
-  # Helper that generates usage text
-  #
-  class Usage
-    def self.from_context(context)
-      new(context[:__tool], context[:__binary_name], context[:__loader])
-    end
+module Toys
+  module Utils
+    ##
+    # Helper that generates usage text
+    #
+    class Usage
+      def self.from_context(context)
+        new(context[:__tool], context[:__binary_name], context[:__loader])
+      end
 
-    def initialize(tool, binary_name, loader)
-      @tool = tool
-      @binary_name = binary_name
-      @loader = loader
-    end
+      def initialize(tool, binary_name, loader)
+        @tool = tool
+        @binary_name = binary_name
+        @loader = loader
+      end
 
-    def string(recursive: false)
-      optparse = ::OptionParser.new
-      optparse.banner = @tool.includes_executor? ? tool_banner : collection_banner
-      unless @tool.effective_long_desc.empty?
+      def string(recursive: false)
+        optparse = ::OptionParser.new
+        optparse.banner = @tool.includes_executor? ? tool_banner : collection_banner
+        unless @tool.effective_long_desc.empty?
+          optparse.separator("")
+          optparse.separator(@tool.effective_long_desc)
+        end
+        add_switches(optparse)
+        if @tool.includes_executor?
+          add_positional_arguments(optparse)
+        elsif !@tool.alias?
+          add_command_list(optparse, recursive)
+        end
+        optparse.to_s
+      end
+
+      private
+
+      def tool_banner
+        banner = ["Usage:", @binary_name] + @tool.full_name
+        banner << "[<options...>]" unless @tool.switches.empty?
+        @tool.required_args.each do |arg_info|
+          banner << "<#{arg_info.canonical_name}>"
+        end
+        @tool.optional_args.each do |arg_info|
+          banner << "[<#{arg_info.canonical_name}>]"
+        end
+        if @tool.remaining_args
+          banner << "[<#{@tool.remaining_args.canonical_name}...>]"
+        end
+        banner.join(" ")
+      end
+
+      def collection_banner
+        (["Usage:", @binary_name] + @tool.full_name + ["<command>", "[<options...>]"]).join(" ")
+      end
+
+      def add_switches(optparse)
+        return if @tool.switches.empty?
         optparse.separator("")
-        optparse.separator(@tool.effective_long_desc)
-      end
-      add_switches(optparse)
-      if @tool.includes_executor?
-        add_positional_arguments(optparse)
-      elsif !@tool.alias?
-        add_command_list(optparse, recursive)
-      end
-      optparse.to_s
-    end
-
-    private
-
-    def tool_banner
-      banner = ["Usage:", @binary_name] + @tool.full_name
-      banner << "[<options...>]" unless @tool.switches.empty?
-      @tool.required_args.each do |arg_info|
-        banner << "<#{arg_info.canonical_name}>"
-      end
-      @tool.optional_args.each do |arg_info|
-        banner << "[<#{arg_info.canonical_name}>]"
-      end
-      if @tool.remaining_args
-        banner << "[<#{@tool.remaining_args.canonical_name}...>]"
-      end
-      banner.join(" ")
-    end
-
-    def collection_banner
-      (["Usage:", @binary_name] + @tool.full_name + ["<command>", "[<options...>]"]).join(" ")
-    end
-
-    def add_switches(optparse)
-      return if @tool.switches.empty?
-      optparse.separator("")
-      optparse.separator("Options:")
-      @tool.switches.each do |switch|
-        optparse.on(*switch.optparse_info)
-      end
-    end
-
-    def add_positional_arguments(optparse)
-      args_to_display = @tool.required_args + @tool.optional_args
-      args_to_display << @tool.remaining_args if @tool.remaining_args
-      return if args_to_display.empty?
-      optparse.separator("")
-      optparse.separator("Positional arguments:")
-      args_to_display.each do |arg_info|
-        optparse.separator("    #{arg_info.canonical_name.ljust(31)}  #{arg_info.doc.first}")
-        (arg_info.doc[1..-1] || []).each do |d|
-          optparse.separator("                                     #{d}")
+        optparse.separator("Options:")
+        @tool.switches.each do |switch|
+          optparse.on(*switch.optparse_info)
         end
       end
-    end
 
-    def add_command_list(optparse, recursive)
-      name_len = @tool.full_name.length
-      subtools = @loader.list_subtools(@tool.full_name, recursive)
-      return if subtools.empty?
-      optparse.separator("")
-      optparse.separator("Commands:")
-      subtools.each do |subtool|
-        tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
-        optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
+      def add_positional_arguments(optparse)
+        args_to_display = @tool.required_args + @tool.optional_args
+        args_to_display << @tool.remaining_args if @tool.remaining_args
+        return if args_to_display.empty?
+        optparse.separator("")
+        optparse.separator("Positional arguments:")
+        args_to_display.each do |arg_info|
+          optparse.separator("    #{arg_info.canonical_name.ljust(31)}  #{arg_info.doc.first}")
+          (arg_info.doc[1..-1] || []).each do |d|
+            optparse.separator("                                     #{d}")
+          end
+        end
+      end
+
+      def add_command_list(optparse, recursive)
+        name_len = @tool.full_name.length
+        subtools = @loader.list_subtools(@tool.full_name, recursive)
+        return if subtools.empty?
+        optparse.separator("")
+        optparse.separator("Commands:")
+        subtools.each do |subtool|
+          tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
+          optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
+        end
       end
     end
   end

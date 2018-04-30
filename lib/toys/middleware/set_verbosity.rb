@@ -29,21 +29,23 @@
 
 require "toys/middleware/base"
 
-module Toys::Middleware
-  ##
-  # A middleware that provides switches for editing the verbosity
-  #
-  class SetVerbosity < Base
-    def config(tool)
-      tool.add_switch(:__verbosity, "-v", "--verbose",
-                      doc: "Increase verbosity",
-                      handler: ->(_val, cur) { cur + 1 },
-                      only_unique: true)
-      tool.add_switch(:__verbosity, "-q", "--quiet",
-                      doc: "Decrease verbosity",
-                      handler: ->(_val, cur) { cur - 1 },
-                      only_unique: true)
-      yield
+module Toys
+  module Middleware
+    ##
+    # A middleware that provides switches for editing the verbosity
+    #
+    class SetVerbosity < Base
+      def config(tool)
+        tool.add_switch(:__verbosity, "-v", "--verbose",
+                        doc: "Increase verbosity",
+                        handler: ->(_val, cur) { cur + 1 },
+                        only_unique: true)
+        tool.add_switch(:__verbosity, "-q", "--quiet",
+                        doc: "Decrease verbosity",
+                        handler: ->(_val, cur) { cur - 1 },
+                        only_unique: true)
+        yield
+      end
     end
   end
 end

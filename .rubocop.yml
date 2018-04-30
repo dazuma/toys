@@ -19,8 +19,6 @@ Metrics/PerceivedComplexity:
   Max: 10
 Style/BracesAroundHashParameters:
   Enabled: false
-Style/ClassAndModuleChildren:
-  Enabled: false
 Style/FormatStringToken:
   Enabled: false
 Style/GuardClause:

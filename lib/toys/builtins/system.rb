@@ -29,7 +29,7 @@
 
 desc "A collection of system commands for toys"
 
-name "version" do
+tool "version" do
   desc "Print current toys version"
 
   execute do
@@ -37,7 +37,7 @@ name "version" do
   end
 end
 
-name "update" do
+tool "update" do
   desc "Update toys if a newer version is available"
 
   use :exec

@@ -27,37 +27,39 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys::Templates
-  ##
-  # A template for tools that run rubocop
-  #
-  class Rubocop
-    include ::Toys::Template
+module Toys
+  module Templates
+    ##
+    # A template for tools that run rubocop
+    #
+    class Rubocop
+      include Template
 
-    def initialize(opts = {})
-      @name = opts[:name] || "rubocop"
-      @fail_on_error = opts.include?(:fail_on_error) ? opts[:fail_on_error] : true
-      @options = opts[:options] || []
-    end
+      def initialize(opts = {})
+        @name = opts[:name] || "rubocop"
+        @fail_on_error = opts.include?(:fail_on_error) ? opts[:fail_on_error] : true
+        @options = opts[:options] || []
+      end
 
-    attr_accessor :name
-    attr_accessor :fail_on_error
-    attr_accessor :options
+      attr_accessor :name
+      attr_accessor :fail_on_error
+      attr_accessor :options
 
-    to_expand do |template|
-      name(template.name) do
-        desc "Run RuboCop"
+      to_expand do |template|
+        name(template.name) do
+          desc "Run RuboCop"
 
-        use :exec
+          use :exec
 
-        execute do
-          require "rubocop"
-          cli = ::RuboCop::CLI.new
-          logger.info "Running RuboCop..."
-          result = cli.run(template.options)
-          if result.nonzero?
-            logger.error "RuboCop failed!"
-            exit(1) if template.fail_on_error
+          execute do
+            require "rubocop"
+            cli = ::RuboCop::CLI.new
+            logger.info "Running RuboCop..."
+            result = cli.run(template.options)
+            if result.nonzero?
+              logger.error "RuboCop failed!"
+              exit(1) if template.fail_on_error
+            end
           end
         end
       end

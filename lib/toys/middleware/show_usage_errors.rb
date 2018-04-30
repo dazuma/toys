@@ -30,19 +30,21 @@
 require "toys/middleware/base"
 require "toys/utils/usage"
 
-module Toys::Middleware
-  ##
-  # A middleware that shows usage errors
-  #
-  class ShowUsageErrors < Base
-    def execute(context)
-      if context[:__usage_error]
-        puts(context[:__usage_error])
-        puts("")
-        puts(::Toys::Utils::Usage.from_context(context).string)
-        context.exit(-1)
-      else
-        yield
+module Toys
+  module Middleware
+    ##
+    # A middleware that shows usage errors
+    #
+    class ShowUsageErrors < Base
+      def execute(context)
+        if context[:__usage_error]
+          puts(context[:__usage_error])
+          puts("")
+          puts(Utils::Usage.from_context(context).string)
+          context.exit(-1)
+        else
+          yield
+        end
       end
     end
   end

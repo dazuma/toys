@@ -30,25 +30,27 @@
 require "toys/middleware/base"
 require "toys/utils/usage"
 
-module Toys::Middleware
-  ##
-  # A middleware that provides a default implementation for collections
-  #
-  class CollectionDefault < Base
-    def config(tool)
-      if tool.includes_executor?
-        yield
-      else
-        tool.add_switch(:_recursive, "-r", "--[no-]recursive",
-                        doc: "Show all subcommands recursively")
+module Toys
+  module Middleware
+    ##
+    # A middleware that provides a default implementation for collections
+    #
+    class CollectionDefault < Base
+      def config(tool)
+        if tool.includes_executor?
+          yield
+        else
+          tool.add_switch(:_recursive, "-r", "--[no-]recursive",
+                          doc: "Show all subcommands recursively")
+        end
       end
-    end
 
-    def execute(context)
-      if context[:__tool].includes_executor?
-        yield
-      else
-        puts(::Toys::Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+      def execute(context)
+        if context[:__tool].includes_executor?
+          yield
+        else
+          puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+        end
       end
     end
   end

@@ -39,9 +39,9 @@ describe Toys::Loader do
     File.join(__dir__, "lookup-cases")
   }
 
-  describe "config path with config items" do
+  describe "path with config items" do
     before do
-      loader.add_config_paths(File.join(cases_dir, "config-items"))
+      loader.add_paths(File.join(cases_dir, "config-items"))
     end
 
     it "finds a tool directly defined in a config file" do
@@ -82,9 +82,9 @@ describe Toys::Loader do
     end
   end
 
-  describe "ordinary path with some hierarchical files" do
+  describe "config path with some hierarchical files" do
     before do
-      loader.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
+      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
     it "finds a tool directly defined" do
@@ -137,7 +137,7 @@ describe Toys::Loader do
 
   describe "collisions between definitions" do
     before do
-      loader.add_paths(File.join(cases_dir, "collision"))
+      loader.add_config_paths(File.join(cases_dir, "collision"))
     end
 
     it "allows loading if the collision isn't actually traversed" do
@@ -154,18 +154,18 @@ describe Toys::Loader do
   end
 
   describe "priority between definitions" do
-    it "chooses from the config path if that has higher priority" do
-      loader.add_config_paths(File.join(cases_dir, "config-items"))
-      loader.add_paths(File.join(cases_dir, "normal-file-hierarchy"))
+    it "chooses from the earlier path" do
+      loader.add_paths(File.join(cases_dir, "config-items"))
+      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"))
 
       tool = loader.lookup(["tool-1"])
       tool.effective_desc.must_equal "file tool-1 short description"
       tool.effective_long_desc.must_equal "file tool-1 long description"
     end
 
-    it "chooses from the directory path if that has higher priority" do
-      loader.add_config_paths(File.join(cases_dir, "config-items"))
-      loader.add_paths(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+    it "honors the high-priority flag" do
+      loader.add_paths(File.join(cases_dir, "config-items"))
+      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
 
       tool = loader.lookup(["tool-1"])
       tool.effective_desc.must_equal "normal tool-1 short description"
@@ -175,7 +175,7 @@ describe Toys::Loader do
 
   describe "includes" do
     before do
-      loader.add_paths(File.join(cases_dir, "items-with-includes"))
+      loader.add_config_paths(File.join(cases_dir, "items-with-includes"))
     end
 
     it "gets an item from a root-level directory include" do

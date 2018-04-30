@@ -29,9 +29,11 @@
 
 require "fileutils"
 
-module Toys::Helpers
-  ##
-  # File system utilities. See the "fileutils" standard library.
-  #
-  FileUtils = ::FileUtils
+module Toys
+  module Helpers
+    ##
+    # File system utilities. See the "fileutils" standard library.
+    #
+    FileUtils = ::FileUtils
+  end
 end

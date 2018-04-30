@@ -40,7 +40,7 @@ module Toys
       @loader = loader
     end
 
-    def name(word, alias_of: nil, &block)
+    def tool(word, alias_of: nil, &block)
       word = word.to_s
       subtool = @loader.get_tool(@tool.full_name + [word], @priority)
       return self if subtool.nil?
@@ -55,6 +55,7 @@ module Toys
       Builder.build(@path, subtool, next_remaining, @priority, @loader, block)
       self
     end
+    alias name tool
 
     def alias_as(word)
       if @tool.root?

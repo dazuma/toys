@@ -46,22 +46,6 @@ module Toys
       @max_priority = @min_priority = 0
     end
 
-    def add_paths(paths, high_priority: false)
-      paths = Array(paths)
-      paths = paths.reverse if high_priority
-      paths.each do |path|
-        add_path(path, high_priority: high_priority)
-      end
-      self
-    end
-
-    def add_path(path, high_priority: false)
-      path = check_path(path)
-      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      @load_worklist << [path, [], priority]
-      self
-    end
-
     def add_config_paths(paths, high_priority: false)
       paths = Array(paths)
       paths = paths.reverse if high_priority
@@ -72,6 +56,22 @@ module Toys
     end
 
     def add_config_path(path, high_priority: false)
+      path = check_path(path)
+      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      @load_worklist << [path, [], priority]
+      self
+    end
+
+    def add_paths(paths, high_priority: false)
+      paths = Array(paths)
+      paths = paths.reverse if high_priority
+      paths.each do |path|
+        add_path(path, high_priority: high_priority)
+      end
+      self
+    end
+
+    def add_path(path, high_priority: false)
       path = check_path(path, type: :dir)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
       if @config_file_name

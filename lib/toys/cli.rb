@@ -100,17 +100,17 @@ module Toys
       @context_base = Context::Base.new(@loader, binary_name, logger)
     end
 
-    def add_paths(paths)
-      @loader.add_paths(paths)
-      self
-    end
-
     def add_config_paths(paths)
       @loader.add_config_paths(paths)
       self
     end
 
-    def add_config_path_hierarchy(path = nil, base = "/")
+    def add_paths(paths)
+      @loader.add_paths(paths)
+      self
+    end
+
+    def add_path_hierarchy(path = nil, base = "/")
       path ||= ::Dir.pwd
       paths = []
       loop do
@@ -120,17 +120,18 @@ module Toys
         break if next_path == path
         path = next_path
       end
-      @loader.add_config_paths(paths)
+      @loader.add_paths(paths)
       self
     end
 
-    def add_standard_config_paths
+    def add_standard_paths
       toys_path = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
       if toys_path.empty?
         toys_path << ::ENV["HOME"] if ::ENV["HOME"]
-        toys_path << "/etc" if File.directory?("/etc") && ::File.readable?("/etc")
+        toys_path << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
       end
-      @loader.add_config_paths(toys_path)
+      @loader.add_paths(toys_path)
+      self
     end
 
     def run(*args)
@@ -147,9 +148,9 @@ module Toys
           preload_file_name: DEFAULT_PRELOAD_NAME,
           middleware: DEFAULT_MIDDLEWARE
         )
-        cli.add_config_path_hierarchy
-        cli.add_standard_config_paths
-        cli.add_paths(BUILTINS_PATH)
+        cli.add_path_hierarchy
+        cli.add_standard_paths
+        cli.add_config_paths(BUILTINS_PATH)
         cli
       end
 
