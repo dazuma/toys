@@ -1,0 +1,11 @@
+--no-private
+--title=Toys
+--markup=markdown
+--embed-mixin=ClassMethods
+--main=README.md
+--exclude=./lib/toys/builtins/**/*.rb
+./lib/**/*.rb
+-
+README.md
+LICENSE.md
+CHANGELOG.md

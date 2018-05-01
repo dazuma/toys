@@ -30,23 +30,66 @@
 module Toys
   module Utils
     ##
-    # Helper that does module lookups
+    # A helper module that provides methods to do module lookups. This is
+    # used to obtain named helpers, middleware, and templates from the
+    # respective modules.
+    #
+    # You generally do not need to use these module methods directly. Instead
+    # use the convenience methods {Toys::Helpers.lookup},
+    # {Toys::Middleware.lookup}, or {Toys::Templates.lookup}.
     #
     module ModuleLookup
       class << self
+        ##
+        # Convert the given string to a path element. Specifically, converts
+        # to `lower_snake_case`.
+        #
+        # @param [String,Symbol] str String to convert.
+        # @return [String] Converted string
+        #
         def to_path_name(str)
           str.to_s.gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }.downcase
         end
 
+        ##
+        # Convert the given string to a module name. Specifically, converts
+        # to `UpperCamelCase`.
+        #
+        # @param [String,Symbol] str String to convert.
+        # @return [String] Converted string
+        #
         def to_module_name(str)
           str.to_s.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
         end
 
+        ##
+        # Obtain a named module from the given collection. Raises an exception
+        # on failure.
+        #
+        # @param [String,Symbol] collection The collection to search. Typical
+        #     values are `:helpers`, `:middleware`, and `:templates`.
+        # @param [String,Symbol] name The name of the module to return.
+        #
+        # @return [Module] The specified module
+        # @raise [LoadError] No Ruby file containing the given module could
+        #     be found.
+        # @raise [NameError] The given module was not defined.
+        #
         def lookup!(collection, name)
           require "toys/#{to_path_name(collection)}/#{to_path_name(name)}"
           ::Toys.const_get(to_module_name(collection)).const_get(to_module_name(name))
         end
 
+        ##
+        # Obtain a named module from the given collection. Returns `nil` on
+        # failure.
+        #
+        # @param [String,Symbol] collection The collection to search. Typical
+        #     values are `:helpers`, `:middleware`, and `:templates`.
+        # @param [String,Symbol] name The name of the module to return.
+        #
+        # @return [Module,nil] The specified module, or `nil` if not found.
+        #
         def lookup(collection, name)
           lookup!(collection, name)
         rescue ::NameError, ::LoadError
