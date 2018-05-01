@@ -64,6 +64,17 @@ module Toys
     #
     DEFAULT_BINARY_NAME = "toys".freeze
 
+    ##
+    # Default help text for the root tool
+    # @return [String]
+    #
+    DEFAULT_ROOT_DESC =
+      "Toys is your personal command line tool. You can add to the list of" \
+      " commands below by writing scripts in Ruby using a simple DSL, and" \
+      " toys will organize and document them, and make them available" \
+      " globally or scoped to specific directories that you choose." \
+      " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
+
     def initialize(
       binary_name: nil,
       logger: nil,
@@ -71,7 +82,8 @@ module Toys
       config_file_name: nil,
       index_file_name: nil,
       preload_file_name: nil,
-      middleware: []
+      middleware: [],
+      root_desc: nil
     )
       logger ||= self.class.default_logger
       @loader = Loader.new(
@@ -79,7 +91,8 @@ module Toys
         config_file_name: config_file_name,
         index_file_name: index_file_name,
         preload_file_name: preload_file_name,
-        middleware: middleware
+        middleware: middleware,
+        root_desc: root_desc
       )
       @context_base = Context::Base.new(@loader, binary_name, logger)
     end
@@ -130,7 +143,8 @@ module Toys
           config_file_name: DEFAULT_FILE_NAME,
           index_file_name: DEFAULT_FILE_NAME,
           preload_file_name: DEFAULT_PRELOAD_NAME,
-          middleware: default_middleware_stack
+          middleware: default_middleware_stack,
+          root_desc: DEFAULT_ROOT_DESC
         )
         cli.add_path_hierarchy
         cli.add_standard_paths

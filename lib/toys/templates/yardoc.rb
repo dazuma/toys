@@ -49,7 +49,7 @@ module Toys
 
       to_expand do |template|
         name(template.name) do
-          desc "Run yardoc"
+          desc "Run yardoc on the current project."
 
           use :exec
 

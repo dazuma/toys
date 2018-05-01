@@ -47,7 +47,7 @@ module Toys
 
       to_expand do |template|
         name(template.name) do
-          desc "Run RuboCop"
+          desc "Run rubocop on the current project."
 
           use :exec
 

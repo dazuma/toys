@@ -45,7 +45,7 @@ module Toys
 
       to_expand do |template|
         name(template.name) do
-          desc "Clean built files and directories"
+          desc "Clean built files and directories."
 
           use :file_utils
 

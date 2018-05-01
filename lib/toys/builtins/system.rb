@@ -30,7 +30,7 @@
 desc "A group of system commands for toys"
 
 tool "version" do
-  desc "Print current toys version"
+  desc "Print current toys version."
 
   execute do
     puts ::Toys::VERSION
@@ -38,7 +38,7 @@ tool "version" do
 end
 
 tool "update" do
-  desc "Update toys if a newer version is available"
+  desc "Update toys if a newer version is available."
 
   use :exec
 

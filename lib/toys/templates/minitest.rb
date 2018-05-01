@@ -49,7 +49,7 @@ module Toys
 
       to_expand do |template|
         name(template.name) do
-          desc "Run minitest"
+          desc "Run minitest on the current project."
 
           use :exec
 

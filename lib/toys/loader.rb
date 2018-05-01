@@ -34,7 +34,7 @@ module Toys
   class Loader
     def initialize(config_dir_name: nil, config_file_name: nil,
                    index_file_name: nil, preload_file_name: nil,
-                   middleware: [])
+                   middleware: [], root_desc: nil)
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
@@ -42,7 +42,9 @@ module Toys
       @middleware = middleware
       check_init_options
       @load_worklist = []
-      @tools = {[] => [Tool.new([], middleware), nil]}
+      root_tool = Tool.new([], middleware)
+      root_tool.long_desc = root_desc if root_desc
+      @tools = {[] => [root_tool, nil]}
       @max_priority = @min_priority = 0
     end
 
