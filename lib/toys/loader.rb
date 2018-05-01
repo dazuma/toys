@@ -113,17 +113,24 @@ module Toys
       @tools[words].first
     end
 
-    def get_tool(words, priority)
+    def get_tool(words, priority, assume_parent: false)
       if tool_defined?(words)
         tool, tool_priority = @tools[words]
         return tool if priority.nil? || tool_priority.nil? || tool_priority == priority
         return nil if tool_priority > priority
       end
-      parent = get_tool(words[0..-2], priority)
-      return nil if parent.nil?
+      unless assume_parent
+        parent = get_tool(words[0..-2], priority)
+        return nil if parent.nil?
+      end
       tool = Tool.new(words, @middleware)
       @tools[words] = [tool, priority]
       tool
+    end
+
+    def put_tool!(tool, priority = nil)
+      @tools[tool.full_name] = [tool, priority]
+      self
     end
 
     def tool_defined?(words)

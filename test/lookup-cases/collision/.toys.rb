@@ -1,4 +1,4 @@
-name "tool-1" do
+tool "tool-1" do
   desc "index tool-1 short description"
   long_desc "index tool-1 long description"
 
@@ -7,7 +7,7 @@ name "tool-1" do
   end
 end
 
-name "tool-2" do
+tool "tool-2" do
   desc "index tool-2 short description"
   long_desc "index tool-2 long description"
 

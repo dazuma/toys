@@ -48,7 +48,6 @@ module Toys
 
       @default_data = {}
       @switches = []
-      @used_switches = []
       @required_args = []
       @optional_args = []
       @remaining_args = nil
@@ -69,6 +68,7 @@ module Toys
     attr_reader :executor
     attr_reader :alias_target
     attr_reader :middleware_stack
+    attr_reader :definition_path
 
     def simple_name
       full_name.last
@@ -83,7 +83,7 @@ module Toys
     end
 
     def includes_executor?
-      @executor.is_a?(::Proc)
+      executor.is_a?(::Proc)
     end
 
     def alias?
@@ -102,11 +102,21 @@ module Toys
       !@long_desc.nil? || !@desc.nil?
     end
 
+    def includes_arguments?
+      !default_data.empty? || !switches.empty? ||
+        !required_args.empty? || !optional_args.empty? || !remaining_args.nil?
+    end
+
+    def includes_helpers?
+      !helpers.empty? || !modules.empty?
+    end
+
     def includes_definition?
-      !@default_data.empty? || !@switches.empty? ||
-        !@required_args.empty? || !@optional_args.empty? ||
-        !@remaining_args.nil? || includes_executor? ||
-        !@helpers.empty? || !@modules.empty?
+      alias? || includes_arguments? || includes_executor? || includes_helpers?
+    end
+
+    def used_switches
+      @switches.reduce([]) { |used, switch| used + switch.switches }.uniq
     end
 
     def defining_from(path)
@@ -159,6 +169,7 @@ module Toys
         raise ToolDefinitionError, "Illegal helper name: #{name_str.inspect}"
       end
       @helpers[name.to_sym] = block
+      self
     end
 
     def use_module(name)
@@ -175,6 +186,7 @@ module Toys
       else
         raise ToolDefinitionError, "Illegal helper module name: #{name.inspect}"
       end
+      self
     end
 
     def add_switch(key, *switches,
@@ -185,32 +197,34 @@ module Toys
       switches += Array(doc)
       switch_info = SwitchInfo.new(key, switches, handler)
       if only_unique
-        switch_info.remove_switches(@used_switches)
+        switch_info.remove_switches(used_switches)
       end
       if switch_info.active?
         @default_data[key] = default
         @switches << switch_info
-        @used_switches += switch_info.switches
-        @used_switches.uniq!
       end
+      self
     end
 
     def add_required_arg(key, accept: nil, doc: nil)
       check_definition_state
       @default_data[key] = nil
       @required_args << ArgInfo.new(key, accept, Array(doc))
+      self
     end
 
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
       check_definition_state
       @default_data[key] = default
       @optional_args << ArgInfo.new(key, accept, Array(doc))
+      self
     end
 
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
       check_definition_state
       @default_data[key] = default
       @remaining_args = ArgInfo.new(key, accept, Array(doc))
+      self
     end
 
     def executor=(executor)
@@ -390,6 +404,7 @@ module Toys
 
       def create_option_parser
         optparse = ::OptionParser.new
+        # The following clears out the Officious (hidden default switches).
         optparse.remove
         optparse.remove
         optparse.new
@@ -453,7 +468,12 @@ module Toys
 
       def perform_execution(context)
         executor = proc do
-          context.instance_eval(&@tool.executor)
+          if @tool.includes_executor?
+            context.instance_eval(&@tool.executor)
+          else
+            context.logger.fatal("No implementation for #{@tool.display_name.inspect}")
+            context.exit(-1)
+          end
         end
         @tool.middleware_stack.reverse.each do |middleware|
           executor = make_executor(middleware, context, executor)

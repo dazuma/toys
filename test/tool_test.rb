@@ -36,11 +36,13 @@ describe Toys::Tool do
   let(:full_tool_name) { "fool" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
+  let(:alias_name) { "alz" }
   let(:root_tool) { Toys::Tool.new([], []) }
   let(:tool) { Toys::Tool.new([tool_name], []) }
   let(:subtool) { Toys::Tool.new([tool_name, subtool_name], []) }
   let(:subtool2) { Toys::Tool.new([tool_name, subtool2_name], []) }
   let(:full_tool) { Toys::Tool.new([full_tool_name], Toys::CLI.default_middleware_stack) }
+  let(:alias_tool) { Toys::Tool.new([tool_name, alias_name], []) }
   let(:logger) {
     Logger.new(StringIO.new).tap do |lgr|
       lgr.level = Logger::WARN
@@ -48,28 +50,70 @@ describe Toys::Tool do
   }
   let(:context_base) { Toys::Context::Base.new(loader, binary_name, logger) }
 
-  describe "names" do
+  describe "name field" do
     it "works for a root tool" do
       assert_nil(root_tool.simple_name)
       assert_equal([], root_tool.full_name)
+      assert_equal(true, root_tool.root?)
+      assert_equal("", root_tool.display_name)
     end
 
     it "works for a toplevel tool" do
       assert_equal(tool_name, tool.simple_name)
       assert_equal([tool_name], tool.full_name)
+      assert_equal(false, tool.root?)
+      assert_equal(tool_name, tool.display_name)
     end
 
     it "works for a subtool" do
       assert_equal(subtool_name, subtool.simple_name)
       assert_equal([tool_name, subtool_name], subtool.full_name)
+      assert_equal(false, subtool.root?)
+      assert_equal("#{tool_name} #{subtool_name}", subtool.display_name)
     end
   end
 
-  describe "definition state" do
+  describe "description" do
     it "defaults to empty" do
       assert_equal(false, tool.includes_description?)
-      assert_equal(false, tool.includes_definition?)
-      assert_equal(false, tool.includes_executor?)
+      assert_match(/^\(/, tool.effective_desc)
+      assert_match(/^\(/, tool.effective_long_desc)
+    end
+
+    it "handles set of short description" do
+      tool.desc = "hi"
+      assert_equal(true, tool.includes_description?)
+      assert_equal("hi", tool.effective_desc)
+      assert_equal("hi", tool.effective_long_desc)
+    end
+
+    it "handles set of long description" do
+      tool.long_desc = "ho"
+      assert_equal(true, tool.includes_description?)
+      assert_match(/^\(/, tool.effective_desc)
+      assert_equal("ho", tool.effective_long_desc)
+    end
+
+    it "handles set of both descriptions" do
+      tool.desc = "hi"
+      tool.long_desc = "ho"
+      assert_equal(true, tool.includes_description?)
+      assert_equal("hi", tool.effective_desc)
+      assert_equal("ho", tool.effective_long_desc)
+    end
+  end
+
+  describe "definition path" do
+    it "starts at nil" do
+      assert_nil(tool.definition_path)
+    end
+
+    it "can be set" do
+      tool.defining_from("path1") do
+        tool.desc = "hi"
+        tool.long_desc = "hiho"
+      end
+      assert_equal("path1", tool.definition_path)
     end
 
     it "prevents defining from multiple paths" do
@@ -81,148 +125,204 @@ describe Toys::Tool do
         tool.desc = "ho"
       end
     end
+
+    it "prevents nested defining paths" do
+      tool.defining_from("path1") do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.defining_from("path2") do
+          end
+        end
+      end
+    end
+
+    it "yields defining paths" do
+      tool.defining_from("path1") do
+        tool.yield_definition do
+          tool.defining_from("path2") do
+            tool.desc = "hi"
+          end
+        end
+      end
+      assert_equal("path1", tool.definition_path)
+    end
   end
 
   describe "option parsing" do
     it "allows empty arguments when none are specified" do
-      assertions = self
+      assert_equal(false, tool.includes_definition?)
+      test = self
       tool.executor = proc do
-        assertions.assert_equal({}, options)
-        assertions.assert_equal([], args)
+        test.assert_equal({}, options)
       end
       assert_equal(0, tool.execute(context_base, []))
     end
 
     it "defaults simple boolean switch to nil" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa", doc: "hi there")
+      assert_equal(true, tool.includes_definition?)
       tool.executor = proc do
-        assertions.assert_equal({a: nil}, options)
+        test.assert_equal({a: nil}, options)
       end
       assert_equal(0, tool.execute(context_base, []))
     end
 
     it "sets simple boolean switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa", doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a: true}, options)
+        test.assert_equal({a: true}, options)
       end
       assert_equal(0, tool.execute(context_base, ["--aa"]))
     end
 
     it "defaults value switch to nil" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa=VALUE", doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a: nil}, options)
+        test.assert_equal({a: nil}, options)
       end
       assert_equal(0, tool.execute(context_base, []))
     end
 
     it "honors given default of a value switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a: "hehe"}, options)
+        test.assert_equal({a: "hehe"}, options)
       end
       assert_equal(0, tool.execute(context_base, []))
     end
 
     it "sets value switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa=VALUE", doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a: "hoho"}, options)
+        test.assert_equal({a: "hoho"}, options)
       end
       assert_equal(0, tool.execute(context_base, ["--aa", "hoho"]))
     end
 
     it "converts a value switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a: 1234}, options)
+        test.assert_equal({a: 1234}, options)
       end
       assert_equal(0, tool.execute(context_base, ["--aa", "1234"]))
     end
 
     it "checks match of a value switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, doc: "hi there")
       tool.executor = proc do
-        assertions.assert_match(/invalid argument: --aa a1234/, usage_error)
+        test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
       assert_equal(0, tool.execute(context_base, ["--aa", "a1234"]))
     end
 
     it "defaults the name of a value switch" do
-      assertions = self
+      test = self
       tool.add_switch(:a_bc, doc: "hi there")
       tool.executor = proc do
-        assertions.assert_equal({a_bc: "hoho"}, options)
+        test.assert_equal({a_bc: "hoho"}, options)
       end
       assert_equal(0, tool.execute(context_base, ["--a-bc", "hoho"]))
     end
 
     it "errors on an unknown switch" do
-      assertions = self
+      test = self
       tool.executor = proc do
-        assertions.assert_match(/invalid option: -a/, usage_error)
+        test.assert_match(/invalid option: -a/, usage_error)
       end
       assert_equal(0, tool.execute(context_base, ["-a"]))
     end
+  end
+
+  describe "used_switches" do
+    it "starts empty" do
+      assert_equal([], tool.used_switches)
+    end
+
+    it "handles switches" do
+      tool.add_switch(:a, "-a", "--aa")
+      assert_equal(["-a", "--aa"], tool.used_switches)
+    end
+
+    it "removes duplicate switches" do
+      tool.add_switch(:a, "-a", "--aa")
+      tool.add_switch(:b, "-b", "--aa")
+      assert_equal(["-a", "--aa", "-b"], tool.used_switches)
+    end
+
+    it "handles special syntax" do
+      tool.add_switch(:a, "--[no-]aa")
+      tool.add_switch(:b, "-bVALUE", "--bb=VALUE")
+      assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_switches)
+    end
+  end
+
+  describe "argument parsing" do
+    it "allows empty arguments when none are specified" do
+      assert_equal(false, tool.includes_definition?)
+      test = self
+      tool.executor = proc do
+        test.assert_equal([], args)
+      end
+      assert_equal(0, tool.execute(context_base, []))
+    end
 
     it "recognizes args in order" do
-      assertions = self
+      test = self
       tool.add_optional_arg(:b)
+      assert_equal(true, tool.includes_definition?)
       tool.add_optional_arg(:c)
       tool.add_required_arg(:a, doc: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
-        assertions.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
+        test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
       end
       assert_equal(0, tool.execute(context_base, ["foo", "bar", "baz", "hello", "world"]))
     end
 
     it "omits optional args if not provided" do
-      assertions = self
+      test = self
       tool.add_optional_arg(:b)
       tool.add_optional_arg(:c)
       tool.add_required_arg(:a, doc: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
-        assertions.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
+        test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
       end
       assert_equal(0, tool.execute(context_base, ["foo", "bar"]))
     end
 
     it "errors if required args are missing" do
-      assertions = self
+      test = self
       tool.add_required_arg(:a)
       tool.add_required_arg(:b)
       tool.executor = proc do
-        assertions.assert_match(/No value given for required argument named <b>/, usage_error)
+        test.assert_match(/No value given for required argument named <b>/, usage_error)
       end
       assert_equal(0, tool.execute(context_base, ["foo"]))
     end
 
     it "errors if there are too many arguments" do
-      assertions = self
+      test = self
       tool.add_optional_arg(:b)
       tool.add_required_arg(:a)
       tool.executor = proc do
-        assertions.assert_match(/Extra arguments provided: baz/, usage_error)
+        test.assert_match(/Extra arguments provided: baz/, usage_error)
       end
       assert_equal(0, tool.execute(context_base, ["foo", "bar", "baz"]))
     end
 
     it "honors defaults for optional arg" do
-      assertions = self
+      test = self
       tool.add_optional_arg(:b, default: "hello")
       tool.add_required_arg(:a)
       tool.executor = proc do
-        assertions.assert_equal({a: "foo", b: "hello"}, options)
+        test.assert_equal({a: "foo", b: "hello"}, options)
       end
       assert_equal(0, tool.execute(context_base, ["foo"]))
     end
@@ -230,17 +330,17 @@ describe Toys::Tool do
 
   describe "default component stack" do
     it "honors --verbose flag" do
-      assertions = self
+      test = self
       full_tool.executor = proc do
-        assertions.assert_equal(Logger::DEBUG, logger.level)
+        test.assert_equal(Logger::DEBUG, logger.level)
       end
       assert_equal(0, full_tool.execute(context_base, ["-v", "--verbose"]))
     end
 
     it "honors --quiet flag" do
-      assertions = self
+      test = self
       full_tool.executor = proc do
-        assertions.assert_equal(Logger::FATAL, logger.level)
+        test.assert_equal(Logger::FATAL, logger.level)
       end
       assert_equal(0, full_tool.execute(context_base, ["-q", "--quiet"]))
     end
@@ -272,12 +372,12 @@ describe Toys::Tool do
     end
   end
 
-  describe "helper" do
+  describe "helper method" do
     it "can be defined on a tool" do
-      assertions = self
+      test = self
       tool.add_helper("hello_helper") { |val| val * 2 }
       tool.executor = proc do
-        assertions.assert_equal(4, hello_helper(2))
+        test.assert_equal(4, hello_helper(2))
       end
       assert_equal(0, tool.execute(context_base, []))
     end
@@ -291,15 +391,129 @@ describe Toys::Tool do
 
   describe "helper module" do
     it "can be looked up from standard helpers" do
-      assertions = self
+      test = self
       tool.use_module(:file_utils)
       tool.executor = proc do
-        assertions.assert_equal(true, private_methods.include?(:rm_rf))
+        test.assert_equal(true, private_methods.include?(:rm_rf))
       end
       assert_equal(0, tool.execute(context_base, []))
     end
   end
 
-  describe "aliases" do
+  describe "aliasing" do
+    it "starts without" do
+      assert_equal(false, alias_tool.alias?)
+    end
+
+    it "cannot be done on the root tool" do
+      assert_raises(Toys::ToolDefinitionError) do
+        root_tool.make_alias_of(tool_name)
+      end
+    end
+
+    it "cannot be done if description has been set" do
+      alias_tool.desc = "hi"
+      assert_raises(Toys::ToolDefinitionError) do
+        alias_tool.make_alias_of(subtool_name)
+      end
+    end
+
+    it "cannot be done if definition has been set" do
+      alias_tool.executor = proc {}
+      assert_raises(Toys::ToolDefinitionError) do
+        alias_tool.make_alias_of(subtool_name)
+      end
+    end
+
+    it "can be set" do
+      alias_tool.make_alias_of(subtool_name)
+      assert_equal(true, alias_tool.alias?)
+    end
+
+    it "prevents setting of other fields" do
+      alias_tool.make_alias_of(subtool_name)
+      assert_raises(Toys::ToolDefinitionError) do
+        alias_tool.desc = "hi"
+      end
+    end
+  end
+
+  describe "finish_definition" do
+    it "runs middleware config" do
+      assert_equal(true, full_tool.switches.empty?)
+      full_tool.finish_definition
+      assert_equal(false, full_tool.switches.empty?)
+    end
+
+    it "can be called multiple times" do
+      full_tool.finish_definition
+      full_tool.finish_definition
+    end
+
+    it "prevents further editing of description" do
+      full_tool.finish_definition
+      assert_raises(Toys::ToolDefinitionError) do
+        full_tool.desc = "hi"
+      end
+    end
+  end
+
+  describe "execution" do
+    it "handles no executor defined" do
+      assert_equal(-1, tool.execute(context_base, []))
+    end
+
+    it "sets context fields" do
+      test = self
+      tool.add_optional_arg(:arg1)
+      tool.add_optional_arg(:arg2)
+      tool.add_switch(:sw1, "-a")
+      tool.executor = proc do
+        test.assert_equal(0, verbosity)
+        test.assert_equal(test.tool, tool)
+        test.assert_equal(test.tool.full_name, tool_name)
+        test.assert_equal(test.loader, loader)
+        test.assert_instance_of(Logger, logger)
+        test.assert_equal("toys", binary_name)
+        test.assert_equal(["hello", "-a"], args)
+        test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
+      end
+      assert_equal(0, tool.execute(context_base, ["hello", "-a"]))
+    end
+
+    it "supports exit code" do
+      tool.executor = proc do
+        exit(2)
+      end
+      assert_equal(2, tool.execute(context_base, []))
+    end
+
+    it "supports sub-runs" do
+      test = self
+      subtool.add_optional_arg(:arg1)
+      subtool.executor = proc do
+        test.assert_equal("hi", self[:arg1])
+        run(test.tool_name, test.subtool2_name, "ho", exit_on_nonzero_status: true)
+      end
+      subtool2.add_optional_arg(:arg2)
+      subtool2.executor = proc do
+        test.assert_equal("ho", self[:arg2])
+        exit(3)
+      end
+      loader.put_tool!(subtool2)
+      assert_equal(3, subtool.execute(context_base, ["hi"]))
+    end
+
+    it "supports aliases" do
+      test = self
+      subtool2.add_optional_arg(:arg2)
+      subtool2.executor = proc do
+        test.assert_equal("ho", self[:arg2])
+        exit(3)
+      end
+      loader.put_tool!(subtool2)
+      alias_tool.make_alias_of(subtool2_name)
+      assert_equal(3, alias_tool.execute(context_base, ["ho"]))
+    end
   end
 end

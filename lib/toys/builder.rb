@@ -43,7 +43,7 @@ module Toys
 
     def tool(word, alias_of: nil, &block)
       word = word.to_s
-      subtool = @loader.get_tool(@tool.full_name + [word], @priority)
+      subtool = @loader.get_tool(@tool.full_name + [word], @priority, assume_parent: true)
       return self if subtool.nil?
       if alias_of
         if block
@@ -60,7 +60,7 @@ module Toys
 
     def append(word, &block)
       word = word.to_s
-      subtool = @loader.get_tool(@tool.full_name + [word], nil)
+      subtool = @loader.get_tool(@tool.full_name + [word], nil, assume_parent: true)
       next_remaining = Loader.next_remaining_words(@remaining_words, word)
       Builder.build(@path, subtool, next_remaining, @priority, @loader, block, :append)
       self
@@ -68,7 +68,7 @@ module Toys
 
     def group(word, &block)
       word = word.to_s
-      subtool = @loader.get_tool(@tool.full_name + [word], @priority)
+      subtool = @loader.get_tool(@tool.full_name + [word], @priority, assume_parent: true)
       return self if subtool.nil?
       next_remaining = Loader.next_remaining_words(@remaining_words, word)
       Builder.build(@path, subtool, next_remaining, @priority, @loader, block, :group)
@@ -182,7 +182,7 @@ module Toys
 
     def helper(name, &block)
       if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot add a helper to a group"
+        raise ToolDefinitionError, "Cannot define a helper method to a group"
       end
       @tool.add_helper(name, &block)
       self

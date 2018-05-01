@@ -210,4 +210,32 @@ describe Toys::Loader do
       loader.tool_defined?(["group-0", "group-1", "tool-1-1"]).must_equal true
     end
   end
+
+  describe "append" do
+    it "can appear after the group" do
+      loader.add_config_paths(
+        [
+          File.join(cases_dir, "normal-file-hierarchy"),
+          File.join(cases_dir, "append")
+        ]
+      )
+      group = loader.lookup(["group-1"])
+      assert_equal("(A group of commands)", group.effective_desc)
+      subtools = loader.list_subtools(["group-1"], false)
+      assert_equal(3, subtools.size)
+    end
+
+    it "can appear before the group" do
+      loader.add_config_paths(
+        [
+          File.join(cases_dir, "append"),
+          File.join(cases_dir, "normal-file-hierarchy")
+        ]
+      )
+      group = loader.lookup(["group-1"])
+      assert_equal("(A group of commands)", group.effective_desc)
+      subtools = loader.list_subtools(["group-1"], false)
+      assert_equal(3, subtools.size)
+    end
+  end
 end

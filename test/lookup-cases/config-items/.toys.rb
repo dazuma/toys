@@ -1,4 +1,4 @@
-name "tool-1" do
+tool "tool-1" do
   desc "file tool-1 short description"
   long_desc "file tool-1 long description"
 
@@ -7,10 +7,10 @@ name "tool-1" do
   end
 end
 
-name "group-1" do
+tool "group-1" do
   desc "file group-1 short description"
 
-  name "tool-1-1" do
+  tool "tool-1-1" do
     desc "file tool-1-1 short description"
     long_desc "file tool-1-1 long description"
 
