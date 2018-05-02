@@ -43,6 +43,7 @@ tool "update" do
   use :exec
 
   execute do
+    logger.info "Checking rubygems for the latest toys release..."
     version_info = capture("gem query -q -r -e toys")
     if version_info =~ /toys\s\((.+)\)/
       latest_version = ::Gem::Version.new($1)
@@ -50,6 +51,9 @@ tool "update" do
       if latest_version > cur_version
         logger.warn("Updating toys from #{cur_version} to #{latest_version}...")
         sh("gem install toys")
+      elsif latest_version < cur_version
+        logger.warn("Toys is already at experimental version #{cur_version}, which is later than" \
+                    " the latest released version #{latest_version}")
       else
         logger.warn("Toys is already at the latest version: #{latest_version}")
       end
