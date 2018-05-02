@@ -92,15 +92,15 @@ module Toys
       #
       def tool_banner
         banner = ["Usage:", @binary_name] + @tool.full_name
-        banner << "[<options...>]" unless @tool.switches.empty?
-        @tool.required_args.each do |arg_info|
+        banner << "[<options...>]" unless @tool.switch_definitions.empty?
+        @tool.required_arg_definitions.each do |arg_info|
           banner << "<#{arg_info.canonical_name}>"
         end
-        @tool.optional_args.each do |arg_info|
+        @tool.optional_arg_definitions.each do |arg_info|
           banner << "[<#{arg_info.canonical_name}>]"
         end
-        if @tool.remaining_args
-          banner << "[<#{@tool.remaining_args.canonical_name}...>]"
+        if @tool.remaining_args_definition
+          banner << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
         end
         banner.join(" ")
       end
@@ -117,10 +117,10 @@ module Toys
       # optparser to generate documentation for those switches.
       #
       def add_switches(optparse)
-        return if @tool.switches.empty?
+        return if @tool.switch_definitions.empty?
         optparse.separator("")
         optparse.separator("Options:")
-        @tool.switches.each do |switch|
+        @tool.switch_definitions.each do |switch|
           optparse.on(*switch.optparse_info)
         end
       end
@@ -130,8 +130,8 @@ module Toys
       # option parser.
       #
       def add_positional_arguments(optparse)
-        args_to_display = @tool.required_args + @tool.optional_args
-        args_to_display << @tool.remaining_args if @tool.remaining_args
+        args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
+        args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
         return if args_to_display.empty?
         optparse.separator("")
         optparse.separator("Positional arguments:")

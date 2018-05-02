@@ -32,5 +32,5 @@ module Toys
   # Current version of Toys
   # @return [String]
   #
-  VERSION = "0.3.0".freeze
+  VERSION = "0.3.1.dev".freeze
 end

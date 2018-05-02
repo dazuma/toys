@@ -56,10 +56,10 @@ module Toys
       @long_desc = nil
 
       @default_data = {}
-      @switches = []
-      @required_args = []
-      @optional_args = []
-      @remaining_args = nil
+      @switch_definitions = []
+      @required_arg_definitions = []
+      @optional_arg_definitions = []
+      @remaining_args_definition = nil
 
       @helpers = {}
       @modules = []
@@ -75,28 +75,28 @@ module Toys
 
     ##
     # Return a list of all defined switches.
-    # @return [Array<Toys::Tool::SwitchInfo>]
+    # @return [Array<Toys::Tool::SwitchDefinition>]
     #
-    attr_reader :switches
+    attr_reader :switch_definitions
 
     ##
     # Return a list of all defined required positional arguments.
-    # @return [Array<Toys::Tool::ArgInfo>]
+    # @return [Array<Toys::Tool::ArgDefinition>]
     #
-    attr_reader :required_args
+    attr_reader :required_arg_definitions
 
     ##
     # Return a list of all defined optional positional arguments.
-    # @return [Array<Toys::Tool::ArgInfo>]
+    # @return [Array<Toys::Tool::ArgDefinition>]
     #
-    attr_reader :optional_args
+    attr_reader :optional_arg_definitions
 
     ##
     # Return the remaining arguments specification, or `nil` if remaining
     # arguments are currently not supported by this tool.
-    # @return [Toys::Tool::ArgInfo,nil]
+    # @return [Toys::Tool::ArgDefinition,nil]
     #
-    attr_reader :remaining_args
+    attr_reader :remaining_args_definition
 
     ##
     # Return the default argument data.
@@ -215,8 +215,9 @@ module Toys
     # @return [Boolean]
     #
     def includes_arguments?
-      !default_data.empty? || !switches.empty? ||
-        !required_args.empty? || !optional_args.empty? || !remaining_args.nil?
+      !default_data.empty? || !switch_definitions.empty? ||
+        !required_arg_definitions.empty? || !optional_arg_definitions.empty? ||
+        !remaining_args_definition.nil?
     end
 
     ##
@@ -241,7 +242,7 @@ module Toys
     # @return [Array<String>]
     #
     def used_switches
-      @switches.reduce([]) { |used, switch| used + switch.switches }.uniq
+      @switch_definitions.reduce([]) { |used, sdef| used + sdef.switches }.uniq
     end
 
     ##
@@ -352,13 +353,13 @@ module Toys
       switches << "--#{Tool.canonical_switch(key)}=VALUE" if switches.empty?
       switches << accept unless accept.nil?
       switches += Array(doc)
-      switch_info = SwitchInfo.new(key, switches, handler)
+      switch_info = SwitchDefinition.new(key, switches, handler)
       if only_unique
         switch_info.remove_switches(used_switches)
       end
       if switch_info.active?
         @default_data[key] = default
-        @switches << switch_info
+        @switch_definitions << switch_info
       end
       self
     end
@@ -377,7 +378,7 @@ module Toys
     def add_required_arg(key, accept: nil, doc: nil)
       check_definition_state
       @default_data[key] = nil
-      @required_args << ArgInfo.new(key, accept, Array(doc))
+      @required_arg_definitions << ArgDefinition.new(key, accept, Array(doc))
       self
     end
 
@@ -399,7 +400,7 @@ module Toys
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
       check_definition_state
       @default_data[key] = default
-      @optional_args << ArgInfo.new(key, accept, Array(doc))
+      @optional_arg_definitions << ArgDefinition.new(key, accept, Array(doc))
       self
     end
 
@@ -421,7 +422,7 @@ module Toys
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
       check_definition_state
       @default_data[key] = default
-      @remaining_args = ArgInfo.new(key, accept, Array(doc))
+      @remaining_args_definition = ArgDefinition.new(key, accept, Array(doc))
       self
     end
 
@@ -541,9 +542,9 @@ module Toys
     ##
     # Representation of a formal switch.
     #
-    class SwitchInfo
+    class SwitchDefinition
       ##
-      # Create a SwitchInfo
+      # Create a SwitchDefinition
       #
       # @param [Symbol] key This switch will set the given context key.
       # @param [Array<String>] optparse_info The switch definition in
@@ -632,9 +633,9 @@ module Toys
     ##
     # Representation of a formal positional argument
     #
-    class ArgInfo
+    class ArgDefinition
       ##
-      # Create an ArgInfo
+      # Create an ArgDefinition
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [Object] accept An OptionParser acceptor
@@ -738,7 +739,7 @@ module Toys
         optparse.remove
         optparse.new
         optparse.new
-        @tool.switches.each do |switch|
+        @tool.switch_definitions.each do |switch|
           optparse.on(*switch.optparse_info) do |val|
             @data[switch.key] = switch.handler.call(val, @data[switch.key])
           end
@@ -747,7 +748,7 @@ module Toys
       end
 
       def parse_required_args(remaining, args)
-        @tool.required_args.each do |arg_info|
+        @tool.required_arg_definitions.each do |arg_info|
           if remaining.empty?
             reason = "No value given for required argument named <#{arg_info.canonical_name}>"
             raise create_parse_error(args, reason)
@@ -758,7 +759,7 @@ module Toys
       end
 
       def parse_optional_args(remaining)
-        @tool.optional_args.each do |arg_info|
+        @tool.optional_arg_definitions.each do |arg_info|
           break if remaining.empty?
           @data[arg_info.key] = arg_info.process_value(remaining.shift)
         end
@@ -767,15 +768,15 @@ module Toys
 
       def parse_remaining_args(remaining, args)
         return if remaining.empty?
-        unless @tool.remaining_args
+        unless @tool.remaining_args_definition
           if @tool.includes_executor?
             raise create_parse_error(remaining, "Extra arguments provided")
           else
             raise create_parse_error(@tool.full_name + args, "Tool not found")
           end
         end
-        @data[@tool.remaining_args.key] =
-          remaining.map { |arg| @tool.remaining_args.process_value(arg) }
+        @data[@tool.remaining_args_definition.key] =
+          remaining.map { |arg| @tool.remaining_args_definition.process_value(arg) }
       end
 
       def create_parse_error(path, reason)

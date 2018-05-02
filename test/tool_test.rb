@@ -444,9 +444,9 @@ describe Toys::Tool do
 
   describe "finish_definition" do
     it "runs middleware config" do
-      assert_equal(true, full_tool.switches.empty?)
+      assert_equal(true, full_tool.switch_definitions.empty?)
       full_tool.finish_definition
-      assert_equal(false, full_tool.switches.empty?)
+      assert_equal(false, full_tool.switch_definitions.empty?)
     end
 
     it "can be called multiple times" do

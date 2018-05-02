@@ -29,12 +29,11 @@ The source can be found on Github at
 
 ### TODO items
 
-* Figure out the "Switch" name since it's overloaded
-* Write overall documentation
 * Decide about highline integration
 * Output formats middleware
 * System paths tool
 * Split out toys-core gem
+* Write overall documentation
 
 ## License
 
