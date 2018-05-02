@@ -1,5 +1,7 @@
 # Toys
 
+[![Travis-CI Build Status](https://travis-ci.org/dazuma/toys.svg)](https://travis-ci.org/dazuma/toys/)
+
 Toys is a Ruby library and command line tool that lets you build your own
 command line suite of tools (with commands and subcommands) using a Ruby DSL.
 You can define commands globally or configure special commands scoped to
