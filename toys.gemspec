@@ -42,7 +42,8 @@ Gem::Specification.new do |spec|
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*") + Dir.glob("*.md")
+  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*") + Dir.glob("*.md") +
+               [".yardopts"]
   spec.required_ruby_version = ">= 2.2.0"
   spec.require_paths = ["lib"]
 

@@ -38,7 +38,7 @@ module Toys
       def initialize(opts = {})
         @name = opts[:name] || "test"
         @libs = opts[:libs] || ["lib"]
-        @files = opts[:files] || ["test/test*.rb"]
+        @files = opts[:files] || ["test/**/test*.rb"]
         @warnings = opts.include?(:warnings) ? opts[:warnings] : true
       end
 
@@ -48,7 +48,7 @@ module Toys
       attr_accessor :warnings
 
       to_expand do |template|
-        name(template.name) do
+        tool(template.name) do
           desc "Run minitest on the current project."
 
           use :exec

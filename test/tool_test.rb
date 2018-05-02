@@ -37,12 +37,16 @@ describe Toys::Tool do
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
   let(:alias_name) { "alz" }
-  let(:root_tool) { Toys::Tool.new([], []) }
-  let(:tool) { Toys::Tool.new([tool_name], []) }
-  let(:subtool) { Toys::Tool.new([tool_name, subtool_name], []) }
-  let(:subtool2) { Toys::Tool.new([tool_name, subtool2_name], []) }
-  let(:full_tool) { Toys::Tool.new([full_tool_name], Toys::CLI.default_middleware_stack) }
-  let(:alias_tool) { Toys::Tool.new([tool_name, alias_name], []) }
+  let(:root_tool) { Toys::Tool.new([]) }
+  let(:tool) { Toys::Tool.new([tool_name]) }
+  let(:subtool) { Toys::Tool.new([tool_name, subtool_name]) }
+  let(:subtool2) { Toys::Tool.new([tool_name, subtool2_name]) }
+  let(:full_tool) {
+    Toys::Tool.new([full_tool_name]).tap do |t|
+      t.middleware_stack.concat(Toys::CLI.default_middleware_stack)
+    end
+  }
+  let(:alias_tool) { Toys::Tool.new([tool_name, alias_name]) }
   let(:logger) {
     Logger.new(StringIO.new).tap do |lgr|
       lgr.level = Logger::WARN

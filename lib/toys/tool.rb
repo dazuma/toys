@@ -31,12 +31,21 @@ require "optparse"
 
 module Toys
   ##
-  # A tool definition
+  # A Tool is a single command that can be invoked using Toys.
+  # It has a name, a series of one or more words that you use to identify
+  # the tool on the command line. It also has a set of formal switches and
+  # command line arguments supported, and a block that gets run when the
+  # tool is executed.
   #
   class Tool
-    def initialize(full_name, middleware_stack)
-      @full_name = full_name
-      @middleware_stack = middleware_stack.dup
+    ##
+    # Create a new tool.
+    #
+    # @param [Array<String>] full_name The name of the tool
+    #
+    def initialize(full_name)
+      @full_name = full_name.dup.freeze
+      @middleware_stack = []
 
       @definition_path = nil
       @cur_path = nil
@@ -57,89 +66,189 @@ module Toys
       @executor = nil
     end
 
+    ##
+    # Return the name of the tool as an array of strings.
+    # This array may not be modified.
+    # @return [Array<String>]
+    #
     attr_reader :full_name
+
+    ##
+    # Return a list of all defined switches.
+    # @return [Array<Toys::Tool::SwitchInfo>]
+    #
     attr_reader :switches
+
+    ##
+    # Return a list of all defined required positional arguments.
+    # @return [Array<Toys::Tool::ArgInfo>]
+    #
     attr_reader :required_args
+
+    ##
+    # Return a list of all defined optional positional arguments.
+    # @return [Array<Toys::Tool::ArgInfo>]
+    #
     attr_reader :optional_args
+
+    ##
+    # Return the remaining arguments specification, or `nil` if remaining
+    # arguments are currently not supported by this tool.
+    # @return [Toys::Tool::ArgInfo,nil]
+    #
     attr_reader :remaining_args
+
+    ##
+    # Return the default argument data.
+    # @return [Hash]
+    #
     attr_reader :default_data
+
+    ##
+    # Return a list of modules that will be available during execution.
+    # @return [Array<Module>]
+    #
     attr_reader :modules
+
+    ##
+    # Return a list of helper methods that will be available during execution.
+    # @return [Hash{Symbol => Proc}]
+    #
     attr_reader :helpers
+
+    ##
+    # Return the executor block, or `nil` if not present.
+    # @return [Proc,nil]
+    #
     attr_reader :executor
+
+    ##
+    # If this tool is an alias, return the alias target as a local name (i.e.
+    # a single word identifying a sibling of this tool). Returns `nil` if this
+    # tool is not an alias.
+    # @return [String,nil]
+    #
     attr_reader :alias_target
+
+    ##
+    # Returns the middleware stack
+    # @return [Array<Object>]
+    #
     attr_reader :middleware_stack
+
+    ##
+    # Returns the path to the file that contains the definition of this tool.
+    # @return [String]
+    #
     attr_reader :definition_path
 
+    ##
+    # Returns the local name of this tool.
+    # @return [String]
+    #
     def simple_name
       full_name.last
     end
 
+    ##
+    # Returns a displayable name of this tool, generally the full name
+    # delimited by spaces.
+    # @return [String]
+    #
     def display_name
       full_name.join(" ")
     end
 
+    ##
+    # Returns true if this tool is a root tool.
+    # @return [Boolean]
+    #
     def root?
       full_name.empty?
     end
 
+    ##
+    # Returns true if this tool has an executor defined.
+    # @return [Boolean]
+    #
     def includes_executor?
       executor.is_a?(::Proc)
     end
 
+    ##
+    # Returns true if this tool is an alias.
+    # @return [Boolean]
+    #
     def alias?
       !alias_target.nil?
     end
 
+    ##
+    # Returns the effective short description for this tool. This will be
+    # displayed when this tool is listed in a command list.
+    # @return [String]
+    #
     def effective_desc
       @desc || default_desc
     end
 
+    ##
+    # Returns the effective long description for this tool. This will be
+    # displayed as part of the usage for this particular tool.
+    # @return [String]
+    #
     def effective_long_desc
       @long_desc || @desc || default_desc
     end
 
+    ##
+    # Returns true if there is a specific description set for this tool.
+    # @return [Boolean]
+    #
     def includes_description?
       !@long_desc.nil? || !@desc.nil?
     end
 
+    ##
+    # Returns true if at least one switch or positional argument is defined
+    # for this tool.
+    # @return [Boolean]
+    #
     def includes_arguments?
       !default_data.empty? || !switches.empty? ||
         !required_args.empty? || !optional_args.empty? || !remaining_args.nil?
     end
 
+    ##
+    # Returns true if at least one helper method or module is added to this
+    # tool.
+    # @return [Boolean]
+    #
     def includes_helpers?
       !helpers.empty? || !modules.empty?
     end
 
+    ##
+    # Returns true if this tool has any definition information.
+    # @return [Boolean]
+    #
     def includes_definition?
       alias? || includes_arguments? || includes_executor? || includes_helpers?
     end
 
+    ##
+    # Returns a list of switch flags used by this tool.
+    # @return [Array<String>]
+    #
     def used_switches
       @switches.reduce([]) { |used, switch| used + switch.switches }.uniq
     end
 
-    def defining_from(path)
-      raise ToolDefinitionError, "Already being defined" if @cur_path
-      @cur_path = path
-      begin
-        yield
-      ensure
-        @definition_path = @cur_path if includes_description? || includes_definition?
-        @cur_path = nil
-      end
-    end
-
-    def yield_definition
-      saved_path = @cur_path
-      @cur_path = nil
-      begin
-        yield
-      ensure
-        @cur_path = saved_path
-      end
-    end
-
+    ##
+    # Make this tool an alias of the sibling tool with the given local name.
+    #
+    # @param [String] target_word The name of the alias target
+    #
     def make_alias_of(target_word)
       if root?
         raise ToolDefinitionError, "Cannot make the root tool an alias"
@@ -152,16 +261,33 @@ module Toys
       self
     end
 
+    ##
+    # Set the short description.
+    #
+    # @param [String] str The short description
+    #
     def desc=(str)
       check_definition_state
       @desc = str
     end
 
+    ##
+    # Set the long description.
+    #
+    # @param [String] str The long description
+    #
     def long_desc=(str)
       check_definition_state
       @long_desc = str
     end
 
+    ##
+    # Define a helper method that will be available during execution.
+    # Pass the name of the method in the argument, and provide a block with
+    # the method body. Note the method name may not start with an underscore.
+    #
+    # @param [String] name The method name
+    #
     def add_helper(name, &block)
       check_definition_state
       name_str = name.to_s
@@ -172,6 +298,12 @@ module Toys
       self
     end
 
+    ##
+    # Mix in the given module during execution. You may provide the module
+    # itself, or the name of a well-known module under {Toys::Helpers}.
+    #
+    # @param [Module,String] name The module or module name.
+    #
     def use_module(name)
       check_definition_state
       case name
@@ -189,6 +321,31 @@ module Toys
       self
     end
 
+    ##
+    # Add a switch to the current tool. Each switch must specify a key which
+    # the executor may use to obtain the switch value from the context.
+    # You may then provide the switches themselves in `OptionParser` form.
+    #
+    # @param [Symbol] key The key to use to retrieve the value from the
+    #     execution context.
+    # @param [String...] switches The OptionParser definition of the switch.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] default The default value. This is the value that will
+    #     be set in the context if this switch is not provided on the command
+    #     line. Defaults to `nil`.
+    # @param [String,nil] doc The documentation for the switch, which appears
+    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [Boolean] only_unique If true, any switches that are already
+    #     defined in this tool are removed from this switch. For example, if
+    #     an earlier switch uses `-a`, and this switch wants to use both
+    #     `-a` and `-b`, then only `-b` will be assigned to this switch.
+    #     Defaults to false.
+    # @param [Proc,nil] handler An optional handler for setting/updating the
+    #     value. If given, it should take two arguments, the new given value
+    #     and the previous value, and it should return the new value that
+    #     should be set. The default handler simply replaces the previous
+    #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+    #
     def add_switch(key, *switches,
                    accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
       check_definition_state
@@ -206,6 +363,17 @@ module Toys
       self
     end
 
+    ##
+    # Add a required positional argument to the current tool. You must specify
+    # a key which the executor may use to obtain the argument value from the
+    # context.
+    #
+    # @param [Symbol] key The key to use to retrieve the value from the
+    #     execution context.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String,nil] doc The documentation for the switch, which appears
+    #     in the usage documentation. Defaults to `nil` for no documentation.
+    #
     def add_required_arg(key, accept: nil, doc: nil)
       check_definition_state
       @default_data[key] = nil
@@ -213,6 +381,21 @@ module Toys
       self
     end
 
+    ##
+    # Add an optional positional argument to the current tool. You must specify
+    # a key which the executor may use to obtain the argument value from the
+    # context. If an optional argument is not given on the command line, the
+    # value is set to the given default.
+    #
+    # @param [Symbol] key The key to use to retrieve the value from the
+    #     execution context.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] default The default value. This is the value that will
+    #     be set in the context if this argument is not provided on the command
+    #     line. Defaults to `nil`.
+    # @param [String,nil] doc The documentation for the argument, which appears
+    #     in the usage documentation. Defaults to `nil` for no documentation.
+    #
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
       check_definition_state
       @default_data[key] = default
@@ -220,6 +403,21 @@ module Toys
       self
     end
 
+    ##
+    # Specify what should be done with unmatched positional arguments. You must
+    # specify a key which the executor may use to obtain the remaining args
+    # from the context.
+    #
+    # @param [Symbol] key The key to use to retrieve the value from the
+    #     execution context.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] default The default value. This is the value that will
+    #     be set in the context if no unmatched arguments are provided on the
+    #     command line. Defaults to the empty array `[]`.
+    # @param [String,nil] doc The documentation for the remaining arguments,
+    #     which appears in the usage documentation. Defaults to `nil` for no
+    #     documentation.
+    #
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
       check_definition_state
       @default_data[key] = default
@@ -227,11 +425,68 @@ module Toys
       self
     end
 
+    ##
+    # Set the executor for this tool. This is a proc that will be called,
+    # with `self` set to a {Toys::Context}.
+    #
+    # @param [Proc] executor The executor for this tool.
+    #
     def executor=(executor)
       check_definition_state
       @executor = executor
     end
 
+    ##
+    # Execute this tool in the given context.
+    #
+    # @param [Toys::Context::Base] context_base The execution context
+    # @param [Array<String>] args The arguments to pass to the tool. Should
+    #     not include the tool name.
+    # @param [Integer] verbosity The starting verbosity. Defaults to 0.
+    #
+    # @return [Integer] The result code.
+    #
+    def execute(context_base, args, verbosity: 0)
+      finish_definition unless @definition_finished
+      Execution.new(self).execute(context_base, args, verbosity: verbosity)
+    end
+
+    ##
+    # Declare that this tool is now defined in the given path
+    #
+    # @private
+    #
+    def defining_from(path)
+      raise ToolDefinitionError, "Already being defined" if @cur_path
+      @cur_path = path
+      begin
+        yield
+      ensure
+        @definition_path = @cur_path if includes_description? || includes_definition?
+        @cur_path = nil
+      end
+    end
+
+    ##
+    # Relinquish the current path declaration
+    #
+    # @private
+    #
+    def yield_definition
+      saved_path = @cur_path
+      @cur_path = nil
+      begin
+        yield
+      ensure
+        @cur_path = saved_path
+      end
+    end
+
+    ##
+    # Complete definition and run middleware configs
+    #
+    # @private
+    #
     def finish_definition
       if !alias? && !@definition_finished
         config_proc = proc {}
@@ -242,11 +497,6 @@ module Toys
       end
       @definition_finished = true
       self
-    end
-
-    def execute(context_base, args, verbosity: 0)
-      finish_definition unless @definition_finished
-      Execution.new(self).execute(context_base, args, verbosity: verbosity)
     end
 
     private
@@ -282,34 +532,75 @@ module Toys
     end
 
     class << self
+      ## @private
       def canonical_switch(name)
         name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
       end
     end
 
     ##
-    # Representation of a formal switch
+    # Representation of a formal switch.
     #
     class SwitchInfo
+      ##
+      # Create a SwitchInfo
+      #
+      # @param [Symbol] key This switch will set the given context key.
+      # @param [Array<String>] optparse_info The switch definition in
+      #     OptionParser format
+      # @param [Proc,nil] handler An optional handler for setting/updating the
+      #     value. If given, it should take two arguments, the new given value
+      #     and the previous value, and it should return the new value that
+      #     should be set. If `nil`, uses a default handler that just replaces
+      #     the previous value. i.e. the default is effectively
+      #     `-> (val, _prev) { val }`.
+      #
       def initialize(key, optparse_info, handler = nil)
         @key = key
         @optparse_info = optparse_info
-        @handler = handler || ->(val, _cur) { val }
+        @handler = handler || ->(val, _prev) { val }
         @switches = nil
       end
 
+      ##
+      # Returns the key.
+      # @return [Symbol]
+      #
       attr_reader :key
+
+      ##
+      # Returns the OptionParser definition.
+      # @return [Array<String>]
+      #
       attr_reader :optparse_info
+
+      ##
+      # Returns the handler.
+      # @return [Proc]
+      #
       attr_reader :handler
 
+      ##
+      # Returns the list of switches used.
+      # @return [Array<String>]
+      #
       def switches
         @switches ||= optparse_info.map { |s| extract_switch(s) }.flatten
       end
 
+      ##
+      # Returns true if this switch is active. That is, it has a nonempty
+      # switches list.
+      # @return [Boolean]
+      #
       def active?
         !switches.empty?
       end
 
+      ##
+      # Removes the given switches.
+      # @param [Array<String>] switches
+      #
       def remove_switches(switches)
         @optparse_info.select! do |s|
           extract_switch(s).all? { |ss| !switches.include?(ss) }
@@ -318,8 +609,15 @@ module Toys
         self
       end
 
+      ##
+      # Extract the list of switches from an OptionParser format string.
+      #
+      # @private
+      #
       def extract_switch(str)
-        if str =~ /^(-[\?\w])/
+        if !str.is_a?(String)
+          []
+        elsif str =~ /^(-[\?\w])/
           [$1]
         elsif str =~ /^--\[no-\](\w[\w-]*)/
           ["--#{$1}", "--no-#{$1}"]
@@ -332,19 +630,54 @@ module Toys
     end
 
     ##
-    # Representation of a formal argument
+    # Representation of a formal positional argument
     #
     class ArgInfo
+      ##
+      # Create an ArgInfo
+      #
+      # @param [Symbol] key This argument will set the given context key.
+      # @param [Object] accept An OptionParser acceptor
+      # @param [Array<String>] doc An array of documentation strings
+      #
       def initialize(key, accept, doc)
         @key = key
         @accept = accept
         @doc = doc
       end
 
+      ##
+      # Returns the key.
+      # @return [Symbol]
+      #
       attr_reader :key
+
+      ##
+      # Returns the acceptor.
+      # @return [Object]
+      #
       attr_reader :accept
+
+      ##
+      # Returns the documentation strings.
+      # @return [Array<String>]
+      #
       attr_reader :doc
 
+      ##
+      # Return a canonical name for this arg. Used in usage documentation.
+      #
+      # @return [String]
+      #
+      def canonical_name
+        Tool.canonical_switch(key)
+      end
+
+      ##
+      # Process the given value through the acceptor.
+      #
+      # @private
+      #
       def process_value(val)
         return val unless accept
         n = canonical_name
@@ -353,10 +686,6 @@ module Toys
         optparse.on("--#{n}=VALUE", accept) { |v| result = v }
         optparse.parse(["--#{n}", val])
         result
-      end
-
-      def canonical_name
-        Tool.canonical_switch(key)
       end
     end
 

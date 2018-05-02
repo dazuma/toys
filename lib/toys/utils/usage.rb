@@ -30,19 +30,45 @@
 module Toys
   module Utils
     ##
-    # Helper that generates usage text
+    # A helper class that generates usage documentation for a tool.
+    #
+    # This class generates full usage documentation, including description,
+    # switches, and arguments. It is used by middleware that implements help
+    # and related options.
     #
     class Usage
+      ##
+      # Create a usage helper given an execution context.
+      #
+      # @param [Toys::Context] context The current execution context.
+      # @return [Toys::Utils::Usage]
+      #
       def self.from_context(context)
         new(context[Context::TOOL], context[Context::BINARY_NAME], context[Context::LOADER])
       end
 
+      ##
+      # Create a usage helper.
+      #
+      # @param [Toys::Tool] tool The tool for which to generate documentation.
+      # @param [String] binary_name The name of the binary. e.g. `"toys"`.
+      # @param [Toys::Loader] loader A loader that can provide subcommands.
+      #
+      # @return [Toys::Utils::Usage]
+      #
       def initialize(tool, binary_name, loader)
         @tool = tool
         @binary_name = binary_name
         @loader = loader
       end
 
+      ##
+      # Generate a usage string.
+      #
+      # @param [Boolean] recursive If true, and the tool is a group tool,
+      #     display all subcommands recursively. Defaults to false.
+      # @return [String] A usage string.
+      #
       def string(recursive: false)
         optparse = ::OptionParser.new
         optparse.banner = @tool.includes_executor? ? tool_banner : group_banner
@@ -61,6 +87,9 @@ module Toys
 
       private
 
+      #
+      # Returns the banner string for a normal tool
+      #
       def tool_banner
         banner = ["Usage:", @binary_name] + @tool.full_name
         banner << "[<options...>]" unless @tool.switches.empty?
@@ -76,10 +105,17 @@ module Toys
         banner.join(" ")
       end
 
+      #
+      # Returns the banner string for a group
+      #
       def group_banner
         (["Usage:", @binary_name] + @tool.full_name + ["<command>", "[<options...>]"]).join(" ")
       end
 
+      #
+      # Add switches from the tool to the given optionparser. Causes the
+      # optparser to generate documentation for those switches.
+      #
       def add_switches(optparse)
         return if @tool.switches.empty?
         optparse.separator("")
@@ -89,6 +125,10 @@ module Toys
         end
       end
 
+      #
+      # Add documentation for the tool's positional arguments, to the given
+      # option parser.
+      #
       def add_positional_arguments(optparse)
         args_to_display = @tool.required_args + @tool.optional_args
         args_to_display << @tool.remaining_args if @tool.remaining_args
@@ -103,9 +143,13 @@ module Toys
         end
       end
 
+      #
+      # Add documentation for the tool's subcommands, to the given option
+      # parser.
+      #
       def add_command_list(optparse, recursive)
         name_len = @tool.full_name.length
-        subtools = @loader.list_subtools(@tool.full_name, recursive)
+        subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
         return if subtools.empty?
         optparse.separator("")
         optparse.separator("Commands:")

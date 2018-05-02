@@ -33,6 +33,14 @@ module Toys
   ##
   # The object context in effect during the execution of a tool.
   #
+  # The context is generally a hash of key-value pairs.
+  # Keys that begin with two underscores are reserved common elements of the
+  # context such as the tool being executed, or the verbosity level.
+  # Other keys are available for use by your tool. Generally, they are set
+  # by switches and arguments in your tool. Context values may also be set
+  # by middleware. By convention, middleware-set keys begin with a single
+  # underscore.
+  #
   class Context
     ##
     # Context key for the verbosity value. Verbosity is an integer defaulting
@@ -86,6 +94,15 @@ module Toys
     #
     USAGE_ERROR = :__usage_error
 
+    ##
+    # Create a Context object. Applications generally will not need to create
+    # these objects directly; they are created by the tool when it is preparing
+    # for execution.
+    # @private
+    #
+    # @param [Toys::Context::Base] context_base
+    # @param [Hash] data
+    #
     def initialize(context_base, data)
       @_context_base = context_base
       @_data = data
@@ -94,58 +111,130 @@ module Toys
       @_data[LOGGER] = context_base.logger
     end
 
+    ##
+    # Return the verbosity as an integer.
+    # @return [Integer]
+    #
     def verbosity
       @_data[VERBOSITY]
     end
 
+    ##
+    # Return the tool being executed.
+    # @return [Toys::Tool]
+    #
     def tool
       @_data[TOOL]
     end
 
+    ##
+    # Return the name of the tool being executed, as an array of strings.
+    # @return [Array[String]]
+    #
     def tool_name
       @_data[TOOL_NAME]
     end
 
+    ##
+    # Return the raw arguments passed to the tool, as an array of strings.
+    # This does not include the tool name itself.
+    # @return [Array[String]]
+    #
     def args
       @_data[ARGS]
     end
 
+    ##
+    # Return any usage error detected during argument parsing, or `nil` if
+    # no error was detected.
+    # @return [String,nil]
+    #
     def usage_error
       @_data[USAGE_ERROR]
     end
 
+    ##
+    # Return the logger for this execution.
+    # @return [Logger]
+    #
     def logger
       @_data[LOGGER]
     end
 
+    ##
+    # Return the active loader that can be used to get other tools.
+    # @return [Toys::Loader]
+    #
     def loader
       @_data[LOADER]
     end
 
+    ##
+    # Return the name of the binary that was executed.
+    # @return [String]
+    #
     def binary_name
       @_data[BINARY_NAME]
     end
 
+    ##
+    # Return a piece of raw data by key.
+    #
+    # @param [Symbol] key
+    # @return [Object]
+    #
     def [](key)
       @_data[key]
     end
 
+    ##
+    # Set a piece of data by key.
+    #
+    # Most tools themselves will not need to do this directly. It is generally
+    # used by middleware to modify the context and affect execution of tools
+    # that use it.
+    #
+    # @param [Symbol] key
+    # @param [Object] value
+    #
     def []=(key, value)
       @_data[key] = value
     end
 
+    ##
+    # Returns the subset of the context that does not include well-known keys
+    # such as tool and verbosity. Technically, this includes all keys that do
+    # not begin with two underscores.
+    #
+    # @return [Hash]
+    #
     def options
       @_data.select do |k, _v|
         !k.is_a?(::Symbol) || !k.to_s.start_with?("__")
       end
     end
 
+    ##
+    # Execute another tool, given by the provided arguments.
+    #
+    # @param [String...] args Command line arguments defining another tool
+    #     to run, along with parameters and switches.
+    # @param [Boolean] exit_on_nonzero_status If true, exit immediately if the
+    #     run returns a nonzero error code.
+    # @return [Integer] The resulting status code
+    #
     def run(*args, exit_on_nonzero_status: false)
       code = @_context_base.run(args.flatten, verbosity: @_data[VERBOSITY])
       exit(code) if exit_on_nonzero_status && !code.zero?
       code
     end
 
+    ##
+    # Exit immediately with the given status code
+    #
+    # @param [Integer] code The status code, which should be 0 for no error,
+    #     or nonzero for an error condition.
+    #
     def exit(code)
       throw :result, code
     end

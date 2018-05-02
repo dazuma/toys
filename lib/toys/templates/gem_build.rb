@@ -61,7 +61,7 @@ module Toys
         end
         task_type = template.push_gem ? "Release" : "Build"
 
-        name(template.name) do
+        tool(template.name) do
           desc "#{task_type} the gem: #{template.gem_name}"
 
           use :file_utils

@@ -34,6 +34,12 @@ module Toys
   # Namespace for common middleware
   #
   module Middleware
+    ##
+    # Return a middleware class by name.
+    #
+    # @param [String,Symbol] name Name of the middleware class to return
+    # @return [Class,nil] The class, or `nil` if not found
+    #
     def self.lookup(name)
       Utils::ModuleLookup.lookup(:middleware, name)
     end

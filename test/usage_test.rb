@@ -37,46 +37,47 @@ describe Toys::Utils::Usage do
   let(:alias_target) { "bar" }
   let(:alias_name) { ["foo", "baz"] }
   let(:group_tool) do
-    Toys::Tool.new(tool_name, [])
+    Toys::Tool.new(tool_name)
   end
   let(:normal_tool) do
-    Toys::Tool.new(tool_name, []).tap do |t|
+    Toys::Tool.new(tool_name).tap do |t|
       t.executor = proc {}
     end
   end
   let(:alias_tool) do
-    Toys::Tool.new(alias_name, []).tap do |t|
+    Toys::Tool.new(alias_name).tap do |t|
       t.make_alias_of(alias_target)
     end
   end
   let(:subtool_one) do
-    Toys::Tool.new(["foo", "bar", "one"], [])
+    Toys::Tool.new(["foo", "bar", "one"])
   end
   let(:subtool_one_a) do
-    Toys::Tool.new(["foo", "bar", "one", "a"], []).tap do |t|
+    Toys::Tool.new(["foo", "bar", "one", "a"]).tap do |t|
       t.executor = proc {}
     end
   end
   let(:subtool_one_b) do
-    Toys::Tool.new(["foo", "bar", "one", "b"], []).tap do |t|
+    Toys::Tool.new(["foo", "bar", "one", "b"]).tap do |t|
       t.executor = proc {}
     end
   end
   let(:subtool_two) do
-    Toys::Tool.new(["foo", "bar", "two"], []).tap do |t|
+    Toys::Tool.new(["foo", "bar", "two"]).tap do |t|
       t.executor = proc {}
     end
   end
   let(:loader) { Minitest::Mock.new }
   let(:group_loader) do
     m = Minitest::Mock.new
-    m.expect(:list_subtools, [subtool_one, subtool_two], [["foo", "bar"], false])
+    m.expect(:list_subtools, [subtool_one, subtool_two],
+             [["foo", "bar"], recursive: false])
     m
   end
   let(:recursive_group_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_one_a, subtool_one_b, subtool_two],
-             [["foo", "bar"], true])
+             [["foo", "bar"], recursive: true])
     m
   end
 

@@ -29,9 +29,35 @@
 
 module Toys
   ##
-  # The lookup service that finds a tool given a set of arguments
+  # The Loader service loads tools from configuration files, and finds the
+  # appropriate tool given a set of command line arguments.
   #
   class Loader
+    ##
+    # Create a Loader
+    #
+    # @param [String,nil] config_dir_name A directory with this name that
+    #     appears in the loader path, is treated as a configuration directory
+    #     whose contents are loaded into the toys configuration. Optional.
+    #     If not provided, toplevel configuration directories are disabled.
+    # @param [String,nil] config_file_name A file with this name that appears
+    #     in the loader path, is treated as a toplevel configuration file
+    #     whose contents are loaded into the toys configuration. Optional.
+    #     If not provided, toplevel configuration files are disabled.
+    # @param [String,nil] index_file_name A file with this name that appears
+    #     in any configuration directory (not just a toplevel directory) is
+    #     loaded first as a standalone configuration file. If not provided,
+    #     standalone configuration files are disabled.
+    # @param [String,nil] preload_file_name A file with this name that appears
+    #     in any configuration directory (not just a toplevel directory) is
+    #     loaded before any configuration files. It is not treated as a
+    #     configuration file in that the configuration DSL is not honored. You
+    #     may use such a file to define auxiliary Ruby modules and classes that
+    #     used by the tools defined in that directory.
+    # @param [Array] middleware An array of middleware that will be used by
+    #     default for all tools loaded by this CLI.
+    # @param [String] root_desc The description of the root tool.
+    #
     def initialize(config_dir_name: nil, config_file_name: nil,
                    index_file_name: nil, preload_file_name: nil,
                    middleware: [], root_desc: nil)
@@ -42,12 +68,22 @@ module Toys
       @middleware = middleware
       check_init_options
       @load_worklist = []
-      root_tool = Tool.new([], middleware)
+      root_tool = Tool.new([])
+      root_tool.middleware_stack.concat(@middleware)
       root_tool.long_desc = root_desc if root_desc
       @tools = {[] => [root_tool, nil]}
       @max_priority = @min_priority = 0
     end
 
+    ##
+    # Add one or more configuration files/directories to the loader.
+    # This might point to a directory that defines a default set of tools.
+    #
+    # @param [String,Array<String>] paths One or more paths to add.
+    # @param [Boolean] high_priority If true, add these paths at the top of
+    #     the priority list. Defaults to false, indicating new paths should
+    #     be at the bottom of the priority list.
+    #
     def add_config_paths(paths, high_priority: false)
       paths = Array(paths)
       paths = paths.reverse if high_priority
@@ -57,6 +93,15 @@ module Toys
       self
     end
 
+    ##
+    # Add a single configuration file/directory to the loader.
+    # This might point to a directory that defines a default set of tools.
+    #
+    # @param [String] path A path to add.
+    # @param [Boolean] high_priority If true, add this path at the top of the
+    #     priority list. Defaults to false, indicating the new path should be
+    #     at the bottom of the priority list.
+    #
     def add_config_path(path, high_priority: false)
       path = check_path(path)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
@@ -64,6 +109,15 @@ module Toys
       self
     end
 
+    ##
+    # Add one or more path directories to the loader. These directories are
+    # searched for toplevel config directories and files.
+    #
+    # @param [String,Array<String>] paths One or more paths to add.
+    # @param [Boolean] high_priority If true, add these paths at the top of
+    #     the priority list. Defaults to false, indicating new paths should
+    #     be at the bottom of the priority list.
+    #
     def add_paths(paths, high_priority: false)
       paths = Array(paths)
       paths = paths.reverse if high_priority
@@ -73,6 +127,15 @@ module Toys
       self
     end
 
+    ##
+    # Add a single path directory to the loader. This directory is searched
+    # for toplevel config directories and files.
+    #
+    # @param [String] path A path to add.
+    # @param [Boolean] high_priority If true, add this path at the top of the
+    #     priority list. Defaults to false, indicating the new path should be
+    #     at the bottom of the priority list.
+    #
     def add_path(path, high_priority: false)
       path = check_path(path, type: :dir)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
@@ -91,6 +154,16 @@ module Toys
       self
     end
 
+    ##
+    # Given a list of command line arguments, find the appropriate tool to
+    # handle the command, loading it from the configuration if necessary.
+    # This always returns a tool. If the specific tool path is not defined and
+    # cannot be found in any configuration, it returns the nearest group that
+    # _would_ contain that tool, up to the root tool.
+    #
+    # @param [String] args Command line arguments
+    # @return [Toys::Tool]
+    #
     def lookup(args)
       orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
       cur_prefix = orig_prefix.dup
@@ -105,41 +178,17 @@ module Toys
       end
     end
 
-    def execute(context_base, args, verbosity: 0)
-      tool = lookup(args)
-      tool.execute(context_base, args.slice(tool.full_name.length..-1), verbosity: verbosity)
-    end
-
-    def exact_tool(words)
-      return nil unless tool_defined?(words)
-      @tools[words].first
-    end
-
-    def get_tool(words, priority, assume_parent: false)
-      if tool_defined?(words)
-        tool, tool_priority = @tools[words]
-        return tool if priority.nil? || tool_priority.nil? || tool_priority == priority
-        return nil if tool_priority > priority
-      end
-      unless assume_parent
-        parent = get_tool(words[0..-2], priority)
-        return nil if parent.nil?
-      end
-      tool = Tool.new(words, @middleware)
-      @tools[words] = [tool, priority]
-      tool
-    end
-
-    def put_tool!(tool, priority = nil)
-      @tools[tool.full_name] = [tool, priority]
-      self
-    end
-
-    def tool_defined?(words)
-      @tools.key?(words)
-    end
-
-    def list_subtools(words, recursive)
+    ##
+    # Returns a list of subtools for the given path, loading from the
+    # configuration if necessary.
+    #
+    # @param [Array<String>] words The name of the parent tool
+    # @param [Boolean] recursive If true, return all subtools recursively
+    #     rather than just the immediate children (the default)
+    # @return [Array<Toys::Tool>]
+    #
+    def list_subtools(words, recursive: false)
+      load_for_prefix(words)
       found_tools = []
       len = words.length
       @tools.each do |n, tp|
@@ -154,10 +203,93 @@ module Toys
       sort_tools_by_name(found_tools)
     end
 
+    ##
+    # Execute the tool given by the given arguments, in the given context.
+    #
+    # @param [Toys::Context::Base] context_base The context in which to
+    #     execute.
+    # @param [String] args Command line arguments
+    # @param [Integer] verbosity Starting verbosity. Defaults to 0.
+    # @return [Integer] The exit code
+    #
+    # @private
+    #
+    def execute(context_base, args, verbosity: 0)
+      tool = lookup(args)
+      tool.execute(context_base, args.slice(tool.full_name.length..-1), verbosity: verbosity)
+    end
+
+    ##
+    # Returns a tool specified by the given words, with the given priority.
+    # Does not do any loading. If the tool is not present, creates it.
+    #
+    # @param [Array<String>] words The name of the tool.
+    # @param [Integer] priority The priority of the request.
+    # @param [Boolean] assume_parent If true, does not check the parent tool's
+    #     priority.
+    # @return [Toys::Tool,nil] The tool, or `nil` if the given priority is
+    #     insufficient.
+    #
+    # @private
+    #
+    def get_or_create_tool(words, priority, assume_parent: false)
+      if tool_defined?(words)
+        tool, tool_priority = @tools[words]
+        return tool if priority.nil? || tool_priority.nil? || tool_priority == priority
+        return nil if tool_priority > priority
+      end
+      unless assume_parent
+        parent = get_or_create_tool(words[0..-2], priority)
+        return nil if parent.nil?
+      end
+      tool = Tool.new(words)
+      tool.middleware_stack.concat(@middleware)
+      @tools[words] = [tool, priority]
+      tool
+    end
+
+    ##
+    # Adds a tool directly to the loader.
+    # This should be used only for testing, as it overrides normal priority
+    # checking.
+    #
+    # @param [Toys::Tool] tool Tool to add.
+    # @param [Integer,nil] priority Priority for the tool.
+    #
+    # @private
+    #
+    def put_tool!(tool, priority = nil)
+      @tools[tool.full_name] = [tool, priority]
+      self
+    end
+
+    ##
+    # Returns true if the given tool name currently exists in the loader.
+    # Does not load the tool if not found.
+    #
+    # @param [Array<String>] words The name of the tool.
+    # @return [Boolean]
+    #
+    # @private
+    #
+    def tool_defined?(words)
+      @tools.key?(words)
+    end
+
+    ##
+    # Load configuration from the given path.
+    #
+    # @private
+    #
     def include_path(path, words, remaining_words, priority)
       handle_path(check_path(path), words, remaining_words, priority)
     end
 
+    ##
+    # Determine the next setting for remaining_words, given a word.
+    #
+    # @private
+    #
     def self.next_remaining_words(remaining_words, word)
       if remaining_words.nil?
         nil
@@ -203,9 +335,9 @@ module Toys
 
     def load_path(path, words, remaining_words, priority)
       if ::File.extname(path) == ".rb"
-        tool = get_tool(words, priority)
+        tool = get_or_create_tool(words, priority)
         if tool
-          Builder.build(path, tool, remaining_words, priority, self, ::IO.read(path), :tool)
+          ConfigDSL.evaluate(path, tool, remaining_words, priority, self, :tool, ::IO.read(path))
         end
       else
         require_preload_in(path)

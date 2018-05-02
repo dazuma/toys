@@ -48,7 +48,7 @@ module Toys
       attr_accessor :stats_options
 
       to_expand do |template|
-        name(template.name) do
+        tool(template.name) do
           desc "Run yardoc on the current project."
 
           use :exec

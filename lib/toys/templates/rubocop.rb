@@ -46,7 +46,7 @@ module Toys
       attr_accessor :options
 
       to_expand do |template|
-        name(template.name) do
+        tool(template.name) do
           desc "Run rubocop on the current project."
 
           use :exec

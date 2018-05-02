@@ -35,13 +35,13 @@
 #
 module Toys
   ##
-  # Namespace for common utility classes
+  # Namespace for common utility classes.
   #
   module Utils; end
 end
 
-require "toys/builder"
 require "toys/cli"
+require "toys/config_dsl"
 require "toys/context"
 require "toys/errors"
 require "toys/helpers"

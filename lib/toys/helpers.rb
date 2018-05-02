@@ -34,6 +34,12 @@ module Toys
   # Namespace for common helper modules
   #
   module Helpers
+    ##
+    # Return a helper module by name.
+    #
+    # @param [String,Symbol] name Name of the helper module to return
+    # @return [Module,nil] The module, or `nil` if not found
+    #
     def self.lookup(name)
       Utils::ModuleLookup.lookup(:helpers, name)
     end

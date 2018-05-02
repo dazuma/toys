@@ -221,7 +221,7 @@ describe Toys::Loader do
       )
       group = loader.lookup(["group-1"])
       assert_equal("(A group of commands)", group.effective_desc)
-      subtools = loader.list_subtools(["group-1"], false)
+      subtools = loader.list_subtools(["group-1"])
       assert_equal(3, subtools.size)
     end
 
@@ -234,7 +234,7 @@ describe Toys::Loader do
       )
       group = loader.lookup(["group-1"])
       assert_equal("(A group of commands)", group.effective_desc)
-      subtools = loader.list_subtools(["group-1"], false)
+      subtools = loader.list_subtools(["group-1"])
       assert_equal(3, subtools.size)
     end
   end

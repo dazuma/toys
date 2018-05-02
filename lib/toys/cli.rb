@@ -31,7 +31,9 @@ require "logger"
 
 module Toys
   ##
-  # A Toys-based CLI
+  # A Toys-based CLI.
+  #
+  # Use this class to implement a CLI using Toys.
   #
   class CLI
     ##
@@ -75,6 +77,38 @@ module Toys
       " globally or scoped to specific directories that you choose." \
       " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
 
+    ##
+    # Create a CLI
+    #
+    # @param [String,nil] binary_name The binary name displayed in help text.
+    #     Optional. Defaults to the ruby program name.
+    # @param [Logger,nil] logger The logger to use. If not provided, a default
+    #     logger that writes to `STDERR` is used.
+    # @param [String,nil] config_dir_name A directory with this name that
+    #     appears in the loader path, is treated as a configuration directory
+    #     whose contents are loaded into the toys configuration. Optional.
+    #     If not provided, toplevel configuration directories are disabled.
+    #     The default toys CLI sets this to `".toys"`.
+    # @param [String,nil] config_file_name A file with this name that appears
+    #     in the loader path, is treated as a toplevel configuration file
+    #     whose contents are loaded into the toys configuration. Optional.
+    #     If not provided, toplevel configuration files are disabled.
+    #     The default toys CLI sets this to `".toys.rb"`.
+    # @param [String,nil] index_file_name A file with this name that appears
+    #     in any configuration directory (not just a toplevel directory) is
+    #     loaded first as a standalone configuration file. If not provided,
+    #     standalone configuration files are disabled.
+    #     The default toys CLI sets this to `".toys.rb"`.
+    # @param [String,nil] preload_file_name A file with this name that appears
+    #     in any configuration directory (not just a toplevel directory) is
+    #     loaded before any configuration files. It is not treated as a
+    #     configuration file in that the configuration DSL is not honored. You
+    #     may use such a file to define auxiliary Ruby modules and classes that
+    #     used by the tools defined in that directory.
+    # @param [Array] middleware An array of middleware that will be used by
+    #     default for all tools loaded by this CLI.
+    # @param [String] root_desc The description of the root tool.
+    #
     def initialize(
       binary_name: nil,
       logger: nil,
@@ -97,16 +131,41 @@ module Toys
       @context_base = Context::Base.new(@loader, binary_name, logger)
     end
 
+    ##
+    # Add one or more configuration files/directories to the loader.
+    #
+    # If a CLI has a default tool set, it might use this to point to the
+    # directory that defines those tools. For example, the default Toys CLI
+    # uses this to load the builtin tools from the `builtins` directory.
+    #
+    # @param [String,Array<String>] paths One or more paths to add.
+    #
     def add_config_paths(paths)
       @loader.add_config_paths(paths)
       self
     end
 
+    ##
+    # Add one or more path directories to the loader. These directories are
+    # searched for config directories and config files. Typically a CLI may
+    # include the current directory, or the user's home directory, `/etc` or
+    # other configuration-centric directories here.
+    #
+    # @param [String,Array<String>] paths One or more paths to add.
+    #
     def add_paths(paths)
       @loader.add_paths(paths)
       self
     end
 
+    ##
+    # Add the given path and all ancestor directories to the loader as paths.
+    # You may optionally provide a stopping point using the `base` argument,
+    # which, if present, will be the _last_ directory added.
+    #
+    # @param [String] path The first directory to add
+    # @param [String] base The last directory to add. Defaults to `"/"`.
+    #
     def add_path_hierarchy(path = nil, base = "/")
       path ||= ::Dir.pwd
       paths = []
@@ -121,6 +180,11 @@ module Toys
       self
     end
 
+    ##
+    # Add a standard set of paths. This includes the contents of the
+    # `TOYS_PATH` environment variable if present, the current user's home
+    # directory, and any system configuration directories such as `/etc`.
+    #
     def add_standard_paths
       toys_path = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
       if toys_path.empty?
@@ -131,11 +195,19 @@ module Toys
       self
     end
 
+    ##
+    # Run the CLI with the given command line arguments.
+    #
     def run(*args)
       exit(@context_base.run(args.flatten, verbosity: 0))
     end
 
     class << self
+      ##
+      # Configure and create the standard Toys CLI.
+      #
+      # @return [Toys::CLI]
+      #
       def create_standard
         cli = new(
           binary_name: DEFAULT_BINARY_NAME,
@@ -152,6 +224,16 @@ module Toys
         cli
       end
 
+      ##
+      # Returns a default set of middleware used by the standard Toys CLI.
+      # This middleware handles usage errors, provides a behavior for groups
+      # that displays the group command list, provides a `--help` option for
+      # showing individual tool documentation, and provides `--verbose` and
+      # `--quiet` switches for setting the verbosity, which in turn controls
+      # the logger level.
+      #
+      # @return [Array]
+      #
       def default_middleware_stack
         [
           Middleware.lookup(:show_usage_errors).new,
@@ -161,6 +243,11 @@ module Toys
         ]
       end
 
+      ##
+      # Returns a default logger that logs to `STDERR`.
+      #
+      # @return [Logger]
+      #
       def default_logger
         logger = ::Logger.new(::STDERR)
         logger.formatter = proc do |severity, time, _progname, msg|

@@ -44,7 +44,7 @@ module Toys
       attr_accessor :paths
 
       to_expand do |template|
-        name(template.name) do
+        tool(template.name) do
           desc "Clean built files and directories."
 
           use :file_utils

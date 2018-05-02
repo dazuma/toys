@@ -29,6 +29,8 @@ The source can be found on Github at
 
 ### TODO items
 
+* Verify that replacing a group deletes subtools.
+* Figure out the "Switch" name since it's overloaded
 * Document methods
 * Write overall documentation
 * Decide about highline integration
