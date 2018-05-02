@@ -35,7 +35,7 @@ module Toys
     ##
     # A middleware that shows usage documentation
     #
-    class ShowToolHelp < Base
+    class ShowToolUsage < Base
       ##
       # This middleware adds a `--help` flag that triggers display of help.
       #

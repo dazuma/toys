@@ -33,20 +33,22 @@ require "toys/utils/usage"
 module Toys
   module Middleware
     ##
-    # A middleware that provides a default implementation for groups
+    # A middleware that provides a default implementation for groups. If a
+    # tool has no executor, this middleware assumes it to be a group, and it
+    # provides a default executor that displays group usage documentation.
     #
-    class GroupDefault < Base
+    class ShowGroupUsage < Base
       ##
-      # This middleware adds a "--recursive" flag to groups. This flag, when
-      # set, shows all subcommands recursively rather than just immediate
-      # subcommands.
+      # This middleware adds a "--no-recursive" flag to groups. This flag, when
+      # set, shows only immediate subcommands rather than all recursively.
       #
       def config(tool)
         if tool.includes_executor?
           yield
         else
-          tool.add_switch(:_recursive, "-r", "--[no-]recursive",
-                          doc: "Show all subcommands recursively")
+          tool.add_switch(:_no_recursive, "--no-recursive",
+                          doc: "Show immediate rather than all subcommands",
+                          only_unique: true)
         end
       end
 
@@ -58,7 +60,7 @@ module Toys
         if context[Context::TOOL].includes_executor?
           yield
         else
-          puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+          puts(Utils::Usage.from_context(context).string(recursive: !context[:_no_recursive]))
         end
       end
     end

@@ -237,8 +237,8 @@ module Toys
       def default_middleware_stack
         [
           Middleware.lookup(:show_usage_errors).new,
-          Middleware.lookup(:group_default).new,
-          Middleware.lookup(:show_tool_help).new,
+          Middleware.lookup(:show_group_usage).new,
+          Middleware.lookup(:show_tool_usage).new,
           Middleware.lookup(:set_verbosity).new
         ]
       end
