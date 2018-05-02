@@ -242,6 +242,7 @@ module Toys
         parent = get_or_create_tool(words[0..-2], priority)
         return nil if parent.nil?
       end
+      prune_from(words)
       tool = Tool.new(words)
       tool.middleware_stack.concat(@middleware)
       @tools[words] = [tool, priority]
@@ -315,6 +316,11 @@ module Toys
       if @preload_file_name && ::File.extname(@preload_file_name) != ".rb"
         raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
       end
+    end
+
+    def prune_from(words)
+      return unless @tools.key?(words)
+      @tools.delete_if { |k, _v| k[0, words.size] == words }
     end
 
     def load_for_prefix(prefix)

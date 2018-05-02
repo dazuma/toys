@@ -93,7 +93,8 @@ module Toys
     # subtool.
     #
     # If the subtool is already defined (either as a tool or a group), the old
-    # definition is discarded and replaced with the new definition.
+    # definition is discarded and replaced with the new definition. If the old
+    # tool was a group, all its descendants are also discarded, recursively.
     #
     # @param [String] word The name of the subtool
     # @param [String,nil] alias_of If set, this subtool is set to be an alias
