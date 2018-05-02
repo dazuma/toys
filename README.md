@@ -32,6 +32,7 @@ The source can be found on Github at
 * Decide about highline integration
 * Output formats middleware
 * System paths tool
+* Search function in group help
 * Split out toys-core gem
 * Write overall documentation
 

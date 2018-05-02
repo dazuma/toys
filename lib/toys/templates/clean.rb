@@ -41,8 +41,8 @@ module Toys
       # You may provide a hash of options when expanding this template.
       # Supported options include:
       #
-      # *  **:name** (String) Name of the tool to create. Defaults to `"clean"`.
-      # *  **:paths** (Array<String>) An array of glob patterns indicating what
+      # *  `:name` (String) Name of the tool to create. Defaults to "clean".
+      # *  `:paths` (Array<String>) An array of glob patterns indicating what
       #    to clean.
       #
       # @param [Hash] opts Options.
@@ -64,7 +64,6 @@ module Toys
           execute do
             files = []
             patterns = Array(template.paths)
-            patterns = ["lib/**/*.rb"] if patterns.empty?
             patterns.each do |pattern|
               files.concat(::Dir.glob(pattern))
             end

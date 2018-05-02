@@ -27,43 +27,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-expand :clean do |t|
-  t.paths = ["pkg", "doc", ".yardoc"]
-end
+expand :clean, paths: ["pkg", "doc", ".yardoc"]
 
-expand :minitest do |t|
-  t.libs << "test"
-  t.files << "test/*_test.rb"
-end
+expand :minitest, libs: ["lib", "test"]
 
 expand :rubocop
 
 expand :yardoc
 
-expand :gem_build
+expand :gem_build, name: "build"
 
-expand :gem_build, name: "release" do |t|
-  t.push_gem = true
-  t.tag = true
-  t.push_tag = true
-end
+expand :gem_build, name: "release", push_gem: true, tag: true, push_tag: true
 
 name "install" do
   desc "Build and install the current code as a gem"
-
   use :exec
-
   execute do
-    run("build", exit_on_nonzero_status: true)
-    sh("gem install pkg/toys-#{Toys::VERSION}.gem")
+    run "build", exit_on_nonzero_status: true
+    sh "gem install pkg/toys-#{Toys::VERSION}.gem", exit_on_nonzero_status: true
   end
 end
 
 name "ci" do
   desc "CI target that runs tests and rubocop"
-
   execute do
-    run("test", exit_on_nonzero_status: true)
-    run("rubocop", exit_on_nonzero_status: true)
+    run "test", exit_on_nonzero_status: true
+    run "rubocop", exit_on_nonzero_status: true
   end
 end

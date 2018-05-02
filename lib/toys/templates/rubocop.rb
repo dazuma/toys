@@ -41,10 +41,10 @@ module Toys
       # You may provide a hash of options when expanding this template.
       # Supported options include:
       #
-      # *  **:name** (String) Name of the tool to create. Defaults to
-      #    `"rubocop"`.
-      # *  **:fail_on_error** (Boolean) If true, exits with a nonzero code if
+      # *  `:name` (String) Name of the tool to create. Defaults to "rubocop".
+      # *  `:fail_on_error` (Boolean) If true, exits with a nonzero code if
       #    Rubocop fails. Defaults to true.
+      # *  `:options` (Hash) Additional options passed to the Rubocop CLI.
       #
       # @param [Hash] opts Options.
       #

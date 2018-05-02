@@ -41,12 +41,12 @@ module Toys
       # You may provide a hash of options when expanding this template.
       # Supported options include:
       #
-      # *  **:name** (String) Name of the tool to create. Defaults to `"test"`.
-      # *  **:lib** (Array<String>) An array of library paths to add to the
+      # *  `:name` (String) Name of the tool to create. Defaults to "test".
+      # *  `:lib` (Array<String>) An array of library paths to add to the
       #    ruby require path.
-      # *  **:files** (Array<String>) An array of globs indicating the test
+      # *  `:files` (Array<String>) An array of globs indicating the test
       #    files to load.
-      # *  **:warnings** (Boolean) If true, runs tests with Ruby warnings.
+      # *  `:warnings` (Boolean) If true, runs tests with Ruby warnings.
       #
       # @param [Hash] opts Options.
       #
