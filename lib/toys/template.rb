@@ -55,30 +55,30 @@ module Toys
   # ## Example
   #
   # This is a simple template that generates a "hello" tool. The tool simply
-  # prints a `"Hello, #{recipient}!"` greeting. The recipient is set as a
-  # template option; it is defined when the template is expanded in a toys
+  # prints a `"Hello, #{name}!"` greeting. The name is set as a template
+  # option; it is defined when the template is expanded in a toys
   # configuration.
   #
   #     # Define a template by creating a class that includes Toys::Template.
   #     class MyHelloTemplate
   #       include Toys::Template
   #
-  #       # A user of the template may pass an optional recipient name as a
-  #       # parameter to `expand`, or leave it as the default of "world".
-  #       def initialize(recipient: "world")
-  #         @recipient = recipient
+  #       # A user of the template may pass an optional name as a parameter to
+  #       # `expand`, or leave it as the default of "world".
+  #       def initialize(name: "world")
+  #         @name = name
   #       end
   #
   #       # The template is passed to the expand block, so a user of the
-  #       # template may also call this method to set the recipient.
-  #       attr_accessor :recipient
+  #       # template may also call this method to set the name.
+  #       attr_accessor :name
   #
   #       # The following block is inserted when the template is expanded.
   #       to_expand do |template|
-  #         desc "Prints a greeting to #{template.recipient}"
+  #         desc "Prints a greeting to #{template.name}"
   #         tool "templated-greeting" do
   #           execute do
-  #             puts "Hello, #{template.recipient}!"
+  #             puts "Hello, #{template.name}!"
   #           end
   #         end
   #       end
@@ -86,12 +86,12 @@ module Toys
   #
   # Now you can use the template in your `.toys.rb` file like this:
   #
-  #     expand(MyHelloTemplate, recipient: "rubyists")
+  #     expand(MyHelloTemplate, name: "rubyists")
   #
   # or alternately:
   #
   #     expand(MyHelloTemplate) do |template|
-  #       template.recipient = "rubyists"
+  #       template.name = "rubyists"
   #     end
   #
   # And it will create a tool called "templated-greeting".

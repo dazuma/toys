@@ -260,7 +260,7 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [String...] switches The OptionParser definition of the switch.
+    # @param [String...] switches The switches in OptionParser format.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command

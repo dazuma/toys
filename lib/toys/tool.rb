@@ -329,7 +329,7 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [String...] switches The OptionParser definition of the switch.
+    # @param [String...] switches The switches in OptionParser format.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
@@ -351,9 +351,11 @@ module Toys
                    accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
       check_definition_state
       switches << "--#{Tool.canonical_switch(key)}=VALUE" if switches.empty?
-      switches << accept unless accept.nil?
-      switches += Array(doc)
-      switch_info = SwitchDefinition.new(key, switches, handler)
+      bad_switch = switches.find { |s| Tool.extract_switch(s).empty? }
+      if bad_switch
+        raise ToolDefinitionError, "Illegal switch: #{bad_switch.inspect}"
+      end
+      switch_info = SwitchDefinition.new(key, switches + Array(accept) + Array(doc), handler)
       if only_unique
         switch_info.remove_switches(used_switches)
       end
@@ -537,6 +539,21 @@ module Toys
       def canonical_switch(name)
         name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
       end
+
+      ## @private
+      def extract_switch(str)
+        if !str.is_a?(String)
+          []
+        elsif str =~ /^(-[\?\w])(\s?\w+)?$/
+          [$1]
+        elsif str =~ /^--\[no-\](\w[\?\w-]*)$/
+          ["--#{$1}", "--no-#{$1}"]
+        elsif str =~ /^(--\w[\?\w-]*)([=\s]\w+)?$/
+          [$1]
+        else
+          []
+        end
+      end
     end
 
     ##
@@ -586,7 +603,7 @@ module Toys
       # @return [Array<String>]
       #
       def switches
-        @switches ||= optparse_info.map { |s| extract_switch(s) }.flatten
+        @switches ||= optparse_info.map { |s| Tool.extract_switch(s) }.flatten
       end
 
       ##
@@ -604,29 +621,10 @@ module Toys
       #
       def remove_switches(switches)
         @optparse_info.select! do |s|
-          extract_switch(s).all? { |ss| !switches.include?(ss) }
+          Tool.extract_switch(s).all? { |ss| !switches.include?(ss) }
         end
         @switches = nil
         self
-      end
-
-      ##
-      # Extract the list of switches from an OptionParser format string.
-      #
-      # @private
-      #
-      def extract_switch(str)
-        if !str.is_a?(String)
-          []
-        elsif str =~ /^(-[\?\w])/
-          [$1]
-        elsif str =~ /^--\[no-\](\w[\w-]*)/
-          ["--#{$1}", "--no-#{$1}"]
-        elsif str =~ /^(--\w[\w-]*)/
-          [$1]
-        else
-          []
-        end
       end
     end
 

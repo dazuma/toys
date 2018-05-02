@@ -234,6 +234,23 @@ describe Toys::Tool do
       assert_equal(0, tool.execute(context_base, ["--a-bc", "hoho"]))
     end
 
+    it "allows legal switch syntax" do
+      tool.add_switch(:foo, "-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
+                      "--[no-]hij", "--kl=VAL", "--mn VAL")
+    end
+
+    it "does not allow illegal switch syntax" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "hi")
+      end
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "")
+      end
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "-a -")
+      end
+    end
+
     it "errors on an unknown switch" do
       test = self
       tool.executor = proc do

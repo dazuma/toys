@@ -202,6 +202,16 @@ module Toys
     end
 
     ##
+    # Return an option value by key.
+    #
+    # @param [Symbol] key
+    # @return [Object]
+    #
+    def option(key)
+      @_data[key]
+    end
+
+    ##
     # Returns the subset of the context that does not include well-known keys
     # such as tool and verbosity. Technically, this includes all keys that do
     # not begin with two underscores.
