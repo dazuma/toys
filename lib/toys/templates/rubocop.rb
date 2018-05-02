@@ -35,6 +35,19 @@ module Toys
     class Rubocop
       include Template
 
+      ##
+      # Create the template settings for the Rubocop template.
+      #
+      # You may provide a hash of options when expanding this template.
+      # Supported options include:
+      #
+      # *  **:name** (String) Name of the tool to create. Defaults to
+      #    `"rubocop"`.
+      # *  **:fail_on_error** (Boolean) If true, exits with a nonzero code if
+      #    Rubocop fails. Defaults to true.
+      #
+      # @param [Hash] opts Options.
+      #
       def initialize(opts = {})
         @name = opts[:name] || "rubocop"
         @fail_on_error = opts.include?(:fail_on_error) ? opts[:fail_on_error] : true

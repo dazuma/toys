@@ -36,6 +36,9 @@ module Toys
     # A middleware that shows usage documentation
     #
     class ShowToolHelp < Base
+      ##
+      # This middleware adds a `--help` flag that triggers display of help.
+      #
       def config(tool)
         if tool.includes_executor?
           tool.add_switch(:_help, "-?", "--help",
@@ -45,6 +48,10 @@ module Toys
         yield
       end
 
+      ##
+      # If the `--help` flag is present, this middleware causes the tool to
+      # display its usage documentation and exit, rather than executing.
+      #
       def execute(context)
         if context[:_help]
           puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))

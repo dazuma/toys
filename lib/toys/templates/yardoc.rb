@@ -35,6 +35,19 @@ module Toys
     class Yardoc
       include Template
 
+      ##
+      # Create the template settings for the Yardoc template.
+      #
+      # You may provide a hash of options when expanding this template.
+      # Supported options include:
+      #
+      # *  **:name** (String) Name of the tool to create. Defaults to
+      #    `"yardoc"`.
+      # *  **:files** (Array<String>) An array of globs indicating the files
+      #    to document.
+      #
+      # @param [Hash] opts Options.
+      #
       def initialize(opts = {})
         @name = opts[:name] || "yardoc"
         @files = opts[:files] || []

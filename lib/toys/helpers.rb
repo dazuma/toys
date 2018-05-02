@@ -37,6 +37,11 @@ module Toys
     ##
     # Return a helper module by name.
     #
+    # Currently recognized module names are:
+    #
+    # * `:exec` : Methods to help execute subcommands.
+    # * `:file_utils` : The FileUtils standard library methods.
+    #
     # @param [String,Symbol] name Name of the helper module to return
     # @return [Module,nil] The module, or `nil` if not found
     #

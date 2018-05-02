@@ -37,6 +37,14 @@ module Toys
     ##
     # Return a template class by name.
     #
+    # Currently recognized template names are:
+    #
+    # *  `:clean` : Creates a tool that cleans build artifacts.
+    # *  `:gem_build` : Creates a tool that builds and/or releases gems.
+    # *  `:minitest` : Creates a tool that runs unit tests.
+    # *  `:rubocop` : Creates a tool that runs rubocop.
+    # *  `:yardoc` : Creates a tool that generates YARD documentation.
+    #
     # @param [String,Symbol] name Name of the template class to return
     # @return [Class,nil] The class, or `nil` if not found
     #

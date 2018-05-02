@@ -36,6 +36,11 @@ module Toys
     # A middleware that provides a default implementation for groups
     #
     class GroupDefault < Base
+      ##
+      # This middleware adds a "--recursive" flag to groups. This flag, when
+      # set, shows all subcommands recursively rather than just immediate
+      # subcommands.
+      #
       def config(tool)
         if tool.includes_executor?
           yield
@@ -45,6 +50,10 @@ module Toys
         end
       end
 
+      ##
+      # This middleware displays the usage documentation for groups. It has
+      # no effect on tools that have their own executor.
+      #
       def execute(context)
         if context[Context::TOOL].includes_executor?
           yield

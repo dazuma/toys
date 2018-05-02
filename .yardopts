@@ -3,7 +3,7 @@
 --markup=markdown
 --embed-mixin=ClassMethods
 --main=README.md
---exclude=./lib/toys/builtins/**/*.rb
+--exclude=lib/toys/builtins
 ./lib/**/*.rb
 -
 README.md

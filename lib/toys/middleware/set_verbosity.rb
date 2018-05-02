@@ -35,6 +35,9 @@ module Toys
     # A middleware that provides switches for editing the verbosity
     #
     class SetVerbosity < Base
+      ##
+      # This middleware adds `--verbose` and `--quiet` flags.
+      #
       def config(tool)
         tool.add_switch(Context::VERBOSITY, "-v", "--verbose",
                         doc: "Increase verbosity",

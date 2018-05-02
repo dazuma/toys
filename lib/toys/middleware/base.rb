@@ -30,13 +30,19 @@
 module Toys
   module Middleware
     ##
-    # A base middleware with a no-op implementation
+    # A base middleware with a no-op implementation.
     #
     class Base
+      ##
+      # The base middleware does not affect tool configuration.
+      #
       def config(_tool)
         yield
       end
 
+      ##
+      # The base middleware does not affect tool execution.
+      #
       def execute(_context)
         yield
       end

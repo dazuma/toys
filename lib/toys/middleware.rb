@@ -37,6 +37,14 @@ module Toys
     ##
     # Return a middleware class by name.
     #
+    # Currently recognized middleware names are:
+    #
+    # *  `:group_default` : Provides a default implementation for a group.
+    # *  `:set_verbosity` : Switches for affecting log verbosity.
+    # *  `:show_tool_help` : A switch that causes a tool to print its usage
+    #    documentation.
+    # *  `:show_usage_errors` : Displays the usage error if one occurs.
+    #
     # @param [String,Symbol] name Name of the middleware class to return
     # @return [Class,nil] The class, or `nil` if not found
     #

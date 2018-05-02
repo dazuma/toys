@@ -35,6 +35,18 @@ module Toys
     class Clean
       include Template
 
+      ##
+      # Create the template settings for the Clean template.
+      #
+      # You may provide a hash of options when expanding this template.
+      # Supported options include:
+      #
+      # *  **:name** (String) Name of the tool to create. Defaults to `"clean"`.
+      # *  **:paths** (Array<String>) An array of glob patterns indicating what
+      #    to clean.
+      #
+      # @param [Hash] opts Options.
+      #
       def initialize(opts = {})
         @name = opts[:name] || "clean"
         @paths = opts[:paths] || []

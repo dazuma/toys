@@ -37,6 +37,24 @@ module Toys
     class GemBuild
       include Template
 
+      ##
+      # Create the template settings for the GemBuild template.
+      #
+      # You may provide a hash of options when expanding this template.
+      # Supported options include:
+      #
+      # *  **:name** (String) Name of the tool to create. Defaults to `"build"`.
+      # *  **:gem_name** (String) Name of the gem to build. If not provided,
+      #    defaults to the first gemspec file it finds.
+      # *  **:push_gen** (Boolean) If true, pushes the built gem to rubygems.
+      # *  **:tag** (Boolean) If true, tags the git repo with the gem version.
+      # *  **:push_tag** (Boolean,String) If truthy, pushes the new tag to
+      #    a git remote. You may specify which remote by setting the value to
+      #    a string. Otherwise, if the value is simply `true`, the `"origin"`
+      #    remote is used by default.
+      #
+      # @param [Hash] opts Options.
+      #
       def initialize(opts = {})
         @name = opts[:name] || "build"
         @gem_name = opts[:gem_name]

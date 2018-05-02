@@ -36,6 +36,12 @@ module Toys
     # A middleware that shows usage errors
     #
     class ShowUsageErrors < Base
+      ##
+      # If a usage error happens, e.g. an unrecognized switch or an unfulfilled
+      # required argument, this middleware causes the tool to display the error
+      # and usage documentation and exit with a nonzero result. Otherwise, it
+      # does nothing.
+      #
       def execute(context)
         if context[Context::USAGE_ERROR]
           puts(context[Context::USAGE_ERROR])
