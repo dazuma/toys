@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -29,7 +27,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-$LOAD_PATH.unshift(::File.absolute_path(::File.join(::File.dirname(__dir__), "lib")))
-require "toys"
-
-::Toys::CLI.create_standard.run(::ARGV)
+module Toys
+  ##
+  # Current version of Toys core
+  # @return [String]
+  #
+  CORE_VERSION = "0.3.2.dev".freeze
+end

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -27,10 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys
-  ##
-  # Current version of Toys
-  # @return [String]
-  #
-  VERSION = "0.3.1".freeze
-end
+$LOAD_PATH.unshift(::File.absolute_path(::File.join(::File.dirname(__dir__), "lib")))
+require "toys"
+
+::Toys::StandardCLI.new.run(::ARGV)

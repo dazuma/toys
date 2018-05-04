@@ -1,9 +1,7 @@
 --no-private
---title=Toys
+--title=Toys Core
 --markup=markdown
---embed-mixin=ClassMethods
 --main=README.md
---exclude=lib/toys/builtins
 ./lib/**/*.rb
 -
 README.md

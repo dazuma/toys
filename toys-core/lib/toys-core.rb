@@ -27,36 +27,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-
-name "install" do
-  desc "Build and install the current code as a gem"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    version = capture("toys/bin/toys system version").strip
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys build"
-      sh "gem install pkg/toys-core-#{version}.gem"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys build"
-      sh "gem install pkg/toys-#{version}.gem"
-    end
-  end
+##
+# Toys is a Ruby library and command line tool that lets you build your own
+# command line suite of tools (with commands and subcommands) using a Ruby DSL.
+# You can define commands globally or configure special commands scoped to
+# individual directories.
+#
+module Toys
+  ##
+  # Namespace for common utility classes.
+  #
+  module Utils; end
 end
 
-name "ci" do
-  desc "CI target that runs tests and rubocop"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys do test , rubocop"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys do test , rubocop"
-    end
-  end
-end
+require "toys/cli"
+require "toys/config_dsl"
+require "toys/context"
+require "toys/core_version"
+require "toys/errors"
+require "toys/helpers"
+require "toys/loader"
+require "toys/middleware"
+require "toys/template"
+require "toys/templates"
+require "toys/tool"

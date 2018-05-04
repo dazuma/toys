@@ -27,36 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-
-name "install" do
-  desc "Build and install the current code as a gem"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    version = capture("toys/bin/toys system version").strip
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys build"
-      sh "gem install pkg/toys-core-#{version}.gem"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys build"
-      sh "gem install pkg/toys-#{version}.gem"
-    end
-  end
-end
-
-name "ci" do
-  desc "CI target that runs tests and rubocop"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys do test , rubocop"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys do test , rubocop"
-    end
-  end
-end
+require "minitest/autorun"
+require "minitest/focus"
+require "minitest/rg"
+require "toys-core"

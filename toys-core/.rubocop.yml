@@ -1,0 +1,57 @@
+AllCops:
+  TargetRubyVersion: 2.2
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Metrics/AbcSize:
+  Max: 20
+Metrics/ClassLength:
+  Max: 250
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/LineLength:
+  Max: 100
+Metrics/MethodLength:
+  Max: 20
+Metrics/ParameterLists:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Max: 10
+Style/BracesAroundHashParameters:
+  Enabled: false
+Style/FormatStringToken:
+  Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/IfUnlessModifier:
+  Enabled: false
+Style/PerlBackrefs:
+  Enabled: false
+Style/Semicolon:
+  Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/SymbolArray:
+  Enabled: false
+Style/WordArray:
+  Enabled: false
+
+# Disable certain checks for templates and tests
+Metrics/BlockLength:
+  Exclude:
+    - "lib/toys/templates/*"
+    - "test/**/*"
+Metrics/BlockNesting:
+  Exclude:
+    - "lib/toys/templates/*"
+    - "test/**/*"
+Naming/FileName:
+  Exclude:
+    - "test/lookup-cases/**/*"
+    - "lib/toys-core.rb"
+Style/BlockDelimiters:
+  Exclude:
+    - "test/**/*"
+Style/Documentation:
+  Exclude:
+    - "test/**/*"

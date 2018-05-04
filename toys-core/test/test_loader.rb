@@ -31,9 +31,7 @@ require "helper"
 
 describe Toys::Loader do
   let(:loader) {
-    Toys::Loader.new(config_dir_name: ".toys",
-                     config_file_name: ".toys.rb",
-                     index_file_name: ".toys.rb")
+    Toys::Loader.new(index_file_name: ".toys.rb")
   }
   let(:cases_dir) {
     File.join(__dir__, "lookup-cases")
@@ -41,7 +39,8 @@ describe Toys::Loader do
 
   describe "path with config items" do
     before do
-      loader.add_paths(File.join(cases_dir, "config-items"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
     end
 
     it "finds a tool directly defined in a config file" do
@@ -84,7 +83,7 @@ describe Toys::Loader do
 
   describe "config path with some hierarchical files" do
     before do
-      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"))
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
     it "finds a tool directly defined" do
@@ -138,7 +137,7 @@ describe Toys::Loader do
 
   describe "collisions between definitions" do
     before do
-      loader.add_config_paths(File.join(cases_dir, "collision"))
+      loader.add_path(File.join(cases_dir, "collision"))
     end
 
     it "allows loading if the collision isn't actually traversed" do
@@ -156,8 +155,9 @@ describe Toys::Loader do
 
   describe "priority between definitions" do
     it "chooses from the earlier path" do
-      loader.add_paths(File.join(cases_dir, "config-items"))
-      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
 
       tool = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.effective_desc)
@@ -165,8 +165,9 @@ describe Toys::Loader do
     end
 
     it "honors the high-priority flag" do
-      loader.add_paths(File.join(cases_dir, "config-items"))
-      loader.add_config_paths(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
 
       tool = loader.lookup(["tool-1"])
       assert_equal("normal tool-1 short description", tool.effective_desc)
@@ -174,8 +175,9 @@ describe Toys::Loader do
     end
 
     it "deletes subtools of a replaced group" do
-      loader.add_config_paths(File.join(cases_dir, "replace-group"))
-      loader.add_paths(File.join(cases_dir, "config-items"), high_priority: true)
+      loader.add_path(File.join(cases_dir, "replace-group"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"), high_priority: true)
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"), high_priority: true)
 
       subtools = loader.list_subtools(["group-1"])
       assert_equal(1, subtools.size)
@@ -185,7 +187,7 @@ describe Toys::Loader do
 
   describe "includes" do
     before do
-      loader.add_config_paths(File.join(cases_dir, "items-with-includes"))
+      loader.add_path(File.join(cases_dir, "items-with-includes"))
     end
 
     it "gets an item from a root-level directory include" do
@@ -223,12 +225,8 @@ describe Toys::Loader do
 
   describe "append" do
     it "can appear after the group" do
-      loader.add_config_paths(
-        [
-          File.join(cases_dir, "normal-file-hierarchy"),
-          File.join(cases_dir, "append")
-        ]
-      )
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      loader.add_path(File.join(cases_dir, "append"))
       group = loader.lookup(["group-1"])
       assert_equal("(A group of commands)", group.effective_desc)
       subtools = loader.list_subtools(["group-1"])
@@ -236,12 +234,8 @@ describe Toys::Loader do
     end
 
     it "can appear before the group" do
-      loader.add_config_paths(
-        [
-          File.join(cases_dir, "append"),
-          File.join(cases_dir, "normal-file-hierarchy")
-        ]
-      )
+      loader.add_path(File.join(cases_dir, "append"))
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
       group = loader.lookup(["group-1"])
       assert_equal("(A group of commands)", group.effective_desc)
       subtools = loader.list_subtools(["group-1"])

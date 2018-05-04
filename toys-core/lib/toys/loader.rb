@@ -36,14 +36,6 @@ module Toys
     ##
     # Create a Loader
     #
-    # @param [String,nil] config_dir_name A directory with this name that
-    #     appears in the loader path, is treated as a configuration directory
-    #     whose contents are loaded into the toys configuration. Optional.
-    #     If not provided, toplevel configuration directories are disabled.
-    # @param [String,nil] config_file_name A file with this name that appears
-    #     in the loader path, is treated as a toplevel configuration file
-    #     whose contents are loaded into the toys configuration. Optional.
-    #     If not provided, toplevel configuration files are disabled.
     # @param [String,nil] index_file_name A file with this name that appears
     #     in any configuration directory (not just a toplevel directory) is
     #     loaded first as a standalone configuration file. If not provided,
@@ -54,102 +46,37 @@ module Toys
     #     configuration file in that the configuration DSL is not honored. You
     #     may use such a file to define auxiliary Ruby modules and classes that
     #     used by the tools defined in that directory.
-    # @param [Array] middleware An array of middleware that will be used by
-    #     default for all tools loaded by this CLI.
+    # @param [Array] middleware_stack An array of middleware that will be used
+    #     by default for all tools loaded by this loader.
     # @param [String] root_desc The description of the root tool.
     #
-    def initialize(config_dir_name: nil, config_file_name: nil,
-                   index_file_name: nil, preload_file_name: nil,
-                   middleware: [], root_desc: nil)
-      @config_dir_name = config_dir_name
-      @config_file_name = config_file_name
+    def initialize(index_file_name: nil, preload_file_name: nil,
+                   middleware_stack: [], root_desc: nil)
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
-      @middleware = middleware
+      @middleware_stack = middleware_stack
       check_init_options
       @load_worklist = []
       root_tool = Tool.new([])
-      root_tool.middleware_stack.concat(@middleware)
+      root_tool.middleware_stack.concat(@middleware_stack)
       root_tool.long_desc = root_desc if root_desc
       @tools = {[] => [root_tool, nil]}
       @max_priority = @min_priority = 0
     end
 
     ##
-    # Add one or more configuration files/directories to the loader.
-    # This might point to a directory that defines a default set of tools.
+    # Add a configuration file/directory to the loader.
     #
-    # @param [String,Array<String>] paths One or more paths to add.
-    # @param [Boolean] high_priority If true, add these paths at the top of
-    #     the priority list. Defaults to false, indicating new paths should
-    #     be at the bottom of the priority list.
-    #
-    def add_config_paths(paths, high_priority: false)
-      paths = Array(paths)
-      paths = paths.reverse if high_priority
-      paths.each do |path|
-        add_config_path(path, high_priority: high_priority)
-      end
-      self
-    end
-
-    ##
-    # Add a single configuration file/directory to the loader.
-    # This might point to a directory that defines a default set of tools.
-    #
-    # @param [String] path A path to add.
-    # @param [Boolean] high_priority If true, add this path at the top of the
-    #     priority list. Defaults to false, indicating the new path should be
-    #     at the bottom of the priority list.
-    #
-    def add_config_path(path, high_priority: false)
-      path = check_path(path)
-      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      @load_worklist << [path, [], priority]
-      self
-    end
-
-    ##
-    # Add one or more path directories to the loader. These directories are
-    # searched for toplevel config directories and files.
-    #
-    # @param [String,Array<String>] paths One or more paths to add.
-    # @param [Boolean] high_priority If true, add these paths at the top of
-    #     the priority list. Defaults to false, indicating new paths should
-    #     be at the bottom of the priority list.
-    #
-    def add_paths(paths, high_priority: false)
-      paths = Array(paths)
-      paths = paths.reverse if high_priority
-      paths.each do |path|
-        add_path(path, high_priority: high_priority)
-      end
-      self
-    end
-
-    ##
-    # Add a single path directory to the loader. This directory is searched
-    # for toplevel config directories and files.
-    #
-    # @param [String] path A path to add.
+    # @param [String,Array<String>] path One or more paths to add.
     # @param [Boolean] high_priority If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
     #
     def add_path(path, high_priority: false)
-      path = check_path(path, type: :dir)
+      paths = Array(path)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      if @config_file_name
-        p = ::File.join(path, @config_file_name)
-        if !::File.directory?(p) && ::File.readable?(p)
-          @load_worklist << [p, [], priority]
-        end
-      end
-      if @config_dir_name
-        p = ::File.join(path, @config_dir_name)
-        if ::File.directory?(p) && ::File.readable?(p)
-          @load_worklist << [p, [], priority]
-        end
+      paths.each do |p|
+        @load_worklist << [check_path(p), [], priority]
       end
       self
     end
@@ -244,7 +171,7 @@ module Toys
       end
       prune_from(words)
       tool = Tool.new(words)
-      tool.middleware_stack.concat(@middleware)
+      tool.middleware_stack.concat(@middleware_stack)
       @tools[words] = [tool, priority]
       tool
     end
@@ -304,12 +231,6 @@ module Toys
     private
 
     def check_init_options
-      if @config_dir_name && ::File.extname(@config_dir_name) == ".rb"
-        raise LookupError, "Illegal config dir name #{@config_dir_name.inspect}"
-      end
-      if @config_file_name && ::File.extname(@config_file_name) != ".rb"
-        raise LookupError, "Illegal config file name #{@config_file_name.inspect}"
-      end
       if @index_file_name && ::File.extname(@index_file_name) != ".rb"
         raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
       end

@@ -1,5 +1,5 @@
-/pkg/
-/doc/
-/tmp/
-/Gemfile.lock
-/.yardoc/
+/*/pkg/
+/*/doc/
+/*/tmp/
+Gemfile.lock
+/*/.yardoc/

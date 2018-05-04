@@ -27,36 +27,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+lib = ::File.expand_path("lib", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require "toys/version"
 
-name "install" do
-  desc "Build and install the current code as a gem"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    version = capture("toys/bin/toys system version").strip
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys build"
-      sh "gem install pkg/toys-core-#{version}.gem"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys build"
-      sh "gem install pkg/toys-#{version}.gem"
-    end
-  end
-end
+::Gem::Specification.new do |spec|
+  spec.name = "toys"
+  spec.version = ::Toys::VERSION
+  spec.authors = ["Daniel Azuma"]
+  spec.email = ["dazuma@gmail.com"]
 
-name "ci" do
-  desc "CI target that runs tests and rubocop"
-  use :exec
-  execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys do test , rubocop"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys do test , rubocop"
-    end
-  end
+  spec.summary = "Command line tool framework"
+  spec.description = "A simple command line tool framework"
+  spec.license = "BSD-3-Clause"
+  spec.homepage = "https://github.com/dazuma/toys"
+
+  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
+               ::Dir.glob("bin/*") + ::Dir.glob("*.md") +
+               [".yardopts"]
+  spec.required_ruby_version = ">= 2.2.0"
+  spec.require_paths = ["lib"]
+
+  spec.bindir = "bin"
+  spec.executables = ["toys"]
+
+  spec.add_dependency "toys-core", "= #{::Toys::VERSION}"
+
+  spec.add_development_dependency "minitest", "~> 5.11"
+  spec.add_development_dependency "minitest-focus", "~> 1.1"
+  spec.add_development_dependency "minitest-rg", "~> 5.2"
+  spec.add_development_dependency "rubocop", "~> 0.55.0"
+  spec.add_development_dependency "yard", "~> 0.9"
 end

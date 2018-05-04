@@ -1,0 +1,9 @@
+--no-private
+--title=Toys
+--markup=markdown
+--main=README.md
+./lib/**/*.rb
+-
+README.md
+LICENSE.md
+CHANGELOG.md

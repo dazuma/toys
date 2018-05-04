@@ -37,53 +37,10 @@ module Toys
   #
   class CLI
     ##
-    # Path to default builtins
-    # @return [String]
-    #
-    BUILTINS_PATH = ::File.join(__dir__, "builtins").freeze
-
-    ##
-    # Default name of toys configuration directory
-    # @return [String]
-    #
-    DEFAULT_DIR_NAME = ".toys".freeze
-
-    ##
-    # Default name of toys configuration file
-    # @return [String]
-    #
-    DEFAULT_FILE_NAME = ".toys.rb".freeze
-
-    ##
-    # Default name of toys preload file
-    # @return [String]
-    #
-    DEFAULT_PRELOAD_NAME = ".preload.rb".freeze
-
-    ##
-    # Default name of toys binary
-    # @return [String]
-    #
-    DEFAULT_BINARY_NAME = "toys".freeze
-
-    ##
-    # Default help text for the root tool
-    # @return [String]
-    #
-    DEFAULT_ROOT_DESC =
-      "Toys is your personal command line tool. You can add to the list of" \
-      " commands below by writing scripts in Ruby using a simple DSL, and" \
-      " toys will organize and document them, and make them available" \
-      " globally or scoped to specific directories that you choose." \
-      " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
-
-    ##
     # Create a CLI
     #
     # @param [String,nil] binary_name The binary name displayed in help text.
     #     Optional. Defaults to the ruby program name.
-    # @param [Logger,nil] logger The logger to use. If not provided, a default
-    #     logger that writes to `STDERR` is used.
     # @param [String,nil] config_dir_name A directory with this name that
     #     appears in the loader path, is treated as a configuration directory
     #     whose contents are loaded into the toys configuration. Optional.
@@ -105,125 +62,137 @@ module Toys
     #     configuration file in that the configuration DSL is not honored. You
     #     may use such a file to define auxiliary Ruby modules and classes that
     #     used by the tools defined in that directory.
-    # @param [Array] middleware An array of middleware that will be used by
-    #     default for all tools loaded by this CLI.
     # @param [String] root_desc The description of the root tool.
+    # @param [Array] middleware_stack An array of middleware that will be used
+    #     by default for all tools loaded by this CLI.
+    # @param [Logger,nil] logger The logger to use. If not provided, a default
+    #     logger that writes to `STDERR` is used.
     #
     def initialize(
       binary_name: nil,
-      logger: nil,
       config_dir_name: nil,
       config_file_name: nil,
       index_file_name: nil,
       preload_file_name: nil,
-      middleware: [],
-      root_desc: nil
+      root_desc: nil,
+      middleware_stack: nil,
+      logger: nil
     )
       logger ||= self.class.default_logger
+      middleware_stack ||= self.class.default_middleware_stack
+      @config_dir_name = config_dir_name
+      @config_file_name = config_file_name
       @loader = Loader.new(
-        config_dir_name: config_dir_name,
-        config_file_name: config_file_name,
         index_file_name: index_file_name,
         preload_file_name: preload_file_name,
-        middleware: middleware,
+        middleware_stack: middleware_stack,
         root_desc: root_desc
       )
       @context_base = Context::Base.new(@loader, binary_name, logger)
     end
 
     ##
-    # Add one or more configuration files/directories to the loader.
+    # Add a configuration file or directory to the loader.
     #
     # If a CLI has a default tool set, it might use this to point to the
     # directory that defines those tools. For example, the default Toys CLI
-    # uses this to load the builtin tools from the `builtins` directory.
+    # uses this to load the builtin tools from the "builtins" directory.
     #
-    # @param [String,Array<String>] paths One or more paths to add.
+    # @param [String] path A path to add.
+    # @param [Boolean] high_priority Add the config at the head of the priority
+    #     list rather than the tail.
     #
-    def add_config_paths(paths)
-      @loader.add_config_paths(paths)
+    def add_config_path(path, high_priority: false)
+      @loader.add_path(path, high_priority: high_priority)
       self
     end
 
     ##
-    # Add one or more path directories to the loader. These directories are
-    # searched for config directories and config files. Typically a CLI may
-    # include the current directory, or the user's home directory, `/etc` or
-    # other configuration-centric directories here.
+    # Searches the given directory for a well-known config directory and/or
+    # config file. If found, these are added to the loader.
     #
-    # @param [String,Array<String>] paths One or more paths to add.
+    # Typically, a CLI will use this to find toys configs in the current
+    # working directory, the user's home directory, or some other well-known
+    # general configuration-oriented directory such as "/etc".
     #
-    def add_paths(paths)
-      @loader.add_paths(paths)
+    # @param [String] search_path A path to search for configs.
+    # @param [Boolean] high_priority Add the configs at the head of the
+    #     priority list rather than the tail.
+    #
+    def add_search_path(search_path, high_priority: false)
+      paths = []
+      if @config_file_name
+        file_path = ::File.join(search_path, @config_file_name)
+        paths << file_path if !::File.directory?(file_path) && ::File.readable?(file_path)
+      end
+      if @config_dir_name
+        dir_path = ::File.join(search_path, @config_dir_name)
+        paths << dir_path if ::File.directory?(dir_path) && ::File.readable?(dir_path)
+      end
+      @loader.add_path(paths, high_priority: high_priority)
       self
     end
 
     ##
-    # Add the given path and all ancestor directories to the loader as paths.
-    # You may optionally provide a stopping point using the `base` argument,
-    # which, if present, will be the _last_ directory added.
+    # A convenience method that searches the current working directory, and all
+    # ancestor directories, for configs to add to the loader.
     #
-    # @param [String] path The first directory to add
+    # @param [String] start The first directory to add. Defaults to the current
+    #     working directory.
     # @param [String] base The last directory to add. Defaults to `"/"`.
+    # @param [Boolean] high_priority Add the configs at the head of the
+    #     priority list rather than the tail.
     #
-    def add_path_hierarchy(path = nil, base = "/")
-      path ||= ::Dir.pwd
+    def add_search_path_hierarchy(start: nil, base: "/", high_priority: false)
+      path = start || ::Dir.pwd
       paths = []
       loop do
         paths << path
-        break if !base || path == base
+        break if path == base
         next_path = ::File.dirname(path)
         break if next_path == path
         path = next_path
       end
-      @loader.add_paths(paths)
+      paths.reverse! if high_priority
+      paths.each do |p|
+        add_search_path(p, high_priority: high_priority)
+      end
       self
     end
 
     ##
-    # Add a standard set of paths. This includes the contents of the
-    # `TOYS_PATH` environment variable if present, the current user's home
-    # directory, and any system configuration directories such as `/etc`.
+    # Searches a standard set of search paths for configs to add. This includes
+    # the contents of the `TOYS_PATH` environment variable if present, the
+    # current user's home directory, and any system configuration directories
+    # such as `/etc`.
     #
-    def add_standard_paths
-      toys_path = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
-      if toys_path.empty?
-        toys_path << ::ENV["HOME"] if ::ENV["HOME"]
-        toys_path << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
+    # @param [Boolean] high_priority Add the configs at the head of the
+    #     priority list rather than the tail.
+    #
+    def add_standard_search_paths(high_priority: false)
+      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
+      if paths.empty?
+        paths << ::ENV["HOME"] if ::ENV["HOME"]
+        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
       end
-      @loader.add_paths(toys_path)
+      paths.reverse! if high_priority
+      paths.each do |path|
+        add_search_path(path, high_priority: high_priority)
+      end
       self
     end
 
     ##
     # Run the CLI with the given command line arguments.
     #
+    # @param [String...] args Command line arguments specifying which tool to
+    #     run and what arguments to pass to it.
+    #
     def run(*args)
       exit(@context_base.run(args.flatten, verbosity: 0))
     end
 
     class << self
-      ##
-      # Configure and create the standard Toys CLI.
-      #
-      # @return [Toys::CLI]
-      #
-      def create_standard
-        cli = new(
-          binary_name: DEFAULT_BINARY_NAME,
-          config_dir_name: DEFAULT_DIR_NAME,
-          config_file_name: DEFAULT_FILE_NAME,
-          index_file_name: DEFAULT_FILE_NAME,
-          preload_file_name: DEFAULT_PRELOAD_NAME,
-          middleware: default_middleware_stack,
-          root_desc: DEFAULT_ROOT_DESC
-        )
-        cli.add_path_hierarchy
-        cli.add_standard_paths
-        cli.add_config_paths(BUILTINS_PATH)
-        cli
-      end
-
       ##
       # Returns a default set of middleware used by the standard Toys CLI.
       # This middleware handles usage errors, provides a behavior for groups

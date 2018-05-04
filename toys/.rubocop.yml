@@ -39,15 +39,10 @@ Style/WordArray:
 # Disable certain checks for templates and tests
 Metrics/BlockLength:
   Exclude:
-    - "lib/toys/templates/*"
     - "test/**/*"
 Metrics/BlockNesting:
   Exclude:
-    - "lib/toys/templates/*"
     - "test/**/*"
-Naming/FileName:
-  Exclude:
-    - "test/lookup-cases/**/*"
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
