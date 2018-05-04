@@ -34,9 +34,11 @@ name "install" do
   execute do
     configure_exec exit_on_nonzero_status: true
     root_path = ::File.dirname(tool.definition_path)
-    version = capture("toys/bin/toys system version").strip
+    version = ::Dir.chdir(root_path) do
+      capture("bin/toys system version").strip
+    end
     ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys build"
+      sh "bin/toys build"
       sh "gem install pkg/toys-core-#{version}.gem"
     end
     ::Dir.chdir(::File.join(root_path, "toys")) do
@@ -53,7 +55,7 @@ name "ci" do
     configure_exec exit_on_nonzero_status: true
     root_path = ::File.dirname(tool.definition_path)
     ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "../toys/bin/toys do test , rubocop"
+      sh "bin/toys do test , rubocop"
     end
     ::Dir.chdir(::File.join(root_path, "toys")) do
       sh "bin/toys do test , rubocop"
