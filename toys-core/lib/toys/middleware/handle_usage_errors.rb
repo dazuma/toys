@@ -28,26 +28,39 @@
 ;
 
 require "toys/middleware/base"
+require "toys/utils/usage"
 
 module Toys
   module Middleware
     ##
-    # A middleware that provides switches for editing the verbosity
+    # This middleware handles the case of a usage error. If a usage error, such
+    # as an unrecognized switch or an unfulfilled required argument, is
+    # detected, this middleware intercepts execution and displays the error
+    # along with the usage string, and terminates execution with an error code.
     #
-    class SetVerbosity < Base
+    class HandleUsageErrors < Base
       ##
-      # This middleware adds `--verbose` and `--quiet` flags.
+      # Create a HandleUsageErrors middleware.
       #
-      def config(tool)
-        tool.add_switch(Context::VERBOSITY, "-v", "--verbose",
-                        doc: "Increase verbosity",
-                        handler: ->(_val, cur) { cur + 1 },
-                        only_unique: true)
-        tool.add_switch(Context::VERBOSITY, "-q", "--quiet",
-                        doc: "Decrease verbosity",
-                        handler: ->(_val, cur) { cur - 1 },
-                        only_unique: true)
-        yield
+      # @param [Intgeer] exit_code The exit code to return if a usage error
+      #     occurs. Default is -1.
+      #
+      def initialize(exit_code: -1)
+        @exit_code = exit_code
+      end
+
+      ##
+      # Intercept and handle usage errors during execution.
+      #
+      def execute(context)
+        if context[Context::USAGE_ERROR]
+          puts(context[Context::USAGE_ERROR])
+          puts("")
+          puts(Utils::Usage.from_context(context).string)
+          context.exit(@exit_code)
+        else
+          yield
+        end
       end
     end
   end

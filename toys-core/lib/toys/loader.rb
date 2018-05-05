@@ -48,19 +48,19 @@ module Toys
     #     used by the tools defined in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
-    # @param [String] root_desc The description of the root tool.
     #
-    def initialize(index_file_name: nil, preload_file_name: nil,
-                   middleware_stack: [], root_desc: nil)
+    def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [])
+      if index_file_name && ::File.extname(index_file_name) != ".rb"
+        raise LoaderError, "Illegal index file name #{index_file_name.inspect}"
+      end
+      if preload_file_name && ::File.extname(preload_file_name) != ".rb"
+        raise LoaderError, "Illegal preload file name #{preload_file_name.inspect}"
+      end
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @middleware_stack = middleware_stack
-      check_init_options
       @load_worklist = []
-      root_tool = Tool.new([])
-      root_tool.middleware_stack.concat(@middleware_stack)
-      root_tool.long_desc = root_desc if root_desc
-      @tools = {[] => [root_tool, nil]}
+      @tools = {}
       @max_priority = @min_priority = 0
     end
 
@@ -98,11 +98,13 @@ module Toys
         load_for_prefix(cur_prefix)
         p = orig_prefix.dup
         while p.length >= cur_prefix.length
-          return @tools[p].first if @tools.key?(p)
+          tool = get_tool(p, [])
+          return tool if tool
           p.pop
         end
-        raise "Bug: No tools found" unless cur_prefix.pop
+        break unless cur_prefix.pop
       end
+      get_or_create_tool([])
     end
 
     ##
@@ -112,7 +114,7 @@ module Toys
     # @param [Array<String>] words The name of the parent tool
     # @param [Boolean] recursive If true, return all subtools recursively
     #     rather than just the immediate children (the default)
-    # @return [Array<Toys::Tool>]
+    # @return [Array<Toys::Tool,Tool::Alias>]
     #
     def list_subtools(words, recursive: false)
       load_for_prefix(words)
@@ -151,29 +153,55 @@ module Toys
     # Does not do any loading. If the tool is not present, creates it.
     #
     # @param [Array<String>] words The name of the tool.
-    # @param [Integer] priority The priority of the request.
-    # @param [Boolean] assume_parent If true, does not check the parent tool's
-    #     priority.
-    # @return [Toys::Tool,nil] The tool, or `nil` if the given priority is
-    #     insufficient.
+    # @param [Integer,nil] priority The priority of the request.
+    # @return [Toys::Tool,Toys::Alias,nil] The tool or alias, or `nil` if the
+    #     given priority is insufficient for modification
     #
     # @private
     #
-    def get_or_create_tool(words, priority, assume_parent: false)
-      if tool_defined?(words)
+    def get_or_create_tool(words, priority: nil)
+      if @tools.key?(words)
         tool, tool_priority = @tools[words]
-        return tool if priority.nil? || tool_priority.nil? || tool_priority == priority
+        if !priority || !tool_priority || tool_priority == priority
+          if priority && tool.is_a?(Alias)
+            raise LoaderError, "Cannot modify #{@words.inspect} because it is already an alias"
+          end
+          return tool
+        end
         return nil if tool_priority > priority
       end
-      unless assume_parent
-        parent = get_or_create_tool(words[0..-2], priority)
-        return nil if parent.nil?
-      end
-      prune_from(words)
+      get_or_create_tool(words[0..-2]) unless words.empty?
       tool = Tool.new(words)
-      tool.middleware_stack.concat(@middleware_stack)
+      tool.middleware_stack.concat(Middleware.resolve_stack(@middleware_stack))
       @tools[words] = [tool, priority]
       tool
+    end
+
+    ##
+    # Sets the given name as an alias to the given target.
+    #
+    # @param [Array<String>] words The alias name
+    # @param [Array<String>] target The alias target name
+    # @param [Integer] priority The priority of the request
+    #
+    # @return [Toys::Alias] The alias created
+    #
+    # @private
+    #
+    def make_alias(words, target, priority)
+      if @tools.key?(words)
+        tool_priority = @tools[words].last
+        if tool_priority
+          if tool_priority == priority
+            raise LoaderError, "Cannot make #{words.inspect} an alias because it is already defined"
+          elsif tool_priority > priority
+            return nil
+          end
+        end
+      end
+      a = Alias.new(words, target)
+      @tools[words] = [a, priority]
+      a
     end
 
     ##
@@ -205,6 +233,32 @@ module Toys
     end
 
     ##
+    # Returns a tool given a name. Resolves any aliases.
+    #
+    # @param [Array<String>] words Name of the tool
+    # @param [Array<Array<String>>] looked_up List of names that have already
+    #     been traversed during alias resolution. Used to detect circular
+    #     alias references.
+    # @return [Toys::Tool,nil] The tool, or `nil` if not found
+    #
+    # @private
+    #
+    def get_tool(words, looked_up = [])
+      return nil unless @tools.key?(words)
+      result = @tools[words].first
+      if result.is_a?(Alias)
+        words = result.target
+        if looked_up.include?(words)
+          raise LoaderError, "Circular alias references: #{looked_up.inspect}"
+        end
+        looked_up << words
+        get_tool(words, looked_up)
+      else
+        result
+      end
+    end
+
+    ##
     # Load configuration from the given path.
     #
     # @private
@@ -230,20 +284,6 @@ module Toys
 
     private
 
-    def check_init_options
-      if @index_file_name && ::File.extname(@index_file_name) != ".rb"
-        raise LookupError, "Illegal index file name #{@index_file_name.inspect}"
-      end
-      if @preload_file_name && ::File.extname(@preload_file_name) != ".rb"
-        raise LookupError, "Illegal preload file name #{@preload_file_name.inspect}"
-      end
-    end
-
-    def prune_from(words)
-      return unless @tools.key?(words)
-      @tools.delete_if { |k, _v| k[0, words.size] == words }
-    end
-
     def load_for_prefix(prefix)
       cur_worklist = @load_worklist
       @load_worklist = []
@@ -262,10 +302,7 @@ module Toys
 
     def load_path(path, words, remaining_words, priority)
       if ::File.extname(path) == ".rb"
-        tool = get_or_create_tool(words, priority)
-        if tool
-          ConfigDSL.evaluate(path, tool, remaining_words, priority, self, :tool, ::IO.read(path))
-        end
+        ConfigDSL.evaluate(words, remaining_words, priority, self, path, ::IO.read(path))
       else
         require_preload_in(path)
         load_index_in(path, words, remaining_words, priority)
@@ -306,12 +343,12 @@ module Toys
       when :file
         if ::File.directory?(path) || !::File.readable?(path)
           return nil if lenient
-          raise LookupError, "Cannot read file #{path}"
+          raise LoaderError, "Cannot read file #{path}"
         end
       when :dir
         if !::File.directory?(path) || !::File.readable?(path)
           return nil if lenient
-          raise LookupError, "Cannot read directory #{path}"
+          raise LoaderError, "Cannot read directory #{path}"
         end
       else
         raise ArgumentError, "Illegal type #{type}"

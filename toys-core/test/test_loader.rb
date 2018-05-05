@@ -173,16 +173,6 @@ describe Toys::Loader do
       assert_equal("normal tool-1 short description", tool.effective_desc)
       assert_equal("normal tool-1 long description", tool.effective_long_desc)
     end
-
-    it "deletes subtools of a replaced group" do
-      loader.add_path(File.join(cases_dir, "replace-group"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"), high_priority: true)
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"), high_priority: true)
-
-      subtools = loader.list_subtools(["group-1"])
-      assert_equal(1, subtools.size)
-      assert_equal("file tool-1-1 short description", subtools.first.effective_desc)
-    end
   end
 
   describe "includes" do
@@ -220,26 +210,6 @@ describe Toys::Loader do
       assert_equal(false, loader.tool_defined?(["group-0", "group-1", "tool-1-1"]))
       loader.lookup(["group-0"])
       assert_equal(true, loader.tool_defined?(["group-0", "group-1", "tool-1-1"]))
-    end
-  end
-
-  describe "append" do
-    it "can appear after the group" do
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
-      loader.add_path(File.join(cases_dir, "append"))
-      group = loader.lookup(["group-1"])
-      assert_equal("(A group of commands)", group.effective_desc)
-      subtools = loader.list_subtools(["group-1"])
-      assert_equal(3, subtools.size)
-    end
-
-    it "can appear before the group" do
-      loader.add_path(File.join(cases_dir, "append"))
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
-      group = loader.lookup(["group-1"])
-      assert_equal("(A group of commands)", group.effective_desc)
-      subtools = loader.list_subtools(["group-1"])
-      assert_equal(3, subtools.size)
     end
   end
 end

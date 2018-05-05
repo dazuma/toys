@@ -79,7 +79,7 @@ module Toys
         add_switches(optparse)
         if @tool.includes_executor?
           add_positional_arguments(optparse)
-        elsif !@tool.alias?
+        else
           add_command_list(optparse, recursive)
         end
         optparse.to_s
@@ -155,7 +155,11 @@ module Toys
         optparse.separator("Commands:")
         subtools.each do |subtool|
           tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
-          optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
+          if subtool.is_a?(Alias)
+            optparse.separator("    #{tool_name}  (Alias of #{subtool.display_target})")
+          else
+            optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
+          end
         end
       end
     end

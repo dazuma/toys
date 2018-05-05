@@ -37,6 +37,6 @@ module Toys
   ##
   # An exception indicating a problem during tool lookup
   #
-  class LookupError < ::StandardError
+  class LoaderError < ::StandardError
   end
 end

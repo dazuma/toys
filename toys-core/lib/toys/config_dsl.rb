@@ -67,123 +67,51 @@ module Toys
     # Create an instance of the DSL.
     # @private
     #
-    # @param [String] path The path to the config file being evaluated
-    # @param [Toys::Tool] tool The tool being defined at the top level
+    # @param [Array<String>] words Full name of the current tool.
     # @param [Array<String>,nil] remaining_words Arguments remaining in the
     #     current lookup.
     # @param [Integer] priority Priority of this configuration
     # @param [Toys::Loader] loader Current active loader
-    # @param [:tool,:append,:group] type Type of tool being configured
+    # @param [String] path The path to the config file being evaluated
     #
     # @return [Toys::ConfigDSL]
     #
-    def initialize(path, tool, remaining_words, priority, loader, type)
-      @path = path
-      @tool = tool
+    def initialize(words, remaining_words, priority, loader, path)
+      @words = words
       @remaining_words = remaining_words
       @priority = priority
       @loader = loader
-      @type = type
+      @path = path
     end
 
     ##
-    # Create a subtool.
-    #
-    # If the subtool is not an alias, you must provide a block defining the
-    # subtool.
+    # Create a subtool. You must provide a block defining the subtool.
     #
     # If the subtool is already defined (either as a tool or a group), the old
     # definition is discarded and replaced with the new definition. If the old
     # tool was a group, all its descendants are also discarded, recursively.
     #
     # @param [String] word The name of the subtool
-    # @param [String,nil] alias_of If set, this subtool is set to be an alias
-    #     of the given subtool name. Defaults to `nil`, indicating the subtool
-    #     is not an alias.
     #
-    def tool(word, alias_of: nil, &block)
+    def tool(word, &block)
+      return self if _cur_tool.nil?
       word = word.to_s
-      subtool = @loader.get_or_create_tool(@tool.full_name + [word], @priority, assume_parent: true)
-      return self if subtool.nil?
-      if alias_of
-        if block
-          raise ToolDefinitionError, "Cannot take a block with alias_of"
-        end
-        subtool.make_alias_of_word(alias_of.to_s)
-        return self
-      end
+      subtool_words = @words + [word]
       next_remaining = Loader.next_remaining_words(@remaining_words, word)
-      ConfigDSL.evaluate(@path, subtool, next_remaining, @priority, @loader, :tool, block)
+      ConfigDSL.evaluate(subtool_words, next_remaining, @priority, @loader, @path, block)
       self
     end
     alias name tool
 
     ##
-    # Append subtools to an existing group.
-    #
-    # Pass a group name to this method to "reopen" that group. You must provide
-    # a block. In that block, you may not modify any properties of the group
-    # itself, but you may add or replace subtools within the group.
-    #
-    # @param [String] word The name of the group.
-    #
-    def append(word, &block)
-      word = word.to_s
-      subtool = @loader.get_or_create_tool(@tool.full_name + [word], nil, assume_parent: true)
-      next_remaining = Loader.next_remaining_words(@remaining_words, word)
-      ConfigDSL.evaluate(@path, subtool, next_remaining, @priority, @loader, :append, block)
-      self
-    end
-
-    ##
-    # Create a group subtool. You must provide a block defining the group's
-    # properties and contents.
-    #
-    # If the subtool is already defined (either as a tool or a group), the old
-    # definition is discarded and replaced with the new definition.
-    #
-    # @param [String] word The name of the group
-    #
-    def group(word, &block)
-      word = word.to_s
-      subtool = @loader.get_or_create_tool(@tool.full_name + [word], @priority, assume_parent: true)
-      return self if subtool.nil?
-      next_remaining = Loader.next_remaining_words(@remaining_words, word)
-      ConfigDSL.evaluate(@path, subtool, next_remaining, @priority, @loader, :group, block)
-      self
-    end
-
-    ##
-    # Create an alias of the current tool.
+    # Create an alias.
     #
     # @param [String] word The name of the alias
+    # @param [String] target The target of the alias
     #
-    def alias_as(word)
-      if @tool.root?
-        raise ToolDefinitionError, "Cannot make an alias of the root tool"
-      end
-      if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot make an alias of a group"
-      end
-      alias_name = @tool.full_name.slice(0..-2) + [word.to_s]
-      alias_tool = @loader.get_or_create_tool(alias_name, @priority)
-      alias_tool.make_alias_of(@tool.simple_name) if alias_tool
-      self
-    end
-
-    ##
-    # Make the current tool an alias of the given sibling
-    #
-    # @param [String] word The name of the sibling tool to alias
-    #
-    def alias_of(word)
-      if @tool.root?
-        raise ToolDefinitionError, "Cannot make the root tool an alias"
-      end
-      if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot make a group an alias"
-      end
-      @tool.make_alias_of(word.to_s)
+    def alias_tool(word, target)
+      return self if _cur_tool.nil?
+      @loader.make_alias(@words + [word.to_s], @words + [target.to_s], @priority)
       self
     end
 
@@ -193,9 +121,8 @@ module Toys
     # @param [String] path The file or directory to include.
     #
     def include(path)
-      @tool.yield_definition do
-        @loader.include_path(path, @tool.full_name, @remaining_words, @priority)
-      end
+      return self if _cur_tool.nil?
+      @loader.include_path(path, @words, @remaining_words, @priority)
       self
     end
 
@@ -210,6 +137,7 @@ module Toys
     # @param [Object...] args Template arguments
     #
     def expand(template_class, *args)
+      return self if _cur_tool.nil?
       unless template_class.is_a?(::Class)
         name = template_class.to_s
         template_class = Templates.lookup(name)
@@ -230,10 +158,9 @@ module Toys
     # @param [String] desc The long description string.
     #
     def long_desc(desc)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot set the description when appending"
-      end
-      @tool.long_desc = desc
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.long_desc = desc
       self
     end
 
@@ -245,10 +172,9 @@ module Toys
     # @param [String] desc The short description string.
     #
     def desc(desc)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot set the description when appending"
-      end
-      @tool.desc = desc
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.desc = desc
       self
     end
     alias short_desc desc
@@ -280,12 +206,11 @@ module Toys
     #
     def switch(key, *switches,
                accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot add a switch when appending"
-      end
-      @tool.add_switch(key, *switches,
-                       accept: accept, default: default, doc: doc,
-                       only_unique: only_unique, handler: handler)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.add_switch(key, *switches,
+                           accept: accept, default: default, doc: doc,
+                           only_unique: only_unique, handler: handler)
       self
     end
 
@@ -301,10 +226,9 @@ module Toys
     #     in the usage documentation. Defaults to `nil` for no documentation.
     #
     def required_arg(key, accept: nil, doc: nil)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot add an argument when appending"
-      end
-      @tool.add_required_arg(key, accept: accept, doc: doc)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.add_required_arg(key, accept: accept, doc: doc)
       self
     end
 
@@ -324,10 +248,9 @@ module Toys
     #     in the usage documentation. Defaults to `nil` for no documentation.
     #
     def optional_arg(key, accept: nil, default: nil, doc: nil)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot add an argument when appending"
-      end
-      @tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
       self
     end
 
@@ -347,10 +270,9 @@ module Toys
     #     documentation.
     #
     def remaining_args(key, accept: nil, default: [], doc: nil)
-      if @type == :append
-        raise ToolDefinitionError, "Cannot add an argument when appending"
-      end
-      @tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
       self
     end
 
@@ -359,10 +281,9 @@ module Toys
     # with `self` set to a {Toys::Context}.
     #
     def execute(&block)
-      if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot set the executor of a group"
-      end
-      @tool.executor = block
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.executor = block
       self
     end
 
@@ -375,10 +296,9 @@ module Toys
     #     underscore.
     #
     def helper(name, &block)
-      if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot define a helper method to a group"
-      end
-      @tool.add_helper(name, &block)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.add_helper(name, &block)
       self
     end
 
@@ -391,10 +311,9 @@ module Toys
     # @param [Module,Symbol] mod Module or name of well-known module.
     #
     def use(mod)
-      if @type == :group || @type == :append
-        raise ToolDefinitionError, "Cannot use a helper module in a group"
-      end
-      @tool.use_module(mod)
+      return self if _cur_tool.nil?
+      _cur_tool.definition_path = @path
+      _cur_tool.use_module(mod)
       self
     end
 
@@ -404,21 +323,16 @@ module Toys
     end
 
     ## @private
-    def self.evaluate(path, tool, remaining_words, priority, loader, type, source)
-      dsl = new(path, tool, remaining_words, priority, loader, type)
-      if type == :append
-        eval_source(dsl, path, source)
-      else
-        tool.defining_from(path) do
-          eval_source(dsl, path, source)
-          tool.finish_definition
-        end
+    def _cur_tool
+      unless defined? @_cur_tool
+        @_cur_tool = @loader.get_or_create_tool(@words, priority: @priority)
       end
-      tool
+      @_cur_tool
     end
 
     ## @private
-    def self.eval_source(dsl, path, source)
+    def self.evaluate(words, remaining_words, priority, loader, path, source)
+      dsl = new(words, remaining_words, priority, loader, path)
       case source
       when String
         # rubocop:disable Security/Eval
@@ -427,6 +341,7 @@ module Toys
       when ::Proc
         dsl.instance_eval(&source)
       end
+      nil
     end
   end
 end

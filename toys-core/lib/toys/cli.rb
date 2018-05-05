@@ -62,7 +62,6 @@ module Toys
     #     configuration file in that the configuration DSL is not honored. You
     #     may use such a file to define auxiliary Ruby modules and classes that
     #     used by the tools defined in that directory.
-    # @param [String] root_desc The description of the root tool.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this CLI.
     # @param [Logger,nil] logger The logger to use. If not provided, a default
@@ -74,7 +73,6 @@ module Toys
       config_file_name: nil,
       index_file_name: nil,
       preload_file_name: nil,
-      root_desc: nil,
       middleware_stack: nil,
       logger: nil
     )
@@ -85,8 +83,7 @@ module Toys
       @loader = Loader.new(
         index_file_name: index_file_name,
         preload_file_name: preload_file_name,
-        middleware_stack: middleware_stack,
-        root_desc: root_desc
+        middleware_stack: middleware_stack
       )
       @context_base = Context::Base.new(@loader, binary_name, logger)
     end
@@ -194,21 +191,22 @@ module Toys
 
     class << self
       ##
-      # Returns a default set of middleware used by the standard Toys CLI.
-      # This middleware handles usage errors, provides a behavior for groups
-      # that displays the group command list, provides a `--help` option for
-      # showing individual tool documentation, and provides `--verbose` and
-      # `--quiet` switches for setting the verbosity, which in turn controls
-      # the logger level.
+      # Returns a default set of middleware that may be used as a starting
+      # point for a typical CLI. This set includes:
+      #
+      # *  {Toys::Middleware::HandleUsageErrors}
+      # *  {Toys::Middleware::ShowUsage} adding the `--help` switch and
+      #    providing default behavior for groups
+      # *  {Toys::Middleware::AddVerbositySwitches} adding the `--verbose` and
+      #    `--quiet` switches for managing the logger level
       #
       # @return [Array]
       #
       def default_middleware_stack
         [
-          Middleware.lookup(:show_usage_errors).new,
-          Middleware.lookup(:show_group_usage).new,
-          Middleware.lookup(:show_tool_usage).new,
-          Middleware.lookup(:set_verbosity).new
+          [:handle_usage_errors],
+          [:show_usage, help_switches: true, fallback_execution: true],
+          [:add_verbosity_switches]
         ]
       end
 

@@ -29,6 +29,8 @@
 
 require "logger"
 
+require "toys/middleware/show_version"
+
 module Toys
   ##
   # The standard Toys CLI.
@@ -76,7 +78,7 @@ module Toys
     # Help text for the standard root tool
     # @return [String]
     #
-    ROOT_DESC =
+    DEFAULT_ROOT_DESC =
       "Toys is your personal command line tool. You can add to the list of" \
       " commands below by writing scripts in Ruby using a simple DSL, and" \
       " toys will organize and document them, and make them available" \
@@ -92,12 +94,27 @@ module Toys
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
-        preload_file_name: PRELOAD_FILE_NAME,
-        root_desc: ROOT_DESC
+        preload_file_name: PRELOAD_FILE_NAME
       )
       add_search_path_hierarchy
       add_standard_search_paths
       add_config_path(BUILTINS_PATH)
+    end
+
+    ##
+    # Returns a the middleware for the standard Toys CLI.
+    #
+    # @return [Array]
+    #
+    def self.default_middleware_stack
+      version_displayer = Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
+      [
+        [:set_default_descriptions, default_root_desc: DEFAULT_ROOT_DESC],
+        [:handle_usage_errors],
+        [:show_version, version_displayer: version_displayer],
+        [:show_usage, help_switches: true, fallback_execution: true],
+        [:add_verbosity_switches]
+      ]
     end
   end
 end

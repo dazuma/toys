@@ -40,6 +40,7 @@ module Toys
   module Utils; end
 end
 
+require "toys/alias"
 require "toys/cli"
 require "toys/config_dsl"
 require "toys/context"

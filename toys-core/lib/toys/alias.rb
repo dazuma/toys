@@ -27,38 +27,68 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-require "toys/utils/usage"
-
 module Toys
-  module Middleware
+  ##
+  # An alias is a name that refers to another name.
+  #
+  class Alias
     ##
-    # A middleware that shows usage documentation
+    # Create a new alias.
     #
-    class ShowToolUsage < Base
-      ##
-      # This middleware adds a `--help` flag that triggers display of help.
-      #
-      def config(tool)
-        if tool.includes_executor?
-          tool.add_switch(:_help, "-?", "--help",
-                          doc: "Show help message",
-                          only_unique: true)
-        end
-        yield
-      end
-
-      ##
-      # If the `--help` flag is present, this middleware causes the tool to
-      # display its usage documentation and exit, rather than executing.
-      #
-      def execute(context)
-        if context[:_help]
-          puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+    # @param [Array<String>] full_name The name of the alias.
+    # @param [String,Array<String>] target The name of the target. May either
+    #     be a local reference (a single string) or a global reference (an
+    #     array of strings)
+    #
+    def initialize(full_name, target)
+      @target =
+        if target.is_a?(::String)
+          full_name[0..-2] + [target]
         else
-          yield
+          target.dup
         end
-      end
+      @target.freeze
+      @full_name = full_name.dup.freeze
+    end
+
+    ##
+    # Return the name of the tool as an array of strings.
+    # This array may not be modified.
+    # @return [Array<String>]
+    #
+    attr_reader :full_name
+
+    ##
+    # Return the name of the target as an array of strings.
+    # This array may not be modified.
+    # @return [Array<String>]
+    #
+    attr_reader :target_name
+
+    ##
+    # Returns the local name of this tool.
+    # @return [String]
+    #
+    def simple_name
+      full_name.last
+    end
+
+    ##
+    # Returns a displayable name of this tool, generally the full name
+    # delimited by spaces.
+    # @return [String]
+    #
+    def display_name
+      full_name.join(" ")
+    end
+
+    ##
+    # Returns a displayable name of the target, generally the full name
+    # delimited by spaces.
+    # @return [String]
+    #
+    def display_target
+      target_name.join(" ")
     end
   end
 end

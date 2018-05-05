@@ -28,29 +28,30 @@
 ;
 
 require "toys/middleware/base"
-require "toys/utils/usage"
 
 module Toys
   module Middleware
     ##
-    # A middleware that shows usage errors
+    # A middleware that provides switches for editing the verbosity.
     #
-    class ShowUsageErrors < Base
+    # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` switches, if
+    # not already defined by the tool. These switches affect the setting of
+    # {Toys::Context::VERBOSITY}, and, thus, the logger level.
+    #
+    class AddVerbositySwitches < Base
       ##
-      # If a usage error happens, e.g. an unrecognized switch or an unfulfilled
-      # required argument, this middleware causes the tool to display the error
-      # and usage documentation and exit with a nonzero result. Otherwise, it
-      # does nothing.
+      # Configure the tool switches.
       #
-      def execute(context)
-        if context[Context::USAGE_ERROR]
-          puts(context[Context::USAGE_ERROR])
-          puts("")
-          puts(Utils::Usage.from_context(context).string)
-          context.exit(-1)
-        else
-          yield
-        end
+      def config(tool)
+        tool.add_switch(Context::VERBOSITY, "-v", "--verbose",
+                        doc: "Increase verbosity",
+                        handler: ->(_val, cur) { cur + 1 },
+                        only_unique: true)
+        tool.add_switch(Context::VERBOSITY, "-q", "--quiet",
+                        doc: "Decrease verbosity",
+                        handler: ->(_val, cur) { cur - 1 },
+                        only_unique: true)
+        yield
       end
     end
   end

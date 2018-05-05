@@ -48,8 +48,6 @@ module Toys
       @middleware_stack = []
 
       @definition_path = nil
-      @cur_path = nil
-      @alias_target = nil
       @definition_finished = false
 
       @desc = nil
@@ -123,14 +121,6 @@ module Toys
     attr_reader :executor
 
     ##
-    # If this tool is an alias, return the alias target as a local name (i.e.
-    # a single word identifying a sibling of this tool). Returns `nil` if this
-    # tool is not an alias.
-    # @return [String,nil]
-    #
-    attr_reader :alias_target
-
-    ##
     # Returns the middleware stack
     # @return [Array<Object>]
     #
@@ -176,20 +166,12 @@ module Toys
     end
 
     ##
-    # Returns true if this tool is an alias.
-    # @return [Boolean]
-    #
-    def alias?
-      !alias_target.nil?
-    end
-
-    ##
     # Returns the effective short description for this tool. This will be
     # displayed when this tool is listed in a command list.
     # @return [String]
     #
     def effective_desc
-      @desc || default_desc
+      @desc || ""
     end
 
     ##
@@ -198,7 +180,7 @@ module Toys
     # @return [String]
     #
     def effective_long_desc
-      @long_desc || @desc || default_desc
+      @long_desc || @desc || ""
     end
 
     ##
@@ -234,7 +216,7 @@ module Toys
     # @return [Boolean]
     #
     def includes_definition?
-      alias? || includes_arguments? || includes_executor? || includes_helpers?
+      includes_arguments? || includes_executor? || includes_helpers?
     end
 
     ##
@@ -246,20 +228,19 @@ module Toys
     end
 
     ##
-    # Make this tool an alias of the sibling tool with the given local name.
+    # Sets the path to the file that defines this tool.
+    # A tool may be defined from at most one path. If a different path is
+    # already set, raises {Toys::ToolDefinitionError}
     #
-    # @param [String] target_word The name of the alias target
+    # @param [String] path The path to the file defining this tool
     #
-    def make_alias_of(target_word)
-      if root?
-        raise ToolDefinitionError, "Cannot make the root tool an alias"
+    def definition_path=(path)
+      if @definition_path && @definition_path != path
+        raise ToolDefinitionError,
+              "Cannot redefine tool #{display_name.inspect} in #{path}" \
+              " (already defined in #{@definition_path})"
       end
-      if includes_description? || includes_definition?
-        raise ToolDefinitionError, "Tool #{display_name.inspect} already has" \
-          " a definition and cannot be made an alias"
-      end
-      @alias_target = target_word
-      self
+      @definition_path = path
     end
 
     ##
@@ -455,50 +436,19 @@ module Toys
     end
 
     ##
-    # Declare that this tool is now defined in the given path
-    #
-    # @private
-    #
-    def defining_from(path)
-      raise ToolDefinitionError, "Already being defined" if @cur_path
-      @cur_path = path
-      begin
-        yield
-      ensure
-        @definition_path = @cur_path if includes_description? || includes_definition?
-        @cur_path = nil
-      end
-    end
-
-    ##
-    # Relinquish the current path declaration
-    #
-    # @private
-    #
-    def yield_definition
-      saved_path = @cur_path
-      @cur_path = nil
-      begin
-        yield
-      ensure
-        @cur_path = saved_path
-      end
-    end
-
-    ##
     # Complete definition and run middleware configs
     #
     # @private
     #
     def finish_definition
-      if !alias? && !@definition_finished
+      unless @definition_finished
         config_proc = proc {}
         middleware_stack.reverse.each do |middleware|
           config_proc = make_config_proc(middleware, config_proc)
         end
         config_proc.call
+        @definition_finished = true
       end
-      @definition_finished = true
       self
     end
 
@@ -508,26 +458,7 @@ module Toys
       proc { middleware.config(self, &next_config) }
     end
 
-    def default_desc
-      if alias?
-        "(Alias of #{@alias_target.inspect})"
-      elsif includes_executor?
-        "(No description available)"
-      else
-        "(A group of commands)"
-      end
-    end
-
     def check_definition_state
-      if alias?
-        raise ToolDefinitionError, "Tool #{display_name.inspect} is an alias"
-      end
-      if @definition_path
-        in_clause = @cur_path ? "in #{@cur_path} " : ""
-        raise ToolDefinitionError,
-              "Cannot redefine tool #{display_name.inspect} #{in_clause}" \
-              "(already defined in #{@definition_path})"
-      end
       if @definition_finished
         raise ToolDefinitionError,
               "Defintion of tool #{display_name.inspect} is already finished"
@@ -701,8 +632,6 @@ module Toys
       end
 
       def execute(context_base, args, verbosity: 0)
-        return execute_alias(context_base, args) if @tool.alias?
-
         parse_args(args, verbosity)
         context = create_child_context(context_base)
 
@@ -814,17 +743,6 @@ module Toys
 
       def make_executor(middleware, context, next_executor)
         proc { middleware.execute(context, &next_executor) }
-      end
-
-      def execute_alias(context_base, args)
-        target_name = @tool.full_name.slice(0..-2) + [@tool.alias_target]
-        target_tool = context_base.loader.lookup(target_name)
-        if target_tool.full_name == target_name
-          target_tool.execute(context_base, args)
-        else
-          context_base.logger.fatal("Alias target #{@tool.alias_target.inspect} not found")
-          -1
-        end
       end
     end
   end

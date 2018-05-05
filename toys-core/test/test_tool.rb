@@ -43,7 +43,7 @@ describe Toys::Tool do
   let(:subtool2) { Toys::Tool.new([tool_name, subtool2_name]) }
   let(:full_tool) {
     Toys::Tool.new([full_tool_name]).tap do |t|
-      t.middleware_stack.concat(Toys::CLI.default_middleware_stack)
+      t.middleware_stack.concat(Toys::Middleware.resolve_stack(Toys::CLI.default_middleware_stack))
     end
   }
   let(:alias_tool) { Toys::Tool.new([tool_name, alias_name]) }
@@ -80,8 +80,8 @@ describe Toys::Tool do
   describe "description" do
     it "defaults to empty" do
       assert_equal(false, tool.includes_description?)
-      assert_match(/^\(/, tool.effective_desc)
-      assert_match(/^\(/, tool.effective_long_desc)
+      assert_equal("", tool.effective_desc)
+      assert_equal("", tool.effective_long_desc)
     end
 
     it "handles set of short description" do
@@ -94,7 +94,7 @@ describe Toys::Tool do
     it "handles set of long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
-      assert_match(/^\(/, tool.effective_desc)
+      assert_equal("", tool.effective_desc)
       assert_equal("ho", tool.effective_long_desc)
     end
 
@@ -113,41 +113,21 @@ describe Toys::Tool do
     end
 
     it "can be set" do
-      tool.defining_from("path1") do
-        tool.desc = "hi"
-        tool.long_desc = "hiho"
-      end
+      tool.definition_path = "path1"
+      assert_equal("path1", tool.definition_path)
+    end
+
+    it "can be set repeatedly to the same value" do
+      tool.definition_path = "path1"
+      tool.definition_path = "path1"
       assert_equal("path1", tool.definition_path)
     end
 
     it "prevents defining from multiple paths" do
-      tool.defining_from("path1") do
-        tool.desc = "hi"
-        tool.long_desc = "hiho"
-      end
+      tool.definition_path = "path1"
       assert_raises(Toys::ToolDefinitionError) do
-        tool.desc = "ho"
+        tool.definition_path = "path2"
       end
-    end
-
-    it "prevents nested defining paths" do
-      tool.defining_from("path1") do
-        assert_raises(Toys::ToolDefinitionError) do
-          tool.defining_from("path2") do
-          end
-        end
-      end
-    end
-
-    it "yields defining paths" do
-      tool.defining_from("path1") do
-        tool.yield_definition do
-          tool.defining_from("path2") do
-            tool.desc = "hi"
-          end
-        end
-      end
-      assert_equal("path1", tool.definition_path)
     end
   end
 
@@ -421,44 +401,6 @@ describe Toys::Tool do
     end
   end
 
-  describe "aliasing" do
-    it "starts without" do
-      assert_equal(false, alias_tool.alias?)
-    end
-
-    it "cannot be done on the root tool" do
-      assert_raises(Toys::ToolDefinitionError) do
-        root_tool.make_alias_of(tool_name)
-      end
-    end
-
-    it "cannot be done if description has been set" do
-      alias_tool.desc = "hi"
-      assert_raises(Toys::ToolDefinitionError) do
-        alias_tool.make_alias_of(subtool_name)
-      end
-    end
-
-    it "cannot be done if definition has been set" do
-      alias_tool.executor = proc {}
-      assert_raises(Toys::ToolDefinitionError) do
-        alias_tool.make_alias_of(subtool_name)
-      end
-    end
-
-    it "can be set" do
-      alias_tool.make_alias_of(subtool_name)
-      assert_equal(true, alias_tool.alias?)
-    end
-
-    it "prevents setting of other fields" do
-      alias_tool.make_alias_of(subtool_name)
-      assert_raises(Toys::ToolDefinitionError) do
-        alias_tool.desc = "hi"
-      end
-    end
-  end
-
   describe "finish_definition" do
     it "runs middleware config" do
       assert_equal(true, full_tool.switch_definitions.empty?)
@@ -523,18 +465,6 @@ describe Toys::Tool do
       end
       loader.put_tool!(subtool2)
       assert_equal(3, subtool.execute(context_base, ["hi"]))
-    end
-
-    it "supports aliases" do
-      test = self
-      subtool2.add_optional_arg(:arg2)
-      subtool2.executor = proc do
-        test.assert_equal("ho", self[:arg2])
-        exit(3)
-      end
-      loader.put_tool!(subtool2)
-      alias_tool.make_alias_of(subtool2_name)
-      assert_equal(3, alias_tool.execute(context_base, ["ho"]))
     end
   end
 end

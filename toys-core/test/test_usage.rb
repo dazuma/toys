@@ -34,19 +34,12 @@ require "toys/utils/usage"
 describe Toys::Utils::Usage do
   let(:binary_name) { "toys" }
   let(:tool_name) { ["foo", "bar"] }
-  let(:alias_target) { "bar" }
-  let(:alias_name) { ["foo", "baz"] }
   let(:group_tool) do
     Toys::Tool.new(tool_name)
   end
   let(:normal_tool) do
     Toys::Tool.new(tool_name).tap do |t|
       t.executor = proc {}
-    end
-  end
-  let(:alias_tool) do
-    Toys::Tool.new(alias_name).tap do |t|
-      t.make_alias_of(alias_target)
     end
   end
   let(:subtool_one) do
@@ -93,7 +86,7 @@ describe Toys::Utils::Usage do
       usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar", usage_array[0])
-      assert_equal("", usage_array[1])
+      assert_equal(1, usage_array.size)
     end
 
     it "is set for a normal tool with switches" do
@@ -146,25 +139,10 @@ describe Toys::Utils::Usage do
   end
 
   describe "description" do
-    it "has a default for a group" do
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
-      usage_array = usage.string.split("\n")
-      assert_equal("(A group of commands)", usage_array[2])
-      assert_equal("", usage_array[3])
-    end
-
-    it "has a default for a normal tool" do
+    it "is absent if empty" do
       usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
       usage_array = usage.string.split("\n")
-      assert_equal("(No description available)", usage_array[2])
-      assert_equal(3, usage_array.size)
-    end
-
-    it "has a default for an alias" do
-      usage = Toys::Utils::Usage.new(alias_tool, binary_name, loader)
-      usage_array = usage.string.split("\n")
-      assert_equal("(Alias of \"bar\")", usage_array[2])
-      assert_equal(3, usage_array.size)
+      assert_equal(1, usage_array.size)
     end
 
     it "uses the long description if present" do
@@ -193,20 +171,13 @@ describe Toys::Utils::Usage do
       assert_nil(index)
     end
 
-    it "is not present for an alias" do
-      usage = Toys::Utils::Usage.new(alias_tool, binary_name, loader)
-      usage_array = usage.string.split("\n")
-      index = usage_array.index("Commands:")
-      assert_nil(index)
-    end
-
     it "is set for a group non-recursive" do
       usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+\(A group/, usage_array[index + 1])
-      assert_match(/two\s+\(No description/, usage_array[index + 2])
+      assert_match(/one\s+/, usage_array[index + 1])
+      assert_match(/two\s+/, usage_array[index + 2])
       assert_equal(index + 3, usage_array.size)
     end
 
@@ -215,10 +186,10 @@ describe Toys::Utils::Usage do
       usage_array = usage.string(recursive: true).split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+\(A group/, usage_array[index + 1])
-      assert_match(/one a\s+\(No description/, usage_array[index + 2])
-      assert_match(/one b\s+\(No description/, usage_array[index + 3])
-      assert_match(/two\s+\(No description/, usage_array[index + 4])
+      assert_match(/one\s+/, usage_array[index + 1])
+      assert_match(/one a\s+/, usage_array[index + 2])
+      assert_match(/one b\s+/, usage_array[index + 3])
+      assert_match(/two\s+/, usage_array[index + 4])
       assert_equal(index + 5, usage_array.size)
     end
   end
@@ -226,13 +197,6 @@ describe Toys::Utils::Usage do
   describe "positional args section" do
     it "is not present for a group" do
       usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
-      usage_array = usage.string.split("\n")
-      index = usage_array.index("Positional arguments:")
-      assert_nil(index)
-    end
-
-    it "is not present for an alias" do
-      usage = Toys::Utils::Usage.new(alias_tool, binary_name, loader)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       assert_nil(index)
@@ -265,13 +229,6 @@ describe Toys::Utils::Usage do
   end
 
   describe "switches section" do
-    it "is not present for an alias" do
-      usage = Toys::Utils::Usage.new(alias_tool, binary_name, loader)
-      usage_array = usage.string.split("\n")
-      index = usage_array.index("Options:")
-      assert_nil(index)
-    end
-
     it "is not present for a tool with no switches" do
       usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
       usage_array = usage.string.split("\n")
