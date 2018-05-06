@@ -29,36 +29,78 @@
 
 
 name "install" do
-  desc "Build and install the current code as a gem"
+  desc "Build and install the current gems"
   use :exec
   execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    version = ::Dir.chdir(root_path) do
-      capture("bin/toys system version").strip
-    end
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "bin/toys build"
-      sh "gem install pkg/toys-core-#{version}.gem"
-    end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys build"
-      sh "gem install pkg/toys-#{version}.gem"
+    set Context::EXIT_ON_NONZERO_STATUS, true
+    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      version = capture("bin/toys system version").strip
+      ::Dir.chdir("toys-core") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("build", cli: cli)
+        sh "gem install pkg/toys-core-#{version}.gem"
+      end
+      ::Dir.chdir("toys") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("build", cli: cli)
+        sh "gem install pkg/toys-#{version}.gem"
+      end
     end
   end
 end
 
 name "ci" do
-  desc "CI target that runs tests and rubocop"
+  desc "CI target that runs tests and rubocop for both gems"
   use :exec
   execute do
-    configure_exec exit_on_nonzero_status: true
-    root_path = ::File.dirname(tool.definition_path)
-    ::Dir.chdir(::File.join(root_path, "toys-core")) do
-      sh "bin/toys do test , rubocop"
+    set Context::EXIT_ON_NONZERO_STATUS, true
+    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      ::Dir.chdir("toys-core") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("test", cli: cli)
+        run("rubocop", cli: cli)
+      end
+      ::Dir.chdir("toys") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("test", cli: cli)
+        run("rubocop", cli: cli)
+      end
     end
-    ::Dir.chdir(::File.join(root_path, "toys")) do
-      sh "bin/toys do test , rubocop"
+  end
+end
+
+name "yardoc" do
+  desc "Generates yardoc for both gems"
+  use :exec
+  execute do
+    set Context::EXIT_ON_NONZERO_STATUS, true
+    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      ::Dir.chdir("toys-core") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("yardoc", cli: cli)
+      end
+      ::Dir.chdir("toys") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("yardoc", cli: cli)
+      end
+    end
+  end
+end
+
+name "clean" do
+  desc "Cleans both gems"
+  use :exec
+  execute do
+    set Context::EXIT_ON_NONZERO_STATUS, true
+    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      ::Dir.chdir("toys-core") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("clean", cli: cli)
+      end
+      ::Dir.chdir("toys") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("clean", cli: cli)
+      end
     end
   end
 end

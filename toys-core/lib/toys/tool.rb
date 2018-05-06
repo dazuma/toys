@@ -423,16 +423,16 @@ module Toys
     ##
     # Execute this tool in the given context.
     #
-    # @param [Toys::Context::Base] context_base The execution context
+    # @param [Toys::CLI] cli The CLI execution context
     # @param [Array<String>] args The arguments to pass to the tool. Should
     #     not include the tool name.
     # @param [Integer] verbosity The starting verbosity. Defaults to 0.
     #
     # @return [Integer] The result code.
     #
-    def execute(context_base, args, verbosity: 0)
+    def execute(cli, args, verbosity: 0)
       finish_definition unless @definition_finished
-      Execution.new(self).execute(context_base, args, verbosity: verbosity)
+      Execution.new(self).execute(cli, args, verbosity: verbosity)
     end
 
     ##
@@ -631,12 +631,12 @@ module Toys
         @data[Context::TOOL_NAME] = tool.full_name
       end
 
-      def execute(context_base, args, verbosity: 0)
+      def execute(cli, args, verbosity: 0)
         parse_args(args, verbosity)
-        context = create_child_context(context_base)
+        context = create_child_context(cli)
 
         original_level = context.logger.level
-        context.logger.level = context_base.base_level - @data[Context::VERBOSITY]
+        context.logger.level = cli.base_level - @data[Context::VERBOSITY]
         begin
           perform_execution(context)
         ensure
@@ -712,8 +712,8 @@ module Toys
         end
       end
 
-      def create_child_context(context_base)
-        context = context_base.create_context(@data)
+      def create_child_context(cli)
+        context = Context.new(cli, @data)
         @tool.modules.each do |mod|
           context.extend(mod)
         end

@@ -33,11 +33,10 @@ require "toys/middleware/show_version"
 
 module Toys
   ##
-  # The standard Toys CLI.
+  # Helpers that configure the toys-core CLI with the behavior for the
+  # standard Toys binary.
   #
-  # This class configures the toys-core CLI with the standard behavior.
-  #
-  class StandardCLI < CLI
+  module StandardCLI
     ##
     # Path to standard built-in tools
     # @return [String]
@@ -86,19 +85,51 @@ module Toys
       " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
 
     ##
-    # Create a standard CLI
+    # Create a standard CLI, configured with the appropriate paths and
+    # middleware.
     #
-    def initialize
-      super(
+    # @param [String,nil] directory Starting search directory for configs.
+    #     Defaults to the current working directory.
+    # @return [Toys::CLI]
+    #
+    def self.create(directory: nil)
+      cli = CLI.new(
         binary_name: BINARY_NAME,
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
-        preload_file_name: PRELOAD_FILE_NAME
+        preload_file_name: PRELOAD_FILE_NAME,
+        middleware_stack: default_middleware_stack
       )
-      add_search_path_hierarchy
-      add_standard_search_paths
-      add_config_path(BUILTINS_PATH)
+      add_standard_paths(cli, directory: directory)
+      cli
+    end
+
+    ##
+    # Add paths for a toys standard CLI. Paths added, in order from high to
+    # low priority, are:
+    #
+    # *  Search the current directory and all ancestors for config files and
+    #    directories.
+    # *  Read the `TOYS_PATH` environment variable and search for config files
+    #    and directories in the given paths. If this variable is empty, use
+    #    `$HOME:/etc` by default.
+    # *  The builtins for the standard toys binary.
+    #
+    # @param [String,nil] directory Starting search directory for configs.
+    #     Defaults to the current working directory.
+    # @param [Toys::CLI] cli Add paths to this CLI
+    #
+    def self.add_standard_paths(cli, directory: nil)
+      cli.add_search_path_hierarchy(start: directory)
+      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
+      if paths.empty?
+        paths << ::ENV["HOME"] if ::ENV["HOME"]
+        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
+      end
+      paths.each { |path| cli.add_search_path(path) }
+      cli.add_config_path(BUILTINS_PATH)
+      cli
     end
 
     ##

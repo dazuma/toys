@@ -321,7 +321,7 @@ module Toys
 
         def initialize(context)
           @context = context
-          @config = {}
+          @config = {exit_on_nonzero_status: @context.get(Context::EXIT_ON_NONZERO_STATUS)}
           @spawn_opts = {}
         end
 

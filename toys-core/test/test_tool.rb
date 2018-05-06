@@ -30,7 +30,6 @@
 require "helper"
 
 describe Toys::Tool do
-  let(:loader) { Toys::Loader.new }
   let(:binary_name) { "toys" }
   let(:tool_name) { "foo" }
   let(:full_tool_name) { "fool" }
@@ -52,7 +51,7 @@ describe Toys::Tool do
       lgr.level = Logger::WARN
     end
   }
-  let(:context_base) { Toys::Context::Base.new(loader, binary_name, logger) }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
 
   describe "name field" do
     it "works for a root tool" do
@@ -138,7 +137,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({}, options)
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "defaults simple boolean switch to nil" do
@@ -148,7 +147,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "sets simple boolean switch" do
@@ -157,7 +156,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: true}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["--aa"]))
+      assert_equal(0, tool.execute(cli, ["--aa"]))
     end
 
     it "defaults value switch to nil" do
@@ -166,7 +165,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "honors given default of a value switch" do
@@ -175,7 +174,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: "hehe"}, options)
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "sets value switch" do
@@ -184,7 +183,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: "hoho"}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["--aa", "hoho"]))
+      assert_equal(0, tool.execute(cli, ["--aa", "hoho"]))
     end
 
     it "converts a value switch" do
@@ -193,7 +192,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: 1234}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["--aa", "1234"]))
+      assert_equal(0, tool.execute(cli, ["--aa", "1234"]))
     end
 
     it "checks match of a value switch" do
@@ -202,7 +201,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
-      assert_equal(0, tool.execute(context_base, ["--aa", "a1234"]))
+      assert_equal(0, tool.execute(cli, ["--aa", "a1234"]))
     end
 
     it "defaults the name of a value switch" do
@@ -211,7 +210,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["--a-bc", "hoho"]))
+      assert_equal(0, tool.execute(cli, ["--a-bc", "hoho"]))
     end
 
     it "allows legal switch syntax" do
@@ -236,7 +235,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_match(/invalid option: -a/, usage_error)
       end
-      assert_equal(0, tool.execute(context_base, ["-a"]))
+      assert_equal(0, tool.execute(cli, ["-a"]))
     end
   end
 
@@ -270,7 +269,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal([], args)
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "recognizes args in order" do
@@ -283,7 +282,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["foo", "bar", "baz", "hello", "world"]))
+      assert_equal(0, tool.execute(cli, ["foo", "bar", "baz", "hello", "world"]))
     end
 
     it "omits optional args if not provided" do
@@ -295,7 +294,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["foo", "bar"]))
+      assert_equal(0, tool.execute(cli, ["foo", "bar"]))
     end
 
     it "errors if required args are missing" do
@@ -305,7 +304,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_match(/No value given for required argument named <b>/, usage_error)
       end
-      assert_equal(0, tool.execute(context_base, ["foo"]))
+      assert_equal(0, tool.execute(cli, ["foo"]))
     end
 
     it "errors if there are too many arguments" do
@@ -315,7 +314,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_match(/Extra arguments provided: baz/, usage_error)
       end
-      assert_equal(0, tool.execute(context_base, ["foo", "bar", "baz"]))
+      assert_equal(0, tool.execute(cli, ["foo", "bar", "baz"]))
     end
 
     it "honors defaults for optional arg" do
@@ -325,7 +324,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "hello"}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["foo"]))
+      assert_equal(0, tool.execute(cli, ["foo"]))
     end
   end
 
@@ -335,7 +334,7 @@ describe Toys::Tool do
       full_tool.executor = proc do
         test.assert_equal(Logger::DEBUG, logger.level)
       end
-      assert_equal(0, full_tool.execute(context_base, ["-v", "--verbose"]))
+      assert_equal(0, full_tool.execute(cli, ["-v", "--verbose"]))
     end
 
     it "honors --quiet flag" do
@@ -343,7 +342,7 @@ describe Toys::Tool do
       full_tool.executor = proc do
         test.assert_equal(Logger::FATAL, logger.level)
       end
-      assert_equal(0, full_tool.execute(context_base, ["-q", "--quiet"]))
+      assert_equal(0, full_tool.execute(cli, ["-q", "--quiet"]))
     end
 
     it "prints help for a command with an executor" do
@@ -351,13 +350,13 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       assert_output(/Usage:/) do
-        assert_equal(0, full_tool.execute(context_base, ["--help"]))
+        assert_equal(0, full_tool.execute(cli, ["--help"]))
       end
     end
 
     it "prints help for a command with no executor" do
       assert_output(/Usage:/) do
-        assert_equal(0, full_tool.execute(context_base, []))
+        assert_equal(0, full_tool.execute(cli, []))
       end
     end
 
@@ -368,7 +367,7 @@ describe Toys::Tool do
         raise "shouldn't have gotten here"
       end
       assert_output(/Extra arguments provided: baz/) do
-        refute_equal(0, full_tool.execute(context_base, ["foo", "bar", "baz"]))
+        refute_equal(0, full_tool.execute(cli, ["foo", "bar", "baz"]))
       end
     end
   end
@@ -380,7 +379,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal(4, hello_helper(2))
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
 
     it "cannot begin with an underscore" do
@@ -397,7 +396,7 @@ describe Toys::Tool do
       tool.executor = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
-      assert_equal(0, tool.execute(context_base, []))
+      assert_equal(0, tool.execute(cli, []))
     end
   end
 
@@ -423,7 +422,7 @@ describe Toys::Tool do
 
   describe "execution" do
     it "handles no executor defined" do
-      assert_equal(-1, tool.execute(context_base, []))
+      assert_equal(-1, tool.execute(cli, []))
     end
 
     it "sets context fields" do
@@ -435,20 +434,19 @@ describe Toys::Tool do
         test.assert_equal(0, verbosity)
         test.assert_equal(test.tool, tool)
         test.assert_equal(test.tool.full_name, tool_name)
-        test.assert_equal(test.loader, loader)
         test.assert_instance_of(Logger, logger)
         test.assert_equal("toys", binary_name)
         test.assert_equal(["hello", "-a"], args)
         test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
       end
-      assert_equal(0, tool.execute(context_base, ["hello", "-a"]))
+      assert_equal(0, tool.execute(cli, ["hello", "-a"]))
     end
 
     it "supports exit code" do
       tool.executor = proc do
         exit(2)
       end
-      assert_equal(2, tool.execute(context_base, []))
+      assert_equal(2, tool.execute(cli, []))
     end
 
     it "supports sub-runs" do
@@ -463,8 +461,8 @@ describe Toys::Tool do
         test.assert_equal("ho", self[:arg2])
         exit(3)
       end
-      loader.put_tool!(subtool2)
-      assert_equal(3, subtool.execute(context_base, ["hi"]))
+      cli.loader.put_tool!(subtool2)
+      assert_equal(3, subtool.execute(cli, ["hi"]))
     end
   end
 end

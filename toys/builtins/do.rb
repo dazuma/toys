@@ -31,7 +31,7 @@ desc "Run multiple tools in order"
 
 switch(:delim, "-d", "--delim=VALUE", default: ",", doc: "Set the delimiter")
 
-remaining_args(:args)
+remaining_args(:args, doc: "Tools to run")
 
 execute do
   delim = self[:delim]

@@ -8,8 +8,12 @@
 * CHANGED: Default descriptions are now set via a middleware rather than in the Tool.
 * CHANGED: Renamed most of the middleware classes.
 * CHANGED: Combined usage-displaying middleware.
+* CHANGED: Standard paths logic moved from CLI to StandardCLI.
 * ADDED: Middleware that responds to the "--version" switch.
+* ADDED: Context#new_cli that lets you run sub-instances of toys.
+* ADDED: Context::EXIT_ON_NONZERO_STATUS.
 * IMPROVED: Middleware can now be referenced by class and constructed implicitly.
 * IMPROVED: Usage error handler can now have its exit code configured.
 * IMPROVED: Help and verbosity middlewares can have their switches configured.
 * DOCS: Expanded middleware documentation
+* INTERNAL: Removed Context::Base and just used CLI as base context

@@ -95,20 +95,27 @@ module Toys
     USAGE_ERROR = :__usage_error
 
     ##
+    # Context key for whether nonzero exit codes from subprocesses should cause
+    # an immediate exit. Value is a truthy or falsy value.
+    # @return [Symbol]
+    #
+    EXIT_ON_NONZERO_STATUS = :__exit_on_nonzero_status
+
+    ##
     # Create a Context object. Applications generally will not need to create
     # these objects directly; they are created by the tool when it is preparing
     # for execution.
     # @private
     #
-    # @param [Toys::Context::Base] context_base
+    # @param [Toys::CLI] cli
     # @param [Hash] data
     #
-    def initialize(context_base, data)
-      @_context_base = context_base
+    def initialize(cli, data)
+      @_cli = cli
       @_data = data
-      @_data[LOADER] = context_base.loader
-      @_data[BINARY_NAME] = context_base.binary_name
-      @_data[LOGGER] = context_base.logger
+      @_data[LOADER] = cli.loader
+      @_data[BINARY_NAME] = cli.binary_name
+      @_data[LOGGER] = cli.logger
     end
 
     ##
@@ -178,7 +185,7 @@ module Toys
     end
 
     ##
-    # Return a piece of raw data by key.
+    # Return an option or other piece of data by key.
     #
     # @param [Symbol] key
     # @return [Object]
@@ -186,13 +193,10 @@ module Toys
     def [](key)
       @_data[key]
     end
+    alias get []
 
     ##
-    # Set a piece of data by key.
-    #
-    # Most tools themselves will not need to do this directly. It is generally
-    # used by middleware to modify the context and affect execution of tools
-    # that use it.
+    # Set an option or other piece of data by key.
     #
     # @param [Symbol] key
     # @param [Object] value
@@ -202,13 +206,18 @@ module Toys
     end
 
     ##
-    # Return an option value by key.
+    # Set an option or other piece of data by key.
     #
     # @param [Symbol] key
-    # @return [Object]
+    # @param [Object] value
     #
-    def option(key)
-      @_data[key]
+    def set(key, value = nil)
+      if key.is_a?(::Hash)
+        @_data.merge!(key)
+      else
+        @_data[key] = value
+      end
+      self
     end
 
     ##
@@ -229,14 +238,31 @@ module Toys
     #
     # @param [String...] args Command line arguments defining another tool
     #     to run, along with parameters and switches.
+    # @param [Toys::CLI,nil] cli The CLI to use to execute the tool. If `nil`
+    #     (the default), uses the current CLI.
     # @param [Boolean] exit_on_nonzero_status If true, exit immediately if the
     #     run returns a nonzero error code.
     # @return [Integer] The resulting status code
     #
-    def run(*args, exit_on_nonzero_status: false)
-      code = @_context_base.run(args.flatten, verbosity: @_data[VERBOSITY])
+    def run(*args, cli: nil, exit_on_nonzero_status: nil)
+      cli ||= @_cli
+      exit_on_nonzero_status = @_data[EXIT_ON_NONZERO_STATUS] if exit_on_nonzero_status.nil?
+      code = cli.run(args.flatten, verbosity: @_data[VERBOSITY])
       exit(code) if exit_on_nonzero_status && !code.zero?
       code
+    end
+
+    ##
+    # Return a new CLI with the same settings as the currnet CLI but no paths.
+    # This can be used to run a toys "sub-instance". Add any new paths to the
+    # returned CLI, then call {#run}, passing in the CLI, to execute a tool.
+    #
+    # @return [Toys::CLI]
+    #
+    def new_cli
+      cli = @_cli.empty_clone
+      yield cli if block_given?
+      cli
     end
 
     ##
@@ -247,32 +273,6 @@ module Toys
     #
     def exit(code)
       throw :result, code
-    end
-
-    ##
-    # Common context data
-    # @private
-    #
-    class Base
-      def initialize(loader, binary_name, logger)
-        @loader = loader
-        @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
-        @logger = logger || ::Logger.new(::STDERR)
-        @base_level = @logger.level
-      end
-
-      attr_reader :loader
-      attr_reader :binary_name
-      attr_reader :logger
-      attr_reader :base_level
-
-      def run(args, verbosity: 0)
-        @loader.execute(self, args, verbosity: verbosity)
-      end
-
-      def create_context(data)
-        Context.new(self, data)
-      end
     end
   end
 end

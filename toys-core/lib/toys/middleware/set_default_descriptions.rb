@@ -54,8 +54,8 @@ module Toys
       # @return [String]
       #
       DEFAULT_ROOT_DESC =
-        "This is a toys-based command line tool, built using the toys-core" \
-        " gem. See https://www.rubydoc.info/gems/toys-core for more info." \
+        "This command line tool was built using the toys-core gem." \
+        " See https://www.rubydoc.info/gems/toys-core for more info." \
         " To replace this message, configure the SetDefaultDescriptions" \
         " middleware.".freeze
 

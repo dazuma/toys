@@ -66,6 +66,9 @@ module Toys
     #     by default for all tools loaded by this CLI.
     # @param [Logger,nil] logger The logger to use. If not provided, a default
     #     logger that writes to `STDERR` is used.
+    # @param [Integer,nil] base_level The logger level that should correspond
+    #     to zero verbosity. If not provided, will default to the current level
+    #     of the logger.
     #
     def initialize(
       binary_name: nil,
@@ -74,19 +77,48 @@ module Toys
       index_file_name: nil,
       preload_file_name: nil,
       middleware_stack: nil,
-      logger: nil
+      logger: nil,
+      base_level: nil
     )
-      logger ||= self.class.default_logger
-      middleware_stack ||= self.class.default_middleware_stack
+      @logger = logger || self.class.default_logger
+      @base_level = base_level || @logger.level
+      @middleware_stack = middleware_stack || self.class.default_middleware_stack
+      @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
+      @index_file_name = index_file_name
+      @preload_file_name = preload_file_name
       @loader = Loader.new(
         index_file_name: index_file_name,
         preload_file_name: preload_file_name,
         middleware_stack: middleware_stack
       )
-      @context_base = Context::Base.new(@loader, binary_name, logger)
     end
+
+    ##
+    # Return the current loader for this CLI
+    # @return [Toys::Loader]
+    #
+    attr_reader :loader
+
+    ##
+    # Return the effective binary name used for usage text in this CLI
+    # @return [String]
+    #
+    attr_reader :binary_name
+
+    ##
+    # Return the logger used by this CLI
+    # @return [Logger]
+    #
+    attr_reader :logger
+
+    ##
+    # Return the initial logger level in this CLI, used as the level for
+    # verbosity 0.
+    # @return [Integer]
+    #
+    attr_reader :base_level
 
     ##
     # Add a configuration file or directory to the loader.
@@ -158,35 +190,33 @@ module Toys
     end
 
     ##
-    # Searches a standard set of search paths for configs to add. This includes
-    # the contents of the `TOYS_PATH` environment variable if present, the
-    # current user's home directory, and any system configuration directories
-    # such as `/etc`.
-    #
-    # @param [Boolean] high_priority Add the configs at the head of the
-    #     priority list rather than the tail.
-    #
-    def add_standard_search_paths(high_priority: false)
-      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
-      if paths.empty?
-        paths << ::ENV["HOME"] if ::ENV["HOME"]
-        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
-      end
-      paths.reverse! if high_priority
-      paths.each do |path|
-        add_search_path(path, high_priority: high_priority)
-      end
-      self
-    end
-
-    ##
     # Run the CLI with the given command line arguments.
     #
     # @param [String...] args Command line arguments specifying which tool to
-    #     run and what arguments to pass to it.
+    #     run and what arguments to pass to it. You may pass either a single
+    #     array of strings, or a series of string arguments.
+    # @param [Integer] verbosity Initial verbosity. Default is 0.
     #
-    def run(*args)
-      exit(@context_base.run(args.flatten, verbosity: 0))
+    # @return [Integer] The resulting status code
+    #
+    def run(*args, verbosity: 0)
+      @loader.execute(self, args.flatten, verbosity: verbosity)
+    end
+
+    ##
+    # Make a clone with the same settings but no paths in the loader.
+    #
+    # @return [Toys::CLI]
+    #
+    def empty_clone
+      CLI.new(binary_name: @binary_name,
+              config_dir_name: @config_dir_name,
+              config_file_name: @config_file_name,
+              index_file_name: @index_file_name,
+              preload_file_name: @preload_file_name,
+              middleware_stack: @middleware_stack,
+              logger: @logger,
+              base_level: @base_level)
     end
 
     class << self
