@@ -53,17 +53,18 @@ module Toys
       ##
       # Create a ShowUsage middleware.
       #
-      # @param [Boolean,Array<String>] help_switches Activate help switches.
-      #     The value should be an array of switches that cause the tool to
-      #     display its usage text. If set to `true`, uses the default set of
-      #     switches defined by {DEFAULT_HELP_SWITCHES}. Default is `false`.
+      # @param [Boolean,Array<String>,Proc] help_switches Specify switches to
+      #     activate help. The value may be any of the following:
+      #     *  An array of switches that cause the tool to display its usage.
+      #     *  The `true` value to use {DEFAULT_HELP_SWITCHES}. (Default)
+      #     *  The `false` value to disable help switches.
+      #     *  A proc that takes a tool and returns any of the above.
       # @param [Boolean] fallback_execution Cause the tool to display its own
       #     usage text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
-      #     Default is `false`.
+      #     Default is `true`.
       #
-      def initialize(help_switches: false, fallback_execution: false)
-        help_switches = DEFAULT_HELP_SWITCHES if help_switches == true
+      def initialize(help_switches: true, fallback_execution: true)
         @help_switches = help_switches
         @fallback_execution = fallback_execution
       end
@@ -72,15 +73,17 @@ module Toys
       # Configure switches and default data.
       #
       def config(tool)
-        if @help_switches
-          tool.add_switch(:_help, *@help_switches,
+        help_switches = Middleware.resolve_switches_spec(@help_switches, tool,
+                                                         DEFAULT_HELP_SWITCHES)
+        if !help_switches.empty?
+          tool.add_switch(:_help, *help_switches,
                           doc: "Show help message",
                           default: !tool.includes_executor? && @fallback_execution,
                           only_unique: true)
         elsif @fallback_execution
           tool.default_data[:_help] = !tool.includes_executor?
         end
-        if tool.includes_executor? && (@help_switches || @fallback_execution)
+        if !tool.includes_executor? && (!help_switches.empty? || @fallback_execution)
           tool.add_switch(:_recursive, "--[no-]recursive",
                           default: true,
                           doc: "Show all subcommands recursively (default is true)",

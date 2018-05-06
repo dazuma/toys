@@ -40,17 +40,58 @@ module Toys
     #
     class AddVerbositySwitches < Base
       ##
+      # Default verbose switches
+      # @return [Array<String>]
+      #
+      DEFAULT_VERBOSE_SWITCHES = ["-v", "--verbose"].freeze
+
+      ##
+      # Default quiet switches
+      # @return [Array<String>]
+      #
+      DEFAULT_QUIET_SWITCHES = ["-q", "--quiet"].freeze
+
+      ##
+      # Create a AddVerbositySwitches middleware.
+      #
+      # @param [Boolean,Array<String>,Proc] verbose_switches Specify switches
+      #     to increase verbosity. The value may be any of the following:
+      #     *  An array of switches that increase verbosity.
+      #     *  The `true` value to use {DEFAULT_VERBOSE_SWITCHES}. (Default)
+      #     *  The `false` value to disable verbose switches.
+      #     *  A proc that takes a tool and returns any of the above.
+      # @param [Boolean,Array<String>,Proc] quiet_switches Specify switches
+      #     to decrease verbosity. The value may be any of the following:
+      #     *  An array of switches that decrease verbosity.
+      #     *  The `true` value to use {DEFAULT_QUIET_SWITCHES}. (Default)
+      #     *  The `false` value to disable quiet switches.
+      #     *  A proc that takes a tool and returns any of the above.
+      #
+      def initialize(verbose_switches: true, quiet_switches: true)
+        @verbose_switches = verbose_switches
+        @quiet_switches = quiet_switches
+      end
+
+      ##
       # Configure the tool switches.
       #
       def config(tool)
-        tool.add_switch(Context::VERBOSITY, "-v", "--verbose",
-                        doc: "Increase verbosity",
-                        handler: ->(_val, cur) { cur + 1 },
-                        only_unique: true)
-        tool.add_switch(Context::VERBOSITY, "-q", "--quiet",
-                        doc: "Decrease verbosity",
-                        handler: ->(_val, cur) { cur - 1 },
-                        only_unique: true)
+        verbose_switches = Middleware.resolve_switches_spec(@verbose_switches, tool,
+                                                            DEFAULT_VERBOSE_SWITCHES)
+        unless verbose_switches.empty?
+          tool.add_switch(Context::VERBOSITY, *verbose_switches,
+                          doc: "Increase verbosity",
+                          handler: ->(_val, cur) { cur + 1 },
+                          only_unique: true)
+        end
+        quiet_switches = Middleware.resolve_switches_spec(@quiet_switches, tool,
+                                                          DEFAULT_QUIET_SWITCHES)
+        unless quiet_switches.empty?
+          tool.add_switch(Context::VERBOSITY, *quiet_switches,
+                          doc: "Decrease verbosity",
+                          handler: ->(_val, cur) { cur - 1 },
+                          only_unique: true)
+        end
         yield
       end
     end

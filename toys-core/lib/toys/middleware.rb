@@ -34,59 +34,91 @@ module Toys
   # Middleware lets you define common behavior across many tools.
   #
   module Middleware
-    ##
-    # Return a middleware class by name.
-    #
-    # Currently recognized middleware names are:
-    #
-    # *  `:add_verbosity_switches` : Adds switches for affecting log verbosity.
-    # *  `:handle_usage_errors` : Displays the usage error if one occurs.
-    # *  `:set_default_descriptions` : Sets default descriptions for tools that
-    #    do not have them set explicitly.
-    # *  `:show_usage` : Provides ways to cause a tool to print its own usage
-    #    documentation.
-    # *  `:show_version` : Provides ways to cause a tool to print its version.
-    #
-    # @param [String,Symbol] name Name of the middleware class to return
-    # @return [Class,nil] The class, or `nil` if not found
-    #
-    def self.lookup(name)
-      Utils::ModuleLookup.lookup(:middleware, name)
-    end
-
-    ##
-    # Resolves a single middleware. You may pass an instance already
-    # constructed, a middleware class, a name to look up to get the middleware
-    # class, or an array where the first element is the lookup name or class,
-    # and subsequent elements are arguments to be passed to the constructor.
-    #
-    # @param [String,Symbol,Array,Object] input The middleware spec
-    # @return [Object] Constructed middleware
-    #
-    def self.resolve(input)
-      input = Array(input)
-      raise "No middleware found" if input.empty?
-      cls = input.first
-      args = input[1..-1]
-      if cls.is_a?(::String) || cls.is_a?(::Symbol)
-        cls = lookup(cls)
+    class << self
+      ##
+      # Return a well-known middleware class by name.
+      #
+      # Currently recognized middleware names are:
+      #
+      # *  `:add_verbosity_switches` : Adds switches for affecting verbosity.
+      # *  `:handle_usage_errors` : Displays the usage error if one occurs.
+      # *  `:set_default_descriptions` : Sets default descriptions for tools
+      #    that do not have them set explicitly.
+      # *  `:show_usage` : Teaches tools to print their usage documentation.
+      # *  `:show_version` : Teaches tools to print their version.
+      #
+      # @param [String,Symbol] name Name of the middleware class to return
+      # @return [Class,nil] The class, or `nil` if not found
+      #
+      def lookup(name)
+        Utils::ModuleLookup.lookup(:middleware, name)
       end
-      if cls.is_a?(::Class)
-        cls.new(*args)
-      else
-        raise "Unrecognized middleware class #{cls.class}" unless args.empty?
-        cls
-      end
-    end
 
-    ##
-    # Resolves an array of middleware specs. See {Toys::Middleware.resolve}.
-    #
-    # @param [Array] input An array of middleware specs
-    # @return [Array] An array of constructed middleware
-    #
-    def self.resolve_stack(input)
-      input.map { |e| resolve(e) }
+      ##
+      # Resolves a single middleware. You may pass an instance already
+      # constructed, a middleware class, the name of a well-known middleware
+      # class, or an array where the first element is the lookup name or class,
+      # and subsequent elements are arguments to be passed to the constructor.
+      #
+      # @param [String,Symbol,Array,Object] input The middleware spec
+      # @return [Object] Constructed middleware
+      #
+      def resolve(input)
+        input = Array(input)
+        raise "No middleware found" if input.empty?
+        cls = input.first
+        args = input[1..-1]
+        if cls.is_a?(::String) || cls.is_a?(::Symbol)
+          cls = lookup(cls)
+        end
+        if cls.is_a?(::Class)
+          cls.new(*args)
+        else
+          raise "Unrecognized middleware class #{cls.class}" unless args.empty?
+          cls
+        end
+      end
+
+      ##
+      # Resolves an array of middleware specs. See {Toys::Middleware.resolve}.
+      #
+      # @param [Array] input An array of middleware specs
+      # @return [Array] An array of constructed middleware
+      #
+      def resolve_stack(input)
+        input.map { |e| resolve(e) }
+      end
+
+      ##
+      # Resolves a typical switches specification. Used often in middleware.
+      #
+      # You may provide any of the following for the `switches` parameter:
+      # *  A string, which becomes the single switch
+      # *  An array of strings
+      # *  The value `false` or `nil` which resolves to no switches
+      # *  The value `true` or `:default` which resolves to the given defaults
+      # *  A proc that takes a tool as argument and returns any of the above.
+      #
+      # Always returns an array of switch strings, even if empty.
+      #
+      # @param [Boolean,String,Array<String>,Proc] switches Switch spec
+      # @param [Toys::Tool] tool The tool
+      # @param [Array<String>] defaults The defaults to use for `true`.
+      # @return [Array<String>] An array of switches
+      #
+      def resolve_switches_spec(switches, tool, defaults)
+        switches = switches.call(tool) if switches.respond_to?(:call)
+        case switches
+        when true, :default
+          Array(defaults)
+        when ::String
+          [switches]
+        when ::Array
+          switches
+        else
+          []
+        end
+      end
     end
   end
 end

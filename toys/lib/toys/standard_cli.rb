@@ -112,7 +112,7 @@ module Toys
         [:set_default_descriptions, default_root_desc: DEFAULT_ROOT_DESC],
         [:handle_usage_errors],
         [:show_version, version_displayer: version_displayer],
-        [:show_usage, help_switches: true, fallback_execution: true],
+        [:show_usage],
         [:add_verbosity_switches]
       ]
     end

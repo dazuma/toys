@@ -1,5 +1,11 @@
 # Release History
 
+### 0.3.2 / in development
+
+* CHANGED: Split core engine out into separate "toys-core" gem. See the
+  toys-core changelog for additional changes in core.
+* NEW: The root tool now responds to the "--version" switch.
+
 ### 0.3.1 / 2018-05-02
 
 * CHANGED: Subcommand display is now recursive by default.

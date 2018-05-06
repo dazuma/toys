@@ -204,9 +204,9 @@ module Toys
       #
       def default_middleware_stack
         [
-          [:handle_usage_errors],
-          [:show_usage, help_switches: true, fallback_execution: true],
-          [:add_verbosity_switches]
+          :handle_usage_errors,
+          :show_usage,
+          :add_verbosity_switches
         ]
       end
 
