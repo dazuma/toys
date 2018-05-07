@@ -35,6 +35,6 @@ expand :rubocop
 
 expand :yardoc
 
-expand :gem_build, name: "build"
+expand :gem_build
 
-expand :gem_build, name: "release", push_gem: true, tag: true, push_tag: true
+expand :gem_build, name: "release", push_gem: true

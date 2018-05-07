@@ -116,6 +116,9 @@ name "release" do
         cli = new_cli.add_config_path(".toys.rb")
         run("release", cli: cli)
       end
+      version = capture("./toys-dev system version").strip
+      sh "git tag v#{version}"
+      sh "git push origin v#{version}"
     end
   end
 end
