@@ -94,7 +94,6 @@ module Toys
     # @param [String] word The name of the subtool
     #
     def tool(word, &block)
-      return self if _cur_tool.nil?
       word = word.to_s
       subtool_words = @words + [word]
       next_remaining = Loader.next_remaining_words(@remaining_words, word)
@@ -110,7 +109,6 @@ module Toys
     # @param [String] target The target of the alias
     #
     def alias_tool(word, target)
-      return self if _cur_tool.nil?
       @loader.make_alias(@words + [word.to_s], @words + [target.to_s], @priority)
       self
     end
@@ -121,7 +119,6 @@ module Toys
     # @param [String] path The file or directory to include.
     #
     def include(path)
-      return self if _cur_tool.nil?
       @loader.include_path(path, @words, @remaining_words, @priority)
       self
     end
@@ -137,7 +134,6 @@ module Toys
     # @param [Object...] args Template arguments
     #
     def expand(template_class, *args)
-      return self if _cur_tool.nil?
       unless template_class.is_a?(::Class)
         name = template_class.to_s
         template_class = Templates.lookup(name)

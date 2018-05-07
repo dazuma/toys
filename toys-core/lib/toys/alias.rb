@@ -41,13 +41,13 @@ module Toys
     #     array of strings)
     #
     def initialize(full_name, target)
-      @target =
+      @target_name =
         if target.is_a?(::String)
           full_name[0..-2] + [target]
         else
           target.dup
         end
-      @target.freeze
+      @target_name.freeze
       @full_name = full_name.dup.freeze
     end
 
