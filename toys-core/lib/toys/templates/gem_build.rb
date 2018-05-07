@@ -88,8 +88,9 @@ module Toys
         tool(template.name) do
           desc "#{task_type} the gem: #{template.gem_name}"
 
-          use :file_utils
           use :exec
+          use :fileutils
+          use :highline
 
           execute do
             configure_exec(exit_on_nonzero_status: true)
@@ -104,6 +105,7 @@ module Toys
                 logger.error "Cannot push the gem when there are uncommited changes"
                 exit(1)
               end
+              exit(1) unless agree("Release #{gemfile}? (y/n) ")
               sh "gem push pkg/#{gemfile}"
               if template.tag
                 sh "git tag v#{version}"

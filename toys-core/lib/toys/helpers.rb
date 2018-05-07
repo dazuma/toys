@@ -40,7 +40,8 @@ module Toys
     # Currently recognized module names are:
     #
     # * `:exec` : Methods to help execute subcommands.
-    # * `:file_utils` : The FileUtils standard library methods.
+    # * `:fileutils` : The FileUtils standard library methods.
+    # * `:highline` : Tools from the highline gem.
     #
     # @param [String,Symbol] name Name of the helper module to return
     # @return [Module,nil] The module, or `nil` if not found

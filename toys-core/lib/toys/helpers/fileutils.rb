@@ -34,7 +34,7 @@ module Toys
     ##
     # A module that provides all methods in the "fileutils" standard library.
     #
-    module FileUtils
+    module Fileutils
       ## @private
       def self.extend_object(obj)
         obj.extend(::FileUtils)
