@@ -714,9 +714,8 @@ module Toys
 
       def create_child_context(cli)
         context = Context.new(cli, @data)
-        @tool.modules.each do |mod|
-          context.extend(mod)
-        end
+        modules = @tool.modules
+        context.extend(*modules) unless modules.empty?
         @tool.helpers.each do |name, block|
           context.define_singleton_method(name, &block)
         end

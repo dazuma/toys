@@ -32,8 +32,13 @@ require "fileutils"
 module Toys
   module Helpers
     ##
-    # File system utilities. See the "fileutils" standard library.
+    # A module that provides all methods in the "fileutils" standard library.
     #
-    FileUtils = ::FileUtils
+    module FileUtils
+      ## @private
+      def self.extend_object(obj)
+        obj.extend(::FileUtils)
+      end
+    end
   end
 end
