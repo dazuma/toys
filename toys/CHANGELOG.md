@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.2 / 2018-05-06
+### 0.3.2 / TBD
 
 * CHANGED: Split core engine out into separate "toys-core" gem. See the
   toys-core changelog for additional changes in core.

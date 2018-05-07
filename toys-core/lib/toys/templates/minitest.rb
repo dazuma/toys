@@ -36,25 +36,43 @@ module Toys
       include Template
 
       ##
+      # Default tool name
+      # @return [String]
+      #
+      DEFAULT_TOOL_NAME = "test".freeze
+
+      ##
+      # Default set of library paths
+      # @return [Array<String>]
+      #
+      DEFAULT_LIBS = ["lib"].freeze
+
+      ##
+      # Default set of test file globs
+      # @return [Array<String>]
+      #
+      DEFAULT_FILES = ["test/**/test*.rb"].freeze
+
+      ##
       # Create the template settings for the Minitest template.
       #
-      # You may provide a hash of options when expanding this template.
-      # Supported options include:
+      # @param [String] name Name of the tool to create. Defaults to
+      #     {DEFAULT_TOOL_NAME}.
+      # @param [Array<String>] libs An array of library paths to add to the
+      #     ruby require path. Defaults to {DEFAULT_LIBS}.
+      # @param [Array<String>] files An array of globs indicating the test
+      #     files to load. Defaults to {DEFAULT_FILES}.
+      # @param [Boolean] warnings If true, runs tests with Ruby warnings.
+      #     Defaults to true.
       #
-      # *  `:name` (String) Name of the tool to create. Defaults to "test".
-      # *  `:lib` (Array<String>) An array of library paths to add to the
-      #    ruby require path.
-      # *  `:files` (Array<String>) An array of globs indicating the test
-      #    files to load.
-      # *  `:warnings` (Boolean) If true, runs tests with Ruby warnings.
-      #
-      # @param [Hash] opts Options.
-      #
-      def initialize(opts = {})
-        @name = opts[:name] || "test"
-        @libs = opts[:libs] || ["lib"]
-        @files = opts[:files] || ["test/**/test*.rb"]
-        @warnings = opts.include?(:warnings) ? opts[:warnings] : true
+      def initialize(name: DEFAULT_TOOL_NAME,
+                     libs: DEFAULT_LIBS,
+                     files: DEFAULT_FILES,
+                     warnings: true)
+        @name = name
+        @libs = libs
+        @files = files
+        @warnings = warnings
       end
 
       attr_accessor :name

@@ -36,24 +36,29 @@ module Toys
       include Template
 
       ##
+      # Default tool name
+      # @return [String]
+      #
+      DEFAULT_TOOL_NAME = "yardoc".freeze
+
+      ##
       # Create the template settings for the Yardoc template.
       #
-      # You may provide a hash of options when expanding this template.
-      # Supported options include:
-      #
-      # *  `:name` (String) Name of the tool to create. Defaults to "yardoc".
-      # *  `:files` (Array<String>) An array of globs indicating the files
+      # @param [String] name Name of the tool to create. Defaults to
+      #     {DEFAULT_TOOL_NAME}.
+      # @param [Array<String>] files An array of globs indicating the files
       #    to document.
-      # *  `:options` (Hash) Additional options passed to YARD
-      # *  `:stats_options` (Hash) Additional options passed to YARD stats
+      # @param [Array] options Additional options passed to YARD
+      # @param [Array] stats_options Additional options passed to YARD stats
       #
-      # @param [Hash] opts Options.
-      #
-      def initialize(opts = {})
-        @name = opts[:name] || "yardoc"
-        @files = opts[:files] || []
-        @options = opts[:options] || []
-        @stats_options = opts[:stats_options] || []
+      def initialize(name: DEFAULT_TOOL_NAME,
+                     files: [],
+                     options: [],
+                     stats_options: [])
+        @name = name
+        @files = files
+        @options = options
+        @stats_options = stats_options
       end
 
       attr_accessor :name

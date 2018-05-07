@@ -22,10 +22,11 @@ The source can be found on Github at
 
 ### TODO items
 
-* Decide about highline integration
-* Output formats middleware
-* System paths tool
-* Figure out whether to provide group clearing/locking
+* Create a release tool covering both gems
+* Investigate highline integration
+* Investigate middleware and/or templates for output formats
+* Investigate system paths tool
+* Investigate group clearing/locking
 * Write overall documentation
 
 ## License

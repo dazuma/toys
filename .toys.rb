@@ -27,7 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-
 name "install" do
   desc "Build and install the current gems"
   use :exec
@@ -76,12 +75,10 @@ name "yardoc" do
     set Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
-        cli = new_cli.add_config_path(".toys.rb")
-        run("yardoc", cli: cli)
+        exec "yardoc"
       end
       ::Dir.chdir("toys") do
-        cli = new_cli.add_config_path(".toys.rb")
-        run("yardoc", cli: cli)
+        exec "yardoc"
       end
     end
   end

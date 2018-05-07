@@ -39,9 +39,9 @@ module Toys
     # `--help`) is provided. It can also be configured to display usage text
     # automatically for tools that do not have an executor.
     #
-    # If a tool has no executor, this middleware also adds a `--[no-]recursive`
-    # flag, which, when set to `true` (the default), shows all subcommands
-    # recursively rather than only immediate subcommands.
+    # If a tool has no executor, this middleware can also add a
+    # `--[no-]recursive` flag, which, when set to `true` (the default), shows
+    # all subcommands recursively rather than only immediate subcommands.
     #
     class ShowUsage < Base
       ##

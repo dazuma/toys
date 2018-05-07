@@ -36,20 +36,22 @@ module Toys
       include Template
 
       ##
+      # Default tool name
+      # @return [String]
+      #
+      DEFAULT_TOOL_NAME = "clean".freeze
+
+      ##
       # Create the template settings for the Clean template.
       #
-      # You may provide a hash of options when expanding this template.
-      # Supported options include:
-      #
-      # *  `:name` (String) Name of the tool to create. Defaults to "clean".
-      # *  `:paths` (Array<String>) An array of glob patterns indicating what
+      # @param [String] name Name of the tool to create. Defaults to
+      #     {DEFAULT_TOOL_NAME}.
+      # @param [Array<String>] paths An array of glob patterns indicating what
       #    to clean.
       #
-      # @param [Hash] opts Options.
-      #
-      def initialize(opts = {})
-        @name = opts[:name] || "clean"
-        @paths = opts[:paths] || []
+      def initialize(name: DEFAULT_TOOL_NAME, paths: [])
+        @name = name
+        @paths = paths
       end
 
       attr_accessor :name

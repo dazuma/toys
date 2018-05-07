@@ -36,22 +36,26 @@ module Toys
       include Template
 
       ##
+      # Default tool name
+      # @return [String]
+      #
+      DEFAULT_TOOL_NAME = "rubocop".freeze
+
+      ##
       # Create the template settings for the Rubocop template.
       #
-      # You may provide a hash of options when expanding this template.
-      # Supported options include:
-      #
-      # *  `:name` (String) Name of the tool to create. Defaults to "rubocop".
-      # *  `:fail_on_error` (Boolean) If true, exits with a nonzero code if
+      # @param [String] name Name of the tool to create. Defaults to
+      #     {DEFAULT_TOOL_NAME}.
+      # @param [Boolean] fail_on_error If true, exits with a nonzero code if
       #    Rubocop fails. Defaults to true.
-      # *  `:options` (Hash) Additional options passed to the Rubocop CLI.
+      # @param [Array] options Additional options passed to the Rubocop CLI.
       #
-      # @param [Hash] opts Options.
-      #
-      def initialize(opts = {})
-        @name = opts[:name] || "rubocop"
-        @fail_on_error = opts.include?(:fail_on_error) ? opts[:fail_on_error] : true
-        @options = opts[:options] || []
+      def initialize(name: DEFAULT_TOOL_NAME,
+                     fail_on_error: true,
+                     options: [])
+        @name = name
+        @fail_on_error = fail_on_error
+        @options = options
       end
 
       attr_accessor :name
