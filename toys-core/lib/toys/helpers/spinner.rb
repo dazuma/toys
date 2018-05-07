@@ -95,7 +95,7 @@ module Toys
 
         def initialize(stream, frames, frame_length)
           @stream = stream
-          @frames = frames
+          @frames = frames.map { |f| f.is_a?(::Array) ? f : [f, f.size] }
           @frame_length = frame_length
           @cur_frame = 0
           @stopping = false
@@ -118,14 +118,12 @@ module Toys
         def start_thread
           ::Thread.new do
             synchronize do
-              loop do
-                frame = @frames[@cur_frame]
-                @stream.write(frame.is_a?(::Array) ? frame[0] : frame)
+              until @stopping
+                @stream.write(@frames[@cur_frame][0])
                 @stream.flush
                 @cond.wait(@frame_length)
-                size = frame.is_a?(::Array) ? frame[1] : frame.size
+                size = @frames[@cur_frame][1]
                 @stream.write("\b" * size + " " * size + "\b" * size)
-                break if @stopping
                 @cur_frame += 1
                 @cur_frame = 0 if @cur_frame >= @frames.size
               end
