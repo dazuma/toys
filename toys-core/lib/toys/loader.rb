@@ -247,7 +247,7 @@ module Toys
       return nil unless @tools.key?(words)
       result = @tools[words].first
       if result.is_a?(Alias)
-        words = result.target
+        words = result.target_name
         if looked_up.include?(words)
           raise LoaderError, "Circular alias references: #{looked_up.inspect}"
         end
