@@ -49,13 +49,13 @@ module Toys
       # @param [String] name Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
       # @param [String] gem_name Name of the gem to build. If not provided,
-      #    defaults to the first gemspec file it finds.
+      #     defaults to the first gemspec file it finds.
       # @param [Boolean] push_gem If true, pushes the built gem to rubygems.
       # @param [Boolean] tag If true, tags the git repo with the gem version.
       # @param [Boolean,String] push_tag If truthy, pushes the new tag to
-      #    a git remote. You may specify which remote by setting the value to
-      #    a string. Otherwise, if the value is simply `true`, the "origin"
-      #    remote is used by default.
+      #     a git remote. You may specify which remote by setting the value to
+      #     a string. Otherwise, if the value is simply `true`, the "origin"
+      #     remote is used by default.
       #
       def initialize(name: DEFAULT_TOOL_NAME,
                      gem_name: nil,

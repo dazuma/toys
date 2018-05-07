@@ -47,9 +47,10 @@ module Toys
       # @param [String] name Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
       # @param [Array<String>] files An array of globs indicating the files
-      #    to document.
-      # @param [Array] options Additional options passed to YARD
-      # @param [Array] stats_options Additional options passed to YARD stats
+      #     to document.
+      # @param [Array<String>] options Additional options passed to YARD
+      # @param [Array<String>] stats_options Additional options passed to YARD
+      #     stats
       #
       def initialize(name: DEFAULT_TOOL_NAME,
                      files: [],

@@ -47,8 +47,9 @@ module Toys
       # @param [String] name Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
       # @param [Boolean] fail_on_error If true, exits with a nonzero code if
-      #    Rubocop fails. Defaults to true.
-      # @param [Array] options Additional options passed to the Rubocop CLI.
+      #     Rubocop fails. Defaults to true.
+      # @param [Array<String>] options Additional options passed to the Rubocop
+      #     CLI.
       #
       def initialize(name: DEFAULT_TOOL_NAME,
                      fail_on_error: true,

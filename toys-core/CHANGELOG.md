@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.2 / TBD
+### 0.3.2 / 2018-05-07
 
 * CHANGED: Split core engine out into "toys-core" from the "toys" gem.
 * CHANGED: Renamed path types to "search" and "config" paths, and restricted the former to the CLI.
@@ -15,6 +15,7 @@
 * IMPROVED: Usage error handler can now have its exit code configured.
 * IMPROVED: Help and verbosity middlewares can have their switches configured.
 * IMPROVED: Help middleware can search for keywords in subcommands.
+* IMPROVED: Help middleware displays the config path in verbose mode.
 * IMPROVED: Context::EXIT_ON_NONZERO_STATUS controls Context#run behavior.
 * DOCS: Expanded middleware documentation
 * INTERNAL: Removed Context::Base and just used CLI as base context

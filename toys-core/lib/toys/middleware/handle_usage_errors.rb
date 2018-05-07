@@ -56,7 +56,7 @@ module Toys
         if context[Context::USAGE_ERROR]
           puts(context[Context::USAGE_ERROR])
           puts("")
-          puts(Utils::Usage.from_context(context).string)
+          puts(Utils::Usage.from_context(context).string(show_path: true))
           context.exit(@exit_code)
         else
           yield

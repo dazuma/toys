@@ -135,7 +135,8 @@ module Toys
         if context[:_help]
           usage = Utils::Usage.from_context(context)
           puts(usage.string(recursive: context[:_recursive_subcommands],
-                            search: context[:_search_subcommands]))
+                            search: context[:_search_subcommands],
+                            show_path: context.verbosity > 0))
         else
           yield
         end

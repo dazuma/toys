@@ -101,3 +101,21 @@ name "clean" do
     end
   end
 end
+
+name "release" do
+  desc "Releases both gems"
+  use :exec
+  execute do
+    set Context::EXIT_ON_NONZERO_STATUS, true
+    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      ::Dir.chdir("toys-core") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("release", cli: cli)
+      end
+      ::Dir.chdir("toys") do
+        cli = new_cli.add_config_path(".toys.rb")
+        run("release", cli: cli)
+      end
+    end
+  end
+end

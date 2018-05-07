@@ -22,7 +22,6 @@ The source can be found on Github at
 
 ### TODO items
 
-* Create a release tool covering both gems
 * Investigate highline integration
 * Investigate middleware and/or templates for output formats
 * Investigate system paths tool

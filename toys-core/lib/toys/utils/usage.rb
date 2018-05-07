@@ -69,14 +69,21 @@ module Toys
       #     display all subcommands recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      # @param [Boolean] show_path If true, shows the path to the config file
+      #     containing the tool definition (if set). Defaults to false.
+      #
       # @return [String] A usage string.
       #
-      def string(recursive: false, search: nil)
+      def string(recursive: false, search: nil, show_path: false)
         optparse = ::OptionParser.new
         optparse.banner = @tool.includes_executor? ? tool_banner : group_banner
         unless @tool.effective_long_desc.empty?
           optparse.separator("")
           optparse.separator(@tool.effective_long_desc)
+        end
+        if show_path && @tool.definition_path
+          optparse.separator("")
+          optparse.separator("Defined in #{@tool.definition_path}")
         end
         add_switches(optparse)
         if @tool.includes_executor?
