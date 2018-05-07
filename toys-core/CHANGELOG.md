@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.2 / in development
+### 0.3.2 / 2018-05-06
 
 * CHANGED: Split core engine out into "toys-core" from the "toys" gem.
 * CHANGED: Renamed path types to "search" and "config" paths, and restricted the former to the CLI.

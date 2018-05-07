@@ -34,7 +34,7 @@ name "install" do
   execute do
     set Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
-      version = capture("bin/toys system version").strip
+      version = capture("./toys-dev system version").strip
       ::Dir.chdir("toys-core") do
         cli = new_cli.add_config_path(".toys.rb")
         run("build", cli: cli)

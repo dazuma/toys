@@ -1,10 +1,12 @@
 # Release History
 
-### 0.3.2 / in development
+### 0.3.2 / 2018-05-06
 
 * CHANGED: Split core engine out into separate "toys-core" gem. See the
   toys-core changelog for additional changes in core.
-* NEW: The root tool now responds to the "--version" switch.
+* ADDED: The root tool now responds to the "--version" switch.
+* ADDED: Group help can now "--search" for subcommands.
+* ADDED: You can now run a sub-instance of toys from an executor.
 
 ### 0.3.1 / 2018-05-02
 

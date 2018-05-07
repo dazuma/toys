@@ -1,3 +1,0 @@
-#!/usr/bin/env ruby
-
-load ::File.join(::File.dirname(::File.dirname(__dir__)), "toys", "bin", "toys")

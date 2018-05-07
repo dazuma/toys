@@ -38,11 +38,10 @@ end
 
 require "toys/version"
 
-begin
+if ::ENV["TOYS_CORE_LIB_PATH"]
+  $LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
+else
   gem "toys-core", "= #{::Toys::VERSION}"
-rescue ::Gem::LoadError
-  base_dir = ::File.absolute_path(::File.dirname(::File.dirname(__dir__)))
-  $LOAD_PATH.unshift(::File.join(base_dir, "toys-core", "lib"))
 end
 require "toys-core"
 

@@ -103,13 +103,26 @@ module Toys
     alias name tool
 
     ##
-    # Create an alias.
+    # Create an alias in the current group.
     #
     # @param [String] word The name of the alias
     # @param [String] target The target of the alias
     #
     def alias_tool(word, target)
       @loader.make_alias(@words + [word.to_s], @words + [target.to_s], @priority)
+      self
+    end
+
+    ##
+    # Create an alias of the current tool.
+    #
+    # @param [String] word The name of the alias
+    #
+    def alias_as(word)
+      if @words.empty?
+        raise ToolDefinitionError, "Cannot make an alias of the root."
+      end
+      @loader.make_alias(@words[0..-2] + [word.to_s], @words, @priority)
       self
     end
 
