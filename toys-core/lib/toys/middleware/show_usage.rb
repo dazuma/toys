@@ -51,21 +51,56 @@ module Toys
       DEFAULT_HELP_SWITCHES = ["-?", "--help"].freeze
 
       ##
+      # Default recursive switches
+      # @return [Array<String>]
+      #
+      DEFAULT_RECURSIVE_SWITCHES = ["-r", "--[no-]recursive"].freeze
+
+      ##
+      # Default search switches
+      # @return [Array<String>]
+      #
+      DEFAULT_SEARCH_SWITCHES = ["-s WORD", "--search=WORD"].freeze
+
+      ##
       # Create a ShowUsage middleware.
       #
       # @param [Boolean,Array<String>,Proc] help_switches Specify switches to
       #     activate help. The value may be any of the following:
-      #     *  An array of switches that cause the tool to display its usage.
+      #     *  An array of switches.
       #     *  The `true` value to use {DEFAULT_HELP_SWITCHES}. (Default)
-      #     *  The `false` value to disable help switches.
+      #     *  The `false` value for no switches.
       #     *  A proc that takes a tool and returns any of the above.
+      # @param [Boolean,Array<String>,Proc] recursive_switches Specify switches
+      #     to control recursive subcommand search. The value may be any of the
+      #     following:
+      #     *  An array of switches.
+      #     *  The `true` value to use {DEFAULT_RECURSIVE_SWITCHES}. (Default)
+      #     *  The `false` value for no switches.
+      #     *  A proc that takes a tool and returns any of the above.
+      # @param [Boolean,Array<String>,Proc] search_switches Specify switches
+      #     to search subcommands for a search term. The value may be any of
+      #     the following:
+      #     *  An array of switches.
+      #     *  The `true` value to use {DEFAULT_SEARCH_SWITCHES}. (Default)
+      #     *  The `false` value for no switches.
+      #     *  A proc that takes a tool and returns any of the above.
+      # @param [Boolean] default_recursive Whether to search recursively for
+      #     subcommands by default. Default is `true`.
       # @param [Boolean] fallback_execution Cause the tool to display its own
       #     usage text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
       #     Default is `true`.
       #
-      def initialize(help_switches: true, fallback_execution: true)
+      def initialize(help_switches: true,
+                     recursive_switches: true,
+                     search_switches: true,
+                     default_recursive: true,
+                     fallback_execution: true)
         @help_switches = help_switches
+        @recursive_switches = recursive_switches
+        @search_switches = search_switches
+        @default_recursive = default_recursive ? true : false
         @fallback_execution = fallback_execution
       end
 
@@ -75,19 +110,20 @@ module Toys
       def config(tool)
         help_switches = Middleware.resolve_switches_spec(@help_switches, tool,
                                                          DEFAULT_HELP_SWITCHES)
+        is_default = !tool.includes_executor? && @fallback_execution
         if !help_switches.empty?
+          doc = "Show help message"
+          doc << " (default for groups)" if is_default
           tool.add_switch(:_help, *help_switches,
-                          doc: "Show help message",
-                          default: !tool.includes_executor? && @fallback_execution,
+                          doc: doc,
+                          default: is_default,
                           only_unique: true)
-        elsif @fallback_execution
-          tool.default_data[:_help] = !tool.includes_executor?
+        elsif is_default
+          tool.default_data[:_help] = true
         end
         if !tool.includes_executor? && (!help_switches.empty? || @fallback_execution)
-          tool.add_switch(:_recursive, "--[no-]recursive",
-                          default: true,
-                          doc: "Show all subcommands recursively (default is true)",
-                          only_unique: true)
+          add_recursive_switches(tool)
+          add_search_switches(tool)
         end
         yield
       end
@@ -97,9 +133,35 @@ module Toys
       #
       def execute(context)
         if context[:_help]
-          puts(Utils::Usage.from_context(context).string(recursive: context[:_recursive]))
+          usage = Utils::Usage.from_context(context)
+          puts(usage.string(recursive: context[:_recursive_subcommands],
+                            search: context[:_search_subcommands]))
         else
           yield
+        end
+      end
+
+      private
+
+      def add_recursive_switches(tool)
+        recursive_switches = Middleware.resolve_switches_spec(@recursive_switches, tool,
+                                                              DEFAULT_RECURSIVE_SWITCHES)
+        unless recursive_switches.empty?
+          tool.add_switch(:_recursive_subcommands, *recursive_switches,
+                          default: @default_recursive,
+                          doc: "Show all subcommands recursively" \
+                               " (default is #{@default_recursive})",
+                          only_unique: true)
+        end
+      end
+
+      def add_search_switches(tool)
+        search_switches = Middleware.resolve_switches_spec(@search_switches, tool,
+                                                           DEFAULT_SEARCH_SWITCHES)
+        unless search_switches.empty?
+          tool.add_switch(:_search_subcommands, *search_switches,
+                          doc: "Search subcommands for the given term",
+                          only_unique: true)
         end
       end
     end

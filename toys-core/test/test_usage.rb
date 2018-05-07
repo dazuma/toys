@@ -78,7 +78,7 @@ describe Toys::Utils::Usage do
     it "is set for a group" do
       usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
       usage_array = usage.string.split("\n")
-      assert_equal("Usage: toys foo bar <command> [<options...>]", usage_array[0])
+      assert_equal("Usage: toys foo bar <command> <command-arguments...>", usage_array[0])
       assert_equal("", usage_array[1])
     end
 

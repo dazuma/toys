@@ -22,11 +22,9 @@ The source can be found on Github at
 
 ### TODO items
 
-* Sub-toys feature that runs against a newly configured loader
 * Decide about highline integration
 * Output formats middleware
 * System paths tool
-* Search function in group help
 * Figure out whether to provide group clearing/locking
 * Write overall documentation
 

@@ -67,9 +67,11 @@ module Toys
       #
       # @param [Boolean] recursive If true, and the tool is a group tool,
       #     display all subcommands recursively. Defaults to false.
+      # @param [String,nil] search An optional string to search for when
+      #     listing subcommands. Defaults to `nil` which finds all subcommands.
       # @return [String] A usage string.
       #
-      def string(recursive: false)
+      def string(recursive: false, search: nil)
         optparse = ::OptionParser.new
         optparse.banner = @tool.includes_executor? ? tool_banner : group_banner
         unless @tool.effective_long_desc.empty?
@@ -80,7 +82,7 @@ module Toys
         if @tool.includes_executor?
           add_positional_arguments(optparse)
         else
-          add_command_list(optparse, recursive)
+          add_command_list(optparse, recursive, search)
         end
         optparse.to_s
       end
@@ -109,7 +111,10 @@ module Toys
       # Returns the banner string for a group
       #
       def group_banner
-        (["Usage:", @binary_name] + @tool.full_name + ["<command>", "[<options...>]"]).join(" ")
+        list = ["Usage:", @binary_name] +
+               @tool.full_name +
+               ["<command>", "<command-arguments...>"]
+        list.join(" ")
       end
 
       #
@@ -147,12 +152,16 @@ module Toys
       # Add documentation for the tool's subcommands, to the given option
       # parser.
       #
-      def add_command_list(optparse, recursive)
+      def add_command_list(optparse, recursive, search)
         name_len = @tool.full_name.length
-        subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
+        subtools = find_commands(recursive, search)
         return if subtools.empty?
         optparse.separator("")
-        optparse.separator("Commands:")
+        if search
+          optparse.separator("Commands with search term #{search.inspect}:")
+        else
+          optparse.separator("Commands:")
+        end
         subtools.each do |subtool|
           tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
           if subtool.is_a?(Alias)
@@ -160,6 +169,19 @@ module Toys
           else
             optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
           end
+        end
+      end
+
+      #
+      # Find subcommands of the current tool
+      #
+      def find_commands(recursive, search)
+        subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
+        return subtools if search.nil? || search.empty?
+        regex = Regexp.new("(^|\\s)#{Regexp.escape(search)}(\\s|$)", Regexp::IGNORECASE)
+        subtools.find_all do |tool|
+          regex =~ tool.display_name || regex =~ tool.effective_desc ||
+            regex =~ tool.effective_long_desc
         end
       end
     end
