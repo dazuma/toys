@@ -53,13 +53,13 @@ module Toys
 
         ##
         # Convert the given string to a module name. Specifically, converts
-        # to `UpperCamelCase`.
+        # to `UpperCamelCase`, and then to a symbol.
         #
         # @param [String,Symbol] str String to convert.
-        # @return [String] Converted string
+        # @return [Symbol] Converted name
         #
         def to_module_name(str)
-          str.to_s.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }
+          str.to_s.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }.to_sym
         end
 
         ##
@@ -77,7 +77,16 @@ module Toys
         #
         def lookup!(collection, name)
           require "toys/#{to_path_name(collection)}/#{to_path_name(name)}"
-          ::Toys.const_get(to_module_name(collection)).const_get(to_module_name(name))
+          collection_sym = to_module_name(collection)
+          unless ::Toys.constants.include?(collection_sym)
+            raise ::NameError, "Module does not exist: Toys::#{collection_sym}"
+          end
+          collection_mod = ::Toys.const_get(collection_sym)
+          name_sym = to_module_name(name)
+          unless collection_mod.constants.include?(name_sym)
+            raise ::NameError, "Module does not exist: Toys::#{collection_sym}::#{name_sym}"
+          end
+          collection_mod.const_get(name_sym)
         end
 
         ##

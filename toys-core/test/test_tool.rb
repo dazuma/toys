@@ -392,7 +392,7 @@ describe Toys::Tool do
   describe "helper module" do
     it "can be looked up from standard helpers" do
       test = self
-      tool.use_module(:file_utils)
+      tool.use_module(:fileutils)
       tool.executor = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
