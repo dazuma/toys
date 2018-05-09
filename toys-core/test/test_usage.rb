@@ -60,6 +60,10 @@ describe Toys::Utils::Usage do
       t.executor = proc {}
     end
   end
+  let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
+  let(:subtool_long) do
+    Toys::Tool.new(["foo", "bar", long_tool_name])
+  end
   let(:loader) { Minitest::Mock.new }
   let(:group_loader) do
     m = Minitest::Mock.new
@@ -71,6 +75,11 @@ describe Toys::Utils::Usage do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_one_a, subtool_one_b, subtool_two],
              [["foo", "bar"], recursive: true])
+    m
+  end
+  let(:long_group_loader) do
+    m = Minitest::Mock.new
+    m.expect(:list_subtools, [subtool_long], [["foo", "bar"], recursive: false])
     m
   end
 
@@ -161,6 +170,16 @@ describe Toys::Utils::Usage do
       assert_equal("The short description", usage_array[2])
       assert_equal("", usage_array[3])
     end
+
+    it "supports multiline descriptions" do
+      group_tool.long_desc = ["hello", "ruby", "world"]
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      assert_equal("hello", usage_array[2])
+      assert_equal("ruby", usage_array[3])
+      assert_equal("world", usage_array[4])
+      assert_equal("", usage_array[5])
+    end
   end
 
   describe "commands section" do
@@ -176,8 +195,8 @@ describe Toys::Utils::Usage do
       usage_array = usage.string.split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+/, usage_array[index + 1])
-      assert_match(/two\s+/, usage_array[index + 2])
+      assert_match(/^\s{4}one\s{30}$/, usage_array[index + 1])
+      assert_match(/^\s{4}two\s{30}$/, usage_array[index + 2])
       assert_equal(index + 3, usage_array.size)
     end
 
@@ -186,11 +205,36 @@ describe Toys::Utils::Usage do
       usage_array = usage.string(recursive: true).split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
-      assert_match(/one\s+/, usage_array[index + 1])
-      assert_match(/one a\s+/, usage_array[index + 2])
-      assert_match(/one b\s+/, usage_array[index + 3])
-      assert_match(/two\s+/, usage_array[index + 4])
+      assert_match(/^\s{4}one\s{30}$/, usage_array[index + 1])
+      assert_match(/^\s{4}one a\s{28}$/, usage_array[index + 2])
+      assert_match(/^\s{4}one b\s{28}$/, usage_array[index + 3])
+      assert_match(/^\s{4}two\s{30}$/, usage_array[index + 4])
       assert_equal(index + 5, usage_array.size)
+    end
+
+    it "shows command docs" do
+      subtool_one.desc = "one docs"
+      subtool_two.desc = ["two docs", "on two lines"]
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      index = usage_array.index("Commands:")
+      refute_nil(index)
+      assert_match(/^\s{4}one\s{30}one docs$/, usage_array[index + 1])
+      assert_match(/^\s{4}two\s{30}two docs$/, usage_array[index + 2])
+      assert_match(/^\s{37}on two lines$/, usage_array[index + 3])
+      assert_equal(index + 4, usage_array.size)
+    end
+
+    it "shows long command docs" do
+      subtool_long.desc = ["long docs", "on two lines"]
+      usage = Toys::Utils::Usage.new(group_tool, long_group_loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      index = usage_array.index("Commands:")
+      refute_nil(index)
+      assert_match(/^\s{4}#{long_tool_name}$/, usage_array[index + 1])
+      assert_match(/^\s{37}long docs$/, usage_array[index + 2])
+      assert_match(/^\s{37}on two lines$/, usage_array[index + 3])
+      assert_equal(index + 4, usage_array.size)
     end
   end
 
@@ -219,12 +263,25 @@ describe Toys::Utils::Usage do
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       refute_nil(index)
-      assert_match(/cc\s+set cc/, usage_array[index + 1])
-      assert_match(/dd\s+set dd/, usage_array[index + 2])
-      assert_match(/ee\s+set ee/, usage_array[index + 3])
-      assert_match(/ff\s+set ff/, usage_array[index + 4])
-      assert_match(/gg\s+set gg/, usage_array[index + 5])
+      assert_match(/^\s{4}cc\s{31}set cc$/, usage_array[index + 1])
+      assert_match(/^\s{4}dd\s{31}set dd$/, usage_array[index + 2])
+      assert_match(/^\s{4}ee\s{31}set ee$/, usage_array[index + 3])
+      assert_match(/^\s{4}ff\s{31}set ff$/, usage_array[index + 4])
+      assert_match(/^\s{4}gg\s{31}set gg$/, usage_array[index + 5])
       assert_equal(index + 6, usage_array.size)
+    end
+
+    it "shows long arg docs" do
+      normal_tool.add_required_arg(:long_long_long_long_long_long_long_long,
+                                   doc: ["set long", "arg docs"])
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      index = usage_array.index("Positional arguments:")
+      refute_nil(index)
+      assert_match(/^\s{4}long-long-long-long-long-long-long-long$/, usage_array[index + 1])
+      assert_match(/^\s{37}set long$/, usage_array[index + 2])
+      assert_match(/^\s{37}arg docs$/, usage_array[index + 3])
+      assert_equal(index + 4, usage_array.size)
     end
   end
 
@@ -243,9 +300,29 @@ describe Toys::Utils::Usage do
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
       refute_nil(index)
-      assert_match(/-a, --aa=VALUE\s+set aa/, usage_array[index + 1])
-      assert_match(/--\[no-\]bb\s+set bb/, usage_array[index + 2])
+      assert_match(/^\s{4}-a, --aa=VALUE\s{19}set aa$/, usage_array[index + 1])
+      assert_match(/^\s{8}--\[no-\]bb\s{20}set bb$/, usage_array[index + 2])
       assert_equal(index + 3, usage_array.size)
+    end
+
+    it "shows value only for last switch" do
+      normal_tool.add_switch(:aa, "-a VALUE", "--aa", doc: "set aa")
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      index = usage_array.index("Options:")
+      refute_nil(index)
+      assert_match(/^\s{4}-a, --aa VALUE\s{19}set aa$/, usage_array[index + 1])
+      assert_equal(index + 2, usage_array.size)
+    end
+
+    it "orders single dashes before double dashes" do
+      normal_tool.add_switch(:aa, "--aa", "-a VALUE", doc: "set aa")
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
+      usage_array = usage.string.split("\n")
+      index = usage_array.index("Options:")
+      refute_nil(index)
+      assert_match(/^\s{4}-a, --aa VALUE\s{19}set aa$/, usage_array[index + 1])
+      assert_equal(index + 2, usage_array.size)
     end
   end
 end

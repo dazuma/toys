@@ -212,4 +212,22 @@ describe Toys::Loader do
       assert_equal(true, loader.tool_defined?(["group-0", "group-1", "tool-1-1"]))
     end
   end
+
+  describe "aliases" do
+    before do
+      loader.add_path(File.join(cases_dir, "aliases"))
+    end
+
+    it "finds a directly referenced alias" do
+      tool = loader.lookup(["alias-1"])
+      assert_equal(["file tool-1 short description"], tool.effective_desc)
+      assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+    end
+
+    it "finds a recursively referenced alias" do
+      tool = loader.lookup(["alias-2"])
+      assert_equal(["file tool-1 short description"], tool.effective_desc)
+      assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+    end
+  end
 end

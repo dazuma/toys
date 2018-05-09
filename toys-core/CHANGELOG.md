@@ -9,7 +9,7 @@
 * ADDED: Highline helper
 * ADDED: Spinner helper
 * IMPROVED: Usage can now customize the left column width and indent
-* IMPROVED: Newlines in documentation are properly indent
+* IMPROVED: Newlines in documentation are properly indented
 
 ### 0.3.2 / 2018-05-07
 
