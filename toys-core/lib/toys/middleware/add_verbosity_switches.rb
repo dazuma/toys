@@ -80,7 +80,7 @@ module Toys
                                                             DEFAULT_VERBOSE_SWITCHES)
         unless verbose_switches.empty?
           tool.add_switch(Context::VERBOSITY, *verbose_switches,
-                          doc: "Increase verbosity",
+                          docs: "Increase verbosity",
                           handler: ->(_val, cur) { cur + 1 },
                           only_unique: true)
         end
@@ -88,7 +88,7 @@ module Toys
                                                           DEFAULT_QUIET_SWITCHES)
         unless quiet_switches.empty?
           tool.add_switch(Context::VERBOSITY, *quiet_switches,
-                          doc: "Decrease verbosity",
+                          docs: "Decrease verbosity",
                           handler: ->(_val, cur) { cur - 1 },
                           only_unique: true)
         end

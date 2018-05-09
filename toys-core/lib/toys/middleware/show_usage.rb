@@ -114,10 +114,10 @@ module Toys
                                                          DEFAULT_HELP_SWITCHES)
         is_default = !tool.includes_executor? && @fallback_execution
         if !help_switches.empty?
-          doc = "Show help message"
-          doc << " (default for groups)" if is_default
+          docs = "Show help message"
+          docs << " (default for groups)" if is_default
           tool.add_switch(:_help, *help_switches,
-                          doc: doc,
+                          docs: docs,
                           default: is_default,
                           only_unique: true)
         elsif is_default
@@ -154,8 +154,8 @@ module Toys
         unless recursive_switches.empty?
           tool.add_switch(:_recursive_subcommands, *recursive_switches,
                           default: @default_recursive,
-                          doc: "Show all subcommands recursively" \
-                               " (default is #{@default_recursive})",
+                          docs: "Show all subcommands recursively" \
+                                " (default is #{@default_recursive})",
                           only_unique: true)
         end
       end
@@ -165,7 +165,7 @@ module Toys
                                                            DEFAULT_SEARCH_SWITCHES)
         unless search_switches.empty?
           tool.add_switch(:_search_subcommands, *search_switches,
-                          doc: "Search subcommands for the given term",
+                          docs: "Search subcommands for the given term",
                           only_unique: true)
         end
       end

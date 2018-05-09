@@ -29,42 +29,42 @@
 
 require "helper"
 
-require "toys/utils/wrapped_string"
+require "toys/utils/wrappable_string"
 
-describe Toys::Utils::WrappedString do
+describe Toys::Utils::WrappableString do
   describe "wrap" do
     it "handles empty string" do
-      result = Toys::Utils::WrappedString.new("").wrap(10)
+      result = Toys::Utils::WrappableString.new("").wrap(10)
       assert_equal([], result)
     end
 
     it "handles whitespace string" do
-      result = Toys::Utils::WrappedString.new(" \n ").wrap(10)
+      result = Toys::Utils::WrappableString.new(" \n ").wrap(10)
       assert_equal([], result)
     end
 
     it "handles single line" do
-      result = Toys::Utils::WrappedString.new("a bcd e").wrap(10)
+      result = Toys::Utils::WrappableString.new("a bcd e").wrap(10)
       assert_equal(["a bcd e"], result)
     end
 
     it "handles leading and trailing spaces" do
-      result = Toys::Utils::WrappedString.new("  a bcd e\n").wrap(10)
+      result = Toys::Utils::WrappableString.new("  a bcd e\n").wrap(10)
       assert_equal(["a bcd e"], result)
     end
 
     it "splits lines" do
-      result = Toys::Utils::WrappedString.new("a b cd efg\n").wrap(5)
+      result = Toys::Utils::WrappableString.new("a b cd efg\n").wrap(5)
       assert_equal(["a b", "cd", "efg"], result)
     end
 
     it "allows a long word" do
-      result = Toys::Utils::WrappedString.new("a b cdefghij kl\n").wrap(5)
+      result = Toys::Utils::WrappableString.new("a b cdefghij kl\n").wrap(5)
       assert_equal(["a b", "cdefghij", "kl"], result)
     end
 
     it "honors the width exactly" do
-      result = Toys::Utils::WrappedString.new("a bcd ef ghi j").wrap(5)
+      result = Toys::Utils::WrappableString.new("a bcd ef ghi j").wrap(5)
       assert_equal(["a bcd", "ef", "ghi j"], result)
     end
   end

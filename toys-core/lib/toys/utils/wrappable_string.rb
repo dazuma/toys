@@ -32,7 +32,7 @@ module Toys
     ##
     # A string marked as wrappable.
     #
-    class WrappedString
+    class WrappableString
       ##
       # Create a wrapped string.
       # @param [String] string The string.

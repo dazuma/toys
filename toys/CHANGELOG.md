@@ -3,9 +3,11 @@
 ### 0.3.3 / TBD
 
 * CHANGED: Renamed file_utils helper to fileutils.
+* CHANGED: Renamed doc: parameter to docs:
 * FIXED: Documentation strings that begin with "-" no longer cause problems.
 * ADDED: Highline helper
 * ADDED: Spinner helper
+* ADDED: WrappableString for descriptions and docs
 * IMPROVED: Descriptions can have multiple lines
 
 ### 0.3.2 / 2018-05-07

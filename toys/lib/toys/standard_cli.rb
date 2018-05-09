@@ -30,7 +30,7 @@
 require "logger"
 
 require "toys/middleware/show_version"
-require "toys/utils/wrapped_string"
+require "toys/utils/wrappable_string"
 
 module Toys
   ##
@@ -79,7 +79,7 @@ module Toys
     # @return [String]
     #
     DEFAULT_ROOT_DESC =
-      Utils::WrappedString.new(
+      Utils::WrappableString.new(
         "Toys is your personal command line tool. You can add to the list of" \
         " commands below by writing scripts in Ruby using a simple DSL, and" \
         " toys will organize and document them, and make them available" \

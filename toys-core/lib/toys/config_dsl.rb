@@ -164,7 +164,7 @@ module Toys
     # Set the long description for the current tool. The long description is
     # displayed in the usage documentation for the tool itself.
     #
-    # @param [String,Toys::Utils::WrappedString...] strs The long description
+    # @param [String,Toys::Utils::WrappableString...] strs The long description
     #
     def long_desc(*strs)
       return self if _cur_tool.nil?
@@ -178,7 +178,7 @@ module Toys
     # displayed with the tool in a command list. You may also use the
     # equivalent method `short_desc`.
     #
-    # @param [String,Toys::Utils::WrappedString...] strs The short description
+    # @param [String,Toys::Utils::WrappableString...] strs The short description
     #
     def desc(*strs)
       return self if _cur_tool.nil?
@@ -200,9 +200,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
-    #     switch. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
+    #     the switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -215,11 +215,11 @@ module Toys
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
     def switch(key, *switches,
-               accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
+               accept: nil, default: nil, docs: nil, only_unique: false, handler: nil)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
       _cur_tool.add_switch(key, *switches,
-                           accept: accept, default: default, doc: doc,
+                           accept: accept, default: default, docs: docs,
                            only_unique: only_unique, handler: handler)
       self
     end
@@ -232,14 +232,14 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
     #     arg. Defaults to empty array.
     #
-    def required_arg(key, accept: nil, doc: nil)
+    def required_arg(key, accept: nil, docs: nil)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.add_required_arg(key, accept: accept, doc: doc)
+      _cur_tool.add_required_arg(key, accept: accept, docs: docs)
       self
     end
 
@@ -255,14 +255,14 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
     #     arg. Defaults to empty array.
     #
-    def optional_arg(key, accept: nil, default: nil, doc: nil)
+    def optional_arg(key, accept: nil, default: nil, docs: nil)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.add_optional_arg(key, accept: accept, default: default, doc: doc)
+      _cur_tool.add_optional_arg(key, accept: accept, default: default, docs: docs)
       self
     end
 
@@ -277,14 +277,14 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
     #     args. Defaults to empty array.
     #
-    def remaining_args(key, accept: nil, default: [], doc: nil)
+    def remaining_args(key, accept: nil, default: [], docs: nil)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.set_remaining_args(key, accept: accept, default: default, doc: doc)
+      _cur_tool.set_remaining_args(key, accept: accept, default: default, docs: docs)
       self
     end
 

@@ -118,6 +118,12 @@ describe Toys::Tool do
       assert_equal(["hi"], tool.effective_desc)
       assert_equal(["ho", "hum"], tool.effective_long_desc)
     end
+
+    it "handles wrapping" do
+      tool.desc = Toys::Utils::WrappableString.new("hi there")
+      assert_equal(["hi there"], tool.effective_desc)
+      assert_equal(["hi", "there"], tool.effective_desc(wrap_width: 4))
+    end
   end
 
   describe "switch definition" do
@@ -151,7 +157,7 @@ describe Toys::Tool do
     end
 
     it "recognizes docs with multiple lines" do
-      tool.add_switch(:a, "-a", doc: ["hello\nworld", "I like Ruby"])
+      tool.add_switch(:a, "-a", docs: ["hello\nworld", "I like Ruby"])
       switch = tool.switch_definitions.first
       assert_equal(["hello", "world", "I like Ruby"], switch.docs)
     end
@@ -265,7 +271,7 @@ describe Toys::Tool do
 
     it "defaults simple boolean switch to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa", docs: "hi there")
       assert_equal(true, tool.includes_definition?)
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
@@ -275,7 +281,7 @@ describe Toys::Tool do
 
     it "sets simple boolean switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa", docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a: true}, options)
       end
@@ -284,7 +290,7 @@ describe Toys::Tool do
 
     it "defaults value switch to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
       end
@@ -293,7 +299,7 @@ describe Toys::Tool do
 
     it "honors given default of a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hehe"}, options)
       end
@@ -302,7 +308,7 @@ describe Toys::Tool do
 
     it "sets value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hoho"}, options)
       end
@@ -311,7 +317,7 @@ describe Toys::Tool do
 
     it "converts a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a: 1234}, options)
       end
@@ -320,7 +326,7 @@ describe Toys::Tool do
 
     it "checks match of a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, doc: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, docs: "hi there")
       tool.executor = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
@@ -329,7 +335,7 @@ describe Toys::Tool do
 
     it "defaults the name of a value switch" do
       test = self
-      tool.add_switch(:a_bc, doc: "hi there")
+      tool.add_switch(:a_bc, docs: "hi there")
       tool.executor = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
@@ -369,7 +375,7 @@ describe Toys::Tool do
       tool.add_optional_arg(:b)
       assert_equal(true, tool.includes_definition?)
       tool.add_optional_arg(:c)
-      tool.add_required_arg(:a, doc: "Hello")
+      tool.add_required_arg(:a, docs: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
@@ -381,7 +387,7 @@ describe Toys::Tool do
       test = self
       tool.add_optional_arg(:b)
       tool.add_optional_arg(:c)
-      tool.add_required_arg(:a, doc: "Hello")
+      tool.add_required_arg(:a, docs: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)

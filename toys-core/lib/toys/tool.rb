@@ -29,7 +29,7 @@
 
 require "optparse"
 
-require "toys/utils/wrapped_string"
+require "toys/utils/wrappable_string"
 
 module Toys
   ##
@@ -323,9 +323,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
-    #     switch. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
+    #     the switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -338,9 +338,9 @@ module Toys
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
     def add_switch(key, *switches,
-                   accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
+                   accept: nil, default: nil, docs: nil, only_unique: false, handler: nil)
       check_definition_state
-      switch_info = SwitchDefinition.new(key, switches, accept, doc, handler)
+      switch_info = SwitchDefinition.new(key, switches, accept, docs, handler)
       if only_unique
         switch_info.remove_switches(used_switches)
       end
@@ -359,14 +359,14 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
-    #     arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
+    #     the arg. Defaults to empty array.
     #
-    def add_required_arg(key, accept: nil, doc: nil)
+    def add_required_arg(key, accept: nil, docs: nil)
       check_definition_state
       @default_data[key] = nil
-      @required_arg_definitions << ArgDefinition.new(key, accept, doc)
+      @required_arg_definitions << ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -382,14 +382,14 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
-    #     arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
+    #     the arg. Defaults to empty array.
     #
-    def add_optional_arg(key, accept: nil, default: nil, doc: nil)
+    def add_optional_arg(key, accept: nil, default: nil, docs: nil)
       check_definition_state
       @default_data[key] = default
-      @optional_arg_definitions << ArgDefinition.new(key, accept, doc)
+      @optional_arg_definitions << ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -404,14 +404,14 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [String,Toys::Utils::WrappedString,
-    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
-    #     args. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
+    #     the args. Defaults to empty array.
     #
-    def set_remaining_args(key, accept: nil, default: [], doc: nil)
+    def set_remaining_args(key, accept: nil, default: [], docs: nil)
       check_definition_state
       @default_data[key] = default
-      @remaining_args_definition = ArgDefinition.new(key, accept, doc)
+      @remaining_args_definition = ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -508,8 +508,8 @@ module Toys
       # @param [Symbol] key This switch will set the given context key.
       # @param [Array<String>] switches Switches in OptionParser format
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Toys::Utils::WrappedString,
-      #     Array<String,Toys::Utils::WrappedString>] docs Documentation
+      # @param [String,Toys::Utils::WrappableString,
+      #     Array<String,Toys::Utils::WrappableString>] docs Documentation
       # @param [Proc,nil] handler An optional handler for setting/updating the
       #     value. If given, it should take two arguments, the new given value
       #     and the previous value, and it should return the new value that
@@ -681,8 +681,8 @@ module Toys
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Toys::Utils::WrappedString,
-      #     Array<String,Toys::Utils::WrappedString>] docs Documentation
+      # @param [String,Toys::Utils::WrappableString,
+      #     Array<String,Toys::Utils::WrappableString>] docs Documentation
       #
       def initialize(key, accept, docs)
         @key = key
@@ -704,7 +704,7 @@ module Toys
 
       ##
       # Returns the documentation strings, which may be the empty array.
-      # @return [Array<String,Toys::Utils::WrappedString>]
+      # @return [Array<String,Toys::Utils::WrappableString>]
       #
       attr_reader :docs
 
@@ -767,14 +767,14 @@ module Toys
       ## @private
       def canonicalize_desc(desc)
         Array(desc).map do |d|
-          d.is_a?(Utils::WrappedString) ? d : d.split("\n")
+          d.is_a?(Utils::WrappableString) ? d : d.split("\n")
         end.flatten.freeze
       end
 
       ## @private
       def resolve_wrapping(strs, wrap_width)
         strs.map do |s|
-          s.is_a?(Utils::WrappedString) && !wrap_width.nil? ? s.wrap(wrap_width) : s.to_s
+          s.is_a?(Utils::WrappableString) && !wrap_width.nil? ? s.wrap(wrap_width) : s.to_s
         end.flatten
       end
     end

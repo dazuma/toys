@@ -89,9 +89,9 @@ module Toys
           switch(
             :warnings, "-w", "--[no-]warnings",
             default: template.warnings,
-            doc: "Turn on Ruby warnings (defaults to #{template.warnings})"
+            docs: "Turn on Ruby warnings (defaults to #{template.warnings})"
           )
-          remaining_args(:tests, doc: "Paths to the tests to run (defaults to all tests)")
+          remaining_args(:tests, docs: "Paths to the tests to run (defaults to all tests)")
 
           execute do
             ruby_args = []

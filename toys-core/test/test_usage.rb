@@ -99,7 +99,7 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with switches" do
-      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", doc: "set aa")
+      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", docs: "set aa")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<options...>]", usage_array[0])
@@ -107,8 +107,8 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with required args" do
-      normal_tool.add_required_arg(:cc, doc: "set cc")
-      normal_tool.add_required_arg(:dd, doc: "set dd")
+      normal_tool.add_required_arg(:cc, docs: "set cc")
+      normal_tool.add_required_arg(:dd, docs: "set dd")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar <cc> <dd>", usage_array[0])
@@ -116,8 +116,8 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with optional args" do
-      normal_tool.add_optional_arg(:ee, doc: "set ee")
-      normal_tool.add_optional_arg(:ff, doc: "set ff")
+      normal_tool.add_optional_arg(:ee, docs: "set ee")
+      normal_tool.add_optional_arg(:ff, docs: "set ff")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<ee>] [<ff>]", usage_array[0])
@@ -125,7 +125,7 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with remaining args" do
-      normal_tool.set_remaining_args(:gg, doc: "set gg")
+      normal_tool.set_remaining_args(:gg, docs: "set gg")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<gg...>]", usage_array[0])
@@ -133,12 +133,12 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with the kitchen sink" do
-      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", doc: "set aa")
-      normal_tool.add_required_arg(:cc, doc: "set cc")
-      normal_tool.add_required_arg(:dd, doc: "set dd")
-      normal_tool.add_optional_arg(:ee, doc: "set ee")
-      normal_tool.add_optional_arg(:ff, doc: "set ff")
-      normal_tool.set_remaining_args(:gg, doc: "set gg")
+      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", docs: "set aa")
+      normal_tool.add_required_arg(:cc, docs: "set cc")
+      normal_tool.add_required_arg(:dd, docs: "set dd")
+      normal_tool.add_optional_arg(:ee, docs: "set ee")
+      normal_tool.add_optional_arg(:ff, docs: "set ff")
+      normal_tool.set_remaining_args(:gg, docs: "set gg")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<options...>] <cc> <dd> [<ee>] [<ff>] [<gg...>]",
@@ -254,11 +254,11 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a normal tool with positional args" do
-      normal_tool.add_required_arg(:cc, doc: "set cc")
-      normal_tool.add_required_arg(:dd, doc: "set dd")
-      normal_tool.add_optional_arg(:ee, doc: "set ee")
-      normal_tool.add_optional_arg(:ff, doc: "set ff")
-      normal_tool.set_remaining_args(:gg, doc: "set gg")
+      normal_tool.add_required_arg(:cc, docs: "set cc")
+      normal_tool.add_required_arg(:dd, docs: "set dd")
+      normal_tool.add_optional_arg(:ee, docs: "set ee")
+      normal_tool.add_optional_arg(:ff, docs: "set ff")
+      normal_tool.set_remaining_args(:gg, docs: "set gg")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
@@ -273,7 +273,7 @@ describe Toys::Utils::Usage do
 
     it "shows long arg docs" do
       normal_tool.add_required_arg(:long_long_long_long_long_long_long_long,
-                                   doc: ["set long", "arg docs"])
+                                   docs: ["set long", "arg docs"])
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
@@ -294,8 +294,8 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a tool with switches" do
-      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", doc: "set aa")
-      normal_tool.add_switch(:bb, "--[no-]bb", doc: "set bb")
+      normal_tool.add_switch(:aa, "-a", "--aa=VALUE", docs: "set aa")
+      normal_tool.add_switch(:bb, "--[no-]bb", docs: "set bb")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
@@ -306,7 +306,7 @@ describe Toys::Utils::Usage do
     end
 
     it "shows value only for last switch" do
-      normal_tool.add_switch(:aa, "-a VALUE", "--aa", doc: "set aa")
+      normal_tool.add_switch(:aa, "-a VALUE", "--aa", docs: "set aa")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
@@ -316,7 +316,7 @@ describe Toys::Utils::Usage do
     end
 
     it "orders single dashes before double dashes" do
-      normal_tool.add_switch(:aa, "--aa", "-a VALUE", doc: "set aa")
+      normal_tool.add_switch(:aa, "--aa", "-a VALUE", docs: "set aa")
       usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
