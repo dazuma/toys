@@ -27,44 +27,54 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "highline"
-
-require "toys/middleware/base"
-require "toys/utils/usage"
-
 module Toys
-  module Middleware
+  module Utils
     ##
-    # This middleware handles the case of a usage error. If a usage error, such
-    # as an unrecognized switch or an unfulfilled required argument, is
-    # detected, this middleware intercepts execution and displays the error
-    # along with the usage string, and terminates execution with an error code.
+    # A string marked as wrappable.
     #
-    class HandleUsageErrors < Base
+    class WrappedString
       ##
-      # Create a HandleUsageErrors middleware.
+      # Create a wrapped string.
+      # @param [String] string The string.
       #
-      # @param [Intgeer] exit_code The exit code to return if a usage error
-      #     occurs. Default is -1.
-      #
-      def initialize(exit_code: -1)
-        @exit_code = exit_code
+      def initialize(string = "")
+        @string = string
       end
 
       ##
-      # Intercept and handle usage errors during execution.
+      # Returns the string.
+      # @return [String]
       #
-      def execute(context)
-        if context[Context::USAGE_ERROR]
-          width = ::HighLine.new.output_cols
-          usage = Utils::Usage.from_context(context)
-          puts(context[Context::USAGE_ERROR])
-          puts("")
-          puts(usage.string(show_path: true, wrap_width: width))
-          context.exit(@exit_code)
-        else
-          yield
+      attr_reader :string
+
+      ##
+      # Returns the string.
+      # @return [String]
+      #
+      def to_s
+        string
+      end
+
+      ##
+      # Wraps the string to the given width.
+      #
+      # @param [Integer] width Width in characters.
+      # @return [Array<String>] Wrapped lines
+      #
+      def wrap(width)
+        lines = []
+        str = string.gsub(/\s/, " ").sub(/^\s+/, "")
+        until str.empty?
+          i = str.index(/\S(\s|$)/) + 1
+          loop do
+            next_i = str.index(/\S(\s|$)/, i)
+            break if next_i.nil? || next_i >= width
+            i = next_i + 1
+          end
+          lines << str[0, i]
+          str = str[i..-1].sub(/^\s+/, "")
         end
+        lines
       end
     end
   end

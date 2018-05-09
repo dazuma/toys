@@ -27,45 +27,45 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "highline"
+require "helper"
 
-require "toys/middleware/base"
-require "toys/utils/usage"
+require "toys/utils/wrapped_string"
 
-module Toys
-  module Middleware
-    ##
-    # This middleware handles the case of a usage error. If a usage error, such
-    # as an unrecognized switch or an unfulfilled required argument, is
-    # detected, this middleware intercepts execution and displays the error
-    # along with the usage string, and terminates execution with an error code.
-    #
-    class HandleUsageErrors < Base
-      ##
-      # Create a HandleUsageErrors middleware.
-      #
-      # @param [Intgeer] exit_code The exit code to return if a usage error
-      #     occurs. Default is -1.
-      #
-      def initialize(exit_code: -1)
-        @exit_code = exit_code
-      end
+describe Toys::Utils::WrappedString do
+  describe "wrap" do
+    it "handles empty string" do
+      result = Toys::Utils::WrappedString.new("").wrap(10)
+      assert_equal([], result)
+    end
 
-      ##
-      # Intercept and handle usage errors during execution.
-      #
-      def execute(context)
-        if context[Context::USAGE_ERROR]
-          width = ::HighLine.new.output_cols
-          usage = Utils::Usage.from_context(context)
-          puts(context[Context::USAGE_ERROR])
-          puts("")
-          puts(usage.string(show_path: true, wrap_width: width))
-          context.exit(@exit_code)
-        else
-          yield
-        end
-      end
+    it "handles whitespace string" do
+      result = Toys::Utils::WrappedString.new(" \n ").wrap(10)
+      assert_equal([], result)
+    end
+
+    it "handles single line" do
+      result = Toys::Utils::WrappedString.new("a bcd e").wrap(10)
+      assert_equal(["a bcd e"], result)
+    end
+
+    it "handles leading and trailing spaces" do
+      result = Toys::Utils::WrappedString.new("  a bcd e\n").wrap(10)
+      assert_equal(["a bcd e"], result)
+    end
+
+    it "splits lines" do
+      result = Toys::Utils::WrappedString.new("a b cd efg\n").wrap(5)
+      assert_equal(["a b", "cd", "efg"], result)
+    end
+
+    it "allows a long word" do
+      result = Toys::Utils::WrappedString.new("a b cdefghij kl\n").wrap(5)
+      assert_equal(["a b", "cdefghij", "kl"], result)
+    end
+
+    it "honors the width exactly" do
+      result = Toys::Utils::WrappedString.new("a bcd ef ghi j").wrap(5)
+      assert_equal(["a bcd", "ef", "ghi j"], result)
     end
   end
 end

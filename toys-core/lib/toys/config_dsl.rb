@@ -164,7 +164,7 @@ module Toys
     # Set the long description for the current tool. The long description is
     # displayed in the usage documentation for the tool itself.
     #
-    # @param [String...] strs The long description string.
+    # @param [String,Toys::Utils::WrappedString...] strs The long description
     #
     def long_desc(*strs)
       return self if _cur_tool.nil?
@@ -178,7 +178,7 @@ module Toys
     # displayed with the tool in a command list. You may also use the
     # equivalent method `short_desc`.
     #
-    # @param [String...] strs The short description string.
+    # @param [String,Toys::Utils::WrappedString...] strs The short description
     #
     def desc(*strs)
       return self if _cur_tool.nil?
@@ -200,8 +200,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,nil] doc The documentation for the switch, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -231,8 +232,9 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
-    # @param [String,nil] doc The documentation for the switch, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     arg. Defaults to empty array.
     #
     def required_arg(key, accept: nil, doc: nil)
       return self if _cur_tool.nil?
@@ -253,8 +255,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,nil] doc The documentation for the argument, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     arg. Defaults to empty array.
     #
     def optional_arg(key, accept: nil, default: nil, doc: nil)
       return self if _cur_tool.nil?
@@ -274,9 +277,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [String,nil] doc The documentation for the remaining arguments,
-    #     which appears in the usage documentation. Defaults to `nil` for no
-    #     documentation.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     args. Defaults to empty array.
     #
     def remaining_args(key, accept: nil, default: [], doc: nil)
       return self if _cur_tool.nil?

@@ -30,6 +30,7 @@
 require "logger"
 
 require "toys/middleware/show_version"
+require "toys/utils/wrapped_string"
 
 module Toys
   ##
@@ -78,11 +79,13 @@ module Toys
     # @return [String]
     #
     DEFAULT_ROOT_DESC =
-      "Toys is your personal command line tool. You can add to the list of" \
-      " commands below by writing scripts in Ruby using a simple DSL, and" \
-      " toys will organize and document them, and make them available" \
-      " globally or scoped to specific directories that you choose." \
-      " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
+      Utils::WrappedString.new(
+        "Toys is your personal command line tool. You can add to the list of" \
+        " commands below by writing scripts in Ruby using a simple DSL, and" \
+        " toys will organize and document them, and make them available" \
+        " globally or scoped to specific directories that you choose." \
+        " For detailed information, see https://www.rubydoc.info/gems/toys"
+      )
 
     ##
     # Create a standard CLI, configured with the appropriate paths and

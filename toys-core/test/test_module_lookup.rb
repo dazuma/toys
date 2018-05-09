@@ -29,6 +29,8 @@
 
 require "helper"
 
+require "toys/utils/module_lookup"
+
 describe Toys::Utils::ModuleLookup do
   describe "to_path_name" do
     it "handles camel case" do

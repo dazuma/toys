@@ -41,7 +41,7 @@ module Toys
       # Default width of first column
       # @return [Integer]
       #
-      DEFAULT_COLUMN_WIDTH = 32
+      DEFAULT_LEFT_COLUMN_WIDTH = 32
 
       ##
       # Default indent
@@ -56,8 +56,7 @@ module Toys
       # @return [Toys::Utils::Usage]
       #
       def self.from_context(context)
-        new(context[Context::TOOL], context[Context::LOADER],
-            binary_name: context[Context::BINARY_NAME])
+        new(context[Context::TOOL], context[Context::LOADER], context[Context::BINARY_NAME])
       end
 
       ##
@@ -66,20 +65,13 @@ module Toys
       # @param [Toys::Tool] tool The tool for which to generate documentation.
       # @param [Toys::Loader] loader A loader that can provide subcommands.
       # @param [String] binary_name The name of the binary. e.g. `"toys"`.
-      #     Defaults to the `$PROGRAM_NAME`.
-      # @param [Integer] column_width Width of the first column. Default is
-      #     {DEFAULT_COLUMN_WIDTH}.
-      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       #
       # @return [Toys::Utils::Usage]
       #
-      def initialize(tool, loader,
-                     binary_name: nil, column_width: nil, indent: nil)
+      def initialize(tool, loader, binary_name)
         @tool = tool
         @loader = loader
-        @binary_name = binary_name || $PROGRAM_NAME
-        @column_width = column_width || DEFAULT_COLUMN_WIDTH
-        @indent = indent || DEFAULT_INDENT
+        @binary_name = binary_name
       end
 
       ##
@@ -91,25 +83,27 @@ module Toys
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
       # @param [Boolean] show_path If true, shows the path to the config file
       #     containing the tool definition (if set). Defaults to false.
+      # @param [Integer] left_column_width Width of the first column. Default
+      #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
+      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       #
       # @return [String] A usage string.
       #
-      def string(recursive: false, search: nil, show_path: false)
+      def string(recursive: false, search: nil, show_path: false,
+                 left_column_width: nil, indent: nil,
+                 wrap_width: nil, right_column_wrap_width: nil)
+        left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
+        indent ||= DEFAULT_INDENT
+        right_column_wrap_width ||= wrap_width - left_column_width - indent - 1 if wrap_width
         lines = []
         lines << (@tool.includes_executor? ? tool_banner : group_banner)
-        unless @tool.effective_long_desc.empty?
-          lines << ""
-          lines.concat(@tool.effective_long_desc)
-        end
-        if show_path && @tool.definition_path
-          lines << ""
-          lines << "Defined in #{@tool.definition_path}"
-        end
-        add_switches(lines)
+        add_description(lines, wrap_width, show_path)
+        add_switches(lines, indent, left_column_width, right_column_wrap_width)
         if @tool.includes_executor?
-          add_positional_arguments(lines)
+          add_positional_arguments(lines, indent, left_column_width, right_column_wrap_width)
         else
-          add_command_list(lines, recursive, search)
+          add_command_list(lines, recursive, search, indent,
+                           left_column_width, right_column_wrap_width)
         end
         lines.join("\n") + "\n"
       end
@@ -144,42 +138,56 @@ module Toys
         banner.join(" ")
       end
 
+      def add_description(lines, wrap_width, show_path)
+        long_desc = @tool.effective_long_desc(wrap_width: wrap_width)
+        unless long_desc.empty?
+          lines << ""
+          lines.concat(long_desc)
+        end
+        if show_path && @tool.definition_path
+          lines << ""
+          lines << "Defined in #{@tool.definition_path}"
+        end
+      end
+
       #
       # Add switches from the tool to the given optionparser. Causes the
       # optparser to generate documentation for those switches.
       #
-      def add_switches(lines)
+      def add_switches(lines, indent, left_column_width, right_column_wrap_width)
         return if @tool.switch_definitions.empty?
         lines << ""
         lines << "Options:"
         @tool.switch_definitions.each do |switch|
-          add_switch(lines, switch)
+          add_switch(lines, switch, indent, left_column_width, right_column_wrap_width)
         end
       end
 
       #
       # Add a single switch
       #
-      def add_switch(lines, switch)
+      def add_switch(lines, switch, indent, left_column_width, right_column_wrap_width)
         switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
                         switch.double_switch_syntax.map(&:str_without_value)).join(", ")
         switches_str << switch.value_delim << switch.value_label if switch.value_label
         switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
-        add_doc(lines, switches_str, switch.docs)
+        add_doc(lines, switches_str, switch.wrapped_docs(right_column_wrap_width),
+                indent, left_column_width)
       end
 
       #
       # Add documentation for the tool's positional arguments, to the given
       # option parser.
       #
-      def add_positional_arguments(lines)
+      def add_positional_arguments(lines, indent, left_column_width, right_column_wrap_width)
         args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
         args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
         return if args_to_display.empty?
         lines << ""
         lines << "Positional arguments:"
         args_to_display.each do |arg_info|
-          add_doc(lines, arg_info.canonical_name, arg_info.docs)
+          add_doc(lines, arg_info.canonical_name, arg_info.wrapped_docs(right_column_wrap_width),
+                  indent, left_column_width)
         end
       end
 
@@ -187,7 +195,8 @@ module Toys
       # Add documentation for the tool's subcommands, to the given option
       # parser.
       #
-      def add_command_list(lines, recursive, search)
+      def add_command_list(lines, recursive, search, indent,
+                           left_column_width, right_column_wrap_width)
         name_len = @tool.full_name.length
         subtools = find_commands(recursive, search)
         return if subtools.empty?
@@ -199,19 +208,19 @@ module Toys
             if subtool.is_a?(Alias)
               ["(Alias of #{subtool.display_target})"]
             else
-              subtool.effective_desc
+              subtool.effective_desc(wrap_width: right_column_wrap_width)
             end
-          add_doc(lines, tool_name, doc)
+          add_doc(lines, tool_name, doc, indent, left_column_width)
         end
       end
 
       #
       # Add a line with possible documentation strings.
       #
-      def add_doc(lines, initial, doc)
-        initial = "#{' ' * @indent}#{initial.ljust(@column_width)}"
+      def add_doc(lines, initial, doc, indent, left_column_width)
+        initial = "#{' ' * indent}#{initial.ljust(left_column_width)}"
         remaining_doc =
-          if initial.size <= @indent + @column_width
+          if initial.size <= indent + left_column_width
             lines << "#{initial} #{doc.first}"
             doc[1..-1] || []
           else
@@ -219,7 +228,7 @@ module Toys
             doc
           end
         remaining_doc.each do |d|
-          lines << "#{' ' * (@indent + @column_width)} #{d}"
+          lines << "#{' ' * (indent + left_column_width)} #{d}"
         end
       end
 

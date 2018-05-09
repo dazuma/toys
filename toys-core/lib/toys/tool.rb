@@ -29,6 +29,8 @@
 
 require "optparse"
 
+require "toys/utils/wrapped_string"
+
 module Toys
   ##
   # A Tool is a single command that can be invoked using Toys.
@@ -168,19 +170,25 @@ module Toys
     ##
     # Returns the effective short description for this tool. This will be
     # displayed when this tool is listed in a command list.
-    # @return [String]
     #
-    def effective_desc
-      @desc
+    # @param [Integer,nil] wrap_width Wrap wrappable strings to the given
+    #     width, or `nil` for no wrapping.
+    # @return [Array<String>]
+    #
+    def effective_desc(wrap_width: nil)
+      Tool.resolve_wrapping(@desc, wrap_width)
     end
 
     ##
     # Returns the effective long description for this tool. This will be
     # displayed as part of the usage for this particular tool.
-    # @return [String]
     #
-    def effective_long_desc
-      @long_desc.empty? ? @desc : @long_desc
+    # @param [Integer,nil] wrap_width Wrap wrappable strings to the given
+    #     width, or `nil` for no wrapping.
+    # @return [Array<String>]
+    #
+    def effective_long_desc(wrap_width: nil)
+      Tool.resolve_wrapping(@long_desc.empty? ? @desc : @long_desc, wrap_width)
     end
 
     ##
@@ -315,8 +323,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Array<String>,nil] doc The documentation for the switch,
-    #     which appears in the usage documentation. Defaults to none.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -350,8 +359,9 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
-    # @param [String,Array<String>,nil] doc The documentation for the arg,
-    #     which appears in the usage documentation. Defaults to none.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     arg. Defaults to empty array.
     #
     def add_required_arg(key, accept: nil, doc: nil)
       check_definition_state
@@ -372,8 +382,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Array<String>,nil] doc The documentation for the arg,
-    #     which appears in the usage documentation. Defaults to none.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     arg. Defaults to empty array.
     #
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
       check_definition_state
@@ -393,8 +404,9 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [String,Array<String>,nil] doc The documentation for the args,
-    #     which appears in the usage documentation. Defaults to none.
+    # @param [String,Toys::Utils::WrappedString,
+    #     Array<String,Toys::Utils::WrappedString>] docs Documentation for the
+    #     args. Defaults to empty array.
     #
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
       check_definition_state
@@ -446,31 +458,6 @@ module Toys
       self
     end
 
-    private
-
-    def make_config_proc(middleware, next_config)
-      proc { middleware.config(self, &next_config) }
-    end
-
-    def check_definition_state
-      if @definition_finished
-        raise ToolDefinitionError,
-              "Defintion of tool #{display_name.inspect} is already finished"
-      end
-    end
-
-    class << self
-      ## @private
-      def canonical_switch(name)
-        name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
-      end
-
-      ## @private
-      def canonicalize_desc(desc)
-        Array(desc).map { |d| d.split("\n") }.flatten.freeze
-      end
-    end
-
     ##
     # Representation of a single switch
     #
@@ -516,11 +503,13 @@ module Toys
     class SwitchDefinition
       ##
       # Create a SwitchDefinition
+      # @private
       #
       # @param [Symbol] key This switch will set the given context key.
       # @param [Array<String>] switches Switches in OptionParser format
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Array<String>,nil] docs Documentation strings
+      # @param [String,Toys::Utils::WrappedString,
+      #     Array<String,Toys::Utils::WrappedString>] docs Documentation
       # @param [Proc,nil] handler An optional handler for setting/updating the
       #     value. If given, it should take two arguments, the new given value
       #     and the previous value, and it should return the new value that
@@ -591,6 +580,16 @@ module Toys
       #
       def effective_switches
         @effective_switches ||= switch_syntax.map(&:switches).flatten
+      end
+
+      ##
+      # Returns the documentation strings with wrapping resolved.
+      #
+      # @param [Integer,nil] width Wrapping width, or `nil` to use default.
+      # @return [Array<String>]
+      #
+      def wrapped_docs(width)
+        Tool.resolve_wrapping(docs, width)
       end
 
       ##
@@ -678,10 +677,12 @@ module Toys
     class ArgDefinition
       ##
       # Create an ArgDefinition
+      # @private
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Array<String>,nil] docs Documentation strings
+      # @param [String,Toys::Utils::WrappedString,
+      #     Array<String,Toys::Utils::WrappedString>] docs Documentation
       #
       def initialize(key, accept, docs)
         @key = key
@@ -703,7 +704,7 @@ module Toys
 
       ##
       # Returns the documentation strings, which may be the empty array.
-      # @return [Array<String>]
+      # @return [Array<String,Toys::Utils::WrappedString>]
       #
       attr_reader :docs
 
@@ -717,18 +718,64 @@ module Toys
       end
 
       ##
+      # Returns the documentation strings with wrapping resolved.
+      #
+      # @param [Integer,nil] width Wrapping width, or `nil` to use default.
+      # @return [Array<String>]
+      #
+      def wrapped_docs(width)
+        Tool.resolve_wrapping(docs, width)
+      end
+
+      ##
       # Process the given value through the acceptor.
+      # May raise an exception if the acceptor rejected the input.
       #
-      # @private
+      # @param [String] input Input value
+      # @return [Object] Accepted value
       #
-      def process_value(val)
-        return val unless accept
+      def process_value(input)
+        return input unless accept
         n = canonical_name
-        result = val
+        result = input
         optparse = ::OptionParser.new
         optparse.on("--#{n}=VALUE", accept) { |v| result = v }
-        optparse.parse(["--#{n}", val])
+        optparse.parse(["--#{n}", input])
         result
+      end
+    end
+
+    private
+
+    def make_config_proc(middleware, next_config)
+      proc { middleware.config(self, &next_config) }
+    end
+
+    def check_definition_state
+      if @definition_finished
+        raise ToolDefinitionError,
+              "Defintion of tool #{display_name.inspect} is already finished"
+      end
+    end
+
+    class << self
+      ## @private
+      def canonical_switch(name)
+        name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
+      end
+
+      ## @private
+      def canonicalize_desc(desc)
+        Array(desc).map do |d|
+          d.is_a?(Utils::WrappedString) ? d : d.split("\n")
+        end.flatten.freeze
+      end
+
+      ## @private
+      def resolve_wrapping(strs, wrap_width)
+        strs.map do |s|
+          s.is_a?(Utils::WrappedString) && !wrap_width.nil? ? s.wrap(wrap_width) : s.to_s
+        end.flatten
       end
     end
 

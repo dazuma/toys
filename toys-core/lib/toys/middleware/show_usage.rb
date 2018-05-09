@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "highline"
+
 require "toys/middleware/base"
 require "toys/utils/usage"
 
@@ -134,9 +136,11 @@ module Toys
       def execute(context)
         if context[:_help]
           usage = Utils::Usage.from_context(context)
+          width = ::HighLine.new.output_cols
           puts(usage.string(recursive: context[:_recursive_subcommands],
                             search: context[:_search_subcommands],
-                            show_path: context.verbosity > 0))
+                            show_path: context.verbosity > 0,
+                            wrap_width: width))
         else
           yield
         end
