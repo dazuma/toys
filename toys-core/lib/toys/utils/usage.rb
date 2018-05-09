@@ -165,7 +165,7 @@ module Toys
                         switch.double_switch_syntax.map(&:str_without_value)).join(", ")
         switches_str << switch.value_delim << switch.value_label if switch.value_label
         switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
-        add_doc(lines, switches_str, switch.doc)
+        add_doc(lines, switches_str, switch.docs)
       end
 
       #
@@ -179,7 +179,7 @@ module Toys
         lines << ""
         lines << "Positional arguments:"
         args_to_display.each do |arg_info|
-          add_doc(lines, arg_info.canonical_name, arg_info.doc)
+          add_doc(lines, arg_info.canonical_name, arg_info.docs)
         end
       end
 

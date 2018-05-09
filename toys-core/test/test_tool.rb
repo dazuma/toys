@@ -90,6 +90,13 @@ describe Toys::Tool do
       assert_equal(["hi"], tool.effective_long_desc)
     end
 
+    it "handles multi-line short description" do
+      tool.desc = ["hi", "there"]
+      assert_equal(true, tool.includes_description?)
+      assert_equal(["hi", "there"], tool.effective_desc)
+      assert_equal(["hi", "there"], tool.effective_long_desc)
+    end
+
     it "handles set of long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
@@ -97,12 +104,19 @@ describe Toys::Tool do
       assert_equal(["ho"], tool.effective_long_desc)
     end
 
+    it "handles multi-line long description" do
+      tool.long_desc = ["ho", "Ender"]
+      assert_equal(true, tool.includes_description?)
+      assert_equal([], tool.effective_desc)
+      assert_equal(["ho", "Ender"], tool.effective_long_desc)
+    end
+
     it "handles set of both descriptions" do
       tool.desc = "hi"
-      tool.long_desc = "ho"
+      tool.long_desc = ["ho", "hum"]
       assert_equal(true, tool.includes_description?)
       assert_equal(["hi"], tool.effective_desc)
-      assert_equal(["ho"], tool.effective_long_desc)
+      assert_equal(["ho", "hum"], tool.effective_long_desc)
     end
   end
 
@@ -122,29 +136,119 @@ describe Toys::Tool do
       assert(tool.default_data.key?(:a))
       assert_equal(2, tool.default_data[:a])
     end
+
+    it "adds a minimal switch" do
+      tool.add_switch(:a, "-a")
+      assert_equal(1, tool.switch_definitions.size)
+      switch = tool.switch_definitions.first
+      assert_equal(:a, switch.key)
+      assert_equal(1, switch.switch_syntax.size)
+      assert_equal(["-a"], switch.switch_syntax.first.switches)
+      assert_nil(switch.accept)
+      assert_equal([], switch.docs)
+      assert_equal(1, switch.handler.call(1, 2))
+      assert_equal(true, switch.active?)
+    end
+
+    it "recognizes docs with multiple lines" do
+      tool.add_switch(:a, "-a", doc: ["hello\nworld", "I like Ruby"])
+      switch = tool.switch_definitions.first
+      assert_equal(["hello", "world", "I like Ruby"], switch.docs)
+    end
+
+    it "exposes optparser info with no acceptor" do
+      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      switch = tool.switch_definitions.first
+      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"], switch.optparser_info)
+    end
+
+    it "exposes optparser info with an acceptor" do
+      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", accept: Integer)
+      switch = tool.switch_definitions.first
+      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer], switch.optparser_info)
+    end
+
+    it "finds single and double switches" do
+      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      switch = tool.switch_definitions.first
+      assert_equal(["-a", "-cVALUE"], switch.single_switch_syntax.map(&:str))
+      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], switch.double_switch_syntax.map(&:str))
+    end
+
+    it "determines effective switches" do
+      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      switch = tool.switch_definitions.first
+      assert_equal(["-a", "--bb", "-c", "--dd", "--ee", "--no-ee"], switch.effective_switches)
+    end
+
+    it "gets value label from last double switch" do
+      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL", "--[no-]ee")
+      switch = tool.switch_definitions.first
+      assert_equal("VAL", switch.value_label)
+      assert_equal("=", switch.value_delim)
+    end
+
+    it "gets value label from last single switch" do
+      tool.add_switch(:a, "-a VAL", "--bb", "-cVALUE", "--aa", "--[no-]ee")
+      switch = tool.switch_definitions.first
+      assert_equal("VALUE", switch.value_label)
+      assert_equal(" ", switch.value_delim)
+    end
+
+    it "removes switches" do
+      tool.add_switch(:a, "-a VAL", "--bb=VALUE")
+      switch = tool.switch_definitions.first
+      switch.remove_switches(["-a", "-b"])
+      assert_equal(["--bb"], switch.effective_switches)
+      assert(switch.active?)
+    end
+
+    it "removes all switches" do
+      tool.add_switch(:a, "-a VAL", "--bb=VALUE")
+      switch = tool.switch_definitions.first
+      switch.remove_switches(["-a", "-b", "--bb"])
+      assert_equal([], switch.effective_switches)
+      refute(switch.active?)
+    end
+
+    it "allows legal switch syntax" do
+      tool.add_switch(:foo, "-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
+                      "--[no-]hij", "--kl=VAL", "--mn VAL")
+    end
+
+    it "does not allow illegal switch syntax" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "hi")
+      end
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "")
+      end
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_switch(:foo, "-a -")
+      end
+    end
   end
 
-  describe "definition path" do
-    it "starts at nil" do
-      assert_nil(tool.definition_path)
+  describe "used_switches" do
+    it "starts empty" do
+      assert_equal([], tool.used_switches)
     end
 
-    it "can be set" do
-      tool.definition_path = "path1"
-      assert_equal("path1", tool.definition_path)
+    it "handles switches" do
+      tool.add_switch(:a, "-a", "--aa")
+      assert_equal(["-a", "--aa"], tool.used_switches)
     end
 
-    it "can be set repeatedly to the same value" do
-      tool.definition_path = "path1"
-      tool.definition_path = "path1"
-      assert_equal("path1", tool.definition_path)
+    it "removes duplicate switches" do
+      tool.add_switch(:a, "-a", "--aa")
+      tool.add_switch(:b, "-b", "--aa")
+      assert_equal(["-a", "--aa", "-b"], tool.used_switches)
     end
 
-    it "prevents defining from multiple paths" do
-      tool.definition_path = "path1"
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.definition_path = "path2"
-      end
+    it "handles special syntax" do
+      tool.add_switch(:a, "--[no-]aa")
+      tool.add_switch(:b, "-bVALUE", "--bb=VALUE")
+      assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_switches)
     end
   end
 
@@ -231,21 +335,13 @@ describe Toys::Tool do
       assert_equal(0, tool.execute(cli, ["--a-bc", "hoho"]))
     end
 
-    it "allows legal switch syntax" do
-      tool.add_switch(:foo, "-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
-                      "--[no-]hij", "--kl=VAL", "--mn VAL")
-    end
-
-    it "does not allow illegal switch syntax" do
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "hi")
+    it "honors the handler" do
+      test = self
+      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hi", handler: ->(v, c) { "#{c}#{v}" })
+      tool.executor = proc do
+        test.assert_equal({a: "hiho"}, options)
       end
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "")
-      end
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "-a -")
-      end
+      assert_equal(0, tool.execute(cli, ["--aa", "ho"]))
     end
 
     it "errors on an unknown switch" do
@@ -254,29 +350,6 @@ describe Toys::Tool do
         test.assert_match(/invalid option: -a/, usage_error)
       end
       assert_equal(0, tool.execute(cli, ["-a"]))
-    end
-  end
-
-  describe "used_switches" do
-    it "starts empty" do
-      assert_equal([], tool.used_switches)
-    end
-
-    it "handles switches" do
-      tool.add_switch(:a, "-a", "--aa")
-      assert_equal(["-a", "--aa"], tool.used_switches)
-    end
-
-    it "removes duplicate switches" do
-      tool.add_switch(:a, "-a", "--aa")
-      tool.add_switch(:b, "-b", "--aa")
-      assert_equal(["-a", "--aa", "-b"], tool.used_switches)
-    end
-
-    it "handles special syntax" do
-      tool.add_switch(:a, "--[no-]aa")
-      tool.add_switch(:b, "-bVALUE", "--bb=VALUE")
-      assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_switches)
     end
   end
 
@@ -343,6 +416,30 @@ describe Toys::Tool do
         test.assert_equal({a: "foo", b: "hello"}, options)
       end
       assert_equal(0, tool.execute(cli, ["foo"]))
+    end
+  end
+
+  describe "definition path" do
+    it "starts at nil" do
+      assert_nil(tool.definition_path)
+    end
+
+    it "can be set" do
+      tool.definition_path = "path1"
+      assert_equal("path1", tool.definition_path)
+    end
+
+    it "can be set repeatedly to the same value" do
+      tool.definition_path = "path1"
+      tool.definition_path = "path1"
+      assert_equal("path1", tool.definition_path)
+    end
+
+    it "prevents defining from multiple paths" do
+      tool.definition_path = "path1"
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.definition_path = "path2"
+      end
     end
   end
 

@@ -520,7 +520,7 @@ module Toys
       # @param [Symbol] key This switch will set the given context key.
       # @param [Array<String>] switches Switches in OptionParser format
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Array<String>,nil] doc Documentation strings
+      # @param [String,Array<String>,nil] docs Documentation strings
       # @param [Proc,nil] handler An optional handler for setting/updating the
       #     value. If given, it should take two arguments, the new given value
       #     and the previous value, and it should return the new value that
@@ -528,12 +528,12 @@ module Toys
       #     the previous value. i.e. the default is effectively
       #     `-> (val, _prev) { val }`.
       #
-      def initialize(key, switches, accept, doc, handler = nil)
+      def initialize(key, switches, accept, docs, handler = nil)
         @key = key
         switches = ["--#{Tool.canonical_switch(key)}=VALUE"] if switches.empty?
         @switch_syntax = switches.map { |s| SwitchSyntax.new(s) }
         @accept = accept
-        @doc = Tool.canonicalize_desc(doc)
+        @docs = Tool.canonicalize_desc(docs)
         @handler = handler || ->(val, _prev) { val }
         reset_data
         @effective_switches = nil
@@ -561,7 +561,7 @@ module Toys
       # Returns the documentation strings, which may be the empty array.
       # @return [Array<String>]
       #
-      attr_reader :doc
+      attr_reader :docs
 
       ##
       # Returns the handler.
@@ -681,12 +681,12 @@ module Toys
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Array<String>,nil] doc Documentation strings
+      # @param [String,Array<String>,nil] docs Documentation strings
       #
-      def initialize(key, accept, doc)
+      def initialize(key, accept, docs)
         @key = key
         @accept = accept
-        @doc = Tool.canonicalize_desc(doc)
+        @docs = Tool.canonicalize_desc(docs)
       end
 
       ##
@@ -705,7 +705,7 @@ module Toys
       # Returns the documentation strings, which may be the empty array.
       # @return [Array<String>]
       #
-      attr_reader :doc
+      attr_reader :docs
 
       ##
       # Return a canonical name for this arg. Used in usage documentation.
