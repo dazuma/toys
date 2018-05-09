@@ -29,7 +29,7 @@
 
 desc "Run multiple tools in order"
 
-switch(:delim, "-d", "--delim=VALUE", default: ",", doc: "Set the delimiter")
+switch(:delim, "-d", "--delim=VALUE", default: ",", docs: "Set the delimiter")
 
 remaining_args(:args, doc: "Tools to run")
 
