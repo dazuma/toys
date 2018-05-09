@@ -38,28 +38,48 @@ module Toys
     #
     class Usage
       ##
+      # Default width of first column
+      # @return [Integer]
+      #
+      DEFAULT_COLUMN_WIDTH = 32
+
+      ##
+      # Default indent
+      # @return [Integer]
+      #
+      DEFAULT_INDENT = 4
+
+      ##
       # Create a usage helper given an execution context.
       #
       # @param [Toys::Context] context The current execution context.
       # @return [Toys::Utils::Usage]
       #
       def self.from_context(context)
-        new(context[Context::TOOL], context[Context::BINARY_NAME], context[Context::LOADER])
+        new(context[Context::TOOL], context[Context::LOADER],
+            binary_name: context[Context::BINARY_NAME])
       end
 
       ##
       # Create a usage helper.
       #
       # @param [Toys::Tool] tool The tool for which to generate documentation.
-      # @param [String] binary_name The name of the binary. e.g. `"toys"`.
       # @param [Toys::Loader] loader A loader that can provide subcommands.
+      # @param [String] binary_name The name of the binary. e.g. `"toys"`.
+      #     Defaults to the `$PROGRAM_NAME`.
+      # @param [Integer] column_width Width of the first column. Default is
+      #     {DEFAULT_COLUMN_WIDTH}.
+      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       #
       # @return [Toys::Utils::Usage]
       #
-      def initialize(tool, binary_name, loader)
+      def initialize(tool, loader,
+                     binary_name: nil, column_width: nil, indent: nil)
         @tool = tool
-        @binary_name = binary_name
         @loader = loader
+        @binary_name = binary_name || $PROGRAM_NAME
+        @column_width = column_width || DEFAULT_COLUMN_WIDTH
+        @indent = indent || DEFAULT_INDENT
       end
 
       ##
@@ -75,23 +95,23 @@ module Toys
       # @return [String] A usage string.
       #
       def string(recursive: false, search: nil, show_path: false)
-        optparse = ::OptionParser.new
-        optparse.banner = @tool.includes_executor? ? tool_banner : group_banner
+        lines = []
+        lines << (@tool.includes_executor? ? tool_banner : group_banner)
         unless @tool.effective_long_desc.empty?
-          optparse.separator("")
-          optparse.separator(@tool.effective_long_desc)
+          lines << ""
+          lines.concat(@tool.effective_long_desc)
         end
         if show_path && @tool.definition_path
-          optparse.separator("")
-          optparse.separator("Defined in #{@tool.definition_path}")
+          lines << ""
+          lines << "Defined in #{@tool.definition_path}"
         end
-        add_switches(optparse)
+        add_switches(lines)
         if @tool.includes_executor?
-          add_positional_arguments(optparse)
+          add_positional_arguments(lines)
         else
-          add_command_list(optparse, recursive, search)
+          add_command_list(lines, recursive, search)
         end
-        optparse.to_s
+        lines.join("\n") + "\n"
       end
 
       private
@@ -118,40 +138,48 @@ module Toys
       # Returns the banner string for a group
       #
       def group_banner
-        list = ["Usage:", @binary_name] +
-               @tool.full_name +
-               ["<command>", "<command-arguments...>"]
-        list.join(" ")
+        banner = ["Usage:", @binary_name] +
+                 @tool.full_name +
+                 ["<command>", "<command-arguments...>"]
+        banner.join(" ")
       end
 
       #
       # Add switches from the tool to the given optionparser. Causes the
       # optparser to generate documentation for those switches.
       #
-      def add_switches(optparse)
+      def add_switches(lines)
         return if @tool.switch_definitions.empty?
-        optparse.separator("")
-        optparse.separator("Options:")
+        lines << ""
+        lines << "Options:"
         @tool.switch_definitions.each do |switch|
-          optparse.on(*switch.optparse_info)
+          add_switch(lines, switch)
         end
+      end
+
+      #
+      # Add a single switch
+      #
+      def add_switch(lines, switch)
+        switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
+                        switch.double_switch_syntax.map(&:str_without_value)).join(", ")
+        switches_str << switch.value_delim << switch.value_label if switch.value_label
+        switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
+        add_doc(lines, switches_str, switch.doc)
       end
 
       #
       # Add documentation for the tool's positional arguments, to the given
       # option parser.
       #
-      def add_positional_arguments(optparse)
+      def add_positional_arguments(lines)
         args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
         args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
         return if args_to_display.empty?
-        optparse.separator("")
-        optparse.separator("Positional arguments:")
+        lines << ""
+        lines << "Positional arguments:"
         args_to_display.each do |arg_info|
-          optparse.separator("    #{arg_info.canonical_name.ljust(31)}  #{arg_info.doc.first}")
-          (arg_info.doc[1..-1] || []).each do |d|
-            optparse.separator("                                     #{d}")
-          end
+          add_doc(lines, arg_info.canonical_name, arg_info.doc)
         end
       end
 
@@ -159,23 +187,39 @@ module Toys
       # Add documentation for the tool's subcommands, to the given option
       # parser.
       #
-      def add_command_list(optparse, recursive, search)
+      def add_command_list(lines, recursive, search)
         name_len = @tool.full_name.length
         subtools = find_commands(recursive, search)
         return if subtools.empty?
-        optparse.separator("")
-        if search
-          optparse.separator("Commands with search term #{search.inspect}:")
-        else
-          optparse.separator("Commands:")
-        end
+        lines << ""
+        lines << (search ? "Commands with search term #{search.inspect}:" : "Commands:")
         subtools.each do |subtool|
-          tool_name = subtool.full_name.slice(name_len..-1).join(" ").ljust(31)
-          if subtool.is_a?(Alias)
-            optparse.separator("    #{tool_name}  (Alias of #{subtool.display_target})")
+          tool_name = subtool.full_name.slice(name_len..-1).join(" ")
+          doc =
+            if subtool.is_a?(Alias)
+              ["(Alias of #{subtool.display_target})"]
+            else
+              subtool.effective_desc
+            end
+          add_doc(lines, tool_name, doc)
+        end
+      end
+
+      #
+      # Add a line with possible documentation strings.
+      #
+      def add_doc(lines, initial, doc)
+        initial = "#{' ' * @indent}#{initial.ljust(@column_width)}"
+        remaining_doc =
+          if initial.size <= @indent + @column_width
+            lines << "#{initial} #{doc.first}"
+            doc[1..-1] || []
           else
-            optparse.separator("    #{tool_name}  #{subtool.effective_desc}")
+            lines << initial
+            doc
           end
+        remaining_doc.each do |d|
+          lines << "#{' ' * (@indent + @column_width)} #{d}"
         end
       end
 
@@ -187,8 +231,9 @@ module Toys
         return subtools if search.nil? || search.empty?
         regex = Regexp.new("(^|\\s)#{Regexp.escape(search)}(\\s|$)", Regexp::IGNORECASE)
         subtools.find_all do |tool|
-          regex =~ tool.display_name || regex =~ tool.effective_desc ||
-            regex =~ tool.effective_long_desc
+          regex =~ tool.display_name ||
+            tool.effective_desc.find { |d| regex =~ d } ||
+            tool.effective_long_desc.find { |d| regex =~ d }
         end
       end
     end

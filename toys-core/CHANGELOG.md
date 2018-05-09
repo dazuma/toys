@@ -3,8 +3,13 @@
 ### 0.3.3 / TBD
 
 * CHANGED: Renamed file_utils helper to fileutils.
+* CHANGED: SwitchDefinition has separate fields for acceptor and docs.
+* CHANGED: Description and long description are now arrays of strings.
+* FIXED: Documentation strings that begin with "--" no longer cause problems.
 * ADDED: Highline helper
 * ADDED: Spinner helper
+* IMPROVED: Usage can now customize the left column width and indent
+* IMPROVED: Newlines in documentation are properly indent
 
 ### 0.3.2 / 2018-05-07
 

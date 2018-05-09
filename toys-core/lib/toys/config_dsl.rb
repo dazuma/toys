@@ -164,12 +164,12 @@ module Toys
     # Set the long description for the current tool. The long description is
     # displayed in the usage documentation for the tool itself.
     #
-    # @param [String] desc The long description string.
+    # @param [String...] strs The long description string.
     #
-    def long_desc(desc)
+    def long_desc(*strs)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.long_desc = desc
+      _cur_tool.long_desc = strs
       self
     end
 
@@ -178,12 +178,12 @@ module Toys
     # displayed with the tool in a command list. You may also use the
     # equivalent method `short_desc`.
     #
-    # @param [String] desc The short description string.
+    # @param [String...] strs The short description string.
     #
-    def desc(desc)
+    def desc(*strs)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.desc = desc
+      _cur_tool.desc = strs
       self
     end
     alias short_desc desc

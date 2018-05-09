@@ -22,10 +22,11 @@ The source can be found on Github at
 
 ### TODO items
 
+* Improve test coverage
+* Write user's guide
 * Investigate middleware and/or templates for output formats
 * Investigate system paths tool
 * Investigate group clearing/locking
-* Write overall documentation
 
 ## License
 

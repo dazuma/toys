@@ -50,8 +50,8 @@ module Toys
       @definition_path = nil
       @definition_finished = false
 
-      @desc = nil
-      @long_desc = nil
+      @desc = []
+      @long_desc = []
 
       @default_data = {}
       @switch_definitions = []
@@ -171,7 +171,7 @@ module Toys
     # @return [String]
     #
     def effective_desc
-      @desc || ""
+      @desc
     end
 
     ##
@@ -180,7 +180,7 @@ module Toys
     # @return [String]
     #
     def effective_long_desc
-      @long_desc || @desc || ""
+      @long_desc.empty? ? @desc : @long_desc
     end
 
     ##
@@ -188,7 +188,7 @@ module Toys
     # @return [Boolean]
     #
     def includes_description?
-      !@long_desc.nil? || !@desc.nil?
+      !@long_desc.empty? || !@desc.empty?
     end
 
     ##
@@ -224,7 +224,7 @@ module Toys
     # @return [Array<String>]
     #
     def used_switches
-      @switch_definitions.reduce([]) { |used, sdef| used + sdef.switches }.uniq
+      @switch_definitions.reduce([]) { |used, sdef| used + sdef.effective_switches }.uniq
     end
 
     ##
@@ -246,21 +246,21 @@ module Toys
     ##
     # Set the short description.
     #
-    # @param [String] str The short description
+    # @param [String,Array<String>] strs The short description
     #
-    def desc=(str)
+    def desc=(strs)
       check_definition_state
-      @desc = str
+      @desc = Tool.canonicalize_desc(strs)
     end
 
     ##
     # Set the long description.
     #
-    # @param [String] str The long description
+    # @param [String,Array<String>] strs The long description
     #
-    def long_desc=(str)
+    def long_desc=(strs)
       check_definition_state
-      @long_desc = str
+      @long_desc = Tool.canonicalize_desc(strs)
     end
 
     ##
@@ -315,8 +315,8 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,nil] doc The documentation for the switch, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Array<String>,nil] doc The documentation for the switch,
+    #     which appears in the usage documentation. Defaults to none.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -331,12 +331,7 @@ module Toys
     def add_switch(key, *switches,
                    accept: nil, default: nil, doc: nil, only_unique: false, handler: nil)
       check_definition_state
-      switches << "--#{Tool.canonical_switch(key)}=VALUE" if switches.empty?
-      bad_switch = switches.find { |s| Tool.extract_switch(s).empty? }
-      if bad_switch
-        raise ToolDefinitionError, "Illegal switch: #{bad_switch.inspect}"
-      end
-      switch_info = SwitchDefinition.new(key, switches + Array(accept) + Array(doc), handler)
+      switch_info = SwitchDefinition.new(key, switches, accept, doc, handler)
       if only_unique
         switch_info.remove_switches(used_switches)
       end
@@ -355,13 +350,13 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
-    # @param [String,nil] doc The documentation for the switch, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Array<String>,nil] doc The documentation for the arg,
+    #     which appears in the usage documentation. Defaults to none.
     #
     def add_required_arg(key, accept: nil, doc: nil)
       check_definition_state
       @default_data[key] = nil
-      @required_arg_definitions << ArgDefinition.new(key, accept, Array(doc))
+      @required_arg_definitions << ArgDefinition.new(key, accept, doc)
       self
     end
 
@@ -377,13 +372,13 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,nil] doc The documentation for the argument, which appears
-    #     in the usage documentation. Defaults to `nil` for no documentation.
+    # @param [String,Array<String>,nil] doc The documentation for the arg,
+    #     which appears in the usage documentation. Defaults to none.
     #
     def add_optional_arg(key, accept: nil, default: nil, doc: nil)
       check_definition_state
       @default_data[key] = default
-      @optional_arg_definitions << ArgDefinition.new(key, accept, Array(doc))
+      @optional_arg_definitions << ArgDefinition.new(key, accept, doc)
       self
     end
 
@@ -398,14 +393,13 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [String,nil] doc The documentation for the remaining arguments,
-    #     which appears in the usage documentation. Defaults to `nil` for no
-    #     documentation.
+    # @param [String,Array<String>,nil] doc The documentation for the args,
+    #     which appears in the usage documentation. Defaults to none.
     #
     def set_remaining_args(key, accept: nil, default: [], doc: nil)
       check_definition_state
       @default_data[key] = default
-      @remaining_args_definition = ArgDefinition.new(key, accept, Array(doc))
+      @remaining_args_definition = ArgDefinition.new(key, accept, doc)
       self
     end
 
@@ -472,31 +466,61 @@ module Toys
       end
 
       ## @private
-      def extract_switch(str)
-        if !str.is_a?(String)
-          []
-        elsif str =~ /^(-[\?\w])(\s?\w+)?$/
-          [$1]
-        elsif str =~ /^--\[no-\](\w[\?\w-]*)$/
-          ["--#{$1}", "--no-#{$1}"]
-        elsif str =~ /^(--\w[\?\w-]*)([=\s]\w+)?$/
-          [$1]
-        else
-          []
-        end
+      def canonicalize_desc(desc)
+        Array(desc).map { |d| d.split("\n") }.flatten.freeze
       end
     end
 
     ##
-    # Representation of a formal switch.
+    # Representation of a single switch
+    #
+    class SwitchSyntax
+      ##
+      # Parse switch syntax
+      # @param [String] str syntax.
+      #
+      def initialize(str)
+        if str =~ /^(-[\?\w])(\s?(\w+))?$/
+          setup(str, [$1], $1, "-", " ", $3)
+        elsif str =~ /^--\[no-\](\w[\?\w-]*)$/
+          setup(str, ["--#{$1}", "--no-#{$1}"], "--[no-]#{$1}", "--", nil, nil)
+        elsif str =~ /^(--\w[\?\w-]*)(([=\s])(\w+))?$/
+          setup(str, [$1], $1, "--", $3, $4)
+        else
+          raise ToolDefinitionError, "Illegal switch: #{str.inspect}"
+        end
+      end
+
+      attr_reader :str
+      attr_reader :str_without_value
+      attr_reader :switches
+      attr_reader :switch_style
+      attr_reader :value_delim
+      attr_reader :value_label
+
+      private
+
+      def setup(str, switches, str_without_value, switch_style, value_delim, value_label)
+        @str = str
+        @switches = switches
+        @str_without_value = str_without_value
+        @switch_style = switch_style
+        @value_delim = value_delim
+        @value_label = value_label
+      end
+    end
+
+    ##
+    # Representation of a formal set of switches.
     #
     class SwitchDefinition
       ##
       # Create a SwitchDefinition
       #
       # @param [Symbol] key This switch will set the given context key.
-      # @param [Array<String>] optparse_info The switch definition in
-      #     OptionParser format
+      # @param [Array<String>] switches Switches in OptionParser format
+      # @param [Object] accept An OptionParser acceptor, or `nil` for none.
+      # @param [String,Array<String>,nil] doc Documentation strings
       # @param [Proc,nil] handler An optional handler for setting/updating the
       #     value. If given, it should take two arguments, the new given value
       #     and the previous value, and it should return the new value that
@@ -504,11 +528,15 @@ module Toys
       #     the previous value. i.e. the default is effectively
       #     `-> (val, _prev) { val }`.
       #
-      def initialize(key, optparse_info, handler = nil)
+      def initialize(key, switches, accept, doc, handler = nil)
         @key = key
-        @optparse_info = optparse_info
+        switches = ["--#{Tool.canonical_switch(key)}=VALUE"] if switches.empty?
+        @switch_syntax = switches.map { |s| SwitchSyntax.new(s) }
+        @accept = accept
+        @doc = Tool.canonicalize_desc(doc)
         @handler = handler || ->(val, _prev) { val }
-        @switches = nil
+        reset_data
+        @effective_switches = nil
       end
 
       ##
@@ -518,10 +546,22 @@ module Toys
       attr_reader :key
 
       ##
-      # Returns the OptionParser definition.
+      # Returns an array of SwitchSyntax for the switches.
+      # @return [Array<SwitchSyntax>]
+      #
+      attr_reader :switch_syntax
+
+      ##
+      # Returns the acceptor, which may be `nil`.
+      # @return [Object]
+      #
+      attr_reader :accept
+
+      ##
+      # Returns the documentation strings, which may be the empty array.
       # @return [Array<String>]
       #
-      attr_reader :optparse_info
+      attr_reader :doc
 
       ##
       # Returns the handler.
@@ -530,11 +570,35 @@ module Toys
       attr_reader :handler
 
       ##
-      # Returns the list of switches used.
+      # Returns an array of SwitchSyntax including only single-dash switches
+      # @return [Array<SwitchSyntax>]
+      #
+      def single_switch_syntax
+        @single_switch_syntax ||= switch_syntax.find_all { |ss| ss.switch_style == "-" }
+      end
+
+      ##
+      # Returns an array of SwitchSyntax including only double-dash switches
+      # @return [Array<SwitchSyntax>]
+      #
+      def double_switch_syntax
+        @double_switch_syntax ||= switch_syntax.find_all { |ss| ss.switch_style == "--" }
+      end
+
+      ##
+      # Returns the list of effective switches used.
       # @return [Array<String>]
       #
-      def switches
-        @switches ||= optparse_info.map { |s| Tool.extract_switch(s) }.flatten
+      def effective_switches
+        @effective_switches ||= switch_syntax.map(&:switches).flatten
+      end
+
+      ##
+      # All optparser switches and acceptor if present
+      # @return [Array]
+      #
+      def optparser_info
+        @optparser_info ||= switch_syntax.map(&:str) + Array(accept)
       end
 
       ##
@@ -543,7 +607,25 @@ module Toys
       # @return [Boolean]
       #
       def active?
-        !switches.empty?
+        !effective_switches.empty?
+      end
+
+      ##
+      # Return the value label if one exists
+      # @return [String,nil]
+      #
+      def value_label
+        find_canonical_value_label
+        @value_label
+      end
+
+      ##
+      # Return the value delimiter if one exists
+      # @return [String,nil]
+      #
+      def value_delim
+        find_canonical_value_label
+        @value_delim
       end
 
       ##
@@ -551,11 +633,42 @@ module Toys
       # @param [Array<String>] switches
       #
       def remove_switches(switches)
-        @optparse_info.select! do |s|
-          Tool.extract_switch(s).all? { |ss| !switches.include?(ss) }
+        @switch_syntax.select! do |ss|
+          ss.switches.all? { |s| !switches.include?(s) }
         end
-        @switches = nil
+        reset_data
         self
+      end
+
+      private
+
+      def reset_data
+        @effective_switches = nil
+        @optparser_info = nil
+        @single_switch_syntax = nil
+        @double_switch_syntax = nil
+        @value_label = nil
+        @value_delim = nil
+      end
+
+      def find_canonical_value_label
+        return if @value_delim
+        double_switch_syntax.reverse_each do |ss|
+          next unless ss.value_label
+          @value_label = ss.value_label
+          @value_delim = ss.value_delim
+          break
+        end
+        return if @value_delim
+        single_switch_syntax.reverse_each do |ss|
+          next unless ss.value_label
+          @value_label = ss.value_label
+          @value_delim = ss.value_delim
+          break
+        end
+        return if @value_delim
+        @value_label = nil
+        @value_delim = ""
       end
     end
 
@@ -567,13 +680,13 @@ module Toys
       # Create an ArgDefinition
       #
       # @param [Symbol] key This argument will set the given context key.
-      # @param [Object] accept An OptionParser acceptor
-      # @param [Array<String>] doc An array of documentation strings
+      # @param [Object] accept An OptionParser acceptor, or `nil` for none.
+      # @param [String,Array<String>,nil] doc Documentation strings
       #
       def initialize(key, accept, doc)
         @key = key
         @accept = accept
-        @doc = doc
+        @doc = Tool.canonicalize_desc(doc)
       end
 
       ##
@@ -583,13 +696,13 @@ module Toys
       attr_reader :key
 
       ##
-      # Returns the acceptor.
+      # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
       attr_reader :accept
 
       ##
-      # Returns the documentation strings.
+      # Returns the documentation strings, which may be the empty array.
       # @return [Array<String>]
       #
       attr_reader :doc
@@ -667,7 +780,7 @@ module Toys
         optparse.new
         optparse.new
         @tool.switch_definitions.each do |switch|
-          optparse.on(*switch.optparse_info) do |val|
+          optparse.on(*switch.optparser_info) do |val|
             @data[switch.key] = switch.handler.call(val, @data[switch.key])
           end
         end

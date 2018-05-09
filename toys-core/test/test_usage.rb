@@ -76,14 +76,14 @@ describe Toys::Utils::Usage do
 
   describe "banner" do
     it "is set for a group" do
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar <command> <command-arguments...>", usage_array[0])
       assert_equal("", usage_array[1])
     end
 
     it "is set for a normal tool with no options" do
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar", usage_array[0])
       assert_equal(1, usage_array.size)
@@ -91,7 +91,7 @@ describe Toys::Utils::Usage do
 
     it "is set for a normal tool with switches" do
       normal_tool.add_switch(:aa, "-a", "--aa=VALUE", doc: "set aa")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<options...>]", usage_array[0])
       assert_equal("", usage_array[1])
@@ -100,7 +100,7 @@ describe Toys::Utils::Usage do
     it "is set for a normal tool with required args" do
       normal_tool.add_required_arg(:cc, doc: "set cc")
       normal_tool.add_required_arg(:dd, doc: "set dd")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar <cc> <dd>", usage_array[0])
       assert_equal("", usage_array[1])
@@ -109,7 +109,7 @@ describe Toys::Utils::Usage do
     it "is set for a normal tool with optional args" do
       normal_tool.add_optional_arg(:ee, doc: "set ee")
       normal_tool.add_optional_arg(:ff, doc: "set ff")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<ee>] [<ff>]", usage_array[0])
       assert_equal("", usage_array[1])
@@ -117,7 +117,7 @@ describe Toys::Utils::Usage do
 
     it "is set for a normal tool with remaining args" do
       normal_tool.set_remaining_args(:gg, doc: "set gg")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<gg...>]", usage_array[0])
       assert_equal("", usage_array[1])
@@ -130,7 +130,7 @@ describe Toys::Utils::Usage do
       normal_tool.add_optional_arg(:ee, doc: "set ee")
       normal_tool.add_optional_arg(:ff, doc: "set ff")
       normal_tool.set_remaining_args(:gg, doc: "set gg")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("Usage: toys foo bar [<options...>] <cc> <dd> [<ee>] [<ff>] [<gg...>]",
                    usage_array[0])
@@ -140,7 +140,7 @@ describe Toys::Utils::Usage do
 
   describe "description" do
     it "is absent if empty" do
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal(1, usage_array.size)
     end
@@ -148,7 +148,7 @@ describe Toys::Utils::Usage do
     it "uses the long description if present" do
       group_tool.desc = "The short description"
       group_tool.long_desc = "The long description"
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("The long description", usage_array[2])
       assert_equal("", usage_array[3])
@@ -156,7 +156,7 @@ describe Toys::Utils::Usage do
 
     it "uses the short description if no long description is available" do
       group_tool.desc = "The short description"
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       assert_equal("The short description", usage_array[2])
       assert_equal("", usage_array[3])
@@ -165,14 +165,14 @@ describe Toys::Utils::Usage do
 
   describe "commands section" do
     it "is not present for a normal tool" do
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Commands:")
       assert_nil(index)
     end
 
     it "is set for a group non-recursive" do
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
@@ -182,7 +182,7 @@ describe Toys::Utils::Usage do
     end
 
     it "is set for a group non-recursive" do
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, recursive_group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, recursive_group_loader, binary_name: binary_name)
       usage_array = usage.string(recursive: true).split("\n")
       index = usage_array.index("Commands:")
       refute_nil(index)
@@ -196,14 +196,14 @@ describe Toys::Utils::Usage do
 
   describe "positional args section" do
     it "is not present for a group" do
-      usage = Toys::Utils::Usage.new(group_tool, binary_name, group_loader)
+      usage = Toys::Utils::Usage.new(group_tool, group_loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       assert_nil(index)
     end
 
     it "is not present for a normal tool with no positional args" do
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       assert_nil(index)
@@ -215,7 +215,7 @@ describe Toys::Utils::Usage do
       normal_tool.add_optional_arg(:ee, doc: "set ee")
       normal_tool.add_optional_arg(:ff, doc: "set ff")
       normal_tool.set_remaining_args(:gg, doc: "set gg")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Positional arguments:")
       refute_nil(index)
@@ -230,7 +230,7 @@ describe Toys::Utils::Usage do
 
   describe "switches section" do
     it "is not present for a tool with no switches" do
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
       assert_nil(index)
@@ -239,7 +239,7 @@ describe Toys::Utils::Usage do
     it "is set for a tool with switches" do
       normal_tool.add_switch(:aa, "-a", "--aa=VALUE", doc: "set aa")
       normal_tool.add_switch(:bb, "--[no-]bb", doc: "set bb")
-      usage = Toys::Utils::Usage.new(normal_tool, binary_name, loader)
+      usage = Toys::Utils::Usage.new(normal_tool, loader, binary_name: binary_name)
       usage_array = usage.string.split("\n")
       index = usage_array.index("Options:")
       refute_nil(index)

@@ -79,30 +79,48 @@ describe Toys::Tool do
   describe "description" do
     it "defaults to empty" do
       assert_equal(false, tool.includes_description?)
-      assert_equal("", tool.effective_desc)
-      assert_equal("", tool.effective_long_desc)
+      assert_equal([], tool.effective_desc)
+      assert_equal([], tool.effective_long_desc)
     end
 
     it "handles set of short description" do
       tool.desc = "hi"
       assert_equal(true, tool.includes_description?)
-      assert_equal("hi", tool.effective_desc)
-      assert_equal("hi", tool.effective_long_desc)
+      assert_equal(["hi"], tool.effective_desc)
+      assert_equal(["hi"], tool.effective_long_desc)
     end
 
     it "handles set of long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
-      assert_equal("", tool.effective_desc)
-      assert_equal("ho", tool.effective_long_desc)
+      assert_equal([], tool.effective_desc)
+      assert_equal(["ho"], tool.effective_long_desc)
     end
 
     it "handles set of both descriptions" do
       tool.desc = "hi"
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
-      assert_equal("hi", tool.effective_desc)
-      assert_equal("ho", tool.effective_long_desc)
+      assert_equal(["hi"], tool.effective_desc)
+      assert_equal(["ho"], tool.effective_long_desc)
+    end
+  end
+
+  describe "switch definition" do
+    it "starts empty" do
+      assert(tool.switch_definitions.empty?)
+    end
+
+    it "sets the default to nil by default" do
+      tool.add_switch(:a, "-a")
+      assert(tool.default_data.key?(:a))
+      assert_nil(tool.default_data[:a])
+    end
+
+    it "sets a default to a custom value" do
+      tool.add_switch(:a, "-a", default: 2)
+      assert(tool.default_data.key?(:a))
+      assert_equal(2, tool.default_data[:a])
     end
   end
 
