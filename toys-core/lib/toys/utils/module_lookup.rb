@@ -48,7 +48,9 @@ module Toys
         # @return [String] Converted string
         #
         def to_path_name(str)
-          str.to_s.gsub(/([a-zA-Z])([A-Z])/) { |_m| "#{$1}_#{$2.downcase}" }.downcase
+          str = str.to_s.sub(/^_/, "").sub(/_$/, "").gsub(/_+/, "_")
+          while str.sub!(/([^_])([A-Z])/, "\\1_\\2") do end
+          str.downcase
         end
 
         ##
@@ -59,7 +61,8 @@ module Toys
         # @return [Symbol] Converted name
         #
         def to_module_name(str)
-          str.to_s.gsub(/(^|_)([a-zA-Z0-9])/) { |_m| $2.upcase }.to_sym
+          str = str.to_s.sub(/^_/, "").sub(/_$/, "").gsub(/_+/, "_")
+          str.to_s.gsub(/(^|_)([a-zA-Z])/) { |_m| $2.upcase }.to_sym
         end
 
         ##

@@ -41,7 +41,8 @@ module Toys
     #
     # * `:exec` : Methods to help execute subcommands.
     # * `:fileutils` : The FileUtils standard library methods.
-    # * `:highline` : Tools from the highline gem.
+    # * `:highline` : Methods from the highline gem.
+    # * `:spinner` : Displays a spinner on the terminal.
     #
     # @param [String,Symbol] name Name of the helper module to return
     # @return [Module,nil] The module, or `nil` if not found

@@ -165,7 +165,8 @@ describe Toys::Tool do
     it "exposes optparser info with an acceptor" do
       tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", accept: Integer)
       switch = tool.switch_definitions.first
-      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer], switch.optparser_info)
+      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer],
+                   switch.optparser_info)
     end
 
     it "finds single and double switches" do
