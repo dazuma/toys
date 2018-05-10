@@ -1,5 +1,10 @@
 # Release History
 
+### 0.3.4 / TBD
+
+* IMPROVED: gem_build template can suppress interactive confirmation
+* IMPROVED: system update builtin can optionally ask for confirmation
+
 ### 0.3.3 / 2018-05-09
 
 * CHANGED: Renamed file_utils helper to fileutils.

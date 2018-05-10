@@ -40,7 +40,10 @@ end
 tool "update" do
   desc "Update toys if a newer version is available."
 
+  switch :yes, "-y", "--yes", docs: "Do not ask for interactive confirmation"
+
   use :exec
+  use :highline
 
   execute do
     logger.info "Checking rubygems for the latest toys release..."
@@ -49,7 +52,8 @@ tool "update" do
       latest_version = ::Gem::Version.new($1)
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
-        logger.warn("Updating toys from #{cur_version} to #{latest_version}...")
+        exit(1) unless options[:yes] ||
+                       agree("Update toys from #{cur_version} to #{latest_version}? (y/n) ")
         sh("gem install toys")
       elsif latest_version < cur_version
         logger.warn("Toys is already at experimental version #{cur_version}, which is later than" \

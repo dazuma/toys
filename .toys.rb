@@ -31,7 +31,7 @@ name "install" do
   desc "Build and install the current gems"
   use :exec
   execute do
-    set Context::EXIT_ON_NONZERO_STATUS, true
+    set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       version = capture("./toys-dev system version").strip
       ::Dir.chdir("toys-core") do
@@ -52,7 +52,7 @@ name "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
   execute do
-    set Context::EXIT_ON_NONZERO_STATUS, true
+    set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
         cli = new_cli.add_config_path(".toys.rb")
@@ -72,7 +72,7 @@ name "yardoc" do
   desc "Generates yardoc for both gems"
   use :exec
   execute do
-    set Context::EXIT_ON_NONZERO_STATUS, true
+    set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
         exec "yardoc"
@@ -88,7 +88,7 @@ name "clean" do
   desc "Cleans both gems"
   use :exec
   execute do
-    set Context::EXIT_ON_NONZERO_STATUS, true
+    set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
         cli = new_cli.add_config_path(".toys.rb")
@@ -105,18 +105,20 @@ end
 name "release" do
   desc "Releases both gems"
   use :exec
+  use :highline
   execute do
-    set Context::EXIT_ON_NONZERO_STATUS, true
+    set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
+      version = capture("./toys-dev system version").strip
+      exit(1) unless agree("Release toys #{version}? (y/n) ")
       ::Dir.chdir("toys-core") do
         cli = new_cli.add_config_path(".toys.rb")
-        run("release", cli: cli)
+        run("release", "-y", cli: cli)
       end
       ::Dir.chdir("toys") do
         cli = new_cli.add_config_path(".toys.rb")
-        run("release", cli: cli)
+        run("release", "-y", cli: cli)
       end
-      version = capture("./toys-dev system version").strip
       sh "git tag v#{version}"
       sh "git push origin v#{version}"
     end
