@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.3 / TBD
+### 0.3.3 / 2018-05-09
 
 * CHANGED: Renamed file_utils helper to fileutils.
 * CHANGED: Renamed doc: parameter to docs:
