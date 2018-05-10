@@ -160,6 +160,15 @@ describe Toys::Tool do
       tool.add_switch(:a, "-a", docs: ["hello\nworld", "I like Ruby"])
       switch = tool.switch_definitions.first
       assert_equal(["hello", "world", "I like Ruby"], switch.docs)
+      assert_equal(["hello", "world", "I like Ruby"], switch.wrapped_docs(7))
+    end
+
+    it "recognizes docs with wrapping" do
+      tool.add_switch(:a, "-a",
+                      docs: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
+      switch = tool.switch_definitions.first
+      assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")], switch.docs)
+      assert_equal(["hello world", "I like", "Ruby"], switch.wrapped_docs(7))
     end
 
     it "exposes optparser info with no acceptor" do

@@ -22,6 +22,7 @@ The source can be found on Github at
 
 ### TODO items
 
+* Improve error messages on dsl syntax errors
 * Improve test coverage
 * Write user's guide
 * Investigate middleware and/or templates for output formats

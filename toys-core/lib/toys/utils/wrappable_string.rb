@@ -30,7 +30,7 @@
 module Toys
   module Utils
     ##
-    # A string marked as wrappable.
+    # A string intended to be wrapped.
     #
     class WrappableString
       ##
@@ -53,6 +53,17 @@ module Toys
       #
       def to_s
         string
+      end
+
+      ## @private
+      def ==(other)
+        other.is_a?(WrappableString) ? other.string == string : false
+      end
+      alias eql? ==
+
+      ## @private
+      def hash
+        string.hash
       end
 
       ##
