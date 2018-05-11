@@ -75,10 +75,16 @@ module Toys
     BINARY_NAME = "toys".freeze
 
     ##
-    # Help text for the standard root tool
+    # Short description for the standard root tool
     # @return [String]
     #
-    DEFAULT_ROOT_DESC =
+    DEFAULT_ROOT_DESC = "Your personal command line tool.".freeze
+
+    ##
+    # Help text for the standard root tool
+    # @return [Toys::Utils::WrappableString]
+    #
+    DEFAULT_ROOT_LONG_DESC =
       Utils::WrappableString.new(
         "Toys is your personal command line tool. You can add to the list of" \
         " commands below by writing scripts in Ruby using a simple DSL, and" \
@@ -143,7 +149,11 @@ module Toys
     def self.default_middleware_stack
       version_displayer = Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
       [
-        [:set_default_descriptions, default_root_desc: DEFAULT_ROOT_DESC],
+        [
+          :set_default_descriptions,
+          default_root_desc: DEFAULT_ROOT_DESC,
+          default_root_long_desc: DEFAULT_ROOT_LONG_DESC
+        ],
         [:handle_usage_errors],
         [:show_version, version_displayer: version_displayer],
         [:show_usage],

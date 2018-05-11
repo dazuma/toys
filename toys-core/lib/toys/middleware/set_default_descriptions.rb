@@ -53,11 +53,19 @@ module Toys
       # The default description for the root tool.
       # @return [String]
       #
-      DEFAULT_ROOT_DESC =
-        "This command line tool was built using the toys-core gem." \
-        " See https://www.rubydoc.info/gems/toys-core for more info." \
-        " To replace this message, configure the SetDefaultDescriptions" \
-        " middleware.".freeze
+      DEFAULT_ROOT_DESC = "Command line tool built using the toys-core gem.".freeze
+
+      ##
+      # The default long description for the root tool.
+      # @return [Toys::Utils::WrappableString]
+      #
+      DEFAULT_ROOT_LONG_DESC =
+        Utils::WrappableString.new(
+          "This command line tool was built using the toys-core gem." \
+          " See https://www.rubydoc.info/gems/toys-core for more info." \
+          " To replace this message, configure the SetDefaultDescriptions" \
+          " middleware."
+        )
 
       ##
       # Create a SetDefaultDescriptions middleware given default descriptions.
@@ -72,19 +80,23 @@ module Toys
       # @param [String,nil] default_group_long_desc The default long
       #     description for tools with no eecutor. If `nil` (the default),
       #     falls back to the value of the `default_group_desc` parameter.
-      # @param [String] default_root_desc The default long description for the
+      # @param [String] default_root_desc The default short description for the
       #     root tool. Defaults to {DEFAULT_ROOT_DESC}.
+      # @param [String] default_root_long_desc The default long description for
+      #     the root tool. Defaults to {DEFAULT_ROOT_LONG_DESC}.
       #
       def initialize(default_tool_desc: DEFAULT_TOOL_DESC,
                      default_tool_long_desc: nil,
                      default_group_desc: DEFAULT_GROUP_DESC,
                      default_group_long_desc: nil,
-                     default_root_desc: DEFAULT_ROOT_DESC)
+                     default_root_desc: DEFAULT_ROOT_DESC,
+                     default_root_long_desc: DEFAULT_ROOT_LONG_DESC)
         @default_tool_desc = default_tool_desc
         @default_tool_long_desc = default_tool_long_desc
         @default_group_desc = default_group_desc
         @default_group_long_desc = default_group_long_desc
         @default_root_desc = default_root_desc
+        @default_root_long_desc = default_root_long_desc
       end
 
       ##
@@ -104,8 +116,11 @@ module Toys
       private
 
       def config_root_desc(tool)
-        if @default_root_desc && tool.effective_long_desc.empty?
-          tool.long_desc = @default_root_desc
+        if @default_root_long_desc && tool.effective_long_desc.empty?
+          tool.long_desc = @default_root_long_desc
+        end
+        if @default_root_desc && tool.effective_desc.empty?
+          tool.desc = @default_root_desc
         end
       end
 

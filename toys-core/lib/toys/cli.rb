@@ -30,6 +30,8 @@
 require "logger"
 require "highline"
 
+require "toys/utils/line_output"
+
 module Toys
   ##
   # A Toys-based CLI.
@@ -99,7 +101,7 @@ module Toys
         preload_file_name: preload_file_name,
         middleware_stack: middleware_stack
       )
-      @error_handler = error_handler || DefaultErrorHandler.new(sink: @logger)
+      @error_handler = error_handler || DefaultErrorHandler.new
     end
 
     ##
@@ -212,8 +214,8 @@ module Toys
       ) do
         @loader.lookup(args.flatten)
       end
-      ContextualError.capture_path(
-        "Error installing middleware!", tool.definition_path,
+      ContextualError.capture(
+        "Error installing tool middleware!",
         tool_name: tool.full_name, tool_args: remaining, full_args: args
       ) do
         tool.finish_definition
@@ -255,65 +257,42 @@ module Toys
       #
       # @param [IO,Logger,nil] sink Where to write errors. Default is `$stderr`.
       #
-      def initialize(sink: $stderr)
-        @sink = sink
-        @lines = []
+      def initialize(sink = $stderr)
+        @line_output = Utils::LineOutput.new(sink, log_level: ::Logger::FATAL)
       end
-
-      ##
-      # Where to write errors
-      # @return [IO,Logger,nil]
-      #
-      attr_reader :sink
-
-      # rubocop:disable Metrics/AbcSize
 
       ## @private
       def call(error)
-        put_line("#{error.cause.class}: #{error.cause.message}")
-        error.cause.backtrace.each_with_index.reverse_each do |bt, i|
-          put_line("    #{(i + 1).to_s.rjust(3)}: #{bt}")
-        end
-        flush
-        if error.banner
-          put_line(error.banner, bold: true)
-        end
-        put_line("    #{error.cause.class}: #{error.cause.message}", bold: true)
-        if error.config_path
-          put_line("    in config file: #{error.config_path}:#{error.config_line}", bold: true)
-        end
-        if error.tool_name
-          put_line("    while executing tool: #{error.tool_name.join(' ').inspect}", bold: true)
-          if error.tool_args
-            put_line("    with arguments: #{error.tool_args.inspect}", bold: true)
-          end
-        end
-        flush
+        @line_output.puts(cause_string(error.cause))
+        @line_output.puts(context_string(error), :bold)
         -1
       end
 
-      # rubocop:enable Metrics/AbcSize
-
       private
 
-      def put_line(str = "", bold: false)
-        if bold && sink.respond_to?(:tty?) && sink.tty?
-          str = ::HighLine.color(str, ::HighLine::BOLD_STYLE)
+      def cause_string(cause)
+        lines = ["#{cause.class}: #{cause.message}"]
+        cause.backtrace.each_with_index.reverse_each do |bt, i|
+          lines << "    #{(i + 1).to_s.rjust(3)}: #{bt}"
         end
-        @lines << str
-        self
+        lines.join("\n")
       end
 
-      def flush
-        str = @lines.join("\n")
-        case sink
-        when ::Logger
-          sink.fatal(str)
-        when ::IO
-          sink.puts(str)
+      def context_string(error)
+        lines = [
+          error.banner || "Unexpected error!",
+          "    #{error.cause.class}: #{error.cause.message}"
+        ]
+        if error.config_path
+          lines << "    in config file: #{error.config_path}:#{error.config_line}"
         end
-        @lines = []
-        self
+        if error.tool_name
+          lines << "    while executing tool: #{error.tool_name.join(' ').inspect}"
+          if error.tool_args
+            lines << "    with arguments: #{error.tool_args.inspect}"
+          end
+        end
+        lines.join("\n")
       end
     end
 
@@ -371,15 +350,15 @@ module Toys
           header =
             case severity
             when "FATAL"
-              ::HighLine.color(header, ::HighLine::BRIGHT_MAGENTA_STYLE, ::HighLine::BOLD_STYLE)
+              ::HighLine.color(header, :bright_magenta, :bold, :underline)
             when "ERROR"
-              ::HighLine.color(header, ::HighLine::BRIGHT_RED_STYLE, ::HighLine::BOLD_STYLE)
+              ::HighLine.color(header, :bright_red, :bold)
             when "WARN"
-              ::HighLine.color(header, ::HighLine::BRIGHT_YELLOW_STYLE)
+              ::HighLine.color(header, :bright_yellow)
             when "INFO"
-              ::HighLine.color(header, ::HighLine::BRIGHT_CYAN_STYLE)
+              ::HighLine.color(header, :bright_cyan)
             when "DEBUG"
-              ::HighLine.color(header, ::HighLine::BRIGHT_GREEN_STYLE)
+              ::HighLine.color(header, :white)
             else
               header
             end
