@@ -28,6 +28,7 @@
 ;
 
 require "logger"
+require "highline"
 
 module Toys
   ##
@@ -69,6 +70,10 @@ module Toys
     # @param [Integer,nil] base_level The logger level that should correspond
     #     to zero verbosity. If not provided, will default to the current level
     #     of the logger.
+    # @param [Proc,nil] error_handler A proc that is called when an error is
+    #     caught. The proc should take a {Toys::ContextualError} argument and
+    #     report the error. It should return an exit code (normally nonzero).
+    #     Default is a {Toys::CLI::DefaultErrorHandler} writing to the logger.
     #
     def initialize(
       binary_name: nil,
@@ -78,7 +83,8 @@ module Toys
       preload_file_name: nil,
       middleware_stack: nil,
       logger: nil,
-      base_level: nil
+      base_level: nil,
+      error_handler: nil
     )
       @logger = logger || self.class.default_logger
       @base_level = base_level || @logger.level
@@ -93,6 +99,7 @@ module Toys
         preload_file_name: preload_file_name,
         middleware_stack: middleware_stack
       )
+      @error_handler = error_handler || DefaultErrorHandler.new(sink: @logger)
     end
 
     ##
@@ -200,7 +207,25 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(*args, verbosity: 0)
-      @loader.execute(self, args.flatten, verbosity: verbosity)
+      tool, remaining = ContextualError.capture(
+        "Error finding tool definition", full_args: args
+      ) do
+        @loader.lookup(args.flatten)
+      end
+      ContextualError.capture_path(
+        "Error installing middleware!", tool.definition_path,
+        tool_name: tool.full_name, tool_args: remaining, full_args: args
+      ) do
+        tool.finish_definition
+      end
+      ContextualError.capture_path(
+        "Error executing tool!", tool.definition_path,
+        tool_name: tool.full_name, tool_args: remaining, full_args: args
+      ) do
+        tool.execute(self, remaining, verbosity: verbosity)
+      end
+    rescue ContextualError => e
+      @error_handler.call(e)
     end
 
     ##
@@ -216,7 +241,80 @@ module Toys
               preload_file_name: @preload_file_name,
               middleware_stack: @middleware_stack,
               logger: @logger,
-              base_level: @base_level)
+              base_level: @base_level,
+              error_handler: @error_handler)
+    end
+
+    ##
+    # A basic error handler that prints out captured errors to a stream or
+    # a logger.
+    #
+    class DefaultErrorHandler
+      ##
+      # Create an error handler.
+      #
+      # @param [IO,Logger,nil] sink Where to write errors. Default is `$stderr`.
+      #
+      def initialize(sink: $stderr)
+        @sink = sink
+        @lines = []
+      end
+
+      ##
+      # Where to write errors
+      # @return [IO,Logger,nil]
+      #
+      attr_reader :sink
+
+      # rubocop:disable Metrics/AbcSize
+
+      ## @private
+      def call(error)
+        put_line("#{error.cause.class}: #{error.cause.message}")
+        error.cause.backtrace.each_with_index.reverse_each do |bt, i|
+          put_line("    #{(i + 1).to_s.rjust(3)}: #{bt}")
+        end
+        flush
+        if error.banner
+          put_line(error.banner, bold: true)
+        end
+        put_line("    #{error.cause.class}: #{error.cause.message}", bold: true)
+        if error.config_path
+          put_line("    in config file: #{error.config_path}:#{error.config_line}", bold: true)
+        end
+        if error.tool_name
+          put_line("    while executing tool: #{error.tool_name.join(' ').inspect}", bold: true)
+          if error.tool_args
+            put_line("    with arguments: #{error.tool_args.inspect}", bold: true)
+          end
+        end
+        flush
+        -1
+      end
+
+      # rubocop:enable Metrics/AbcSize
+
+      private
+
+      def put_line(str = "", bold: false)
+        if bold && sink.respond_to?(:tty?) && sink.tty?
+          str = ::HighLine.color(str, ::HighLine::BOLD_STYLE)
+        end
+        @lines << str
+        self
+      end
+
+      def flush
+        str = @lines.join("\n")
+        case sink
+        when ::Logger
+          sink.fatal(str)
+        when ::IO
+          sink.puts(str)
+        end
+        @lines = []
+        self
+      end
     end
 
     class << self
@@ -243,10 +341,11 @@ module Toys
       ##
       # Returns a default logger that logs to `STDERR`.
       #
+      # @param [IO] stream Stream to write to. Defaults to `$stderr`.
       # @return [Logger]
       #
-      def default_logger
-        logger = ::Logger.new(::STDERR)
+      def default_logger(stream = $stderr)
+        logger = ::Logger.new(stream)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg
@@ -257,11 +356,35 @@ module Toys
             else
               msg.inspect
             end
-          timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-          format("[%s %5s]  %s\n", timestr, severity, msg_str)
+          format_log(stream.tty?, time, severity, msg_str)
         end
         logger.level = ::Logger::WARN
         logger
+      end
+
+      private
+
+      def format_log(is_tty, time, severity, msg)
+        timestr = time.strftime("%Y-%m-%d %H:%M:%S")
+        header = format("[%s %5s]", timestr, severity)
+        if is_tty
+          header =
+            case severity
+            when "FATAL"
+              ::HighLine.color(header, ::HighLine::BRIGHT_MAGENTA_STYLE, ::HighLine::BOLD_STYLE)
+            when "ERROR"
+              ::HighLine.color(header, ::HighLine::BRIGHT_RED_STYLE, ::HighLine::BOLD_STYLE)
+            when "WARN"
+              ::HighLine.color(header, ::HighLine::BRIGHT_YELLOW_STYLE)
+            when "INFO"
+              ::HighLine.color(header, ::HighLine::BRIGHT_CYAN_STYLE)
+            when "DEBUG"
+              ::HighLine.color(header, ::HighLine::BRIGHT_GREEN_STYLE)
+            else
+              header
+            end
+        end
+        "#{header}  #{msg}\n"
       end
     end
   end

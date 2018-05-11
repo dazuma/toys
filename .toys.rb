@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-name "install" do
+tool "install" do
   desc "Build and install the current gems"
   use :exec
   execute do
@@ -48,7 +48,7 @@ name "install" do
   end
 end
 
-name "ci" do
+tool "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
   execute do
@@ -68,7 +68,7 @@ name "ci" do
   end
 end
 
-name "yardoc" do
+tool "yardoc" do
   desc "Generates yardoc for both gems"
   use :exec
   execute do
@@ -84,7 +84,7 @@ name "yardoc" do
   end
 end
 
-name "clean" do
+tool "clean" do
   desc "Cleans both gems"
   use :exec
   execute do
@@ -102,7 +102,7 @@ name "clean" do
   end
 end
 
-name "release" do
+tool "release" do
   desc "Releases both gems"
   use :exec
   use :highline

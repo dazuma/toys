@@ -44,40 +44,46 @@ describe Toys::Loader do
     end
 
     it "finds a tool directly defined in a config file" do
-      tool = loader.lookup(["tool-1"])
+      tool, remaining = loader.lookup(["tool-1"])
       assert_equal(["file tool-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+      assert_equal([], remaining)
     end
 
     it "finds a subtool directly defined in a config file" do
-      tool = loader.lookup(["group-1", "tool-1-1"])
+      tool, remaining = loader.lookup(["group-1", "tool-1-1"])
       assert_equal(["file tool-1-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1-1 long description"], tool.effective_long_desc)
       assert_equal(["group-1", "tool-1-1"], tool.full_name)
+      assert_equal([], remaining)
     end
 
     it "finds a group directly defined in a config file" do
-      tool = loader.lookup(["group-1"])
+      tool, remaining = loader.lookup(["group-1"])
       assert_equal(["file group-1 short description"], tool.effective_desc)
       assert_equal(["group-1"], tool.full_name)
+      assert_equal([], remaining)
     end
 
     it "finds a tool defined in a file in a config directory" do
-      tool = loader.lookup(["tool-2"])
+      tool, remaining = loader.lookup(["tool-2"])
       assert_equal(["directory tool-2 short description"], tool.effective_desc)
       assert_equal(["directory tool-2 long description"], tool.effective_long_desc)
+      assert_equal([], remaining)
     end
 
     it "finds the nearest group directly defined if a query doesn't match" do
-      tool = loader.lookup(["group-1", "tool-blah"])
+      tool, remaining = loader.lookup(["group-1", "tool-blah"])
       assert_equal(["file group-1 short description"], tool.effective_desc)
       assert_equal(["group-1"], tool.full_name)
+      assert_equal(["tool-blah"], remaining)
     end
 
     it "finds the root if a query has no toplevel match" do
-      tool = loader.lookup(["tool-blah"])
+      tool, remaining = loader.lookup(["tool-blah"])
       assert_equal([], tool.full_name)
       assert_nil(tool.simple_name)
+      assert_equal(["tool-blah"], remaining)
     end
   end
 
@@ -87,34 +93,39 @@ describe Toys::Loader do
     end
 
     it "finds a tool directly defined" do
-      tool = loader.lookup(["tool-1"])
+      tool, remaining = loader.lookup(["tool-1"])
       assert_equal(["normal tool-1 short description"], tool.effective_desc)
       assert_equal(["normal tool-1 long description"], tool.effective_long_desc)
+      assert_equal([], remaining)
     end
 
     it "finds a subtool directly defined" do
-      tool = loader.lookup(["group-1", "tool-1-3"])
+      tool, remaining = loader.lookup(["group-1", "tool-1-3"])
       assert_equal(["normal tool-1-3 short description"], tool.effective_desc)
       assert_equal(["normal tool-1-3 long description"], tool.effective_long_desc)
       assert_equal(["group-1", "tool-1-3"], tool.full_name)
+      assert_equal([], remaining)
     end
 
     it "finds a group directly defined" do
-      tool = loader.lookup(["group-1"])
+      tool, remaining = loader.lookup(["group-1"])
       assert_equal(false, tool.includes_executor?)
       assert_equal(["group-1"], tool.full_name)
+      assert_equal([], remaining)
     end
 
     it "finds the nearest group directly defined if a query doesn't match" do
-      tool = loader.lookup(["group-1", "tool-blah"])
+      tool, remaining = loader.lookup(["group-1", "tool-blah"])
       assert_equal(false, tool.includes_executor?)
       assert_equal(["group-1"], tool.full_name)
+      assert_equal(["tool-blah"], remaining)
     end
 
     it "finds the root if a query has no toplevel match" do
-      tool = loader.lookup(["tool-blah"])
+      tool, remaining = loader.lookup(["tool-blah"])
       assert_equal([], tool.full_name)
       assert_nil(tool.simple_name)
+      assert_equal(["tool-blah"], remaining)
     end
 
     it "does not load unnecessary files" do
@@ -141,13 +152,13 @@ describe Toys::Loader do
     end
 
     it "allows loading if the collision isn't actually traversed" do
-      tool = loader.lookup(["tool-2"])
+      tool, _remaining = loader.lookup(["tool-2"])
       assert_equal(["index tool-2 short description"], tool.effective_desc)
       assert_equal(["index tool-2 long description"], tool.effective_long_desc)
     end
 
     it "reports error if a tool is defined multiple times" do
-      assert_raises(Toys::ToolDefinitionError) do
+      assert_raises(Toys::ContextualError) do
         loader.lookup(["tool-1"])
       end
     end
@@ -159,7 +170,7 @@ describe Toys::Loader do
       loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
       loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
 
-      tool = loader.lookup(["tool-1"])
+      tool, _remaining = loader.lookup(["tool-1"])
       assert_equal(["file tool-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1 long description"], tool.effective_long_desc)
     end
@@ -169,7 +180,7 @@ describe Toys::Loader do
       loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
       loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
 
-      tool = loader.lookup(["tool-1"])
+      tool, _remaining = loader.lookup(["tool-1"])
       assert_equal(["normal tool-1 short description"], tool.effective_desc)
       assert_equal(["normal tool-1 long description"], tool.effective_long_desc)
     end
@@ -181,19 +192,19 @@ describe Toys::Loader do
     end
 
     it "gets an item from a root-level directory include" do
-      tool = loader.lookup(["tool-2"])
+      tool, _remaining = loader.lookup(["tool-2"])
       assert_equal(["directory tool-2 short description"], tool.effective_desc)
       assert_equal(["directory tool-2 long description"], tool.effective_long_desc)
     end
 
     it "gets an item from a root-level file include" do
-      tool = loader.lookup(["group-1", "tool-1-1"])
+      tool, _remaining = loader.lookup(["group-1", "tool-1-1"])
       assert_equal(["file tool-1-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1-1 long description"], tool.effective_long_desc)
     end
 
     it "gets an item from non-root-level include" do
-      tool = loader.lookup(["group-0", "group-1", "tool-1-1"])
+      tool, _remaining = loader.lookup(["group-0", "group-1", "tool-1-1"])
       assert_equal(["normal tool-1-1 short description"], tool.effective_desc)
       assert_equal(["normal tool-1-1 long description"], tool.effective_long_desc)
     end
@@ -219,15 +230,24 @@ describe Toys::Loader do
     end
 
     it "finds a directly referenced alias" do
-      tool = loader.lookup(["alias-1"])
+      tool, remaining = loader.lookup(["alias-1"])
       assert_equal(["file tool-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+      assert_equal([], remaining)
     end
 
     it "finds a recursively referenced alias" do
-      tool = loader.lookup(["alias-2"])
+      tool, remaining = loader.lookup(["alias-2"])
       assert_equal(["file tool-1 short description"], tool.effective_desc)
       assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+      assert_equal([], remaining)
+    end
+
+    it "recognizes remaining args after an alias" do
+      tool, remaining = loader.lookup(["alias-2", "tool-blah"])
+      assert_equal(["file tool-1 short description"], tool.effective_desc)
+      assert_equal(["file tool-1 long description"], tool.effective_long_desc)
+      assert_equal(["tool-blah"], remaining)
     end
   end
 end

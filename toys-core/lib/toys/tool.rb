@@ -437,8 +437,13 @@ module Toys
     # @return [Integer] The result code.
     #
     def execute(cli, args, verbosity: 0)
-      finish_definition unless @definition_finished
-      Execution.new(self).execute(cli, args, verbosity: verbosity)
+      ContextualError.capture_path(
+        "Error during tool execution!", definition_path,
+        tool_name: full_name, tool_args: args
+      ) do
+        finish_definition unless @definition_finished
+        Execution.new(self).execute(cli, args, verbosity: verbosity)
+      end
     end
 
     ##

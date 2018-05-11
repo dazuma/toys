@@ -347,9 +347,11 @@ module Toys
       dsl = new(words, remaining_words, priority, loader, path)
       case source
       when String
-        # rubocop:disable Security/Eval
-        eval(source, dsl._binding, path, 1)
-        # rubocop:enable Security/Eval
+        ContextualError.capture_path("Error while loading Toys config!", path) do
+          # rubocop:disable Security/Eval
+          eval(source, dsl._binding, path, 1)
+          # rubocop:enable Security/Eval
+        end
       when ::Proc
         dsl.instance_eval(&source)
       end

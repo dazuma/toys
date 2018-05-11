@@ -51,10 +51,10 @@ module Toys
     #
     def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [])
       if index_file_name && ::File.extname(index_file_name) != ".rb"
-        raise LoaderError, "Illegal index file name #{index_file_name.inspect}"
+        raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
       if preload_file_name && ::File.extname(preload_file_name) != ".rb"
-        raise LoaderError, "Illegal preload file name #{preload_file_name.inspect}"
+        raise ::ArgumentError, "Illegal preload file name #{preload_file_name.inspect}"
       end
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
@@ -83,13 +83,17 @@ module Toys
 
     ##
     # Given a list of command line arguments, find the appropriate tool to
-    # handle the command, loading it from the configuration if necessary.
+    # handle the command, loading it from the configuration if necessary, and
+    # following aliases.
     # This always returns a tool. If the specific tool path is not defined and
-    # cannot be found in any configuration, it returns the nearest group that
+    # cannot be found in any configuration, it finds the nearest group that
     # _would_ contain that tool, up to the root tool.
     #
+    # Returns a tuple of the found tool, and the array of remaining arguments
+    # that are not part of the tool name and should be passed as tool args.
+    #
     # @param [String] args Command line arguments
-    # @return [Toys::Tool]
+    # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
       orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
@@ -99,12 +103,12 @@ module Toys
         p = orig_prefix.dup
         while p.length >= cur_prefix.length
           tool = get_tool(p, [])
-          return tool if tool
+          return [tool, args.slice(p.length..-1)] if tool
           p.pop
         end
         break unless cur_prefix.pop
       end
-      get_or_create_tool([])
+      [get_or_create_tool([]), args]
     end
 
     ##
@@ -130,22 +134,6 @@ module Toys
         found_tools << tp.first
       end
       sort_tools_by_name(found_tools)
-    end
-
-    ##
-    # Execute the tool given by the given arguments, in the given context.
-    #
-    # @param [Toys::Context::Base] context_base The context in which to
-    #     execute.
-    # @param [String] args Command line arguments
-    # @param [Integer] verbosity Starting verbosity. Defaults to 0.
-    # @return [Integer] The exit code
-    #
-    # @private
-    #
-    def execute(context_base, args, verbosity: 0)
-      tool = lookup(args)
-      tool.execute(context_base, args.slice(tool.full_name.length..-1), verbosity: verbosity)
     end
 
     ##
@@ -351,7 +339,7 @@ module Toys
           raise LoaderError, "Cannot read directory #{path}"
         end
       else
-        raise ArgumentError, "Illegal type #{type}"
+        raise ::ArgumentError, "Illegal type #{type}"
       end
       path
     end
