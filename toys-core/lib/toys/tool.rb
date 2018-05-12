@@ -240,6 +240,16 @@ module Toys
     end
 
     ##
+    # Returns all arg definitions in order: required, optional, remaining.
+    # @return [Array<Toys::Tool::ArgDefinition>]
+    #
+    def arg_definitions
+      result = required_arg_definitions + optional_arg_definitions
+      result << remaining_args_definition if remaining_args_definition
+      result
+    end
+
+    ##
     # Returns a list of flags used by this tool.
     # @return [Array<String>]
     #
@@ -388,7 +398,7 @@ module Toys
     #
     def add_required_arg(key, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key)
+      arg_def = ArgDefinition.new(key, :required)
       arg_def.accept = accept unless accept.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
@@ -419,7 +429,7 @@ module Toys
     #
     def add_optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key)
+      arg_def = ArgDefinition.new(key, :optional)
       arg_def.accept = accept unless accept.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
@@ -449,7 +459,7 @@ module Toys
     #
     def set_remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key)
+      arg_def = ArgDefinition.new(key, :remaining)
       arg_def.accept = accept unless accept.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
@@ -565,7 +575,10 @@ module Toys
       #
       def initialize(key, flags)
         @key = key
-        flags = ["--#{Tool.canonical_flag(key)}=VALUE"] if flags.empty?
+        if flags.empty?
+          canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
+          flags = ["--#{canonical_flag}=VALUE"]
+        end
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = nil
         @desc = ""
@@ -774,9 +787,11 @@ module Toys
       # @private
       #
       # @param [Symbol] key This argument will set the given context key.
+      # @param [:required,:optional,:remaining] type Type of this argument
       #
-      def initialize(key)
+      def initialize(key, type)
         @key = key
+        @type = type
         @accept = nil
         @desc = ""
         @long_desc = []
@@ -799,6 +814,12 @@ module Toys
       # @return [String,Toys::Utils::WrappableString]
       #
       attr_reader :desc
+
+      ##
+      # Type of this argument.
+      # @return [:required,:optional,:remaining]
+      #
+      attr_reader :type
 
       ##
       # Set the short description string.
@@ -824,12 +845,12 @@ module Toys
       end
 
       ##
-      # Return a canonical name for this arg. Used in usage documentation.
+      # Return a display name for this arg. Used in usage documentation.
       #
       # @return [String]
       #
-      def canonical_name
-        Tool.canonical_flag(key)
+      def display_name
+        key.to_s.tr("-", "_").gsub(/\W/, "").upcase
       end
 
       ##
@@ -865,11 +886,10 @@ module Toys
       #
       def process_value(input)
         return input unless accept
-        n = canonical_name
         result = input
         optparse = ::OptionParser.new
-        optparse.on("--#{n}=VALUE", accept) { |v| result = v }
-        optparse.parse(["--#{n}", input])
+        optparse.on("--abc=VALUE", accept) { |v| result = v }
+        optparse.parse(["--abc", input])
         result
       end
     end
@@ -888,11 +908,6 @@ module Toys
     end
 
     class << self
-      ## @private
-      def canonical_flag(name)
-        name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
-      end
-
       ## @private
       def canonicalize_desc(desc)
         desc.is_a?(Utils::WrappableString) ? desc : desc.gsub(/\s/, " ")
@@ -964,7 +979,7 @@ module Toys
       def parse_required_args(remaining, args)
         @tool.required_arg_definitions.each do |arg_info|
           if remaining.empty?
-            reason = "No value given for required argument named <#{arg_info.canonical_name}>"
+            reason = "No value given for required argument #{arg_info.display_name}"
             raise create_parse_error(args, reason)
           end
           @data[arg_info.key] = arg_info.process_value(remaining.shift)
@@ -1014,7 +1029,7 @@ module Toys
           if @tool.includes_executor?
             context.instance_eval(&@tool.executor)
           else
-            context.logger.fatal("No implementation for #{@tool.display_name.inspect}")
+            context.logger.fatal("No implementation for tool #{@tool.display_name.inspect}")
             context.exit(-1)
           end
         end

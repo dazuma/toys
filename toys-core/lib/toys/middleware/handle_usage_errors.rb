@@ -31,6 +31,7 @@ require "highline"
 
 require "toys/middleware/base"
 require "toys/utils/help_text"
+require "toys/utils/line_output"
 
 module Toys
   module Middleware
@@ -46,9 +47,14 @@ module Toys
       #
       # @param [Intgeer] exit_code The exit code to return if a usage error
       #     occurs. Default is -1.
+      # @param [IO] stream Output stream to write to. Default is stderr.
+      # @param [Boolean,nil] styled_output Cause the tool to display help text
+      #     with ansi styles. If `nil`, display styles if the output stream is
+      #     a tty. Default is `nil`.
       #
-      def initialize(exit_code: -1)
+      def initialize(exit_code: -1, stream: $stderr, styled_output: nil)
         @exit_code = exit_code
+        @output = Utils::LineOutput.new(stream, styled: styled_output)
       end
 
       ##
@@ -58,9 +64,9 @@ module Toys
         if context[Context::USAGE_ERROR]
           width = ::HighLine.new.output_cols
           help_text = Utils::HelpText.from_context(context)
-          puts(context[Context::USAGE_ERROR])
-          puts("")
-          puts(help_text.short_string(wrap_width: width))
+          @output.puts(context[Context::USAGE_ERROR], :bright_red, :bold)
+          @output.puts("")
+          @output.puts(help_text.short_string(wrap_width: width))
           context.exit(@exit_code)
         else
           yield

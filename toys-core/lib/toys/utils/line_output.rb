@@ -40,14 +40,14 @@ module Toys
       #
       # @param [IO,Logger,nil] sink Where to write lines.
       #
-      def initialize(sink, log_level: ::Logger::INFO, support_styles: nil)
+      def initialize(sink, log_level: ::Logger::INFO, styled: nil)
         @sink = sink
         @log_level = sink.is_a?(::Logger) ? log_level : nil
-        @support_styles =
-          if support_styles.nil?
+        @styled =
+          if styled.nil?
             sink.respond_to?(:tty?) && sink.tty?
           else
-            support_styles ? true : false
+            styled ? true : false
           end
       end
 
@@ -58,10 +58,10 @@ module Toys
       attr_reader :sink
 
       ##
-      # Whether the sink is a tty
+      # Whether output is styled
       # @return [Boolean]
       #
-      attr_reader :support_styles
+      attr_reader :styled
 
       ##
       # If the sink is a Logger, the level to log, otherwise `nil`.
@@ -76,7 +76,7 @@ module Toys
       # @param [Symbol...] styles Styles to apply to the entire line.
       #
       def puts(str = "", *styles)
-        if support_styles
+        if styled
           str = color(str, *styles) unless styles.empty?
         else
           str = ::HighLine.uncolor(str)

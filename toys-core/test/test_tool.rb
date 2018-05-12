@@ -411,7 +411,7 @@ describe Toys::Tool do
       tool.add_required_arg(:a)
       tool.add_required_arg(:b)
       tool.executor = proc do
-        test.assert_match(/No value given for required argument named <b>/, usage_error)
+        test.assert_match(/No value given for required argument B/, usage_error)
       end
       assert_equal(0, tool.execute(cli, ["foo"]))
     end
@@ -457,50 +457,6 @@ describe Toys::Tool do
       tool.definition_path = "path1"
       assert_raises(Toys::ToolDefinitionError) do
         tool.definition_path = "path2"
-      end
-    end
-  end
-
-  describe "default component stack" do
-    it "honors --verbose flag" do
-      test = self
-      full_tool.executor = proc do
-        test.assert_equal(Logger::DEBUG, logger.level)
-      end
-      assert_equal(0, full_tool.execute(cli, ["-v", "--verbose"]))
-    end
-
-    it "honors --quiet flag" do
-      test = self
-      full_tool.executor = proc do
-        test.assert_equal(Logger::FATAL, logger.level)
-      end
-      assert_equal(0, full_tool.execute(cli, ["-q", "--quiet"]))
-    end
-
-    it "prints help for a command with an executor" do
-      full_tool.executor = proc do
-        raise "shouldn't have gotten here"
-      end
-      assert_output(/SYNOPSIS/) do
-        assert_equal(0, full_tool.execute(cli, ["--help"]))
-      end
-    end
-
-    it "prints help for a command with no executor" do
-      assert_output(/SYNOPSIS/) do
-        assert_equal(0, full_tool.execute(cli, []))
-      end
-    end
-
-    it "prints usage error" do
-      full_tool.add_optional_arg(:b)
-      full_tool.add_required_arg(:a)
-      full_tool.executor = proc do
-        raise "shouldn't have gotten here"
-      end
-      assert_output(/Extra arguments provided: baz/) do
-        refute_equal(0, full_tool.execute(cli, ["foo", "bar", "baz"]))
       end
     end
   end

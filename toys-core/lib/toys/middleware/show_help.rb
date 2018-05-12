@@ -31,6 +31,7 @@ require "highline"
 
 require "toys/middleware/base"
 require "toys/utils/help_text"
+require "toys/utils/line_output"
 
 module Toys
   module Middleware
@@ -93,17 +94,24 @@ module Toys
       #     help text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
       #     Default is `true`.
+      # @param [IO] stream Output stream to write to. Default is stdout.
+      # @param [Boolean,nil] styled_output Cause the tool to display help text
+      #     with ansi styles. If `nil`, display styles if the output stream is
+      #     a tty. Default is `nil`.
       #
       def initialize(help_flags: true,
                      recursive_flags: true,
                      search_flags: true,
                      default_recursive: true,
-                     fallback_execution: true)
+                     fallback_execution: true,
+                     stream: $stdout,
+                     styled_output: nil)
         @help_flags = help_flags
         @recursive_flags = recursive_flags
         @search_flags = search_flags
         @default_recursive = default_recursive ? true : false
         @fallback_execution = fallback_execution
+        @output = Utils::LineOutput.new(stream, styled: styled_output)
       end
 
       ##
@@ -135,10 +143,11 @@ module Toys
         if context[:_help]
           help_text = Utils::HelpText.from_context(context)
           width = ::HighLine.new.output_cols
-          puts(help_text.long_string(recursive: context[:_recursive_subtools],
-                                     search: context[:_search_subtools],
-                                     show_path: context[Context::VERBOSITY] > 0,
-                                     wrap_width: width))
+          str = help_text.long_string(recursive: context[:_recursive_subtools],
+                                      search: context[:_search_subtools],
+                                      show_path: context[Context::VERBOSITY] > 0,
+                                      wrap_width: width)
+          @output.puts(str)
         else
           yield
         end

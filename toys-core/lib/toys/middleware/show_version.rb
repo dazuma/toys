@@ -28,6 +28,7 @@
 ;
 
 require "toys/middleware/base"
+require "toys/utils/line_output"
 
 module Toys
   module Middleware
@@ -63,11 +64,14 @@ module Toys
       # @param [Array<String>] version_flags A list of flags that should
       #     trigger displaying the version. Default is
       #     {DEFAULT_VERSION_FLAGS}.
+      # @param [IO] stream Output stream to write to. Default is stdout.
       #
       def initialize(version_displayer: nil,
-                     version_flags: DEFAULT_VERSION_FLAGS)
+                     version_flags: DEFAULT_VERSION_FLAGS,
+                     stream: $stdout)
         @version_displayer = version_displayer || proc { |_| false }
         @version_flags = version_flags
+        @output = Utils::LineOutput.new(stream)
       end
 
       ##
@@ -89,7 +93,7 @@ module Toys
       #
       def execute(context)
         if context[:_show_version]
-          puts context[:_show_version]
+          @output.puts context[:_show_version]
         else
           yield
         end

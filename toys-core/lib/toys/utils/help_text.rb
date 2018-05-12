@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "highline"
+
 module Toys
   module Utils
     ##
@@ -84,6 +86,8 @@ module Toys
       # @param [Integer] left_column_width Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
+      # @param [Integer,nil] wrap_width Overall width to wrap to. Default is
+      #     `nil` indicating no wrapping.
       #
       # @return [String] A usage string.
       #
@@ -111,16 +115,17 @@ module Toys
       #     {DEFAULT_INDENT}.
       # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
+      # @param [Boolean] styled Output ansi styles. Default is `true`.
       #
       # @return [String] A usage string.
       #
       def long_string(recursive: false, search: nil, show_path: false,
-                      indent: nil, indent2: nil, wrap_width: nil)
+                      indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search)
         assembler = LongHelpAssembler.new(@tool, @binary_name, subtools, search, show_path,
-                                          indent, indent2, wrap_width)
+                                          indent, indent2, wrap_width, styled)
         assembler.result
       end
 
@@ -176,21 +181,15 @@ module Toys
 
         def tool_synopsis
           synopsis = [@binary_name] + @tool.full_name
-          synopsis << "[<flags...>]" unless @tool.flag_definitions.empty?
-          @tool.required_arg_definitions.each do |arg_info|
-            synopsis << "<#{arg_info.canonical_name}>"
-          end
-          @tool.optional_arg_definitions.each do |arg_info|
-            synopsis << "[<#{arg_info.canonical_name}>]"
-          end
-          if @tool.remaining_args_definition
-            synopsis << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
+          synopsis << "[FLAGS...]" unless @tool.flag_definitions.empty?
+          @tool.arg_definitions.each do |arg_info|
+            synopsis << arg_name(arg_info)
           end
           synopsis.join(" ")
         end
 
         def group_synopsis
-          ([@binary_name] + @tool.full_name + ["<tool>", "<tool-arguments...>"]).join(" ")
+          ([@binary_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
         end
 
         def add_flags_section
@@ -203,8 +202,8 @@ module Toys
         end
 
         def add_flag(flag)
-          flags_str = (flag.single_flag_syntax.map(&:str_without_value) +
-                       flag.double_flag_syntax.map(&:str_without_value)).join(", ")
+          flags_str = (flag.single_flag_syntax + flag.double_flag_syntax)
+                      .map(&:str_without_value).join(", ")
           flags_str << flag.value_delim << flag.value_label if flag.value_label
           flags_str = "    #{flags_str}" if flag.single_flag_syntax.empty?
           add_right_column_desc(flags_str, flag.wrapped_desc(@right_column_wrap_width))
@@ -217,7 +216,7 @@ module Toys
           @lines << ""
           @lines << "Positional arguments:"
           args_to_display.each do |arg_info|
-            add_right_column_desc(arg_info.canonical_name,
+            add_right_column_desc(arg_name(arg_info),
                                   arg_info.wrapped_desc(@right_column_wrap_width))
           end
         end
@@ -258,6 +257,17 @@ module Toys
           end
         end
 
+        def arg_name(arg_info)
+          case arg_info.type
+          when :required
+            arg_info.display_name
+          when :optional
+            "[#{arg_info.display_name}]"
+          when :remaining
+            "[#{arg_info.display_name}...]"
+          end
+        end
+
         def indent_str(str)
           "#{' ' * @indent}#{str}"
         end
@@ -266,7 +276,7 @@ module Toys
       ## @private
       class LongHelpAssembler
         def initialize(tool, binary_name, subtools, search_term, show_path,
-                       indent, indent2, wrap_width)
+                       indent, indent2, wrap_width, styled)
           @tool = tool
           @binary_name = binary_name
           @subtools = subtools
@@ -275,6 +285,7 @@ module Toys
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
+          @styled = styled
           @lines = []
           assemble
         end
@@ -298,7 +309,7 @@ module Toys
         end
 
         def add_name_section
-          @lines << "NAME"
+          @lines << bold("NAME")
           name_str = ([@binary_name] + @tool.full_name).join(" ")
           desc = prefix_with_desc(name_str, @tool)
           @lines << indent_str(desc[0])
@@ -321,7 +332,7 @@ module Toys
 
         def add_synopsis_section
           @lines << ""
-          @lines << "SYNOPSIS"
+          @lines << bold("SYNOPSIS")
           unless @tool.includes_executor?
             @lines << indent_str(group_synopsis)
           end
@@ -330,28 +341,26 @@ module Toys
 
         def tool_synopsis
           # TODO: Expand this
-          synopsis = [@binary_name] + @tool.full_name
-          synopsis << "[<flags...>]" unless @tool.flag_definitions.empty?
-          @tool.required_arg_definitions.each do |arg_info|
-            synopsis << "<#{arg_info.canonical_name}>"
-          end
-          @tool.optional_arg_definitions.each do |arg_info|
-            synopsis << "[<#{arg_info.canonical_name}>]"
-          end
-          if @tool.remaining_args_definition
-            synopsis << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
+          synopsis = [full_binary_name]
+          synopsis << "[FLAGS...]" unless @tool.flag_definitions.empty?
+          @tool.arg_definitions.each do |arg_info|
+            synopsis << arg_name(arg_info)
           end
           synopsis.join(" ")
         end
 
         def group_synopsis
-          ([@binary_name] + @tool.full_name + ["<tool>", "<tool-arguments...>"]).join(" ")
+          "#{full_binary_name} #{underline('TOOL')} [#{underline('ARGUMENTS')}...]"
+        end
+
+        def full_binary_name
+          bold(([@binary_name] + @tool.full_name).join(" "))
         end
 
         def add_source_section
           return unless @tool.definition_path
           @lines << ""
-          @lines << "SOURCE"
+          @lines << bold("SOURCE")
           @lines << indent_str("Defined in #{@tool.definition_path}")
         end
 
@@ -359,7 +368,7 @@ module Toys
           desc = @tool.wrapped_long_desc(@wrap_width - @indent)
           return if desc.empty?
           @lines << ""
-          @lines << "DESCRIPTION"
+          @lines << bold("DESCRIPTION")
           desc.each do |line|
             @lines << indent_str(line)
           end
@@ -368,30 +377,31 @@ module Toys
         def add_flags_section
           return if @tool.flag_definitions.empty?
           @lines << ""
-          @lines << "FLAGS"
+          @lines << bold("FLAGS")
           precede_with_blank = false
           @tool.flag_definitions.each do |flag|
-            add_flag(flag, precede_with_blank)
+            add_indented_section(flag_spec_string(flag), flag, precede_with_blank)
             precede_with_blank = true
           end
         end
 
-        def add_flag(flag, precede_with_blank)
-          flags_str = (flag.single_flag_syntax.map(&:str_without_value) +
-                       flag.double_flag_syntax.map(&:str_without_value)).join(", ")
-          flags_str << flag.value_delim << flag.value_label if flag.value_label
-          add_indented_section(flags_str, flag, precede_with_blank)
+        def flag_spec_string(flag)
+          flags_str =
+            (flag.single_flag_syntax + flag.double_flag_syntax)
+            .map { |fs| bold(fs.str_without_value) }
+            .join(", ")
+          flags_str << flag.value_delim << underline(flag.value_label) if flag.value_label
+          flags_str
         end
 
         def add_positional_arguments_section
-          args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
-          args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
+          args_to_display = @tool.arg_definitions
           return if args_to_display.empty?
           @lines << ""
-          @lines << "POSITIONAL ARGUMENTS"
+          @lines << bold("POSITIONAL ARGUMENTS")
           precede_with_blank = false
           args_to_display.each do |arg_info|
-            add_indented_section(arg_info.canonical_name, arg_info, precede_with_blank)
+            add_indented_section(arg_name(arg_info), arg_info, precede_with_blank)
             precede_with_blank = true
           end
         end
@@ -399,7 +409,8 @@ module Toys
         def add_subtool_list_section
           return if @subtools.empty?
           @lines << ""
-          @lines << (@search_term ? "TOOLS with search term #{@search_term.inspect}:" : "TOOLS:")
+          header = @search_term ? "TOOLS with search term #{@search_term.inspect}:" : "TOOLS:"
+          @lines << bold(header)
           name_len = @tool.full_name.length
           precede_with_blank = false
           @subtools.each do |subtool|
@@ -410,7 +421,7 @@ module Toys
               else
                 subtool.wrapped_desc(@wrap_width - @indent - @indent2)
               end
-            add_indented_section(tool_name, desc, precede_with_blank)
+            add_indented_section(bold(tool_name), desc, precede_with_blank)
             precede_with_blank = true
           end
         end
@@ -426,6 +437,25 @@ module Toys
           desc.each do |line|
             @lines << indent2_str(line)
           end
+        end
+
+        def arg_name(arg_info)
+          case arg_info.type
+          when :required
+            underline(arg_info.display_name)
+          when :optional
+            "[#{underline(arg_info.display_name)}]"
+          when :remaining
+            "[#{underline(arg_info.display_name)}...]"
+          end
+        end
+
+        def bold(str)
+          @styled ? ::HighLine.color(str, :bold) : str
+        end
+
+        def underline(str)
+          @styled ? ::HighLine.color(str, :underline) : str
         end
 
         def indent_str(str)

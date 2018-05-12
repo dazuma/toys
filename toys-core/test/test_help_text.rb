@@ -88,7 +88,7 @@ describe Toys::Utils::HelpText do
       it "is set for a group" do
         usage = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar <tool> <tool-arguments...>", usage_array[0])
+        assert_equal("Usage: toys foo bar TOOL [ARGUMENTS...]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -103,7 +103,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
         usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [<flags...>]", usage_array[0])
+        assert_equal("Usage: toys foo bar [FLAGS...]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -112,7 +112,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_required_arg(:dd, desc: "set dd")
         usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar <cc> <dd>", usage_array[0])
+        assert_equal("Usage: toys foo bar CC DD", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -121,7 +121,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [<ee>] [<ff>]", usage_array[0])
+        assert_equal("Usage: toys foo bar [EE] [FF]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -129,7 +129,7 @@ describe Toys::Utils::HelpText do
         normal_tool.set_remaining_args(:gg, desc: "set gg")
         usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [<gg...>]", usage_array[0])
+        assert_equal("Usage: toys foo bar [GG...]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -142,7 +142,7 @@ describe Toys::Utils::HelpText do
         normal_tool.set_remaining_args(:gg, desc: "set gg")
         usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [<flags...>] <cc> <dd> [<ee>] [<ff>] [<gg...>]",
+        assert_equal("Usage: toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
         assert_equal("", usage_array[1])
       end
@@ -229,11 +229,11 @@ describe Toys::Utils::HelpText do
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
-        assert_match(/^\s{4}cc\s{31}set cc$/, usage_array[index + 1])
-        assert_match(/^\s{4}dd\s{31}set dd$/, usage_array[index + 2])
-        assert_match(/^\s{4}ee\s{31}set ee$/, usage_array[index + 3])
-        assert_match(/^\s{4}ff\s{31}set ff$/, usage_array[index + 4])
-        assert_match(/^\s{4}gg\s{31}set gg$/, usage_array[index + 5])
+        assert_match(/^\s{4}CC\s{31}set cc$/, usage_array[index + 1])
+        assert_match(/^\s{4}DD\s{31}set dd$/, usage_array[index + 2])
+        assert_match(/^\s{4}\[EE\]\s{29}set ee$/, usage_array[index + 3])
+        assert_match(/^\s{4}\[FF\]\s{29}set ff$/, usage_array[index + 4])
+        assert_match(/^\s{4}\[GG\.\.\.\]\s{26}set gg$/, usage_array[index + 5])
         assert_equal(index + 6, usage_array.size)
       end
 
@@ -244,7 +244,7 @@ describe Toys::Utils::HelpText do
         usage_array = usage.short_string(wrap_width: 47).split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
-        assert_match(/^\s{4}long-long-long-long-long-long-long-long$/, usage_array[index + 1])
+        assert_match(/^\s{4}LONG_LONG_LONG_LONG_LONG_LONG_LONG_LONG$/, usage_array[index + 1])
         assert_match(/^\s{37}set long$/, usage_array[index + 2])
         assert_match(/^\s{37}arg desc$/, usage_array[index + 3])
         assert_equal(index + 4, usage_array.size)
