@@ -75,7 +75,30 @@ module Toys
       end
 
       ##
-      # Generate a usage string.
+      # Generate a short usage string.
+      #
+      # @param [Boolean] recursive If true, and the tool is a group tool,
+      #     display all subcommands recursively. Defaults to false.
+      # @param [String,nil] search An optional string to search for when
+      #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      # @param [Integer] left_column_width Width of the first column. Default
+      #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
+      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
+      #
+      # @return [String] A usage string.
+      #
+      def short_string(recursive: false, search: nil,
+                       left_column_width: nil, indent: nil, wrap_width: nil)
+        left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
+        indent ||= DEFAULT_INDENT
+        subtools = find_subtools(recursive, search)
+        assembler = ShortHelpAssembler.new(@tool, @binary_name, subtools, search,
+                                           indent, left_column_width, wrap_width)
+        assembler.result
+      end
+
+      ##
+      # Generate a long usage string.
       #
       # @param [Boolean] recursive If true, and the tool is a group tool,
       #     display all subcommands recursively. Defaults to false.
@@ -83,166 +106,343 @@ module Toys
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
       # @param [Boolean] show_path If true, shows the path to the config file
       #     containing the tool definition (if set). Defaults to false.
-      # @param [Integer] left_column_width Width of the first column. Default
-      #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
+      # @param [Integer] indent2 Second indent width. Default is
+      #     {DEFAULT_INDENT}.
+      # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
+      #     disable wrap. Default is `nil`.
       #
       # @return [String] A usage string.
       #
-      def string(recursive: false, search: nil, show_path: false,
-                 left_column_width: nil, indent: nil,
-                 wrap_width: nil, right_column_wrap_width: nil)
-        left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
+      def long_string(recursive: false, search: nil, show_path: false,
+                      indent: nil, indent2: nil, wrap_width: nil)
         indent ||= DEFAULT_INDENT
-        right_column_wrap_width ||= wrap_width - left_column_width - indent - 1 if wrap_width
-        lines = []
-        lines << (@tool.includes_executor? ? tool_banner : group_banner)
-        add_description(lines, wrap_width, show_path)
-        add_switches(lines, indent, left_column_width, right_column_wrap_width)
-        if @tool.includes_executor?
-          add_positional_arguments(lines, indent, left_column_width, right_column_wrap_width)
-        else
-          add_command_list(lines, recursive, search, indent,
-                           left_column_width, right_column_wrap_width)
-        end
-        lines.join("\n") + "\n"
+        indent2 ||= DEFAULT_INDENT
+        subtools = find_subtools(recursive, search)
+        assembler = LongHelpAssembler.new(@tool, @binary_name, subtools, search, show_path,
+                                          indent, indent2, wrap_width)
+        assembler.result
       end
 
       private
 
-      #
-      # Returns the banner string for a normal tool
-      #
-      def tool_banner
-        banner = ["Usage:", @binary_name] + @tool.full_name
-        banner << "[<options...>]" unless @tool.switch_definitions.empty?
-        @tool.required_arg_definitions.each do |arg_info|
-          banner << "<#{arg_info.canonical_name}>"
-        end
-        @tool.optional_arg_definitions.each do |arg_info|
-          banner << "[<#{arg_info.canonical_name}>]"
-        end
-        if @tool.remaining_args_definition
-          banner << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
-        end
-        banner.join(" ")
-      end
-
-      #
-      # Returns the banner string for a group
-      #
-      def group_banner
-        banner = ["Usage:", @binary_name] +
-                 @tool.full_name +
-                 ["<command>", "<command-arguments...>"]
-        banner.join(" ")
-      end
-
-      def add_description(lines, wrap_width, show_path)
-        long_desc = @tool.effective_long_desc(wrap_width: wrap_width)
-        unless long_desc.empty?
-          lines << ""
-          lines.concat(long_desc)
-        end
-        if show_path && @tool.definition_path
-          lines << ""
-          lines << "Defined in #{@tool.definition_path}"
-        end
-      end
-
-      #
-      # Add switches from the tool to the given optionparser. Causes the
-      # optparser to generate documentation for those switches.
-      #
-      def add_switches(lines, indent, left_column_width, right_column_wrap_width)
-        return if @tool.switch_definitions.empty?
-        lines << ""
-        lines << "Options:"
-        @tool.switch_definitions.each do |switch|
-          add_switch(lines, switch, indent, left_column_width, right_column_wrap_width)
-        end
-      end
-
-      #
-      # Add a single switch
-      #
-      def add_switch(lines, switch, indent, left_column_width, right_column_wrap_width)
-        switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
-                        switch.double_switch_syntax.map(&:str_without_value)).join(", ")
-        switches_str << switch.value_delim << switch.value_label if switch.value_label
-        switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
-        add_doc(lines, switches_str, switch.wrapped_docs(right_column_wrap_width),
-                indent, left_column_width)
-      end
-
-      #
-      # Add documentation for the tool's positional arguments, to the given
-      # option parser.
-      #
-      def add_positional_arguments(lines, indent, left_column_width, right_column_wrap_width)
-        args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
-        args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
-        return if args_to_display.empty?
-        lines << ""
-        lines << "Positional arguments:"
-        args_to_display.each do |arg_info|
-          add_doc(lines, arg_info.canonical_name, arg_info.wrapped_docs(right_column_wrap_width),
-                  indent, left_column_width)
-        end
-      end
-
-      #
-      # Add documentation for the tool's subcommands, to the given option
-      # parser.
-      #
-      def add_command_list(lines, recursive, search, indent,
-                           left_column_width, right_column_wrap_width)
-        name_len = @tool.full_name.length
-        subtools = find_commands(recursive, search)
-        return if subtools.empty?
-        lines << ""
-        lines << (search ? "Commands with search term #{search.inspect}:" : "Commands:")
-        subtools.each do |subtool|
-          tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-          doc =
-            if subtool.is_a?(Alias)
-              ["(Alias of #{subtool.display_target})"]
-            else
-              subtool.effective_desc(wrap_width: right_column_wrap_width)
-            end
-          add_doc(lines, tool_name, doc, indent, left_column_width)
-        end
-      end
-
-      #
-      # Add a line with possible documentation strings.
-      #
-      def add_doc(lines, initial, doc, indent, left_column_width)
-        initial = "#{' ' * indent}#{initial.ljust(left_column_width)}"
-        remaining_doc =
-          if initial.size <= indent + left_column_width
-            lines << "#{initial} #{doc.first}"
-            doc[1..-1] || []
-          else
-            lines << initial
-            doc
-          end
-        remaining_doc.each do |d|
-          lines << "#{' ' * (indent + left_column_width)} #{d}"
-        end
-      end
-
-      #
-      # Find subcommands of the current tool
-      #
-      def find_commands(recursive, search)
+      def find_subtools(recursive, search)
+        return [] if @tool.includes_executor?
         subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
         return subtools if search.nil? || search.empty?
         regex = Regexp.new("(^|\\s)#{Regexp.escape(search)}(\\s|$)", Regexp::IGNORECASE)
         subtools.find_all do |tool|
           regex =~ tool.display_name ||
-            tool.effective_desc.find { |d| regex =~ d } ||
-            tool.effective_long_desc.find { |d| regex =~ d }
+            tool.desc.find { |d| regex =~ d.to_s } ||
+            tool.long_desc.find { |d| regex =~ d.to_s }
+        end
+      end
+
+      ## @private
+      class ShortHelpAssembler
+        def initialize(tool, binary_name, subtools, search_term,
+                       indent, left_column_width, wrap_width)
+          @tool = tool
+          @binary_name = binary_name
+          @subtools = subtools
+          @search_term = search_term
+          @indent = indent
+          @left_column_width = left_column_width
+          @wrap_width = wrap_width
+          @right_column_wrap_width = wrap_width ? wrap_width - left_column_width - indent - 1 : nil
+          @lines = []
+          assemble
+        end
+
+        attr_reader :result
+
+        private
+
+        def assemble
+          add_synopsis_section
+          add_description_section
+          add_flags_section
+          if @tool.includes_executor?
+            add_positional_arguments_section
+          else
+            add_subtool_list_section
+          end
+          @result = @lines.join("\n") + "\n"
+        end
+
+        def add_synopsis_section
+          synopsis = @tool.includes_executor? ? tool_synopsis : group_synopsis
+          @lines << "Usage: #{synopsis}"
+        end
+
+        def tool_synopsis
+          synopsis = [@binary_name] + @tool.full_name
+          synopsis << "[<options...>]" unless @tool.switch_definitions.empty?
+          @tool.required_arg_definitions.each do |arg_info|
+            synopsis << "<#{arg_info.canonical_name}>"
+          end
+          @tool.optional_arg_definitions.each do |arg_info|
+            synopsis << "[<#{arg_info.canonical_name}>]"
+          end
+          if @tool.remaining_args_definition
+            synopsis << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
+          end
+          synopsis.join(" ")
+        end
+
+        def group_synopsis
+          ([@binary_name] + @tool.full_name + ["<command>", "<command-arguments...>"]).join(" ")
+        end
+
+        def add_description_section
+          desc = @tool.wrapped_desc(@wrap_width)
+          unless desc.empty?
+            @lines << ""
+            @lines.concat(desc)
+          end
+        end
+
+        def add_flags_section
+          return if @tool.switch_definitions.empty?
+          @lines << ""
+          @lines << "Flags:"
+          @tool.switch_definitions.each do |switch|
+            add_flag(switch)
+          end
+        end
+
+        def add_flag(switch)
+          switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
+                          switch.double_switch_syntax.map(&:str_without_value)).join(", ")
+          switches_str << switch.value_delim << switch.value_label if switch.value_label
+          switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
+          add_right_column_desc(switches_str, switch.wrapped_desc(@right_column_wrap_width))
+        end
+
+        def add_positional_arguments_section
+          args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
+          args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
+          return if args_to_display.empty?
+          @lines << ""
+          @lines << "Positional arguments:"
+          args_to_display.each do |arg_info|
+            add_right_column_desc(arg_info.canonical_name,
+                                  arg_info.wrapped_desc(@right_column_wrap_width))
+          end
+        end
+
+        def add_subtool_list_section
+          return if @subtools.empty?
+          name_len = @tool.full_name.length
+          @lines << ""
+          @lines <<
+            if @search_term
+              "Tools with search term #{@search_term.inspect}:"
+            else
+              "Tools:"
+            end
+          @subtools.each do |subtool|
+            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
+            desc =
+              if subtool.is_a?(Alias)
+                ["(Alias of #{subtool.display_target})"]
+              else
+                subtool.wrapped_desc(@right_column_wrap_width)
+              end
+            add_right_column_desc(tool_name, desc)
+          end
+        end
+
+        def add_right_column_desc(initial, desc)
+          initial = indent_str(initial.ljust(@left_column_width))
+          remaining_doc = desc
+          if initial.size <= @indent + @left_column_width
+            @lines << "#{initial} #{desc.first}"
+            remaining_doc = desc[1..-1] || []
+          else
+            @lines << initial
+          end
+          remaining_doc.each do |d|
+            @lines << "#{' ' * (@indent + @left_column_width)} #{d}"
+          end
+        end
+
+        def indent_str(str)
+          "#{' ' * @indent}#{str}"
+        end
+      end
+
+      ## @private
+      class LongHelpAssembler
+        def initialize(tool, binary_name, subtools, search_term, show_path,
+                       indent, indent2, wrap_width)
+          @tool = tool
+          @binary_name = binary_name
+          @subtools = subtools
+          @search_term = search_term
+          @show_path = show_path
+          @indent = indent
+          @indent2 = indent2
+          @wrap_width = wrap_width
+          @lines = []
+          assemble
+        end
+
+        attr_reader :result
+
+        private
+
+        def assemble
+          add_name_section
+          add_synopsis_section
+          add_description_section
+          add_flags_section
+          if @tool.includes_executor?
+            add_positional_arguments_section
+          else
+            add_subtool_list_section
+          end
+          add_source_section if @show_path
+          @result = @lines.join("\n") + "\n"
+        end
+
+        def add_name_section
+          @lines << "NAME"
+          name_str = ([@binary_name] + @tool.full_name).join(" ")
+          desc = prefix_with_desc(name_str, @tool)
+          @lines << indent_str(desc[0])
+          desc[1..-1].each do |line|
+            @lines << indent2_str(line)
+          end
+        end
+
+        def prefix_with_desc(prefix, object)
+          return [prefix] if object.desc.empty?
+          width1 = @wrap_width - prefix.size - @indent - 3
+          if width1 <= 0
+            ["#{name_str} -"] + object.wrapped_desc(@wrap_width - @indent - @indent2)
+          else
+            desc = object.wrapped_desc(width1, @wrap_width - @indent - @indent2)
+            desc[0] = "#{prefix} - #{desc[0]}"
+            desc
+          end
+        end
+
+        def add_synopsis_section
+          @lines << ""
+          @lines << "SYNOPSIS"
+          unless @tool.includes_executor?
+            @lines << indent_str(group_synopsis)
+          end
+          @lines << indent_str(tool_synopsis)
+        end
+
+        def tool_synopsis
+          # TODO: Expand this
+          synopsis = [@binary_name] + @tool.full_name
+          synopsis << "[<options...>]" unless @tool.switch_definitions.empty?
+          @tool.required_arg_definitions.each do |arg_info|
+            synopsis << "<#{arg_info.canonical_name}>"
+          end
+          @tool.optional_arg_definitions.each do |arg_info|
+            synopsis << "[<#{arg_info.canonical_name}>]"
+          end
+          if @tool.remaining_args_definition
+            synopsis << "[<#{@tool.remaining_args_definition.canonical_name}...>]"
+          end
+          synopsis.join(" ")
+        end
+
+        def group_synopsis
+          ([@binary_name] + @tool.full_name + ["<command>", "<command-arguments...>"]).join(" ")
+        end
+
+        def add_source_section
+          return unless @tool.definition_path
+          @lines << ""
+          @lines << "SOURCE"
+          @lines << indent_str("Defined in #{@tool.definition_path}")
+        end
+
+        def add_description_section
+          desc = @tool.wrapped_long_desc(@wrap_width - @indent)
+          return if desc.empty?
+          @lines << ""
+          @lines << "DESCRIPTION"
+          desc.each do |line|
+            @lines << indent_str(line)
+          end
+        end
+
+        def add_flags_section
+          return if @tool.switch_definitions.empty?
+          @lines << ""
+          @lines << "FLAGS"
+          precede_with_blank = false
+          @tool.switch_definitions.each do |switch|
+            add_flag(switch, precede_with_blank)
+            precede_with_blank = true
+          end
+        end
+
+        def add_flag(switch, precede_with_blank)
+          switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
+                          switch.double_switch_syntax.map(&:str_without_value)).join(", ")
+          switches_str << switch.value_delim << switch.value_label if switch.value_label
+          add_indented_section(switches_str, switch, precede_with_blank)
+        end
+
+        def add_positional_arguments_section
+          args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
+          args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
+          return if args_to_display.empty?
+          @lines << ""
+          @lines << "POSITIONAL ARGUMENTS"
+          precede_with_blank = false
+          args_to_display.each do |arg_info|
+            add_indented_section(arg_info.canonical_name, arg_info, precede_with_blank)
+            precede_with_blank = true
+          end
+        end
+
+        def add_subtool_list_section
+          return if @subtools.empty?
+          @lines << ""
+          @lines << (@search_term ? "TOOLS with search term #{@search_term.inspect}:" : "TOOLS:")
+          name_len = @tool.full_name.length
+          precede_with_blank = false
+          @subtools.each do |subtool|
+            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
+            desc =
+              if subtool.is_a?(Alias)
+                ["(Alias of #{subtool.display_target})"]
+              else
+                subtool.wrapped_desc(@wrap_width - @indent - @indent2)
+              end
+            add_indented_section(tool_name, desc, precede_with_blank)
+            precede_with_blank = true
+          end
+        end
+
+        def add_indented_section(header, info, precede_with_blank)
+          @lines << "" if precede_with_blank
+          @lines << indent_str(header)
+          desc = info
+          unless desc.is_a?(::Array)
+            desc = info.wrapped_long_desc(@wrap_width - @indent - @indent2)
+            desc = info.wrapped_desc(@wrap_width - @indent - @indent2) if desc.empty?
+          end
+          desc.each do |line|
+            @lines << indent2_str(line)
+          end
+        end
+
+        def indent_str(str)
+          "#{' ' * @indent}#{str}"
+        end
+
+        def indent2_str(str)
+          "#{' ' * (@indent + @indent2)}#{str}"
         end
       end
     end

@@ -178,12 +178,12 @@ module Toys
     # displayed with the tool in a command list. You may also use the
     # equivalent method `short_desc`.
     #
-    # @param [String,Toys::Utils::WrappableString...] strs The short description
+    # @param [String,Toys::Utils::WrappableString] str The short description
     #
-    def desc(*strs)
+    def desc(str)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.desc = strs
+      _cur_tool.desc = str
       self
     end
     alias short_desc desc
@@ -201,8 +201,11 @@ module Toys
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
-    #     the switch. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the switch. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -215,12 +218,16 @@ module Toys
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
     def switch(key, *switches,
-               accept: nil, default: nil, docs: nil, only_unique: false, handler: nil)
+               accept: nil, default: nil, desc: nil, long_desc: nil,
+               only_unique: false, handler: nil,
+               &block)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
       _cur_tool.add_switch(key, *switches,
-                           accept: accept, default: default, docs: docs,
-                           only_unique: only_unique, handler: handler)
+                           accept: accept, default: default,
+                           desc: desc, long_desc: long_desc,
+                           only_unique: only_unique, handler: handler,
+                           &block)
       self
     end
 
@@ -233,13 +240,18 @@ module Toys
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
-    #     arg. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def required_arg(key, accept: nil, docs: nil)
+    def required_arg(key, accept: nil, desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.add_required_arg(key, accept: accept, docs: docs)
+      _cur_tool.add_required_arg(key,
+                                 accept: accept, desc: desc, long_desc: long_desc,
+                                 &block)
       self
     end
 
@@ -251,18 +263,24 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
-    #     arg. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def optional_arg(key, accept: nil, default: nil, docs: nil)
+    def optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.add_optional_arg(key, accept: accept, default: default, docs: docs)
+      _cur_tool.add_optional_arg(key,
+                                 accept: accept, default: default,
+                                 desc: desc, long_desc: long_desc,
+                                 &block)
       self
     end
 
@@ -273,18 +291,24 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for the
-    #     args. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def remaining_args(key, accept: nil, default: [], docs: nil)
+    def remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.set_remaining_args(key, accept: accept, default: default, docs: docs)
+      _cur_tool.set_remaining_args(key,
+                                   accept: accept, default: default,
+                                   desc: desc, long_desc: long_desc,
+                                   &block)
       self
     end
 

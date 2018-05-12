@@ -77,7 +77,7 @@ module Toys
         version = @version_displayer.call(tool)
         if version
           tool.add_switch(:_show_version, *@version_switches,
-                          docs: "Show version",
+                          desc: "Show version",
                           handler: ->(_val, _prev) { version },
                           only_unique: true)
         end

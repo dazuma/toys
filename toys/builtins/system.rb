@@ -40,7 +40,7 @@ end
 tool "update" do
   desc "Update toys if a newer version is available."
 
-  switch :yes, "-y", "--yes", docs: "Do not ask for interactive confirmation"
+  switch :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
   use :exec
   use :highline

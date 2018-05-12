@@ -69,12 +69,15 @@ module Toys
       ##
       # Wraps the string to the given width.
       #
-      # @param [Integer] width Width in characters.
+      # @param [Integer,nil] width Width in characters, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
       # @return [Array<String>] Wrapped lines
       #
-      def wrap(width)
+      def wrap(width, width2 = nil)
         lines = []
         str = string.gsub(/\s/, " ").sub(/^\s+/, "")
+        return str.sub(/\s+$/, "") if width.nil?
         until str.empty?
           i = str.index(/\S(\s|$)/) + 1
           loop do
@@ -84,8 +87,28 @@ module Toys
           end
           lines << str[0, i]
           str = str[i..-1].sub(/^\s+/, "")
+          width = width2 if width2
         end
         lines
+      end
+
+      ##
+      # Wraps an array of lines to the given width.
+      #
+      # @param [Array<String,WrappableString>] strs Array of strings to wrap.
+      # @param [Integer,nil] width Width in characters, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
+      # @return [Array<String>] Wrapped lines
+      #
+      def self.wrap_lines(strs, width, width2 = nil)
+        result = Array(strs).map do |s|
+          lines = s.is_a?(WrappableString) ? s.wrap(width, width2) : s.to_s
+          width = width2 if width2
+          lines
+        end.flatten
+        result = [] if result.all?(&:empty?)
+        result
       end
     end
   end

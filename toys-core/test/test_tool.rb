@@ -79,50 +79,43 @@ describe Toys::Tool do
   describe "description" do
     it "defaults to empty" do
       assert_equal(false, tool.includes_description?)
-      assert_equal([], tool.effective_desc)
-      assert_equal([], tool.effective_long_desc)
+      assert_equal("", tool.desc)
+      assert_equal([], tool.long_desc)
     end
 
     it "handles set of short description" do
       tool.desc = "hi"
       assert_equal(true, tool.includes_description?)
-      assert_equal(["hi"], tool.effective_desc)
-      assert_equal(["hi"], tool.effective_long_desc)
-    end
-
-    it "handles multi-line short description" do
-      tool.desc = ["hi", "there"]
-      assert_equal(true, tool.includes_description?)
-      assert_equal(["hi", "there"], tool.effective_desc)
-      assert_equal(["hi", "there"], tool.effective_long_desc)
+      assert_equal("hi", tool.desc)
+      assert_equal([], tool.long_desc)
     end
 
     it "handles set of long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
-      assert_equal([], tool.effective_desc)
-      assert_equal(["ho"], tool.effective_long_desc)
+      assert_equal("", tool.desc)
+      assert_equal(["ho"], tool.long_desc)
     end
 
     it "handles multi-line long description" do
       tool.long_desc = ["ho", "Ender"]
       assert_equal(true, tool.includes_description?)
-      assert_equal([], tool.effective_desc)
-      assert_equal(["ho", "Ender"], tool.effective_long_desc)
+      assert_equal("", tool.desc)
+      assert_equal(["ho", "Ender"], tool.long_desc)
     end
 
     it "handles set of both descriptions" do
       tool.desc = "hi"
       tool.long_desc = ["ho", "hum"]
       assert_equal(true, tool.includes_description?)
-      assert_equal(["hi"], tool.effective_desc)
-      assert_equal(["ho", "hum"], tool.effective_long_desc)
+      assert_equal("hi", tool.desc)
+      assert_equal(["ho", "hum"], tool.long_desc)
     end
 
     it "handles wrapping" do
       tool.desc = Toys::Utils::WrappableString.new("hi there")
-      assert_equal(["hi there"], tool.effective_desc)
-      assert_equal(["hi", "there"], tool.effective_desc(wrap_width: 4))
+      assert_equal(["hi there"], tool.wrapped_desc(nil))
+      assert_equal(["hi", "there"], tool.wrapped_desc(4))
     end
   end
 
@@ -151,24 +144,33 @@ describe Toys::Tool do
       assert_equal(1, switch.switch_syntax.size)
       assert_equal(["-a"], switch.switch_syntax.first.switches)
       assert_nil(switch.accept)
-      assert_equal([], switch.docs)
+      assert_equal("", switch.desc)
+      assert_equal([], switch.long_desc)
       assert_equal(1, switch.handler.call(1, 2))
       assert_equal(true, switch.active?)
     end
 
-    it "recognizes docs with multiple lines" do
-      tool.add_switch(:a, "-a", docs: ["hello\nworld", "I like Ruby"])
+    it "recognizes desc with wrapping" do
+      tool.add_switch(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"))
       switch = tool.switch_definitions.first
-      assert_equal(["hello", "world", "I like Ruby"], switch.docs)
-      assert_equal(["hello", "world", "I like Ruby"], switch.wrapped_docs(7))
+      assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), switch.desc)
+      assert_equal(["I like", "Ruby"], switch.wrapped_desc(7))
     end
 
-    it "recognizes docs with wrapping" do
-      tool.add_switch(:a, "-a",
-                      docs: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
+    it "recognizes long desc with multiple lines" do
+      tool.add_switch(:a, "-a", long_desc: ["hello\nworld", "I like Ruby"])
       switch = tool.switch_definitions.first
-      assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")], switch.docs)
-      assert_equal(["hello world", "I like", "Ruby"], switch.wrapped_docs(7))
+      assert_equal(["hello", "world", "I like Ruby"], switch.long_desc)
+      assert_equal(["hello", "world", "I like Ruby"], switch.wrapped_long_desc(7))
+    end
+
+    it "recognizes long desc with wrapping" do
+      tool.add_switch(:a, "-a",
+                      long_desc: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
+      switch = tool.switch_definitions.first
+      assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")],
+                   switch.long_desc)
+      assert_equal(["hello world", "I like", "Ruby"], switch.wrapped_long_desc(7))
     end
 
     it "exposes optparser info with no acceptor" do
@@ -280,7 +282,7 @@ describe Toys::Tool do
 
     it "defaults simple boolean switch to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa", desc: "hi there")
       assert_equal(true, tool.includes_definition?)
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
@@ -290,7 +292,7 @@ describe Toys::Tool do
 
     it "sets simple boolean switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: true}, options)
       end
@@ -299,7 +301,7 @@ describe Toys::Tool do
 
     it "defaults value switch to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
       end
@@ -308,7 +310,7 @@ describe Toys::Tool do
 
     it "honors given default of a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hehe"}, options)
       end
@@ -317,7 +319,7 @@ describe Toys::Tool do
 
     it "sets value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hoho"}, options)
       end
@@ -326,7 +328,7 @@ describe Toys::Tool do
 
     it "converts a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: 1234}, options)
       end
@@ -335,7 +337,7 @@ describe Toys::Tool do
 
     it "checks match of a value switch" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, docs: "hi there")
+      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
       tool.executor = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
@@ -344,7 +346,7 @@ describe Toys::Tool do
 
     it "defaults the name of a value switch" do
       test = self
-      tool.add_switch(:a_bc, docs: "hi there")
+      tool.add_switch(:a_bc, desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
@@ -384,7 +386,7 @@ describe Toys::Tool do
       tool.add_optional_arg(:b)
       assert_equal(true, tool.includes_definition?)
       tool.add_optional_arg(:c)
-      tool.add_required_arg(:a, docs: "Hello")
+      tool.add_required_arg(:a, desc: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
@@ -396,7 +398,7 @@ describe Toys::Tool do
       test = self
       tool.add_optional_arg(:b)
       tool.add_optional_arg(:c)
-      tool.add_required_arg(:a, docs: "Hello")
+      tool.add_required_arg(:a, desc: "Hello")
       tool.set_remaining_args(:d)
       tool.executor = proc do
         test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
@@ -480,13 +482,13 @@ describe Toys::Tool do
       full_tool.executor = proc do
         raise "shouldn't have gotten here"
       end
-      assert_output(/Usage:/) do
+      assert_output(/SYNOPSIS/) do
         assert_equal(0, full_tool.execute(cli, ["--help"]))
       end
     end
 
     it "prints help for a command with no executor" do
-      assert_output(/Usage:/) do
+      assert_output(/SYNOPSIS/) do
         assert_equal(0, full_tool.execute(cli, []))
       end
     end

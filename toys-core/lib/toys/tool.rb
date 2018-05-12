@@ -52,7 +52,7 @@ module Toys
       @definition_path = nil
       @definition_finished = false
 
-      @desc = []
+      @desc = ""
       @long_desc = []
 
       @default_data = {}
@@ -72,6 +72,18 @@ module Toys
     # @return [Array<String>]
     #
     attr_reader :full_name
+
+    ##
+    # Returns the short description string.
+    # @return [String,Toys::Utils::WrappableString]
+    #
+    attr_reader :desc
+
+    ##
+    # Returns the long description strings as an array.
+    # @return [Array<String,Toys::Utils::WrappableString>]
+    #
+    attr_reader :long_desc
 
     ##
     # Return a list of all defined switches.
@@ -168,27 +180,27 @@ module Toys
     end
 
     ##
-    # Returns the effective short description for this tool. This will be
-    # displayed when this tool is listed in a command list.
+    # Returns the short description string with wrapping resolved.
     #
-    # @param [Integer,nil] wrap_width Wrap wrappable strings to the given
-    #     width, or `nil` for no wrapping.
+    # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+    # @param [Integer,nil] width2 Width in characters for the second and
+    #     subsequent lines, or `nil` to use the same as width.
     # @return [Array<String>]
     #
-    def effective_desc(wrap_width: nil)
-      Tool.resolve_wrapping(@desc, wrap_width)
+    def wrapped_desc(width, width2 = nil)
+      Utils::WrappableString.wrap_lines([desc], width, width2)
     end
 
     ##
-    # Returns the effective long description for this tool. This will be
-    # displayed as part of the usage for this particular tool.
+    # Returns the long description strings with wrapping resolved.
     #
-    # @param [Integer,nil] wrap_width Wrap wrappable strings to the given
-    #     width, or `nil` for no wrapping.
+    # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+    # @param [Integer,nil] width2 Width in characters for the second and
+    #     subsequent lines, or `nil` to use the same as width.
     # @return [Array<String>]
     #
-    def effective_long_desc(wrap_width: nil)
-      Tool.resolve_wrapping(@long_desc.empty? ? @desc : @long_desc, wrap_width)
+    def wrapped_long_desc(width, width2 = nil)
+      Utils::WrappableString.wrap_lines(long_desc, width, width2)
     end
 
     ##
@@ -196,7 +208,7 @@ module Toys
     # @return [Boolean]
     #
     def includes_description?
-      !@long_desc.empty? || !@desc.empty?
+      !long_desc.empty? || !desc.empty?
     end
 
     ##
@@ -232,7 +244,7 @@ module Toys
     # @return [Array<String>]
     #
     def used_switches
-      @switch_definitions.reduce([]) { |used, sdef| used + sdef.effective_switches }.uniq
+      switch_definitions.reduce([]) { |used, sdef| used + sdef.effective_switches }.uniq
     end
 
     ##
@@ -243,32 +255,31 @@ module Toys
     # @param [String] path The path to the file defining this tool
     #
     def definition_path=(path)
-      if @definition_path && @definition_path != path
+      if definition_path && definition_path != path
         raise ToolDefinitionError,
               "Cannot redefine tool #{display_name.inspect} in #{path}" \
-              " (already defined in #{@definition_path})"
+              " (already defined in #{definition_path})"
       end
       @definition_path = path
     end
 
     ##
-    # Set the short description.
+    # Set the short description string.
+    # @param [String,Toys::Utils::WrappableString] desc Short description
     #
-    # @param [String,Array<String>] strs The short description
-    #
-    def desc=(strs)
+    def desc=(desc)
       check_definition_state
-      @desc = Tool.canonicalize_desc(strs)
+      @desc = Tool.canonicalize_desc(desc)
     end
 
     ##
-    # Set the long description.
+    # Set the long description strings.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] desc Long description
     #
-    # @param [String,Array<String>] strs The long description
-    #
-    def long_desc=(strs)
+    def long_desc=(desc)
       check_definition_state
-      @long_desc = Tool.canonicalize_desc(strs)
+      @long_desc = Tool.canonicalize_long_desc(desc)
     end
 
     ##
@@ -324,8 +335,11 @@ module Toys
     #     be set in the context if this switch is not provided on the command
     #     line. Defaults to `nil`.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
-    #     the switch. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the switch. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the switch. Defaults to empty array.
     # @param [Boolean] only_unique If true, any switches that are already
     #     defined in this tool are removed from this switch. For example, if
     #     an earlier switch uses `-a`, and this switch wants to use both
@@ -338,15 +352,21 @@ module Toys
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
     def add_switch(key, *switches,
-                   accept: nil, default: nil, docs: nil, only_unique: false, handler: nil)
+                   accept: nil, default: nil, desc: nil, long_desc: nil,
+                   only_unique: false, handler: nil)
       check_definition_state
-      switch_info = SwitchDefinition.new(key, switches, accept, docs, handler)
+      switch_def = SwitchDefinition.new(key, switches)
+      switch_def.accept = accept unless accept.nil?
+      switch_def.desc = desc unless desc.nil?
+      switch_def.long_desc = long_desc unless long_desc.nil?
+      switch_def.handler = handler unless handler.nil?
+      yield switch_def if block_given?
       if only_unique
-        switch_info.remove_switches(used_switches)
+        switch_def.remove_switches(used_switches)
       end
-      if switch_info.active?
+      if switch_def.active?
         @default_data[key] = default
-        @switch_definitions << switch_info
+        @switch_definitions << switch_def
       end
       self
     end
@@ -360,13 +380,21 @@ module Toys
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
-    #     the arg. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def add_required_arg(key, accept: nil, docs: nil)
+    def add_required_arg(key, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
+      arg_def = ArgDefinition.new(key)
+      arg_def.accept = accept unless accept.nil?
+      arg_def.desc = desc unless desc.nil?
+      arg_def.long_desc = long_desc unless long_desc.nil?
+      yield arg_def if block_given?
+      @required_arg_definitions << arg_def
       @default_data[key] = nil
-      @required_arg_definitions << ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -378,18 +406,26 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
-    #     the arg. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def add_optional_arg(key, accept: nil, default: nil, docs: nil)
+    def add_optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
+      arg_def = ArgDefinition.new(key)
+      arg_def.accept = accept unless accept.nil?
+      arg_def.desc = desc unless desc.nil?
+      arg_def.long_desc = long_desc unless long_desc.nil?
+      yield arg_def if block_given?
+      @optional_arg_definitions << arg_def
       @default_data[key] = default
-      @optional_arg_definitions << ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -400,18 +436,26 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
+    # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] docs Documentation for
-    #     the args. Defaults to empty array.
+    #     Array<String,Toys::Utils::WrappableString>] desc Short description
+    #     for the arg. Defaults to empty array.
+    # @param [String,Toys::Utils::WrappableString,
+    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
+    #     description for the arg. Defaults to empty array.
     #
-    def set_remaining_args(key, accept: nil, default: [], docs: nil)
+    def set_remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil)
       check_definition_state
+      arg_def = ArgDefinition.new(key)
+      arg_def.accept = accept unless accept.nil?
+      arg_def.desc = desc unless desc.nil?
+      arg_def.long_desc = long_desc unless long_desc.nil?
+      yield arg_def if block_given?
+      @remaining_args_definition = arg_def
       @default_data[key] = default
-      @remaining_args_definition = ArgDefinition.new(key, accept, docs)
       self
     end
 
@@ -507,30 +551,27 @@ module Toys
     #
     class SwitchDefinition
       ##
+      # The default handler replaces the previous value.
+      # @return [Proc]
+      #
+      DEFAULT_HANDLER = ->(val, _prev) { val }
+
+      ##
       # Create a SwitchDefinition
       # @private
       #
       # @param [Symbol] key This switch will set the given context key.
       # @param [Array<String>] switches Switches in OptionParser format
-      # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Toys::Utils::WrappableString,
-      #     Array<String,Toys::Utils::WrappableString>] docs Documentation
-      # @param [Proc,nil] handler An optional handler for setting/updating the
-      #     value. If given, it should take two arguments, the new given value
-      #     and the previous value, and it should return the new value that
-      #     should be set. If `nil`, uses a default handler that just replaces
-      #     the previous value. i.e. the default is effectively
-      #     `-> (val, _prev) { val }`.
       #
-      def initialize(key, switches, accept, docs, handler = nil)
+      def initialize(key, switches)
         @key = key
         switches = ["--#{Tool.canonical_switch(key)}=VALUE"] if switches.empty?
         @switch_syntax = switches.map { |s| SwitchSyntax.new(s) }
-        @accept = accept
-        @docs = Tool.canonicalize_desc(docs)
-        @handler = handler || ->(val, _prev) { val }
+        @accept = nil
+        @desc = ""
+        @long_desc = []
+        @handler = DEFAULT_HANDLER
         reset_data
-        @effective_switches = nil
       end
 
       ##
@@ -549,19 +590,53 @@ module Toys
       # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
-      attr_reader :accept
+      attr_accessor :accept
 
       ##
-      # Returns the documentation strings, which may be the empty array.
-      # @return [Array<String>]
+      # Returns the short description string.
+      # @return [String,Toys::Utils::WrappableString]
       #
-      attr_reader :docs
+      attr_reader :desc
+
+      ##
+      # Set the short description string.
+      # @param [String,Toys::Utils::WrappableString] desc Short description
+      #
+      def desc=(desc)
+        @desc = Tool.canonicalize_desc(desc)
+      end
+
+      ##
+      # Returns the long description strings as an array.
+      # @return [Array<String,Toys::Utils::WrappableString>]
+      #
+      attr_reader :long_desc
+
+      ##
+      # Set the long description strings.
+      # @param [String,Toys::Utils::WrappableString,
+      #     Array<String,Toys::Utils::WrappableString>] desc Long description
+      #
+      def long_desc=(desc)
+        @long_desc = Tool.canonicalize_long_desc(desc)
+      end
 
       ##
       # Returns the handler.
       # @return [Proc]
       #
       attr_reader :handler
+
+      ##
+      # Set the handler
+      # @param [Proc,nil] handler The handler for setting/updating the value.
+      #     The handler should take two arguments, the new given value and the
+      #     previous value, and it should return the new value that should be
+      #     set. If `nil`, uses {DEFAULT_HANDLER}.
+      #
+      def handler=(handler)
+        @handler = handler || DEFAULT_HANDLER
+      end
 
       ##
       # Returns an array of SwitchSyntax including only single-dash switches
@@ -588,13 +663,27 @@ module Toys
       end
 
       ##
-      # Returns the documentation strings with wrapping resolved.
+      # Returns the short description string with wrapping resolved.
       #
-      # @param [Integer,nil] width Wrapping width, or `nil` to use default.
+      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
       # @return [Array<String>]
       #
-      def wrapped_docs(width)
-        Tool.resolve_wrapping(docs, width)
+      def wrapped_desc(width, width2 = nil)
+        Utils::WrappableString.wrap_lines([desc], width, width2)
+      end
+
+      ##
+      # Returns the long description strings with wrapping resolved.
+      #
+      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
+      # @return [Array<String>]
+      #
+      def wrapped_long_desc(width, width2 = nil)
+        Utils::WrappableString.wrap_lines(long_desc, width, width2)
       end
 
       ##
@@ -685,14 +774,12 @@ module Toys
       # @private
       #
       # @param [Symbol] key This argument will set the given context key.
-      # @param [Object] accept An OptionParser acceptor, or `nil` for none.
-      # @param [String,Toys::Utils::WrappableString,
-      #     Array<String,Toys::Utils::WrappableString>] docs Documentation
       #
-      def initialize(key, accept, docs)
+      def initialize(key)
         @key = key
-        @accept = accept
-        @docs = Tool.canonicalize_desc(docs)
+        @accept = nil
+        @desc = ""
+        @long_desc = []
       end
 
       ##
@@ -705,13 +792,36 @@ module Toys
       # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
-      attr_reader :accept
+      attr_accessor :accept
 
       ##
-      # Returns the documentation strings, which may be the empty array.
+      # Returns the short description string.
+      # @return [String,Toys::Utils::WrappableString]
+      #
+      attr_reader :desc
+
+      ##
+      # Set the short description string.
+      # @param [String,Toys::Utils::WrappableString] desc Short description
+      #
+      def desc=(desc)
+        @desc = Tool.canonicalize_desc(desc)
+      end
+
+      ##
+      # Returns the long description strings as an array.
       # @return [Array<String,Toys::Utils::WrappableString>]
       #
-      attr_reader :docs
+      attr_reader :long_desc
+
+      ##
+      # Set the long description strings.
+      # @param [String,Toys::Utils::WrappableString,
+      #     Array<String,Toys::Utils::WrappableString>] desc Long description
+      #
+      def long_desc=(desc)
+        @long_desc = Tool.canonicalize_long_desc(desc)
+      end
 
       ##
       # Return a canonical name for this arg. Used in usage documentation.
@@ -723,13 +833,27 @@ module Toys
       end
 
       ##
-      # Returns the documentation strings with wrapping resolved.
+      # Returns the short description string with wrapping resolved.
       #
-      # @param [Integer,nil] width Wrapping width, or `nil` to use default.
+      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
       # @return [Array<String>]
       #
-      def wrapped_docs(width)
-        Tool.resolve_wrapping(docs, width)
+      def wrapped_desc(width, width2 = nil)
+        Utils::WrappableString.wrap_lines([desc], width, width2)
+      end
+
+      ##
+      # Returns the long description strings with wrapping resolved.
+      #
+      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
+      # @param [Integer,nil] width2 Width in characters for the second and
+      #     subsequent lines, or `nil` to use the same as width.
+      # @return [Array<String>]
+      #
+      def wrapped_long_desc(width, width2 = nil)
+        Utils::WrappableString.wrap_lines(long_desc, width, width2)
       end
 
       ##
@@ -771,16 +895,14 @@ module Toys
 
       ## @private
       def canonicalize_desc(desc)
-        Array(desc).map do |d|
-          d.is_a?(Utils::WrappableString) ? d : d.split("\n")
-        end.flatten.freeze
+        desc.is_a?(Utils::WrappableString) ? desc : desc.gsub(/\s/, " ")
       end
 
       ## @private
-      def resolve_wrapping(strs, wrap_width)
-        strs.map do |s|
-          s.is_a?(Utils::WrappableString) && !wrap_width.nil? ? s.wrap(wrap_width) : s.to_s
-        end.flatten
+      def canonicalize_long_desc(desc)
+        Array(desc).map do |d|
+          d.is_a?(Utils::WrappableString) ? d : d.split("\n")
+        end.flatten.freeze
       end
     end
 

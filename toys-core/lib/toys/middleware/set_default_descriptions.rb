@@ -116,28 +116,28 @@ module Toys
       private
 
       def config_root_desc(tool)
-        if @default_root_long_desc && tool.effective_long_desc.empty?
+        if @default_root_long_desc && tool.long_desc.empty?
           tool.long_desc = @default_root_long_desc
         end
-        if @default_root_desc && tool.effective_desc.empty?
+        if @default_root_desc && tool.desc.empty?
           tool.desc = @default_root_desc
         end
       end
 
       def config_tool_desc(tool)
-        if @default_tool_long_desc && tool.effective_long_desc.empty?
+        if @default_tool_long_desc && tool.long_desc.empty?
           tool.long_desc = @default_tool_long_desc
         end
-        if @default_tool_desc && tool.effective_desc.empty?
+        if @default_tool_desc && tool.desc.empty?
           tool.desc = @default_tool_desc
         end
       end
 
       def config_group_desc(tool)
-        if @default_group_long_desc && tool.effective_long_desc.empty?
+        if @default_group_long_desc && tool.long_desc.empty?
           tool.long_desc = @default_group_long_desc
         end
-        if @default_group_desc && tool.effective_desc.empty?
+        if @default_group_desc && tool.desc.empty?
           tool.desc = @default_group_desc
         end
       end

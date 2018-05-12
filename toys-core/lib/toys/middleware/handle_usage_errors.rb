@@ -60,7 +60,7 @@ module Toys
           usage = Utils::Usage.from_context(context)
           puts(context[Context::USAGE_ERROR])
           puts("")
-          puts(usage.string(show_path: true, wrap_width: width))
+          puts(usage.short_string(wrap_width: width))
           context.exit(@exit_code)
         else
           yield

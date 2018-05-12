@@ -88,7 +88,7 @@ module Toys
         tool(template.name) do
           desc "#{task_type} the gem: #{template.gem_name}"
 
-          switch :yes, "-y", "--yes", docs: "Do not ask for interactive confirmation"
+          switch :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
           use :exec
           use :fileutils

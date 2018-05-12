@@ -114,10 +114,10 @@ module Toys
                                                          DEFAULT_HELP_SWITCHES)
         is_default = !tool.includes_executor? && @fallback_execution
         if !help_switches.empty?
-          docs = "Show help message"
-          docs << " (default for groups)" if is_default
+          desc = "Show help message"
+          desc << " (default for groups)" if is_default
           tool.add_switch(:_help, *help_switches,
-                          docs: docs,
+                          desc: desc,
                           default: is_default,
                           only_unique: true)
         elsif is_default
@@ -137,10 +137,10 @@ module Toys
         if context[:_help]
           usage = Utils::Usage.from_context(context)
           width = ::HighLine.new.output_cols
-          puts(usage.string(recursive: context[:_recursive_subcommands],
-                            search: context[:_search_subcommands],
-                            show_path: context.verbosity > 0,
-                            wrap_width: width))
+          puts(usage.long_string(recursive: context[:_recursive_subcommands],
+                                 search: context[:_search_subcommands],
+                                 show_path: context[Context::VERBOSITY] > 0,
+                                 wrap_width: width))
         else
           yield
         end
@@ -154,7 +154,7 @@ module Toys
         unless recursive_switches.empty?
           tool.add_switch(:_recursive_subcommands, *recursive_switches,
                           default: @default_recursive,
-                          docs: "Show all subcommands recursively" \
+                          desc: "Show all subcommands recursively" \
                                 " (default is #{@default_recursive})",
                           only_unique: true)
         end
@@ -165,7 +165,7 @@ module Toys
                                                            DEFAULT_SEARCH_SWITCHES)
         unless search_switches.empty?
           tool.add_switch(:_search_subcommands, *search_switches,
-                          docs: "Search subcommands for the given term",
+                          desc: "Search subcommands for the given term",
                           only_unique: true)
         end
       end
