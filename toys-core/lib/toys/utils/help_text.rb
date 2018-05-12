@@ -36,7 +36,7 @@ module Toys
     # switches, and arguments. It is used by middleware that implements help
     # and related options.
     #
-    class Usage
+    class HelpText
       ##
       # Default width of first column
       # @return [Integer]
@@ -53,7 +53,7 @@ module Toys
       # Create a usage helper given an execution context.
       #
       # @param [Toys::Context] context The current execution context.
-      # @return [Toys::Utils::Usage]
+      # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
         new(context[Context::TOOL], context[Context::LOADER], context[Context::BINARY_NAME])
@@ -66,7 +66,7 @@ module Toys
       # @param [Toys::Loader] loader A loader that can provide subcommands.
       # @param [String] binary_name The name of the binary. e.g. `"toys"`.
       #
-      # @return [Toys::Utils::Usage]
+      # @return [Toys::Utils::HelpText]
       #
       def initialize(tool, loader, binary_name)
         @tool = tool
@@ -160,7 +160,6 @@ module Toys
 
         def assemble
           add_synopsis_section
-          add_description_section
           add_flags_section
           if @tool.includes_executor?
             add_positional_arguments_section
@@ -192,14 +191,6 @@ module Toys
 
         def group_synopsis
           ([@binary_name] + @tool.full_name + ["<command>", "<command-arguments...>"]).join(" ")
-        end
-
-        def add_description_section
-          desc = @tool.wrapped_desc(@wrap_width)
-          unless desc.empty?
-            @lines << ""
-            @lines.concat(desc)
-          end
         end
 
         def add_flags_section

@@ -2,13 +2,15 @@
 
 ### 0.3.4 / TBD
 
+* CHANGED: Renamed Utils::Usage to Utils::HelpText
+* CHANGED: Renamed show_usage middleware to show_help
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
 * CHANGED: desc is now a single string rather than an array.
 * CHANGED: Removed Loader#execute, and returned remaining args from Loader#lookup.
 * CHANGED: Wrapped most errors with Toys::ContextualError
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: Logger colors the header when possible.
-* IMPROVED: Usage class can now generate nicer help pages
+* IMPROVED: HelpText class can now generate nicer help pages
 * ADDED: CLI now takes an error handler to report most errors.
 
 ### 0.3.3 / 2018-05-09

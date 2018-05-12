@@ -30,22 +30,22 @@
 require "highline"
 
 require "toys/middleware/base"
-require "toys/utils/usage"
+require "toys/utils/help_text"
 
 module Toys
   module Middleware
     ##
-    # A middleware that shows usage documentation.
+    # A middleware that shows help text for the tool.
     #
-    # This can be configured to display usage text when a switch (typically
-    # `--help`) is provided. It can also be configured to display usage text
+    # This can be configured to display help text when a switch (typically
+    # `--help`) is provided. It can also be configured to display help text
     # automatically for tools that do not have an executor.
     #
     # If a tool has no executor, this middleware can also add a
     # `--[no-]recursive` flag, which, when set to `true` (the default), shows
     # all subcommands recursively rather than only immediate subcommands.
     #
-    class ShowUsage < Base
+    class ShowHelp < Base
       ##
       # Default help switches
       # @return [Array<String>]
@@ -65,7 +65,7 @@ module Toys
       DEFAULT_SEARCH_SWITCHES = ["-s WORD", "--search=WORD"].freeze
 
       ##
-      # Create a ShowUsage middleware.
+      # Create a ShowHelp middleware.
       #
       # @param [Boolean,Array<String>,Proc] help_switches Specify switches to
       #     activate help. The value may be any of the following:
@@ -90,7 +90,7 @@ module Toys
       # @param [Boolean] default_recursive Whether to search recursively for
       #     subcommands by default. Default is `true`.
       # @param [Boolean] fallback_execution Cause the tool to display its own
-      #     usage text if it does not otherwise have an executor. This is
+      #     help text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
       #     Default is `true`.
       #
@@ -131,16 +131,16 @@ module Toys
       end
 
       ##
-      # Display usage text if requested.
+      # Display help text if requested.
       #
       def execute(context)
         if context[:_help]
-          usage = Utils::Usage.from_context(context)
+          help_text = Utils::HelpText.from_context(context)
           width = ::HighLine.new.output_cols
-          puts(usage.long_string(recursive: context[:_recursive_subcommands],
-                                 search: context[:_search_subcommands],
-                                 show_path: context[Context::VERBOSITY] > 0,
-                                 wrap_width: width))
+          puts(help_text.long_string(recursive: context[:_recursive_subcommands],
+                                     search: context[:_search_subcommands],
+                                     show_path: context[Context::VERBOSITY] > 0,
+                                     wrap_width: width))
         else
           yield
         end

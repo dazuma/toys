@@ -156,7 +156,7 @@ module Toys
         ],
         [:handle_usage_errors],
         [:show_version, version_displayer: version_displayer],
-        [:show_usage],
+        [:show_help],
         [:add_verbosity_switches]
       ]
     end

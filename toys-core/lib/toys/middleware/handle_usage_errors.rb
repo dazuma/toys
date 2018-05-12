@@ -38,7 +38,8 @@ module Toys
     # This middleware handles the case of a usage error. If a usage error, such
     # as an unrecognized switch or an unfulfilled required argument, is
     # detected, this middleware intercepts execution and displays the error
-    # along with the usage string, and terminates execution with an error code.
+    # along with the short help string, and terminates execution with an error
+    # code.
     #
     class HandleUsageErrors < Base
       ##
@@ -57,10 +58,10 @@ module Toys
       def execute(context)
         if context[Context::USAGE_ERROR]
           width = ::HighLine.new.output_cols
-          usage = Utils::Usage.from_context(context)
+          help_text = Utils::HelpText.from_context(context)
           puts(context[Context::USAGE_ERROR])
           puts("")
-          puts(usage.short_string(wrap_width: width))
+          puts(help_text.short_string(wrap_width: width))
           context.exit(@exit_code)
         else
           yield

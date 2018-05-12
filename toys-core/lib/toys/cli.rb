@@ -302,7 +302,7 @@ module Toys
       # point for a typical CLI. This set includes:
       #
       # *  {Toys::Middleware::HandleUsageErrors}
-      # *  {Toys::Middleware::ShowUsage} adding the `--help` switch and
+      # *  {Toys::Middleware::ShowHelp} adding the `--help` switch and
       #    providing default behavior for groups
       # *  {Toys::Middleware::AddVerbositySwitches} adding the `--verbose` and
       #    `--quiet` switches for managing the logger level
@@ -312,7 +312,7 @@ module Toys
       def default_middleware_stack
         [
           :handle_usage_errors,
-          :show_usage,
+          :show_help,
           :add_verbosity_switches
         ]
       end

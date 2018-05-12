@@ -4,7 +4,7 @@
 
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
 * CHANGED: desc is now a single string rather than an array.
-* IMPROVED: Help page format
+* IMPROVED: Nicer help page format
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: system update builtin can optionally ask for confirmation.
 * IMPROVED: Error reporting is significantly improved.
