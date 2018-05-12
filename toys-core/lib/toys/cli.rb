@@ -302,10 +302,10 @@ module Toys
       # point for a typical CLI. This set includes:
       #
       # *  {Toys::Middleware::HandleUsageErrors}
-      # *  {Toys::Middleware::ShowHelp} adding the `--help` switch and
+      # *  {Toys::Middleware::ShowHelp} adding the `--help` flag and
       #    providing default behavior for groups
       # *  {Toys::Middleware::AddVerbositySwitches} adding the `--verbose` and
-      #    `--quiet` switches for managing the logger level
+      #    `--quiet` flags for managing the logger level
       #
       # @return [Array]
       #
@@ -313,7 +313,7 @@ module Toys
         [
           :handle_usage_errors,
           :show_help,
-          :add_verbosity_switches
+          :add_verbosity_flags
         ]
       end
 

@@ -40,11 +40,11 @@ module Toys
       #
       # Currently recognized middleware names are:
       #
-      # *  `:add_verbosity_switches` : Adds switches for affecting verbosity.
+      # *  `:add_verbosity_flags` : Adds flags for affecting verbosity.
       # *  `:handle_usage_errors` : Displays the usage error if one occurs.
       # *  `:set_default_descriptions` : Sets default descriptions for tools
       #    that do not have them set explicitly.
-      # *  `:show_usage` : Teaches tools to print their usage documentation.
+      # *  `:show_help` : Teaches tools to print their usage documentation.
       # *  `:show_version` : Teaches tools to print their version.
       #
       # @param [String,Symbol] name Name of the middleware class to return
@@ -90,31 +90,31 @@ module Toys
       end
 
       ##
-      # Resolves a typical switches specification. Used often in middleware.
+      # Resolves a typical flags specification. Used often in middleware.
       #
-      # You may provide any of the following for the `switches` parameter:
+      # You may provide any of the following for the `flags` parameter:
       # *  A string, which becomes the single switch
       # *  An array of strings
-      # *  The value `false` or `nil` which resolves to no switches
+      # *  The value `false` or `nil` which resolves to no flags
       # *  The value `true` or `:default` which resolves to the given defaults
       # *  A proc that takes a tool as argument and returns any of the above.
       #
       # Always returns an array of switch strings, even if empty.
       #
-      # @param [Boolean,String,Array<String>,Proc] switches Switch spec
+      # @param [Boolean,String,Array<String>,Proc] flags Switch spec
       # @param [Toys::Tool] tool The tool
       # @param [Array<String>] defaults The defaults to use for `true`.
-      # @return [Array<String>] An array of switches
+      # @return [Array<String>] An array of flags
       #
-      def resolve_switches_spec(switches, tool, defaults)
-        switches = switches.call(tool) if switches.respond_to?(:call)
-        case switches
+      def resolve_flags_spec(flags, tool, defaults)
+        flags = flags.call(tool) if flags.respond_to?(:call)
+        case flags
         when true, :default
           Array(defaults)
         when ::String
-          [switches]
+          [flags]
         when ::Array
-          switches
+          flags
         else
           []
         end

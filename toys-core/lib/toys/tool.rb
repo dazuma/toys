@@ -35,7 +35,7 @@ module Toys
   ##
   # A Tool is a single command that can be invoked using Toys.
   # It has a name, a series of one or more words that you use to identify
-  # the tool on the command line. It also has a set of formal switches and
+  # the tool on the command line. It also has a set of formal flags and
   # command line arguments supported, and a block that gets run when the
   # tool is executed.
   #
@@ -56,7 +56,7 @@ module Toys
       @long_desc = []
 
       @default_data = {}
-      @switch_definitions = []
+      @flag_definitions = []
       @required_arg_definitions = []
       @optional_arg_definitions = []
       @remaining_args_definition = nil
@@ -86,10 +86,10 @@ module Toys
     attr_reader :long_desc
 
     ##
-    # Return a list of all defined switches.
-    # @return [Array<Toys::Tool::SwitchDefinition>]
+    # Return a list of all defined flags.
+    # @return [Array<Toys::Tool::FlagDefinition>]
     #
-    attr_reader :switch_definitions
+    attr_reader :flag_definitions
 
     ##
     # Return a list of all defined required positional arguments.
@@ -212,12 +212,12 @@ module Toys
     end
 
     ##
-    # Returns true if at least one switch or positional argument is defined
+    # Returns true if at least one flag or positional argument is defined
     # for this tool.
     # @return [Boolean]
     #
     def includes_arguments?
-      !default_data.empty? || !switch_definitions.empty? ||
+      !default_data.empty? || !flag_definitions.empty? ||
         !required_arg_definitions.empty? || !optional_arg_definitions.empty? ||
         !remaining_args_definition.nil?
     end
@@ -240,11 +240,11 @@ module Toys
     end
 
     ##
-    # Returns a list of switch flags used by this tool.
+    # Returns a list of flags used by this tool.
     # @return [Array<String>]
     #
-    def used_switches
-      switch_definitions.reduce([]) { |used, sdef| used + sdef.effective_switches }.uniq
+    def used_flags
+      flag_definitions.reduce([]) { |used, fdef| used + fdef.effective_flags }.uniq
     end
 
     ##
@@ -323,27 +323,27 @@ module Toys
     end
 
     ##
-    # Add a switch to the current tool. Each switch must specify a key which
-    # the executor may use to obtain the switch value from the context.
-    # You may then provide the switches themselves in `OptionParser` form.
+    # Add a flag to the current tool. Each flag must specify a key which
+    # the executor may use to obtain the flag value from the context.
+    # You may then provide the flags themselves in `OptionParser` form.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [String...] switches The switches in OptionParser format.
+    # @param [String...] flags The flags in OptionParser format.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
-    #     be set in the context if this switch is not provided on the command
+    #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the switch. Defaults to empty array.
+    #     for the flag. Defaults to empty array.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the switch. Defaults to empty array.
-    # @param [Boolean] only_unique If true, any switches that are already
-    #     defined in this tool are removed from this switch. For example, if
-    #     an earlier switch uses `-a`, and this switch wants to use both
-    #     `-a` and `-b`, then only `-b` will be assigned to this switch.
+    #     description for the flag. Defaults to empty array.
+    # @param [Boolean] only_unique If true, any flags that are already
+    #     defined in this tool are removed from this flag. For example, if
+    #     an earlier flag uses `-a`, and this flag wants to use both
+    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
     #     Defaults to false.
     # @param [Proc,nil] handler An optional handler for setting/updating the
     #     value. If given, it should take two arguments, the new given value
@@ -351,22 +351,22 @@ module Toys
     #     should be set. The default handler simply replaces the previous
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
-    def add_switch(key, *switches,
-                   accept: nil, default: nil, desc: nil, long_desc: nil,
-                   only_unique: false, handler: nil)
+    def add_flag(key, *flags,
+                 accept: nil, default: nil, desc: nil, long_desc: nil,
+                 only_unique: false, handler: nil)
       check_definition_state
-      switch_def = SwitchDefinition.new(key, switches)
-      switch_def.accept = accept unless accept.nil?
-      switch_def.desc = desc unless desc.nil?
-      switch_def.long_desc = long_desc unless long_desc.nil?
-      switch_def.handler = handler unless handler.nil?
-      yield switch_def if block_given?
+      flag_def = FlagDefinition.new(key, flags)
+      flag_def.accept = accept unless accept.nil?
+      flag_def.desc = desc unless desc.nil?
+      flag_def.long_desc = long_desc unless long_desc.nil?
+      flag_def.handler = handler unless handler.nil?
+      yield flag_def if block_given?
       if only_unique
-        switch_def.remove_switches(used_switches)
+        flag_def.remove_flags(used_flags)
       end
-      if switch_def.active?
+      if flag_def.active?
         @default_data[key] = default
-        @switch_definitions << switch_def
+        @flag_definitions << flag_def
       end
       self
     end
@@ -508,11 +508,11 @@ module Toys
     end
 
     ##
-    # Representation of a single switch
+    # Representation of a single flag
     #
-    class SwitchSyntax
+    class FlagSyntax
       ##
-      # Parse switch syntax
+      # Parse flag syntax
       # @param [String] str syntax.
       #
       def initialize(str)
@@ -523,33 +523,33 @@ module Toys
         elsif str =~ /^(--\w[\?\w-]*)(([=\s])(\w+))?$/
           setup(str, [$1], $1, "--", $3, $4)
         else
-          raise ToolDefinitionError, "Illegal switch: #{str.inspect}"
+          raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
       end
 
       attr_reader :str
       attr_reader :str_without_value
-      attr_reader :switches
-      attr_reader :switch_style
+      attr_reader :flags
+      attr_reader :flag_style
       attr_reader :value_delim
       attr_reader :value_label
 
       private
 
-      def setup(str, switches, str_without_value, switch_style, value_delim, value_label)
+      def setup(str, flags, str_without_value, flag_style, value_delim, value_label)
         @str = str
-        @switches = switches
+        @flags = flags
         @str_without_value = str_without_value
-        @switch_style = switch_style
+        @flag_style = flag_style
         @value_delim = value_delim
         @value_label = value_label
       end
     end
 
     ##
-    # Representation of a formal set of switches.
+    # Representation of a formal set of flags.
     #
-    class SwitchDefinition
+    class FlagDefinition
       ##
       # The default handler replaces the previous value.
       # @return [Proc]
@@ -557,16 +557,16 @@ module Toys
       DEFAULT_HANDLER = ->(val, _prev) { val }
 
       ##
-      # Create a SwitchDefinition
+      # Create a FlagDefinition
       # @private
       #
-      # @param [Symbol] key This switch will set the given context key.
-      # @param [Array<String>] switches Switches in OptionParser format
+      # @param [Symbol] key This flag will set the given context key.
+      # @param [Array<String>] flags Flags in OptionParser format
       #
-      def initialize(key, switches)
+      def initialize(key, flags)
         @key = key
-        switches = ["--#{Tool.canonical_switch(key)}=VALUE"] if switches.empty?
-        @switch_syntax = switches.map { |s| SwitchSyntax.new(s) }
+        flags = ["--#{Tool.canonical_flag(key)}=VALUE"] if flags.empty?
+        @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = nil
         @desc = ""
         @long_desc = []
@@ -581,10 +581,10 @@ module Toys
       attr_reader :key
 
       ##
-      # Returns an array of SwitchSyntax for the switches.
-      # @return [Array<SwitchSyntax>]
+      # Returns an array of FlagSyntax for the flags.
+      # @return [Array<FlagSyntax>]
       #
-      attr_reader :switch_syntax
+      attr_reader :flag_syntax
 
       ##
       # Returns the acceptor, which may be `nil`.
@@ -639,27 +639,27 @@ module Toys
       end
 
       ##
-      # Returns an array of SwitchSyntax including only single-dash switches
-      # @return [Array<SwitchSyntax>]
+      # Returns an array of FlagSyntax including only single-dash flags
+      # @return [Array<FlagSyntax>]
       #
-      def single_switch_syntax
-        @single_switch_syntax ||= switch_syntax.find_all { |ss| ss.switch_style == "-" }
+      def single_flag_syntax
+        @single_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == "-" }
       end
 
       ##
-      # Returns an array of SwitchSyntax including only double-dash switches
-      # @return [Array<SwitchSyntax>]
+      # Returns an array of FlagSyntax including only double-dash flags
+      # @return [Array<FlagSyntax>]
       #
-      def double_switch_syntax
-        @double_switch_syntax ||= switch_syntax.find_all { |ss| ss.switch_style == "--" }
+      def double_flag_syntax
+        @double_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == "--" }
       end
 
       ##
-      # Returns the list of effective switches used.
+      # Returns the list of effective flags used.
       # @return [Array<String>]
       #
-      def effective_switches
-        @effective_switches ||= switch_syntax.map(&:switches).flatten
+      def effective_flags
+        @effective_flags ||= flag_syntax.map(&:flags).flatten
       end
 
       ##
@@ -687,20 +687,20 @@ module Toys
       end
 
       ##
-      # All optparser switches and acceptor if present
+      # All optparser flags and acceptor if present
       # @return [Array]
       #
       def optparser_info
-        @optparser_info ||= switch_syntax.map(&:str) + Array(accept)
+        @optparser_info ||= flag_syntax.map(&:str) + Array(accept)
       end
 
       ##
-      # Returns true if this switch is active. That is, it has a nonempty
-      # switches list.
+      # Returns true if this flag is active. That is, it has a nonempty
+      # flags list.
       # @return [Boolean]
       #
       def active?
-        !effective_switches.empty?
+        !effective_flags.empty?
       end
 
       ##
@@ -722,12 +722,12 @@ module Toys
       end
 
       ##
-      # Removes the given switches.
-      # @param [Array<String>] switches
+      # Removes the given flags.
+      # @param [Array<String>] flags
       #
-      def remove_switches(switches)
-        @switch_syntax.select! do |ss|
-          ss.switches.all? { |s| !switches.include?(s) }
+      def remove_flags(flags)
+        @flag_syntax.select! do |ss|
+          ss.flags.all? { |s| !flags.include?(s) }
         end
         reset_data
         self
@@ -736,24 +736,24 @@ module Toys
       private
 
       def reset_data
-        @effective_switches = nil
+        @effective_flags = nil
         @optparser_info = nil
-        @single_switch_syntax = nil
-        @double_switch_syntax = nil
+        @single_flag_syntax = nil
+        @double_flag_syntax = nil
         @value_label = nil
         @value_delim = nil
       end
 
       def find_canonical_value_label
         return if @value_delim
-        double_switch_syntax.reverse_each do |ss|
+        double_flag_syntax.reverse_each do |ss|
           next unless ss.value_label
           @value_label = ss.value_label
           @value_delim = ss.value_delim
           break
         end
         return if @value_delim
-        single_switch_syntax.reverse_each do |ss|
+        single_flag_syntax.reverse_each do |ss|
           next unless ss.value_label
           @value_label = ss.value_label
           @value_delim = ss.value_delim
@@ -829,7 +829,7 @@ module Toys
       # @return [String]
       #
       def canonical_name
-        Tool.canonical_switch(key)
+        Tool.canonical_flag(key)
       end
 
       ##
@@ -889,7 +889,7 @@ module Toys
 
     class << self
       ## @private
-      def canonical_switch(name)
+      def canonical_flag(name)
         name.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
       end
 
@@ -948,14 +948,14 @@ module Toys
 
       def create_option_parser
         optparse = ::OptionParser.new
-        # The following clears out the Officious (hidden default switches).
+        # The following clears out the Officious (hidden default flags).
         optparse.remove
         optparse.remove
         optparse.new
         optparse.new
-        @tool.switch_definitions.each do |switch|
-          optparse.on(*switch.optparser_info) do |val|
-            @data[switch.key] = switch.handler.call(val, @data[switch.key])
+        @tool.flag_definitions.each do |flag|
+          optparse.on(*flag.optparser_info) do |val|
+            @data[flag.key] = flag.handler.call(val, @data[flag.key])
           end
         end
         optparse

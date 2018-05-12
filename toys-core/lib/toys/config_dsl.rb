@@ -32,7 +32,7 @@ module Toys
   # This class defines the DSL for a toys configuration file.
   #
   # A toys configuration defines one or more named tools. It provides syntax
-  # for setting the description, defining switches and arguments, specifying
+  # for setting the description, defining flags and arguments, specifying
   # how to execute the tool, and requesting helper modules and other services.
   # It also lets you define subtools, nested arbitrarily deep, using blocks.
   #
@@ -189,27 +189,27 @@ module Toys
     alias short_desc desc
 
     ##
-    # Add a switch to the current tool. Each switch must specify a key which
-    # the executor may use to obtain the switch value from the context.
-    # You may then provide the switches themselves in `OptionParser` form.
+    # Add a flag to the current tool. Each flag must specify a key which
+    # the executor may use to obtain the flag value from the context.
+    # You may then provide the flags themselves in `OptionParser` form.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [String...] switches The switches in OptionParser format.
+    # @param [String...] flags The flags in OptionParser format.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
-    #     be set in the context if this switch is not provided on the command
+    #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the switch. Defaults to empty array.
+    #     for the flag. Defaults to empty array.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the switch. Defaults to empty array.
-    # @param [Boolean] only_unique If true, any switches that are already
-    #     defined in this tool are removed from this switch. For example, if
-    #     an earlier switch uses `-a`, and this switch wants to use both
-    #     `-a` and `-b`, then only `-b` will be assigned to this switch.
+    #     description for the flag. Defaults to empty array.
+    # @param [Boolean] only_unique If true, any flags that are already
+    #     defined in this tool are removed from this flag. For example, if
+    #     an earlier flag uses `-a`, and this flag wants to use both
+    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
     #     Defaults to false.
     # @param [Proc,nil] handler An optional handler for setting/updating the
     #     value. If given, it should take two arguments, the new given value
@@ -217,17 +217,17 @@ module Toys
     #     should be set. The default handler simply replaces the previous
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
-    def switch(key, *switches,
-               accept: nil, default: nil, desc: nil, long_desc: nil,
-               only_unique: false, handler: nil,
-               &block)
+    def flag(key, *flags,
+             accept: nil, default: nil, desc: nil, long_desc: nil,
+             only_unique: false, handler: nil,
+             &block)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.add_switch(key, *switches,
-                           accept: accept, default: default,
-                           desc: desc, long_desc: long_desc,
-                           only_unique: only_unique, handler: handler,
-                           &block)
+      _cur_tool.add_flag(key, *flags,
+                         accept: accept, default: default,
+                         desc: desc, long_desc: long_desc,
+                         only_unique: only_unique, handler: handler,
+                         &block)
       self
     end
 

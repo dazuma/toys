@@ -30,16 +30,15 @@
 require "highline"
 
 require "toys/middleware/base"
-require "toys/utils/usage"
+require "toys/utils/help_text"
 
 module Toys
   module Middleware
     ##
     # This middleware handles the case of a usage error. If a usage error, such
-    # as an unrecognized switch or an unfulfilled required argument, is
-    # detected, this middleware intercepts execution and displays the error
-    # along with the short help string, and terminates execution with an error
-    # code.
+    # as an unrecognized flag or an unfulfilled required argument, is detected,
+    # this middleware intercepts execution and displays the error along with
+    # the short help string, and terminates execution with an error code.
     #
     class HandleUsageErrors < Base
       ##

@@ -33,7 +33,7 @@ module Toys
     # A helper class that generates usage documentation for a tool.
     #
     # This class generates full usage documentation, including description,
-    # switches, and arguments. It is used by middleware that implements help
+    # flags, and arguments. It is used by middleware that implements help
     # and related options.
     #
     class HelpText
@@ -176,7 +176,7 @@ module Toys
 
         def tool_synopsis
           synopsis = [@binary_name] + @tool.full_name
-          synopsis << "[<options...>]" unless @tool.switch_definitions.empty?
+          synopsis << "[<flags...>]" unless @tool.flag_definitions.empty?
           @tool.required_arg_definitions.each do |arg_info|
             synopsis << "<#{arg_info.canonical_name}>"
           end
@@ -190,24 +190,24 @@ module Toys
         end
 
         def group_synopsis
-          ([@binary_name] + @tool.full_name + ["<command>", "<command-arguments...>"]).join(" ")
+          ([@binary_name] + @tool.full_name + ["<tool>", "<tool-arguments...>"]).join(" ")
         end
 
         def add_flags_section
-          return if @tool.switch_definitions.empty?
+          return if @tool.flag_definitions.empty?
           @lines << ""
           @lines << "Flags:"
-          @tool.switch_definitions.each do |switch|
-            add_flag(switch)
+          @tool.flag_definitions.each do |flag|
+            add_flag(flag)
           end
         end
 
-        def add_flag(switch)
-          switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
-                          switch.double_switch_syntax.map(&:str_without_value)).join(", ")
-          switches_str << switch.value_delim << switch.value_label if switch.value_label
-          switches_str = "    #{switches_str}" if switch.single_switch_syntax.empty?
-          add_right_column_desc(switches_str, switch.wrapped_desc(@right_column_wrap_width))
+        def add_flag(flag)
+          flags_str = (flag.single_flag_syntax.map(&:str_without_value) +
+                       flag.double_flag_syntax.map(&:str_without_value)).join(", ")
+          flags_str << flag.value_delim << flag.value_label if flag.value_label
+          flags_str = "    #{flags_str}" if flag.single_flag_syntax.empty?
+          add_right_column_desc(flags_str, flag.wrapped_desc(@right_column_wrap_width))
         end
 
         def add_positional_arguments_section
@@ -331,7 +331,7 @@ module Toys
         def tool_synopsis
           # TODO: Expand this
           synopsis = [@binary_name] + @tool.full_name
-          synopsis << "[<options...>]" unless @tool.switch_definitions.empty?
+          synopsis << "[<flags...>]" unless @tool.flag_definitions.empty?
           @tool.required_arg_definitions.each do |arg_info|
             synopsis << "<#{arg_info.canonical_name}>"
           end
@@ -345,7 +345,7 @@ module Toys
         end
 
         def group_synopsis
-          ([@binary_name] + @tool.full_name + ["<command>", "<command-arguments...>"]).join(" ")
+          ([@binary_name] + @tool.full_name + ["<tool>", "<tool-arguments...>"]).join(" ")
         end
 
         def add_source_section
@@ -366,21 +366,21 @@ module Toys
         end
 
         def add_flags_section
-          return if @tool.switch_definitions.empty?
+          return if @tool.flag_definitions.empty?
           @lines << ""
           @lines << "FLAGS"
           precede_with_blank = false
-          @tool.switch_definitions.each do |switch|
-            add_flag(switch, precede_with_blank)
+          @tool.flag_definitions.each do |flag|
+            add_flag(flag, precede_with_blank)
             precede_with_blank = true
           end
         end
 
-        def add_flag(switch, precede_with_blank)
-          switches_str = (switch.single_switch_syntax.map(&:str_without_value) +
-                          switch.double_switch_syntax.map(&:str_without_value)).join(", ")
-          switches_str << switch.value_delim << switch.value_label if switch.value_label
-          add_indented_section(switches_str, switch, precede_with_blank)
+        def add_flag(flag, precede_with_blank)
+          flags_str = (flag.single_flag_syntax.map(&:str_without_value) +
+                       flag.double_flag_syntax.map(&:str_without_value)).join(", ")
+          flags_str << flag.value_delim << flag.value_label if flag.value_label
+          add_indented_section(flags_str, flag, precede_with_blank)
         end
 
         def add_positional_arguments_section

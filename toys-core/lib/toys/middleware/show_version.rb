@@ -33,15 +33,15 @@ module Toys
   module Middleware
     ##
     # A middleware that displays a version string for certain tools if the
-    # `--version` switch is given. You can specify which tools respond to
-    # this switch, and the string that will be displayed.
+    # `--version` flag is given. You can specify which tools respond to
+    # this flag, and the string that will be displayed.
     #
     class ShowVersion < Base
       ##
-      # Default version switches
+      # Default version flags
       # @return [Array<String>]
       #
-      DEFAULT_VERSION_SWITCHES = ["--version"].freeze
+      DEFAULT_VERSION_FLAGS = ["--version"].freeze
 
       ##
       # Return a simple version displayer that returns the given string for
@@ -58,28 +58,28 @@ module Toys
       #
       # @param [Proc] version_displayer A proc that takes a tool and returns
       #     either the version string that should be displayed, or a falsy
-      #     value to indicate the tool should not have a `--version` switch.
+      #     value to indicate the tool should not have a `--version` flag.
       #     Defaults to a "null" displayer that returns false for all tools.
-      # @param [Array<String>] version_switches A list of switches that should
+      # @param [Array<String>] version_flags A list of flags that should
       #     trigger displaying the version. Default is
-      #     {DEFAULT_VERSION_SWITCHES}.
+      #     {DEFAULT_VERSION_FLAGS}.
       #
       def initialize(version_displayer: nil,
-                     version_switches: DEFAULT_VERSION_SWITCHES)
+                     version_flags: DEFAULT_VERSION_FLAGS)
         @version_displayer = version_displayer || proc { |_| false }
-        @version_switches = version_switches
+        @version_flags = version_flags
       end
 
       ##
-      # Adds the version switch if requested.
+      # Adds the version flag if requested.
       #
       def config(tool)
         version = @version_displayer.call(tool)
         if version
-          tool.add_switch(:_show_version, *@version_switches,
-                          desc: "Show version",
-                          handler: ->(_val, _prev) { version },
-                          only_unique: true)
+          tool.add_flag(:_show_version, *@version_flags,
+                        desc: "Show version",
+                        handler: ->(_val, _prev) { version },
+                        only_unique: true)
         end
         yield
       end

@@ -2,6 +2,7 @@
 
 ### 0.3.4 / TBD
 
+* CHANGED: Renamed switch to flag
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
 * CHANGED: desc is now a single string rather than an array.
 * IMPROVED: Nicer help page format

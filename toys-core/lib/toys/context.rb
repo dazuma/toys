@@ -37,7 +37,7 @@ module Toys
   # Keys that begin with two underscores are reserved common elements of the
   # context such as the tool being executed, or the verbosity level.
   # Other keys are available for use by your tool. Generally, they are set
-  # by switches and arguments in your tool. Context values may also be set
+  # by flags and arguments in your tool. Context values may also be set
   # by middleware. By convention, middleware-set keys begin with a single
   # underscore.
   #
@@ -236,8 +236,8 @@ module Toys
     ##
     # Execute another tool, given by the provided arguments.
     #
-    # @param [String...] args Command line arguments defining another tool
-    #     to run, along with parameters and switches.
+    # @param [String...] args The name of the tool to run along with its
+    #     command line arguments and flags.
     # @param [Toys::CLI,nil] cli The CLI to use to execute the tool. If `nil`
     #     (the default), uses the current CLI.
     # @param [Boolean] exit_on_nonzero_status If true, exit immediately if the

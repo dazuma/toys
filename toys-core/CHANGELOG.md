@@ -2,6 +2,7 @@
 
 ### 0.3.4 / TBD
 
+* CHANGED: Renamed switch to flag
 * CHANGED: Renamed Utils::Usage to Utils::HelpText
 * CHANGED: Renamed show_usage middleware to show_help
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.

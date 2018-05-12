@@ -37,95 +37,93 @@ module Toys
     ##
     # A middleware that shows help text for the tool.
     #
-    # This can be configured to display help text when a switch (typically
+    # This can be configured to display help text when a flag (typically
     # `--help`) is provided. It can also be configured to display help text
     # automatically for tools that do not have an executor.
     #
     # If a tool has no executor, this middleware can also add a
     # `--[no-]recursive` flag, which, when set to `true` (the default), shows
-    # all subcommands recursively rather than only immediate subcommands.
+    # all subtools recursively rather than only immediate subtools.
     #
     class ShowHelp < Base
       ##
-      # Default help switches
+      # Default help flags
       # @return [Array<String>]
       #
-      DEFAULT_HELP_SWITCHES = ["-?", "--help"].freeze
+      DEFAULT_HELP_FLAGS = ["-?", "--help"].freeze
 
       ##
-      # Default recursive switches
+      # Default recursive flags
       # @return [Array<String>]
       #
-      DEFAULT_RECURSIVE_SWITCHES = ["-r", "--[no-]recursive"].freeze
+      DEFAULT_RECURSIVE_FLAGS = ["-r", "--[no-]recursive"].freeze
 
       ##
-      # Default search switches
+      # Default search flags
       # @return [Array<String>]
       #
-      DEFAULT_SEARCH_SWITCHES = ["-s WORD", "--search=WORD"].freeze
+      DEFAULT_SEARCH_FLAGS = ["-s WORD", "--search=WORD"].freeze
 
       ##
       # Create a ShowHelp middleware.
       #
-      # @param [Boolean,Array<String>,Proc] help_switches Specify switches to
+      # @param [Boolean,Array<String>,Proc] help_flags Specify flags to
       #     activate help. The value may be any of the following:
-      #     *  An array of switches.
-      #     *  The `true` value to use {DEFAULT_HELP_SWITCHES}. (Default)
-      #     *  The `false` value for no switches.
+      #     *  An array of flags.
+      #     *  The `true` value to use {DEFAULT_HELP_FLAGS}. (Default)
+      #     *  The `false` value for no flags.
       #     *  A proc that takes a tool and returns any of the above.
-      # @param [Boolean,Array<String>,Proc] recursive_switches Specify switches
-      #     to control recursive subcommand search. The value may be any of the
+      # @param [Boolean,Array<String>,Proc] recursive_flags Specify flags
+      #     to control recursive subtool search. The value may be any of the
       #     following:
-      #     *  An array of switches.
-      #     *  The `true` value to use {DEFAULT_RECURSIVE_SWITCHES}. (Default)
-      #     *  The `false` value for no switches.
+      #     *  An array of flags.
+      #     *  The `true` value to use {DEFAULT_RECURSIVE_FLAGS}. (Default)
+      #     *  The `false` value for no flags.
       #     *  A proc that takes a tool and returns any of the above.
-      # @param [Boolean,Array<String>,Proc] search_switches Specify switches
-      #     to search subcommands for a search term. The value may be any of
+      # @param [Boolean,Array<String>,Proc] search_flags Specify flags
+      #     to search subtools for a search term. The value may be any of
       #     the following:
-      #     *  An array of switches.
-      #     *  The `true` value to use {DEFAULT_SEARCH_SWITCHES}. (Default)
-      #     *  The `false` value for no switches.
+      #     *  An array of flags.
+      #     *  The `true` value to use {DEFAULT_SEARCH_FLAGS}. (Default)
+      #     *  The `false` value for no flags.
       #     *  A proc that takes a tool and returns any of the above.
       # @param [Boolean] default_recursive Whether to search recursively for
-      #     subcommands by default. Default is `true`.
+      #     subtools by default. Default is `true`.
       # @param [Boolean] fallback_execution Cause the tool to display its own
       #     help text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
       #     Default is `true`.
       #
-      def initialize(help_switches: true,
-                     recursive_switches: true,
-                     search_switches: true,
+      def initialize(help_flags: true,
+                     recursive_flags: true,
+                     search_flags: true,
                      default_recursive: true,
                      fallback_execution: true)
-        @help_switches = help_switches
-        @recursive_switches = recursive_switches
-        @search_switches = search_switches
+        @help_flags = help_flags
+        @recursive_flags = recursive_flags
+        @search_flags = search_flags
         @default_recursive = default_recursive ? true : false
         @fallback_execution = fallback_execution
       end
 
       ##
-      # Configure switches and default data.
+      # Configure flags and default data.
       #
       def config(tool)
-        help_switches = Middleware.resolve_switches_spec(@help_switches, tool,
-                                                         DEFAULT_HELP_SWITCHES)
+        help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
+                                                   DEFAULT_HELP_FLAGS)
         is_default = !tool.includes_executor? && @fallback_execution
-        if !help_switches.empty?
+        if !help_flags.empty?
           desc = "Show help message"
           desc << " (default for groups)" if is_default
-          tool.add_switch(:_help, *help_switches,
-                          desc: desc,
-                          default: is_default,
-                          only_unique: true)
+          tool.add_flag(:_help, *help_flags,
+                        desc: desc, default: is_default, only_unique: true)
         elsif is_default
           tool.default_data[:_help] = true
         end
-        if !tool.includes_executor? && (!help_switches.empty? || @fallback_execution)
-          add_recursive_switches(tool)
-          add_search_switches(tool)
+        if !tool.includes_executor? && (!help_flags.empty? || @fallback_execution)
+          add_recursive_flags(tool)
+          add_search_flags(tool)
         end
         yield
       end
@@ -137,8 +135,8 @@ module Toys
         if context[:_help]
           help_text = Utils::HelpText.from_context(context)
           width = ::HighLine.new.output_cols
-          puts(help_text.long_string(recursive: context[:_recursive_subcommands],
-                                     search: context[:_search_subcommands],
+          puts(help_text.long_string(recursive: context[:_recursive_subtools],
+                                     search: context[:_search_subtools],
                                      show_path: context[Context::VERBOSITY] > 0,
                                      wrap_width: width))
         else
@@ -148,25 +146,24 @@ module Toys
 
       private
 
-      def add_recursive_switches(tool)
-        recursive_switches = Middleware.resolve_switches_spec(@recursive_switches, tool,
-                                                              DEFAULT_RECURSIVE_SWITCHES)
-        unless recursive_switches.empty?
-          tool.add_switch(:_recursive_subcommands, *recursive_switches,
-                          default: @default_recursive,
-                          desc: "Show all subcommands recursively" \
-                                " (default is #{@default_recursive})",
-                          only_unique: true)
+      def add_recursive_flags(tool)
+        recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool,
+                                                        DEFAULT_RECURSIVE_FLAGS)
+        unless recursive_flags.empty?
+          tool.add_flag(:_recursive_subtools, *recursive_flags,
+                        default: @default_recursive,
+                        desc: "Show all subtools recursively (default is #{@default_recursive})",
+                        only_unique: true)
         end
       end
 
-      def add_search_switches(tool)
-        search_switches = Middleware.resolve_switches_spec(@search_switches, tool,
-                                                           DEFAULT_SEARCH_SWITCHES)
-        unless search_switches.empty?
-          tool.add_switch(:_search_subcommands, *search_switches,
-                          desc: "Search subcommands for the given term",
-                          only_unique: true)
+      def add_search_flags(tool)
+        search_flags = Middleware.resolve_flags_spec(@search_flags, tool,
+                                                     DEFAULT_SEARCH_FLAGS)
+        unless search_flags.empty?
+          tool.add_flag(:_search_subtools, *search_flags,
+                        desc: "Search subtools for the given term",
+                        only_unique: true)
         end
       end
     end

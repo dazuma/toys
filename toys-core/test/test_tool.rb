@@ -119,154 +119,154 @@ describe Toys::Tool do
     end
   end
 
-  describe "switch definition" do
+  describe "flag definition" do
     it "starts empty" do
-      assert(tool.switch_definitions.empty?)
+      assert(tool.flag_definitions.empty?)
     end
 
     it "sets the default to nil by default" do
-      tool.add_switch(:a, "-a")
+      tool.add_flag(:a, "-a")
       assert(tool.default_data.key?(:a))
       assert_nil(tool.default_data[:a])
     end
 
     it "sets a default to a custom value" do
-      tool.add_switch(:a, "-a", default: 2)
+      tool.add_flag(:a, "-a", default: 2)
       assert(tool.default_data.key?(:a))
       assert_equal(2, tool.default_data[:a])
     end
 
-    it "adds a minimal switch" do
-      tool.add_switch(:a, "-a")
-      assert_equal(1, tool.switch_definitions.size)
-      switch = tool.switch_definitions.first
-      assert_equal(:a, switch.key)
-      assert_equal(1, switch.switch_syntax.size)
-      assert_equal(["-a"], switch.switch_syntax.first.switches)
-      assert_nil(switch.accept)
-      assert_equal("", switch.desc)
-      assert_equal([], switch.long_desc)
-      assert_equal(1, switch.handler.call(1, 2))
-      assert_equal(true, switch.active?)
+    it "adds a minimal flag" do
+      tool.add_flag(:a, "-a")
+      assert_equal(1, tool.flag_definitions.size)
+      flag = tool.flag_definitions.first
+      assert_equal(:a, flag.key)
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal(["-a"], flag.flag_syntax.first.flags)
+      assert_nil(flag.accept)
+      assert_equal("", flag.desc)
+      assert_equal([], flag.long_desc)
+      assert_equal(1, flag.handler.call(1, 2))
+      assert_equal(true, flag.active?)
     end
 
     it "recognizes desc with wrapping" do
-      tool.add_switch(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"))
-      switch = tool.switch_definitions.first
-      assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), switch.desc)
-      assert_equal(["I like", "Ruby"], switch.wrapped_desc(7))
+      tool.add_flag(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"))
+      flag = tool.flag_definitions.first
+      assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), flag.desc)
+      assert_equal(["I like", "Ruby"], flag.wrapped_desc(7))
     end
 
     it "recognizes long desc with multiple lines" do
-      tool.add_switch(:a, "-a", long_desc: ["hello\nworld", "I like Ruby"])
-      switch = tool.switch_definitions.first
-      assert_equal(["hello", "world", "I like Ruby"], switch.long_desc)
-      assert_equal(["hello", "world", "I like Ruby"], switch.wrapped_long_desc(7))
+      tool.add_flag(:a, "-a", long_desc: ["hello\nworld", "I like Ruby"])
+      flag = tool.flag_definitions.first
+      assert_equal(["hello", "world", "I like Ruby"], flag.long_desc)
+      assert_equal(["hello", "world", "I like Ruby"], flag.wrapped_long_desc(7))
     end
 
     it "recognizes long desc with wrapping" do
-      tool.add_switch(:a, "-a",
-                      long_desc: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
-      switch = tool.switch_definitions.first
+      tool.add_flag(:a, "-a",
+                    long_desc: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
+      flag = tool.flag_definitions.first
       assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")],
-                   switch.long_desc)
-      assert_equal(["hello world", "I like", "Ruby"], switch.wrapped_long_desc(7))
+                   flag.long_desc)
+      assert_equal(["hello world", "I like", "Ruby"], flag.wrapped_long_desc(7))
     end
 
     it "exposes optparser info with no acceptor" do
-      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
-      switch = tool.switch_definitions.first
-      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"], switch.optparser_info)
+      tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      flag = tool.flag_definitions.first
+      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"], flag.optparser_info)
     end
 
     it "exposes optparser info with an acceptor" do
-      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", accept: Integer)
-      switch = tool.switch_definitions.first
+      tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", accept: Integer)
+      flag = tool.flag_definitions.first
       assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer],
-                   switch.optparser_info)
+                   flag.optparser_info)
     end
 
-    it "finds single and double switches" do
-      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
-      switch = tool.switch_definitions.first
-      assert_equal(["-a", "-cVALUE"], switch.single_switch_syntax.map(&:str))
-      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], switch.double_switch_syntax.map(&:str))
+    it "finds single and double flags" do
+      tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      flag = tool.flag_definitions.first
+      assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:str))
+      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], flag.double_flag_syntax.map(&:str))
     end
 
-    it "determines effective switches" do
-      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
-      switch = tool.switch_definitions.first
-      assert_equal(["-a", "--bb", "-c", "--dd", "--ee", "--no-ee"], switch.effective_switches)
+    it "determines effective flags" do
+      tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
+      flag = tool.flag_definitions.first
+      assert_equal(["-a", "--bb", "-c", "--dd", "--ee", "--no-ee"], flag.effective_flags)
     end
 
-    it "gets value label from last double switch" do
-      tool.add_switch(:a, "-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL", "--[no-]ee")
-      switch = tool.switch_definitions.first
-      assert_equal("VAL", switch.value_label)
-      assert_equal("=", switch.value_delim)
+    it "gets value label from last double flag" do
+      tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL", "--[no-]ee")
+      flag = tool.flag_definitions.first
+      assert_equal("VAL", flag.value_label)
+      assert_equal("=", flag.value_delim)
     end
 
-    it "gets value label from last single switch" do
-      tool.add_switch(:a, "-a VAL", "--bb", "-cVALUE", "--aa", "--[no-]ee")
-      switch = tool.switch_definitions.first
-      assert_equal("VALUE", switch.value_label)
-      assert_equal(" ", switch.value_delim)
+    it "gets value label from last single flag" do
+      tool.add_flag(:a, "-a VAL", "--bb", "-cVALUE", "--aa", "--[no-]ee")
+      flag = tool.flag_definitions.first
+      assert_equal("VALUE", flag.value_label)
+      assert_equal(" ", flag.value_delim)
     end
 
-    it "removes switches" do
-      tool.add_switch(:a, "-a VAL", "--bb=VALUE")
-      switch = tool.switch_definitions.first
-      switch.remove_switches(["-a", "-b"])
-      assert_equal(["--bb"], switch.effective_switches)
-      assert(switch.active?)
+    it "removes flags" do
+      tool.add_flag(:a, "-a VAL", "--bb=VALUE")
+      flag = tool.flag_definitions.first
+      flag.remove_flags(["-a", "-b"])
+      assert_equal(["--bb"], flag.effective_flags)
+      assert(flag.active?)
     end
 
-    it "removes all switches" do
-      tool.add_switch(:a, "-a VAL", "--bb=VALUE")
-      switch = tool.switch_definitions.first
-      switch.remove_switches(["-a", "-b", "--bb"])
-      assert_equal([], switch.effective_switches)
-      refute(switch.active?)
+    it "removes all flags" do
+      tool.add_flag(:a, "-a VAL", "--bb=VALUE")
+      flag = tool.flag_definitions.first
+      flag.remove_flags(["-a", "-b", "--bb"])
+      assert_equal([], flag.effective_flags)
+      refute(flag.active?)
     end
 
-    it "allows legal switch syntax" do
-      tool.add_switch(:foo, "-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
-                      "--[no-]hij", "--kl=VAL", "--mn VAL")
+    it "allows legal flag syntax" do
+      tool.add_flag(:foo, "-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
+                    "--[no-]hij", "--kl=VAL", "--mn VAL")
     end
 
-    it "does not allow illegal switch syntax" do
+    it "does not allow illegal flag syntax" do
       assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "hi")
+        tool.add_flag(:foo, "hi")
       end
       assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "")
+        tool.add_flag(:foo, "")
       end
       assert_raises(Toys::ToolDefinitionError) do
-        tool.add_switch(:foo, "-a -")
+        tool.add_flag(:foo, "-a -")
       end
     end
   end
 
-  describe "used_switches" do
+  describe "used_flags" do
     it "starts empty" do
-      assert_equal([], tool.used_switches)
+      assert_equal([], tool.used_flags)
     end
 
-    it "handles switches" do
-      tool.add_switch(:a, "-a", "--aa")
-      assert_equal(["-a", "--aa"], tool.used_switches)
+    it "handles flags" do
+      tool.add_flag(:a, "-a", "--aa")
+      assert_equal(["-a", "--aa"], tool.used_flags)
     end
 
-    it "removes duplicate switches" do
-      tool.add_switch(:a, "-a", "--aa")
-      tool.add_switch(:b, "-b", "--aa")
-      assert_equal(["-a", "--aa", "-b"], tool.used_switches)
+    it "removes duplicate flags" do
+      tool.add_flag(:a, "-a", "--aa")
+      tool.add_flag(:b, "-b", "--aa")
+      assert_equal(["-a", "--aa", "-b"], tool.used_flags)
     end
 
     it "handles special syntax" do
-      tool.add_switch(:a, "--[no-]aa")
-      tool.add_switch(:b, "-bVALUE", "--bb=VALUE")
-      assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_switches)
+      tool.add_flag(:a, "--[no-]aa")
+      tool.add_flag(:b, "-bVALUE", "--bb=VALUE")
+      assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_flags)
     end
   end
 
@@ -280,9 +280,9 @@ describe Toys::Tool do
       assert_equal(0, tool.execute(cli, []))
     end
 
-    it "defaults simple boolean switch to nil" do
+    it "defaults simple boolean flag to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa", desc: "hi there")
       assert_equal(true, tool.includes_definition?)
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
@@ -290,63 +290,63 @@ describe Toys::Tool do
       assert_equal(0, tool.execute(cli, []))
     end
 
-    it "sets simple boolean switch" do
+    it "sets simple boolean flag" do
       test = self
-      tool.add_switch(:a, "-a", "--aa", desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: true}, options)
       end
       assert_equal(0, tool.execute(cli, ["--aa"]))
     end
 
-    it "defaults value switch to nil" do
+    it "defaults value flag to nil" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa=VALUE", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: nil}, options)
       end
       assert_equal(0, tool.execute(cli, []))
     end
 
-    it "honors given default of a value switch" do
+    it "honors given default of a value flag" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hehe", desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa=VALUE", default: "hehe", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hehe"}, options)
       end
       assert_equal(0, tool.execute(cli, []))
     end
 
-    it "sets value switch" do
+    it "sets value flag" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa=VALUE", desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: "hoho"}, options)
       end
       assert_equal(0, tool.execute(cli, ["--aa", "hoho"]))
     end
 
-    it "converts a value switch" do
+    it "converts a value flag" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a: 1234}, options)
       end
       assert_equal(0, tool.execute(cli, ["--aa", "1234"]))
     end
 
-    it "checks match of a value switch" do
+    it "checks match of a value flag" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
+      tool.add_flag(:a, "-a", "--aa=VALUE", accept: Integer, desc: "hi there")
       tool.executor = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
       assert_equal(0, tool.execute(cli, ["--aa", "a1234"]))
     end
 
-    it "defaults the name of a value switch" do
+    it "defaults the name of a value flag" do
       test = self
-      tool.add_switch(:a_bc, desc: "hi there")
+      tool.add_flag(:a_bc, desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
@@ -355,14 +355,14 @@ describe Toys::Tool do
 
     it "honors the handler" do
       test = self
-      tool.add_switch(:a, "-a", "--aa=VALUE", default: "hi", handler: ->(v, c) { "#{c}#{v}" })
+      tool.add_flag(:a, "-a", "--aa=VALUE", default: "hi", handler: ->(v, c) { "#{c}#{v}" })
       tool.executor = proc do
         test.assert_equal({a: "hiho"}, options)
       end
       assert_equal(0, tool.execute(cli, ["--aa", "ho"]))
     end
 
-    it "errors on an unknown switch" do
+    it "errors on an unknown flag" do
       test = self
       tool.executor = proc do
         test.assert_match(/invalid option: -a/, usage_error)
@@ -535,9 +535,9 @@ describe Toys::Tool do
 
   describe "finish_definition" do
     it "runs middleware config" do
-      assert_equal(true, full_tool.switch_definitions.empty?)
+      assert_equal(true, full_tool.flag_definitions.empty?)
       full_tool.finish_definition
-      assert_equal(false, full_tool.switch_definitions.empty?)
+      assert_equal(false, full_tool.flag_definitions.empty?)
     end
 
     it "can be called multiple times" do
@@ -562,7 +562,7 @@ describe Toys::Tool do
       test = self
       tool.add_optional_arg(:arg1)
       tool.add_optional_arg(:arg2)
-      tool.add_switch(:sw1, "-a")
+      tool.add_flag(:sw1, "-a")
       tool.executor = proc do
         test.assert_equal(0, verbosity)
         test.assert_equal(test.tool, tool)

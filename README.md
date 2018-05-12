@@ -24,7 +24,6 @@ The source can be found on Github at
 
 * Providing an accept: should automatically force a value label
 * Placeholders in usage strings should be CAPS
-* Rename switch -> flag
 * Investigate required flags and flag groups
 * --short-help or --usage
 * toys help

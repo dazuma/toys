@@ -32,65 +32,65 @@ require "toys/middleware/base"
 module Toys
   module Middleware
     ##
-    # A middleware that provides switches for editing the verbosity.
+    # A middleware that provides flags for editing the verbosity.
     #
-    # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` switches, if
-    # not already defined by the tool. These switches affect the setting of
+    # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` flags, if
+    # not already defined by the tool. These flags affect the setting of
     # {Toys::Context::VERBOSITY}, and, thus, the logger level.
     #
-    class AddVerbositySwitches < Base
+    class AddVerbosityFlags < Base
       ##
-      # Default verbose switches
+      # Default verbose flags
       # @return [Array<String>]
       #
-      DEFAULT_VERBOSE_SWITCHES = ["-v", "--verbose"].freeze
+      DEFAULT_VERBOSE_FLAGS = ["-v", "--verbose"].freeze
 
       ##
-      # Default quiet switches
+      # Default quiet flags
       # @return [Array<String>]
       #
-      DEFAULT_QUIET_SWITCHES = ["-q", "--quiet"].freeze
+      DEFAULT_QUIET_FLAGS = ["-q", "--quiet"].freeze
 
       ##
-      # Create a AddVerbositySwitches middleware.
+      # Create a AddVerbosityFlags middleware.
       #
-      # @param [Boolean,Array<String>,Proc] verbose_switches Specify switches
+      # @param [Boolean,Array<String>,Proc] verbose_flags Specify flags
       #     to increase verbosity. The value may be any of the following:
-      #     *  An array of switches that increase verbosity.
-      #     *  The `true` value to use {DEFAULT_VERBOSE_SWITCHES}. (Default)
-      #     *  The `false` value to disable verbose switches.
+      #     *  An array of flags that increase verbosity.
+      #     *  The `true` value to use {DEFAULT_VERBOSE_FLAGS}. (Default)
+      #     *  The `false` value to disable verbose flags.
       #     *  A proc that takes a tool and returns any of the above.
-      # @param [Boolean,Array<String>,Proc] quiet_switches Specify switches
+      # @param [Boolean,Array<String>,Proc] quiet_flags Specify flags
       #     to decrease verbosity. The value may be any of the following:
-      #     *  An array of switches that decrease verbosity.
-      #     *  The `true` value to use {DEFAULT_QUIET_SWITCHES}. (Default)
-      #     *  The `false` value to disable quiet switches.
+      #     *  An array of flags that decrease verbosity.
+      #     *  The `true` value to use {DEFAULT_QUIET_FLAGS}. (Default)
+      #     *  The `false` value to disable quiet flags.
       #     *  A proc that takes a tool and returns any of the above.
       #
-      def initialize(verbose_switches: true, quiet_switches: true)
-        @verbose_switches = verbose_switches
-        @quiet_switches = quiet_switches
+      def initialize(verbose_flags: true, quiet_flags: true)
+        @verbose_flags = verbose_flags
+        @quiet_flags = quiet_flags
       end
 
       ##
-      # Configure the tool switches.
+      # Configure the tool flags.
       #
       def config(tool)
-        verbose_switches = Middleware.resolve_switches_spec(@verbose_switches, tool,
-                                                            DEFAULT_VERBOSE_SWITCHES)
-        unless verbose_switches.empty?
-          tool.add_switch(Context::VERBOSITY, *verbose_switches,
-                          desc: "Increase verbosity",
-                          handler: ->(_val, cur) { cur + 1 },
-                          only_unique: true)
+        verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool,
+                                                      DEFAULT_VERBOSE_FLAGS)
+        unless verbose_flags.empty?
+          tool.add_flag(Context::VERBOSITY, *verbose_flags,
+                        desc: "Increase verbosity",
+                        handler: ->(_val, cur) { cur + 1 },
+                        only_unique: true)
         end
-        quiet_switches = Middleware.resolve_switches_spec(@quiet_switches, tool,
-                                                          DEFAULT_QUIET_SWITCHES)
-        unless quiet_switches.empty?
-          tool.add_switch(Context::VERBOSITY, *quiet_switches,
-                          desc: "Decrease verbosity",
-                          handler: ->(_val, cur) { cur - 1 },
-                          only_unique: true)
+        quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool,
+                                                    DEFAULT_QUIET_FLAGS)
+        unless quiet_flags.empty?
+          tool.add_flag(Context::VERBOSITY, *quiet_flags,
+                        desc: "Decrease verbosity",
+                        handler: ->(_val, cur) { cur - 1 },
+                        only_unique: true)
         end
         yield
       end
