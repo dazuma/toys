@@ -23,13 +23,11 @@ The source can be found on Github at
 ### TODO items
 
 * Providing an accept: should automatically force a value label
-* Placeholders in usage strings should be CAPS
 * Investigate required flags and flag groups
 * --short-help or --usage
 * toys help
-* Style for long help
 * Pipe long help into less?
-* Usage#long_tool_synopsis (may require WrappableString of fragments)
+* Individual flags in long synopsis (may require WrappableString of fragments)
 
 * Improve test coverage
 * Write user's guide

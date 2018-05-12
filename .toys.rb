@@ -124,3 +124,12 @@ tool "release" do
     end
   end
 end
+
+tool "foo" do
+  use :spinner
+  execute do
+    spinner leading_text: "processing... ", style: :cyan do
+      sleep 4
+    end
+  end
+end

@@ -27,8 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-gem "highline", "~> 1.7"
-
 require "highline"
 
 module Toys

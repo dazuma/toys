@@ -28,6 +28,7 @@
 ;
 
 require "monitor"
+require "highline"
 
 module Toys
   module Helpers
@@ -53,23 +54,23 @@ module Toys
       # spinner will be displayed.
       #
       # @param [String] leading_text Optional leading string to display to the
-      #     left of the spinner.
+      #     left of the spinner. Default is the empty string.
       # @param [Float] frame_length Length of a single frame, in seconds.
       #     Defaults to {DEFAULT_FRAME_LENGTH}.
-      # @param [Array<String,Array<String>>] frames An array of frames. Each
-      #     frame should be either a string, or a two-element array of string
-      #     and integer, where the integer is the visible length of the frame
-      #     on screen. The latter form should be used if the frame string
-      #     contains non-printing characters such as ANSI escape codes.
-      #     Defaults to {DEFAULT_FRAMES}.
+      # @param [Array<String>] frames An array of frames. Defaults to
+      #     {DEFAULT_FRAMES}.
+      # @param [Symbol,Array<Symbol>] style A HighLine style or array of styles
+      #     to apply to all frames in the spinner. Defaults to empty,
       # @param [IO] stream Stream to output the spinner to. Defaults to STDOUT.
       #     Note the spinner will be disabled if this stream is not a tty.
       # @param [String] final_text Optional final string to display when the
-      #     spinner is complete.
+      #     spinner is complete. Default is the empty string. A common practice
+      #     is to set this to newline.
       #
       def spinner(leading_text: "",
                   frame_length: DEFAULT_FRAME_LENGTH,
                   frames: DEFAULT_FRAMES,
+                  style: nil,
                   stream: $stdout,
                   final_text: "")
         return nil unless block_given?
@@ -77,7 +78,7 @@ module Toys
           stream.write(leading_text)
           stream.flush
         end
-        spin = SpinDriver.new(stream, frames, frame_length)
+        spin = SpinDriver.new(stream, frames, Array(style), frame_length)
         begin
           yield
         ensure
@@ -93,9 +94,14 @@ module Toys
       class SpinDriver
         include ::MonitorMixin
 
-        def initialize(stream, frames, frame_length)
+        def initialize(stream, frames, style, frame_length)
           @stream = stream
-          @frames = frames.map { |f| f.is_a?(::Array) ? f : [f, f.size] }
+          @frames = frames.map do |f|
+            [
+              style.empty? ? f : ::HighLine.color(f, *style),
+              ::HighLine.uncolor(f).size
+            ]
+          end
           @frame_length = frame_length
           @cur_frame = 0
           @stopping = false
