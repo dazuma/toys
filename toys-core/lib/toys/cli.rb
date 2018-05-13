@@ -287,22 +287,25 @@ module Toys
     class << self
       ##
       # Returns a default set of middleware that may be used as a starting
-      # point for a typical CLI. This set includes:
+      # point for a typical CLI. This set includes the following in order:
       #
+      # *  {Toys::Middleware::SetDefaultDescriptions} providing defaults for
+      #    description fields
+      # *  {Toys::Middleware::ShowHelp} adding the `--help` flag
       # *  {Toys::Middleware::HandleUsageErrors}
-      # *  {Toys::Middleware::ShowHelp} adding the `--help` flag and
-      #    providing default behavior for groups
-      # *  {Toys::Middleware::AddVerbositySwitches} adding the `--verbose` and
+      # *  {Toys::Middleware::ShowHelp} providing default behavior for groups
+      # *  {Toys::Middleware::AddVerbosityFlags} adding the `--verbose` and
       #    `--quiet` flags for managing the logger level
       #
       # @return [Array]
       #
       def default_middleware_stack
         [
-          :set_default_descriptions,
-          :show_help,
-          :handle_usage_errors,
-          :add_verbosity_flags
+          [:set_default_descriptions],
+          [:show_help, help_flags: true],
+          [:handle_usage_errors],
+          [:show_help, fallback_execution: true],
+          [:add_verbosity_flags]
         ]
       end
 

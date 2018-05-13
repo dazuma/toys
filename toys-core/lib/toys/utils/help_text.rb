@@ -132,14 +132,11 @@ module Toys
       private
 
       def find_subtools(recursive, search)
-        return [] if @tool.includes_executor?
         subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
         return subtools if search.nil? || search.empty?
         regex = Regexp.new("(^|\\s)#{Regexp.escape(search)}(\\s|$)", Regexp::IGNORECASE)
         subtools.find_all do |tool|
-          regex =~ tool.display_name ||
-            tool.desc.find { |d| regex =~ d.to_s } ||
-            tool.long_desc.find { |d| regex =~ d.to_s }
+          regex =~ tool.display_name || tool.desc.find { |d| regex =~ d.to_s }
         end
       end
 
@@ -166,17 +163,21 @@ module Toys
         def assemble
           add_synopsis_section
           add_flags_section
-          if @tool.includes_executor?
-            add_positional_arguments_section
-          else
-            add_subtool_list_section
-          end
+          add_positional_arguments_section if @tool.includes_executor?
+          add_subtool_list_section
           @result = @lines.join("\n") + "\n"
         end
 
         def add_synopsis_section
-          synopsis = @tool.includes_executor? ? tool_synopsis : group_synopsis
-          @lines << "Usage: #{synopsis}"
+          synopses = []
+          synopses << group_synopsis if !@subtools.empty? && !@tool.includes_executor?
+          synopses << tool_synopsis
+          synopses << group_synopsis if !@subtools.empty? && @tool.includes_executor?
+          first = true
+          synopses.each do |synopsis|
+            @lines << (first ? "Usage:  #{synopsis}" : "        #{synopsis}")
+            first = false
+          end
         end
 
         def tool_synopsis
@@ -210,8 +211,7 @@ module Toys
         end
 
         def add_positional_arguments_section
-          args_to_display = @tool.required_arg_definitions + @tool.optional_arg_definitions
-          args_to_display << @tool.remaining_args_definition if @tool.remaining_args_definition
+          args_to_display = @tool.arg_definitions
           return if args_to_display.empty?
           @lines << ""
           @lines << "Positional arguments:"
@@ -299,11 +299,8 @@ module Toys
           add_synopsis_section
           add_description_section
           add_flags_section
-          if @tool.includes_executor?
-            add_positional_arguments_section
-          else
-            add_subtool_list_section
-          end
+          add_positional_arguments_section if @tool.includes_executor?
+          add_subtool_list_section
           add_source_section if @show_path
           @result = @lines.join("\n") + "\n"
         end
@@ -333,11 +330,18 @@ module Toys
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
-          unless @tool.includes_executor?
-            @lines << indent_str(group_synopsis)
+          if !@subtools.empty? && !@tool.includes_executor?
+            add_synopsis_clause(group_synopsis)
           end
+          add_synopsis_clause(tool_synopsis)
+          if !@subtools.empty? && @tool.includes_executor?
+            add_synopsis_clause(group_synopsis)
+          end
+        end
+
+        def add_synopsis_clause(synopsis)
           first = true
-          tool_synopsis.each do |line|
+          synopsis.each do |line|
             @lines << (first ? indent_str(line) : indent2_str(line))
             first = false
           end
@@ -356,7 +360,9 @@ module Toys
         end
 
         def group_synopsis
-          "#{full_binary_name} #{underline('TOOL')} [#{underline('ARGUMENTS')}...]"
+          synopsis = [full_binary_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
+          Utils::WrappableString.new(synopsis).wrap(@wrap_width - @indent,
+                                                    @wrap_width - @indent - @indent2)
         end
 
         def full_binary_name

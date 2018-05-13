@@ -93,15 +93,15 @@ module Toys
       # Resolves a typical flags specification. Used often in middleware.
       #
       # You may provide any of the following for the `flags` parameter:
-      # *  A string, which becomes the single switch
+      # *  A string, which becomes the single flag
       # *  An array of strings
       # *  The value `false` or `nil` which resolves to no flags
       # *  The value `true` or `:default` which resolves to the given defaults
       # *  A proc that takes a tool as argument and returns any of the above.
       #
-      # Always returns an array of switch strings, even if empty.
+      # Always returns an array of flag strings, even if empty.
       #
-      # @param [Boolean,String,Array<String>,Proc] flags Switch spec
+      # @param [Boolean,String,Array<String>,Proc] flags Flag spec
       # @param [Toys::Tool] tool The tool
       # @param [Array<String>] defaults The defaults to use for `true`.
       # @return [Array<String>] An array of flags

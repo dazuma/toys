@@ -154,9 +154,10 @@ module Toys
           default_root_desc: DEFAULT_ROOT_DESC,
           default_root_long_desc: DEFAULT_ROOT_LONG_DESC
         ],
-        [:show_help],
-        [:handle_usage_errors],
+        [:show_help, help_flags: true],
         [:show_version, version_displayer: version_displayer],
+        [:handle_usage_errors],
+        [:show_help, fallback_execution: true],
         [:add_verbosity_flags]
       ]
     end

@@ -22,6 +22,7 @@ The source can be found on Github at
 
 ### TODO items
 
+* help should take precedence over usage error for normal tools but not for groups
 * --short-help or --usage?
 * toys help
 * Pipe long help into less?
@@ -33,7 +34,7 @@ The source can be found on Github at
 * Write user's guide
 
 * Investigate required flags and flag groups
-* Investigate middleware and/or templates for output formats
+* Investigate something to generate output formats
 * Investigate system paths tool
 * Investigate group clearing/locking
 

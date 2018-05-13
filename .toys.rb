@@ -124,3 +124,15 @@ tool "release" do
     end
   end
 end
+
+tool "foo" do
+  required_arg :hi
+  execute do
+    puts "Got #{self[:hi]}"
+  end
+  tool "bar" do
+    execute do
+      puts "in bar"
+    end
+  end
+end

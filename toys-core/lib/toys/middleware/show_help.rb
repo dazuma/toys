@@ -36,15 +36,14 @@ require "toys/utils/line_output"
 module Toys
   module Middleware
     ##
-    # A middleware that shows help text for the tool.
-    #
-    # This can be configured to display help text when a flag (typically
-    # `--help`) is provided. It can also be configured to display help text
-    # automatically for tools that do not have an executor.
+    # A middleware that shows help text for the tool when a flag (typically
+    # `--help`) is provided. It can also be configured to show help by
+    # default if the tool is a group with no executor.
     #
     # If a tool has no executor, this middleware can also add a
     # `--[no-]recursive` flag, which, when set to `true` (the default), shows
-    # all subtools recursively rather than only immediate subtools.
+    # all subtools recursively rather than only immediate subtools. This
+    # middleware can also search for keywords in its subtools.
     #
     class ShowHelp < Base
       ##
@@ -74,6 +73,10 @@ module Toys
       #     *  The `true` value to use {DEFAULT_HELP_FLAGS}. (Default)
       #     *  The `false` value for no flags.
       #     *  A proc that takes a tool and returns any of the above.
+      # @param [Boolean] fallback_execution Cause the tool to display its own
+      #     help text if it does not otherwise have an executor. This is
+      #     mostly useful for groups, which have children but no executor.
+      #     Default is `true`.
       # @param [Boolean,Array<String>,Proc] recursive_flags Specify flags
       #     to control recursive subtool search. The value may be any of the
       #     following:
@@ -89,28 +92,24 @@ module Toys
       #     *  The `false` value for no flags.
       #     *  A proc that takes a tool and returns any of the above.
       # @param [Boolean] default_recursive Whether to search recursively for
-      #     subtools by default. Default is `true`.
-      # @param [Boolean] fallback_execution Cause the tool to display its own
-      #     help text if it does not otherwise have an executor. This is
-      #     mostly useful for groups, which have children but no executor.
-      #     Default is `true`.
+      #     subtools by default. Default is `false`.
       # @param [IO] stream Output stream to write to. Default is stdout.
       # @param [Boolean,nil] styled_output Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #
-      def initialize(help_flags: true,
+      def initialize(help_flags: false,
+                     fallback_execution: false,
                      recursive_flags: true,
                      search_flags: true,
-                     default_recursive: true,
-                     fallback_execution: true,
+                     default_recursive: false,
                      stream: $stdout,
                      styled_output: nil)
         @help_flags = help_flags
+        @fallback_execution = fallback_execution
         @recursive_flags = recursive_flags
         @search_flags = search_flags
         @default_recursive = default_recursive ? true : false
-        @fallback_execution = fallback_execution
         @output = Utils::LineOutput.new(stream, styled: styled_output)
       end
 
@@ -120,16 +119,11 @@ module Toys
       def config(tool)
         help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
                                                    DEFAULT_HELP_FLAGS)
-        is_default = !tool.includes_executor? && @fallback_execution
-        if !help_flags.empty?
+        unless help_flags.empty?
           desc = "Show help message"
-          desc << " (default for groups)" if is_default
-          tool.add_flag(:_help, *help_flags,
-                        desc: desc, default: is_default, only_unique: true)
-        elsif is_default
-          tool.default_data[:_help] = true
+          tool.add_flag(:_help, *help_flags, desc: desc, only_unique: true)
         end
-        if !tool.includes_executor? && (!help_flags.empty? || @fallback_execution)
+        if !help_flags.empty? || @fallback_execution
           add_recursive_flags(tool)
           add_search_flags(tool)
         end
@@ -140,7 +134,9 @@ module Toys
       # Display help text if requested.
       #
       def execute(context)
-        if context[:_help]
+        execute_by_fallback = @fallback_execution && !context[Context::TOOL].includes_executor?
+        execute_by_flag = context[:_help]
+        if execute_by_fallback || execute_by_flag
           help_text = Utils::HelpText.from_context(context)
           width = ::HighLine.new.output_cols
           str = help_text.long_string(recursive: context[:_recursive_subtools],

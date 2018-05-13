@@ -14,6 +14,7 @@
 * IMPROVED: Style support for spinner helper
 * IMPROVED: Set default descriptions for flags and args
 * FIXED: Subtools with no desc now properly pick up the default
+* FIXED: Usage errors and show-help now interact in the right way
 
 ### 0.3.3 / 2018-05-09
 

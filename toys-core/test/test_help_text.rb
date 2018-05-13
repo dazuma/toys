@@ -64,11 +64,14 @@ describe Toys::Utils::HelpText do
   let(:subtool_long) do
     Toys::Tool.new(["foo", "bar", long_tool_name])
   end
-  let(:loader) { Minitest::Mock.new }
+  let(:empty_loader) do
+    m = Minitest::Mock.new
+    m.expect(:list_subtools, [], [["foo", "bar"], recursive: false])
+    m
+  end
   let(:group_loader) do
     m = Minitest::Mock.new
-    m.expect(:list_subtools, [subtool_one, subtool_two],
-             [["foo", "bar"], recursive: false])
+    m.expect(:list_subtools, [subtool_one, subtool_two], [["foo", "bar"], recursive: false])
     m
   end
   let(:recursive_group_loader) do
@@ -84,52 +87,61 @@ describe Toys::Utils::HelpText do
   end
 
   describe "short usage" do
-    describe "banner" do
+    describe "synopsis" do
       it "is set for a group" do
         usage = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar TOOL [ARGUMENTS...]", usage_array[0])
-        assert_equal("", usage_array[1])
+        assert_equal("Usage:  toys foo bar TOOL [ARGUMENTS...]", usage_array[0])
+        assert_equal("        toys foo bar", usage_array[1])
+        assert_equal("", usage_array[2])
+      end
+
+      it "is set for a group with an executor" do
+        usage = Toys::Utils::HelpText.new(normal_tool, group_loader, binary_name)
+        usage_array = usage.short_string.split("\n")
+        assert_equal("Usage:  toys foo bar", usage_array[0])
+        assert_equal("        toys foo bar TOOL [ARGUMENTS...]", usage_array[1])
+        assert_equal("", usage_array[2])
       end
 
       it "is set for a normal tool with no flags" do
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar", usage_array[0])
+        assert_equal("Usage:  toys foo bar", usage_array[0])
         assert_equal(1, usage_array.size)
       end
 
       it "is set for a normal tool with flags" do
         normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [FLAGS...]", usage_array[0])
+        assert_equal("Usage:  toys foo bar [FLAGS...]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
       it "is set for a normal tool with required args" do
         normal_tool.add_required_arg(:cc, desc: "set cc")
         normal_tool.add_required_arg(:dd, desc: "set dd")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar CC DD", usage_array[0])
+        assert_equal("Usage:  toys foo bar CC DD", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
       it "is set for a normal tool with optional args" do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [EE] [FF]", usage_array[0])
+        assert_equal("Usage:  toys foo bar [EE] [FF]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
       it "is set for a normal tool with remaining args" do
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [GG...]", usage_array[0])
+        assert_equal("Usage:  toys foo bar [GG...]", usage_array[0])
         assert_equal("", usage_array[1])
       end
 
@@ -140,9 +152,9 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
-        assert_equal("Usage: toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
+        assert_equal("Usage:  toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
         assert_equal("", usage_array[1])
       end
@@ -150,7 +162,7 @@ describe Toys::Utils::HelpText do
 
     describe "commands section" do
       it "is not present for a normal tool" do
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Tools:")
         assert_nil(index)
@@ -213,7 +225,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is not present for a normal tool with no positional args" do
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Positional arguments:")
         assert_nil(index)
@@ -225,7 +237,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
@@ -240,7 +252,7 @@ describe Toys::Utils::HelpText do
       it "shows long arg desc" do
         normal_tool.add_required_arg(:long_long_long_long_long_long_long_long,
                                      desc: Toys::Utils::WrappableString.new("set long arg desc"))
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string(wrap_width: 47).split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
@@ -253,7 +265,7 @@ describe Toys::Utils::HelpText do
 
     describe "flags section" do
       it "is not present for a tool with no flags" do
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Flags:")
         assert_nil(index)
@@ -262,7 +274,7 @@ describe Toys::Utils::HelpText do
       it "is set for a tool with flags" do
         normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
         normal_tool.add_flag(:bb, "--[no-]bb", desc: "set bb")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
@@ -273,7 +285,7 @@ describe Toys::Utils::HelpText do
 
       it "shows value only for last flag" do
         normal_tool.add_flag(:aa, "-a VALUE", "--aa", desc: "set aa")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
@@ -283,7 +295,7 @@ describe Toys::Utils::HelpText do
 
       it "orders single dashes before double dashes" do
         normal_tool.add_flag(:aa, "--aa", "-a VALUE", desc: "set aa")
-        usage = Toys::Utils::HelpText.new(normal_tool, loader, binary_name)
+        usage = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = usage.short_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
