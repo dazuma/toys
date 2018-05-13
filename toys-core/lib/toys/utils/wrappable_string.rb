@@ -35,35 +35,38 @@ module Toys
     class WrappableString
       ##
       # Create a wrapped string.
-      # @param [String] string The string.
+      # @param [String,Array<String>] string The string or array of string
+      #     fragments
       #
       def initialize(string = "")
-        @string = string
+        @fragments = string.is_a?(::Array) ? string.dup : string.split
       end
 
       ##
-      # Returns the string.
-      # @return [String]
+      # Returns the fragments.
+      # @return [Array<String>]
       #
-      attr_reader :string
+      attr_reader :fragments
 
       ##
-      # Returns the string.
+      # Returns the string without any wrapping
       # @return [String]
       #
       def to_s
-        string
+        @fragments.join(" ")
       end
+      alias string to_s
 
       ## @private
       def ==(other)
-        other.is_a?(WrappableString) ? other.string == string : false
+        return false unless other.is_a?(WrappableString)
+        other.fragments == fragments
       end
       alias eql? ==
 
       ## @private
       def hash
-        string.hash
+        fragments.hash
       end
 
       ##
@@ -76,19 +79,24 @@ module Toys
       #
       def wrap(width, width2 = nil)
         lines = []
-        str = string.gsub(/\s/, " ").sub(/^\s+/, "")
-        return str.sub(/\s+$/, "") if width.nil?
-        until str.empty?
-          i = str.index(/\S(\s|$)/) + 1
-          loop do
-            next_i = str.index(/\S(\s|$)/, i)
-            break if next_i.nil? || next_i >= width
-            i = next_i + 1
+        line = ""
+        line_len = 0
+        fragments.each do |frag|
+          frag_len = ::HighLine.uncolor(frag).size
+          if line_len.zero?
+            line = frag
+            line_len = frag_len
+          elsif width && line_len + 1 + frag_len > width
+            lines << line
+            line = frag
+            line_len = frag_len
+            width = width2 if width2
+          else
+            line_len += frag_len + 1
+            line = "#{line} #{frag}"
           end
-          lines << str[0, i]
-          str = str[i..-1].sub(/^\s+/, "")
-          width = width2 if width2
         end
+        lines << line if line_len > 0
         lines
       end
 

@@ -10,6 +10,7 @@
 * IMPROVED: system update builtin can optionally ask for confirmation.
 * IMPROVED: Error reporting is significantly improved.
 * IMPROVED: Logger colors the header when possible.
+* IMPROVED: Style support for spinner helper
 
 ### 0.3.3 / 2018-05-09
 

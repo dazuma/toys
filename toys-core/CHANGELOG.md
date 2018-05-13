@@ -12,6 +12,7 @@
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: Logger colors the header when possible.
 * IMPROVED: HelpText class can now generate nicer help pages
+* IMPROVED: Style support for spinner helper
 * ADDED: CLI now takes an error handler to report most errors.
 
 ### 0.3.3 / 2018-05-09

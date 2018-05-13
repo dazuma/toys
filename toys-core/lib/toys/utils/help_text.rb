@@ -336,17 +336,23 @@ module Toys
           unless @tool.includes_executor?
             @lines << indent_str(group_synopsis)
           end
-          @lines << indent_str(tool_synopsis)
+          first = true
+          tool_synopsis.each do |line|
+            @lines << (first ? indent_str(line) : indent2_str(line))
+            first = false
+          end
         end
 
         def tool_synopsis
-          # TODO: Expand this
           synopsis = [full_binary_name]
-          synopsis << "[FLAGS...]" unless @tool.flag_definitions.empty?
+          @tool.flag_definitions.each do |flag_def|
+            synopsis << "[#{flag_spec_string(flag_def)}]"
+          end
           @tool.arg_definitions.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
-          synopsis.join(" ")
+          Utils::WrappableString.new(synopsis).wrap(@wrap_width - @indent,
+                                                    @wrap_width - @indent - @indent2)
         end
 
         def group_synopsis
@@ -386,12 +392,15 @@ module Toys
         end
 
         def flag_spec_string(flag)
-          flags_str =
-            (flag.single_flag_syntax + flag.double_flag_syntax)
-            .map { |fs| bold(fs.str_without_value) }
-            .join(", ")
-          flags_str << flag.value_delim << underline(flag.value_label) if flag.value_label
-          flags_str
+          single_flags = flag.single_flag_syntax.map do |fs|
+            str = bold(fs.str_without_value)
+            flag.value_label ? "#{str} #{underline(flag.value_label)}" : str
+          end
+          double_flags = flag.double_flag_syntax.map do |fs|
+            str = bold(fs.str_without_value)
+            flag.value_label ? "#{str}#{flag.value_delim}#{underline(flag.value_label)}" : str
+          end
+          (single_flags + double_flags).join(", ")
         end
 
         def add_positional_arguments_section

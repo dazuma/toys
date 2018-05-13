@@ -24,10 +24,13 @@ The source can be found on Github at
 
 * Providing an accept: should automatically force a value label
 * Investigate required flags and flag groups
-* --short-help or --usage
+* --short-help or --usage?
 * toys help
 * Pipe long help into less?
-* Individual flags in long synopsis (may require WrappableString of fragments)
+* Expand set_default_descriptions to include flags/args
+* Figure out why subtools with no desc don't pick up the set_default_descriptions
+* Consider a helper method for wrappable strings.
+* Flesh out long descriptions for our standard tools and stuff
 
 * Improve test coverage
 * Write user's guide

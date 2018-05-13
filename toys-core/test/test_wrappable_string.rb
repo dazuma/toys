@@ -32,7 +32,7 @@ require "helper"
 require "toys/utils/wrappable_string"
 
 describe Toys::Utils::WrappableString do
-  describe "wrap" do
+  describe "wrap string" do
     it "handles empty string" do
       result = Toys::Utils::WrappableString.new("").wrap(10)
       assert_equal([], result)
@@ -66,6 +66,41 @@ describe Toys::Utils::WrappableString do
     it "honors the width exactly" do
       result = Toys::Utils::WrappableString.new("a bcd ef ghi j").wrap(5)
       assert_equal(["a bcd", "ef", "ghi j"], result)
+    end
+
+    it "honors different width2" do
+      result = Toys::Utils::WrappableString.new("a b cd ef\n").wrap(3, 5)
+      assert_equal(["a b", "cd ef"], result)
+    end
+
+    it "doesn't get confused by ansi style codes" do
+      str = HighLine.color("a b", :bold)
+      result = Toys::Utils::WrappableString.new(str).wrap(3)
+      assert_equal([str], result)
+      result2 = Toys::Utils::WrappableString.new(str).wrap(2)
+      assert_equal(2, result2.size)
+    end
+  end
+
+  describe "wrap fragments" do
+    it "handles empty fragments" do
+      result = Toys::Utils::WrappableString.new([]).wrap(10)
+      assert_equal([], result)
+    end
+
+    it "does not split fragments" do
+      result = Toys::Utils::WrappableString.new(["ab cd", "ef gh", "ij kl"]).wrap(10)
+      assert_equal(["ab cd", "ef gh", "ij kl"], result)
+    end
+
+    it "combines fragments" do
+      result = Toys::Utils::WrappableString.new(["ab cd", "ef gh", "ij kl"]).wrap(13)
+      assert_equal(["ab cd ef gh", "ij kl"], result)
+    end
+
+    it "preserves spaces in fragments" do
+      result = Toys::Utils::WrappableString.new([" ab cd\n", "\nef gh ", "ij   kl"]).wrap(15)
+      assert_equal([" ab cd\n \nef gh ", "ij   kl"], result)
     end
   end
 end

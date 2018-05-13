@@ -72,7 +72,10 @@ module Toys
             files.uniq!
 
             files.each do |file|
-              rm_rf file
+              if ::File.exist?(file)
+                rm_rf file
+                puts "Cleaned: #{file}"
+              end
             end
           end
         end
