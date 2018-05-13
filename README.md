@@ -22,18 +22,17 @@ The source can be found on Github at
 
 ### TODO items
 
-* Providing an accept: should automatically force a value label
-* Investigate required flags and flag groups
 * --short-help or --usage?
 * toys help
 * Pipe long help into less?
-* Expand set_default_descriptions to include flags/args
-* Figure out why subtools with no desc don't pick up the set_default_descriptions
 * Consider a helper method for wrappable strings.
 * Flesh out long descriptions for our standard tools and stuff
+* Tests for long-style help
 
 * Improve test coverage
 * Write user's guide
+
+* Investigate required flags and flag groups
 * Investigate middleware and/or templates for output formats
 * Investigate system paths tool
 * Investigate group clearing/locking

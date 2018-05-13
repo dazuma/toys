@@ -365,8 +365,7 @@ module Toys
                  accept: nil, default: nil, desc: nil, long_desc: nil,
                  only_unique: false, handler: nil)
       check_definition_state
-      flag_def = FlagDefinition.new(key, flags)
-      flag_def.accept = accept unless accept.nil?
+      flag_def = FlagDefinition.new(key, flags, accept)
       flag_def.desc = desc unless desc.nil?
       flag_def.long_desc = long_desc unless long_desc.nil?
       flag_def.handler = handler unless handler.nil?
@@ -495,7 +494,6 @@ module Toys
         "Error during tool execution!", definition_path,
         tool_name: full_name, tool_args: args
       ) do
-        finish_definition unless @definition_finished
         Execution.new(self).execute(cli, args, verbosity: verbosity)
       end
     end
@@ -507,11 +505,13 @@ module Toys
     #
     def finish_definition
       unless @definition_finished
-        config_proc = proc {}
-        middleware_stack.reverse.each do |middleware|
-          config_proc = make_config_proc(middleware, config_proc)
+        ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
+          config_proc = proc {}
+          middleware_stack.reverse.each do |middleware|
+            config_proc = make_config_proc(middleware, config_proc)
+          end
+          config_proc.call
         end
-        config_proc.call
         @definition_finished = true
       end
       self
@@ -537,7 +537,7 @@ module Toys
         end
       end
 
-      attr_reader :str
+      attr_reader :original_str
       attr_reader :str_without_value
       attr_reader :flags
       attr_reader :flag_style
@@ -546,13 +546,13 @@ module Toys
 
       private
 
-      def setup(str, flags, str_without_value, flag_style, value_delim, value_label)
-        @str = str
+      def setup(original_str, flags, str_without_value, flag_style, value_delim, value_label)
+        @original_str = original_str
         @flags = flags
         @str_without_value = str_without_value
         @flag_style = flag_style
         @value_delim = value_delim
-        @value_label = value_label
+        @value_label = value_label ? value_label.upcase : value_label
       end
     end
 
@@ -572,15 +572,17 @@ module Toys
       #
       # @param [Symbol] key This flag will set the given context key.
       # @param [Array<String>] flags Flags in OptionParser format
+      # @param [Object] accept The acceptor, which may be nil.
       #
-      def initialize(key, flags)
+      def initialize(key, flags, accept)
         @key = key
-        if flags.empty?
-          canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
-          flags = ["--#{canonical_flag}=VALUE"]
-        end
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
-        @accept = nil
+        @accept = accept
+        if @flag_syntax.empty?
+          create_default_flag
+        else
+          add_missing_values
+        end
         @desc = ""
         @long_desc = []
         @handler = DEFAULT_HANDLER
@@ -603,7 +605,7 @@ module Toys
       # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
-      attr_accessor :accept
+      attr_reader :accept
 
       ##
       # Returns the short description string.
@@ -704,7 +706,7 @@ module Toys
       # @return [Array]
       #
       def optparser_info
-        @optparser_info ||= flag_syntax.map(&:str) + Array(accept)
+        @optparser_info ||= flag_syntax.map(&:original_str) + Array(accept)
       end
 
       ##
@@ -747,6 +749,26 @@ module Toys
       end
 
       private
+
+      def create_default_flag
+        canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
+        unless canonical_flag.empty?
+          flag = @accept ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
+          @flag_syntax << FlagSyntax.new(flag)
+        end
+      end
+
+      def add_missing_values
+        if @accept && @flag_syntax.all? { |fs| fs.value_label.nil? }
+          @flag_syntax.map! do |fs|
+            begin
+              FlagSyntax.new("#{fs.original_str} VALUE")
+            rescue ToolDefinitionError
+              fs
+            end
+          end
+        end
+      end
 
       def reset_data
         @effective_flags = nil

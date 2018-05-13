@@ -47,7 +47,7 @@ module Toys
     ## @private
     def initialize(cause, banner,
                    config_path: nil, config_line: nil,
-                   tool_name: nil, tool_args: nil, full_args: nil)
+                   tool_name: nil, tool_args: nil)
       super("#{banner} : #{cause.message} (#{cause.class})")
       @cause = cause
       @banner = banner
@@ -55,7 +55,6 @@ module Toys
       @config_line = config_line
       @tool_name = tool_name
       @tool_args = tool_args
-      @full_args = full_args
     end
 
     attr_reader :cause
@@ -65,7 +64,6 @@ module Toys
     attr_accessor :config_line
     attr_accessor :tool_name
     attr_accessor :tool_args
-    attr_accessor :full_args
 
     class << self
       ## @private

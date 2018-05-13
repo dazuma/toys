@@ -137,6 +137,22 @@ module Toys
     end
 
     ##
+    # Finishes all tool definitions under the given path. This generally means
+    # installing middleware.
+    #
+    # @param [Array<String>] words The path to the tool under which all
+    #     definitions should be finished.
+    #
+    def finish_definitions_in_tree(words)
+      load_for_prefix(words)
+      len = words.length
+      @tools.each do |n, tp|
+        next if n.length < len || n.slice(0, len) != words
+        tp.first.finish_definition
+      end
+    end
+
+    ##
     # Returns a tool specified by the given words, with the given priority.
     # Does not do any loading. If the tool is not present, creates it.
     #

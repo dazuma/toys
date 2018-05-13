@@ -5,12 +5,15 @@
 * CHANGED: Renamed switch to flag
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
 * CHANGED: desc is now a single string rather than an array.
+* CHANGED: accept: parameter now controls whether a switch takes a value by default
 * IMPROVED: Nicer help page format
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: system update builtin can optionally ask for confirmation.
 * IMPROVED: Error reporting is significantly improved.
 * IMPROVED: Logger colors the header when possible.
 * IMPROVED: Style support for spinner helper
+* IMPROVED: Set default descriptions for flags and args
+* FIXED: Subtools with no desc now properly pick up the default
 
 ### 0.3.3 / 2018-05-09
 

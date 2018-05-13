@@ -9,11 +9,14 @@
 * CHANGED: desc is now a single string rather than an array.
 * CHANGED: Removed Loader#execute, and returned remaining args from Loader#lookup.
 * CHANGED: Wrapped most errors with Toys::ContextualError
+* CHANGED: accept: parameter now controls whether a switch takes a value by default
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: Logger colors the header when possible.
 * IMPROVED: HelpText class can now generate nicer help pages
 * IMPROVED: Style support for spinner helper
+* IMPROVED: Set default descriptions for flags and args
 * ADDED: CLI now takes an error handler to report most errors.
+* FIXED: Finish definitions for subtools since the desc may depend on it
 
 ### 0.3.3 / 2018-05-09
 

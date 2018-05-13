@@ -209,23 +209,11 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(*args, verbosity: 0)
-      tool, remaining = ContextualError.capture(
-        "Error finding tool definition", full_args: args
-      ) do
+      tool, remaining = ContextualError.capture("Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
-      ContextualError.capture(
-        "Error installing tool middleware!",
-        tool_name: tool.full_name, tool_args: remaining, full_args: args
-      ) do
-        tool.finish_definition
-      end
-      ContextualError.capture_path(
-        "Error executing tool!", tool.definition_path,
-        tool_name: tool.full_name, tool_args: remaining, full_args: args
-      ) do
-        tool.execute(self, remaining, verbosity: verbosity)
-      end
+      @loader.finish_definitions_in_tree(tool.full_name)
+      tool.execute(self, remaining, verbosity: verbosity)
     rescue ContextualError => e
       @error_handler.call(e)
     end
@@ -311,8 +299,9 @@ module Toys
       #
       def default_middleware_stack
         [
-          :handle_usage_errors,
+          :set_default_descriptions,
           :show_help,
+          :handle_usage_errors,
           :add_verbosity_flags
         ]
       end

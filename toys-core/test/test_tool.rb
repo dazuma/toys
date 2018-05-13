@@ -189,8 +189,8 @@ describe Toys::Tool do
     it "finds single and double flags" do
       tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
       flag = tool.flag_definitions.first
-      assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:str))
-      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], flag.double_flag_syntax.map(&:str))
+      assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:original_str))
+      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], flag.double_flag_syntax.map(&:original_str))
     end
 
     it "determines effective flags" do
@@ -346,7 +346,7 @@ describe Toys::Tool do
 
     it "defaults the name of a value flag" do
       test = self
-      tool.add_flag(:a_bc, desc: "hi there")
+      tool.add_flag(:a_bc, accept: String, desc: "hi there")
       tool.executor = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
