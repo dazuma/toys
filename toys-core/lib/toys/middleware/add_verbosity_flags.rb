@@ -87,9 +87,7 @@ module Toys
         verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool,
                                                       DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
-          long_desc = Utils::WrappableString.new(
-            "Increase verbosity, causing additional logging levels to display."
-          )
+          long_desc = "Increase verbosity, causing additional logging levels to display."
           tool.add_flag(Context::VERBOSITY, *verbose_flags,
                         desc: "Increase verbosity",
                         long_desc: long_desc,
@@ -102,9 +100,7 @@ module Toys
         quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool,
                                                     DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
-          long_desc = Utils::WrappableString.new(
-            "Decrease verbosity, causing fewer logging levels to display."
-          )
+          long_desc = "Decrease verbosity, causing fewer logging levels to display."
           tool.add_flag(Context::VERBOSITY, *quiet_flags,
                         desc: "Decrease verbosity",
                         long_desc: long_desc,

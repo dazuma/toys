@@ -59,6 +59,9 @@ describe Toys::Tool do
     end
   }
   let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
+  def wrappable(str)
+    Toys::Utils::WrappableString.new(str)
+  end
 
   describe "name field" do
     it "works for a root tool" do
@@ -86,29 +89,29 @@ describe Toys::Tool do
   describe "description" do
     it "defaults to empty" do
       assert_equal(false, tool.includes_description?)
-      assert_equal("", tool.desc)
+      assert_equal(wrappable(""), tool.desc)
       assert_equal([], tool.long_desc)
     end
 
     it "handles short description with line breaks" do
       tool.desc = "hi\nthere"
       assert_equal(true, tool.includes_description?)
-      assert_equal("hi there", tool.desc)
+      assert_equal(wrappable("hi there"), tool.desc)
       assert_equal([], tool.long_desc)
     end
 
     it "handles single-line long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
-      assert_equal("", tool.desc)
-      assert_equal(["ho"], tool.long_desc)
+      assert_equal(wrappable(""), tool.desc)
+      assert_equal([wrappable("ho")], tool.long_desc)
     end
 
     it "handles multi-line long description" do
-      tool.long_desc = ["ho\nhum", Toys::Utils::WrappableString.new("Ender")]
+      tool.long_desc = ["ho\nhum", "dee dum"]
       assert_equal(true, tool.includes_description?)
-      assert_equal("", tool.desc)
-      assert_equal(["ho", "hum", Toys::Utils::WrappableString.new("Ender")], tool.long_desc)
+      assert_equal(wrappable(""), tool.desc)
+      assert_equal([wrappable("ho hum"), wrappable("dee dum")], tool.long_desc)
     end
   end
 
@@ -144,11 +147,11 @@ describe Toys::Tool do
     end
 
     it "recognizes desc and long desc" do
-      tool.add_flag(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"),
-                              long_desc: "hello\nworld")
+      tool.add_flag(:a, "-a", desc: "I like Ruby",
+                              long_desc: ["hello", "world"])
       flag = tool.flag_definitions.first
-      assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), flag.desc)
-      assert_equal(["hello", "world"], flag.long_desc)
+      assert_equal(wrappable("I like Ruby"), flag.desc)
+      assert_equal([wrappable("hello"), wrappable("world")], flag.long_desc)
     end
 
     it "exposes optparser info with no acceptor" do
@@ -443,20 +446,20 @@ describe Toys::Tool do
     end
 
     it "can be set" do
-      tool.definition_path = "path1"
+      tool.lock_definition_path("path1")
       assert_equal("path1", tool.definition_path)
     end
 
     it "can be set repeatedly to the same value" do
-      tool.definition_path = "path1"
-      tool.definition_path = "path1"
+      tool.lock_definition_path("path1")
+      tool.lock_definition_path("path1")
       assert_equal("path1", tool.definition_path)
     end
 
     it "prevents defining from multiple paths" do
-      tool.definition_path = "path1"
+      tool.lock_definition_path("path1")
       assert_raises(Toys::ToolDefinitionError) do
-        tool.definition_path = "path2"
+        tool.lock_definition_path("path2")
       end
     end
   end

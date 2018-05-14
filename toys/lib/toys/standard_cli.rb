@@ -82,16 +82,13 @@ module Toys
 
     ##
     # Help text for the standard root tool
-    # @return [Toys::Utils::WrappableString]
+    # @return [String]
     #
     DEFAULT_ROOT_LONG_DESC =
-      Utils::WrappableString.new(
-        "Toys is your personal command line tool. You can add to the list of" \
-        " commands below by writing scripts in Ruby using a simple DSL, and" \
-        " toys will organize and document them, and make them available" \
-        " globally or scoped to specific directories that you choose." \
-        " For detailed information, see https://www.rubydoc.info/gems/toys"
-      )
+      "Toys is your personal command line tool. You can add to the list of commands below by" \
+      " writing scripts in Ruby using a simple DSL, and toys will organize and document them" \
+      " and make them available globally or scoped to specific directories that you choose." \
+      " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
 
     ##
     # Create a standard CLI, configured with the appropriate paths and
@@ -160,20 +157,25 @@ module Toys
           help_flags: true,
           usage_flags: true,
           recursive_flags: true,
-          search_flags: true
+          search_flags: true,
+          allow_root_args: true
         ],
         [
           :show_version,
           version_displayer: Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
         ],
-        [:handle_usage_errors],
+        [
+          :handle_usage_errors
+        ],
         [
           :show_help,
           fallback_execution: true,
           recursive_flags: true,
           search_flags: true
         ],
-        [:add_verbosity_flags]
+        [
+          :add_verbosity_flags
+        ]
       ]
     end
 

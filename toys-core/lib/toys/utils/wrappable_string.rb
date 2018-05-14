@@ -39,7 +39,7 @@ module Toys
       #     fragments
       #
       def initialize(string = "")
-        @fragments = string.is_a?(::Array) ? string : string.split
+        @fragments = string.is_a?(::Array) ? string.map(&:to_s) : string.to_s.split
       end
 
       ##
@@ -47,6 +47,15 @@ module Toys
       # @return [Array<String>]
       #
       attr_reader :fragments
+
+      ##
+      # Concatenates this WrappableString with another WrappableString
+      # @param [WrappableString] other
+      #
+      def +(other)
+        other = WrappableString.new(other) unless other.is_a?(WrappableString)
+        WrappableString.new(fragments + other.fragments)
+      end
 
       ##
       # Returns true if the string is empty (i.e. has no fragments)
@@ -111,7 +120,7 @@ module Toys
       ##
       # Wraps an array of lines to the given width.
       #
-      # @param [Array<String,WrappableString>] strs Array of strings to wrap.
+      # @param [Array<WrappableString>] strs Array of strings to wrap.
       # @param [Integer,nil] width Width in characters, or `nil` for infinite.
       # @param [Integer,nil] width2 Width in characters for the second and
       #     subsequent lines, or `nil` to use the same as width.
@@ -119,7 +128,7 @@ module Toys
       #
       def self.wrap_lines(strs, width, width2 = nil)
         result = Array(strs).map do |s|
-          lines = s.is_a?(WrappableString) ? s.wrap(width, width2) : s.to_s
+          lines = s.empty? ? [""] : s.wrap(width, width2)
           width = width2 if width2
           lines
         end.flatten

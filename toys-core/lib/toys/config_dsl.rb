@@ -85,16 +85,6 @@ module Toys
     end
 
     ##
-    # Return a wrappable string
-    #
-    # @param [String] str The string to make wrappable
-    # @return [Toys::Utils::WrappableString]
-    #
-    def wrappable(str)
-      Utils::WrappableString.new(str)
-    end
-
-    ##
     # Create a subtool. You must provide a block defining the subtool.
     #
     # If the subtool is already defined (either as a tool or a group), the old
@@ -171,32 +161,40 @@ module Toys
     end
 
     ##
-    # Set the long description for the current tool. The long description is
-    # displayed in the usage documentation for the tool itself.
-    #
-    # @param [String,Toys::Utils::WrappableString...] strs The long description
-    #
-    def long_desc(*strs)
-      return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
-      _cur_tool.long_desc = strs.flatten
-      self
-    end
-
-    ##
     # Set the short description for the current tool. The short description is
     # displayed with the tool in a subtool list. You may also use the
     # equivalent method `short_desc`.
     #
-    # @param [String,Toys::Utils::WrappableString] str The short description
+    # The description may be provided as a {Toys::Utils::WrappableString}, a
+    # single string (which will be wrapped), or an array of strings, which will
+    # be interpreted as string fragments that will be concatenated and wrapped.
+    #
+    # @param [Toys::Utils::WrappableString,String,Array<String>] str
     #
     def desc(str)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.desc = str
       self
     end
     alias short_desc desc
+
+    ##
+    # Set the long description for the current tool. The long description is
+    # displayed in the usage documentation for the tool itself.
+    #
+    # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+    # string (which will be wrapped), or an array of strings, which will be
+    # interpreted as string fragments that will be concatenated and wrapped.
+    #
+    # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
+    #
+    def long_desc(*strs)
+      return self if _cur_tool.nil?
+      _cur_tool.lock_definition_path(@path)
+      _cur_tool.long_desc = strs
+      self
+    end
 
     ##
     # Add a flag to the current tool. Each flag must specify a key which
@@ -232,7 +230,7 @@ module Toys
              only_unique: false, handler: nil,
              &block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.add_flag(key, *flags,
                          accept: accept, default: default,
                          desc: desc, long_desc: long_desc,
@@ -249,6 +247,8 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -256,11 +256,12 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def required_arg(key, accept: nil, desc: nil, long_desc: nil, &block)
+    def required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.add_required_arg(key,
-                                 accept: accept, desc: desc, long_desc: long_desc,
+                                 accept: accept, display_name: display_name,
+                                 desc: desc, long_desc: long_desc,
                                  &block)
       self
     end
@@ -278,6 +279,8 @@ module Toys
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -285,11 +288,12 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil, &block)
+    def optional_arg(key, default: nil, accept: nil, display_name: nil,
+                     desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.add_optional_arg(key,
-                                 accept: accept, default: default,
+                                 accept: accept, default: default, display_name: display_name,
                                  desc: desc, long_desc: long_desc,
                                  &block)
       self
@@ -307,6 +311,8 @@ module Toys
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -314,11 +320,12 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil, &block)
+    def remaining_args(key, default: [], accept: nil, display_name: nil,
+                       desc: nil, long_desc: nil, &block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.set_remaining_args(key,
-                                   accept: accept, default: default,
+                                   accept: accept, default: default, display_name: display_name,
                                    desc: desc, long_desc: long_desc,
                                    &block)
       self
@@ -331,7 +338,7 @@ module Toys
     #
     def execute(&block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.executor = block
       self
     end
@@ -346,7 +353,7 @@ module Toys
     #
     def helper(name, &block)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.add_helper(name, &block)
       self
     end
@@ -361,7 +368,7 @@ module Toys
     #
     def use(mod)
       return self if _cur_tool.nil?
-      _cur_tool.definition_path = @path
+      _cur_tool.lock_definition_path(@path)
       _cur_tool.use_module(mod)
       self
     end

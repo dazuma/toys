@@ -12,6 +12,7 @@
 * CHANGED: Wrapped most errors with Toys::ContextualError
 * CHANGED: accept: parameter now controls whether a switch takes a value by default
 * CHANGED: Explicit and implicit show-help now handled by separate middleware instances
+* CHANGED: All description strings are now wrappable
 * IMPROVED: gem_build template can suppress interactive confirmation.
 * IMPROVED: Logger colors the header when possible.
 * IMPROVED: HelpText class can now generate nicer help pages

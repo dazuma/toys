@@ -29,27 +29,25 @@
 
 desc "Run multiple tools in order"
 
-long_desc [
-  wrappable("The \"toys do\" builtin provides a convenient interface for running multiple" \
-            " tools in sequence. Provide the tools to run as arguments, separated by a" \
-            " delimiter (which is the string \",\" by default). Toys will run them in" \
-            " order, stopping if any tool returns a nonzero exit code."),
+long_desc \
+  "The \"toys do\" builtin provides a convenient interface for running multiple tools in" \
+    " sequence. Provide the tools to run as arguments, separated by a delimiter (which is" \
+    " the string \",\" by default). Toys will run them in order, stopping if any tool" \
+    " returns a nonzero exit code.",
   "",
-  wrappable("Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool, each" \
-            " with some flags. You could run them in order, with their flags, like this:"),
-  "    toys do rails build --staging , deploy --migrate",
+  "Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool, each with some" \
+    " flags. You could run them in order, with their flags, like this:",
+  ["    toys do rails build --staging , deploy --migrate"],
   "",
-  wrappable("You may change the delimiter using the --delim flag. For example:"),
-  "    toys do --delim=/ rails build --staging / deploy --migrate"
-]
+  "You may change the delimiter using the --delim flag. For example:",
+  ["    toys do --delim=/ rails build --staging / deploy --migrate"]
 
 flag :delim, "-d", "--delim=VALUE",
      default: ",",
      desc: "Set the delimiter",
-     long_desc: wrappable("Sets the delimiter that separates tool invocations." \
-                           " The default value is \",\".")
+     long_desc: "Sets the delimiter that separates tool invocations. The default value is \",\"."
 
-remaining_args :args, desc: wrappable("A series of tools to run, separated by the delimiter")
+remaining_args :args, desc: "A series of tools to run, separated by the delimiter"
 
 execute do
   delim = self[:delim]

@@ -52,7 +52,7 @@ module Toys
       @definition_path = nil
       @definition_finished = false
 
-      @desc = ""
+      @desc = Toys::Utils::WrappableString.new("")
       @long_desc = []
 
       @default_data = {}
@@ -75,13 +75,13 @@ module Toys
 
     ##
     # Returns the short description string.
-    # @return [String,Toys::Utils::WrappableString]
+    # @return [Toys::Utils::WrappableString]
     #
     attr_reader :desc
 
     ##
     # Returns the long description strings as an array.
-    # @return [Array<String,Toys::Utils::WrappableString>]
+    # @return [Array<Toys::Utils::WrappableString>]
     #
     attr_reader :long_desc
 
@@ -240,7 +240,7 @@ module Toys
     #
     # @param [String] path The path to the file defining this tool
     #
-    def definition_path=(path)
+    def lock_definition_path(path)
       if definition_path && definition_path != path
         raise ToolDefinitionError,
               "Cannot redefine tool #{display_name.inspect} in #{path}" \
@@ -251,7 +251,12 @@ module Toys
 
     ##
     # Set the short description string.
-    # @param [String,Toys::Utils::WrappableString] desc Short description
+    #
+    # The description may be provided as a {Toys::Utils::WrappableString}, a
+    # single string (which will be wrapped), or an array of strings, which will
+    # be interpreted as string fragments that will be concatenated and wrapped.
+    #
+    # @param [Toys::Utils::WrappableString,String,Array<String>] desc
     #
     def desc=(desc)
       check_definition_state
@@ -260,12 +265,31 @@ module Toys
 
     ##
     # Set the long description strings.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Long description
     #
-    def long_desc=(desc)
+    # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+    # string (which will be wrapped), or an array of strings, which will be
+    # interpreted as string fragments that will be concatenated and wrapped.
+    #
+    # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
+    #
+    def long_desc=(descs)
       check_definition_state
-      @long_desc = Tool.canonicalize_long_desc(desc)
+      @long_desc = Tool.canonicalize_long_desc(descs)
+    end
+
+    ##
+    # Set the long description strings.
+    #
+    # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+    # string (which will be wrapped), or an array of strings, which will be
+    # interpreted as string fragments that will be concatenated and wrapped.
+    #
+    # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
+    #
+    def populate_long_desc(*descs)
+      check_definition_state
+      @long_desc = Tool.canonicalize_long_desc(descs)
+      self
     end
 
     ##
@@ -363,6 +387,8 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -370,11 +396,12 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def add_required_arg(key, accept: nil, desc: nil, long_desc: nil)
+    def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
       check_definition_state
       arg_def = ArgDefinition.new(self, key, :required)
       arg_def.accept = accept
       arg_def.default = nil
+      arg_def.display_name = display_name unless display_name.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -394,6 +421,8 @@ module Toys
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -401,11 +430,13 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def add_optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil)
+    def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
+                         desc: nil, long_desc: nil)
       check_definition_state
       arg_def = ArgDefinition.new(self, key, :optional)
       arg_def.accept = accept
       arg_def.default = default
+      arg_def.display_name = display_name unless display_name.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -424,6 +455,8 @@ module Toys
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
     # @param [String,Toys::Utils::WrappableString,
     #     Array<String,Toys::Utils::WrappableString>] desc Short description
     #     for the arg. Defaults to empty array.
@@ -431,11 +464,13 @@ module Toys
     #     Array<String,Toys::Utils::WrappableString>] long_desc Long
     #     description for the arg. Defaults to empty array.
     #
-    def set_remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil)
+    def set_remaining_args(key, default: [], accept: nil, display_name: nil,
+                           desc: nil, long_desc: nil)
       check_definition_state
       arg_def = ArgDefinition.new(self, key, :remaining)
       arg_def.accept = accept
       arg_def.default = default
+      arg_def.display_name = display_name unless display_name.nil?
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -579,13 +614,13 @@ module Toys
 
       ##
       # Returns the short description string.
-      # @return [String,Toys::Utils::WrappableString]
+      # @return [Toys::Utils::WrappableString]
       #
       attr_reader :desc
 
       ##
       # Returns the long description strings as an array.
-      # @return [Array<String,Toys::Utils::WrappableString>]
+      # @return [Array<Toys::Utils::WrappableString>]
       #
       attr_reader :long_desc
 
@@ -635,7 +670,13 @@ module Toys
 
       ##
       # Set the short description string.
-      # @param [String,Toys::Utils::WrappableString] desc Short description
+      #
+      # The description may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
+      #
+      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
       #
       def desc=(desc)
         @desc = Tool.canonicalize_desc(desc)
@@ -643,11 +684,31 @@ module Toys
 
       ##
       # Set the long description strings.
-      # @param [String,Toys::Utils::WrappableString,
-      #     Array<String,Toys::Utils::WrappableString>] desc Long description
       #
-      def long_desc=(desc)
-        @long_desc = Tool.canonicalize_long_desc(desc)
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
+      #
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
+      #
+      def long_desc=(descs)
+        @long_desc = Tool.canonicalize_long_desc(descs)
+      end
+
+      ##
+      # Set the long description strings.
+      #
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
+      #
+      # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
+      #
+      def populate_long_desc(*descs)
+        @long_desc = Tool.canonicalize_long_desc(descs)
+        self
       end
 
       ##
@@ -783,6 +844,7 @@ module Toys
         @accept = nil
         @desc = ""
         @long_desc = []
+        @display_name = key.to_s.tr("-", "_").gsub(/\W/, "").upcase
       end
 
       ##
@@ -805,15 +867,21 @@ module Toys
 
       ##
       # Returns the short description string.
-      # @return [String,Toys::Utils::WrappableString]
+      # @return [Toys::Utils::WrappableString]
       #
       attr_reader :desc
 
       ##
       # Returns the long description strings as an array.
-      # @return [Array<String,Toys::Utils::WrappableString>]
+      # @return [Array<Toys::Utils::WrappableString>]
       #
       attr_reader :long_desc
+
+      ##
+      # Returns the displayable name.
+      # @return [String]
+      #
+      attr_accessor :display_name
 
       ##
       # Set the default.
@@ -825,7 +893,13 @@ module Toys
 
       ##
       # Set the short description string.
-      # @param [String,Toys::Utils::WrappableString] desc Short description
+      #
+      # The description may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
+      #
+      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
       #
       def desc=(desc)
         @desc = Tool.canonicalize_desc(desc)
@@ -833,20 +907,31 @@ module Toys
 
       ##
       # Set the long description strings.
-      # @param [String,Toys::Utils::WrappableString,
-      #     Array<String,Toys::Utils::WrappableString>] desc Long description
       #
-      def long_desc=(desc)
-        @long_desc = Tool.canonicalize_long_desc(desc)
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
+      #
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
+      #
+      def long_desc=(descs)
+        @long_desc = Tool.canonicalize_long_desc(descs)
       end
 
       ##
-      # Return a display name for this arg. Used in usage documentation.
+      # Set the long description strings.
       #
-      # @return [String]
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which
+      # will be interpreted as string fragments that will be concatenated and
+      # wrapped.
       #
-      def display_name
-        key.to_s.tr("-", "_").gsub(/\W/, "").upcase
+      # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
+      #
+      def populate_long_desc(*descs)
+        @long_desc = Tool.canonicalize_long_desc(descs)
+        self
       end
 
       ##
@@ -882,20 +967,12 @@ module Toys
     class << self
       ## @private
       def canonicalize_desc(desc)
-        desc.is_a?(Utils::WrappableString) ? desc : desc.gsub(/\s/, " ")
+        desc.is_a?(Utils::WrappableString) ? desc : Utils::WrappableString.new(desc)
       end
 
       ## @private
-      def canonicalize_long_desc(desc)
-        Array(desc).map do |d|
-          if d.empty?
-            ""
-          elsif d.is_a?(Utils::WrappableString)
-            d
-          else
-            d.split("\n")
-          end
-        end.flatten.freeze
+      def canonicalize_long_desc(descs)
+        Array(descs).map { |desc| canonicalize_desc(desc) }.freeze
       end
     end
 

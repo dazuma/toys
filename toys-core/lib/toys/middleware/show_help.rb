@@ -104,7 +104,11 @@ module Toys
       # @param [Boolean] fallback_execution Cause the tool to display its own
       #     help text if it does not otherwise have an executor. This is
       #     mostly useful for groups, which have children but no executor.
-      #     Default is `true`.
+      #     Default is `false`.
+      # @param [Boolean] allow_root_args If the root tool includes flags for
+      #     help or usage, and doesn't otherwise use positional arguments,
+      #     then a tool name can be passed as arguments to display help for
+      #     that tool.
       # @param [IO] stream Output stream to write to. Default is stdout.
       # @param [Boolean,nil] styled_output Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
@@ -116,32 +120,31 @@ module Toys
                      search_flags: false,
                      default_recursive: false,
                      fallback_execution: false,
+                     allow_root_args: false,
                      stream: $stdout,
                      styled_output: nil)
         @help_flags = help_flags
         @usage_flags = usage_flags
-        @fallback_execution = fallback_execution
         @recursive_flags = recursive_flags
         @search_flags = search_flags
         @default_recursive = default_recursive ? true : false
-        @output = Utils::LineOutput.new(stream, styled: styled_output)
+        @fallback_execution = fallback_execution
+        @allow_root_args = allow_root_args
+        @stream = stream
+        @styled_output = styled_output
       end
 
       ##
       # Configure flags and default data.
       #
       def config(tool, loader)
-        help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
-                                                   DEFAULT_HELP_FLAGS)
-        unless help_flags.empty?
-          desc = "Display help for this tool"
-          tool.add_flag(:_show_help, *help_flags, desc: desc, only_unique: true)
-        end
-        usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool,
-                                                    DEFAULT_USAGE_FLAGS)
-        unless usage_flags.empty?
-          desc = "Display a brief usage string for this tool"
-          tool.add_flag(:_show_usage, *usage_flags, desc: desc, only_unique: true)
+        help_flags = add_help_flags(tool)
+        usage_flags = add_usage_flags(tool)
+        if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
+          if tool.root? && tool.arg_definitions.empty?
+            tool.set_remaining_args(:_tool_name, display_name: "TOOL_NAME",
+                                                 desc: "The tool for which to display help")
+          end
         end
         if (!help_flags.empty? || @fallback_execution) && loader.has_subtools?(tool.full_name)
           add_recursive_flags(tool)
@@ -154,22 +157,68 @@ module Toys
       # Display help text if requested.
       #
       def execute(context)
-        if @fallback_execution && !context[Context::TOOL].includes_executor? || context[:_show_help]
-          help_text = Utils::HelpText.from_context(context)
+        if context[:_show_usage]
+          help_text = get_help_text(context)
+          str = help_text.usage_string(wrap_width: output_cols)
+          output.puts(str)
+        elsif @fallback_execution && !context[Context::TOOL].includes_executor? ||
+              context[:_show_help]
+          help_text = get_help_text(context)
           str = help_text.help_string(recursive: context[:_recursive_subtools],
                                       search: context[:_search_subtools],
-                                      wrap_width: ::HighLine.new.output_cols)
-          @output.puts(str)
-        elsif context[:_show_usage]
-          help_text = Utils::HelpText.from_context(context)
-          str = help_text.usage_string(wrap_width: ::HighLine.new.output_cols)
-          @output.puts(str)
+                                      wrap_width: output_cols)
+          output.puts(str)
         else
           yield
         end
       end
 
       private
+
+      def output_cols
+        @output_cols ||= ::HighLine.new(nil, @stream).output_cols
+      end
+
+      def output
+        @output ||= Utils::LineOutput.new(@stream, styled: @styled_output)
+      end
+
+      def get_help_text(context)
+        tool_name = context[:_tool_name]
+        return Utils::HelpText.from_context(context) if tool_name.nil? || tool_name.empty?
+        loader = context[Context::LOADER]
+        tool, rest = loader.lookup(tool_name)
+        help_text = Utils::HelpText.new(tool, loader, context[Context::BINARY_NAME])
+        report_usage_error(tool_name, help_text) unless rest.empty?
+        help_text
+      end
+
+      def report_usage_error(tool_name, help_text)
+        output.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
+        output.puts
+        output.puts help_text.usage_string(wrap_width: output_cols)
+        context.exit(1)
+      end
+
+      def add_help_flags(tool)
+        help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
+                                                   DEFAULT_HELP_FLAGS)
+        unless help_flags.empty?
+          tool.add_flag(:_show_help, *help_flags,
+                        desc: "Display help for this tool", only_unique: true)
+        end
+        help_flags
+      end
+
+      def add_usage_flags(tool)
+        usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool,
+                                                    DEFAULT_USAGE_FLAGS)
+        unless usage_flags.empty?
+          tool.add_flag(:_show_usage, *usage_flags,
+                        desc: "Display a brief usage string for this tool", only_unique: true)
+        end
+        usage_flags
+      end
 
       def add_recursive_flags(tool)
         recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool,

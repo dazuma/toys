@@ -36,6 +36,9 @@ describe Toys::Loader do
   let(:cases_dir) {
     File.join(__dir__, "lookup-cases")
   }
+  def wrappable(str)
+    Toys::Utils::WrappableString.new(str)
+  end
 
   describe "path with config items" do
     before do
@@ -45,36 +48,33 @@ describe Toys::Loader do
 
     it "finds a tool directly defined in a config file" do
       tool, remaining = loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc)
-      assert_equal(["file tool-1 long description"], tool.long_desc)
+      assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "finds a subtool directly defined in a config file" do
       tool, remaining = loader.lookup(["group-1", "tool-1-1"])
-      assert_equal("file tool-1-1 short description", tool.desc)
-      assert_equal(["file tool-1-1 long description"], tool.long_desc)
+      assert_equal("file tool-1-1 short description", tool.desc.to_s)
       assert_equal(["group-1", "tool-1-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
     it "finds a group directly defined in a config file" do
       tool, remaining = loader.lookup(["group-1"])
-      assert_equal("file group-1 short description", tool.desc)
+      assert_equal("file group-1 short description", tool.desc.to_s)
       assert_equal(["group-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
     it "finds a tool defined in a file in a config directory" do
       tool, remaining = loader.lookup(["tool-2"])
-      assert_equal("directory tool-2 short description", tool.desc)
-      assert_equal(["directory tool-2 long description"], tool.long_desc)
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "finds the nearest group directly defined if a query doesn't match" do
       tool, remaining = loader.lookup(["group-1", "tool-blah"])
-      assert_equal("file group-1 short description", tool.desc)
+      assert_equal("file group-1 short description", tool.desc.to_s)
       assert_equal(["group-1"], tool.full_name)
       assert_equal(["tool-blah"], remaining)
     end
@@ -94,15 +94,13 @@ describe Toys::Loader do
 
     it "finds a tool directly defined" do
       tool, remaining = loader.lookup(["tool-1"])
-      assert_equal("normal tool-1 short description", tool.desc)
-      assert_equal(["normal tool-1 long description"], tool.long_desc)
+      assert_equal("normal tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "finds a subtool directly defined" do
       tool, remaining = loader.lookup(["group-1", "tool-1-3"])
-      assert_equal("normal tool-1-3 short description", tool.desc)
-      assert_equal(["normal tool-1-3 long description"], tool.long_desc)
+      assert_equal("normal tool-1-3 short description", tool.desc.to_s)
       assert_equal(["group-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)
     end
@@ -153,8 +151,7 @@ describe Toys::Loader do
 
     it "allows loading if the collision isn't actually traversed" do
       tool, _remaining = loader.lookup(["tool-2"])
-      assert_equal("index tool-2 short description", tool.desc)
-      assert_equal(["index tool-2 long description"], tool.long_desc)
+      assert_equal("index tool-2 short description", tool.desc.to_s)
     end
 
     it "reports error if a tool is defined multiple times" do
@@ -171,8 +168,7 @@ describe Toys::Loader do
       loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
 
       tool, _remaining = loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc)
-      assert_equal(["file tool-1 long description"], tool.long_desc)
+      assert_equal("file tool-1 short description", tool.desc.to_s)
     end
 
     it "honors the high-priority flag" do
@@ -181,8 +177,7 @@ describe Toys::Loader do
       loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
 
       tool, _remaining = loader.lookup(["tool-1"])
-      assert_equal("normal tool-1 short description", tool.desc)
-      assert_equal(["normal tool-1 long description"], tool.long_desc)
+      assert_equal("normal tool-1 short description", tool.desc.to_s)
     end
   end
 
@@ -193,20 +188,17 @@ describe Toys::Loader do
 
     it "gets an item from a root-level directory include" do
       tool, _remaining = loader.lookup(["tool-2"])
-      assert_equal("directory tool-2 short description", tool.desc)
-      assert_equal(["directory tool-2 long description"], tool.long_desc)
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
     end
 
     it "gets an item from a root-level file include" do
       tool, _remaining = loader.lookup(["group-1", "tool-1-1"])
-      assert_equal("file tool-1-1 short description", tool.desc)
-      assert_equal(["file tool-1-1 long description"], tool.long_desc)
+      assert_equal("file tool-1-1 short description", tool.desc.to_s)
     end
 
     it "gets an item from non-root-level include" do
       tool, _remaining = loader.lookup(["group-0", "group-1", "tool-1-1"])
-      assert_equal("normal tool-1-1 short description", tool.desc)
-      assert_equal(["normal tool-1-1 long description"], tool.long_desc)
+      assert_equal("normal tool-1-1 short description", tool.desc.to_s)
     end
 
     it "does not load an include if not needed" do
@@ -231,22 +223,19 @@ describe Toys::Loader do
 
     it "finds a directly referenced alias" do
       tool, remaining = loader.lookup(["alias-1"])
-      assert_equal("file tool-1 short description", tool.desc)
-      assert_equal(["file tool-1 long description"], tool.long_desc)
+      assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "finds a recursively referenced alias" do
       tool, remaining = loader.lookup(["alias-2"])
-      assert_equal("file tool-1 short description", tool.desc)
-      assert_equal(["file tool-1 long description"], tool.long_desc)
+      assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
     end
 
     it "recognizes remaining args after an alias" do
       tool, remaining = loader.lookup(["alias-2", "tool-blah"])
-      assert_equal("file tool-1 short description", tool.desc)
-      assert_equal(["file tool-1 long description"], tool.long_desc)
+      assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal(["tool-blah"], remaining)
     end
   end

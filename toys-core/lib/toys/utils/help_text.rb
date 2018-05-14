@@ -76,6 +76,8 @@ module Toys
         @binary_name = binary_name
       end
 
+      attr_reader :tool
+
       ##
       # Generate a short usage string.
       #
@@ -290,7 +292,7 @@ module Toys
           add_synopsis_section
           add_description_section
           add_flags_section
-          add_positional_arguments_section if @tool.includes_executor?
+          add_positional_arguments_section
           add_subtool_list_section
           add_source_section
           @result = @lines.join("\n") + "\n"

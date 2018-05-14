@@ -57,15 +57,12 @@ module Toys
 
       ##
       # The default long description for the root tool.
-      # @return [Toys::Utils::WrappableString]
+      # @return [String]
       #
       DEFAULT_ROOT_LONG_DESC =
-        Utils::WrappableString.new(
-          "This command line tool was built using the toys-core gem." \
-          " See https://www.rubydoc.info/gems/toys-core for more info." \
-          " To replace this message, configure the SetDefaultDescriptions" \
-          " middleware."
-        )
+        "This command line tool was built using the toys-core gem. See" \
+        " https://www.rubydoc.info/gems/toys-core for more info. To replace this message," \
+        " configure the SetDefaultDescriptions middleware.".freeze
 
       ##
       # The default description for flags.

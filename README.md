@@ -26,7 +26,7 @@ The source can be found on Github at
 * Write user's guide
 
 * Investigate piping long help into less
-* Investigate required flags and flag groups
+* Investigate required flags and flag groups. Three types: at_most_one, exactly_one, at_least_one
 * Investigate something to generate output formats
 * Investigate system paths tool
 * Investigate group clearing/locking
