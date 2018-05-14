@@ -89,17 +89,17 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def short_string(recursive: false, left_column_width: nil, indent: nil, wrap_width: nil)
+      def usage_string(recursive: false, left_column_width: nil, indent: nil, wrap_width: nil)
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, nil)
-        assembler = ShortHelpAssembler.new(@tool, @binary_name, subtools,
-                                           indent, left_column_width, wrap_width)
+        assembler = UsageStringAssembler.new(@tool, @binary_name, subtools,
+                                             indent, left_column_width, wrap_width)
         assembler.result
       end
 
       ##
-      # Generate a long usage string.
+      # Generate a long help string.
       #
       # @param [Boolean] recursive If true, and the tool is a group tool,
       #     display all subcommands recursively. Defaults to false.
@@ -116,13 +116,13 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def long_string(recursive: false, search: nil, show_path: false,
+      def help_string(recursive: false, search: nil, show_path: false,
                       indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search)
-        assembler = LongHelpAssembler.new(@tool, @binary_name, subtools, search, show_path,
-                                          indent, indent2, wrap_width, styled)
+        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search, show_path,
+                                            indent, indent2, wrap_width, styled)
         assembler.result
       end
 
@@ -138,7 +138,7 @@ module Toys
       end
 
       ## @private
-      class ShortHelpAssembler
+      class UsageStringAssembler
         def initialize(tool, binary_name, subtools,
                        indent, left_column_width, wrap_width)
           @tool = tool
@@ -268,7 +268,7 @@ module Toys
       end
 
       ## @private
-      class LongHelpAssembler
+      class HelpStringAssembler
         def initialize(tool, binary_name, subtools, search_term, show_path,
                        indent, indent2, wrap_width, styled)
           @tool = tool
@@ -311,7 +311,7 @@ module Toys
 
         def prefix_with_desc(prefix, desc)
           return [prefix] if desc.empty?
-          return ["#{prefix} - #{desc}"] unless object.desc.is_a?(Utils::WrappableString)
+          return ["#{prefix} - #{desc}"] unless desc.is_a?(Utils::WrappableString)
           wrap_indent_indent2(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
         end
 
@@ -455,14 +455,17 @@ module Toys
         end
 
         def wrap_indent(input)
+          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
           Utils::WrappableString.wrap_lines(input, @wrap_width - @indent)
         end
 
         def wrap_indent2(input)
+          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
           Utils::WrappableString.wrap_lines(input, @wrap_width - @indent - @indent2)
         end
 
         def wrap_indent_indent2(input)
+          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
           Utils::WrappableString.wrap_lines(input, @wrap_width - @indent,
                                             @wrap_width - @indent - @indent2)
         end

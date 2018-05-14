@@ -83,14 +83,14 @@ describe Toys::Tool do
       assert_equal([], tool.long_desc)
     end
 
-    it "handles set of short description" do
-      tool.desc = "hi"
+    it "handles short description with line breaks" do
+      tool.desc = "hi\nthere"
       assert_equal(true, tool.includes_description?)
-      assert_equal("hi", tool.desc)
+      assert_equal("hi there", tool.desc)
       assert_equal([], tool.long_desc)
     end
 
-    it "handles set of long description" do
+    it "handles single-line long description" do
       tool.long_desc = "ho"
       assert_equal(true, tool.includes_description?)
       assert_equal("", tool.desc)
@@ -98,18 +98,10 @@ describe Toys::Tool do
     end
 
     it "handles multi-line long description" do
-      tool.long_desc = ["ho", "Ender"]
+      tool.long_desc = ["ho\nhum", Toys::Utils::WrappableString.new("Ender")]
       assert_equal(true, tool.includes_description?)
       assert_equal("", tool.desc)
-      assert_equal(["ho", "Ender"], tool.long_desc)
-    end
-
-    it "handles set of both descriptions" do
-      tool.desc = "hi"
-      tool.long_desc = ["ho", "hum"]
-      assert_equal(true, tool.includes_description?)
-      assert_equal("hi", tool.desc)
-      assert_equal(["ho", "hum"], tool.long_desc)
+      assert_equal(["ho", "hum", Toys::Utils::WrappableString.new("Ender")], tool.long_desc)
     end
   end
 
@@ -144,24 +136,12 @@ describe Toys::Tool do
       assert_equal(true, flag.active?)
     end
 
-    it "recognizes desc with wrapping" do
-      tool.add_flag(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"))
+    it "recognizes desc and long desc" do
+      tool.add_flag(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"),
+                              long_desc: "hello\nworld")
       flag = tool.flag_definitions.first
       assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), flag.desc)
-    end
-
-    it "recognizes long desc with multiple lines" do
-      tool.add_flag(:a, "-a", long_desc: ["hello\nworld", "I like Ruby"])
-      flag = tool.flag_definitions.first
-      assert_equal(["hello", "world", "I like Ruby"], flag.long_desc)
-    end
-
-    it "recognizes long desc with wrapping" do
-      tool.add_flag(:a, "-a",
-                    long_desc: ["hello world", Toys::Utils::WrappableString.new("I like Ruby")])
-      flag = tool.flag_definitions.first
-      assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")],
-                   flag.long_desc)
+      assert_equal(["hello", "world"], flag.long_desc)
     end
 
     it "exposes optparser info with no acceptor" do
@@ -175,6 +155,26 @@ describe Toys::Tool do
       flag = tool.flag_definitions.first
       assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer],
                    flag.optparser_info)
+    end
+
+    it "adds a value label by default when an acceptor is present" do
+      tool.add_flag(:a, "-a", "--bb", accept: Integer)
+      flag = tool.flag_definitions.first
+      assert_equal(["-a VALUE", "--bb VALUE", Integer], flag.optparser_info)
+      assert_equal("VALUE", flag.value_label)
+      assert_equal(" ", flag.value_delim)
+    end
+
+    it "adds default values without an acceptor" do
+      tool.add_flag(:abc)
+      flag = tool.flag_definitions.first
+      assert_equal(["--abc"], flag.optparser_info)
+    end
+
+    it "adds default values with an acceptor" do
+      tool.add_flag(:abc, accept: String)
+      flag = tool.flag_definitions.first
+      assert_equal(["--abc=VALUE", String], flag.optparser_info)
     end
 
     it "finds single and double flags" do

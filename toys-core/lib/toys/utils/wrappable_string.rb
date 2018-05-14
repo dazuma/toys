@@ -49,6 +49,14 @@ module Toys
       attr_reader :fragments
 
       ##
+      # Returns true if the string is empty (i.e. has no fragments)
+      # @return [String]
+      #
+      def empty?
+        @fragments.empty?
+      end
+
+      ##
       # Returns the string without any wrapping
       # @return [String]
       #

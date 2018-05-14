@@ -139,7 +139,7 @@ module Toys
         if execute_by_fallback || execute_by_flag
           help_text = Utils::HelpText.from_context(context)
           width = ::HighLine.new.output_cols
-          str = help_text.long_string(recursive: context[:_recursive_subtools],
+          str = help_text.help_string(recursive: context[:_recursive_subtools],
                                       search: context[:_search_subtools],
                                       show_path: context[Context::VERBOSITY] > 0,
                                       wrap_width: width)
