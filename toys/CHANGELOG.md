@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.4 / TBD
+### 0.3.4 / 2018-05-14
 
 * CHANGED: Renamed switch to flag
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
