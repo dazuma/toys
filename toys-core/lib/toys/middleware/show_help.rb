@@ -189,11 +189,11 @@ module Toys
         loader = context[Context::LOADER]
         tool, rest = loader.lookup(tool_name)
         help_text = Utils::HelpText.new(tool, loader, context[Context::BINARY_NAME])
-        report_usage_error(tool_name, help_text) unless rest.empty?
+        report_usage_error(context, tool_name, help_text) unless rest.empty?
         help_text
       end
 
-      def report_usage_error(tool_name, help_text)
+      def report_usage_error(context, tool_name, help_text)
         output.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
         output.puts
         output.puts help_text.usage_string(wrap_width: output_cols)
