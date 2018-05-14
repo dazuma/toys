@@ -419,7 +419,7 @@ module Toys
           name_len = @tool.full_name.length
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc = subtool.is_a?(Alias) ? ["(Alias of #{subtool.display_target})"] : subtool.desc
+            desc = subtool.is_a?(Alias) ? "(Alias of #{subtool.display_target})" : subtool.desc
             add_prefix_with_desc(bold(tool_name), desc)
           end
         end
