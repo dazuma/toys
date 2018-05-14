@@ -167,7 +167,7 @@ module Toys
                                                      DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
           tool.add_flag(:_search_subtools, *search_flags,
-                        desc: "Search subtools for the given term",
+                        desc: "Search subtools for the given regular expression",
                         only_unique: true)
         end
       end

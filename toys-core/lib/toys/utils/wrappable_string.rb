@@ -39,7 +39,7 @@ module Toys
       #     fragments
       #
       def initialize(string = "")
-        @fragments = string.is_a?(::Array) ? string.dup : string.split
+        @fragments = string.is_a?(::Array) ? string : string.split
       end
 
       ##

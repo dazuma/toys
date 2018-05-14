@@ -22,13 +22,13 @@ The source can be found on Github at
 
 ### TODO items
 
-* help should take precedence over usage error for normal tools but not for groups
 * --short-help or --usage?
 * toys help
 * Pipe long help into less?
 * Consider a helper method for wrappable strings.
 * Flesh out long descriptions for our standard tools and stuff
 * Tests for long-style help
+* Short usage should not support tool search
 
 * Improve test coverage
 * Write user's guide

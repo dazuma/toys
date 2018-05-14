@@ -81,8 +81,6 @@ module Toys
       #
       # @param [Boolean] recursive If true, and the tool is a group tool,
       #     display all subcommands recursively. Defaults to false.
-      # @param [String,nil] search An optional string to search for when
-      #     listing subcommands. Defaults to `nil` which finds all subcommands.
       # @param [Integer] left_column_width Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
@@ -91,12 +89,11 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def short_string(recursive: false, search: nil,
-                       left_column_width: nil, indent: nil, wrap_width: nil)
+      def short_string(recursive: false, left_column_width: nil, indent: nil, wrap_width: nil)
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, search)
-        assembler = ShortHelpAssembler.new(@tool, @binary_name, subtools, search,
+        subtools = find_subtools(recursive, nil)
+        assembler = ShortHelpAssembler.new(@tool, @binary_name, subtools,
                                            indent, left_column_width, wrap_width)
         assembler.result
       end
@@ -134,20 +131,19 @@ module Toys
       def find_subtools(recursive, search)
         subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
         return subtools if search.nil? || search.empty?
-        regex = Regexp.new("(^|\\s)#{Regexp.escape(search)}(\\s|$)", Regexp::IGNORECASE)
+        regex = Regexp.new(search, Regexp::IGNORECASE)
         subtools.find_all do |tool|
-          regex =~ tool.display_name || tool.desc.find { |d| regex =~ d.to_s }
+          regex =~ tool.display_name || regex =~ tool.desc.to_s
         end
       end
 
       ## @private
       class ShortHelpAssembler
-        def initialize(tool, binary_name, subtools, search_term,
+        def initialize(tool, binary_name, subtools,
                        indent, left_column_width, wrap_width)
           @tool = tool
           @binary_name = binary_name
           @subtools = subtools
-          @search_term = search_term
           @indent = indent
           @left_column_width = left_column_width
           @wrap_width = wrap_width
@@ -207,7 +203,7 @@ module Toys
                       .map(&:str_without_value).join(", ")
           flags_str << flag.value_delim << flag.value_label if flag.value_label
           flags_str = "    #{flags_str}" if flag.single_flag_syntax.empty?
-          add_right_column_desc(flags_str, flag.wrapped_desc(@right_column_wrap_width))
+          add_right_column_desc(flags_str, wrap_desc(flag.desc))
         end
 
         def add_positional_arguments_section
@@ -216,8 +212,7 @@ module Toys
           @lines << ""
           @lines << "Positional arguments:"
           args_to_display.each do |arg_info|
-            add_right_column_desc(arg_name(arg_info),
-                                  arg_info.wrapped_desc(@right_column_wrap_width))
+            add_right_column_desc(arg_name(arg_info), wrap_desc(arg_info.desc))
           end
         end
 
@@ -225,19 +220,14 @@ module Toys
           return if @subtools.empty?
           name_len = @tool.full_name.length
           @lines << ""
-          @lines <<
-            if @search_term
-              "Tools with search term #{@search_term.inspect}:"
-            else
-              "Tools:"
-            end
+          @lines << "Tools:"
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
             desc =
               if subtool.is_a?(Alias)
                 ["(Alias of #{subtool.display_target})"]
               else
-                subtool.wrapped_desc(@right_column_wrap_width)
+                wrap_desc(subtool.desc)
               end
             add_right_column_desc(tool_name, desc)
           end
@@ -266,6 +256,10 @@ module Toys
           when :remaining
             "[#{arg_info.display_name}...]"
           end
+        end
+
+        def wrap_desc(desc)
+          Utils::WrappableString.wrap_lines(desc, @right_column_wrap_width)
         end
 
         def indent_str(str)
@@ -308,23 +302,17 @@ module Toys
         def add_name_section
           @lines << bold("NAME")
           name_str = ([@binary_name] + @tool.full_name).join(" ")
-          desc = prefix_with_desc(name_str, @tool)
+          desc = prefix_with_desc(name_str, @tool.desc)
           @lines << indent_str(desc[0])
           desc[1..-1].each do |line|
             @lines << indent2_str(line)
           end
         end
 
-        def prefix_with_desc(prefix, object)
-          return [prefix] if object.desc.empty?
-          width1 = @wrap_width - prefix.size - @indent - 3
-          if width1 <= 0
-            ["#{name_str} -"] + object.wrapped_desc(@wrap_width - @indent - @indent2)
-          else
-            desc = object.wrapped_desc(width1, @wrap_width - @indent - @indent2)
-            desc[0] = "#{prefix} - #{desc[0]}"
-            desc
-          end
+        def prefix_with_desc(prefix, desc)
+          return [prefix] if desc.empty?
+          return ["#{prefix} - #{desc}"] unless object.desc.is_a?(Utils::WrappableString)
+          wrap_indent_indent2(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
         end
 
         def add_synopsis_section
@@ -355,14 +343,12 @@ module Toys
           @tool.arg_definitions.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
-          Utils::WrappableString.new(synopsis).wrap(@wrap_width - @indent,
-                                                    @wrap_width - @indent - @indent2)
+          wrap_indent_indent2(Utils::WrappableString.new(synopsis))
         end
 
         def group_synopsis
           synopsis = [full_binary_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
-          Utils::WrappableString.new(synopsis).wrap(@wrap_width - @indent,
-                                                    @wrap_width - @indent - @indent2)
+          wrap_indent_indent2(Utils::WrappableString.new(synopsis))
         end
 
         def full_binary_name
@@ -377,7 +363,7 @@ module Toys
         end
 
         def add_description_section
-          desc = @tool.wrapped_long_desc(@wrap_width - @indent)
+          desc = wrap_indent(@tool.long_desc)
           return if desc.empty?
           @lines << ""
           @lines << bold("DESCRIPTION")
@@ -424,8 +410,11 @@ module Toys
         def add_subtool_list_section
           return if @subtools.empty?
           @lines << ""
-          header = @search_term ? "TOOLS with search term #{@search_term.inspect}:" : "TOOLS:"
-          @lines << bold(header)
+          @lines << bold("TOOLS")
+          if @search_term
+            @lines << indent_str("Showing search results for \"#{@search_term}\"")
+            @lines << ""
+          end
           name_len = @tool.full_name.length
           precede_with_blank = false
           @subtools.each do |subtool|
@@ -434,7 +423,7 @@ module Toys
               if subtool.is_a?(Alias)
                 ["(Alias of #{subtool.display_target})"]
               else
-                subtool.wrapped_desc(@wrap_width - @indent - @indent2)
+                wrap_indent2(subtool.desc)
               end
             add_indented_section(bold(tool_name), desc, precede_with_blank)
             precede_with_blank = true
@@ -446,8 +435,8 @@ module Toys
           @lines << indent_str(header)
           desc = info
           unless desc.is_a?(::Array)
-            desc = info.wrapped_long_desc(@wrap_width - @indent - @indent2)
-            desc = info.wrapped_desc(@wrap_width - @indent - @indent2) if desc.empty?
+            desc = wrap_indent2(info.long_desc)
+            desc = wrap_indent2(info.desc) if desc.empty?
           end
           desc.each do |line|
             @lines << indent2_str(line)
@@ -463,6 +452,19 @@ module Toys
           when :remaining
             "[#{underline(arg_info.display_name)}...]"
           end
+        end
+
+        def wrap_indent(input)
+          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent)
+        end
+
+        def wrap_indent2(input)
+          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent - @indent2)
+        end
+
+        def wrap_indent_indent2(input)
+          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent,
+                                            @wrap_width - @indent - @indent2)
         end
 
         def bold(str)

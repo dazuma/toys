@@ -111,12 +111,6 @@ describe Toys::Tool do
       assert_equal("hi", tool.desc)
       assert_equal(["ho", "hum"], tool.long_desc)
     end
-
-    it "handles wrapping" do
-      tool.desc = Toys::Utils::WrappableString.new("hi there")
-      assert_equal(["hi there"], tool.wrapped_desc(nil))
-      assert_equal(["hi", "there"], tool.wrapped_desc(4))
-    end
   end
 
   describe "flag definition" do
@@ -154,14 +148,12 @@ describe Toys::Tool do
       tool.add_flag(:a, "-a", desc: Toys::Utils::WrappableString.new("I like Ruby"))
       flag = tool.flag_definitions.first
       assert_equal(Toys::Utils::WrappableString.new("I like Ruby"), flag.desc)
-      assert_equal(["I like", "Ruby"], flag.wrapped_desc(7))
     end
 
     it "recognizes long desc with multiple lines" do
       tool.add_flag(:a, "-a", long_desc: ["hello\nworld", "I like Ruby"])
       flag = tool.flag_definitions.first
       assert_equal(["hello", "world", "I like Ruby"], flag.long_desc)
-      assert_equal(["hello", "world", "I like Ruby"], flag.wrapped_long_desc(7))
     end
 
     it "recognizes long desc with wrapping" do
@@ -170,7 +162,6 @@ describe Toys::Tool do
       flag = tool.flag_definitions.first
       assert_equal(["hello world", Toys::Utils::WrappableString.new("I like Ruby")],
                    flag.long_desc)
-      assert_equal(["hello world", "I like", "Ruby"], flag.wrapped_long_desc(7))
     end
 
     it "exposes optparser info with no acceptor" do

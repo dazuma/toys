@@ -180,30 +180,6 @@ module Toys
     end
 
     ##
-    # Returns the short description string with wrapping resolved.
-    #
-    # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-    # @param [Integer,nil] width2 Width in characters for the second and
-    #     subsequent lines, or `nil` to use the same as width.
-    # @return [Array<String>]
-    #
-    def wrapped_desc(width, width2 = nil)
-      Utils::WrappableString.wrap_lines([desc], width, width2)
-    end
-
-    ##
-    # Returns the long description strings with wrapping resolved.
-    #
-    # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-    # @param [Integer,nil] width2 Width in characters for the second and
-    #     subsequent lines, or `nil` to use the same as width.
-    # @return [Array<String>]
-    #
-    def wrapped_long_desc(width, width2 = nil)
-      Utils::WrappableString.wrap_lines(long_desc, width, width2)
-    end
-
-    ##
     # Returns true if there is a specific description set for this tool.
     # @return [Boolean]
     #
@@ -678,30 +654,6 @@ module Toys
       end
 
       ##
-      # Returns the short description string with wrapping resolved.
-      #
-      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-      # @param [Integer,nil] width2 Width in characters for the second and
-      #     subsequent lines, or `nil` to use the same as width.
-      # @return [Array<String>]
-      #
-      def wrapped_desc(width, width2 = nil)
-        Utils::WrappableString.wrap_lines([desc], width, width2)
-      end
-
-      ##
-      # Returns the long description strings with wrapping resolved.
-      #
-      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-      # @param [Integer,nil] width2 Width in characters for the second and
-      #     subsequent lines, or `nil` to use the same as width.
-      # @return [Array<String>]
-      #
-      def wrapped_long_desc(width, width2 = nil)
-        Utils::WrappableString.wrap_lines(long_desc, width, width2)
-      end
-
-      ##
       # All optparser flags and acceptor if present
       # @return [Array]
       #
@@ -873,30 +825,6 @@ module Toys
       #
       def display_name
         key.to_s.tr("-", "_").gsub(/\W/, "").upcase
-      end
-
-      ##
-      # Returns the short description string with wrapping resolved.
-      #
-      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-      # @param [Integer,nil] width2 Width in characters for the second and
-      #     subsequent lines, or `nil` to use the same as width.
-      # @return [Array<String>]
-      #
-      def wrapped_desc(width, width2 = nil)
-        Utils::WrappableString.wrap_lines([desc], width, width2)
-      end
-
-      ##
-      # Returns the long description strings with wrapping resolved.
-      #
-      # @param [Integer,nil] width Wrapping width, or `nil` for infinite.
-      # @param [Integer,nil] width2 Width in characters for the second and
-      #     subsequent lines, or `nil` to use the same as width.
-      # @return [Array<String>]
-      #
-      def wrapped_long_desc(width, width2 = nil)
-        Utils::WrappableString.wrap_lines(long_desc, width, width2)
       end
 
       ##
