@@ -105,8 +105,6 @@ module Toys
       #     display all subcommands recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
-      # @param [Boolean] show_path If true, shows the path to the config file
-      #     containing the tool definition (if set). Defaults to false.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       # @param [Integer] indent2 Second indent width. Default is
       #     {DEFAULT_INDENT}.
@@ -116,12 +114,12 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def help_string(recursive: false, search: nil, show_path: false,
+      def help_string(recursive: false, search: nil,
                       indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search)
-        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search, show_path,
+        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search,
                                             indent, indent2, wrap_width, styled)
         assembler.result
       end
@@ -269,13 +267,12 @@ module Toys
 
       ## @private
       class HelpStringAssembler
-        def initialize(tool, binary_name, subtools, search_term, show_path,
+        def initialize(tool, binary_name, subtools, search_term,
                        indent, indent2, wrap_width, styled)
           @tool = tool
           @binary_name = binary_name
           @subtools = subtools
           @search_term = search_term
-          @show_path = show_path
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
@@ -295,7 +292,7 @@ module Toys
           add_flags_section
           add_positional_arguments_section if @tool.includes_executor?
           add_subtool_list_section
-          add_source_section if @show_path
+          add_source_section
           @result = @lines.join("\n") + "\n"
         end
 

@@ -158,7 +158,6 @@ module Toys
           help_text = Utils::HelpText.from_context(context)
           str = help_text.help_string(recursive: context[:_recursive_subtools],
                                       search: context[:_search_subtools],
-                                      show_path: context[Context::VERBOSITY] > 0,
                                       wrap_width: ::HighLine.new.output_cols)
           @output.puts(str)
         elsif context[:_show_usage]

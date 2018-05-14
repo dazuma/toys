@@ -212,7 +212,6 @@ module Toys
       tool, remaining = ContextualError.capture("Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
-      @loader.finish_definitions_in_tree(tool.full_name)
       tool.execute(self, remaining, verbosity: verbosity)
     rescue ContextualError => e
       @error_handler.call(e)

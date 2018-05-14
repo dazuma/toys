@@ -22,15 +22,10 @@ The source can be found on Github at
 
 ### TODO items
 
-* --short-help or --usage?
-* toys help
-* Pipe long help into less?
-* Consider a helper method for wrappable strings.
-* Flesh out long descriptions for our standard tools and stuff
-
 * Improve test coverage
 * Write user's guide
 
+* Investigate piping long help into less
 * Investigate required flags and flag groups
 * Investigate something to generate output formats
 * Investigate system paths tool

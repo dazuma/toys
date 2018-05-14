@@ -103,12 +103,17 @@ module Toys
         p = orig_prefix.dup
         while p.length >= cur_prefix.length
           tool = get_tool(p, [])
-          return [tool, args.slice(p.length..-1)] if tool
+          if tool
+            finish_definitions_in_tree(p)
+            return [tool, args.slice(p.length..-1)]
+          end
           p.pop
         end
         break unless cur_prefix.pop
       end
-      [get_or_create_tool([]), args]
+      tool = get_or_create_tool([])
+      finish_definitions_in_tree([])
+      [tool, args]
     end
 
     ##
