@@ -104,7 +104,7 @@ module Toys
         while p.length >= cur_prefix.length
           tool = get_tool(p, [])
           if tool
-            finish_definitions_in_tree(p)
+            finish_definitions_in_tree(tool.full_name)
             return [tool, args.slice(p.length..-1)]
           end
           p.pop

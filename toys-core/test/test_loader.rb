@@ -49,6 +49,7 @@ describe Toys::Loader do
     it "finds a tool directly defined in a config file" do
       tool, remaining = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
       assert_equal([], remaining)
     end
 
@@ -224,12 +225,14 @@ describe Toys::Loader do
     it "finds a directly referenced alias" do
       tool, remaining = loader.lookup(["alias-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
       assert_equal([], remaining)
     end
 
     it "finds a recursively referenced alias" do
       tool, remaining = loader.lookup(["alias-2"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
       assert_equal([], remaining)
     end
 

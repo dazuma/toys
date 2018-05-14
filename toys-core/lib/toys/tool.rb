@@ -216,6 +216,14 @@ module Toys
     end
 
     ##
+    # Returns true if this tool's definition has been finished and is locked.
+    # @return [Boolean]
+    #
+    def definition_finished?
+      @definition_finished
+    end
+
+    ##
     # Returns all arg definitions in order: required, optional, remaining.
     # @return [Array<Toys::Tool::ArgDefinition>]
     #
