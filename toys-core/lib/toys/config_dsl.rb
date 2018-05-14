@@ -169,13 +169,13 @@ module Toys
     def long_desc(*strs)
       return self if _cur_tool.nil?
       _cur_tool.definition_path = @path
-      _cur_tool.long_desc = strs
+      _cur_tool.long_desc = strs.flatten
       self
     end
 
     ##
     # Set the short description for the current tool. The short description is
-    # displayed with the tool in a command list. You may also use the
+    # displayed with the tool in a subtool list. You may also use the
     # equivalent method `short_desc`.
     #
     # @param [String,Toys::Utils::WrappableString] str The short description
@@ -254,6 +254,7 @@ module Toys
                                  &block)
       self
     end
+    alias required required_arg
 
     ##
     # Add an optional positional argument to the current tool. You must specify
@@ -283,6 +284,7 @@ module Toys
                                  &block)
       self
     end
+    alias optional optional_arg
 
     ##
     # Specify what should be done with unmatched positional arguments. You must
@@ -311,6 +313,7 @@ module Toys
                                    &block)
       self
     end
+    alias remaining remaining_args
 
     ##
     # Specify the executor for this tool. This is a block that will be called,

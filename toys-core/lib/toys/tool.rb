@@ -341,10 +341,9 @@ module Toys
                  accept: nil, default: nil, desc: nil, long_desc: nil,
                  only_unique: false, handler: nil)
       check_definition_state
-      flag_def = FlagDefinition.new(key, flags, accept)
+      flag_def = FlagDefinition.new(key, flags, accept, handler)
       flag_def.desc = desc unless desc.nil?
       flag_def.long_desc = long_desc unless long_desc.nil?
-      flag_def.handler = handler unless handler.nil?
       yield flag_def if block_given?
       if only_unique
         flag_def.remove_flags(used_flags)
@@ -373,8 +372,7 @@ module Toys
     #
     def add_required_arg(key, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :required)
-      arg_def.accept = accept unless accept.nil?
+      arg_def = ArgDefinition.new(key, :required, accept)
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -404,8 +402,7 @@ module Toys
     #
     def add_optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :optional)
-      arg_def.accept = accept unless accept.nil?
+      arg_def = ArgDefinition.new(key, :optional, accept)
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -434,8 +431,7 @@ module Toys
     #
     def set_remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :remaining)
-      arg_def.accept = accept unless accept.nil?
+      arg_def = ArgDefinition.new(key, :remaining, accept)
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
@@ -548,12 +544,17 @@ module Toys
       #
       # @param [Symbol] key This flag will set the given context key.
       # @param [Array<String>] flags Flags in OptionParser format
-      # @param [Object] accept The acceptor, which may be nil.
+      # @param [Object] accept The acceptor, which may be `nil`.
+      # @param [Proc,nil] handler The handler for setting/updating the value.
+      #     The handler should take two arguments, the new given value and the
+      #     previous value, and it should return the new value that should be
+      #     set. If `nil`, uses {DEFAULT_HANDLER}.
       #
-      def initialize(key, flags, accept)
+      def initialize(key, flags, accept, handler)
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
+        @handler = handler || DEFAULT_HANDLER
         if @flag_syntax.empty?
           create_default_flag
         else
@@ -561,7 +562,6 @@ module Toys
         end
         @desc = ""
         @long_desc = []
-        @handler = DEFAULT_HANDLER
         reset_data
       end
 
@@ -590,6 +590,18 @@ module Toys
       attr_reader :desc
 
       ##
+      # Returns the long description strings as an array.
+      # @return [Array<String,Toys::Utils::WrappableString>]
+      #
+      attr_reader :long_desc
+
+      ##
+      # Returns the handler for setting/updating the value.
+      # @return [Proc]
+      #
+      attr_reader :handler
+
+      ##
       # Set the short description string.
       # @param [String,Toys::Utils::WrappableString] desc Short description
       #
@@ -598,35 +610,12 @@ module Toys
       end
 
       ##
-      # Returns the long description strings as an array.
-      # @return [Array<String,Toys::Utils::WrappableString>]
-      #
-      attr_reader :long_desc
-
-      ##
       # Set the long description strings.
       # @param [String,Toys::Utils::WrappableString,
       #     Array<String,Toys::Utils::WrappableString>] desc Long description
       #
       def long_desc=(desc)
         @long_desc = Tool.canonicalize_long_desc(desc)
-      end
-
-      ##
-      # Returns the handler.
-      # @return [Proc]
-      #
-      attr_reader :handler
-
-      ##
-      # Set the handler
-      # @param [Proc,nil] handler The handler for setting/updating the value.
-      #     The handler should take two arguments, the new given value and the
-      #     previous value, and it should return the new value that should be
-      #     set. If `nil`, uses {DEFAULT_HANDLER}.
-      #
-      def handler=(handler)
-        @handler = handler || DEFAULT_HANDLER
       end
 
       ##
@@ -762,11 +751,12 @@ module Toys
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [:required,:optional,:remaining] type Type of this argument
+      # @param [Object] accept The acceptor
       #
-      def initialize(key, type)
+      def initialize(key, type, accept)
         @key = key
         @type = type
-        @accept = nil
+        @accept = accept
         @desc = ""
         @long_desc = []
       end
@@ -781,7 +771,7 @@ module Toys
       # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
-      attr_accessor :accept
+      attr_reader :accept
 
       ##
       # Returns the short description string.
@@ -796,18 +786,18 @@ module Toys
       attr_reader :type
 
       ##
+      # Returns the long description strings as an array.
+      # @return [Array<String,Toys::Utils::WrappableString>]
+      #
+      attr_reader :long_desc
+
+      ##
       # Set the short description string.
       # @param [String,Toys::Utils::WrappableString] desc Short description
       #
       def desc=(desc)
         @desc = Tool.canonicalize_desc(desc)
       end
-
-      ##
-      # Returns the long description strings as an array.
-      # @return [Array<String,Toys::Utils::WrappableString>]
-      #
-      attr_reader :long_desc
 
       ##
       # Set the long description strings.

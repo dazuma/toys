@@ -13,6 +13,7 @@
 * IMPROVED: Logger colors the header when possible.
 * IMPROVED: Style support for spinner helper
 * IMPROVED: Set default descriptions for flags and args
+* ADDED: Alias DSL methods `required`, `optional`, and `remaining`.
 * FIXED: Subtools with no desc now properly pick up the default
 * FIXED: Usage errors and show-help now interact in the right way
 

@@ -17,6 +17,7 @@
 * IMPROVED: Style support for spinner helper
 * IMPROVED: Set default descriptions for flags and args
 * ADDED: CLI now takes an error handler to report most errors.
+* ADDED: Alias DSL methods `required`, `optional`, and `remaining`.
 * FIXED: Finish definitions for subtools since the desc may depend on it
 
 ### 0.3.3 / 2018-05-09
