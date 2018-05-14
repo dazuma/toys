@@ -341,17 +341,17 @@ module Toys
                  accept: nil, default: nil, desc: nil, long_desc: nil,
                  only_unique: false, handler: nil)
       check_definition_state
-      flag_def = FlagDefinition.new(key, flags, accept, handler)
+      flag_def = FlagDefinition.new(self, key)
+      flag_def.add_flags(flags)
+      flag_def.accept = accept
+      flag_def.handler = handler
+      flag_def.default = default
       flag_def.desc = desc unless desc.nil?
       flag_def.long_desc = long_desc unless long_desc.nil?
       yield flag_def if block_given?
-      if only_unique
-        flag_def.remove_flags(used_flags)
-      end
-      if flag_def.active?
-        @default_data[key] = default
-        @flag_definitions << flag_def
-      end
+      flag_def.create_default_flag_if_needed
+      flag_def.remove_flags(used_flags) if only_unique
+      @flag_definitions << flag_def if flag_def.active?
       self
     end
 
@@ -372,12 +372,13 @@ module Toys
     #
     def add_required_arg(key, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :required, accept)
+      arg_def = ArgDefinition.new(self, key, :required)
+      arg_def.accept = accept
+      arg_def.default = nil
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
       @required_arg_definitions << arg_def
-      @default_data[key] = nil
       self
     end
 
@@ -402,12 +403,13 @@ module Toys
     #
     def add_optional_arg(key, default: nil, accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :optional, accept)
+      arg_def = ArgDefinition.new(self, key, :optional)
+      arg_def.accept = accept
+      arg_def.default = default
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
       @optional_arg_definitions << arg_def
-      @default_data[key] = default
       self
     end
 
@@ -431,12 +433,13 @@ module Toys
     #
     def set_remaining_args(key, default: [], accept: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :remaining, accept)
+      arg_def = ArgDefinition.new(self, key, :remaining)
+      arg_def.accept = accept
+      arg_def.default = default
       arg_def.desc = desc unless desc.nil?
       arg_def.long_desc = long_desc unless long_desc.nil?
       yield arg_def if block_given?
       @remaining_args_definition = arg_def
-      @default_data[key] = default
       self
     end
 
@@ -472,15 +475,16 @@ module Toys
 
     ##
     # Complete definition and run middleware configs
+    # @param [Toys::Loader] loader
     #
     # @private
     #
-    def finish_definition
+    def finish_definition(loader)
       unless @definition_finished
         ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
           config_proc = proc {}
           middleware_stack.reverse.each do |middleware|
-            config_proc = make_config_proc(middleware, config_proc)
+            config_proc = make_config_proc(middleware, loader, config_proc)
           end
           config_proc.call
         end
@@ -543,23 +547,13 @@ module Toys
       # @private
       #
       # @param [Symbol] key This flag will set the given context key.
-      # @param [Array<String>] flags Flags in OptionParser format
-      # @param [Object] accept The acceptor, which may be `nil`.
-      # @param [Proc,nil] handler The handler for setting/updating the value.
-      #     The handler should take two arguments, the new given value and the
-      #     previous value, and it should return the new value that should be
-      #     set. If `nil`, uses {DEFAULT_HANDLER}.
       #
-      def initialize(key, flags, accept, handler)
+      def initialize(tool, key)
+        @tool = tool
         @key = key
-        @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
-        @accept = accept
-        @handler = handler || DEFAULT_HANDLER
-        if @flag_syntax.empty?
-          create_default_flag
-        else
-          add_missing_values
-        end
+        @flag_syntax = []
+        @accept = nil
+        @handler = DEFAULT_HANDLER
         @desc = ""
         @long_desc = []
         reset_data
@@ -600,6 +594,44 @@ module Toys
       # @return [Proc]
       #
       attr_reader :handler
+
+      ##
+      # Adds the given flags.
+      # @param [Array<String>] flags Flags in OptionParser format
+      #
+      def add_flags(flags)
+        @flag_syntax.concat(flags.map { |s| FlagSyntax.new(s) })
+        reset_data
+        self
+      end
+
+      ##
+      # Set the acceptor.
+      # @param [Object] accept Acceptor. May be `nil` for the default.
+      #
+      def accept=(accept)
+        @accept = accept
+        reset_data
+      end
+
+      ##
+      # Set the default.
+      # @param [Object] default The default value.
+      #
+      def default=(default)
+        @tool.default_data[@key] = default
+      end
+
+      ##
+      # Set the handler for setting/updating the value.
+      # @param [Proc,nil] handler The handler for setting/updating the value.
+      #     The handler should take two arguments, the new given value and the
+      #     previous value, and it should return the new value that should be
+      #     set. If `nil`, uses {DEFAULT_HANDLER}.
+      #
+      def handler=(handler)
+        @handler = handler || DEFAULT_HANDLER
+      end
 
       ##
       # Set the short description string.
@@ -647,7 +679,14 @@ module Toys
       # @return [Array]
       #
       def optparser_info
-        @optparser_info ||= flag_syntax.map(&:original_str) + Array(accept)
+        @optparser_info ||= begin
+          flags = flag_syntax.map do |fs|
+            f = fs.str_without_value
+            f = "#{f} #{value_label}" if value_label
+            f
+          end
+          flags + Array(accept)
+        end
       end
 
       ##
@@ -677,11 +716,9 @@ module Toys
         @value_delim
       end
 
-      ##
-      # Removes the given flags.
-      # @param [Array<String>] flags
-      #
+      ## @private
       def remove_flags(flags)
+        flags = flags.map { |f| FlagSyntax.new(f).flags }.flatten
         @flag_syntax.select! do |ss|
           ss.flags.all? { |s| !flags.include?(s) }
         end
@@ -689,27 +726,18 @@ module Toys
         self
       end
 
-      private
-
-      def create_default_flag
-        canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "")
+      ## @private
+      def create_default_flag_if_needed
+        return unless @flag_syntax.empty?
+        canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
         unless canonical_flag.empty?
           flag = @accept ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
           @flag_syntax << FlagSyntax.new(flag)
         end
+        reset_data
       end
 
-      def add_missing_values
-        if @accept && @flag_syntax.all? { |fs| fs.value_label.nil? }
-          @flag_syntax.map! do |fs|
-            begin
-              FlagSyntax.new("#{fs.original_str} VALUE")
-            rescue ToolDefinitionError
-              fs
-            end
-          end
-        end
-      end
+      private
 
       def reset_data
         @effective_flags = nil
@@ -722,22 +750,18 @@ module Toys
 
       def find_canonical_value_label
         return if @value_delim
-        double_flag_syntax.reverse_each do |ss|
+        @value_label = @accept ? "VALUE" : nil
+        @value_delim = @accept ? " " : ""
+        single_flag_syntax.each do |ss|
           next unless ss.value_label
           @value_label = ss.value_label
           @value_delim = ss.value_delim
-          break
         end
-        return if @value_delim
-        single_flag_syntax.reverse_each do |ss|
+        double_flag_syntax.each do |ss|
           next unless ss.value_label
           @value_label = ss.value_label
           @value_delim = ss.value_delim
-          break
         end
-        return if @value_delim
-        @value_label = nil
-        @value_delim = ""
       end
     end
 
@@ -751,12 +775,12 @@ module Toys
       #
       # @param [Symbol] key This argument will set the given context key.
       # @param [:required,:optional,:remaining] type Type of this argument
-      # @param [Object] accept The acceptor
       #
-      def initialize(key, type, accept)
+      def initialize(tool, key, type)
+        @tool = tool
         @key = key
         @type = type
-        @accept = accept
+        @accept = nil
         @desc = ""
         @long_desc = []
       end
@@ -768,10 +792,16 @@ module Toys
       attr_reader :key
 
       ##
+      # Type of this argument.
+      # @return [:required,:optional,:remaining]
+      #
+      attr_reader :type
+
+      ##
       # Returns the acceptor, which may be `nil`.
       # @return [Object]
       #
-      attr_reader :accept
+      attr_accessor :accept
 
       ##
       # Returns the short description string.
@@ -780,16 +810,18 @@ module Toys
       attr_reader :desc
 
       ##
-      # Type of this argument.
-      # @return [:required,:optional,:remaining]
-      #
-      attr_reader :type
-
-      ##
       # Returns the long description strings as an array.
       # @return [Array<String,Toys::Utils::WrappableString>]
       #
       attr_reader :long_desc
+
+      ##
+      # Set the default.
+      # @param [Object] default The default value.
+      #
+      def default=(default)
+        @tool.default_data[@key] = default
+      end
 
       ##
       # Set the short description string.
@@ -836,8 +868,8 @@ module Toys
 
     private
 
-    def make_config_proc(middleware, next_config)
-      proc { middleware.config(self, &next_config) }
+    def make_config_proc(middleware, loader, next_config)
+      proc { middleware.config(self, loader, &next_config) }
     end
 
     def check_definition_state
@@ -856,7 +888,13 @@ module Toys
       ## @private
       def canonicalize_long_desc(desc)
         Array(desc).map do |d|
-          d.is_a?(Utils::WrappableString) ? d : d.split("\n")
+          if d.empty?
+            ""
+          elsif d.is_a?(Utils::WrappableString)
+            d
+          else
+            d.split("\n")
+          end
         end.flatten.freeze
       end
     end

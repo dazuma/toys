@@ -168,7 +168,7 @@ module Toys
       ##
       # Add default description text to tools.
       #
-      def config(tool)
+      def config(tool, _loader)
         if tool.root?
           config_descs(tool, @default_root_desc, @default_root_long_desc)
         elsif tool.includes_executor?

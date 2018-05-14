@@ -29,6 +29,9 @@
 
 desc "A group of system commands for toys"
 
+long_desc wrappable("The \"toys system\" group contains tools that inspect, configure, and" \
+                    " update toys itself.")
+
 tool "version" do
   desc "Print current toys version."
 
@@ -39,6 +42,9 @@ end
 
 tool "update" do
   desc "Update toys if a newer version is available."
+
+  long_desc wrappable("Checks rubygems for a newer version of toys. If one is available," \
+                      " downloads and installs it.")
 
   flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 

@@ -30,6 +30,13 @@
 require "helper"
 
 describe Toys::Tool do
+  let(:fake_loader) {
+    obj = Object.new
+    def obj.has_subtools?(_words)
+      false
+    end
+    obj
+  }
   let(:binary_name) { "toys" }
   let(:tool_name) { "foo" }
   let(:full_tool_name) { "fool" }
@@ -147,13 +154,14 @@ describe Toys::Tool do
     it "exposes optparser info with no acceptor" do
       tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee")
       flag = tool.flag_definitions.first
-      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"], flag.optparser_info)
+      assert_equal(["-a VAL", "--bb VAL", "-c VAL", "--dd VAL", "--[no-]ee VAL"],
+                   flag.optparser_info)
     end
 
     it "exposes optparser info with an acceptor" do
       tool.add_flag(:a, "-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", accept: Integer)
       flag = tool.flag_definitions.first
-      assert_equal(["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee", Integer],
+      assert_equal(["-a VAL", "--bb VAL", "-c VAL", "--dd VAL", "--[no-]ee VAL", Integer],
                    flag.optparser_info)
     end
 
@@ -174,7 +182,7 @@ describe Toys::Tool do
     it "adds default values with an acceptor" do
       tool.add_flag(:abc, accept: String)
       flag = tool.flag_definitions.first
-      assert_equal(["--abc=VALUE", String], flag.optparser_info)
+      assert_equal(["--abc VALUE", String], flag.optparser_info)
     end
 
     it "finds single and double flags" do
@@ -204,11 +212,12 @@ describe Toys::Tool do
       assert_equal(" ", flag.value_delim)
     end
 
-    it "removes flags" do
+    it "uniquifies flags" do
       tool.add_flag(:a, "-a VAL", "--bb=VALUE")
-      flag = tool.flag_definitions.first
-      flag.remove_flags(["-a", "-b"])
-      assert_equal(["--bb"], flag.effective_flags)
+      tool.add_flag(:b, "-b VAL", "--bb=VALUE", only_unique: true)
+      tool.add_flag(:c, "-a VAL", only_unique: true)
+      flag = tool.flag_definitions.last
+      assert_equal(["-b"], flag.effective_flags)
       assert(flag.active?)
     end
 
@@ -483,17 +492,17 @@ describe Toys::Tool do
   describe "finish_definition" do
     it "runs middleware config" do
       assert_equal(true, full_tool.flag_definitions.empty?)
-      full_tool.finish_definition
+      full_tool.finish_definition(fake_loader)
       assert_equal(false, full_tool.flag_definitions.empty?)
     end
 
     it "can be called multiple times" do
-      full_tool.finish_definition
-      full_tool.finish_definition
+      full_tool.finish_definition(fake_loader)
+      full_tool.finish_definition(fake_loader)
     end
 
     it "prevents further editing of description" do
-      full_tool.finish_definition
+      full_tool.finish_definition(fake_loader)
       assert_raises(Toys::ToolDefinitionError) do
         full_tool.desc = "hi"
       end

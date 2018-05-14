@@ -27,8 +27,6 @@ The source can be found on Github at
 * Pipe long help into less?
 * Consider a helper method for wrappable strings.
 * Flesh out long descriptions for our standard tools and stuff
-* Tests for long-style help
-* Short usage should not support tool search
 
 * Improve test coverage
 * Write user's guide

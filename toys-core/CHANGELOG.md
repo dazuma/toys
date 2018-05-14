@@ -4,8 +4,9 @@
 
 * CHANGED: Renamed switch to flag
 * CHANGED: Renamed Utils::Usage to Utils::HelpText
-* CHANGED: Renamed show_usage middleware to show_help
+* CHANGED: Renamed show_usage middleware to show_help and default everything false.
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
+* CHANGED: Middleware config method takes a loader as the second arg
 * CHANGED: desc is now a single string rather than an array.
 * CHANGED: Removed Loader#execute, and returned remaining args from Loader#lookup.
 * CHANGED: Wrapped most errors with Toys::ContextualError

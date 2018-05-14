@@ -75,24 +75,42 @@ module Toys
       ##
       # Configure the tool flags.
       #
-      def config(tool)
+      def config(tool, _loader)
+        add_verbose_flags(tool)
+        add_quiet_flags(tool)
+        yield
+      end
+
+      private
+
+      def add_verbose_flags(tool)
         verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool,
                                                       DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
+          long_desc = Utils::WrappableString.new(
+            "Increase verbosity, causing additional logging levels to display."
+          )
           tool.add_flag(Context::VERBOSITY, *verbose_flags,
                         desc: "Increase verbosity",
+                        long_desc: long_desc,
                         handler: ->(_val, cur) { cur + 1 },
                         only_unique: true)
         end
+      end
+
+      def add_quiet_flags(tool)
         quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool,
                                                     DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
+          long_desc = Utils::WrappableString.new(
+            "Decrease verbosity, causing fewer logging levels to display."
+          )
           tool.add_flag(Context::VERBOSITY, *quiet_flags,
                         desc: "Decrease verbosity",
+                        long_desc: long_desc,
                         handler: ->(_val, cur) { cur - 1 },
                         only_unique: true)
         end
-        yield
       end
     end
   end

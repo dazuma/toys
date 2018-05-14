@@ -141,25 +141,42 @@ module Toys
       cli
     end
 
+    # rubocop:disable Metrics/MethodLength
+
     ##
     # Returns a the middleware for the standard Toys CLI.
     #
     # @return [Array]
     #
     def self.default_middleware_stack
-      version_displayer = Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
       [
         [
           :set_default_descriptions,
           default_root_desc: DEFAULT_ROOT_DESC,
           default_root_long_desc: DEFAULT_ROOT_LONG_DESC
         ],
-        [:show_help, help_flags: true],
-        [:show_version, version_displayer: version_displayer],
+        [
+          :show_help,
+          help_flags: true,
+          usage_flags: true,
+          recursive_flags: true,
+          search_flags: true
+        ],
+        [
+          :show_version,
+          version_displayer: Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
+        ],
         [:handle_usage_errors],
-        [:show_help, fallback_execution: true],
+        [
+          :show_help,
+          fallback_execution: true,
+          recursive_flags: true,
+          search_flags: true
+        ],
         [:add_verbosity_flags]
       ]
     end
+
+    # rubocop:enable Metrics/MethodLength
   end
 end

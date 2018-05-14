@@ -36,10 +36,11 @@ Style/SymbolArray:
 Style/WordArray:
   Enabled: false
 
-# Disable certain checks for templates and tests
+# Disable certain checks for builtins and tests
 Metrics/BlockLength:
   Exclude:
     - "test/**/*"
+    - "builtins/**/*"
 Metrics/BlockNesting:
   Exclude:
     - "test/**/*"

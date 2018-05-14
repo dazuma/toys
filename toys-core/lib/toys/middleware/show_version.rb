@@ -77,11 +77,11 @@ module Toys
       ##
       # Adds the version flag if requested.
       #
-      def config(tool)
+      def config(tool, _loader)
         version = @version_displayer.call(tool)
         if version
           tool.add_flag(:_show_version, *@version_flags,
-                        desc: "Show version",
+                        desc: "Display the version",
                         handler: ->(_val, _prev) { version },
                         only_unique: true)
         end

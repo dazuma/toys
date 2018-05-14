@@ -85,6 +85,16 @@ module Toys
     end
 
     ##
+    # Return a wrappable string
+    #
+    # @param [String] str The string to make wrappable
+    # @return [Toys::Utils::WrappableString]
+    #
+    def wrappable(str)
+      Utils::WrappableString.new(str)
+    end
+
+    ##
     # Create a subtool. You must provide a block defining the subtool.
     #
     # If the subtool is already defined (either as a tool or a group), the old

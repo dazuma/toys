@@ -302,17 +302,21 @@ module Toys
         def add_name_section
           @lines << bold("NAME")
           name_str = ([@binary_name] + @tool.full_name).join(" ")
-          desc = prefix_with_desc(name_str, @tool.desc)
-          @lines << indent_str(desc[0])
-          desc[1..-1].each do |line|
-            @lines << indent2_str(line)
-          end
+          add_prefix_with_desc(name_str, @tool.desc)
         end
 
-        def prefix_with_desc(prefix, desc)
-          return [prefix] if desc.empty?
-          return ["#{prefix} - #{desc}"] unless desc.is_a?(Utils::WrappableString)
-          wrap_indent_indent2(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
+        def add_prefix_with_desc(prefix, desc)
+          if desc.empty?
+            @lines << indent_str(prefix)
+          elsif !desc.is_a?(Utils::WrappableString)
+            @lines << indent_str("#{prefix} - #{desc}")
+          else
+            desc = wrap_indent_indent2(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
+            @lines << indent_str(desc[0])
+            desc[1..-1].each do |line|
+              @lines << indent2_str(line)
+            end
+          end
         end
 
         def add_synopsis_section
@@ -416,17 +420,10 @@ module Toys
             @lines << ""
           end
           name_len = @tool.full_name.length
-          precede_with_blank = false
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc =
-              if subtool.is_a?(Alias)
-                ["(Alias of #{subtool.display_target})"]
-              else
-                wrap_indent2(subtool.desc)
-              end
-            add_indented_section(bold(tool_name), desc, precede_with_blank)
-            precede_with_blank = true
+            desc = subtool.is_a?(Alias) ? ["(Alias of #{subtool.display_target})"] : subtool.desc
+            add_prefix_with_desc(bold(tool_name), desc)
           end
         end
 

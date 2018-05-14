@@ -17,6 +17,8 @@ Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
   Max: 10
+Naming/PredicateName:
+  Enabled: false
 Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:

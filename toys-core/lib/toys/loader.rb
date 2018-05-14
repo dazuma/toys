@@ -137,6 +137,22 @@ module Toys
     end
 
     ##
+    # Returns true if the given path has at least one subtool. Loads from the
+    # configuration if necessary.
+    #
+    # @param [Array<String>] words The name of the parent tool
+    # @return [Boolean]
+    #
+    def has_subtools?(words)
+      load_for_prefix(words)
+      len = words.length
+      @tools.each do |n, _tp|
+        return true if !n.empty? && n.length > len && n.slice(0, len) == words
+      end
+      false
+    end
+
+    ##
     # Finishes all tool definitions under the given path. This generally means
     # installing middleware.
     #
@@ -148,7 +164,7 @@ module Toys
       len = words.length
       @tools.each do |n, tp|
         next if n.length < len || n.slice(0, len) != words
-        tp.first.finish_definition
+        tp.first.finish_definition(self)
       end
     end
 

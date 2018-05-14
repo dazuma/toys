@@ -388,9 +388,8 @@ describe Toys::Utils::HelpText do
         index = help_array.index("TOOLS")
         refute_nil(index)
         assert_equal("    one", help_array[index + 1])
-        assert_equal("", help_array[index + 2])
-        assert_equal("    two", help_array[index + 3])
-        assert_equal(index + 4, help_array.size)
+        assert_equal("    two", help_array[index + 2])
+        assert_equal(index + 3, help_array.size)
       end
 
       it "is set for a group recursive" do
@@ -399,13 +398,10 @@ describe Toys::Utils::HelpText do
         index = help_array.index("TOOLS")
         refute_nil(index)
         assert_equal("    one", help_array[index + 1])
-        assert_equal("", help_array[index + 2])
-        assert_equal("    one a", help_array[index + 3])
-        assert_equal("", help_array[index + 4])
-        assert_equal("    one b", help_array[index + 5])
-        assert_equal("", help_array[index + 6])
-        assert_equal("    two", help_array[index + 7])
-        assert_equal(index + 8, help_array.size)
+        assert_equal("    one a", help_array[index + 2])
+        assert_equal("    one b", help_array[index + 3])
+        assert_equal("    two", help_array[index + 4])
+        assert_equal(index + 5, help_array.size)
       end
 
       it "shows subtool desc" do
@@ -416,13 +412,10 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
-        assert_equal("    one", help_array[index + 1])
-        assert_equal("        one desc", help_array[index + 2])
-        assert_equal("", help_array[index + 3])
-        assert_equal("    two", help_array[index + 4])
-        assert_equal("        two desc on", help_array[index + 5])
-        assert_equal("        two lines", help_array[index + 6])
-        assert_equal(index + 7, help_array.size)
+        assert_equal("    one - one desc", help_array[index + 1])
+        assert_equal("    two - two desc", help_array[index + 2])
+        assert_equal("        on two lines", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
       end
     end
   end
