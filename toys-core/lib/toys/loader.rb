@@ -169,7 +169,7 @@ module Toys
       len = words.length
       @tools.each do |n, tp|
         next if n.length < len || n.slice(0, len) != words
-        tp.first.finish_definition(self)
+        tp.first.finish_definition(self) unless tp.first.is_a?(Alias)
       end
     end
 
