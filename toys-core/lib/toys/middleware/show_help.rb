@@ -30,6 +30,7 @@
 require "highline"
 
 require "toys/middleware/base"
+require "toys/utils/exec"
 require "toys/utils/help_text"
 require "toys/utils/line_output"
 
@@ -227,7 +228,7 @@ module Toys
         help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
                                                    DEFAULT_HELP_FLAGS)
         unless help_flags.empty?
-          tool.add_flag(:_show_help, *help_flags,
+          tool.add_flag(:_show_help, help_flags,
                         desc: "Display help for this tool", only_unique: true)
         end
         help_flags
@@ -237,7 +238,7 @@ module Toys
         usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool,
                                                     DEFAULT_USAGE_FLAGS)
         unless usage_flags.empty?
-          tool.add_flag(:_show_usage, *usage_flags,
+          tool.add_flag(:_show_usage, usage_flags,
                         desc: "Display a brief usage string for this tool", only_unique: true)
         end
         usage_flags
@@ -247,7 +248,7 @@ module Toys
         recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool,
                                                         DEFAULT_RECURSIVE_FLAGS)
         unless recursive_flags.empty?
-          tool.add_flag(:_recursive_subtools, *recursive_flags,
+          tool.add_flag(:_recursive_subtools, recursive_flags,
                         default: @default_recursive,
                         desc: "Show all subtools recursively (default is #{@default_recursive})",
                         only_unique: true)
@@ -258,7 +259,7 @@ module Toys
         search_flags = Middleware.resolve_flags_spec(@search_flags, tool,
                                                      DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
-          tool.add_flag(:_search_subtools, *search_flags,
+          tool.add_flag(:_search_subtools, search_flags,
                         desc: "Search subtools for the given regular expression",
                         only_unique: true)
         end

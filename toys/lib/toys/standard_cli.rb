@@ -158,6 +158,7 @@ module Toys
           usage_flags: true,
           recursive_flags: true,
           search_flags: true,
+          default_recursive: true,
           allow_root_args: true,
           use_less: true
         ],
@@ -173,6 +174,7 @@ module Toys
           fallback_execution: true,
           recursive_flags: true,
           search_flags: true,
+          default_recursive: true,
           use_less: true
         ],
         [

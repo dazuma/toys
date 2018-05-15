@@ -158,8 +158,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with flags" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
-        normal_tool.add_flag(:bb, "--[no-]bb", desc: "set bb")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
+        normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
@@ -201,8 +201,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with the kitchen sink and wrapping" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
-        normal_tool.add_flag(:bb, "--[no-]bb", desc: "set bb")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
+        normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         normal_tool.add_required_arg(:cc, desc: "set cc")
         normal_tool.add_required_arg(:dd, desc: "set dd")
         normal_tool.add_optional_arg(:ee, desc: "set ee")
@@ -228,8 +228,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a tool with flags" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
-        normal_tool.add_flag(:bb, "--[no-]bb", desc: "set bb")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
+        normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
@@ -243,7 +243,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "orders single dashes before double dashes" do
-        normal_tool.add_flag(:aa, "--aa=VALUE", "-a", desc: "set aa")
+        normal_tool.add_flag(:aa, ["--aa=VALUE", "-a"], desc: "set aa")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
@@ -254,7 +254,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "handles no description" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"])
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
@@ -264,7 +264,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "prefers long description over short description" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "short desc", long_desc: "long desc")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "short desc", long_desc: "long desc")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
@@ -276,7 +276,7 @@ describe Toys::Utils::HelpText do
 
       it "wraps long description" do
         long_desc = ["long desc", Toys::Utils::WrappableString.new("hello ruby world")]
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", long_desc: long_desc)
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], long_desc: long_desc)
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("FLAGS")
@@ -446,7 +446,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with flags" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar [FLAGS...]", usage_array[0])
@@ -480,7 +480,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with the kitchen sink" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_required_arg(:cc, desc: "set cc")
         normal_tool.add_required_arg(:dd, desc: "set dd")
         normal_tool.add_optional_arg(:ee, desc: "set ee")
@@ -606,8 +606,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a tool with flags" do
-        normal_tool.add_flag(:aa, "-a", "--aa=VALUE", desc: "set aa")
-        normal_tool.add_flag(:bb, "--[no-]bb", desc: "set bb")
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
+        normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
@@ -618,7 +618,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "shows value only for last flag" do
-        normal_tool.add_flag(:aa, "-a VALUE", "--aa", desc: "set aa")
+        normal_tool.add_flag(:aa, ["-a VALUE", "--aa"], desc: "set aa")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
@@ -628,7 +628,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "orders single dashes before double dashes" do
-        normal_tool.add_flag(:aa, "--aa", "-a VALUE", desc: "set aa")
+        normal_tool.add_flag(:aa, ["--aa", "-a VALUE"], desc: "set aa")
         help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")

@@ -124,13 +124,3 @@ tool "release" do
     end
   end
 end
-
-tool "foo" do
-  use :exec
-  execute do
-    sh "echo hello"
-    s = capture "echo ruby is cool"
-    puts "**** #{s} ****"
-    ruby "--version"
-  end
-end

@@ -22,6 +22,10 @@ The source can be found on Github at
 
 ### TODO items
 
+* I still don't like the name "execute". Maybe "script"? or "action"?
+* I'm tempted to go back from "group" to "collection" or even "namespace" so that "group" is free for flags.
+* We should drop the block syntax for adding flags/args at the Tool level and provide it at the ConfigDSL level instead. So that we can say `f.long_desc "blah blah"`
+
 * Improve test coverage
 * Write user's guide
 

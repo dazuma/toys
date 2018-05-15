@@ -165,9 +165,27 @@ module Toys
     # displayed with the tool in a subtool list. You may also use the
     # equivalent method `short_desc`.
     #
-    # The description may be provided as a {Toys::Utils::WrappableString}, a
-    # single string (which will be wrapped), or an array of strings, which will
-    # be interpreted as string fragments that will be concatenated and wrapped.
+    # The description is a {Toys::Utils::WrappableString}, which may be word-
+    # wrapped when displayed in a help screen. You may pass a
+    # {Toys::Utils::WrappableString} directly to this method, or you may pass
+    # any input that can be used to construct a wrappable string:
+    #
+    # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+    #     newlines, and multiple consecutive whitespace will be turned into a
+    #     single space), and it will be word-wrapped on whitespace.
+    # *   If you pass an Array of Strings, each string will be considered a
+    #     literal word that cannot be broken, and wrapping will be done across
+    #     the strings in the array. In this case, whitespace is not compacted.
+    #
+    # For example, if you pass in a sentence as a simple string, it may be
+    # word wrapped when displayed:
+    #
+    #     desc "This sentence may be wrapped."
+    #
+    # To specify a sentence that should never be word-wrapped, pass it as the
+    # sole element of a string array:
+    #
+    #     desc ["This sentence will not be wrapped."]
     #
     # @param [Toys::Utils::WrappableString,String,Array<String>] str
     #
@@ -183,9 +201,18 @@ module Toys
     # Set the long description for the current tool. The long description is
     # displayed in the usage documentation for the tool itself.
     #
-    # Each string may be provided as a {Toys::Utils::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # A long description is a series of descriptions, which are generally
+    # displayed in a series of lines/paragraphs. Each individual description
+    # uses the form described in the {Toys::ConfigDSL#desc} documentation, and
+    # may be word-wrapped when displayed. To insert a blank line, include an
+    # empty string as one of the descriptions.
+    #
+    # Example:
+    #
+    #     long_desc "This is an initial paragraph that might be word wrapped.",
+    #               "This next paragraph is followed by a blank line.",
+    #               "",
+    #               ["This line will not be wrapped."]
     #
     # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
     #
@@ -201,6 +228,9 @@ module Toys
     # the executor may use to obtain the flag value from the context.
     # You may then provide the flags themselves in `OptionParser` form.
     #
+    # Attributes of the flag may be passed in as arguments to this method, or
+    # set in a block passed to this method.
+    #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [String...] flags The flags in OptionParser format.
@@ -208,34 +238,35 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the flag. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the flag. Defaults to empty array.
-    # @param [Boolean] only_unique If true, any flags that are already
-    #     defined in this tool are removed from this flag. For example, if
-    #     an earlier flag uses `-a`, and this flag wants to use both
-    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
-    #     Defaults to false.
     # @param [Proc,nil] handler An optional handler for setting/updating the
     #     value. If given, it should take two arguments, the new given value
     #     and the previous value, and it should return the new value that
     #     should be set. The default handler simply replaces the previous
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::ConfigDSL#desc} for a description
+    #     of the allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::ConfigDSL#long_desc} for a
+    #     description of the allowed formats. (But note that this param takes
+    #     an Array of description lines, rather than a series of arguments.)
+    #     Defaults to the empty array.
+    # @param [Boolean] only_unique If true, any flags that are already
+    #     defined in this tool are removed from this flag. For example, if
+    #     an earlier flag uses `-a`, and this flag wants to use both
+    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
+    #     Defaults to false.
+    # @yieldparam flag_dsl [Toys::ConfigDSL::FlagDSL] An object that lets you
+    #     configure this flag in a block.
     #
     def flag(key, *flags,
-             accept: nil, default: nil, desc: nil, long_desc: nil,
-             only_unique: false, handler: nil,
-             &block)
+             accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
+             only_unique: false)
       return self if _cur_tool.nil?
+      flag_dsl = FlagDSL.new(flags, accept, default, handler, desc, long_desc)
+      yield flag_dsl if block_given?
       _cur_tool.lock_definition_path(@path)
-      _cur_tool.add_flag(key, *flags,
-                         accept: accept, default: default,
-                         desc: desc, long_desc: long_desc,
-                         only_unique: only_unique, handler: handler,
-                         &block)
+      flag_dsl._add_to(_cur_tool, key, only_unique)
       self
     end
 
@@ -249,20 +280,23 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::ConfigDSL#desc} for a description
+    #     of the allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::ConfigDSL#long_desc} for a
+    #     description of the allowed formats. (But note that this param takes
+    #     an Array of description lines, rather than a series of arguments.)
+    #     Defaults to the empty array.
+    # @yieldparam arg_dsl [Toys::ConfigDSL::ArgDSL] An object that lets you
+    #     configure this argument in a block.
     #
-    def required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil, &block)
+    def required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
       return self if _cur_tool.nil?
+      arg_dsl = ArgDSL.new(accept, nil, display_name, desc, long_desc)
+      yield arg_dsl if block_given?
       _cur_tool.lock_definition_path(@path)
-      _cur_tool.add_required_arg(key,
-                                 accept: accept, display_name: display_name,
-                                 desc: desc, long_desc: long_desc,
-                                 &block)
+      arg_dsl._add_required_to(_cur_tool, key)
       self
     end
     alias required required_arg
@@ -281,21 +315,24 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::ConfigDSL#desc} for a description
+    #     of the allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::ConfigDSL#long_desc} for a
+    #     description of the allowed formats. (But note that this param takes
+    #     an Array of description lines, rather than a series of arguments.)
+    #     Defaults to the empty array.
+    # @yieldparam arg_dsl [Toys::ConfigDSL::ArgDSL] An object that lets you
+    #     configure this argument in a block.
     #
     def optional_arg(key, default: nil, accept: nil, display_name: nil,
-                     desc: nil, long_desc: nil, &block)
+                     desc: nil, long_desc: nil)
       return self if _cur_tool.nil?
+      arg_dsl = ArgDSL.new(accept, default, display_name, desc, long_desc)
+      yield arg_dsl if block_given?
       _cur_tool.lock_definition_path(@path)
-      _cur_tool.add_optional_arg(key,
-                                 accept: accept, default: default, display_name: display_name,
-                                 desc: desc, long_desc: long_desc,
-                                 &block)
+      arg_dsl._add_optional_to(_cur_tool, key)
       self
     end
     alias optional optional_arg
@@ -313,21 +350,24 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::ConfigDSL#desc} for a description
+    #     of the allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::ConfigDSL#long_desc} for a
+    #     description of the allowed formats. (But note that this param takes
+    #     an Array of description lines, rather than a series of arguments.)
+    #     Defaults to the empty array.
+    # @yieldparam arg_dsl [Toys::ConfigDSL::ArgDSL] An object that lets you
+    #     configure this argument in a block.
     #
     def remaining_args(key, default: [], accept: nil, display_name: nil,
-                       desc: nil, long_desc: nil, &block)
+                       desc: nil, long_desc: nil)
       return self if _cur_tool.nil?
+      arg_dsl = ArgDSL.new(accept, default, display_name, desc, long_desc)
+      yield arg_dsl if block_given?
       _cur_tool.lock_definition_path(@path)
-      _cur_tool.set_remaining_args(key,
-                                   accept: accept, default: default, display_name: display_name,
-                                   desc: desc, long_desc: long_desc,
-                                   &block)
+      arg_dsl._set_remaining_on(_cur_tool, key)
       self
     end
     alias remaining remaining_args
@@ -371,6 +411,175 @@ module Toys
       _cur_tool.lock_definition_path(@path)
       _cur_tool.use_module(mod)
       self
+    end
+
+    ##
+    # DSL for a flag definition block. Lets you set flag attributes in a block
+    # instead of a long series of keyword arguments.
+    #
+    class FlagDSL
+      ## @private
+      def initialize(flags, accept, default, handler, desc, long_desc)
+        @flags = flags
+        @accept = accept
+        @default = default
+        @handler = handler
+        @desc = desc
+        @long_desc = long_desc
+      end
+
+      ##
+      # Add flags in OptionParser format. This may be called multiple times,
+      # and the results are cumulative.
+      # @param [String...] flags
+      #
+      def flags(*flags)
+        @flags += flags
+        self
+      end
+
+      ##
+      # Set the OptionParser acceptor.
+      # @param [Object] accept
+      #
+      def accept(accept)
+        @accept = accept
+        self
+      end
+
+      ##
+      # Set the default value.
+      # @param [Object] default
+      #
+      def default(default)
+        @default = default
+        self
+      end
+
+      ##
+      # Set the optional handler for setting/updating the value when a flag is
+      # parsed. It should be a Proc taking two arguments, the new given value
+      # and the previous value, and it should return the new value that should
+      # be set.
+      # @param [Proc] handler
+      #
+      def handler(handler)
+        @handler = handler
+        self
+      end
+
+      ##
+      # Set the short description. See {Toys::ConfigDSL#desc} for the allowed
+      # formats.
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      #
+      def desc(desc)
+        @desc = desc
+        self
+      end
+
+      ##
+      # Adds to the long description. This may be called multiple times, and
+      # the results are cumulative. See {Toys::ConfigDSL#long_desc} for the
+      # allowed formats.
+      # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
+      #
+      def long_desc(*long_desc)
+        @long_desc += long_desc
+        self
+      end
+
+      ## @private
+      def _add_to(tool, key, only_unique)
+        tool.add_flag(key, @flags,
+                      accept: @accept, default: @default, handler: @handler,
+                      desc: @desc, long_desc: @long_desc,
+                      only_unique: only_unique)
+      end
+    end
+
+    ##
+    # DSL for an arg definition block. Lets you set arg attributes in a block
+    # instead of a long series of keyword arguments.
+    #
+    class ArgDSL
+      ## @private
+      def initialize(accept, default, display_name, desc, long_desc)
+        @accept = accept
+        @default = default
+        @display_name = display_name
+        @desc = desc
+        @long_desc = long_desc
+      end
+
+      ##
+      # Set the OptionParser acceptor.
+      # @param [Object] accept
+      #
+      def accept(accept)
+        @accept = accept
+        self
+      end
+
+      ##
+      # Set the default value.
+      # @param [Object] default
+      #
+      def default(default)
+        @default = default
+        self
+      end
+
+      ##
+      # Set the name of this arg as it appears in help screens.
+      # @param [String] display_name
+      #
+      def display_name(display_name)
+        @handler = display_name
+        self
+      end
+
+      ##
+      # Set the short description. See {Toys::ConfigDSL#desc} for the allowed
+      # formats.
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      #
+      def desc(desc)
+        @desc = desc
+        self
+      end
+
+      ##
+      # Adds to the long description. This may be called multiple times, and
+      # the results are cumulative. See {Toys::ConfigDSL#long_desc} for the
+      # allowed formats.
+      # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
+      #
+      def long_desc(*long_desc)
+        @long_desc += long_desc
+        self
+      end
+
+      ## @private
+      def _add_required_to(tool, key)
+        tool.add_required_arg(key,
+                              accept: @accept, display_name: @display_name,
+                              desc: @desc, long_desc: @long_desc)
+      end
+
+      ## @private
+      def _add_optional_to(tool, key)
+        tool.add_optional_arg(key,
+                              accept: @accept, default: @default, display_name: @display_name,
+                              desc: @desc, long_desc: @long_desc)
+      end
+
+      ## @private
+      def _set_remaining_on(tool, key)
+        tool.set_remaining_args(key,
+                                accept: @accept, default: @default, display_name: @display_name,
+                                desc: @desc, long_desc: @long_desc)
+      end
     end
 
     ## @private

@@ -2,6 +2,7 @@
 
 ### 0.3.5 / TBD
 
+* CHANGED: Flag and arg blocks in the DSL have an interface more similar to the rest of the DSL.
 * IMPROVED: Help display uses `less` if available.
 
 ### 0.3.4 / 2018-05-14

@@ -347,17 +347,17 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [String...] flags The flags in OptionParser format.
+    # @param [Array<String>] flags The flags in OptionParser format.
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the flag. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the flag. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     # @param [Boolean] only_unique If true, any flags that are already
     #     defined in this tool are removed from this flag. For example, if
     #     an earlier flag uses `-a`, and this flag wants to use both
@@ -369,21 +369,14 @@ module Toys
     #     should be set. The default handler simply replaces the previous
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
-    def add_flag(key, *flags,
-                 accept: nil, default: nil, desc: nil, long_desc: nil,
-                 only_unique: false, handler: nil)
+    def add_flag(key, flags = [],
+                 accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
+                 only_unique: false)
       check_definition_state
-      flag_def = FlagDefinition.new(self, key)
-      flag_def.add_flags(flags)
-      flag_def.accept = accept
-      flag_def.handler = handler
-      flag_def.default = default
-      flag_def.desc = desc unless desc.nil?
-      flag_def.long_desc = long_desc unless long_desc.nil?
-      yield flag_def if block_given?
-      flag_def.create_default_flag_if_needed
+      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc)
       flag_def.remove_flags(used_flags) if only_unique
       @flag_definitions << flag_def if flag_def.active?
+      @default_data[key] = default
       self
     end
 
@@ -397,22 +390,16 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(self, key, :required)
-      arg_def.accept = accept
-      arg_def.default = nil
-      arg_def.display_name = display_name unless display_name.nil?
-      arg_def.desc = desc unless desc.nil?
-      arg_def.long_desc = long_desc unless long_desc.nil?
-      yield arg_def if block_given?
+      arg_def = ArgDefinition.new(key, :required, accept, desc, long_desc, display_name)
       @required_arg_definitions << arg_def
       self
     end
@@ -431,24 +418,19 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
                          desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(self, key, :optional)
-      arg_def.accept = accept
-      arg_def.default = default
-      arg_def.display_name = display_name unless display_name.nil?
-      arg_def.desc = desc unless desc.nil?
-      arg_def.long_desc = long_desc unless long_desc.nil?
-      yield arg_def if block_given?
+      arg_def = ArgDefinition.new(key, :optional, accept, desc, long_desc, display_name)
       @optional_arg_definitions << arg_def
+      @default_data[key] = default
       self
     end
 
@@ -465,24 +447,19 @@ module Toys
     # @param [Object,nil] accept An OptionParser acceptor. Optional.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] desc Short description
-    #     for the arg. Defaults to empty array.
-    # @param [String,Toys::Utils::WrappableString,
-    #     Array<String,Toys::Utils::WrappableString>] long_desc Long
-    #     description for the arg. Defaults to empty array.
+    # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def set_remaining_args(key, default: [], accept: nil, display_name: nil,
                            desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(self, key, :remaining)
-      arg_def.accept = accept
-      arg_def.default = default
-      arg_def.display_name = display_name unless display_name.nil?
-      arg_def.desc = desc unless desc.nil?
-      arg_def.long_desc = long_desc unless long_desc.nil?
-      yield arg_def if block_given?
+      arg_def = ArgDefinition.new(key, :remaining, accept, desc, long_desc, display_name)
       @remaining_args_definition = arg_def
+      @default_data[key] = default
       self
     end
 
@@ -591,14 +568,14 @@ module Toys
       #
       # @param [Symbol] key This flag will set the given context key.
       #
-      def initialize(tool, key)
-        @tool = tool
+      def initialize(key, flags, accept, handler, desc, long_desc)
         @key = key
-        @flag_syntax = []
-        @accept = nil
-        @handler = DEFAULT_HANDLER
-        @desc = ""
-        @long_desc = []
+        @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
+        @accept = accept
+        @handler = handler || DEFAULT_HANDLER
+        @desc = Tool.canonicalize_desc(desc)
+        @long_desc = Tool.canonicalize_long_desc(long_desc)
+        create_default_flag_if_needed
         reset_data
       end
 
@@ -637,87 +614,6 @@ module Toys
       # @return [Proc]
       #
       attr_reader :handler
-
-      ##
-      # Adds the given flags.
-      # @param [Array<String>] flags Flags in OptionParser format
-      #
-      def add_flags(flags)
-        @flag_syntax.concat(flags.map { |s| FlagSyntax.new(s) })
-        reset_data
-        self
-      end
-
-      ##
-      # Set the acceptor.
-      # @param [Object] accept Acceptor. May be `nil` for the default.
-      #
-      def accept=(accept)
-        @accept = accept
-        reset_data
-      end
-
-      ##
-      # Set the default.
-      # @param [Object] default The default value.
-      #
-      def default=(default)
-        @tool.default_data[@key] = default
-      end
-
-      ##
-      # Set the handler for setting/updating the value.
-      # @param [Proc,nil] handler The handler for setting/updating the value.
-      #     The handler should take two arguments, the new given value and the
-      #     previous value, and it should return the new value that should be
-      #     set. If `nil`, uses {DEFAULT_HANDLER}.
-      #
-      def handler=(handler)
-        @handler = handler || DEFAULT_HANDLER
-      end
-
-      ##
-      # Set the short description string.
-      #
-      # The description may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
-      #
-      def desc=(desc)
-        @desc = Tool.canonicalize_desc(desc)
-      end
-
-      ##
-      # Set the long description strings.
-      #
-      # Each string may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
-      #
-      def long_desc=(descs)
-        @long_desc = Tool.canonicalize_long_desc(descs)
-      end
-
-      ##
-      # Set the long description strings.
-      #
-      # Each string may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
-      #
-      def populate_long_desc(*descs)
-        @long_desc = Tool.canonicalize_long_desc(descs)
-        self
-      end
 
       ##
       # Returns an array of FlagSyntax including only single-dash flags
@@ -785,23 +681,27 @@ module Toys
         @value_delim
       end
 
+      ##
+      # Set description
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      #
+      def desc=(desc)
+        @desc = Tool.canonicalize_desc(desc)
+      end
+
+      ##
+      # Set long description
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #
+      def long_desc=(long_desc)
+        @long_desc = Tool.canonicalize_long_desc(long_desc)
+      end
+
       ## @private
       def remove_flags(flags)
         flags = flags.map { |f| FlagSyntax.new(f).flags }.flatten
         @flag_syntax.select! do |ss|
           ss.flags.all? { |s| !flags.include?(s) }
-        end
-        reset_data
-        self
-      end
-
-      ## @private
-      def create_default_flag_if_needed
-        return unless @flag_syntax.empty?
-        canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
-        unless canonical_flag.empty?
-          flag = @accept ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
-          @flag_syntax << FlagSyntax.new(flag)
         end
         reset_data
       end
@@ -815,6 +715,15 @@ module Toys
         @double_flag_syntax = nil
         @value_label = nil
         @value_delim = nil
+      end
+
+      def create_default_flag_if_needed
+        return unless @flag_syntax.empty?
+        canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
+        unless canonical_flag.empty?
+          flag = @accept ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
+          @flag_syntax << FlagSyntax.new(flag)
+        end
       end
 
       def find_canonical_value_label
@@ -845,14 +754,13 @@ module Toys
       # @param [Symbol] key This argument will set the given context key.
       # @param [:required,:optional,:remaining] type Type of this argument
       #
-      def initialize(tool, key, type)
-        @tool = tool
+      def initialize(key, type, accept, desc, long_desc, display_name)
         @key = key
         @type = type
-        @accept = nil
-        @desc = ""
-        @long_desc = []
-        @display_name = key.to_s.tr("-", "_").gsub(/\W/, "").upcase
+        @accept = accept
+        @desc = Tool.canonicalize_desc(desc)
+        @long_desc = Tool.canonicalize_long_desc(long_desc)
+        @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
       end
 
       ##
@@ -892,57 +800,6 @@ module Toys
       attr_accessor :display_name
 
       ##
-      # Set the default.
-      # @param [Object] default The default value.
-      #
-      def default=(default)
-        @tool.default_data[@key] = default
-      end
-
-      ##
-      # Set the short description string.
-      #
-      # The description may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
-      #
-      def desc=(desc)
-        @desc = Tool.canonicalize_desc(desc)
-      end
-
-      ##
-      # Set the long description strings.
-      #
-      # Each string may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
-      #
-      def long_desc=(descs)
-        @long_desc = Tool.canonicalize_long_desc(descs)
-      end
-
-      ##
-      # Set the long description strings.
-      #
-      # Each string may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which
-      # will be interpreted as string fragments that will be concatenated and
-      # wrapped.
-      #
-      # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
-      #
-      def populate_long_desc(*descs)
-        @long_desc = Tool.canonicalize_long_desc(descs)
-        self
-      end
-
-      ##
       # Process the given value through the acceptor.
       # May raise an exception if the acceptor rejected the input.
       #
@@ -956,6 +813,22 @@ module Toys
         optparse.on("--abc=VALUE", accept) { |v| result = v }
         optparse.parse(["--abc", input])
         result
+      end
+
+      ##
+      # Set description
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      #
+      def desc=(desc)
+        @desc = Tool.canonicalize_desc(desc)
+      end
+
+      ##
+      # Set long description
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #
+      def long_desc=(long_desc)
+        @long_desc = Tool.canonicalize_long_desc(long_desc)
       end
     end
 

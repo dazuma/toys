@@ -3,6 +3,7 @@
 ### 0.3.5 / TBD
 
 * CHANGED: Exec logic now lives in a utils class.
+* CHANGED: Moved flag and arg blocks from Tool into the DSL.
 * IMPROVED: Help display can use `less` if available.
 
 ### 0.3.4 / 2018-05-14
