@@ -41,6 +41,7 @@ Metrics/BlockLength:
   Exclude:
     - "test/**/*"
     - "builtins/**/*"
+    - "*.gemspec"
 Metrics/BlockNesting:
   Exclude:
     - "test/**/*"

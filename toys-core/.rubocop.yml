@@ -43,6 +43,7 @@ Metrics/BlockLength:
   Exclude:
     - "lib/toys/templates/*"
     - "test/**/*"
+    - "*.gemspec"
 Metrics/BlockNesting:
   Exclude:
     - "lib/toys/templates/*"
