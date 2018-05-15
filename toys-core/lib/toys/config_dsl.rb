@@ -49,7 +49,7 @@ module Toys
   #
   #       optional_arg :recipient, default: "world"
   #
-  #       execute do
+  #       script do
   #         puts "Hello, #{self[:recipient]}!"
   #       end
   #     end
@@ -87,9 +87,8 @@ module Toys
     ##
     # Create a subtool. You must provide a block defining the subtool.
     #
-    # If the subtool is already defined (either as a tool or a group), the old
-    # definition is discarded and replaced with the new definition. If the old
-    # tool was a group, all its descendants are also discarded, recursively.
+    # If the subtool is already defined (either as a tool or a namespace), the
+    # old definition is discarded and replaced with the new definition.
     #
     # @param [String] word The name of the subtool
     #
@@ -103,7 +102,7 @@ module Toys
     alias name tool
 
     ##
-    # Create an alias in the current group.
+    # Create an alias in the current namespace.
     #
     # @param [String] word The name of the alias
     # @param [String] target The target of the alias
@@ -225,7 +224,7 @@ module Toys
 
     ##
     # Add a flag to the current tool. Each flag must specify a key which
-    # the executor may use to obtain the flag value from the context.
+    # the script may use to obtain the flag value from the context.
     # You may then provide the flags themselves in `OptionParser` form.
     #
     # Attributes of the flag may be passed in as arguments to this method, or
@@ -272,7 +271,7 @@ module Toys
 
     ##
     # Add a required positional argument to the current tool. You must specify
-    # a key which the executor may use to obtain the argument value from the
+    # a key which the script may use to obtain the argument value from the
     # context.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
@@ -303,7 +302,7 @@ module Toys
 
     ##
     # Add an optional positional argument to the current tool. You must specify
-    # a key which the executor may use to obtain the argument value from the
+    # a key which the script may use to obtain the argument value from the
     # context. If an optional argument is not given on the command line, the
     # value is set to the given default.
     #
@@ -339,8 +338,8 @@ module Toys
 
     ##
     # Specify what should be done with unmatched positional arguments. You must
-    # specify a key which the executor may use to obtain the remaining args
-    # from the context.
+    # specify a key which the script may use to obtain the remaining args from
+    # the context.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
@@ -373,18 +372,18 @@ module Toys
     alias remaining remaining_args
 
     ##
-    # Specify the executor for this tool. This is a block that will be called,
+    # Specify the script for this tool. This is a block that will be called,
     # with `self` set to a {Toys::Context}.
     #
-    def execute(&block)
+    def script(&block)
       return self if _cur_tool.nil?
       _cur_tool.lock_definition_path(@path)
-      _cur_tool.executor = block
+      _cur_tool.script = block
       self
     end
 
     ##
-    # Define a helper method that may be called from this tool's executor.
+    # Define a helper method that may be called from this tool's script.
     # You must provide a name for the method, and a block for the method
     # definition.
     #
@@ -399,7 +398,7 @@ module Toys
     end
 
     ##
-    # Specify that the given module should be mixed in to this tool's executor.
+    # Specify that the given module should be mixed in to this tool's script.
     # Effectively, the module is added to the {Toys::Context} object.
     # You may either provide a module directly, or specify the name of a
     # well-known module.

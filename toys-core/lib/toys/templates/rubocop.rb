@@ -69,7 +69,7 @@ module Toys
 
           use :exec
 
-          execute do
+          script do
             require "rubocop"
             cli = ::RuboCop::CLI.new
             logger.info "Running RuboCop..."

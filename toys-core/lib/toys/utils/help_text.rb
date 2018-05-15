@@ -81,7 +81,7 @@ module Toys
       ##
       # Generate a short usage string.
       #
-      # @param [Boolean] recursive If true, and the tool is a group tool,
+      # @param [Boolean] recursive If true, and the tool is a namespace,
       #     display all subcommands recursively. Defaults to false.
       # @param [Integer] left_column_width Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
@@ -103,7 +103,7 @@ module Toys
       ##
       # Generate a long help string.
       #
-      # @param [Boolean] recursive If true, and the tool is a group tool,
+      # @param [Boolean] recursive If true, and the tool is a namespace,
       #     display all subcommands recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
@@ -159,16 +159,16 @@ module Toys
         def assemble
           add_synopsis_section
           add_flags_section
-          add_positional_arguments_section if @tool.includes_executor?
+          add_positional_arguments_section if @tool.includes_script?
           add_subtool_list_section
           @result = @lines.join("\n") + "\n"
         end
 
         def add_synopsis_section
           synopses = []
-          synopses << group_synopsis if !@subtools.empty? && !@tool.includes_executor?
+          synopses << namespace_synopsis if !@subtools.empty? && !@tool.includes_script?
           synopses << tool_synopsis
-          synopses << group_synopsis if !@subtools.empty? && @tool.includes_executor?
+          synopses << namespace_synopsis if !@subtools.empty? && @tool.includes_script?
           first = true
           synopses.each do |synopsis|
             @lines << (first ? "Usage:  #{synopsis}" : "        #{synopsis}")
@@ -185,7 +185,7 @@ module Toys
           synopsis.join(" ")
         end
 
-        def group_synopsis
+        def namespace_synopsis
           ([@binary_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
         end
 
@@ -321,12 +321,12 @@ module Toys
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
-          if !@subtools.empty? && !@tool.includes_executor?
-            add_synopsis_clause(group_synopsis)
+          if !@subtools.empty? && !@tool.includes_script?
+            add_synopsis_clause(namespace_synopsis)
           end
           add_synopsis_clause(tool_synopsis)
-          if !@subtools.empty? && @tool.includes_executor?
-            add_synopsis_clause(group_synopsis)
+          if !@subtools.empty? && @tool.includes_script?
+            add_synopsis_clause(namespace_synopsis)
           end
         end
 
@@ -349,7 +349,7 @@ module Toys
           wrap_indent_indent2(Utils::WrappableString.new(synopsis))
         end
 
-        def group_synopsis
+        def namespace_synopsis
           synopsis = [full_binary_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
           wrap_indent_indent2(Utils::WrappableString.new(synopsis))
         end

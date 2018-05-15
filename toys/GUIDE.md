@@ -17,7 +17,7 @@ actual behavior of the toys binary by writing *configuration files*.
 
 Toys is a multi-command binary. You may define a collection of commands, called
 *tools*, which can be invoked by passing the tool name as an argument to the
-`toys` binary. Tools are arranged in a hierarchy; any tool may be a *group*
+`toys` binary. Tools are arranged in a hierarchy; a tool may be a *namespace*
 that has *subtools*.
 
 Each tool defines the command line arguments, in the form of *flags* and
@@ -40,8 +40,8 @@ configuration.
 
 Finally, Toys provides certain *built-in behavior*, including automatically
 providing flags to display help screens and set verbosity. It also includes a
-built-in group of *system tools* that let you inspect and configure the toys
-system.
+built-in namespace of *system tools* that let you inspect and configure the
+Toys system.
 
 ## The Toys Command Line
 

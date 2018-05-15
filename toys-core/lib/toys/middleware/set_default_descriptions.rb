@@ -34,7 +34,7 @@ module Toys
     ##
     # This middleware sets default description fields for tools that do not
     # have them set otherwise. You can set separate descriptions for tools,
-    # groups, and the root.
+    # namespaces, and the root.
     #
     class SetDefaultDescriptions < Base
       ##
@@ -44,10 +44,10 @@ module Toys
       DEFAULT_TOOL_DESC = "(No tool description available)".freeze
 
       ##
-      # The default description for groups.
+      # The default description for namespaces.
       # @return [String]
       #
-      DEFAULT_GROUP_DESC = "(A group of tools)".freeze
+      DEFAULT_NAMESPACE_DESC = "(A namespace of tools)".freeze
 
       ##
       # The default description for the root tool.
@@ -92,16 +92,16 @@ module Toys
       # Create a SetDefaultDescriptions middleware given default descriptions.
       #
       # @param [String,nil] default_tool_desc The default short description for
-      #     tools with an executor, or `nil` not to set one. Defaults to
+      #     tools with an script, or `nil` not to set one. Defaults to
       #     {DEFAULT_TOOL_DESC}.
       # @param [String,nil] default_tool_long_desc The default long description
-      #     for tools with an executor, or `nil` not to set one. Defaults to
+      #     for tools with an script, or `nil` not to set one. Defaults to
       #     `nil`.
-      # @param [String,nil] default_group_desc The default short description
-      #     for tools with no executor, or `nil` not to set one. Defaults to
-      #     {DEFAULT_TOOL_DESC}.
-      # @param [String,nil] default_group_long_desc The default long
-      #     description for tools with no executor, or `nil` not to set one.
+      # @param [String,nil] default_namespace_desc The default short
+      #     description for tools with no script, or `nil` not to set one.
+      #     Defaults to {DEFAULT_TOOL_DESC}.
+      # @param [String,nil] default_namespace_long_desc The default long
+      #     description for tools with no script, or `nil` not to set one.
       #     Defaults to `nil`.
       # @param [String,nil] default_root_desc The default short description for
       #     the root tool, or `nil` not to set one. Defaults to
@@ -134,8 +134,8 @@ module Toys
       #
       def initialize(default_tool_desc: DEFAULT_TOOL_DESC,
                      default_tool_long_desc: nil,
-                     default_group_desc: DEFAULT_GROUP_DESC,
-                     default_group_long_desc: nil,
+                     default_namespace_desc: DEFAULT_NAMESPACE_DESC,
+                     default_namespace_long_desc: nil,
                      default_root_desc: DEFAULT_ROOT_DESC,
                      default_root_long_desc: DEFAULT_ROOT_LONG_DESC,
                      default_flag_desc: DEFAULT_FLAG_DESC,
@@ -148,8 +148,8 @@ module Toys
                      default_remaining_arg_long_desc: nil)
         @default_tool_desc = default_tool_desc
         @default_tool_long_desc = default_tool_long_desc
-        @default_group_desc = default_group_desc
-        @default_group_long_desc = default_group_long_desc
+        @default_namespace_desc = default_namespace_desc
+        @default_namespace_long_desc = default_namespace_long_desc
         @default_root_desc = default_root_desc
         @default_root_long_desc = default_root_long_desc
         @default_flag_desc = default_flag_desc
@@ -168,10 +168,10 @@ module Toys
       def config(tool, _loader)
         if tool.root?
           config_descs(tool, @default_root_desc, @default_root_long_desc)
-        elsif tool.includes_executor?
+        elsif tool.includes_script?
           config_descs(tool, @default_tool_desc, @default_tool_long_desc)
         else
-          config_descs(tool, @default_group_desc, @default_group_long_desc)
+          config_descs(tool, @default_namespace_desc, @default_namespace_long_desc)
         end
         tool.flag_definitions.each do |flag|
           config_descs(flag, @default_flag_desc, @default_flag_long_desc)

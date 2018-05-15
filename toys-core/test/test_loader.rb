@@ -54,16 +54,16 @@ describe Toys::Loader do
     end
 
     it "finds a subtool directly defined in a config file" do
-      tool, remaining = loader.lookup(["group-1", "tool-1-1"])
+      tool, remaining = loader.lookup(["namespace-1", "tool-1-1"])
       assert_equal("file tool-1-1 short description", tool.desc.to_s)
-      assert_equal(["group-1", "tool-1-1"], tool.full_name)
+      assert_equal(["namespace-1", "tool-1-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
-    it "finds a group directly defined in a config file" do
-      tool, remaining = loader.lookup(["group-1"])
-      assert_equal("file group-1 short description", tool.desc.to_s)
-      assert_equal(["group-1"], tool.full_name)
+    it "finds a namespace directly defined in a config file" do
+      tool, remaining = loader.lookup(["namespace-1"])
+      assert_equal("file namespace-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
@@ -73,10 +73,10 @@ describe Toys::Loader do
       assert_equal([], remaining)
     end
 
-    it "finds the nearest group directly defined if a query doesn't match" do
-      tool, remaining = loader.lookup(["group-1", "tool-blah"])
-      assert_equal("file group-1 short description", tool.desc.to_s)
-      assert_equal(["group-1"], tool.full_name)
+    it "finds the nearest namespace directly defined if a query doesn't match" do
+      tool, remaining = loader.lookup(["namespace-1", "tool-blah"])
+      assert_equal("file namespace-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1"], tool.full_name)
       assert_equal(["tool-blah"], remaining)
     end
 
@@ -100,23 +100,23 @@ describe Toys::Loader do
     end
 
     it "finds a subtool directly defined" do
-      tool, remaining = loader.lookup(["group-1", "tool-1-3"])
+      tool, remaining = loader.lookup(["namespace-1", "tool-1-3"])
       assert_equal("normal tool-1-3 short description", tool.desc.to_s)
-      assert_equal(["group-1", "tool-1-3"], tool.full_name)
+      assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)
     end
 
-    it "finds a group directly defined" do
-      tool, remaining = loader.lookup(["group-1"])
-      assert_equal(false, tool.includes_executor?)
-      assert_equal(["group-1"], tool.full_name)
+    it "finds a namespace directly defined" do
+      tool, remaining = loader.lookup(["namespace-1"])
+      assert_equal(false, tool.includes_script?)
+      assert_equal(["namespace-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
-    it "finds the nearest group directly defined if a query doesn't match" do
-      tool, remaining = loader.lookup(["group-1", "tool-blah"])
-      assert_equal(false, tool.includes_executor?)
-      assert_equal(["group-1"], tool.full_name)
+    it "finds the nearest namespace directly defined if a query doesn't match" do
+      tool, remaining = loader.lookup(["namespace-1", "tool-blah"])
+      assert_equal(false, tool.includes_script?)
+      assert_equal(["namespace-1"], tool.full_name)
       assert_equal(["tool-blah"], remaining)
     end
 
@@ -128,19 +128,19 @@ describe Toys::Loader do
     end
 
     it "does not load unnecessary files" do
-      loader.lookup(["group-1", "tool-1-3"])
-      assert_equal(true, loader.tool_defined?(["group-1", "tool-1-3"]))
-      assert_equal(true, loader.tool_defined?(["group-1"]))
-      assert_equal(false, loader.tool_defined?(["group-1", "tool-1-1"]))
+      loader.lookup(["namespace-1", "tool-1-3"])
+      assert_equal(true, loader.tool_defined?(["namespace-1", "tool-1-3"]))
+      assert_equal(true, loader.tool_defined?(["namespace-1"]))
+      assert_equal(false, loader.tool_defined?(["namespace-1", "tool-1-1"]))
       assert_equal(false, loader.tool_defined?(["tool-1"]))
       loader.lookup(["tool-1"])
       assert_equal(true, loader.tool_defined?(["tool-1"]))
-      assert_equal(false, loader.tool_defined?(["group-1", "tool-1-1"]))
+      assert_equal(false, loader.tool_defined?(["namespace-1", "tool-1-1"]))
     end
 
-    it "loads all descendants of a group query" do
+    it "loads all descendants of a namespace query" do
       loader.lookup([])
-      assert_equal(true, loader.tool_defined?(["group-1", "tool-1-3"]))
+      assert_equal(true, loader.tool_defined?(["namespace-1", "tool-1-3"]))
       assert_equal(true, loader.tool_defined?(["tool-1"]))
     end
   end
@@ -193,27 +193,27 @@ describe Toys::Loader do
     end
 
     it "gets an item from a root-level file include" do
-      tool, _remaining = loader.lookup(["group-1", "tool-1-1"])
+      tool, _remaining = loader.lookup(["namespace-1", "tool-1-1"])
       assert_equal("file tool-1-1 short description", tool.desc.to_s)
     end
 
     it "gets an item from non-root-level include" do
-      tool, _remaining = loader.lookup(["group-0", "group-1", "tool-1-1"])
+      tool, _remaining = loader.lookup(["namespace-0", "namespace-1", "tool-1-1"])
       assert_equal("normal tool-1-1 short description", tool.desc.to_s)
     end
 
     it "does not load an include if not needed" do
-      loader.lookup(["group-1", "tool-1-1"])
-      assert_equal(true, loader.tool_defined?(["group-1", "tool-1-1"]))
-      assert_equal(false, loader.tool_defined?(["group-0", "tool-1"]))
-      loader.lookup(["group-0", "tool-1"])
-      assert_equal(true, loader.tool_defined?(["group-0", "tool-1"]))
+      loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal(true, loader.tool_defined?(["namespace-1", "tool-1-1"]))
+      assert_equal(false, loader.tool_defined?(["namespace-0", "tool-1"]))
+      loader.lookup(["namespace-0", "tool-1"])
+      assert_equal(true, loader.tool_defined?(["namespace-0", "tool-1"]))
     end
 
-    it "loads includes that are descendants of a group query" do
-      assert_equal(false, loader.tool_defined?(["group-0", "group-1", "tool-1-1"]))
-      loader.lookup(["group-0"])
-      assert_equal(true, loader.tool_defined?(["group-0", "group-1", "tool-1-1"]))
+    it "loads includes that are descendants of a namespace query" do
+      assert_equal(false, loader.tool_defined?(["namespace-0", "namespace-1", "tool-1-1"]))
+      loader.lookup(["namespace-0"])
+      assert_equal(true, loader.tool_defined?(["namespace-0", "namespace-1", "tool-1-1"]))
     end
   end
 

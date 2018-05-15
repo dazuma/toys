@@ -27,22 +27,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-desc "A group of system commands for toys"
+desc "A set of system commands for Toys"
 
-long_desc "Contains tools that inspect, configure, and update toys itself."
+long_desc "Contains tools that inspect, configure, and update Toys itself."
 
 tool "version" do
-  desc "Print current toys version."
+  desc "Print current Toys version."
 
-  execute do
+  script do
     puts ::Toys::VERSION
   end
 end
 
 tool "update" do
-  desc "Update toys if a newer version is available."
+  desc "Update Toys if a newer version is available."
 
-  long_desc "Checks rubygems for a newer version of toys. If one is available, downloads" \
+  long_desc "Checks rubygems for a newer version of Toys. If one is available, downloads" \
             " and installs it."
 
   flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
@@ -50,8 +50,8 @@ tool "update" do
   use :exec
   use :highline
 
-  execute do
-    logger.info "Checking rubygems for the latest toys release..."
+  script do
+    logger.info "Checking rubygems for the latest Toys release..."
     version_info = capture("gem query -q -r -e toys")
     if version_info =~ /toys\s\((.+)\)/
       latest_version = ::Gem::Version.new($1)
@@ -67,7 +67,7 @@ tool "update" do
         logger.warn("Toys is already at the latest version: #{latest_version}")
       end
     else
-      logger.error("Could not get latest toys version")
+      logger.error("Could not get latest Toys version")
       exit(1)
     end
   end

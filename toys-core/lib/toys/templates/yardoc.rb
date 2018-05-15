@@ -73,7 +73,7 @@ module Toys
 
           use :exec
 
-          execute do
+          script do
             require "yard"
             files = []
             patterns = Array(template.files)

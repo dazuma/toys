@@ -30,7 +30,7 @@
 tool "install" do
   desc "Build and install the current gems"
   use :exec
-  execute do
+  script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       version = capture("./toys-dev system version").strip
@@ -51,7 +51,7 @@ end
 tool "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
-  execute do
+  script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -71,7 +71,7 @@ end
 tool "yardoc" do
   desc "Generates yardoc for both gems"
   use :exec
-  execute do
+  script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -87,7 +87,7 @@ end
 tool "clean" do
   desc "Cleans both gems"
   use :exec
-  execute do
+  script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -106,7 +106,7 @@ tool "release" do
   desc "Releases both gems"
   use :exec
   use :highline
-  execute do
+  script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       version = capture("./toys-dev system version").strip

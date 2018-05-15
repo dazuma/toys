@@ -34,12 +34,12 @@ require "toys/utils/help_text"
 describe Toys::Utils::HelpText do
   let(:binary_name) { "toys" }
   let(:tool_name) { ["foo", "bar"] }
-  let(:group_tool) do
+  let(:namespace_tool) do
     Toys::Tool.new(tool_name)
   end
   let(:normal_tool) do
     Toys::Tool.new(tool_name).tap do |t|
-      t.executor = proc {}
+      t.script = proc {}
     end
   end
   let(:subtool_one) do
@@ -47,17 +47,17 @@ describe Toys::Utils::HelpText do
   end
   let(:subtool_one_a) do
     Toys::Tool.new(["foo", "bar", "one", "a"]).tap do |t|
-      t.executor = proc {}
+      t.script = proc {}
     end
   end
   let(:subtool_one_b) do
     Toys::Tool.new(["foo", "bar", "one", "b"]).tap do |t|
-      t.executor = proc {}
+      t.script = proc {}
     end
   end
   let(:subtool_two) do
     Toys::Tool.new(["foo", "bar", "two"]).tap do |t|
-      t.executor = proc {}
+      t.script = proc {}
     end
   end
   let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
@@ -69,18 +69,18 @@ describe Toys::Utils::HelpText do
     m.expect(:list_subtools, [], [["foo", "bar"], recursive: false])
     m
   end
-  let(:group_loader) do
+  let(:namespace_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_two], [["foo", "bar"], recursive: false])
     m
   end
-  let(:recursive_group_loader) do
+  let(:recursive_namespace_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_one, subtool_one_a, subtool_one_b, subtool_two],
              [["foo", "bar"], recursive: true])
     m
   end
-  let(:long_group_loader) do
+  let(:long_namespace_loader) do
     m = Minitest::Mock.new
     m.expect(:list_subtools, [subtool_long], [["foo", "bar"], recursive: false])
     m
@@ -128,8 +128,8 @@ describe Toys::Utils::HelpText do
     end
 
     describe "synopsis section" do
-      it "is set for a group" do
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+      it "is set for a namespace" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -138,8 +138,8 @@ describe Toys::Utils::HelpText do
         assert_equal("", help_array[index + 3])
       end
 
-      it "is set for a group with an executor" do
-        help = Toys::Utils::HelpText.new(normal_tool, group_loader, binary_name)
+      it "is set for a namespace with a script" do
+        help = Toys::Utils::HelpText.new(normal_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -382,8 +382,8 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a group non-recursive" do
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+      it "is set for a namespace non-recursive" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
@@ -392,8 +392,8 @@ describe Toys::Utils::HelpText do
         assert_equal(index + 3, help_array.size)
       end
 
-      it "is set for a group recursive" do
-        help = Toys::Utils::HelpText.new(group_tool, recursive_group_loader, binary_name)
+      it "is set for a namespace recursive" do
+        help = Toys::Utils::HelpText.new(namespace_tool, recursive_namespace_loader, binary_name)
         help_array = help.help_string(styled: false, recursive: true).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
@@ -408,7 +408,7 @@ describe Toys::Utils::HelpText do
         subtool_one.desc = "one desc"
         subtool_one.long_desc = ["long desc"]
         subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
@@ -422,16 +422,16 @@ describe Toys::Utils::HelpText do
 
   describe "usage string" do
     describe "synopsis" do
-      it "is set for a group" do
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+      it "is set for a namespace" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar TOOL [ARGUMENTS...]", usage_array[0])
         assert_equal("        toys foo bar", usage_array[1])
         assert_equal("", usage_array[2])
       end
 
-      it "is set for a group with an executor" do
-        help = Toys::Utils::HelpText.new(normal_tool, group_loader, binary_name)
+      it "is set for a namespace with a script" do
+        help = Toys::Utils::HelpText.new(normal_tool, namespace_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar", usage_array[0])
         assert_equal("        toys foo bar TOOL [ARGUMENTS...]", usage_array[1])
@@ -502,8 +502,8 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a group non-recursive" do
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+      it "is set for a namespace non-recursive" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -512,8 +512,8 @@ describe Toys::Utils::HelpText do
         assert_equal(index + 3, usage_array.size)
       end
 
-      it "is set for a group recursive" do
-        help = Toys::Utils::HelpText.new(group_tool, recursive_group_loader, binary_name)
+      it "is set for a namespace recursive" do
+        help = Toys::Utils::HelpText.new(namespace_tool, recursive_namespace_loader, binary_name)
         usage_array = help.usage_string(recursive: true).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -527,7 +527,7 @@ describe Toys::Utils::HelpText do
       it "shows subtool desc" do
         subtool_one.desc = "one desc"
         subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 49).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -539,7 +539,7 @@ describe Toys::Utils::HelpText do
 
       it "shows desc for long subtool name" do
         subtool_long.desc = Toys::Utils::WrappableString.new("long desc on two lines")
-        help = Toys::Utils::HelpText.new(group_tool, long_group_loader, binary_name)
+        help = Toys::Utils::HelpText.new(namespace_tool, long_namespace_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 49).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -551,8 +551,8 @@ describe Toys::Utils::HelpText do
     end
 
     describe "positional args section" do
-      it "is not present for a group" do
-        help = Toys::Utils::HelpText.new(group_tool, group_loader, binary_name)
+      it "is not present for a namespace" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Positional arguments:")
         assert_nil(index)

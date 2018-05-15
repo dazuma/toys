@@ -3,7 +3,7 @@ tool "tool-1" do
   long_desc "file tool-1 long description"
   alias_as "alias-1"
 
-  execute do
+  script do
     puts "file tool-1 execution"
   end
 end

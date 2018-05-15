@@ -292,7 +292,8 @@ module Toys
       #    description fields
       # *  {Toys::Middleware::ShowHelp} adding the `--help` flag
       # *  {Toys::Middleware::HandleUsageErrors}
-      # *  {Toys::Middleware::ShowHelp} providing default behavior for groups
+      # *  {Toys::Middleware::ShowHelp} providing default behavior for
+      #    namespaces
       # *  {Toys::Middleware::AddVerbosityFlags} adding the `--verbose` and
       #    `--quiet` flags for managing the logger level
       #

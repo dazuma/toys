@@ -63,7 +63,7 @@ module Toys
 
       @helpers = {}
       @modules = []
-      @executor = nil
+      @script = nil
     end
 
     ##
@@ -129,10 +129,10 @@ module Toys
     attr_reader :helpers
 
     ##
-    # Return the executor block, or `nil` if not present.
+    # Return the script block, or `nil` if not present.
     # @return [Proc,nil]
     #
-    attr_reader :executor
+    attr_reader :script
 
     ##
     # Returns the middleware stack
@@ -172,11 +172,11 @@ module Toys
     end
 
     ##
-    # Returns true if this tool has an executor defined.
+    # Returns true if this tool has an script defined.
     # @return [Boolean]
     #
-    def includes_executor?
-      executor.is_a?(::Proc)
+    def includes_script?
+      script.is_a?(::Proc)
     end
 
     ##
@@ -212,7 +212,7 @@ module Toys
     # @return [Boolean]
     #
     def includes_definition?
-      includes_arguments? || includes_executor? || includes_helpers?
+      includes_arguments? || includes_script? || includes_helpers?
     end
 
     ##
@@ -342,7 +342,7 @@ module Toys
 
     ##
     # Add a flag to the current tool. Each flag must specify a key which
-    # the executor may use to obtain the flag value from the context.
+    # the script may use to obtain the flag value from the context.
     # You may then provide the flags themselves in `OptionParser` form.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
@@ -382,7 +382,7 @@ module Toys
 
     ##
     # Add a required positional argument to the current tool. You must specify
-    # a key which the executor may use to obtain the argument value from the
+    # a key which the script may use to obtain the argument value from the
     # context.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
@@ -406,7 +406,7 @@ module Toys
 
     ##
     # Add an optional positional argument to the current tool. You must specify
-    # a key which the executor may use to obtain the argument value from the
+    # a key which the script may use to obtain the argument value from the
     # context. If an optional argument is not given on the command line, the
     # value is set to the given default.
     #
@@ -436,7 +436,7 @@ module Toys
 
     ##
     # Specify what should be done with unmatched positional arguments. You must
-    # specify a key which the executor may use to obtain the remaining args
+    # specify a key which the script may use to obtain the remaining args
     # from the context.
     #
     # @param [Symbol] key The key to use to retrieve the value from the
@@ -464,14 +464,14 @@ module Toys
     end
 
     ##
-    # Set the executor for this tool. This is a proc that will be called,
+    # Set the script for this tool. This is a proc that will be called,
     # with `self` set to a {Toys::Context}.
     #
-    # @param [Proc] executor The executor for this tool.
+    # @param [Proc] script The script for this tool.
     #
-    def executor=(executor)
+    def script=(script)
       check_definition_state
-      @executor = executor
+      @script = script
     end
 
     ##
@@ -934,7 +934,7 @@ module Toys
       def parse_remaining_args(remaining, args)
         return if remaining.empty?
         unless @tool.remaining_args_definition
-          if @tool.includes_executor?
+          if @tool.includes_script?
             raise create_parse_error(remaining, "Extra arguments provided")
           else
             raise create_parse_error(@tool.full_name + args, "Tool not found")
@@ -962,8 +962,8 @@ module Toys
 
       def perform_execution(context)
         executor = proc do
-          if @tool.includes_executor?
-            context.instance_eval(&@tool.executor)
+          if @tool.includes_script?
+            context.instance_eval(&@tool.script)
           else
             context.logger.fatal("No implementation for tool #{@tool.display_name.inspect}")
             context.exit(-1)

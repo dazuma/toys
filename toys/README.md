@@ -44,7 +44,7 @@ current directory. Copy the following into the file, and save it:
     tool "greet" do
       desc "My first tool!"
       flag :whom, default: "world"
-      execute do
+      script do
         puts "Hello, #{options[:whom]}!"
       end
     end
@@ -77,8 +77,8 @@ longer present. You can use this to create tools scoped to particular
 directories and projects.
 
 Toys also lets you create hierarchies of tools. The "system version" tool you
-tried earlier is an example. The "system" tool is a "group". It's a namespace
-for tools, and various tools are available under that namespace.
+tried earlier is an example. The "system" tool is a namespace for tools, and
+various tools are available under that namespace.
 
 Toys provides a rich set of useful libraries for writing tools. It gives you a
 logger and automatically provides flags to control verbosity of log output. It

@@ -49,7 +49,7 @@ flag :delim, "-d", "--delim=VALUE",
 
 remaining_args :args, desc: "A series of tools to run, separated by the delimiter"
 
-execute do
+script do
   delim = self[:delim]
   self[:args]
     .chunk { |arg| arg == delim ? :_separator : true }

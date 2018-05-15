@@ -94,7 +94,7 @@ module Toys
           use :fileutils
           use :highline
 
-          execute do
+          script do
             configure_exec(exit_on_nonzero_status: true)
             gemspec = ::Gem::Specification.load "#{template.gem_name}.gemspec"
             version = gemspec.version
