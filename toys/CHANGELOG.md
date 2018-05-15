@@ -2,6 +2,8 @@
 
 ### 0.3.5 / TBD
 
+* IMPROVED: Help display uses `less` if available.
+
 ### 0.3.4 / 2018-05-14
 
 * CHANGED: Renamed switch to flag

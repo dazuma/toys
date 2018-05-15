@@ -158,7 +158,8 @@ module Toys
           usage_flags: true,
           recursive_flags: true,
           search_flags: true,
-          allow_root_args: true
+          allow_root_args: true,
+          use_less: true
         ],
         [
           :show_version,
@@ -171,7 +172,8 @@ module Toys
           :show_help,
           fallback_execution: true,
           recursive_flags: true,
-          search_flags: true
+          search_flags: true,
+          use_less: true
         ],
         [
           :add_verbosity_flags

@@ -109,6 +109,8 @@ module Toys
       #     help or usage, and doesn't otherwise use positional arguments,
       #     then a tool name can be passed as arguments to display help for
       #     that tool.
+      # @param [Boolean] use_less If the `less` tool is available, and the
+      #     output stream is a tty, then use `less` to display help text.
       # @param [IO] stream Output stream to write to. Default is stdout.
       # @param [Boolean,nil] styled_output Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
@@ -121,6 +123,7 @@ module Toys
                      default_recursive: false,
                      fallback_execution: false,
                      allow_root_args: false,
+                     use_less: false,
                      stream: $stdout,
                      styled_output: nil)
         @help_flags = help_flags
@@ -132,6 +135,7 @@ module Toys
         @allow_root_args = allow_root_args
         @stream = stream
         @styled_output = styled_output
+        @use_less = use_less
       end
 
       ##
@@ -167,7 +171,7 @@ module Toys
           str = help_text.help_string(recursive: context[:_recursive_subtools],
                                       search: context[:_search_subtools],
                                       wrap_width: output_cols)
-          output.puts(str)
+          output_help(str)
         else
           yield
         end
@@ -181,6 +185,25 @@ module Toys
 
       def output
         @output ||= Utils::LineOutput.new(@stream, styled: @styled_output)
+      end
+
+      def output_help(str)
+        if less_path
+          Utils::Exec.new.exec([less_path, "-R"], in_from: str)
+        else
+          output.puts(str)
+        end
+      end
+
+      def less_path
+        unless defined? @less_path
+          @less_path =
+            if @use_less && @stream.tty?
+              path = `which less`.strip
+              path.empty? ? nil : path
+            end
+        end
+        @less_path
       end
 
       def get_help_text(context)
