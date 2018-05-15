@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.5 / TBD
+### 0.3.5 / 2018-05-15
 
 * CHANGED: Exec logic now lives in a utils class.
 * CHANGED: Moved flag and arg blocks from Tool into the DSL.

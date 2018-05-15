@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.5 / TBD
+### 0.3.5 / 2018-05-15
 
 * CHANGED: Flag and arg blocks in the DSL have an interface more similar to the rest of the DSL.
 * CHANGED: Renamed `execute do` to `script do`.
