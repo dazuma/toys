@@ -1,15 +1,16 @@
 # Toys
 
-Toys is a command line binary that lets you build your own suite of command
-line tools (with commands and subcommands) using a Ruby DSL. Commands can be
-defined globally or scoped to directories.
+Toys is a command line binary that lets you build your own personal suite of
+command line tools using a Ruby DSL. Toys handles argument parsing, error
+reporting, logging, help text, and many other details for you. Toys is designed
+for software developers, IT specialists, and other power users who want to
+write and organize scripts to automate their workflows.
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to create command line binaries using the Toys DSL.
+to create command line binaries using the internal Toys APIs.
 
-## Quick Start
-
-(TODO)
+To get started using toys-core for your own command line binary, see the
+{file:docs/getting-started.md Getting Started Guide}.
 
 ## Contributing
 

@@ -373,7 +373,7 @@ module Toys
                  accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
                  only_unique: false)
       check_definition_state
-      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc)
+      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc, default)
       flag_def.remove_flags(used_flags) if only_unique
       @flag_definitions << flag_def if flag_def.active?
       @default_data[key] = default
@@ -568,13 +568,15 @@ module Toys
       #
       # @param [Symbol] key This flag will set the given context key.
       #
-      def initialize(key, flags, accept, handler, desc, long_desc)
+      def initialize(key, flags, accept, handler, desc, long_desc, default)
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
         @handler = handler || DEFAULT_HANDLER
         @desc = Tool.canonicalize_desc(desc)
         @long_desc = Tool.canonicalize_long_desc(long_desc)
+        @needs_val = !@accept.nil? ||
+                     (!default.nil? && default != true && default != false)
         create_default_flag_if_needed
         reset_data
       end
@@ -721,15 +723,15 @@ module Toys
         return unless @flag_syntax.empty?
         canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
         unless canonical_flag.empty?
-          flag = @accept ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
+          flag = @needs_val ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
           @flag_syntax << FlagSyntax.new(flag)
         end
       end
 
       def find_canonical_value_label
         return if @value_delim
-        @value_label = @accept ? "VALUE" : nil
-        @value_delim = @accept ? " " : ""
+        @value_label = @needs_val ? "VALUE" : nil
+        @value_delim = @needs_val ? " " : ""
         single_flag_syntax.each do |ss|
           next unless ss.value_label
           @value_label = ss.value_label

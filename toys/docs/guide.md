@@ -1,11 +1,12 @@
+# @title Toys User Guide
+
 # Toys User Guide
 
 Toys is a command line binary that lets you build your own personal suite of
-command line tools (with commands and subcommands) using a Ruby DSL. Toys
-handles argument parsing, error reporting, logging, help text, and many other
-details for you. It is designed for software developers, IT specialists, and
-other power users who want to write and organize scripts to automate their
-workflows.
+command line tools using a Ruby DSL. Toys handles argument parsing, error
+reporting, logging, help text, and many other details for you. Toys is designed
+for software developers, IT specialists, and other power users who want to
+write and organize scripts to automate their workflows.
 
 This user's guide covers everything you need to know to use Toys effectively.
 

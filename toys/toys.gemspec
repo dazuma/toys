@@ -37,14 +37,20 @@ require "toys/version"
   spec.authors = ["Daniel Azuma"]
   spec.email = ["dazuma@gmail.com"]
 
-  spec.summary = "Command line tool framework"
-  spec.description = "A simple command line tool framework"
+  spec.summary = "Framework for creating personal command line tools"
+  spec.description =
+    "Toys is a command line binary that lets you build your own personal" \
+    " suite of command line tools using a Ruby DSL. Toys handles argument" \
+    " parsing, error reporting, logging, help text, and many other details" \
+    " for you. It is designed for software developers, IT specialists, and" \
+    " other power users who want to write and organize scripts to automate" \
+    " their workflows."
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
-               ::Dir.glob("bin/*") + ::Dir.glob("*.md") +
-               [".yardopts"]
+               ::Dir.glob("*.md") + ::Dir.glob("docs/**/*.md") +
+               ::Dir.glob("bin/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.2.0"
   spec.require_paths = ["lib"]
 

@@ -27,22 +27,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-lib = File.expand_path("lib", __dir__)
+lib = ::File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "toys/core_version"
 
-Gem::Specification.new do |spec|
+::Gem::Specification.new do |spec|
   spec.name = "toys-core"
-  spec.version = Toys::CORE_VERSION
+  spec.version = ::Toys::CORE_VERSION
   spec.authors = ["Daniel Azuma"]
   spec.email = ["dazuma@gmail.com"]
 
-  spec.summary = "Command line tool framework"
-  spec.description = "A simple command line tool framework"
+  spec.summary = "Framework for creating command line binaries"
+  spec.description =
+    "Toys-Core is the command line tool framework underlying Toys. It can be" \
+    " used to create command line binaries using the internal Toys APIs."
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("*.md") + [".yardopts"]
+  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("*.md") +
+               ::Dir.glob("docs/**/*.md") + [".yardopts"]
   spec.required_ruby_version = ">= 2.2.0"
   spec.require_paths = ["lib"]
 
