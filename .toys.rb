@@ -51,18 +51,25 @@ end
 tool "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
+  helper(:validate_dir) do
+    cli = new_cli.add_config_path(".toys.rb")
+    run("test", cli: cli)
+    run("rubocop", cli: cli)
+    exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
+    stats = capture(["yard", "stats", "--list-undoc"])
+    if stats =~ /Undocumented\sObjects:/
+      puts stats
+      exit(1)
+    end
+  end
   script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
-        cli = new_cli.add_config_path(".toys.rb")
-        run("test", cli: cli)
-        run("rubocop", cli: cli)
+        validate_dir
       end
       ::Dir.chdir("toys") do
-        cli = new_cli.add_config_path(".toys.rb")
-        run("test", cli: cli)
-        run("rubocop", cli: cli)
+        validate_dir
       end
     end
   end
