@@ -107,6 +107,8 @@ module Toys
       #     display all subcommands recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
       #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      # @param [Boolean] show_source_path If true, shows the source path
+      #     section. Defaults to false.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       # @param [Integer] indent2 Second indent width. Default is
       #     {DEFAULT_INDENT}.
@@ -116,12 +118,12 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def help_string(recursive: false, search: nil,
+      def help_string(recursive: false, search: nil, show_source_path: false,
                       indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search)
-        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search,
+        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search, show_source_path,
                                             indent, indent2, wrap_width, styled)
         assembler.result
       end
@@ -269,12 +271,13 @@ module Toys
 
       ## @private
       class HelpStringAssembler
-        def initialize(tool, binary_name, subtools, search_term,
+        def initialize(tool, binary_name, subtools, search_term, show_source_path,
                        indent, indent2, wrap_width, styled)
           @tool = tool
           @binary_name = binary_name
           @subtools = subtools
           @search_term = search_term
+          @show_source_path = show_source_path
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
@@ -359,7 +362,7 @@ module Toys
         end
 
         def add_source_section
-          return unless @tool.definition_path
+          return unless @tool.definition_path && @show_source_path
           @lines << ""
           @lines << bold("SOURCE")
           @lines << indent_str("Defined in #{@tool.definition_path}")

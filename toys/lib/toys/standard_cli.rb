@@ -29,9 +29,6 @@
 
 require "logger"
 
-require "toys/middleware/show_version"
-require "toys/utils/wrappable_string"
-
 module Toys
   ##
   # Helpers that configure the toys-core CLI with the behavior for the
@@ -160,11 +157,12 @@ module Toys
           search_flags: true,
           default_recursive: true,
           allow_root_args: true,
+          show_source_path: true,
           use_less: true
         ],
         [
-          :show_version,
-          version_displayer: Middleware::ShowVersion.root_version_displayer(::Toys::VERSION)
+          :show_root_version,
+          version_string: ::Toys::VERSION
         ],
         [
           :handle_usage_errors
@@ -175,6 +173,7 @@ module Toys
           recursive_flags: true,
           search_flags: true,
           default_recursive: true,
+          show_source_path: true,
           use_less: true
         ],
         [

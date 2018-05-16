@@ -1,5 +1,10 @@
 # Release History
 
+### 0.3.6 / TBD
+
+* CHANGED: show_version middleware to show_root_version.
+* IMPROVED: show_help middleware lets you control display of the source path section.
+
 ### 0.3.5 / 2018-05-15
 
 * CHANGED: Exec logic now lives in a utils class.

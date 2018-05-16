@@ -33,11 +33,10 @@ require "toys/utils/line_output"
 module Toys
   module Middleware
     ##
-    # A middleware that displays a version string for certain tools if the
-    # `--version` flag is given. You can specify which tools respond to
-    # this flag, and the string that will be displayed.
+    # A middleware that displays a version string for the root tool if the
+    # `--version` flag is given.
     #
-    class ShowVersion < Base
+    class ShowRootVersion < Base
       ##
       # Default version flags
       # @return [Array<String>]
@@ -45,31 +44,18 @@ module Toys
       DEFAULT_VERSION_FLAGS = ["--version"].freeze
 
       ##
-      # Return a simple version displayer that returns the given string for
-      # the root tool.
-      #
-      # @return [Proc]
-      #
-      def self.root_version_displayer(version)
-        proc { |tool| tool.root? ? version : false }
-      end
-
-      ##
       # Create a ShowVersion middleware
       #
-      # @param [Proc] version_displayer A proc that takes a tool and returns
-      #     either the version string that should be displayed, or a falsy
-      #     value to indicate the tool should not have a `--version` flag.
-      #     Defaults to a "null" displayer that returns false for all tools.
+      # @param [String] version_string The string that should be displayed.
       # @param [Array<String>] version_flags A list of flags that should
       #     trigger displaying the version. Default is
       #     {DEFAULT_VERSION_FLAGS}.
       # @param [IO] stream Output stream to write to. Default is stdout.
       #
-      def initialize(version_displayer: nil,
+      def initialize(version_string: nil,
                      version_flags: DEFAULT_VERSION_FLAGS,
                      stream: $stdout)
-        @version_displayer = version_displayer || proc { |_| false }
+        @version_string = version_string
         @version_flags = version_flags
         @output = Utils::LineOutput.new(stream)
       end
@@ -78,11 +64,9 @@ module Toys
       # Adds the version flag if requested.
       #
       def config(tool, _loader)
-        version = @version_displayer.call(tool)
-        if version
+        if @version_string
           tool.add_flag(:_show_version, @version_flags,
                         desc: "Display the version",
-                        handler: ->(_val, _prev) { version },
                         only_unique: true)
         end
         yield
@@ -93,7 +77,7 @@ module Toys
       #
       def execute(context)
         if context[:_show_version]
-          @output.puts context[:_show_version]
+          @output.puts(@version_string)
         else
           yield
         end

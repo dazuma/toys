@@ -110,6 +110,8 @@ module Toys
       #     help or usage, and doesn't otherwise use positional arguments,
       #     then a tool name can be passed as arguments to display help for
       #     that tool.
+      # @param [Boolean] show_source_path Show the source path section. Default
+      #     is `false`.
       # @param [Boolean] use_less If the `less` tool is available, and the
       #     output stream is a tty, then use `less` to display help text.
       # @param [IO] stream Output stream to write to. Default is stdout.
@@ -124,6 +126,7 @@ module Toys
                      default_recursive: false,
                      fallback_execution: false,
                      allow_root_args: false,
+                     show_source_path: false,
                      use_less: false,
                      stream: $stdout,
                      styled_output: nil)
@@ -134,6 +137,7 @@ module Toys
         @default_recursive = default_recursive ? true : false
         @fallback_execution = fallback_execution
         @allow_root_args = allow_root_args
+        @show_source_path = show_source_path
         @stream = stream
         @styled_output = styled_output
         @use_less = use_less
@@ -171,6 +175,7 @@ module Toys
           help_text = get_help_text(context)
           str = help_text.help_string(recursive: context[:_recursive_subtools],
                                       search: context[:_search_subtools],
+                                      show_source_path: @show_source_path,
                                       wrap_width: output_cols)
           output_help(str)
         else
