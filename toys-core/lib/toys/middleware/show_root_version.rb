@@ -64,7 +64,7 @@ module Toys
       # Adds the version flag if requested.
       #
       def config(tool, _loader)
-        if @version_string
+        if @version_string && tool.root?
           tool.add_flag(:_show_version, @version_flags,
                         desc: "Display the version",
                         only_unique: true)

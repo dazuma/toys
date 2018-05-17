@@ -286,21 +286,6 @@ module Toys
     end
 
     ##
-    # Set the long description strings.
-    #
-    # Each string may be provided as a {Toys::Utils::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
-    #
-    # @param [Toys::Utils::WrappableString,String,Array<String>...] descs
-    #
-    def populate_long_desc(*descs)
-      check_definition_state
-      @long_desc = Tool.canonicalize_long_desc(descs)
-      self
-    end
-
-    ##
     # Define a helper method that will be available during execution.
     # Pass the name of the method in the argument, and provide a block with
     # the method body. Note the method name may not start with an underscore.
@@ -399,7 +384,7 @@ module Toys
     #
     def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :required, accept, desc, long_desc, display_name)
+      arg_def = ArgDefinition.new(key, :required, accept, nil, desc, long_desc, display_name)
       @required_arg_definitions << arg_def
       self
     end
@@ -428,7 +413,7 @@ module Toys
     def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
                          desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :optional, accept, desc, long_desc, display_name)
+      arg_def = ArgDefinition.new(key, :optional, accept, default, desc, long_desc, display_name)
       @optional_arg_definitions << arg_def
       @default_data[key] = default
       self
@@ -457,7 +442,7 @@ module Toys
     def set_remaining_args(key, default: [], accept: nil, display_name: nil,
                            desc: nil, long_desc: nil)
       check_definition_state
-      arg_def = ArgDefinition.new(key, :remaining, accept, desc, long_desc, display_name)
+      arg_def = ArgDefinition.new(key, :remaining, accept, default, desc, long_desc, display_name)
       @remaining_args_definition = arg_def
       @default_data[key] = default
       self
@@ -566,8 +551,6 @@ module Toys
       # Create a FlagDefinition
       # @private
       #
-      # @param [Symbol] key This flag will set the given context key.
-      #
       def initialize(key, flags, accept, handler, desc, long_desc, default)
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
@@ -575,6 +558,7 @@ module Toys
         @handler = handler || DEFAULT_HANDLER
         @desc = Tool.canonicalize_desc(desc)
         @long_desc = Tool.canonicalize_long_desc(long_desc)
+        @default = default
         @needs_val = !@accept.nil? ||
                      (!default.nil? && default != true && default != false)
         create_default_flag_if_needed
@@ -598,6 +582,12 @@ module Toys
       # @return [Object]
       #
       attr_reader :accept
+
+      ##
+      # Returns the default value, which may be `nil`.
+      # @return [Object]
+      #
+      attr_reader :default
 
       ##
       # Returns the short description string.
@@ -753,13 +743,11 @@ module Toys
       # Create an ArgDefinition
       # @private
       #
-      # @param [Symbol] key This argument will set the given context key.
-      # @param [:required,:optional,:remaining] type Type of this argument
-      #
-      def initialize(key, type, accept, desc, long_desc, display_name)
+      def initialize(key, type, accept, default, desc, long_desc, display_name)
         @key = key
         @type = type
         @accept = accept
+        @default = default
         @desc = Tool.canonicalize_desc(desc)
         @long_desc = Tool.canonicalize_long_desc(long_desc)
         @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
@@ -782,6 +770,12 @@ module Toys
       # @return [Object]
       #
       attr_accessor :accept
+
+      ##
+      # Returns the default value, which may be `nil`.
+      # @return [Object]
+      #
+      attr_reader :default
 
       ##
       # Returns the short description string.

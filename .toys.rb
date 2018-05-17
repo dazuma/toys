@@ -51,25 +51,37 @@ end
 tool "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
+  use :highline
   helper(:validate_dir) do
     cli = new_cli.add_config_path(".toys.rb")
+    puts color("** Checking tests...", :cyan)
     run("test", cli: cli)
+    puts color("** Tests ok.", :cyan)
+    puts color("** Checking rubocop...", :cyan)
     run("rubocop", cli: cli)
+    puts color("** Rubocop ok.", :cyan)
+    puts color("** Checking yardoc...", :cyan)
     exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
     stats = capture(["yard", "stats", "--list-undoc"])
     if stats =~ /Undocumented\sObjects:/
       puts stats
       exit(1)
     end
+    puts color("** Yardoc ok.", :cyan)
   end
   script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
+    ::HighLine.use_color = ::STDOUT.tty?
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
+        puts color("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
         validate_dir
+        puts color("**** TOYS-CORE GEM OK.", :bold, :cyan)
       end
       ::Dir.chdir("toys") do
+        puts color("**** CHECKING TOYS GEM ...", :bold, :cyan)
         validate_dir
+        puts color("**** TOYS GEM OK.", :bold, :cyan)
       end
     end
   end

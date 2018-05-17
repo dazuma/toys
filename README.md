@@ -22,6 +22,9 @@ The source can be found on Github at
 
 ### TODO items
 
+* Support optional values for flags
+* Support custom accepts (perhaps using proc for the accept)
+
 * Improve test coverage
 * Write user's guide
 

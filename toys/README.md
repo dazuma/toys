@@ -10,12 +10,14 @@ I wrote Toys because I was accumulating dozens of ad hoc Ruby scripts that I
 had written to automate everything from refreshing credentials, to displaying
 git history in my favorite format, to running builds and tests of complex
 multi-component projects. It was becoming difficult to remember which scripts
-did what, and what arguments to pass, and I was repeating the same
+did what, and what arguments each required, and I was repeating the same
 OptionParser and common tool boilerplate each time I wrote a new one.
 
 Toys is a powerful tool that makes it easy to write and organize your scripts.
-You write your functionality, and Toys takes care of all the details expected
-from a good command line tool.
+You write your functionality, and Toys takes care of all the other details
+expected from a good command line tool. It automatically generates help text,
+so you can see usage information at a glance. It also provides a search feature
+to help you find the script you need.
 
 You can also use the core functionality of Toys to create your own command line
 binaries, by using the *toys-core* API, which is available as a separate gem.

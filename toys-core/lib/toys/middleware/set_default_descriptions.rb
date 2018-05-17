@@ -32,9 +32,12 @@ require "toys/middleware/base"
 module Toys
   module Middleware
     ##
-    # This middleware sets default description fields for tools that do not
-    # have them set otherwise. You can set separate descriptions for tools,
-    # namespaces, and the root.
+    # This middleware sets default description fields for tools and command
+    # line arguments and flags that do not have them set otherwise.
+    #
+    # You can modify the static descriptions for tools, namespaces, and the
+    # root tool by passing parameters to this middleware. For finer control,
+    # you can override methods to modify the description generation logic.
     #
     class SetDefaultDescriptions < Base
       ##
@@ -59,34 +62,11 @@ module Toys
       # The default long description for the root tool.
       # @return [String]
       #
-      DEFAULT_ROOT_LONG_DESC =
+      DEFAULT_ROOT_LONG_DESC = [
         "This command line tool was built using the toys-core gem. See" \
-        " https://www.rubydoc.info/gems/toys-core for more info. To replace this message," \
-        " configure the SetDefaultDescriptions middleware.".freeze
-
-      ##
-      # The default description for flags.
-      # @return [String]
-      #
-      DEFAULT_FLAG_DESC = "(No flag description available)".freeze
-
-      ##
-      # The default description for required args.
-      # @return [String]
-      #
-      DEFAULT_REQUIRED_ARG_DESC = "(Required argument - no description available)".freeze
-
-      ##
-      # The default description for optional args.
-      # @return [String]
-      #
-      DEFAULT_OPTIONAL_ARG_DESC = "(Optional argument - no description available)".freeze
-
-      ##
-      # The default description for remaining args.
-      # @return [String]
-      #
-      DEFAULT_REMAINING_ARG_DESC = "(Remaining arguments - no description available)".freeze
+          " https://www.rubydoc.info/gems/toys-core for more info.",
+        "To replace this message, configure the SetDefaultDescriptions middleware."
+      ].freeze
 
       ##
       # Create a SetDefaultDescriptions middleware given default descriptions.
@@ -109,99 +89,165 @@ module Toys
       # @param [String,nil] default_root_long_desc The default long description
       #     for the root tool, or `nil` not to set one. Defaults to
       #     {DEFAULT_ROOT_LONG_DESC}.
-      # @param [String,nil] default_flag_desc The default short description for
-      #     flags, or `nil` not to set one. Defaults to {DEFAULT_FLAG_DESC}.
-      # @param [String,nil] default_flag_long_desc The default long description
-      #     for flags, or `nil` not to set one. Defaults to `nil`.
-      # @param [String,nil] default_required_arg_desc The default short
-      #     description for required args, or `nil` not to set one. Defaults to
-      #     {DEFAULT_REQUIRED_ARG_DESC}.
-      # @param [String,nil] default_required_arg_long_desc The default long
-      #     description for required args, or `nil` not to set one. Defaults to
-      #     `nil`.
-      # @param [String,nil] default_optional_arg_desc The default short
-      #     description for optional args, or `nil` not to set one. Defaults to
-      #     {DEFAULT_OPTIONAL_ARG_DESC}.
-      # @param [String,nil] default_optional_arg_long_desc The default long
-      #     description for optional args, or `nil` not to set one. Defaults to
-      #     `nil`.
-      # @param [String,nil] default_remaining_arg_desc The default short
-      #     description for remaining args, or `nil` not to set one. Defaults
-      #     to {DEFAULT_REMAINING_ARG_DESC}.
-      # @param [String,nil] default_remaining_arg_long_desc The default long
-      #     description for remaining args, or `nil` not to set one. Defaults
-      #     to `nil`.
       #
       def initialize(default_tool_desc: DEFAULT_TOOL_DESC,
                      default_tool_long_desc: nil,
                      default_namespace_desc: DEFAULT_NAMESPACE_DESC,
                      default_namespace_long_desc: nil,
                      default_root_desc: DEFAULT_ROOT_DESC,
-                     default_root_long_desc: DEFAULT_ROOT_LONG_DESC,
-                     default_flag_desc: DEFAULT_FLAG_DESC,
-                     default_flag_long_desc: nil,
-                     default_required_arg_desc: DEFAULT_REQUIRED_ARG_DESC,
-                     default_required_arg_long_desc: nil,
-                     default_optional_arg_desc: DEFAULT_OPTIONAL_ARG_DESC,
-                     default_optional_arg_long_desc: nil,
-                     default_remaining_arg_desc: DEFAULT_REMAINING_ARG_DESC,
-                     default_remaining_arg_long_desc: nil)
+                     default_root_long_desc: DEFAULT_ROOT_LONG_DESC)
         @default_tool_desc = default_tool_desc
         @default_tool_long_desc = default_tool_long_desc
         @default_namespace_desc = default_namespace_desc
         @default_namespace_long_desc = default_namespace_long_desc
         @default_root_desc = default_root_desc
         @default_root_long_desc = default_root_long_desc
-        @default_flag_desc = default_flag_desc
-        @default_flag_long_desc = default_flag_long_desc
-        @default_required_arg_desc = default_required_arg_desc
-        @default_required_arg_long_desc = default_required_arg_long_desc
-        @default_optional_arg_desc = default_optional_arg_desc
-        @default_optional_arg_long_desc = default_optional_arg_long_desc
-        @default_remaining_arg_desc = default_remaining_arg_desc
-        @default_remaining_arg_long_desc = default_remaining_arg_long_desc
       end
 
       ##
       # Add default description text to tools.
       #
-      def config(tool, _loader)
-        if tool.root?
-          config_descs(tool, @default_root_desc, @default_root_long_desc)
-        elsif tool.includes_script?
-          config_descs(tool, @default_tool_desc, @default_tool_long_desc)
-        else
-          config_descs(tool, @default_namespace_desc, @default_namespace_long_desc)
-        end
+      def config(tool, loader)
+        data = {tool: tool, loader: loader}
         tool.flag_definitions.each do |flag|
-          config_descs(flag, @default_flag_desc, @default_flag_long_desc)
+          config_desc(flag, generate_flag_desc(flag, data), generate_flag_long_desc(flag, data))
         end
-        config_args(tool)
+        tool.arg_definitions.each do |arg|
+          config_desc(arg, generate_arg_desc(arg, data), generate_arg_long_desc(arg, data))
+        end
+        config_desc(tool, generate_tool_desc(tool, data), generate_tool_long_desc(tool, data))
         yield
+      end
+
+      protected
+
+      ##
+      # This method implements the logic for generating a tool description.
+      # By default, it uses the parameters given to the middleware object.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool] tool The tool to document.
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Loader} is passed with key `:loader`. Future versions
+      #     of Toys may provide additional information.
+      # @return [String,Array<String>,Toys::Utils::WrappableString,nil] The
+      #     default description, or `nil` not to set a default. See
+      #     {Toys::Tool#desc=} for info on the format.
+      #
+      def generate_tool_desc(tool, data)
+        if tool.root?
+          @default_root_desc
+        elsif !tool.includes_script? && data[:loader].has_subtools?(tool.full_name)
+          @default_namespace_desc
+        else
+          @default_tool_desc
+        end
+      end
+
+      ##
+      # This method implements logic for generating a tool long description.
+      # By default, it uses the parameters given to the middleware object.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool] tool The tool to document
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Loader} is passed with key `:loader`. Future versions
+      #     of Toys may provide additional information.
+      # @return [Array<Toys::Utils::WrappableString,String,Array<String>>,nil]
+      #     The default long description, or `nil` not to set a default. See
+      #     {Toys::Tool#long_desc=} for info on the format.
+      #
+      def generate_tool_long_desc(tool, data)
+        if tool.root?
+          @default_root_long_desc
+        elsif !tool.includes_script? && data[:loader].has_subtools?(tool.full_name)
+          @default_namespace_long_desc
+        else
+          @default_tool_long_desc
+        end
+      end
+
+      ##
+      # This method implements the logic for generating a flag description.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool::FlagDefinition] flag The flag to document
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
+      #     Toys may provide additional information.
+      # @return [String,Array<String>,Toys::Utils::WrappableString,nil] The
+      #     default description, or `nil` not to set a default. See
+      #     {Toys::Tool#desc=} for info on the format.
+      #
+      def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
+        name = flag.key.to_s.tr("_", "-").gsub(/[^\w-]/, "").downcase.inspect
+        acceptable = flag.value_label ? (flag.accept || "string").to_s : "boolean flag"
+        default_clause = flag.default ? " (default is #{flag.default.inspect})" : ""
+        "Sets the #{name} option as type #{acceptable}#{default_clause}."
+      end
+
+      ##
+      # This method implements logic for generating a flag long description.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool::FlagDefinition] flag The flag to document
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
+      #     Toys may provide additional information.
+      # @return [Array<Toys::Utils::WrappableString,String,Array<String>>,nil]
+      #     The default long description, or `nil` not to set a default. See
+      #     {Toys::Tool#long_desc=} for info on the format.
+      #
+      def generate_flag_long_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
+        nil
+      end
+
+      ##
+      # This method implements the logic for generating an arg description.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool::ArgDefinition] arg The arg to document
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
+      #     Toys may provide additional information.
+      # @return [String,Array<String>,Toys::Utils::WrappableString,nil] The
+      #     default description, or `nil` not to set a default. See
+      #     {Toys::Tool#desc=} for info on the format.
+      #
+      def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
+        acceptable = (arg.accept || "string").to_s
+        default_clause = arg.default ? " (default is #{arg.default.inspect})" : ""
+        case arg.type
+        when :required
+          "Required #{acceptable} argument."
+        when :optional
+          "Optional #{acceptable} argument#{default_clause}."
+        else
+          "Remaining arguments are type #{acceptable}#{default_clause}."
+        end
+      end
+
+      ##
+      # This method implements logic for generating an arg long description.
+      # Override this method to provide different logic.
+      #
+      # @param [Toys::Tool::ArgDefinition] arg The arg to document
+      # @param [Hash] data Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
+      #     Toys may provide additional information.
+      # @return [Array<Toys::Utils::WrappableString,String,Array<String>>,nil]
+      #     The default long description, or `nil` not to set a default. See
+      #     {Toys::Tool#long_desc=} for info on the format.
+      #
+      def generate_arg_long_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
+        nil
       end
 
       private
 
-      def config_args(tool)
-        tool.required_arg_definitions.each do |arg|
-          config_descs(arg, @default_required_arg_desc, @default_required_arg_long_desc)
-        end
-        tool.optional_arg_definitions.each do |arg|
-          config_descs(arg, @default_optional_arg_desc, @default_optional_arg_long_desc)
-        end
-        if tool.remaining_args_definition
-          config_descs(tool.remaining_args_definition,
-                       @default_remaining_arg_desc, @default_remaining_arg_long_desc)
-        end
-      end
-
-      def config_descs(object, default_desc, default_long_desc)
-        if default_desc && object.desc.empty?
-          object.desc = default_desc
-        end
-        if default_long_desc && object.long_desc.empty?
-          object.long_desc = default_long_desc
-        end
+      def config_desc(object, desc, long_desc)
+        object.desc = desc if desc && object.desc.empty?
+        object.long_desc = long_desc if long_desc && object.long_desc.empty?
       end
     end
   end
