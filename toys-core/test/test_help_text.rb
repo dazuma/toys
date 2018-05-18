@@ -164,7 +164,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
-        assert_equal("    toys foo bar [-a VALUE, --aa=VALUE] [--[no-]bb]", help_array[index + 1])
+        assert_equal("    toys foo bar [-aVALUE, --aa=VALUE] [--[no-]bb]", help_array[index + 1])
         assert_equal("", help_array[index + 2])
       end
 
@@ -212,7 +212,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false, wrap_width: 40).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
-        assert_equal("    toys foo bar [-a VALUE, --aa=VALUE]", help_array[index + 1])
+        assert_equal("    toys foo bar [-aVALUE, --aa=VALUE]", help_array[index + 1])
         assert_equal("        [--[no-]bb] CC DD [EE] [FF]", help_array[index + 2])
         assert_equal("        [GG...]", help_array[index + 3])
         assert_equal("", help_array[index + 4])
@@ -234,23 +234,12 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
-        assert_equal("    -a VALUE, --aa=VALUE", help_array[index + 1])
+        assert_equal("    -aVALUE, --aa=VALUE", help_array[index + 1])
         assert_equal("        set aa", help_array[index + 2])
         assert_equal("", help_array[index + 3])
         assert_equal("    --[no-]bb", help_array[index + 4])
         assert_equal("        set bb", help_array[index + 5])
         assert_equal(index + 6, help_array.size)
-      end
-
-      it "orders single dashes before double dashes" do
-        normal_tool.add_flag(:aa, ["--aa=VALUE", "-a"], desc: "set aa")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
-        help_array = help.help_string(styled: false).split("\n")
-        index = help_array.index("FLAGS")
-        refute_nil(index)
-        assert_equal("    -a VALUE, --aa=VALUE", help_array[index + 1])
-        assert_equal("        set aa", help_array[index + 2])
-        assert_equal(index + 3, help_array.size)
       end
 
       it "handles no description" do
@@ -259,7 +248,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
-        assert_equal("    -a VALUE, --aa=VALUE", help_array[index + 1])
+        assert_equal("    -aVALUE, --aa=VALUE", help_array[index + 1])
         assert_equal(index + 2, help_array.size)
       end
 
@@ -269,7 +258,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
-        assert_equal("    -a VALUE, --aa=VALUE", help_array[index + 1])
+        assert_equal("    -aVALUE, --aa=VALUE", help_array[index + 1])
         assert_equal("        long desc", help_array[index + 2])
         assert_equal(index + 3, help_array.size)
       end
@@ -281,7 +270,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
-        assert_equal("    -a VALUE, --aa=VALUE", help_array[index + 1])
+        assert_equal("    -aVALUE, --aa=VALUE", help_array[index + 1])
         assert_equal("        long desc", help_array[index + 2])
         assert_equal("        hello ruby", help_array[index + 3])
         assert_equal("        world", help_array[index + 4])

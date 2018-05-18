@@ -358,8 +358,9 @@ module Toys
                  accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
                  only_unique: false)
       check_definition_state
-      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc, default)
-      flag_def.remove_flags(used_flags) if only_unique
+      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc, default) do |f|
+        f.remove_flags(used_flags) if only_unique
+      end
       @flag_definitions << flag_def if flag_def.active?
       @default_data[key] = default
       self
@@ -507,33 +508,64 @@ module Toys
       # @param [String] str syntax.
       #
       def initialize(str)
-        if str =~ /^(-[\?\w])(\s?(\w+))?$/
-          setup(str, [$1], $1, "-", " ", $3)
-        elsif str =~ /^--\[no-\](\w[\?\w-]*)$/
-          setup(str, ["--#{$1}", "--no-#{$1}"], "--[no-]#{$1}", "--", nil, nil)
-        elsif str =~ /^(--\w[\?\w-]*)(([=\s])(\w+))?$/
-          setup(str, [$1], $1, "--", $3, $4)
+        case str
+        when /^(-[\?\w])$/
+          setup(str, [$1], $1, "-", nil, nil, nil, nil)
+        when /^(-[\?\w])( ?)\[(\w+)\]$/
+          setup(str, [$1], $1, "-", :value, :optional, $2, $3)
+        when /^(-[\?\w])( ?)(\w+)$/
+          setup(str, [$1], $1, "-", :value, :required, $2, $3)
+        when /^--\[no-\](\w[\?\w-]*)$/
+          setup(str, ["--#{$1}", "--no-#{$1}"], str, "--", :boolean, nil, nil, nil)
+        when /^(--\w[\?\w-]*)$/
+          setup(str, [$1], $1, "--", nil, nil, nil, nil)
+        when /^(--\w[\?\w-]*)([= ])\[(\w+)\]$/
+          setup(str, [$1], $1, "--", :value, :optional, $2, $3)
+        when /^(--\w[\?\w-]*)([= ])(\w+)$/
+          setup(str, [$1], $1, "--", :value, :required, $2, $3)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
       end
 
       attr_reader :original_str
-      attr_reader :str_without_value
       attr_reader :flags
+      attr_reader :str_without_value
       attr_reader :flag_style
+      attr_reader :flag_type
+      attr_reader :value_type
       attr_reader :value_delim
       attr_reader :value_label
+      attr_reader :canonical_str
+
+      ## @private
+      def configure_canonical(canonical_flag_type, canonical_value_type,
+                              canonical_value_label, canonical_value_delim)
+        return unless flag_type.nil?
+        @flag_type = canonical_flag_type
+        return unless canonical_flag_type == :value
+        @value_type = canonical_value_type
+        canonical_value_delim = "" if canonical_value_delim == "=" && flag_style == "-"
+        canonical_value_delim = "=" if canonical_value_delim == "" && flag_style == "--"
+        @value_delim = canonical_value_delim
+        @value_label = canonical_value_label
+        label = @value_type == :optional ? "[#{@value_label}]" : @value_label
+        @canonical_str = "#{str_without_value}#{@value_delim}#{label}"
+      end
 
       private
 
-      def setup(original_str, flags, str_without_value, flag_style, value_delim, value_label)
+      def setup(original_str, flags, str_without_value, flag_style, flag_type, value_type,
+                value_delim, value_label)
         @original_str = original_str
         @flags = flags
         @str_without_value = str_without_value
         @flag_style = flag_style
+        @flag_type = flag_type
+        @value_type = value_type
         @value_delim = value_delim
         @value_label = value_label ? value_label.upcase : value_label
+        @canonical_str = original_str
       end
     end
 
@@ -559,10 +591,11 @@ module Toys
         @desc = Tool.canonicalize_desc(desc)
         @long_desc = Tool.canonicalize_long_desc(long_desc)
         @default = default
-        @needs_val = !@accept.nil? ||
-                     (!default.nil? && default != true && default != false)
-        create_default_flag_if_needed
-        reset_data
+        needs_val = (!accept.nil? && accept != ::TrueClass && accept != ::FalseClass) ||
+                    (!default.nil? && default != true && default != false)
+        create_default_flag_if_needed(needs_val)
+        yield self if block_given?
+        canonicalize(needs_val)
       end
 
       ##
@@ -607,6 +640,14 @@ module Toys
       #
       attr_reader :handler
 
+      attr_reader :flag_type
+
+      attr_reader :value_type
+
+      attr_reader :value_label
+
+      attr_reader :value_delim
+
       ##
       # Returns an array of FlagSyntax including only single-dash flags
       # @return [Array<FlagSyntax>]
@@ -636,14 +677,7 @@ module Toys
       # @return [Array]
       #
       def optparser_info
-        @optparser_info ||= begin
-          flags = flag_syntax.map do |fs|
-            f = fs.str_without_value
-            f = "#{f} #{value_label}" if value_label
-            f
-          end
-          flags + Array(accept)
-        end
+        @optparser_info ||= flag_syntax.map(&:canonical_str) + Array(accept)
       end
 
       ##
@@ -653,24 +687,6 @@ module Toys
       #
       def active?
         !effective_flags.empty?
-      end
-
-      ##
-      # Return the value label if one exists
-      # @return [String,nil]
-      #
-      def value_label
-        find_canonical_value_label
-        @value_label
-      end
-
-      ##
-      # Return the value delimiter if one exists
-      # @return [String,nil]
-      #
-      def value_delim
-        find_canonical_value_label
-        @value_delim
       end
 
       ##
@@ -695,43 +711,50 @@ module Toys
         @flag_syntax.select! do |ss|
           ss.flags.all? { |s| !flags.include?(s) }
         end
-        reset_data
       end
 
       private
 
-      def reset_data
-        @effective_flags = nil
-        @optparser_info = nil
-        @single_flag_syntax = nil
-        @double_flag_syntax = nil
-        @value_label = nil
-        @value_delim = nil
-      end
-
-      def create_default_flag_if_needed
+      def create_default_flag_if_needed(needs_val)
         return unless @flag_syntax.empty?
         canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
         unless canonical_flag.empty?
-          flag = @needs_val ? "--#{canonical_flag}=VALUE" : "--#{canonical_flag}"
+          flag = needs_val ? "--#{canonical_flag} VALUE" : "--#{canonical_flag}"
           @flag_syntax << FlagSyntax.new(flag)
         end
       end
 
-      def find_canonical_value_label
-        return if @value_delim
-        @value_label = @needs_val ? "VALUE" : nil
-        @value_delim = @needs_val ? " " : ""
-        single_flag_syntax.each do |ss|
-          next unless ss.value_label
-          @value_label = ss.value_label
-          @value_delim = ss.value_delim
+      def canonicalize(needs_val)
+        @flag_type = needs_val ? :value : nil
+        @value_type = nil
+        @value_label = needs_val ? "VALUE" : nil
+        @value_delim = " "
+        single_flag_syntax.each do |flag|
+          analyze_flag_syntax(flag)
         end
-        double_flag_syntax.each do |ss|
-          next unless ss.value_label
-          @value_label = ss.value_label
-          @value_delim = ss.value_delim
+        double_flag_syntax.each do |flag|
+          analyze_flag_syntax(flag)
         end
+        @flag_type ||= :boolean
+        flag_syntax.each do |flag|
+          flag.configure_canonical(@flag_type, @value_type, @value_label, @value_delim)
+        end
+      end
+
+      def analyze_flag_syntax(flag)
+        return if flag.flag_type.nil?
+        if !@flag_type.nil? && @flag_type != flag.flag_type
+          raise ToolDefinitionError, "Cannot have both value and boolean flags for #{key.inspect}"
+        end
+        @flag_type = flag.flag_type
+        return unless @flag_type == :value
+        if !@value_type.nil? && @value_type != flag.value_type
+          raise ToolDefinitionError,
+                "Cannot have both required and optional values for flag #{key.inspect}"
+        end
+        @value_type = flag.value_type
+        @value_label = flag.value_label
+        @value_delim = flag.value_delim
       end
     end
 

@@ -201,9 +201,11 @@ module Toys
         end
 
         def add_flag(flag)
-          flags_str = (flag.single_flag_syntax + flag.double_flag_syntax)
-                      .map(&:str_without_value).join(", ")
-          flags_str << flag.value_delim << flag.value_label if flag.value_label
+          flags = flag.single_flag_syntax + flag.double_flag_syntax
+          last_index = flags.size - 1
+          flags_str = flags.each_with_index.map do |fs, i|
+            i == last_index ? fs.canonical_str : fs.str_without_value
+          end.join(", ")
           flags_str = "    #{flags_str}" if flag.single_flag_syntax.empty?
           add_right_column_desc(flags_str, wrap_desc(flag.desc))
         end
@@ -390,15 +392,16 @@ module Toys
         end
 
         def flag_spec_string(flag)
-          single_flags = flag.single_flag_syntax.map do |fs|
+          flag.flag_syntax.map do |fs|
             str = bold(fs.str_without_value)
-            flag.value_label ? "#{str} #{underline(flag.value_label)}" : str
-          end
-          double_flags = flag.double_flag_syntax.map do |fs|
-            str = bold(fs.str_without_value)
-            flag.value_label ? "#{str}#{flag.value_delim}#{underline(flag.value_label)}" : str
-          end
-          (single_flags + double_flags).join(", ")
+            if fs.flag_type != :value
+              str
+            elsif fs.value_type == :optional
+              "#{str}#{fs.value_delim}[#{underline(fs.value_label)}]"
+            else
+              "#{str}#{fs.value_delim}#{underline(fs.value_label)}"
+            end
+          end.join(", ")
         end
 
         def add_positional_arguments_section

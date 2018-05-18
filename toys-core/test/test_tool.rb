@@ -120,132 +120,279 @@ describe Toys::Tool do
       assert(tool.flag_definitions.empty?)
     end
 
-    it "sets the default to nil by default" do
-      tool.add_flag(:a, ["-a"])
-      assert(tool.default_data.key?(:a))
-      assert_nil(tool.default_data[:a])
-    end
-
-    it "sets a default to a custom value" do
-      tool.add_flag(:a, ["-a"], default: 2)
-      assert(tool.default_data.key?(:a))
-      assert_equal(2, tool.default_data[:a])
-    end
-
-    it "adds a minimal flag" do
-      tool.add_flag(:a, ["-a"])
-      assert_equal(1, tool.flag_definitions.size)
-      flag = tool.flag_definitions.first
-      assert_equal(:a, flag.key)
-      assert_equal(1, flag.flag_syntax.size)
-      assert_equal(["-a"], flag.flag_syntax.first.flags)
-      assert_nil(flag.accept)
-      assert_equal("", flag.desc.to_s)
-      assert_equal([], flag.long_desc)
-      assert_equal(1, flag.handler.call(1, 2))
-      assert_equal(true, flag.active?)
-    end
-
-    it "recognizes desc and long desc" do
-      tool.add_flag(:a, ["-a"], desc: "I like Ruby",
-                                long_desc: ["hello", "world"])
-      flag = tool.flag_definitions.first
-      assert_equal(wrappable("I like Ruby"), flag.desc)
-      assert_equal([wrappable("hello"), wrappable("world")], flag.long_desc)
-    end
-
-    it "exposes optparser info with no acceptor" do
-      tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"])
-      flag = tool.flag_definitions.first
-      assert_equal(["-a VAL", "--bb VAL", "-c VAL", "--dd VAL", "--[no-]ee VAL"],
-                   flag.optparser_info)
-    end
-
-    it "exposes optparser info with an acceptor" do
-      tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"], accept: Integer)
-      flag = tool.flag_definitions.first
-      assert_equal(["-a VAL", "--bb VAL", "-c VAL", "--dd VAL", "--[no-]ee VAL", Integer],
-                   flag.optparser_info)
-    end
-
-    it "adds a value label by default when an acceptor is present" do
-      tool.add_flag(:a, ["-a", "--bb"], accept: Integer)
-      flag = tool.flag_definitions.first
-      assert_equal(["-a VALUE", "--bb VALUE", Integer], flag.optparser_info)
-      assert_equal("VALUE", flag.value_label)
-      assert_equal(" ", flag.value_delim)
-    end
-
-    it "adds default values without an acceptor" do
-      tool.add_flag(:abc)
-      flag = tool.flag_definitions.first
-      assert_equal(["--abc"], flag.optparser_info)
-    end
-
-    it "adds default values with an acceptor" do
-      tool.add_flag(:abc, accept: String)
-      flag = tool.flag_definitions.first
-      assert_equal(["--abc VALUE", String], flag.optparser_info)
-    end
-
-    it "finds single and double flags" do
-      tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"])
-      flag = tool.flag_definitions.first
-      assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:original_str))
-      assert_equal(["--bb", "--dd=VAL", "--[no-]ee"], flag.double_flag_syntax.map(&:original_str))
-    end
-
-    it "determines effective flags" do
-      tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL", "--[no-]ee"])
-      flag = tool.flag_definitions.first
-      assert_equal(["-a", "--bb", "-c", "--dd", "--ee", "--no-ee"], flag.effective_flags)
-    end
-
-    it "gets value label from last double flag" do
-      tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL", "--[no-]ee"])
-      flag = tool.flag_definitions.first
-      assert_equal("VAL", flag.value_label)
-      assert_equal("=", flag.value_delim)
-    end
-
-    it "gets value label from last single flag" do
-      tool.add_flag(:a, ["-a VAL", "--bb", "-cVALUE", "--aa", "--[no-]ee"])
-      flag = tool.flag_definitions.first
-      assert_equal("VALUE", flag.value_label)
-      assert_equal(" ", flag.value_delim)
-    end
-
-    it "uniquifies flags" do
-      tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
-      tool.add_flag(:b, ["-b VAL", "--bb=VALUE"], only_unique: true)
-      tool.add_flag(:c, ["-a VAL"], only_unique: true)
-      flag = tool.flag_definitions.last
-      assert_equal(["-b"], flag.effective_flags)
-      assert(flag.active?)
-    end
-
-    it "removes all flags" do
-      tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
-      flag = tool.flag_definitions.first
-      flag.remove_flags(["-a", "-b", "--bb"])
-      assert_equal([], flag.effective_flags)
-      refute(flag.active?)
-    end
-
-    it "allows legal flag syntax" do
-      tool.add_flag(:foo, ["-a", "-bVAL", "-c VAL", "-?", "--d", "--e-f-g",
-                           "--[no-]hij", "--kl=VAL", "--mn VAL"])
-    end
-
-    it "does not allow illegal flag syntax" do
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_flag(:foo, ["hi"])
+    describe "flag syntax checking" do
+      it "allows legal flag syntax with raw booleans" do
+        tool.add_flag(:foo, ["-a", "-?", "--d", "--e-f-g"])
       end
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_flag(:foo, [""])
+
+      it "allows legal flag syntax with required values" do
+        tool.add_flag(:foo, ["-bVAL", "-c VAL", "--kl=VAL", "--mn VAL"])
       end
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_flag(:foo, ["-a -"])
+
+      it "allows legal flag syntax with optional values" do
+        tool.add_flag(:foo, ["-b[VAL]", "-c [VAL]", "--kl=[VAL]", "--mn [VAL]"])
+      end
+
+      it "allows legal flag syntax with boolean switches" do
+        tool.add_flag(:foo, ["-a", "--[no-]op"])
+      end
+
+      it "does not allow illegal flag syntax" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:foo, ["hi"])
+        end
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:foo, [""])
+        end
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:foo, ["-a -"])
+        end
+      end
+    end
+
+    describe "options" do
+      it "handles no explicit options" do
+        tool.add_flag(:a, ["-a"])
+        assert_equal(1, tool.flag_definitions.size)
+        flag = tool.flag_definitions.first
+        assert_equal(:a, flag.key)
+        assert_equal(1, flag.flag_syntax.size)
+        assert_equal(["-a"], flag.flag_syntax.first.flags)
+        assert_nil(flag.accept)
+        assert_equal("", flag.desc.to_s)
+        assert_equal([], flag.long_desc)
+        assert_equal(1, flag.handler.call(1, 2))
+        assert_equal(true, flag.active?)
+      end
+
+      it "sets the default to nil by default" do
+        tool.add_flag(:a, ["-a"])
+        assert(tool.default_data.key?(:a))
+        assert_nil(tool.default_data[:a])
+      end
+
+      it "sets a default to a custom value" do
+        tool.add_flag(:a, ["-a"], default: 2)
+        assert(tool.default_data.key?(:a))
+        assert_equal(2, tool.default_data[:a])
+      end
+
+      it "recognizes desc and long desc" do
+        tool.add_flag(:a, ["-a"], desc: "I like Ruby",
+                                  long_desc: ["hello", "world"])
+        flag = tool.flag_definitions.first
+        assert_equal(wrappable("I like Ruby"), flag.desc)
+        assert_equal([wrappable("hello"), wrappable("world")], flag.long_desc)
+      end
+    end
+
+    describe "forcing values" do
+      it "adds a value label by default when an acceptor is present" do
+        tool.add_flag(:a, ["-a", "--bb"], accept: Integer)
+        flag = tool.flag_definitions.first
+        assert_equal("VALUE", flag.value_label)
+        assert_equal(" ", flag.value_delim)
+      end
+
+      it "adds a value label by default when a nonboolean default is present" do
+        tool.add_flag(:a, ["-a", "--bb"], default: "hi")
+        flag = tool.flag_definitions.first
+        assert_equal("VALUE", flag.value_label)
+        assert_equal(" ", flag.value_delim)
+      end
+
+      it "does not add a value label by default when a boolean default is present" do
+        tool.add_flag(:a, ["-a", "--bb"], default: true)
+        flag = tool.flag_definitions.first
+        assert_nil(flag.value_label)
+      end
+    end
+
+    describe "default flag generation" do
+      it "adds a default flag without an acceptor" do
+        tool.add_flag(:abc)
+        flag = tool.flag_definitions.first
+        assert_equal(["--abc"], flag.optparser_info)
+      end
+
+      it "adds a default flag with an acceptor" do
+        tool.add_flag(:abc, accept: String)
+        flag = tool.flag_definitions.first
+        assert_equal(["--abc VALUE", String], flag.optparser_info)
+      end
+
+      it "adds a default flag with a nonboolean default" do
+        tool.add_flag(:abc, default: "hi")
+        flag = tool.flag_definitions.first
+        assert_equal(["--abc VALUE"], flag.optparser_info)
+      end
+
+      it "adds a default flag with a boolean default" do
+        tool.add_flag(:abc, default: true)
+        flag = tool.flag_definitions.first
+        assert_equal(["--abc"], flag.optparser_info)
+      end
+    end
+
+    describe "single vs double" do
+      it "finds single and double flags with values" do
+        tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:original_str))
+        assert_equal(["--bb", "--dd=VAL"], flag.double_flag_syntax.map(&:original_str))
+      end
+
+      it "finds single and double flags with booleans" do
+        tool.add_flag(:a, ["-a", "--bb", "--[no-]ee"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a"], flag.single_flag_syntax.map(&:original_str))
+        assert_equal(["--bb", "--[no-]ee"], flag.double_flag_syntax.map(&:original_str))
+      end
+    end
+
+    describe "effective flags" do
+      it "determines effective flags with values" do
+        tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a", "--bb", "-c", "--dd"], flag.effective_flags)
+      end
+
+      it "determines effective flags with booleans" do
+        tool.add_flag(:a, ["-a", "--bb", "--[no-]ee"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a", "--bb", "--ee", "--no-ee"], flag.effective_flags)
+      end
+    end
+
+    describe "uniquification" do
+      it "uniquifies flags" do
+        tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
+        tool.add_flag(:b, ["-b VAL", "--bb=VALUE"], only_unique: true)
+        tool.add_flag(:c, ["-a VAL"], only_unique: true)
+        flag = tool.flag_definitions.last
+        assert_equal(["-b"], flag.effective_flags)
+        assert(flag.active?)
+      end
+
+      it "removes all flags" do
+        tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
+        tool.add_flag(:b, ["-a VAL", "--bb=VALUE"], only_unique: true)
+        assert_equal(1, tool.flag_definitions.size)
+      end
+    end
+
+    describe "flag types" do
+      it "detects required value type" do
+        tool.add_flag(:a, ["-a", "-cVALUE", "--bb"])
+        flag = tool.flag_definitions.first
+        assert_equal(:value, flag.flag_type)
+        assert_equal(:required, flag.value_type)
+      end
+
+      it "detects optional value type" do
+        tool.add_flag(:a, ["-a", "-c[VALUE]", "--bb"])
+        flag = tool.flag_definitions.first
+        assert_equal(:value, flag.flag_type)
+        assert_equal(:optional, flag.value_type)
+      end
+
+      it "detects boolean switch type" do
+        tool.add_flag(:a, ["-a", "--[no-]cc", "--bb"])
+        flag = tool.flag_definitions.first
+        assert_equal(:boolean, flag.flag_type)
+        assert_nil(flag.value_type)
+      end
+
+      it "detects default boolean type" do
+        tool.add_flag(:a, ["-a", "--bb"])
+        flag = tool.flag_definitions.first
+        assert_equal(:boolean, flag.flag_type)
+        assert_nil(flag.value_type)
+      end
+
+      it "prevents incompatible flag types from coexisting" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["--aa VALUE", "--[no-]cc"])
+        end
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["--aa [VALUE]", "--[no-]cc"])
+        end
+      end
+
+      it "prevents incompatible value types from coexisting" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["--aa VALUE", "--aa [VALUE]"])
+        end
+      end
+    end
+
+    describe "optparser canonicalization" do
+      it "fills required value from single with empty delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "-cVALUE"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.optparser_info)
+      end
+
+      it "fills required value from single with space delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "-c VALUE"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a VALUE", "--bb VALUE", "-c VALUE"], flag.optparser_info)
+      end
+
+      it "fills required value from double with space delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "--cc VALUE"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a VALUE", "--bb VALUE", "--cc VALUE"], flag.optparser_info)
+      end
+
+      it "fills required value from double with equals delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "--cc=VALUE"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-aVALUE", "--bb=VALUE", "--cc=VALUE"], flag.optparser_info)
+      end
+
+      it "fills optional value from single with empty delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "-c[VALUE]"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "-c[VALUE]"], flag.optparser_info)
+      end
+
+      it "fills optional value from single with space delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "-c [VALUE]"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a [VALUE]", "--bb [VALUE]", "-c [VALUE]"], flag.optparser_info)
+      end
+
+      it "fills optional value from double with space delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "--cc [VALUE]"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a [VALUE]", "--bb [VALUE]", "--cc [VALUE]"], flag.optparser_info)
+      end
+
+      it "fills optional value from double with equals delimiter" do
+        tool.add_flag(:a, ["-a", "--bb", "--cc=[VALUE]"])
+        flag = tool.flag_definitions.first
+        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "--cc=[VALUE]"], flag.optparser_info)
+      end
+
+      it "handles an acceptor" do
+        tool.add_flag(:a, ["-a", "--bb", "-cVALUE"], accept: Integer)
+        flag = tool.flag_definitions.first
+        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE", Integer], flag.optparser_info)
+      end
+
+      it "gets value label from last double flag" do
+        tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL"])
+        flag = tool.flag_definitions.first
+        assert_equal("VAL", flag.value_label)
+        assert_equal("=", flag.value_delim)
+      end
+
+      it "gets value label from last single flag" do
+        tool.add_flag(:a, ["-a VAL", "--bb", "-cVALUE", "--aa"])
+        flag = tool.flag_definitions.first
+        assert_equal("VALUE", flag.value_label)
+        assert_equal("", flag.value_delim)
       end
     end
   end

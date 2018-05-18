@@ -4,7 +4,7 @@ AllCops:
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 Metrics/AbcSize:
-  Max: 20
+  Max: 24
 Metrics/ClassLength:
   Max: 250
 Metrics/CyclomaticComplexity:
