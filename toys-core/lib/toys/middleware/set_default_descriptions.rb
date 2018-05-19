@@ -69,6 +69,20 @@ module Toys
       ].freeze
 
       ##
+      # A mapping of names for acceptable types
+      # @return [Hash]
+      #
+      ACCEPTABLE_NAMES = {
+        nil => "string",
+        ::String => "nonempty string",
+        ::TrueClass => "boolean",
+        ::FalseClass => "boolean",
+        ::OptionParser::DecimalInteger => "decimal integer",
+        ::OptionParser::OctalInteger => "octal integer",
+        ::OptionParser::DecimalNumeric => "decimal numeric"
+      }.freeze
+
+      ##
       # Create a SetDefaultDescriptions middleware given default descriptions.
       #
       # @param [String,nil] default_tool_desc The default short description for
@@ -181,7 +195,7 @@ module Toys
       #
       def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
         name = flag.key.to_s.tr("_", "-").gsub(/[^\w-]/, "").downcase.inspect
-        acceptable = flag.value_label ? (flag.accept || "string").to_s : "boolean flag"
+        acceptable = flag.flag_type == :value ? acceptable_name(flag.accept) : "boolean flag"
         default_clause = flag.default ? " (default is #{flag.default.inspect})" : ""
         "Sets the #{name} option as type #{acceptable}#{default_clause}."
       end
@@ -215,7 +229,7 @@ module Toys
       #     {Toys::Tool#desc=} for info on the format.
       #
       def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
-        acceptable = (arg.accept || "string").to_s
+        acceptable = acceptable_name(arg.accept)
         default_clause = arg.default ? " (default is #{arg.default.inspect})" : ""
         case arg.type
         when :required
@@ -241,6 +255,16 @@ module Toys
       #
       def generate_arg_long_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
         nil
+      end
+
+      ##
+      # Return a reasonable name for an acceptor
+      #
+      # @param [Object] accept An acceptor to name
+      # @return [String]
+      #
+      def acceptable_name(accept)
+        ACCEPTABLE_NAMES[accept] || accept.to_s.downcase
       end
 
       private

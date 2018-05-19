@@ -85,6 +85,26 @@ module Toys
     end
 
     ##
+    # Create an acceptor that can be passed into a flag or arg. An acceptor
+    # validates and/or converts a string parameter to a Ruby object. This
+    # acceptor may, for the current tool, be referenced by the name you provide
+    # when you create a flag or arg.
+    #
+    # The validator is of the form of a regular expression. If no validator is
+    # present, no validation is performed.
+    # The converter is passed as a block that should take the string input and
+    # return the converted object. If no block is given, no conversion is
+    # performed and the final value is the original string.
+    #
+    # @param [String] name The acceptor name.
+    # @param [Regexp] pat The validator, or `nil` to perform no validation.
+    #
+    def acceptor(name, pat = nil, &block)
+      _cur_tool.add_acceptor(name, pat, &block)
+      self
+    end
+
+    ##
     # Create a subtool. You must provide a block defining the subtool.
     #
     # If the subtool is already defined (either as a tool or a namespace), the
@@ -233,7 +253,10 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [String...] flags The flags in OptionParser format.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
@@ -276,7 +299,10 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
@@ -311,7 +337,10 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
@@ -346,7 +375,10 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short

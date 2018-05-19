@@ -494,6 +494,26 @@ describe Toys::Tool do
       assert_equal(0, tool.execute(cli, ["--aa", "a1234"]))
     end
 
+    it "converts a value flag using a custom acceptor" do
+      test = self
+      tool.add_acceptor("myenum", /foo|bar/)
+      tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum", desc: "hi there")
+      tool.script = proc do
+        test.assert_equal({a: "bar"}, options)
+      end
+      assert_equal(0, tool.execute(cli, ["--aa", "bar"]))
+    end
+
+    it "checks match of a value flag using a custom acceptor" do
+      test = self
+      tool.add_acceptor("myenum", /foo|bar/)
+      tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum", desc: "hi there")
+      tool.script = proc do
+        test.assert_match(/invalid argument: --aa 1234/, usage_error)
+      end
+      assert_equal(0, tool.execute(cli, ["--aa", "1234"]))
+    end
+
     it "defaults the name of a value flag" do
       test = self
       tool.add_flag(:a_bc, accept: String, desc: "hi there")

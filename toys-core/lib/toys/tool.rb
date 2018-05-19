@@ -41,6 +41,27 @@ module Toys
   #
   class Tool
     ##
+    # Built-in acceptors (i.e. those recognized by OptionParser).
+    # You can reference these acceptors directly. Otherwise, you have to add
+    # one explicitly to the tool using {Tool#add_acceptor}.
+    #
+    OPTPARSER_ACCEPTORS = [
+      ::Object,
+      ::NilClass,
+      ::String,
+      ::Integer,
+      ::Float,
+      ::Numeric,
+      ::TrueClass,
+      ::FalseClass,
+      ::Array,
+      ::Regexp,
+      ::OptionParser::DecimalInteger,
+      ::OptionParser::OctalInteger,
+      ::OptionParser::DecimalNumeric
+    ].freeze
+
+    ##
     # Create a new tool.
     #
     # @param [Array<String>] full_name The name of the tool
@@ -56,6 +77,8 @@ module Toys
       @long_desc = []
 
       @default_data = {}
+      @acceptors = {}
+      OPTPARSER_ACCEPTORS.each { |a| @acceptors[a] = a }
       @flag_definitions = []
       @required_arg_definitions = []
       @optional_arg_definitions = []
@@ -242,6 +265,21 @@ module Toys
     end
 
     ##
+    # Returns a list of all custom acceptors used by this tool.
+    # @return [Array<Toys::Tool::Acceptor>]
+    #
+    def custom_acceptors
+      result = []
+      flag_definitions.each do |f|
+        result << f.accept if f.accept.is_a?(Acceptor)
+      end
+      arg_definitions.each do |a|
+        result << a.accept if a.accept.is_a?(Acceptor)
+      end
+      result.uniq
+    end
+
+    ##
     # Sets the path to the file that defines this tool.
     # A tool may be defined from at most one path. If a different path is
     # already set, raises {Toys::ToolDefinitionError}
@@ -326,6 +364,24 @@ module Toys
     end
 
     ##
+    # Add an acceptor to the tool. This acceptor may be refereneced by name
+    # when adding a flag or an arg.
+    #
+    # The validator is of the form of a regular expression. If no validator is
+    # present, no validation is performed.
+    # The converter is passed as a block that should take the string input and
+    # return the converted object. If no block is given, no conversion is
+    # performed and the final value is the original string.
+    #
+    # @param [String] name The acceptor name.
+    # @param [Regexp] pat The validator, or `nil` to perform no validation.
+    #
+    def add_acceptor(name, pat = nil, &block)
+      @acceptors[name] = Acceptor.new(name, pat, &block)
+      self
+    end
+
+    ##
     # Add a flag to the current tool. Each flag must specify a key which
     # the script may use to obtain the flag value from the context.
     # You may then provide the flags themselves in `OptionParser` form.
@@ -333,7 +389,10 @@ module Toys
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
     # @param [Array<String>] flags The flags in OptionParser format.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
@@ -358,6 +417,7 @@ module Toys
                  accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
                  only_unique: false)
       check_definition_state
+      accept = resolve_acceptor(accept)
       flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc, default) do |f|
         f.remove_flags(used_flags) if only_unique
       end
@@ -373,7 +433,10 @@ module Toys
     #
     # @param [Symbol] key The key to use to retrieve the value from the
     #     execution context.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
@@ -385,6 +448,7 @@ module Toys
     #
     def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
       check_definition_state
+      accept = resolve_acceptor(accept)
       arg_def = ArgDefinition.new(key, :required, accept, nil, desc, long_desc, display_name)
       @required_arg_definitions << arg_def
       self
@@ -401,7 +465,10 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this argument is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
@@ -414,6 +481,7 @@ module Toys
     def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
                          desc: nil, long_desc: nil)
       check_definition_state
+      accept = resolve_acceptor(accept)
       arg_def = ArgDefinition.new(key, :optional, accept, default, desc, long_desc, display_name)
       @optional_arg_definitions << arg_def
       @default_data[key] = default
@@ -430,7 +498,10 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if no unmatched arguments are provided on the
     #     command line. Defaults to the empty array `[]`.
-    # @param [Object,nil] accept An OptionParser acceptor. Optional.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
@@ -443,6 +514,7 @@ module Toys
     def set_remaining_args(key, default: [], accept: nil, display_name: nil,
                            desc: nil, long_desc: nil)
       check_definition_state
+      accept = resolve_acceptor(accept)
       arg_def = ArgDefinition.new(key, :remaining, accept, default, desc, long_desc, display_name)
       @remaining_args_definition = arg_def
       @default_data[key] = default
@@ -497,6 +569,56 @@ module Toys
         @definition_finished = true
       end
       self
+    end
+
+    ##
+    # An acceptor that validates and converts arguments.
+    #
+    class Acceptor
+      ##
+      # Create an acceptor.
+      #
+      # Provide a block to this constructor if you need to convert string input
+      # to objects. (The block should take a string and return the converted
+      # object.) Otherwise the final value will be the string.
+      #
+      # @param [String] name A visible name for the acceptor, shown in help.
+      # @param [Regexp] pat Regular expression defining value values. If not
+      #     given, all values are considered valid.
+      #
+      def initialize(name, pat = nil, &block)
+        @name = name
+        @pat = pat
+        @block = block
+      end
+
+      ##
+      # Name of the acceptor
+      # @return [String]
+      #
+      attr_reader :name
+      alias to_s name
+
+      ## @private
+      def match(str)
+        @pat ? @pat.match(str) : str
+      end
+
+      ## @private
+      def convert(str)
+        @block ? @block.call(str) : str
+      end
+
+      ##
+      # Returns an acceptor that takes any of the given string values.
+      #
+      # @param [String] name Name of the acceptor
+      # @param [Array<String>] values Allowed values.
+      #
+      def self.enum(name, values)
+        escaped = Array(values).map { |v| ::Regexp.escape(v) }
+        new(name, ::Regexp.new(escaped.join("|")))
+      end
     end
 
     ##
@@ -829,6 +951,7 @@ module Toys
         return input unless accept
         result = input
         optparse = ::OptionParser.new
+        optparse.accept(accept) if accept.is_a?(Acceptor)
         optparse.on("--abc=VALUE", accept) { |v| result = v }
         optparse.parse(["--abc", input])
         result
@@ -862,6 +985,14 @@ module Toys
         raise ToolDefinitionError,
               "Defintion of tool #{display_name.inspect} is already finished"
       end
+    end
+
+    def resolve_acceptor(accept)
+      return nil if accept.nil?
+      unless @acceptors.key?(accept)
+        raise ToolDefinitionError, "Unknown acceptor: #{accept.inspect}"
+      end
+      @acceptors[accept]
     end
 
     class << self
@@ -927,6 +1058,9 @@ module Toys
           optparse.on(*flag.optparser_info) do |val|
             @data[flag.key] = flag.handler.call(val, @data[flag.key])
           end
+        end
+        @tool.custom_acceptors do |accept|
+          optparse.accept(accept)
         end
         optparse
       end
