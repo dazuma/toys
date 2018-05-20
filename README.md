@@ -20,16 +20,6 @@ guidelines will be provided when the software stabilizes further.
 The source can be found on Github at
 [https://github.com/dazuma/toys](https://github.com/dazuma/toys)
 
-### TODO items
-
-* Improve test coverage
-* Write user's guide
-
-* Investigate required flags and flag groups. Three types: at_most_one, exactly_one, at_least_one
-* Investigate something to generate output formats
-* Investigate system paths tool
-* Investigate group clearing/locking
-
 ## License
 
 Copyright 2018 Daniel Azuma

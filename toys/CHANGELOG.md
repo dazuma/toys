@@ -2,6 +2,10 @@
 
 ### 0.3.6 / TBD
 
+* IMPROVED: Provide more details in default descriptions.
+* IMPROVED: Optional parameters are now supported for flags.
+* IMPROVED: Support custom acceptors.
+
 ### 0.3.5 / 2018-05-15
 
 * CHANGED: Flag and arg blocks in the DSL have an interface more similar to the rest of the DSL.

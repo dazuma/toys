@@ -90,17 +90,53 @@ module Toys
     # acceptor may, for the current tool, be referenced by the name you provide
     # when you create a flag or arg.
     #
-    # The validator is of the form of a regular expression. If no validator is
-    # present, no validation is performed.
-    # The converter is passed as a block that should take the string input and
-    # return the converted object. If no block is given, no conversion is
-    # performed and the final value is the original string.
+    # An acceptor contains a validator, which parses and validates the string
+    # syntax of an argument, and a converter, which takes the validation
+    # results and returns a final value for the context data.
+    #
+    # The validator may be either a regular expression or a list of valid
+    # inputs.
+    #
+    # If the validator is a regular expression, it is matched against the
+    # argument string and succeeds only if the expression covers the *entire*
+    # string. The elements of the MatchData (i.e. the string matched, plus any
+    # captures) are then passed into the conversion function.
+    #
+    # If the validator is an array, the *string form* of the array elements
+    # (i.e. the results of calling to_s on each element) are considered the
+    # valid values for the argument. This is useful for enums, for example.
+    # In this case, the input is converted to the original array element, and
+    # any converter function you provide is ignored.
+    #
+    # If you provide no validator, then no validation takes place and all
+    # argument strings are considered valid. The string itself is passed on to
+    # the converter.
+    #
+    # The converter should be a proc that takes as its arguments the results
+    # of validation. For example, if you use a regular expression validator,
+    # the converter should take a series of strings arguments, the first of
+    # which is the full input string, and the rest of which are captures.
+    # If you provide no converter, no conversion is done and the input string
+    # is considered the final value. You may also provide the converter as a
+    # block.
     #
     # @param [String] name The acceptor name.
-    # @param [Regexp] pat The validator, or `nil` to perform no validation.
+    # @param [Regexp,Array,nil] validator The validator.
+    # @param [Proc,nil] converter The validator.
     #
-    def acceptor(name, pat = nil, &block)
-      _cur_tool.add_acceptor(name, pat, &block)
+    def acceptor(name, validator = nil, converter = nil, &block)
+      accept =
+        case validator
+        when ::Regexp
+          Tool::PatternAcceptor.new(name, validator, converter, &block)
+        when ::Array
+          Tool::EnumAcceptor.new(name, validator)
+        when nil
+          Tool::Acceptor.new(name, converter, &block)
+        else
+          raise ToolDefinitionError, "Illegal validator: #{validator.inspect}"
+        end
+      _cur_tool.add_acceptor(accept)
       self
     end
 

@@ -135,6 +135,29 @@ module Toys
         result = [] if result.all?(&:empty?)
         result
       end
+
+      ##
+      # Make the given object a WrappableString.
+      # If the object is already a WrappableString, return it. Otherwise,
+      # treat it as a string or an array of strings and wrap it in a
+      # WrappableString.
+      #
+      # @param [Toys::Utils::WrappableString,String,Array<String>] obj
+      # @return [Toys::Utils::WrappableString]
+      #
+      def self.make(obj)
+        obj.is_a?(Utils::WrappableString) ? obj : Utils::WrappableString.new(obj)
+      end
+
+      ##
+      # Make the given object an array of WrappableString.
+      #
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] objs
+      # @return [Array<Toys::Utils::WrappableString>]
+      #
+      def self.make_array(objs)
+        Array(objs).map { |obj| make(obj) }
+      end
     end
   end
 end
