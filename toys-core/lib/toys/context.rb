@@ -45,61 +45,61 @@ module Toys
     ##
     # Context key for the verbosity value. Verbosity is an integer defaulting
     # to 0, with higher values meaning more verbose and lower meaning quieter.
-    # @return [Symbol]
+    # @return [Object]
     #
-    VERBOSITY = :__verbosity
+    VERBOSITY = ::Object.new.freeze
 
     ##
     # Context key for the `Toys::Tool` object being executed.
-    # @return [Symbol]
+    # @return [Object]
     #
-    TOOL = :__tool
+    TOOL = ::Object.new.freeze
 
     ##
     # Context key for the full name of the tool being executed. Value is an
     # array of strings.
-    # @return [Symbol]
+    # @return [Object]
     #
-    TOOL_NAME = :__tool_name
+    TOOL_NAME = ::Object.new.freeze
 
     ##
     # Context key for the active `Toys::Loader` object.
-    # @return [Symbol]
+    # @return [Object]
     #
-    LOADER = :__loader
+    LOADER = ::Object.new.freeze
 
     ##
     # Context key for the active `Logger` object.
-    # @return [Symbol]
+    # @return [Object]
     #
-    LOGGER = :__logger
+    LOGGER = ::Object.new.freeze
 
     ##
     # Context key for the name of the toys binary. Value is a string.
-    # @return [Symbol]
+    # @return [Object]
     #
-    BINARY_NAME = :__binary_name
+    BINARY_NAME = ::Object.new.freeze
 
     ##
     # Context key for the argument list passed to the current tool. Value is
     # an array of strings.
-    # @return [Symbol]
+    # @return [Object]
     #
-    ARGS = :__args
+    ARGS = ::Object.new.freeze
 
     ##
     # Context key for the usage error raised. Value is a string if there was
     # an error, or nil if there was no error.
-    # @return [Symbol]
+    # @return [Object]
     #
-    USAGE_ERROR = :__usage_error
+    USAGE_ERROR = ::Object.new.freeze
 
     ##
     # Context key for whether nonzero exit codes from subprocesses should cause
     # an immediate exit. Value is a truthy or falsy value.
-    # @return [Symbol]
+    # @return [Object]
     #
-    EXIT_ON_NONZERO_STATUS = :__exit_on_nonzero_status
+    EXIT_ON_NONZERO_STATUS = ::Object.new.freeze
 
     ##
     # Create a Context object. Applications generally will not need to create
@@ -229,7 +229,7 @@ module Toys
     #
     def options
       @_data.select do |k, _v|
-        !k.is_a?(::Symbol) || !k.to_s.start_with?("__")
+        k.is_a?(::Symbol) || k.is_a?(::String)
       end
     end
 

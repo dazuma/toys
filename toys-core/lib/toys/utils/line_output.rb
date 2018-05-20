@@ -49,6 +49,7 @@ module Toys
           else
             styled ? true : false
           end
+        @buffer = ""
       end
 
       ##
@@ -61,7 +62,7 @@ module Toys
       # Whether output is styled
       # @return [Boolean]
       #
-      attr_reader :styled
+      attr_accessor :styled
 
       ##
       # If the sink is a Logger, the level to log, otherwise `nil`.
@@ -76,29 +77,45 @@ module Toys
       # @param [Symbol...] styles Styles to apply to the entire line.
       #
       def puts(str = "", *styles)
-        if styled
-          str = color(str, *styles) unless styles.empty?
-        else
-          str = ::HighLine.uncolor(str)
-        end
+        str = @buffer + apply_styles(str, styles)
+        @buffer = ""
         case sink
         when ::Logger
           sink.log(log_level, str)
         when ::IO
           sink.puts(str)
+          sink.flush
         end
         self
       end
 
       ##
-      # Apply the given styles to a string
+      # Write a newline and flush the current line.
       #
-      # @param [String] str The string
-      # @param [Symbol...] styles Styles to apply to the string.
-      # @return [String] The string with styles applied.
+      def newline
+        puts
+      end
+
+      ##
+      # Buffer a partial line but do not write it out yet because the line
+      # may not yet be complete.
       #
-      def color(str, *styles)
-        ::HighLine.color(str, *styles)
+      # @param [String] str The line to write
+      # @param [Symbol...] styles Styles to apply to the partial line.
+      #
+      def write(str = "", *styles)
+        @buffer << apply_styles(str, styles)
+        self
+      end
+
+      private
+
+      def apply_styles(str, styles)
+        if styled
+          styles.empty? ? str : ::HighLine.color(str, *styles)
+        else
+          ::HighLine.uncolor(str)
+        end
       end
     end
   end
