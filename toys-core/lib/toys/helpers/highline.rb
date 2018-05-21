@@ -39,16 +39,11 @@ module Toys
       # Returns a global highline instance
       # @return [::HighLine]
       #
-      def self.highline
-        @highline ||= ::HighLine.new
-      end
-
-      ##
-      # Returns a global highline instance
-      # @return [::HighLine]
-      #
       def highline
-        Highline.highline
+        context[Highline] ||= begin
+          ::HighLine.use_color = $stdout.tty?
+          ::HighLine.new
+        end
       end
 
       ##

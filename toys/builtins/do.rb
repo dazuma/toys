@@ -35,12 +35,17 @@ long_desc \
     " the string \",\" by default). Toys will run them in order, stopping if any tool" \
     " returns a nonzero exit code.",
   "",
-  "Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool, each with some" \
-    " flags. You could run them in order, with their flags, like this:",
-  ["    toys do rails build --staging , deploy --migrate"],
+  "Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool. You could run them" \
+    " in order like this:",
+  ["    toys do rails build , deploy"],
+  "",
+  "However, if you want to pass flags to the tools to run, you need to preface the arguments" \
+    " with \"--\" in order to prevent \"do\" from trying to use them as its own flags. That" \
+    " might look something like this:",
+  ["    toys do -- rails build --staging , deploy --migrate"],
   "",
   "You may change the delimiter using the --delim flag. For example:",
-  ["    toys do --delim=/ rails build --staging / deploy --migrate"]
+  ["    toys do --delim=/ -- rails build --staging / deploy --migrate"]
 
 flag :delim, "-d", "--delim=VALUE",
      default: ",",

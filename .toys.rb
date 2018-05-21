@@ -51,36 +51,36 @@ end
 tool "ci" do
   desc "CI target that runs tests and rubocop for both gems"
   use :exec
-  use :line_output
+  use :highline
   helper(:validate_dir) do
     cli = new_cli.add_config_path(".toys.rb")
-    line_output.puts("** Checking tests...", :cyan)
+    puts color("** Checking tests...", :cyan)
     run("test", cli: cli)
-    line_output.puts("** Tests ok.", :cyan)
-    line_output.puts("** Checking rubocop...", :cyan)
+    puts color("** Tests ok.", :cyan)
+    puts color("** Checking rubocop...", :cyan)
     run("rubocop", cli: cli)
-    line_output.puts("** Rubocop ok.", :cyan)
-    line_output.puts("** Checking yardoc...", :cyan)
+    puts color("** Rubocop ok.", :cyan)
+    puts color("** Checking yardoc...", :cyan)
     exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
     stats = capture(["yard", "stats", "--list-undoc"])
     if stats =~ /Undocumented\sObjects:/
-      line_output.puts stats
+      puts stats
       exit(1)
     end
-    line_output.puts("** Yardoc ok.", :cyan)
+    puts color("** Yardoc ok.", :cyan)
   end
   script do
     set ::Toys::Context::EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool.definition_path)) do
       ::Dir.chdir("toys-core") do
-        line_output.puts("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
+        puts color("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
         validate_dir
-        line_output.puts("**** TOYS-CORE GEM OK.", :bold, :cyan)
+        puts color("**** TOYS-CORE GEM OK.", :bold, :cyan)
       end
       ::Dir.chdir("toys") do
-        line_output.puts("**** CHECKING TOYS GEM ...", :bold, :cyan)
+        puts color("**** CHECKING TOYS GEM ...", :bold, :cyan)
         validate_dir
-        line_output.puts("**** TOYS GEM OK.", :bold, :cyan)
+        puts color("**** TOYS GEM OK.", :bold, :cyan)
       end
     end
   end
