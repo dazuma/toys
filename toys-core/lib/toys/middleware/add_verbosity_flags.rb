@@ -89,10 +89,10 @@ module Toys
         unless verbose_flags.empty?
           long_desc = "Increase verbosity, causing additional logging levels to display."
           tool.add_flag(Context::VERBOSITY, verbose_flags,
-                        desc: "Increase verbosity",
-                        long_desc: long_desc,
+                        report_collisions: false,
                         handler: ->(_val, cur) { cur + 1 },
-                        only_unique: true)
+                        desc: "Increase verbosity",
+                        long_desc: long_desc)
         end
       end
 
@@ -102,10 +102,10 @@ module Toys
         unless quiet_flags.empty?
           long_desc = "Decrease verbosity, causing fewer logging levels to display."
           tool.add_flag(Context::VERBOSITY, quiet_flags,
-                        desc: "Decrease verbosity",
-                        long_desc: long_desc,
+                        report_collisions: false,
                         handler: ->(_val, cur) { cur - 1 },
-                        only_unique: true)
+                        desc: "Decrease verbosity",
+                        long_desc: long_desc)
         end
       end
     end

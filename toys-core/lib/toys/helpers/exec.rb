@@ -62,7 +62,7 @@ module Toys
       #     configuration options in the {Toys::Utils::Exec} docs.
       #
       def configure_exec(opts = {})
-        self[Exec].config_defaults(opts)
+        self[Exec].configure_defaults(opts)
       end
 
       ##

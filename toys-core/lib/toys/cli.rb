@@ -219,19 +219,24 @@ module Toys
 
     ##
     # Make a clone with the same settings but no paths in the loader.
+    # This is sometimes useful for running sub-tools.
     #
     # @return [Toys::CLI]
+    # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
+    #     to it so you can add paths and make other modifications.
     #
-    def empty_clone
-      CLI.new(binary_name: @binary_name,
-              config_dir_name: @config_dir_name,
-              config_file_name: @config_file_name,
-              index_file_name: @index_file_name,
-              preload_file_name: @preload_file_name,
-              middleware_stack: @middleware_stack,
-              logger: @logger,
-              base_level: @base_level,
-              error_handler: @error_handler)
+    def child
+      cli = CLI.new(binary_name: @binary_name,
+                    config_dir_name: @config_dir_name,
+                    config_file_name: @config_file_name,
+                    index_file_name: @index_file_name,
+                    preload_file_name: @preload_file_name,
+                    middleware_stack: @middleware_stack,
+                    logger: @logger,
+                    base_level: @base_level,
+                    error_handler: @error_handler)
+      yield cli if block_given?
+      cli
     end
 
     ##

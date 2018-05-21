@@ -112,7 +112,7 @@ module Toys
       #
       # @param [Hash] opts New default options to set
       #
-      def config_defaults(opts = {})
+      def configure_defaults(opts = {})
         @default_opts.add(opts)
         self
       end

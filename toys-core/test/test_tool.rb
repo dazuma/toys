@@ -265,10 +265,25 @@ describe Toys::Tool do
     end
 
     describe "uniquification" do
+      it "reports flag collisions" do
+        tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:b, ["-b", "--bb"])
+        end
+      end
+
       it "uniquifies flags" do
         tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
-        tool.add_flag(:b, ["-b VAL", "--bb=VALUE"], only_unique: true)
-        tool.add_flag(:c, ["-a VAL"], only_unique: true)
+        tool.add_flag(:b, ["-b VAL", "--bb=VALUE"], report_collisions: false)
+        tool.add_flag(:c, ["-a VAL"], report_collisions: false)
+        flag = tool.flag_definitions.last
+        assert_equal(["-b"], flag.effective_flags)
+        assert(flag.active?)
+      end
+
+      it "disables flags" do
+        tool.disable_flag("--bb")
+        tool.add_flag(:b, ["-b VAL", "--bb=VALUE"], report_collisions: false)
         flag = tool.flag_definitions.last
         assert_equal(["-b"], flag.effective_flags)
         assert(flag.active?)
@@ -276,7 +291,7 @@ describe Toys::Tool do
 
       it "removes all flags" do
         tool.add_flag(:a, ["-a VAL", "--bb=VALUE"])
-        tool.add_flag(:b, ["-a VAL", "--bb=VALUE"], only_unique: true)
+        tool.add_flag(:b, ["-a VAL", "--bb=VALUE"], report_collisions: false)
         assert_equal(1, tool.flag_definitions.size)
       end
     end
@@ -407,9 +422,15 @@ describe Toys::Tool do
       assert_equal(["-a", "--aa"], tool.used_flags)
     end
 
+    it "allows disabling" do
+      tool.add_flag(:a, ["-a", "--aa"])
+      tool.disable_flag("-b", "--bb")
+      assert_equal(["-a", "--aa", "-b", "--bb"], tool.used_flags)
+    end
+
     it "removes duplicate flags" do
       tool.add_flag(:a, ["-a", "--aa"])
-      tool.add_flag(:b, ["-b", "--aa"])
+      tool.add_flag(:b, ["-b", "--aa"], report_collisions: false)
       assert_equal(["-a", "--aa", "-b"], tool.used_flags)
     end
 

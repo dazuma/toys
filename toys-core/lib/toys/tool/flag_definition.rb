@@ -34,7 +34,7 @@ require "toys/utils/wrappable_string"
 module Toys
   class Tool
     ##
-    # Representation of a single flag
+    # Representation of a single flag.
     #
     class FlagSyntax
       ##
@@ -104,7 +104,8 @@ module Toys
     end
 
     ##
-    # Representation of a formal set of flags.
+    # Representation of a formal set of flags that set a particular context
+    # key. The flags within a single FlagDefinition are synonyms.
     #
     class FlagDefinition
       ##
@@ -117,7 +118,7 @@ module Toys
       # Create a FlagDefinition
       # @private
       #
-      def initialize(key, flags, accept, handler, desc, long_desc, default)
+      def initialize(key, flags, used_flags, report_collisions, accept, handler, default)
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
@@ -128,7 +129,7 @@ module Toys
         needs_val = (!accept.nil? && accept != ::TrueClass && accept != ::FalseClass) ||
                     (!default.nil? && default != true && default != false)
         create_default_flag_if_needed(needs_val)
-        yield self if block_given?
+        remove_used_flags(used_flags, report_collisions)
         canonicalize(needs_val)
       end
 
@@ -174,12 +175,32 @@ module Toys
       #
       attr_reader :handler
 
+      ##
+      # The type of flag. Possible values are `:boolean` for a simple boolean
+      # switch, or `:value` for a flag that sets a value.
+      # @return [:boolean,:value]
+      #
       attr_reader :flag_type
 
+      ##
+      # The type of value. Set to `:required` or `:optional` if the flag type
+      # is `:value`. Otherwise set to `nil`.
+      # @return [:required,:optional,nil]
+      #
       attr_reader :value_type
 
+      ##
+      # The string label for the value as it should display in help, or `nil`
+      # if the flag type is not `:value`.
+      # @return [String,nil]
+      #
       attr_reader :value_label
 
+      ##
+      # The value delimiter, which may be `""`, `" "`, or `"="`. Set to `nil`
+      # if the flag type is not `:value`.
+      # @return [String,nil]
+      #
       attr_reader :value_delim
 
       ##
@@ -239,14 +260,6 @@ module Toys
         @long_desc = Utils::WrappableString.make_array(long_desc)
       end
 
-      ## @private
-      def remove_flags(flags)
-        flags = flags.map { |f| FlagSyntax.new(f).flags }.flatten
-        @flag_syntax.select! do |ss|
-          ss.flags.all? { |s| !flags.include?(s) }
-        end
-      end
-
       private
 
       def create_default_flag_if_needed(needs_val)
@@ -256,6 +269,20 @@ module Toys
           flag = needs_val ? "--#{canonical_flag} VALUE" : "--#{canonical_flag}"
           @flag_syntax << FlagSyntax.new(flag)
         end
+      end
+
+      def remove_used_flags(used_flags, report_collisions)
+        @flag_syntax.select! do |fs|
+          fs.flags.all? do |f|
+            collision = used_flags.include?(f)
+            if collision && report_collisions
+              raise ToolDefinitionError,
+                    "Cannot use flag #{f.inspect} because it is already assigned or reserved."
+            end
+            !collision
+          end
+        end
+        used_flags.concat(effective_flags.uniq)
       end
 
       def canonicalize(needs_val)

@@ -2,11 +2,15 @@
 
 ### 0.3.6 / TBD
 
-* CHANGED: show_version middleware to show_root_version.
+* CHANGED: Renamed show_version middleware to show_root_version.
 * CHANGED: Reworked set_default_descriptions interface for more flexibility.
+* CHANGED: Renamed Utils::Exec#config_defaults to configure_defaults to match the helper.
+* CHANGED: Removed Context#new_cli and exposed Context#cli instead.
+* CHANGED: Renamed CLI#empty_clone to CLI#child.
 * IMPROVED: show_help middleware lets you control display of the source path section.
 * IMPROVED: Optional parameters are now supported for flags.
 * IMPROVED: Support custom acceptors.
+* IMPROVED: Highline helper automatically sets use_color based on the type of stdout.
 
 ### 0.3.5 / 2018-05-15
 

@@ -79,6 +79,8 @@ module Toys
       @default_data = {}
       @acceptors = {}
       OPTPARSER_ACCEPTORS.each { |a| @acceptors[a] = a }
+      @used_flags = []
+
       @flag_definitions = []
       @required_arg_definitions = []
       @optional_arg_definitions = []
@@ -132,6 +134,12 @@ module Toys
     # @return [Toys::Tool::ArgDefinition,nil]
     #
     attr_reader :remaining_args_definition
+
+    ##
+    # Return a list of flags that have been used in the flag definitions.
+    # @return [Array<String>]
+    #
+    attr_reader :used_flags
 
     ##
     # Return the default argument data.
@@ -254,14 +262,6 @@ module Toys
       result = required_arg_definitions + optional_arg_definitions
       result << remaining_args_definition if remaining_args_definition
       result
-    end
-
-    ##
-    # Returns a list of flags used by this tool.
-    # @return [Array<String>]
-    #
-    def used_flags
-      flag_definitions.reduce([]) { |used, fdef| used + fdef.effective_flags }.uniq
     end
 
     ##
@@ -389,33 +389,50 @@ module Toys
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
+    # @param [Proc,nil] handler An optional handler for setting/updating the
+    #     value. If given, it should take two arguments, the new given value
+    #     and the previous value, and it should return the new value that
+    #     should be set. The default handler simply replaces the previous
+    #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+    # @param [Boolean] report_collisions Raise an exception if a flag is
+    #     requested that is already in use or marked as disabled. Default is
+    #     true.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
     #     description for the flag. See {Toys::Tool#desc=} for a description of
     #     allowed formats. Defaults to the empty string.
     # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
     #     Long description for the flag. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
-    # @param [Boolean] only_unique If true, any flags that are already
-    #     defined in this tool are removed from this flag. For example, if
-    #     an earlier flag uses `-a`, and this flag wants to use both
-    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
-    #     Defaults to false.
-    # @param [Proc,nil] handler An optional handler for setting/updating the
-    #     value. If given, it should take two arguments, the new given value
-    #     and the previous value, and it should return the new value that
-    #     should be set. The default handler simply replaces the previous
-    #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
     #
     def add_flag(key, flags = [],
-                 accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
-                 only_unique: false)
+                 accept: nil, default: nil, handler: nil,
+                 report_collisions: true,
+                 desc: nil, long_desc: nil)
       check_definition_state
       accept = resolve_acceptor(accept)
-      flag_def = FlagDefinition.new(key, flags, accept, handler, desc, long_desc, default) do |f|
-        f.remove_flags(used_flags) if only_unique
-      end
+      flag_def = FlagDefinition.new(key, flags, @used_flags, report_collisions,
+                                    accept, handler, default)
+      flag_def.desc = desc if desc
+      flag_def.long_desc = long_desc if long_desc
       @flag_definitions << flag_def if flag_def.active?
       @default_data[key] = default
+      self
+    end
+
+    ##
+    # Mark one or more flags as disabled, preventing their use by any
+    # subsequent flag definition. This may be used to prevent middleware from
+    # defining a particular flag.
+    #
+    # @param [String...] flags The flags to disable
+    #
+    def disable_flag(*flags)
+      flags = flags.uniq
+      intersection = @used_flags & flags
+      unless intersection.empty?
+        raise ToolDefinitionError, "Cannot disable flags already used: #{intersection.inspect}"
+      end
+      @used_flags.concat(flags)
       self
     end
 

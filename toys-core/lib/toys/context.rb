@@ -31,17 +31,33 @@ require "logger"
 
 module Toys
   ##
-  # The object context in effect during the execution of a tool.
+  # This class manages the object context in effect during the execution of a
+  # tool. The context is a hash of key-value pairs.
   #
-  # The context is generally a hash of key-value pairs.
-  # Keys that begin with two underscores are reserved common elements of the
-  # context such as the tool being executed, or the verbosity level.
-  # Other keys are available for use by your tool. Generally, they are set
-  # by flags and arguments in your tool. Context values may also be set
-  # by middleware. By convention, middleware-set keys begin with a single
-  # underscore.
+  # Flags and arguments defined by your tool normally report their values in
+  # the context, using keys that are strings or symbols.
+  #
+  # Keys that are neither strings nor symbols are by convention used for other
+  # context information, including:
+  # *   Common information such as the {Toys::Tool} object being executed, the
+  #     arguments originally passed to it, or the usage error string. These
+  #     well-known keys can be accessed via constants in the {Toys::Context}
+  #     module.
+  # *   Common settings such as the verbosity level, and whether to exit
+  #     immediately if a subprocess exits with a nonzero result. These keys are
+  #     also present as {Toys::Context} constants.
+  # *   Private information used internally by middleware and helpers.
+  #
+  # This class provides convenience accessors for common keys and settings, and
+  # you can retrieve argument-set keys using the {#options} hash.
   #
   class Context
+    ##
+    # Context key for the currently running CLI.
+    # @return [Object]
+    #
+    CLI = ::Object.new.freeze
+
     ##
     # Context key for the verbosity value. Verbosity is an integer defaulting
     # to 0, with higher values meaning more verbose and lower meaning quieter.
@@ -111,15 +127,23 @@ module Toys
     # @param [Hash] data
     #
     def initialize(cli, data)
-      @_cli = cli
       @_data = data
+      @_data[CLI] = cli
       @_data[LOADER] = cli.loader
       @_data[BINARY_NAME] = cli.binary_name
       @_data[LOGGER] = cli.logger
     end
 
     ##
-    # Return the verbosity as an integer.
+    # Return the currently running CLI.
+    # @return [Toys::CLI]
+    #
+    def cli
+      @_data[CLI]
+    end
+
+    ##
+    # Return the current verbosity setting as an integer.
     # @return [Integer]
     #
     def verbosity
@@ -196,7 +220,7 @@ module Toys
     alias get []
 
     ##
-    # Set an option or other piece of data by key.
+    # Set an option or other piece of context data by key.
     #
     # @param [Symbol] key
     # @param [Object] value
@@ -206,7 +230,7 @@ module Toys
     end
 
     ##
-    # Set an option or other piece of data by key.
+    # Set an option or other piece of context data by key.
     #
     # @param [Symbol] key
     # @param [Object] value
@@ -221,9 +245,10 @@ module Toys
     end
 
     ##
-    # Returns the subset of the context that does not include well-known keys
-    # such as tool and verbosity. Technically, this includes all keys that do
-    # not begin with two underscores.
+    # Returns the subset of the context that uses string or symbol keys. By
+    # convention, this includes keys that are set by tool flags and arguments,
+    # but does not include well-known context values such as verbosity or
+    # private context values used by middleware or helpers.
     #
     # @return [Hash]
     #
@@ -245,24 +270,11 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(*args, cli: nil, exit_on_nonzero_status: nil)
-      cli ||= @_cli
+      cli ||= @_data[CLI]
       exit_on_nonzero_status = @_data[EXIT_ON_NONZERO_STATUS] if exit_on_nonzero_status.nil?
       code = cli.run(args.flatten, verbosity: @_data[VERBOSITY])
       exit(code) if exit_on_nonzero_status && !code.zero?
       code
-    end
-
-    ##
-    # Return a new CLI with the same settings as the currnet CLI but no paths.
-    # This can be used to run a toys "sub-instance". Add any new paths to the
-    # returned CLI, then call {#run}, passing in the CLI, to execute a tool.
-    #
-    # @return [Toys::CLI]
-    #
-    def new_cli
-      cli = @_cli.empty_clone
-      yield cli if block_given?
-      cli
     end
 
     ##

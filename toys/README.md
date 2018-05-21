@@ -15,14 +15,20 @@ and I was constantly digging back into their source just to remember how to use
 them. Furthermore, when writing new scripts, I was repeating the same
 OptionParser boilerplate and common functionality.
 
-I designed Toys specifically to solve those problems. Toys is a powerful tool
-that makes it easy to write and organize your scripts. You write your
+Toys was designed to address those problems by providing a framework for
+writing and organizing command line scripts. You provide the actual script
 functionality, and Toys takes care of all the other details expected from a
 good command line tool. It provides a streamlined interface for defining and
 handling command line flags and positional arguments, and sensible ways to
 organize shared code. It automatically generates help text, so you can see
 usage information at a glance, and it also provides a search feature to help
 you find the script you need.
+
+Toys can also be used to share scripts. For example, it can be used instead of
+Rake to provide build and test scripts for a project--- tools that, unlike Rake
+tasks, can be invoked and passed arguments using familiar unix command line
+arguments and flags. The Toys github repo itself comes with Toys configs
+instead of Rakefiles.
 
 You can also use the core functionality of Toys to create your own command line
 binaries, by using the *toys-core* API, which is available as a separate gem.

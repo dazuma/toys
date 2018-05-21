@@ -88,6 +88,12 @@ module Toys
       " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
 
     ##
+    # Short description for the verion flag
+    # @return [String]
+    #
+    DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys.".freeze
+
+    ##
     # Create a standard CLI, configured with the appropriate paths and
     # middleware.
     #
@@ -162,7 +168,8 @@ module Toys
         ],
         [
           :show_root_version,
-          version_string: ::Toys::VERSION
+          version_string: ::Toys::VERSION,
+          version_flag_desc: DEFAULT_VERSION_FLAG_DESC
         ],
         [
           :handle_usage_errors

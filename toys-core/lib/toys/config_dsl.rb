@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/context"
+
 module Toys
   ##
   # This class defines the DSL for a toys configuration file.
@@ -63,6 +65,12 @@ module Toys
   #     toys greet rubyists
   #
   class ConfigDSL
+    # Copy the well-known context key constants here, so that script blocks
+    # inside config DSL files can access them without qualification.
+    ::Toys::Context.constants.each do |const|
+      const_set(const, ::Toys::Context.const_get(const))
+    end
+
     ##
     # Create an instance of the DSL.
     # @private
@@ -301,6 +309,9 @@ module Toys
     #     and the previous value, and it should return the new value that
     #     should be set. The default handler simply replaces the previous
     #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+    # @param [Boolean] report_collisions Raise an exception if a flag is
+    #     requested that is already in use or marked as unusable. Default is
+    #     true.
     # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
     #     description for the flag. See {Toys::ConfigDSL#desc} for a description
     #     of the allowed formats. Defaults to the empty string.
@@ -309,22 +320,18 @@ module Toys
     #     description of the allowed formats. (But note that this param takes
     #     an Array of description lines, rather than a series of arguments.)
     #     Defaults to the empty array.
-    # @param [Boolean] only_unique If true, any flags that are already
-    #     defined in this tool are removed from this flag. For example, if
-    #     an earlier flag uses `-a`, and this flag wants to use both
-    #     `-a` and `-b`, then only `-b` will be assigned to this flag.
-    #     Defaults to false.
     # @yieldparam flag_dsl [Toys::ConfigDSL::FlagDSL] An object that lets you
     #     configure this flag in a block.
     #
     def flag(key, *flags,
-             accept: nil, default: nil, handler: nil, desc: nil, long_desc: nil,
-             only_unique: false)
+             accept: nil, default: nil, handler: nil,
+             report_collisions: true,
+             desc: nil, long_desc: nil)
       return self if _cur_tool.nil?
-      flag_dsl = FlagDSL.new(flags, accept, default, handler, desc, long_desc)
+      flag_dsl = FlagDSL.new(flags, accept, default, handler, report_collisions, desc, long_desc)
       yield flag_dsl if block_given?
       _cur_tool.lock_definition_path(@path)
-      flag_dsl._add_to(_cur_tool, key, only_unique)
+      flag_dsl._add_to(_cur_tool, key)
       self
     end
 
@@ -486,11 +493,12 @@ module Toys
     #
     class FlagDSL
       ## @private
-      def initialize(flags, accept, default, handler, desc, long_desc)
+      def initialize(flags, accept, default, handler, report_collisions, desc, long_desc)
         @flags = flags
         @accept = accept
         @default = default
         @handler = handler
+        @report_collisions = report_collisions
         @desc = desc
         @long_desc = long_desc
       end
@@ -536,6 +544,16 @@ module Toys
       end
 
       ##
+      # Set whether to raise an exception if a flag is requested that is
+      # already in use or marked as disabled.
+      # @param [Boolean] setting
+      #
+      def report_collisions(setting)
+        @report_collisions = setting
+        self
+      end
+
+      ##
       # Set the short description. See {Toys::ConfigDSL#desc} for the allowed
       # formats.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
@@ -557,11 +575,11 @@ module Toys
       end
 
       ## @private
-      def _add_to(tool, key, only_unique)
+      def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @accept, default: @default, handler: @handler,
-                      desc: @desc, long_desc: @long_desc,
-                      only_unique: only_unique)
+                      report_collisions: @report_collisions,
+                      desc: @desc, long_desc: @long_desc)
       end
     end
 

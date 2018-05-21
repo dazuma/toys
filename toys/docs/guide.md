@@ -171,6 +171,20 @@ them.) These standard flags include:
     tool's logging display, decreasing the number of log levels shown. This
     flag may also be issued multiple times.
 
+Namespace tools (tools that have subtools but no explicit functionality of
+their own) always behave as though `--help` is invoked. (They do recognize the
+flag, but it has no additional effect.) Namespaces also support the following
+additional flags:
+
+*   `--[no-]recursive` (also `-r`) which displays all subtools recursively,
+    instead of only the immediate subtools.
+*   `--search=TERM` which displays only subtools whose name or description
+    contain the specified search term.
+
+Finally, the root tool also supports:
+
+*   `--version` which displays the current Toys version.
+
 ### Positional Arguments
 
 Any arguments not recognized as flags or flag arguments, are interpreted as

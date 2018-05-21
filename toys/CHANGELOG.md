@@ -2,9 +2,12 @@
 
 ### 0.3.6 / TBD
 
+* CHANGED: Removed Context#new_cli and exposed Context#cli instead.
+* CHANGED: Raises ToolDefinitionError if you declare a duplicate flag.
 * IMPROVED: Provide more details in default descriptions.
 * IMPROVED: Optional parameters are now supported for flags.
 * IMPROVED: Support custom acceptors.
+* IMPROVED: Highline helper automatically sets use_color based on the type of stdout.
 
 ### 0.3.5 / 2018-05-15
 

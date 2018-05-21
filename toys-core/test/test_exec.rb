@@ -117,13 +117,13 @@ describe Toys::Utils::Exec do
 
   describe "default options" do
     it "is reflected in spawned processes" do
-      exec.config_defaults(out_to: :capture)
+      exec.configure_defaults(out_to: :capture)
       result = exec.ruby(["-e", 'puts "hello"'])
       assert_equal("hello\n", result.captured_out)
     end
 
     it "can be overridden in spawned processes" do
-      exec.config_defaults(out_to: :capture)
+      exec.configure_defaults(out_to: :capture)
       result = exec.ruby(["-e", 'puts "hello"'], out_to: :controller) do |c|
         assert_equal("hello\n", c.out.gets)
       end

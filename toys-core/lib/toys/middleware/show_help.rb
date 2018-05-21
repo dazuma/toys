@@ -234,7 +234,7 @@ module Toys
                                                    DEFAULT_HELP_FLAGS)
         unless help_flags.empty?
           tool.add_flag(:_show_help, help_flags,
-                        desc: "Display help for this tool", only_unique: true)
+                        report_collisions: false, desc: "Display help for this tool")
         end
         help_flags
       end
@@ -244,7 +244,8 @@ module Toys
                                                     DEFAULT_USAGE_FLAGS)
         unless usage_flags.empty?
           tool.add_flag(:_show_usage, usage_flags,
-                        desc: "Display a brief usage string for this tool", only_unique: true)
+                        report_collisions: false,
+                        desc: "Display a brief usage string for this tool")
         end
         usage_flags
       end
@@ -254,9 +255,9 @@ module Toys
                                                         DEFAULT_RECURSIVE_FLAGS)
         unless recursive_flags.empty?
           tool.add_flag(:_recursive_subtools, recursive_flags,
+                        report_collisions: false,
                         default: @default_recursive,
-                        desc: "Show all subtools recursively (default is #{@default_recursive})",
-                        only_unique: true)
+                        desc: "Show all subtools recursively (default is #{@default_recursive})")
         end
       end
 
@@ -265,8 +266,8 @@ module Toys
                                                      DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
           tool.add_flag(:_search_subtools, search_flags,
-                        desc: "Search subtools for the given regular expression",
-                        only_unique: true)
+                        report_collisions: false,
+                        desc: "Search subtools for the given regular expression")
         end
       end
     end

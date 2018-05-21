@@ -44,6 +44,12 @@ module Toys
       DEFAULT_VERSION_FLAGS = ["--version"].freeze
 
       ##
+      # Default description for the version flags
+      # @return [String]
+      #
+      DEFAULT_VERSION_FLAG_DESC = "Display the version".freeze
+
+      ##
       # Create a ShowVersion middleware
       #
       # @param [String] version_string The string that should be displayed.
@@ -54,9 +60,11 @@ module Toys
       #
       def initialize(version_string: nil,
                      version_flags: DEFAULT_VERSION_FLAGS,
+                     version_flag_desc: DEFAULT_VERSION_FLAG_DESC,
                      stream: $stdout)
         @version_string = version_string
         @version_flags = version_flags
+        @version_flag_desc = version_flag_desc
         @output = Utils::LineOutput.new(stream)
       end
 
@@ -66,8 +74,7 @@ module Toys
       def config(tool, _loader)
         if @version_string && tool.root?
           tool.add_flag(:_show_version, @version_flags,
-                        desc: "Display the version",
-                        only_unique: true)
+                        report_collisions: false, desc: @version_flag_desc)
         end
         yield
       end
