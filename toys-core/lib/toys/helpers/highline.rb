@@ -40,7 +40,7 @@ module Toys
       # @return [::HighLine]
       #
       def highline
-        context[Highline] ||= begin
+        self[Highline] ||= begin
           ::HighLine.use_color = $stdout.tty?
           ::HighLine.new
         end
