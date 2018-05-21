@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.6 / TBD
+### 0.3.6 / 2018-05-21
 
 * CHANGED: Renamed show_version middleware to show_root_version.
 * CHANGED: Reworked set_default_descriptions interface for more flexibility.

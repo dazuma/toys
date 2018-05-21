@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.6 / TBD
+### 0.3.6 / 2018-05-21
 
 * CHANGED: Removed Context#new_cli and exposed Context#cli instead.
 * CHANGED: Raises ToolDefinitionError if you declare a duplicate flag.
