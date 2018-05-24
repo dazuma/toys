@@ -41,20 +41,6 @@ module Toys
     # available in that class's documentation.
     #
     module Exec
-      ## @private
-      def self.extended(context)
-        context[Exec] = Utils::Exec.new do |k|
-          case k
-          when :logger
-            context[Context::LOGGER]
-          when :nonzero_status_handler
-            if context[Context::EXIT_ON_NONZERO_STATUS]
-              proc { |s| context.exit(s.exitstatus) }
-            end
-          end
-        end
-      end
-
       ##
       # Set default configuration keys.
       #
@@ -62,7 +48,7 @@ module Toys
       #     configuration options in the {Toys::Utils::Exec} docs.
       #
       def configure_exec(opts = {})
-        self[Exec].configure_defaults(opts)
+        Exec._exec(self).configure_defaults(opts)
       end
 
       ##
@@ -82,7 +68,7 @@ module Toys
       #     code and any captured output.
       #
       def exec(cmd, opts = {}, &block)
-        self[Exec].exec(cmd, Exec._setup_exec_opts(opts, self), &block)
+        Exec._exec(self).exec(cmd, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -101,7 +87,7 @@ module Toys
       #     code and any captured output.
       #
       def ruby(args, opts = {}, &block)
-        self[Exec].ruby(args, Exec._setup_exec_opts(opts, self), &block)
+        Exec._exec(self).ruby(args, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -116,7 +102,7 @@ module Toys
       # @return [Integer] The exit code
       #
       def sh(cmd, opts = {})
-        self[Exec].sh(cmd, Exec._setup_exec_opts(opts, self))
+        Exec._exec(self).sh(cmd, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -134,7 +120,21 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture(cmd, opts = {})
-        self[Exec].capture(cmd, Exec._setup_exec_opts(opts, self))
+        Exec._exec(self).capture(cmd, Exec._setup_exec_opts(opts, self))
+      end
+
+      ## @private
+      def self._exec(tool)
+        tool[Exec] ||= Utils::Exec.new do |k|
+          case k
+          when :logger
+            tool[Tool::LOGGER]
+          when :nonzero_status_handler
+            if tool[Tool::EXIT_ON_NONZERO_STATUS]
+              proc { |s| tool.exit(s.exitstatus) }
+            end
+          end
+        end
       end
 
       ## @private

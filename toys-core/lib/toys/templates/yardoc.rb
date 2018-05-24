@@ -71,7 +71,7 @@ module Toys
         tool(template.name) do
           desc "Run yardoc on the current project."
 
-          use :exec
+          include :exec
 
           script do
             require "yard"

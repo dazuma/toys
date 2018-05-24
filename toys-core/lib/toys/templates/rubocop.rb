@@ -67,7 +67,7 @@ module Toys
         tool(template.name) do
           desc "Run rubocop on the current project."
 
-          use :exec
+          include :exec
 
           script do
             require "rubocop"

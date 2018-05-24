@@ -32,13 +32,13 @@ require "optparse"
 require "toys/utils/wrappable_string"
 
 module Toys
-  class Tool
+  module Definition
     ##
     # Representation of a formal positional argument
     #
-    class ArgDefinition
+    class Arg
       ##
-      # Create an ArgDefinition
+      # Create an Arg definition
       # @private
       #
       def initialize(key, type, accept, default, desc, long_desc, display_name)

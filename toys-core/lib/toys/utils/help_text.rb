@@ -52,13 +52,13 @@ module Toys
       DEFAULT_INDENT = 4
 
       ##
-      # Create a usage helper given an execution context.
+      # Create a usage helper given an executable tool.
       #
-      # @param [Toys::Context] context The current execution context.
+      # @param [Toys::Tool] tool The current tool.
       # @return [Toys::Utils::HelpText]
       #
-      def self.from_context(context)
-        new(context[Context::TOOL], context[Context::LOADER], context[Context::BINARY_NAME])
+      def self.from_tool(tool)
+        new(tool[Tool::TOOL_DEFINITION], tool[Tool::LOADER], tool[Tool::BINARY_NAME])
       end
 
       ##
@@ -228,7 +228,7 @@ module Toys
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
             desc =
-              if subtool.is_a?(Alias)
+              if subtool.is_a?(Definition::Alias)
                 ["(Alias of #{subtool.display_target})"]
               else
                 wrap_desc(subtool.desc)
@@ -427,7 +427,12 @@ module Toys
           name_len = @tool.full_name.length
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc = subtool.is_a?(Alias) ? "(Alias of #{subtool.display_target})" : subtool.desc
+            desc =
+              if subtool.is_a?(Definition::Alias)
+                "(Alias of #{subtool.display_target})"
+              else
+                subtool.desc
+              end
             add_prefix_with_desc(bold(tool_name), desc)
           end
         end

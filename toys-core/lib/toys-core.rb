@@ -40,17 +40,34 @@ module Toys
   # Namespace for common utility classes.
   #
   module Utils; end
+
+  ##
+  # Namespace for object definition classes.
+  #
+  module Definition; end
+
+  ##
+  # Namespace for DSL classes.
+  #
+  module DSL; end
 end
 
-require "toys/alias"
 require "toys/cli"
-require "toys/config_dsl"
-require "toys/context"
 require "toys/core_version"
+require "toys/definition/acceptor"
+require "toys/definition/alias"
+require "toys/definition/arg"
+require "toys/definition/flag"
+require "toys/definition/tool"
+require "toys/dsl/arg"
+require "toys/dsl/flag"
+require "toys/dsl/tool"
 require "toys/errors"
+require "toys/executor"
 require "toys/helpers"
 require "toys/loader"
 require "toys/middleware"
 require "toys/template"
 require "toys/templates"
 require "toys/tool"
+require "toys/tool_classes"

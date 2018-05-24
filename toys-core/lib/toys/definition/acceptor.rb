@@ -28,7 +28,7 @@
 ;
 
 module Toys
-  class Tool
+  module Definition
     ##
     # An Acceptor validates and converts arguments. It is designed to be
     # compatible with the OptionParser accept mechanism.

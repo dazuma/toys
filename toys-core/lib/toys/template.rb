@@ -43,8 +43,8 @@ module Toys
   # The class defines the "configuration" of the template. If your template
   # has options/parameters, you should provide a constructor, and methods
   # appropriate to edit those options. The arguments given to the
-  # {Toys::ConfigDSL#expand} method are passed to your constructor, and your
-  # template object is passed to any block given to {Toys::ConfigDSL#expand}.
+  # {Toys::DSL::Tool#expand} method are passed to your constructor, and your
+  # template object is passed to any block given to {Toys::DSL::Tool#expand}.
   #
   # Next, in your template class, call the `to_expand` method, which is defined
   # in {Toys::Template::ClassMethods#to_expand}. Pass this a block which
@@ -100,6 +100,7 @@ module Toys
     ## @private
     def self.included(mod)
       mod.extend(ClassMethods)
+      mod.include(Tool::Keys)
     end
 
     ##

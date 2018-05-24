@@ -35,34 +35,34 @@ describe Toys::Utils::HelpText do
   let(:binary_name) { "toys" }
   let(:tool_name) { ["foo", "bar"] }
   let(:namespace_tool) do
-    Toys::Tool.new(tool_name)
+    Toys::Definition::Tool.new(tool_name, 0, Toys::Tool, [])
   end
   let(:normal_tool) do
-    Toys::Tool.new(tool_name).tap do |t|
+    Toys::Definition::Tool.new(tool_name, 0, Toys::Tool, []).tap do |t|
       t.script = proc {}
     end
   end
   let(:subtool_one) do
-    Toys::Tool.new(["foo", "bar", "one"])
+    Toys::Definition::Tool.new(["foo", "bar", "one"], 0, Toys::Tool, [])
   end
   let(:subtool_one_a) do
-    Toys::Tool.new(["foo", "bar", "one", "a"]).tap do |t|
+    Toys::Definition::Tool.new(["foo", "bar", "one", "a"], 0, Toys::Tool, []).tap do |t|
       t.script = proc {}
     end
   end
   let(:subtool_one_b) do
-    Toys::Tool.new(["foo", "bar", "one", "b"]).tap do |t|
+    Toys::Definition::Tool.new(["foo", "bar", "one", "b"], 0, Toys::Tool, []).tap do |t|
       t.script = proc {}
     end
   end
   let(:subtool_two) do
-    Toys::Tool.new(["foo", "bar", "two"]).tap do |t|
+    Toys::Definition::Tool.new(["foo", "bar", "two"], 0, Toys::Tool, []).tap do |t|
       t.script = proc {}
     end
   end
   let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
   let(:subtool_long) do
-    Toys::Tool.new(["foo", "bar", long_tool_name])
+    Toys::Definition::Tool.new(["foo", "bar", long_tool_name], 0, Toys::Tool, [])
   end
   let(:empty_loader) do
     m = Minitest::Mock.new

@@ -29,19 +29,19 @@
 
 tool "install" do
   desc "Build and install the current gems"
-  use :exec
+  include :exec
   script do
     set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       version = capture("./toys-dev system version").strip
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("build", cli: subcli)
+        run_tool("build", cli: subcli)
         sh "gem install pkg/toys-core-#{version}.gem"
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("build", cli: subcli)
+        run_tool("build", cli: subcli)
         sh "gem install pkg/toys-#{version}.gem"
       end
     end
@@ -50,15 +50,15 @@ end
 
 tool "ci" do
   desc "CI target that runs all tests for both gems"
-  use :exec
-  use :highline
-  helper(:validate_dir) do
+  include :exec
+  include :highline
+  def validate_dir
     subcli = cli.child.add_config_path(".toys.rb")
     puts color("** Checking tests...", :cyan)
-    run("test", cli: subcli)
+    run_tool("test", cli: subcli)
     puts color("** Tests ok.", :cyan)
     puts color("** Checking rubocop...", :cyan)
-    run("rubocop", cli: subcli)
+    run_tool("rubocop", cli: subcli)
     puts color("** Rubocop ok.", :cyan)
     puts color("** Checking yardoc...", :cyan)
     exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
@@ -71,7 +71,7 @@ tool "ci" do
   end
   script do
     set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
         puts color("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
         validate_dir
@@ -88,10 +88,10 @@ end
 
 tool "yardoc" do
   desc "Generates yardoc for both gems"
-  use :exec
+  include :exec
   script do
     set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
         exec "yardoc"
       end
@@ -104,17 +104,17 @@ end
 
 tool "clean" do
   desc "Cleans both gems"
-  use :exec
+  include :exec
   script do
     set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("clean", cli: subcli)
+        run_tool("clean", cli: subcli)
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("clean", cli: subcli)
+        run_tool("clean", cli: subcli)
       end
     end
   end
@@ -122,20 +122,20 @@ end
 
 tool "release" do
   desc "Releases both gems"
-  use :exec
-  use :highline
+  include :exec
+  include :highline
   script do
     set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       version = capture("./toys-dev system version").strip
       exit(1) unless agree("Release toys #{version}? (y/n) ")
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("release", "-y", cli: subcli)
+        run_tool("release", "-y", cli: subcli)
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run("release", "-y", cli: subcli)
+        run_tool("release", "-y", cli: subcli)
       end
       sh "git tag v#{version}"
       sh "git push origin v#{version}"

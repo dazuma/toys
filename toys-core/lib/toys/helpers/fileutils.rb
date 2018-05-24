@@ -36,8 +36,8 @@ module Toys
     #
     module Fileutils
       ## @private
-      def self.extend_object(obj)
-        obj.extend(::FileUtils)
+      def self.included(mod)
+        mod.include(::FileUtils)
       end
     end
   end

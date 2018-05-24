@@ -90,9 +90,9 @@ module Toys
 
           flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
-          use :exec
-          use :fileutils
-          use :highline
+          include :exec
+          include :fileutils
+          include :highline
 
           script do
             configure_exec(exit_on_nonzero_status: true)

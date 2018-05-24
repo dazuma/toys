@@ -33,6 +33,9 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
+    ## @private
+    LOWEST_PRIORITY = -999_999_999
+
     ##
     # Create a Loader
     #
@@ -60,7 +63,8 @@ module Toys
       @preload_file_name = preload_file_name
       @middleware_stack = middleware_stack
       @load_worklist = []
-      @tools = {}
+      @tool_classes = {}
+      @tool_definitions = {}
       @max_priority = @min_priority = 0
     end
 
@@ -93,27 +97,26 @@ module Toys
     # that are not part of the tool name and should be passed as tool args.
     #
     # @param [String] args Command line arguments
-    # @return [Array(Toys::Tool,Array<String>)]
+    # @return [Array(Toys::Definition::Tool,Array<String>)]
     #
     def lookup(args)
       orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
-      cur_prefix = orig_prefix.dup
+      cur_prefix = orig_prefix
       loop do
         load_for_prefix(cur_prefix)
-        p = orig_prefix.dup
-        while p.length >= cur_prefix.length
-          tool = get_tool(p, [])
+        p = orig_prefix
+        loop do
+          tool = get_active_tool(p, [])
           if tool
             finish_definitions_in_tree(tool.full_name)
             return [tool, args.slice(p.length..-1)]
           end
-          p.pop
+          break if p.empty? || p.length <= cur_prefix.length
+          p = p.slice(0..-2)
         end
-        break unless cur_prefix.pop
+        return nil if cur_prefix.empty?
+        cur_prefix = cur_prefix.slice(0..-2)
       end
-      tool = get_or_create_tool([])
-      finish_definitions_in_tree([])
-      [tool, args]
     end
 
     ##
@@ -123,20 +126,20 @@ module Toys
     # @param [Array<String>] words The name of the parent tool
     # @param [Boolean] recursive If true, return all subtools recursively
     #     rather than just the immediate children (the default)
-    # @return [Array<Toys::Tool,Tool::Alias>]
+    # @return [Array<Toys::Definition::Tool,Tool::Definition::Alias>]
     #
     def list_subtools(words, recursive: false)
       load_for_prefix(words)
       found_tools = []
       len = words.length
-      @tools.each do |n, tp|
+      @tool_definitions.each do |n, t|
         next if n.empty?
         if recursive
           next if n.length <= len || n.slice(0, len) != words
         else
           next unless n.slice(0..-2) == words
         end
-        found_tools << tp.first
+        found_tools << t
       end
       sort_tools_by_name(found_tools)
     end
@@ -151,7 +154,7 @@ module Toys
     def has_subtools?(words)
       load_for_prefix(words)
       len = words.length
-      @tools.each do |n, _tp|
+      @tool_definitions.each_key do |n|
         return true if !n.empty? && n.length > len && n.slice(0, len) == words
       end
       false
@@ -167,9 +170,9 @@ module Toys
     def finish_definitions_in_tree(words)
       load_for_prefix(words)
       len = words.length
-      @tools.each do |n, tp|
+      @tool_definitions.each do |n, t|
         next if n.length < len || n.slice(0, len) != words
-        tp.first.finish_definition(self) unless tp.first.is_a?(Alias)
+        t.finish_definition(self) unless t.is_a?(Definition::Alias)
       end
     end
 
@@ -184,22 +187,20 @@ module Toys
     #
     # @private
     #
-    def get_or_create_tool(words, priority: nil)
-      if @tools.key?(words)
-        tool, tool_priority = @tools[words]
-        if !priority || !tool_priority || tool_priority == priority
-          if priority && tool.is_a?(Alias)
+    def activate_tool_definition(words, priority)
+      tool = @tool_definitions[words]
+      if tool
+        if tool.priority == priority
+          if priority && tool.is_a?(Definition::Alias)
             raise LoaderError, "Cannot modify #{@words.inspect} because it is already an alias"
           end
           return tool
         end
-        return nil if tool_priority > priority
+        return nil if tool.priority > priority
       end
-      get_or_create_tool(words[0..-2]) unless words.empty?
-      tool = Tool.new(words)
-      tool.middleware_stack.concat(Middleware.resolve_stack(@middleware_stack))
-      @tools[words] = [tool, priority]
-      tool
+      tool_class = @tool_classes[[words, priority]] || Tool
+      tool_definition = Definition::Tool.new(words, priority, tool_class, @middleware_stack)
+      @tool_definitions[words] = tool_definition
     end
 
     ##
@@ -214,19 +215,15 @@ module Toys
     # @private
     #
     def make_alias(words, target, priority)
-      if @tools.key?(words)
-        tool_priority = @tools[words].last
-        if tool_priority
-          if tool_priority == priority
-            raise LoaderError, "Cannot make #{words.inspect} an alias because it is already defined"
-          elsif tool_priority > priority
-            return nil
-          end
+      existing = @tool_definitions[words]
+      if existing
+        if existing.priority == priority
+          raise LoaderError, "Cannot make #{words.inspect} an alias because it is already defined"
+        elsif existing.priority > priority
+          return nil
         end
       end
-      a = Alias.new(words, target)
-      @tools[words] = [a, priority]
-      a
+      @tool_definitions[words] = Definition::Alias.new(words, target, priority)
     end
 
     ##
@@ -235,12 +232,11 @@ module Toys
     # checking.
     #
     # @param [Toys::Tool] tool Tool to add.
-    # @param [Integer,nil] priority Priority for the tool.
     #
     # @private
     #
-    def put_tool!(tool, priority = nil)
-      @tools[tool.full_name] = [tool, priority]
+    def put_tool!(tool)
+      @tool_definitions[tool.full_name] = tool
       self
     end
 
@@ -254,7 +250,7 @@ module Toys
     # @private
     #
     def tool_defined?(words)
-      @tools.key?(words)
+      @tool_definitions.key?(words)
     end
 
     ##
@@ -268,19 +264,32 @@ module Toys
     #
     # @private
     #
-    def get_tool(words, looked_up = [])
-      return nil unless @tools.key?(words)
-      result = @tools[words].first
-      if result.is_a?(Alias)
+    def get_active_tool(words, looked_up = [])
+      result = @tool_definitions[words]
+      if result.is_a?(Definition::Alias)
         words = result.target_name
         if looked_up.include?(words)
           raise LoaderError, "Circular alias references: #{looked_up.inspect}"
         end
         looked_up << words
-        get_tool(words, looked_up)
-      else
-        result
+        result = get_active_tool(words, looked_up)
       end
+      result
+    end
+
+    ##
+    # Get the tool class for the given name and priority.
+    #
+    # @private
+    #
+    def get_tool_class(words, priority)
+      @tool_definitions[words] ||=
+        Definition::Tool.new(words, LOWEST_PRIORITY, ::Toys::Tool, @middleware_stack)
+      tool_class = @tool_classes[[words, priority]]
+      return tool_class if tool_class
+      @tool_classes[[words, priority]] = tool_class = DSL::Tool.new_class(words, priority, self)
+      ::ToysToolClasses.add(tool_class, words, priority, self)
+      tool_class
     end
 
     ##
@@ -327,7 +336,8 @@ module Toys
 
     def load_path(path, words, remaining_words, priority)
       if ::File.extname(path) == ".rb"
-        ConfigDSL.evaluate(words, remaining_words, priority, self, path, ::IO.read(path))
+        tool_class = get_tool_class(words, priority)
+        DSL::Tool.evaluate(tool_class, remaining_words, path, ::IO.read(path))
       else
         require_preload_in(path)
         load_index_in(path, words, remaining_words, priority)

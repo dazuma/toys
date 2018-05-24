@@ -36,14 +36,14 @@ module Toys
       ##
       # The base middleware does not affect tool configuration.
       #
-      def config(_tool, _loader)
+      def config(_tool_definition, _loader)
         yield
       end
 
       ##
       # The base middleware does not affect tool execution.
       #
-      def execute(_context)
+      def execute(_tool)
         yield
       end
     end

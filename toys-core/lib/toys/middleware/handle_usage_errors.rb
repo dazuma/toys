@@ -60,14 +60,14 @@ module Toys
       ##
       # Intercept and handle usage errors during execution.
       #
-      def execute(context)
-        if context[Context::USAGE_ERROR]
+      def execute(tool)
+        if tool[Tool::USAGE_ERROR]
           width = ::HighLine.new.output_cols
-          help_text = Utils::HelpText.from_context(context)
-          @output.puts(context[Context::USAGE_ERROR], :bright_red, :bold)
+          help_text = Utils::HelpText.from_tool(tool)
+          @output.puts(tool[Tool::USAGE_ERROR], :bright_red, :bold)
           @output.puts("")
           @output.puts(help_text.usage_string(wrap_width: width))
-          context.exit(@exit_code)
+          tool.exit(@exit_code)
         else
           yield
         end

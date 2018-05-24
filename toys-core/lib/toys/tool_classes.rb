@@ -27,68 +27,39 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-module Toys
+##
+# Base module for tool classes
+#
+module ToysToolClasses
   ##
-  # An alias is a name that refers to another name.
+  # Add the given tool class to the class hierarchy.
   #
-  class Alias
-    ##
-    # Create a new alias.
-    #
-    # @param [Array<String>] full_name The name of the alias.
-    # @param [String,Array<String>] target The name of the target. May either
-    #     be a local reference (a single string) or a global reference (an
-    #     array of strings)
-    #
-    def initialize(full_name, target)
-      @target_name =
-        if target.is_a?(::String)
-          full_name[0..-2] + [target]
+  def self.add(tool_class, words, priority, loader)
+    if words.empty?
+      mangled_name =
+        if priority > 0
+          "TOYSroot_Pp#{priority}"
+        elsif priority < 0
+          "TOYSroot_Pm#{-priority}"
         else
-          target.dup
+          "TOYSroot_P0"
         end
-      @target_name.freeze
-      @full_name = full_name.dup.freeze
+      parent_class = base_module(loader)
+    else
+      parent_class = loader.get_tool_class(words.slice(0..-2), priority)
+      mangled_name = "TOYStool_" + words.last.gsub("_", "_u_").gsub("-", "_h_")
     end
+    parent_class.const_set(mangled_name, tool_class)
+  end
 
-    ##
-    # Return the name of the tool as an array of strings.
-    # This array may not be modified.
-    # @return [Array<String>]
-    #
-    attr_reader :full_name
-
-    ##
-    # Return the name of the target as an array of strings.
-    # This array may not be modified.
-    # @return [Array<String>]
-    #
-    attr_reader :target_name
-
-    ##
-    # Returns the local name of this tool.
-    # @return [String]
-    #
-    def simple_name
-      full_name.last
-    end
-
-    ##
-    # Returns a displayable name of this tool, generally the full name
-    # delimited by spaces.
-    # @return [String]
-    #
-    def display_name
-      full_name.join(" ")
-    end
-
-    ##
-    # Returns a displayable name of the target, generally the full name
-    # delimited by spaces.
-    # @return [String]
-    #
-    def display_target
-      target_name.join(" ")
-    end
+  ##
+  # Return a base module unique to the given object.
+  #
+  def self.base_module(loader)
+    base_name = "TOYSbase_#{loader.object_id}"
+    return const_get(base_name) if const_defined?(base_name)
+    mod = ::Module.new
+    const_set(base_name, mod)
+    mod
   end
 end

@@ -84,7 +84,7 @@ module Toys
         tool(template.name) do
           desc "Run minitest on the current project."
 
-          use :exec
+          include :exec
 
           flag :warnings, "-w", "--[no-]warnings",
                default: template.warnings,

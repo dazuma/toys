@@ -61,7 +61,7 @@ module Toys
         tool(template.name) do
           desc "Clean built files and directories."
 
-          use :fileutils
+          include :fileutils
 
           script do
             files = []

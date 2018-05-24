@@ -146,18 +146,20 @@ module Toys
       ##
       # Configure flags and default data.
       #
-      def config(tool, loader)
-        help_flags = add_help_flags(tool)
-        usage_flags = add_usage_flags(tool)
+      def config(tool_definition, loader)
+        help_flags = add_help_flags(tool_definition)
+        usage_flags = add_usage_flags(tool_definition)
         if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
-          if tool.root? && tool.arg_definitions.empty?
-            tool.set_remaining_args(:_tool_name, display_name: "TOOL_NAME",
-                                                 desc: "The tool for which to display help")
+          if tool_definition.root? && tool_definition.arg_definitions.empty?
+            tool_definition.set_remaining_args(:_tool_name,
+                                               display_name: "TOOL_NAME",
+                                               desc: "The tool for which to display help")
           end
         end
-        if (!help_flags.empty? || @fallback_execution) && loader.has_subtools?(tool.full_name)
-          add_recursive_flags(tool)
-          add_search_flags(tool)
+        if (!help_flags.empty? || @fallback_execution) &&
+           loader.has_subtools?(tool_definition.full_name)
+          add_recursive_flags(tool_definition)
+          add_search_flags(tool_definition)
         end
         yield
       end
@@ -165,16 +167,16 @@ module Toys
       ##
       # Display help text if requested.
       #
-      def execute(context)
-        if context[:_show_usage]
-          help_text = get_help_text(context)
+      def execute(tool)
+        if tool[:_show_usage]
+          help_text = get_help_text(tool)
           str = help_text.usage_string(wrap_width: output_cols)
           output.puts(str)
-        elsif @fallback_execution && !context[Context::TOOL].includes_script? ||
-              context[:_show_help]
-          help_text = get_help_text(context)
-          str = help_text.help_string(recursive: context[:_recursive_subtools],
-                                      search: context[:_search_subtools],
+        elsif @fallback_execution && !tool[Tool::TOOL_DEFINITION].includes_script? ||
+              tool[:_show_help]
+          help_text = get_help_text(tool)
+          str = help_text.help_string(recursive: tool[:_recursive_subtools],
+                                      search: tool[:_search_subtools],
                                       show_source_path: @show_source_path,
                                       wrap_width: output_cols)
           output_help(str)
@@ -212,62 +214,70 @@ module Toys
         @less_path
       end
 
-      def get_help_text(context)
-        tool_name = context[:_tool_name]
-        return Utils::HelpText.from_context(context) if tool_name.nil? || tool_name.empty?
-        loader = context[Context::LOADER]
-        tool, rest = loader.lookup(tool_name)
-        help_text = Utils::HelpText.new(tool, loader, context[Context::BINARY_NAME])
-        report_usage_error(context, tool_name, help_text) unless rest.empty?
+      def get_help_text(tool)
+        tool_name = tool[:_tool_name]
+        return Utils::HelpText.from_tool(tool) if tool_name.nil? || tool_name.empty?
+        loader = tool[Tool::LOADER]
+        tool_definition, rest = loader.lookup(tool_name)
+        help_text = Utils::HelpText.new(tool_definition, loader, tool[Tool::BINARY_NAME])
+        report_usage_error(tool, tool_name, help_text) unless rest.empty?
         help_text
       end
 
-      def report_usage_error(context, tool_name, help_text)
+      def report_usage_error(tool, tool_name, help_text)
         output.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
         output.puts
         output.puts help_text.usage_string(wrap_width: output_cols)
-        context.exit(1)
+        tool.exit(1)
       end
 
-      def add_help_flags(tool)
-        help_flags = Middleware.resolve_flags_spec(@help_flags, tool,
+      def add_help_flags(tool_definition)
+        help_flags = Middleware.resolve_flags_spec(@help_flags, tool_definition,
                                                    DEFAULT_HELP_FLAGS)
         unless help_flags.empty?
-          tool.add_flag(:_show_help, help_flags,
-                        report_collisions: false, desc: "Display help for this tool")
+          tool_definition.add_flag(
+            :_show_help, help_flags,
+            report_collisions: false,
+            desc: "Display help for this tool"
+          )
         end
         help_flags
       end
 
-      def add_usage_flags(tool)
-        usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool,
+      def add_usage_flags(tool_definition)
+        usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool_definition,
                                                     DEFAULT_USAGE_FLAGS)
         unless usage_flags.empty?
-          tool.add_flag(:_show_usage, usage_flags,
-                        report_collisions: false,
-                        desc: "Display a brief usage string for this tool")
+          tool_definition.add_flag(
+            :_show_usage, usage_flags,
+            report_collisions: false,
+            desc: "Display a brief usage string for this tool"
+          )
         end
         usage_flags
       end
 
-      def add_recursive_flags(tool)
-        recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool,
+      def add_recursive_flags(tool_definition)
+        recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool_definition,
                                                         DEFAULT_RECURSIVE_FLAGS)
         unless recursive_flags.empty?
-          tool.add_flag(:_recursive_subtools, recursive_flags,
-                        report_collisions: false,
-                        default: @default_recursive,
-                        desc: "Show all subtools recursively (default is #{@default_recursive})")
+          tool_definition.add_flag(
+            :_recursive_subtools, recursive_flags,
+            report_collisions: false, default: @default_recursive,
+            desc: "Show all subtools recursively (default is #{@default_recursive})"
+          )
         end
       end
 
-      def add_search_flags(tool)
-        search_flags = Middleware.resolve_flags_spec(@search_flags, tool,
+      def add_search_flags(tool_definition)
+        search_flags = Middleware.resolve_flags_spec(@search_flags, tool_definition,
                                                      DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
-          tool.add_flag(:_search_subtools, search_flags,
-                        report_collisions: false,
-                        desc: "Search subtools for the given regular expression")
+          tool_definition.add_flag(
+            :_search_subtools, search_flags,
+            report_collisions: false,
+            desc: "Search subtools for the given regular expression"
+          )
         end
       end
     end

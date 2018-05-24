@@ -32,7 +32,7 @@ require "optparse"
 require "toys/utils/wrappable_string"
 
 module Toys
-  class Tool
+  module Definition
     ##
     # Representation of a single flag.
     #
@@ -105,9 +105,9 @@ module Toys
 
     ##
     # Representation of a formal set of flags that set a particular context
-    # key. The flags within a single FlagDefinition are synonyms.
+    # key. The flags within a single Flag definition are synonyms.
     #
-    class FlagDefinition
+    class Flag
       ##
       # The default handler replaces the previous value.
       # @return [Proc]
@@ -115,7 +115,7 @@ module Toys
       DEFAULT_HANDLER = ->(val, _prev) { val }
 
       ##
-      # Create a FlagDefinition
+      # Create a Flag definition
       # @private
       #
       def initialize(key, flags, used_flags, report_collisions, accept, handler, default)

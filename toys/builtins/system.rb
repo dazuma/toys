@@ -47,8 +47,8 @@ tool "update" do
 
   flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
-  use :exec
-  use :highline
+  include :exec
+  include :highline
 
   script do
     logger.info "Checking rubygems for the latest Toys release..."

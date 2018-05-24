@@ -27,67 +27,76 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-require "toys/utils/line_output"
-
 module Toys
-  module Middleware
+  module Definition
     ##
-    # A middleware that displays a version string for the root tool if the
-    # `--version` flag is given.
+    # An alias is a name that refers to another name.
     #
-    class ShowRootVersion < Base
+    class Alias
       ##
-      # Default version flags
+      # Create a new alias.
+      #
+      # @param [Array<String>] full_name The name of the alias.
+      # @param [String,Array<String>] target The name of the target. May either
+      #     be a local reference (a single string) or a global reference (an
+      #     array of strings)
+      #
+      def initialize(full_name, target, priority)
+        @target_name =
+          if target.is_a?(::String)
+            full_name[0..-2] + [target]
+          else
+            target.dup
+          end
+        @target_name.freeze
+        @full_name = full_name.dup.freeze
+        @priority = priority
+      end
+
+      ##
+      # Return the name of the tool as an array of strings.
+      # This array may not be modified.
       # @return [Array<String>]
       #
-      DEFAULT_VERSION_FLAGS = ["--version"].freeze
+      attr_reader :full_name
 
       ##
-      # Default description for the version flags
+      # Return the priority of this alias.
+      # @return [Integer]
+      #
+      attr_reader :priority
+
+      ##
+      # Return the name of the target as an array of strings.
+      # This array may not be modified.
+      # @return [Array<String>]
+      #
+      attr_reader :target_name
+
+      ##
+      # Returns the local name of this tool.
       # @return [String]
       #
-      DEFAULT_VERSION_FLAG_DESC = "Display the version".freeze
-
-      ##
-      # Create a ShowVersion middleware
-      #
-      # @param [String] version_string The string that should be displayed.
-      # @param [Array<String>] version_flags A list of flags that should
-      #     trigger displaying the version. Default is
-      #     {DEFAULT_VERSION_FLAGS}.
-      # @param [IO] stream Output stream to write to. Default is stdout.
-      #
-      def initialize(version_string: nil,
-                     version_flags: DEFAULT_VERSION_FLAGS,
-                     version_flag_desc: DEFAULT_VERSION_FLAG_DESC,
-                     stream: $stdout)
-        @version_string = version_string
-        @version_flags = version_flags
-        @version_flag_desc = version_flag_desc
-        @output = Utils::LineOutput.new(stream)
+      def simple_name
+        full_name.last
       end
 
       ##
-      # Adds the version flag if requested.
+      # Returns a displayable name of this tool, generally the full name
+      # delimited by spaces.
+      # @return [String]
       #
-      def config(tool_definition, _loader)
-        if @version_string && tool_definition.root?
-          tool_definition.add_flag(:_show_version, @version_flags,
-                                   report_collisions: false, desc: @version_flag_desc)
-        end
-        yield
+      def display_name
+        full_name.join(" ")
       end
 
       ##
-      # This middleware displays the version.
+      # Returns a displayable name of the target, generally the full name
+      # delimited by spaces.
+      # @return [String]
       #
-      def execute(tool)
-        if tool[:_show_version]
-          @output.puts(@version_string)
-        else
-          yield
-        end
+      def display_target
+        target_name.join(" ")
       end
     end
   end

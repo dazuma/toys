@@ -209,10 +209,15 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(*args, verbosity: 0)
-      tool, remaining = ContextualError.capture("Error finding tool definition") do
+      tool_definition, remaining = ContextualError.capture("Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
-      tool.execute(self, remaining, verbosity: verbosity)
+      ContextualError.capture_path(
+        "Error during tool execution!", tool_definition.definition_path,
+        tool_name: tool_definition.full_name, tool_args: remaining
+      ) do
+        Executor.new(self, tool_definition).execute(remaining, verbosity: verbosity)
+      end
     rescue ContextualError => e
       @error_handler.call(e)
     end

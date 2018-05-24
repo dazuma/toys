@@ -36,7 +36,7 @@ module Toys
     #
     # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` flags, if
     # not already defined by the tool. These flags affect the setting of
-    # {Toys::Context::VERBOSITY}, and, thus, the logger level.
+    # {Toys::Tool::VERBOSITY}, and, thus, the logger level.
     #
     class AddVerbosityFlags < Base
       ##
@@ -75,37 +75,39 @@ module Toys
       ##
       # Configure the tool flags.
       #
-      def config(tool, _loader)
-        add_verbose_flags(tool)
-        add_quiet_flags(tool)
+      def config(tool_definition, _loader)
+        add_verbose_flags(tool_definition)
+        add_quiet_flags(tool_definition)
         yield
       end
 
       private
 
-      def add_verbose_flags(tool)
-        verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool,
+      def add_verbose_flags(tool_definition)
+        verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool_definition,
                                                       DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
-          long_desc = "Increase verbosity, causing additional logging levels to display."
-          tool.add_flag(Context::VERBOSITY, verbose_flags,
-                        report_collisions: false,
-                        handler: ->(_val, cur) { cur + 1 },
-                        desc: "Increase verbosity",
-                        long_desc: long_desc)
+          tool_definition.add_flag(
+            Tool::VERBOSITY, verbose_flags,
+            report_collisions: false,
+            handler: ->(_val, cur) { cur + 1 },
+            desc: "Increase verbosity",
+            long_desc: "Increase verbosity, causing additional logging levels to display."
+          )
         end
       end
 
-      def add_quiet_flags(tool)
-        quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool,
+      def add_quiet_flags(tool_definition)
+        quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool_definition,
                                                     DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
-          long_desc = "Decrease verbosity, causing fewer logging levels to display."
-          tool.add_flag(Context::VERBOSITY, quiet_flags,
-                        report_collisions: false,
-                        handler: ->(_val, cur) { cur - 1 },
-                        desc: "Decrease verbosity",
-                        long_desc: long_desc)
+          tool_definition.add_flag(
+            Tool::VERBOSITY, quiet_flags,
+            report_collisions: false,
+            handler: ->(_val, cur) { cur - 1 },
+            desc: "Decrease verbosity",
+            long_desc: "Decrease verbosity, causing fewer logging levels to display."
+          )
         end
       end
     end
