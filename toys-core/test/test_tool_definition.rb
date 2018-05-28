@@ -29,6 +29,12 @@
 
 require "helper"
 
+module MyHelper
+  def helper1
+    :helper1
+  end
+end
+
 describe Toys::Definition::Tool do
   let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
   let(:full_cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
@@ -648,9 +654,33 @@ describe Toys::Definition::Tool do
   describe "helper module" do
     it "can be looked up from standard helpers" do
       test = self
-      tool.tool_class.include(:fileutils)
+      tool.include_helper(:fileutils)
       tool.runnable = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
+      end
+      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+    end
+
+    it "defaults to nil if not set" do
+      assert_nil(tool.resolve_helper("myhelper"))
+    end
+
+    it "can be set and retrieved" do
+      tool.add_helper("myhelper", MyHelper)
+      assert_equal(MyHelper, tool.resolve_helper("myhelper"))
+    end
+
+    it "can be retrieved from a subtool" do
+      tool.add_helper("myhelper", MyHelper)
+      assert_equal(MyHelper, subtool.resolve_helper("myhelper"))
+    end
+
+    it "mixes into the executable tool" do
+      test = self
+      tool.add_helper("myhelper", MyHelper)
+      tool.include_helper("myhelper")
+      tool.runnable = proc do
+        test.assert_equal(:helper1, helper1)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
     end

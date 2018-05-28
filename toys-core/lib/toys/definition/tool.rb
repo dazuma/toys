@@ -69,7 +69,8 @@ module Toys
       #
       # @param [Array<String>] full_name The name of the tool
       #
-      def initialize(loader, full_name, priority, middleware_stack)
+      def initialize(loader, parent, full_name, priority, middleware_stack)
+        @parent = parent
         @full_name = full_name.dup.freeze
         @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
         @priority = priority
@@ -85,6 +86,8 @@ module Toys
         @acceptors = {}
         OPTPARSER_ACCEPTORS.each { |a| @acceptors[a] = a }
         @used_flags = []
+
+        @helpers = {}
 
         @flag_definitions = []
         @required_arg_definitions = []
@@ -267,6 +270,26 @@ module Toys
       end
 
       ##
+      # Get the named helper from this tool or its ancestors.
+      #
+      # @param [String] name The helper name
+      # @return [Module,nil] The helper module, or `nil` if not found.
+      #
+      def resolve_helper(name)
+        @helpers.fetch(name.to_s) { |k| @parent ? @parent.resolve_helper(k) : nil }
+      end
+
+      ##
+      # Include the given helper in the tool class.
+      #
+      # @param [String,Symbol,Module] name The helper name or module
+      #
+      def include_helper(name)
+        tool_class.include(name)
+        self
+      end
+
+      ##
       # Sets the path to the file that defines this tool.
       # A tool may be defined from at most one path. If a different path is
       # already set, raises {Toys::ToolDefinitionError}
@@ -318,6 +341,17 @@ module Toys
       #
       def add_acceptor(acceptor)
         @acceptors[acceptor.name] = acceptor
+        self
+      end
+
+      ##
+      # Add a named helper module to this tool.
+      #
+      # @param [String] name The name of the helper.
+      # @param [Module] helper_module The helper module.
+      #
+      def add_helper(name, helper_module)
+        @helpers[name.to_s] = helper_module
         self
       end
 

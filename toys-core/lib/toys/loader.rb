@@ -275,19 +275,17 @@ module Toys
     # @private
     #
     def get_tool_definition(words, priority)
-      unless words.empty?
-        parent_words = words.slice(0..-2)
-        if get_tool_definition(parent_words, priority).is_a?(Definition::Alias)
-          raise ToolDefinitionError,
-                "Cannot create children of #{parent_words.join(' ').inspect} because it is an alias"
-        end
+      parent = words.empty? ? nil : get_tool_definition(words.slice(0..-2), priority)
+      if parent.is_a?(Definition::Alias)
+        raise ToolDefinitionError,
+              "Cannot create children of #{parent.display_name.inspect} because it is an alias"
       end
       tool_data = get_tool_data(words)
       if tool_data.top_priority.nil? || tool_data.top_priority < priority
         tool_data.top_priority = priority
       end
       tool_data.definitions[priority] ||=
-        Definition::Tool.new(self, words, priority, @middleware_stack)
+        Definition::Tool.new(self, parent, words, priority, @middleware_stack)
     end
 
     ##

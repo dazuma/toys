@@ -130,6 +130,20 @@ module Toys
       end
 
       ##
+      # Create a named helper module.
+      # This module may be included by name in this tool or any subtool.
+      #
+      # You should pass a block and define methods in that block.
+      #
+      # @param [String] name Name of the helper
+      #
+      def helper(name, &block)
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.add_helper(name, ::Module.new(&block)) if cur_tool
+        self
+      end
+
+      ##
       # Create a subtool. You must provide a block defining the subtool.
       #
       # If the subtool is already defined (either as a tool or a namespace), the
@@ -447,12 +461,16 @@ module Toys
       # @param [Module,Symbol] mod Module or name of well-known module.
       #
       def include(mod)
-        if mod.is_a?(::Symbol)
-          name = mod.to_s
+        cur_tool = DSL::Tool.activate_tool(self)
+        return if cur_tool.nil?
+        name = mod.to_s
+        if mod.is_a?(::String)
+          mod = cur_tool.resolve_helper(mod)
+        elsif mod.is_a?(::Symbol)
           mod = Helpers.lookup(name)
-          if mod.nil?
-            raise ToolDefinitionError, "Module not found: #{name.inspect}"
-          end
+        end
+        if mod.nil?
+          raise ToolDefinitionError, "Module not found: #{name.inspect}"
         end
         super(mod)
       end

@@ -2,8 +2,11 @@
 
 ### 0.3.7 / TBD
 
-* CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods and modules instead of weird helper-things.
+* CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.
+* CHANGED: Renamed "script" to "run", and allow setting of runnable by defining a "run" method
+* CHANGED: Set up a constant scope for each config file, to make constant lookup make sense.
 * CHANGED: Organized DSL and definition classes
+* ADDED: Helper modules scoped to the tool hierarchy
 
 ### 0.3.6 / 2018-05-21
 
