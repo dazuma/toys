@@ -107,7 +107,7 @@ module Toys
                 logger.error "Cannot push the gem when there are uncommited changes"
                 exit(1)
               end
-              exit(1) unless options[:yes] || agree("Release #{gemfile}? (y/n) ")
+              exit(1) unless option(:yes) || agree("Release #{gemfile}? (y/n) ")
               sh "gem push pkg/#{gemfile}"
               if template.tag
                 sh "git tag v#{version}"

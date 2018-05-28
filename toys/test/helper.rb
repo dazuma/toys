@@ -31,3 +31,21 @@ require "minitest/autorun"
 require "minitest/focus"
 require "minitest/rg"
 require "toys"
+require "shellwords"
+
+module Toys
+  ##
+  # Helpers for tests
+  #
+  module TestHelper
+    ## Name of the local dev binary
+    TOYS_BINARY = ::File.join(::File.dirname(__dir__), "toys-dev")
+
+    ##
+    # Execute toys and capture the result
+    #
+    def self.capture_toys(*args)
+      `#{::Shellwords.join([TOYS_BINARY] + args.flatten)}`
+    end
+  end
+end

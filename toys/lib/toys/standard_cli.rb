@@ -75,7 +75,7 @@ module Toys
     # Short description for the standard root tool
     # @return [String]
     #
-    DEFAULT_ROOT_DESC = "Your personal command line tool.".freeze
+    DEFAULT_ROOT_DESC = "Your personal command line tool".freeze
 
     ##
     # Help text for the standard root tool

@@ -43,7 +43,7 @@ module Toys
       ##
       # The base middleware does not affect tool execution.
       #
-      def execute(_tool)
+      def run(_tool)
         yield
       end
     end

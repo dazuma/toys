@@ -55,11 +55,11 @@ flag :delim, "-d", "--delim=VALUE",
 remaining_args :args, desc: "A series of tools to run, separated by the delimiter"
 
 def run
-  delim = self[:delim]
-  self[:args]
+  delim = option(:delim)
+  option(:args)
     .chunk { |arg| arg == delim ? :_separator : true }
     .each do |_, action|
-      code = run(action)
+      code = run_tool(action)
       exit(code) unless code.zero?
     end
 end

@@ -255,7 +255,7 @@ Consider the following example:
       optional_arg :whom, default: "world", desc: "Whom to greet."
       flag :shout, "-s", "--shout", desc: "Greet loudly."
 
-      script do
+      def run
         greeting = "Hello, #{options[:whom]}!"
         greeting.upcase! if options[:shout]
         puts greeting

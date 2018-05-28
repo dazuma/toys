@@ -32,7 +32,7 @@ desc "A set of system commands for Toys"
 long_desc "Contains tools that inspect, configure, and update Toys itself."
 
 tool "version" do
-  desc "Print current Toys version."
+  desc "Print the current Toys version"
 
   def run
     puts ::Toys::VERSION
@@ -40,7 +40,7 @@ tool "version" do
 end
 
 tool "update" do
-  desc "Update Toys if a newer version is available."
+  desc "Update Toys if a newer version is available"
 
   long_desc "Checks rubygems for a newer version of Toys. If one is available, downloads" \
             " and installs it."
@@ -56,7 +56,7 @@ tool "update" do
       latest_version = ::Gem::Version.new($1)
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
-        exit(1) unless options[:yes] ||
+        exit(1) unless option(:yes) ||
                        agree("Update toys from #{cur_version} to #{latest_version}? (y/n) ")
         sh("gem install toys")
       elsif latest_version < cur_version

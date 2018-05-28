@@ -167,12 +167,12 @@ module Toys
       ##
       # Display help text if requested.
       #
-      def execute(tool)
+      def run(tool)
         if tool[:_show_usage]
           help_text = get_help_text(tool)
           str = help_text.usage_string(wrap_width: output_cols)
           output.puts(str)
-        elsif @fallback_execution && !tool[Tool::TOOL_DEFINITION].runnable? ||
+        elsif @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
               tool[:_show_help]
           help_text = get_help_text(tool)
           str = help_text.help_string(recursive: tool[:_recursive_subtools],
@@ -217,9 +217,9 @@ module Toys
       def get_help_text(tool)
         tool_name = tool[:_tool_name]
         return Utils::HelpText.from_tool(tool) if tool_name.nil? || tool_name.empty?
-        loader = tool[Tool::LOADER]
+        loader = tool[Tool::Keys::LOADER]
         tool_definition, rest = loader.lookup(tool_name)
-        help_text = Utils::HelpText.new(tool_definition, loader, tool[Tool::BINARY_NAME])
+        help_text = Utils::HelpText.new(tool_definition, loader, tool[Tool::Keys::BINARY_NAME])
         report_usage_error(tool, tool_name, help_text) unless rest.empty?
         help_text
       end

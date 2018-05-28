@@ -60,11 +60,11 @@ module Toys
       ##
       # Intercept and handle usage errors during execution.
       #
-      def execute(tool)
-        if tool[Tool::USAGE_ERROR]
+      def run(tool)
+        if tool[Tool::Keys::USAGE_ERROR]
           width = ::HighLine.new.output_cols
           help_text = Utils::HelpText.from_tool(tool)
-          @output.puts(tool[Tool::USAGE_ERROR], :bright_red, :bold)
+          @output.puts(tool[Tool::Keys::USAGE_ERROR], :bright_red, :bold)
           @output.puts("")
           @output.puts(help_text.usage_string(wrap_width: width))
           tool.exit(@exit_code)

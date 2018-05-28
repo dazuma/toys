@@ -46,7 +46,7 @@ module Toys
       tool = @tool_definition.tool_class.new(@cli, data)
 
       original_level = @cli.logger.level
-      @cli.logger.level = @cli.base_level - data[Tool::VERBOSITY]
+      @cli.logger.level = @cli.base_level - data[Tool::Keys::VERBOSITY]
       begin
         perform_execution(tool)
       ensure
@@ -58,11 +58,11 @@ module Toys
 
     def create_data(args, base_verbosity)
       data = @tool_definition.default_data.dup
-      data[Tool::TOOL_DEFINITION] = @tool_definition
-      data[Tool::TOOL_NAME] = @tool_definition.full_name
-      data[Tool::VERBOSITY] = base_verbosity
-      data[Tool::ARGS] = args
-      data[Tool::USAGE_ERROR] = nil
+      data[Tool::Keys::TOOL_DEFINITION] = @tool_definition
+      data[Tool::Keys::TOOL_NAME] = @tool_definition.full_name
+      data[Tool::Keys::VERBOSITY] = base_verbosity
+      data[Tool::Keys::ARGS] = args
+      data[Tool::Keys::USAGE_ERROR] = nil
       data
     end
 
@@ -73,7 +73,7 @@ module Toys
       remaining = parse_optional_args(remaining, data)
       parse_remaining_args(remaining, args, data)
     rescue ::OptionParser::ParseError => e
-      data[Tool::USAGE_ERROR] = e.message
+      data[Tool::Keys::USAGE_ERROR] = e.message
     end
 
     def create_option_parser(data)
@@ -151,7 +151,7 @@ module Toys
     end
 
     def make_executor(middleware, tool, next_executor)
-      proc { middleware.execute(tool, &next_executor) }
+      proc { middleware.run(tool, &next_executor) }
     end
   end
 end

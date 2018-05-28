@@ -69,7 +69,7 @@ current directory. Copy the following into the file, and save it:
     tool "greet" do
       desc "My first tool!"
       flag :whom, default: "world"
-      script do
+      def run
         puts "Hello, #{options[:whom]}!"
       end
     end

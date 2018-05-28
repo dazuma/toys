@@ -128,9 +128,9 @@ module Toys
         tool[Exec] ||= Utils::Exec.new do |k|
           case k
           when :logger
-            tool[Tool::LOGGER]
+            tool[Tool::Keys::LOGGER]
           when :nonzero_status_handler
-            if tool[Tool::EXIT_ON_NONZERO_STATUS]
+            if tool[Tool::Keys::EXIT_ON_NONZERO_STATUS]
               proc { |s| tool.exit(s.exitstatus) }
             end
           end

@@ -88,7 +88,7 @@ module Toys
                                                       DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
           tool_definition.add_flag(
-            Tool::VERBOSITY, verbose_flags,
+            Tool::Keys::VERBOSITY, verbose_flags,
             report_collisions: false,
             handler: ->(_val, cur) { cur + 1 },
             desc: "Increase verbosity",
@@ -102,7 +102,7 @@ module Toys
                                                     DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
           tool_definition.add_flag(
-            Tool::VERBOSITY, quiet_flags,
+            Tool::Keys::VERBOSITY, quiet_flags,
             report_collisions: false,
             handler: ->(_val, cur) { cur - 1 },
             desc: "Decrease verbosity",

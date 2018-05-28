@@ -82,7 +82,7 @@ module Toys
       ##
       # This middleware displays the version.
       #
-      def execute(tool)
+      def run(tool)
         if tool[:_show_version]
           @output.puts(@version_string)
         else

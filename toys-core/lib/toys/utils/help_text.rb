@@ -58,7 +58,8 @@ module Toys
       # @return [Toys::Utils::HelpText]
       #
       def self.from_tool(tool)
-        new(tool[Tool::TOOL_DEFINITION], tool[Tool::LOADER], tool[Tool::BINARY_NAME])
+        new(tool[Tool::Keys::TOOL_DEFINITION], tool[Tool::Keys::LOADER],
+            tool[Tool::Keys::BINARY_NAME])
       end
 
       ##

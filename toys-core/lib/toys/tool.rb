@@ -122,8 +122,6 @@ module Toys
       EXIT_ON_NONZERO_STATUS = ::Object.new.freeze
     end
 
-    include Keys
-
     ##
     # Create a Context object. Applications generally will not need to create
     # these objects directly; they are created by the tool when it is preparing
@@ -134,11 +132,11 @@ module Toys
     # @param [Hash] data
     #
     def initialize(cli, data)
-      @_data = data
-      @_data[CLI] = cli
-      @_data[LOADER] = cli.loader
-      @_data[BINARY_NAME] = cli.binary_name
-      @_data[LOGGER] = cli.logger
+      @__data = data
+      @__data[Keys::CLI] = cli
+      @__data[Keys::LOADER] = cli.loader
+      @__data[Keys::BINARY_NAME] = cli.binary_name
+      @__data[Keys::LOGGER] = cli.logger
     end
 
     ##
@@ -146,7 +144,7 @@ module Toys
     # @return [Toys::CLI]
     #
     def cli
-      @_data[CLI]
+      @__data[Keys::CLI]
     end
 
     ##
@@ -154,7 +152,7 @@ module Toys
     # @return [Integer]
     #
     def verbosity
-      @_data[VERBOSITY]
+      @__data[Keys::VERBOSITY]
     end
 
     ##
@@ -162,7 +160,7 @@ module Toys
     # @return [Toys::Definition::Tool]
     #
     def tool_definition
-      @_data[TOOL_DEFINITION]
+      @__data[Keys::TOOL_DEFINITION]
     end
 
     ##
@@ -170,7 +168,7 @@ module Toys
     # @return [Array[String]]
     #
     def tool_name
-      @_data[TOOL_NAME]
+      @__data[Keys::TOOL_NAME]
     end
 
     ##
@@ -179,7 +177,7 @@ module Toys
     # @return [Array[String]]
     #
     def args
-      @_data[ARGS]
+      @__data[Keys::ARGS]
     end
 
     ##
@@ -188,7 +186,7 @@ module Toys
     # @return [String,nil]
     #
     def usage_error
-      @_data[USAGE_ERROR]
+      @__data[Keys::USAGE_ERROR]
     end
 
     ##
@@ -196,7 +194,7 @@ module Toys
     # @return [Logger]
     #
     def logger
-      @_data[LOGGER]
+      @__data[Keys::LOGGER]
     end
 
     ##
@@ -204,7 +202,7 @@ module Toys
     # @return [Toys::Loader]
     #
     def loader
-      @_data[LOADER]
+      @__data[Keys::LOADER]
     end
 
     ##
@@ -212,7 +210,7 @@ module Toys
     # @return [String]
     #
     def binary_name
-      @_data[BINARY_NAME]
+      @__data[Keys::BINARY_NAME]
     end
 
     ##
@@ -222,7 +220,7 @@ module Toys
     # @return [Object]
     #
     def [](key)
-      @_data[key]
+      @__data[key]
     end
     alias get []
 
@@ -233,7 +231,7 @@ module Toys
     # @param [Object] value
     #
     def []=(key, value)
-      @_data[key] = value
+      @__data[key] = value
     end
 
     ##
@@ -244,9 +242,9 @@ module Toys
     #
     def set(key, value = nil)
       if key.is_a?(::Hash)
-        @_data.merge!(key)
+        @__data.merge!(key)
       else
-        @_data[key] = value
+        @__data[key] = value
       end
       self
     end
@@ -260,9 +258,21 @@ module Toys
     # @return [Hash]
     #
     def options
-      @_data.select do |k, _v|
+      @__data.select do |k, _v|
         k.is_a?(::Symbol) || k.is_a?(::String)
       end
+    end
+
+    ##
+    # Returns the value of the given option. Returns only options with string
+    # or symbol keys; returns `nil` if passed other well-known context keys
+    # such as verbosity.
+    #
+    # @param [String,Symbol] key
+    # @return [Object]
+    #
+    def option(key)
+      key.is_a?(::Symbol) || key.is_a?(::String) ? @__data[key] : nil
     end
 
     ##
@@ -277,9 +287,9 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run_tool(*args, cli: nil, exit_on_nonzero_status: nil)
-      cli ||= @_data[CLI]
-      exit_on_nonzero_status = @_data[EXIT_ON_NONZERO_STATUS] if exit_on_nonzero_status.nil?
-      code = cli.run(args.flatten, verbosity: @_data[VERBOSITY])
+      cli ||= @__data[Keys::CLI]
+      exit_on_nonzero_status = @__data[Keys::EXIT_ON_NONZERO_STATUS] if exit_on_nonzero_status.nil?
+      code = cli.run(args.flatten, verbosity: @__data[Keys::VERBOSITY])
       exit(code) if exit_on_nonzero_status && !code.zero?
       code
     end
