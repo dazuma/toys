@@ -5,6 +5,8 @@
 * CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.
 * CHANGED: Renamed "script" to "run", and allow setting of runnable by defining a "run" method
 * CHANGED: Set up a constant scope for each config file, to make constant lookup make sense.
+* CHANGED: Removed run_toys and dropped EXIT_ON_NONZERO_STATUS key in favor of using cli directly.
+* CHANGED: Renamed definition_path to source_path
 * CHANGED: Organized DSL and definition classes
 * ADDED: Helper modules scoped to the tool hierarchy
 

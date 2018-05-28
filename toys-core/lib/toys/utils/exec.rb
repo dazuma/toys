@@ -134,8 +134,18 @@ module Toys
       #     exit code and any captured output.
       #
       def exec(cmd, opts = {}, &block)
+        spawn_cmd =
+          if cmd.is_a?(::Array)
+            if cmd.size == 1 && cmd.first.is_a?(::String)
+              [[cmd.first, opts[:argv0] || cmd.first]]
+            else
+              cmd
+            end
+          else
+            [cmd]
+          end
         exec_opts = Opts.new(@default_opts).add(opts)
-        executor = Executor.new(exec_opts, cmd)
+        executor = Executor.new(exec_opts, spawn_cmd)
         executor.execute(&block)
       end
 
@@ -155,13 +165,8 @@ module Toys
       #     exit code and any captured output.
       #
       def ruby(args, opts = {}, &block)
-        cmd =
-          if args.is_a?(::Array)
-            [[::RbConfig.ruby, "ruby"]] + args
-          else
-            "#{::RbConfig.ruby} #{args}"
-          end
-        exec(cmd, opts, &block)
+        cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
+        exec(cmd, {argv0: "ruby"}.merge(opts), &block)
       end
 
       ##
@@ -170,8 +175,6 @@ module Toys
       # @param [String] cmd The shell command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
       #
       # @return [Integer] The exit code
       #
@@ -188,8 +191,6 @@ module Toys
       # @param [String,Array<String>] cmd The command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
@@ -384,8 +385,8 @@ module Toys
       # @private
       #
       class Executor
-        def initialize(exec_opts, cmd)
-          @cmd = Array(cmd)
+        def initialize(exec_opts, spawn_cmd)
+          @spawn_cmd = spawn_cmd
           @config_opts = exec_opts.config_opts
           @spawn_opts = exec_opts.spawn_opts
           @captures = {}
@@ -409,7 +410,7 @@ module Toys
         def log_command
           logger = @config_opts[:logger]
           if logger && @config_opts[:log_level] != false
-            cmd_str = @cmd.size == 1 ? @cmd.first : @cmd.inspect
+            cmd_str = @spawn_cmd.size == 1 ? @spawn_cmd.first : @spawn_cmd.inspect
             logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str)
           end
         end
@@ -417,7 +418,7 @@ module Toys
         def start_process
           args = []
           args << @config_opts[:env] if @config_opts[:env]
-          args.concat(@cmd)
+          args.concat(@spawn_cmd)
           pid = ::Process.spawn(*args, @spawn_opts)
           @child_streams.each(&:close)
           ::Process.detach(pid)

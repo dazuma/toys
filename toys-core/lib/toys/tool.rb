@@ -113,13 +113,6 @@ module Toys
       # @return [Object]
       #
       USAGE_ERROR = ::Object.new.freeze
-
-      ##
-      # Context key for whether nonzero exit codes from subprocesses should cause
-      # an immediate exit. Value is a truthy or falsy value.
-      # @return [Object]
-      #
-      EXIT_ON_NONZERO_STATUS = ::Object.new.freeze
     end
 
     ##
@@ -273,25 +266,6 @@ module Toys
     #
     def option(key)
       key.is_a?(::Symbol) || key.is_a?(::String) ? @__data[key] : nil
-    end
-
-    ##
-    # Execute another tool, given by the provided arguments.
-    #
-    # @param [String...] args The name of the tool to run along with its
-    #     command line arguments and flags.
-    # @param [Toys::CLI,nil] cli The CLI to use to execute the tool. If `nil`
-    #     (the default), uses the current CLI.
-    # @param [Boolean] exit_on_nonzero_status If true, exit immediately if the
-    #     run returns a nonzero error code.
-    # @return [Integer] The resulting status code
-    #
-    def run_tool(*args, cli: nil, exit_on_nonzero_status: nil)
-      cli ||= @__data[Keys::CLI]
-      exit_on_nonzero_status = @__data[Keys::EXIT_ON_NONZERO_STATUS] if exit_on_nonzero_status.nil?
-      code = cli.run(args.flatten, verbosity: @__data[Keys::VERBOSITY])
-      exit(code) if exit_on_nonzero_status && !code.zero?
-      code
     end
 
     ##

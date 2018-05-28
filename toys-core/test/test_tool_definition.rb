@@ -627,26 +627,26 @@ describe Toys::Definition::Tool do
     end
   end
 
-  describe "definition path" do
+  describe "source path" do
     it "starts at nil" do
-      assert_nil(tool.definition_path)
+      assert_nil(tool.source_path)
     end
 
     it "can be set" do
-      tool.lock_definition_path("path1")
-      assert_equal("path1", tool.definition_path)
+      tool.lock_source_path("path1")
+      assert_equal("path1", tool.source_path)
     end
 
     it "can be set repeatedly to the same value" do
-      tool.lock_definition_path("path1")
-      tool.lock_definition_path("path1")
-      assert_equal("path1", tool.definition_path)
+      tool.lock_source_path("path1")
+      tool.lock_source_path("path1")
+      assert_equal("path1", tool.source_path)
     end
 
     it "prevents defining from multiple paths" do
-      tool.lock_definition_path("path1")
+      tool.lock_source_path("path1")
       assert_raises(Toys::ToolDefinitionError) do
-        tool.lock_definition_path("path2")
+        tool.lock_source_path("path2")
       end
     end
   end
@@ -740,7 +740,7 @@ describe Toys::Definition::Tool do
       subtool.add_optional_arg(:arg1)
       subtool.runnable = proc do
         test.assert_equal("hi", self[:arg1])
-        run_tool(test.tool_name, test.subtool2_name, "ho", exit_on_nonzero_status: true)
+        exit(cli.run(test.tool_name, test.subtool2_name, "ho"))
       end
       subtool2.add_optional_arg(:arg2)
       subtool2.runnable = proc do

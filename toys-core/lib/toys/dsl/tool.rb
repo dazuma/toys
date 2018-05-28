@@ -505,7 +505,7 @@ module Toys
             tool_class.instance_variable_set(:@__cur_tool, cur_tool)
             cur_tool
           end
-        cur_tool.lock_definition_path(path) if cur_tool
+        cur_tool.lock_source_path(path) if cur_tool
         cur_tool
       end
 

@@ -2,7 +2,6 @@
 
 ## Immediate tasks
 
-* Rename run_tool to exec_tool and move to exec helper
 * Create color util to eliminate hard dependency on highline
 * Create gem util to handle declaring/loading/installing of gem dependencies
 

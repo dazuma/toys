@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
 
 ::ENV["TOYS_CORE_LIB_PATH"] = ::File.absolute_path(::File.join(__dir__, "lib"))
+::ENV["TOYS_BIN_PATH"] = ::File.absolute_path(__FILE__)
 load ::File.join(::File.dirname(__dir__), "toys", "bin", "toys")

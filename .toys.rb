@@ -31,18 +31,18 @@ tool "install" do
   desc "Build and install the current gems"
   include :exec
   def run
-    set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
-      version = capture("./toys-dev system version").strip
+    configure_exec(exit_on_nonzero_status: true)
+    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
+      version = capture(["./toys-dev", "system", "version"]).strip
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("build", cli: subcli)
-        sh "gem install pkg/toys-core-#{version}.gem"
+        exit_on_nonzero_status(subcli.run("build"))
+        exec(["gem", "install", "pkg/toys-core-#{version}.gem"])
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("build", cli: subcli)
-        sh "gem install pkg/toys-#{version}.gem"
+        exit_on_nonzero_status(subcli.run("build"))
+        exec(["gem", "install", "pkg/toys-#{version}.gem"])
       end
     end
   end
@@ -55,10 +55,10 @@ tool "ci" do
   def validate_dir
     subcli = cli.child.add_config_path(".toys.rb")
     puts color("** Checking tests...", :cyan)
-    run_tool("test", cli: subcli)
+    exit_on_nonzero_status(subcli.run("test"))
     puts color("** Tests ok.", :cyan)
     puts color("** Checking rubocop...", :cyan)
-    run_tool("rubocop", cli: subcli)
+    exit_on_nonzero_status(subcli.run("rubocop"))
     puts color("** Rubocop ok.", :cyan)
     puts color("** Checking yardoc...", :cyan)
     exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
@@ -70,8 +70,8 @@ tool "ci" do
     puts color("** Yardoc ok.", :cyan)
   end
   def run
-    set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
+    configure_exec(exit_on_nonzero_status: true)
+    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
       ::Dir.chdir("toys-core") do
         puts color("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
         validate_dir
@@ -90,13 +90,13 @@ tool "yardoc" do
   desc "Generates yardoc for both gems"
   include :exec
   def run
-    set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
+    configure_exec(exit_on_nonzero_status: true)
+    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
       ::Dir.chdir("toys-core") do
-        exec "yardoc"
+        exec(["yardoc"])
       end
       ::Dir.chdir("toys") do
-        exec "yardoc"
+        exec(["yardoc"])
       end
     end
   end
@@ -104,17 +104,17 @@ end
 
 tool "clean" do
   desc "Cleans both gems"
-  include :exec
   def run
-    set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
+    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("clean", cli: subcli)
+        status = subcli.run("clean")
+        exit(status) unless status.zero?
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("clean", cli: subcli)
+        status = subcli.run("clean")
+        exit(status) unless status.zero?
       end
     end
   end
@@ -125,20 +125,20 @@ tool "release" do
   include :exec
   include :highline
   def run
-    set EXIT_ON_NONZERO_STATUS, true
-    ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
-      version = capture("./toys-dev system version").strip
+    configure_exec(exit_on_nonzero_status: true)
+    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
+      version = capture(["./toys-dev", "system", "version"]).strip
       exit(1) unless agree("Release toys #{version}? (y/n) ")
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("release", "-y", cli: subcli)
+        exit_on_nonzero_status(subcli.run("release", "-y"))
       end
       ::Dir.chdir("toys") do
         subcli = cli.child.add_config_path(".toys.rb")
-        run_tool("release", "-y", cli: subcli)
+        exit_on_nonzero_status(subcli.run("release", "-y"))
       end
-      sh "git tag v#{version}"
-      sh "git push origin v#{version}"
+      exec(["git", "tag", "v#{version}"])
+      exec(["git", "push", "origin", "v#{version}"])
     end
   end
 end

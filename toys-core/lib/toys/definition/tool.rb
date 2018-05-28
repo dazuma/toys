@@ -76,7 +76,7 @@ module Toys
         @priority = priority
         @middleware_stack = Middleware.resolve_stack(middleware_stack)
 
-        @definition_path = nil
+        @source_path = nil
         @definition_finished = false
 
         @desc = Toys::Utils::WrappableString.new("")
@@ -174,7 +174,7 @@ module Toys
       # Returns the path to the file that contains the definition of this tool.
       # @return [String]
       #
-      attr_reader :definition_path
+      attr_reader :source_path
 
       ##
       # Returns the local name of this tool.
@@ -296,13 +296,13 @@ module Toys
       #
       # @param [String] path The path to the file defining this tool
       #
-      def lock_definition_path(path)
-        if definition_path && definition_path != path
+      def lock_source_path(path)
+        if source_path && source_path != path
           raise ToolDefinitionError,
                 "Cannot redefine tool #{display_name.inspect} in #{path}" \
-                " (already defined in #{definition_path})"
+                " (already defined in #{source_path})"
         end
-        @definition_path = path
+        @source_path = path
       end
 
       ##

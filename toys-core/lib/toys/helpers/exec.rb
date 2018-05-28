@@ -96,8 +96,6 @@ module Toys
       # @param [String] cmd The shell command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
-      #     the subprocess streams.
       #
       # @return [Integer] The exit code
       #
@@ -114,8 +112,6 @@ module Toys
       # @param [String,Array<String>] cmd The command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
-      #     the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
@@ -123,26 +119,31 @@ module Toys
         Exec._exec(self).capture(cmd, Exec._setup_exec_opts(opts, self))
       end
 
+      ##
+      # Exit if the given status code is nonzero. Otherwise, returns 0.
+      #
+      # @param [Integer,Process::Status,Toys::Utils::Exec::Result] status
+      #
+      def exit_on_nonzero_status(status)
+        status = status.exit_code if status.respond_to?(:exit_code)
+        status = status.exitstatus if status.respond_to?(:exitstatus)
+        exit(status) unless status.zero?
+        0
+      end
+
       ## @private
       def self._exec(tool)
         tool[Exec] ||= Utils::Exec.new do |k|
-          case k
-          when :logger
-            tool[Tool::Keys::LOGGER]
-          when :nonzero_status_handler
-            if tool[Tool::Keys::EXIT_ON_NONZERO_STATUS]
-              proc { |s| tool.exit(s.exitstatus) }
-            end
-          end
+          k == :logger ? tool[Tool::Keys::LOGGER] : nil
         end
       end
 
       ## @private
-      def self._setup_exec_opts(opts, context)
+      def self._setup_exec_opts(opts, tool)
         return opts unless opts.key?(:exit_on_nonzero_status)
         nonzero_status_handler =
           if opts[:exit_on_nonzero_status]
-            proc { |s| context.exit(s.exitstatus) }
+            proc { |s| tool.exit(s.exitstatus) }
           end
         opts.merge(nonzero_status_handler: nonzero_status_handler)
       end

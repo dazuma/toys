@@ -34,6 +34,11 @@
 # individual directories.
 #
 module Toys
+  ##
+  # Path to the Toys binary
+  # @return [String]
+  #
+  BINARY_PATH = ::ENV["TOYS_BIN_PATH"] || "toys"
 end
 
 require "toys/version"

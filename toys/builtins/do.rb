@@ -59,7 +59,7 @@ def run
   option(:args)
     .chunk { |arg| arg == delim ? :_separator : true }
     .each do |_, action|
-      code = run_tool(action)
+      code = cli.run(action)
       exit(code) unless code.zero?
     end
 end
