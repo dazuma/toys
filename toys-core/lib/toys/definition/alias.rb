@@ -41,7 +41,7 @@ module Toys
       #     be a local reference (a single string) or a global reference (an
       #     array of strings)
       #
-      def initialize(full_name, target, priority)
+      def initialize(loader, full_name, target, priority)
         @target_name =
           if target.is_a?(::String)
             full_name[0..-2] + [target]
@@ -51,7 +51,14 @@ module Toys
         @target_name.freeze
         @full_name = full_name.dup.freeze
         @priority = priority
+        @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
       end
+
+      ##
+      # Return the tool class.
+      # @return [Class]
+      #
+      attr_reader :tool_class
 
       ##
       # Return the name of the tool as an array of strings.

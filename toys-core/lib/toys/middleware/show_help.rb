@@ -39,9 +39,9 @@ module Toys
     ##
     # A middleware that shows help text for the tool when a flag (typically
     # `--help`) is provided. It can also be configured to show help by
-    # default if the tool is a namespace with no script.
+    # default if the tool is a namespace that is not runnable.
     #
-    # If a tool has no script, this middleware can also add a
+    # If a tool is not runnable, this middleware can also add a
     # `--[no-]recursive` flag, which, when set to `true` (the default), shows
     # all subtools recursively rather than only immediate subtools. This
     # middleware can also search for keywords in its subtools.
@@ -103,9 +103,9 @@ module Toys
       # @param [Boolean] default_recursive Whether to search recursively for
       #     subtools by default. Default is `false`.
       # @param [Boolean] fallback_execution Cause the tool to display its own
-      #     help text if it does not otherwise have an script. This is mostly
-      #     useful for namespaces, which have children but no script. Default
-      #     is `false`.
+      #     help text if it is not otherwise runnable. This is mostly useful
+      #     for namespaces, which have children are not runnable. Default is
+      #     `false`.
       # @param [Boolean] allow_root_args If the root tool includes flags for
       #     help or usage, and doesn't otherwise use positional arguments,
       #     then a tool name can be passed as arguments to display help for
@@ -172,7 +172,7 @@ module Toys
           help_text = get_help_text(tool)
           str = help_text.usage_string(wrap_width: output_cols)
           output.puts(str)
-        elsif @fallback_execution && !tool[Tool::TOOL_DEFINITION].includes_script? ||
+        elsif @fallback_execution && !tool[Tool::TOOL_DEFINITION].runnable? ||
               tool[:_show_help]
           help_text = get_help_text(tool)
           str = help_text.help_string(recursive: tool[:_recursive_subtools],

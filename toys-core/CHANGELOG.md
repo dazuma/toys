@@ -1,5 +1,10 @@
 # Release History
 
+### 0.3.7 / TBD
+
+* CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods and modules instead of weird helper-things.
+* CHANGED: Organized DSL and definition classes
+
 ### 0.3.6 / 2018-05-21
 
 * CHANGED: Renamed show_version middleware to show_root_version.

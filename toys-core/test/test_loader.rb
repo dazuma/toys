@@ -108,14 +108,14 @@ describe Toys::Loader do
 
     it "finds a namespace directly defined" do
       tool, remaining = loader.lookup(["namespace-1"])
-      assert_equal(false, tool.includes_script?)
+      assert_equal(false, tool.runnable?)
       assert_equal(["namespace-1"], tool.full_name)
       assert_equal([], remaining)
     end
 
     it "finds the nearest namespace directly defined if a query doesn't match" do
       tool, remaining = loader.lookup(["namespace-1", "tool-blah"])
-      assert_equal(false, tool.includes_script?)
+      assert_equal(false, tool.runnable?)
       assert_equal(["namespace-1"], tool.full_name)
       assert_equal(["tool-blah"], remaining)
     end

@@ -65,12 +65,14 @@ module Toys
       ##
       # Create a new tool.
       #
+      # @private
+      #
       # @param [Array<String>] full_name The name of the tool
       #
-      def initialize(full_name, priority, tool_class, middleware_stack)
+      def initialize(loader, full_name, priority, middleware_stack)
         @full_name = full_name.dup.freeze
+        @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
         @priority = priority
-        @tool_class = tool_class
         @middleware_stack = Middleware.resolve_stack(middleware_stack)
 
         @definition_path = nil
@@ -88,7 +90,7 @@ module Toys
         @required_arg_definitions = []
         @optional_arg_definitions = []
         @remaining_args_definition = nil
-        @script = nil
+        @runnable = false
       end
 
       ##
@@ -105,7 +107,7 @@ module Toys
       attr_reader :priority
 
       ##
-      # Return the class.
+      # Return the tool class.
       # @return [Class]
       #
       attr_reader :tool_class
@@ -160,12 +162,6 @@ module Toys
       attr_reader :default_data
 
       ##
-      # Return the script block, or `nil` if not present.
-      # @return [Proc,nil]
-      #
-      attr_reader :script
-
-      ##
       # Returns the middleware stack
       # @return [Array<Object>]
       #
@@ -203,11 +199,11 @@ module Toys
       end
 
       ##
-      # Returns true if this tool has an script defined.
+      # Returns true if this tool is marked as runnable.
       # @return [Boolean]
       #
-      def includes_script?
-        script.is_a?(::Proc)
+      def runnable?
+        @runnable
       end
 
       ##
@@ -234,7 +230,7 @@ module Toys
       # @return [Boolean]
       #
       def includes_definition?
-        includes_arguments? || includes_script?
+        includes_arguments? || runnable?
       end
 
       ##
@@ -485,14 +481,21 @@ module Toys
       end
 
       ##
-      # Set the script for this tool. This is a proc that will be called,
-      # with `self` set to a {Toys::Context}.
+      # Mark this tool as runnable
       #
-      # @param [Proc] script The script for this tool.
-      #
-      def script=(script)
+      def mark_runnable
         check_definition_state
-        @script = script
+        @runnable = true
+        self
+      end
+
+      ##
+      # Set the runnable block
+      #
+      # @param [Proc] proc The runnable block
+      #
+      def runnable=(proc)
+        @tool_class.run(&proc)
       end
 
       ##

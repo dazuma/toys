@@ -73,7 +73,7 @@ module Toys
 
           include :exec
 
-          script do
+          run do
             require "yard"
             files = []
             patterns = Array(template.files)

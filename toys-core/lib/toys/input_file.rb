@@ -28,38 +28,34 @@
 ;
 
 ##
-# Base module for tool classes
+# Internal modules providing constant namespaces for config files.
 #
-module ToysToolClasses
-  ##
-  # Add the given tool class to the class hierarchy.
-  #
-  def self.add(tool_class, words, priority, loader)
-    if words.empty?
-      mangled_name =
-        if priority > 0
-          "TOYSroot_Pp#{priority}"
-        elsif priority < 0
-          "TOYSroot_Pm#{-priority}"
-        else
-          "TOYSroot_P0"
-        end
-      parent_class = base_module(loader)
-    else
-      parent_class = loader.get_tool_class(words.slice(0..-2), priority)
-      mangled_name = "TOYStool_" + words.last.gsub("_", "_u_").gsub("-", "_h_")
-    end
-    parent_class.const_set(mangled_name, tool_class)
+module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
+  ## @private
+  def self.__binding
+    binding
   end
 
-  ##
-  # Return a base module unique to the given object.
-  #
-  def self.base_module(loader)
-    base_name = "TOYSbase_#{loader.object_id}"
-    return const_get(base_name) if const_defined?(base_name)
-    mod = ::Module.new
-    const_set(base_name, mod)
-    mod
+  ## @private
+  def self.evaluate(tool_class, remaining_words, path)
+    namespace = ::Module.new
+    namespace.module_eval do
+      include ::Toys::Tool::Keys
+      @tool_class = tool_class
+    end
+    name = "M#{namespace.object_id}"
+    const_set(name, namespace)
+    str = <<-STR
+      module #{name}; @tool_class.class_eval do
+      #{::IO.read(path)}
+      end end
+    STR
+    ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
+      ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
+        # rubocop:disable Security/Eval
+        eval(str, __binding, path, 0)
+        # rubocop:enable Security/Eval
+      end
+    end
   end
 end

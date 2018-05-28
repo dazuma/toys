@@ -86,16 +86,15 @@ module Toys
       # Create a SetDefaultDescriptions middleware given default descriptions.
       #
       # @param [String,nil] default_tool_desc The default short description for
-      #     tools with an script, or `nil` not to set one. Defaults to
+      #     runnable tools, or `nil` not to set one. Defaults to
       #     {DEFAULT_TOOL_DESC}.
       # @param [String,nil] default_tool_long_desc The default long description
-      #     for tools with an script, or `nil` not to set one. Defaults to
-      #     `nil`.
+      #     for runnable tools, or `nil` not to set one. Defaults to `nil`.
       # @param [String,nil] default_namespace_desc The default short
-      #     description for tools with no script, or `nil` not to set one.
+      #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to {DEFAULT_TOOL_DESC}.
       # @param [String,nil] default_namespace_long_desc The default long
-      #     description for tools with no script, or `nil` not to set one.
+      #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to `nil`.
       # @param [String,nil] default_root_desc The default short description for
       #     the root tool, or `nil` not to set one. Defaults to
@@ -151,7 +150,7 @@ module Toys
       def generate_tool_desc(tool, data)
         if tool.root?
           @default_root_desc
-        elsif !tool.includes_script? && data[:loader].has_subtools?(tool.full_name)
+        elsif !tool.runnable? && data[:loader].has_subtools?(tool.full_name)
           @default_namespace_desc
         else
           @default_tool_desc
@@ -174,7 +173,7 @@ module Toys
       def generate_tool_long_desc(tool, data)
         if tool.root?
           @default_root_long_desc
-        elsif !tool.includes_script? && data[:loader].has_subtools?(tool.full_name)
+        elsif !tool.runnable? && data[:loader].has_subtools?(tool.full_name)
           @default_namespace_long_desc
         else
           @default_tool_long_desc

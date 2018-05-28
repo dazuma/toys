@@ -116,7 +116,7 @@ module Toys
     def parse_remaining_args(remaining, args, data)
       return if remaining.empty?
       unless @tool_definition.remaining_args_definition
-        if @tool_definition.includes_script?
+        if @tool_definition.runnable?
           raise create_parse_error(remaining, "Extra arguments provided")
         else
           raise create_parse_error(@tool_definition.full_name + args, "Tool not found")
@@ -134,8 +134,8 @@ module Toys
 
     def perform_execution(tool)
       executor = proc do
-        if @tool_definition.includes_script?
-          tool.instance_eval(&@tool_definition.script)
+        if @tool_definition.runnable?
+          tool.run
         else
           @cli.logger.fatal("No implementation for tool #{@tool_definition.display_name.inspect}")
           tool.exit(-1)

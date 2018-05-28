@@ -99,7 +99,7 @@ module Toys
       @loader = Loader.new(
         index_file_name: index_file_name,
         preload_file_name: preload_file_name,
-        middleware_stack: middleware_stack
+        middleware_stack: @middleware_stack
       )
       @error_handler = error_handler || DefaultErrorHandler.new
     end

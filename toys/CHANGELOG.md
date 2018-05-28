@@ -1,5 +1,9 @@
 # Release History
 
+### 0.3.7 / TBD
+
+* CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods and modules instead of weird helper-things.
+
 ### 0.3.6 / 2018-05-21
 
 * CHANGED: Removed Context#new_cli and exposed Context#cli instead.

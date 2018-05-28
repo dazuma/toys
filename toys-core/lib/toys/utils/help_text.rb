@@ -161,16 +161,16 @@ module Toys
         def assemble
           add_synopsis_section
           add_flags_section
-          add_positional_arguments_section if @tool.includes_script?
+          add_positional_arguments_section if @tool.runnable?
           add_subtool_list_section
           @result = @lines.join("\n") + "\n"
         end
 
         def add_synopsis_section
           synopses = []
-          synopses << namespace_synopsis if !@subtools.empty? && !@tool.includes_script?
+          synopses << namespace_synopsis if !@subtools.empty? && !@tool.runnable?
           synopses << tool_synopsis
-          synopses << namespace_synopsis if !@subtools.empty? && @tool.includes_script?
+          synopses << namespace_synopsis if !@subtools.empty? && @tool.runnable?
           first = true
           synopses.each do |synopsis|
             @lines << (first ? "Usage:  #{synopsis}" : "        #{synopsis}")
@@ -326,11 +326,11 @@ module Toys
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
-          if !@subtools.empty? && !@tool.includes_script?
+          if !@subtools.empty? && !@tool.runnable?
             add_synopsis_clause(namespace_synopsis)
           end
           add_synopsis_clause(tool_synopsis)
-          if !@subtools.empty? && @tool.includes_script?
+          if !@subtools.empty? && @tool.runnable?
             add_synopsis_clause(namespace_synopsis)
           end
         end

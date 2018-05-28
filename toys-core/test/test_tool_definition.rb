@@ -30,36 +30,27 @@
 require "helper"
 
 describe Toys::Definition::Tool do
-  let(:fake_loader) {
-    obj = Object.new
-    def obj.has_subtools?(_words)
-      false
-    end
-    obj
-  }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+  let(:full_cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
+  let(:loader) { cli.loader }
+  let(:full_loader) { full_cli.loader }
   let(:binary_name) { "toys" }
   let(:tool_name) { "foo" }
   let(:full_tool_name) { "fool" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
   let(:alias_name) { "alz" }
-  let(:root_tool) { Toys::Definition::Tool.new([], 0, Toys::Tool, []) }
-  let(:tool) {
-    dsl = Toys::DSL::Tool.new_class([tool_name], 0, fake_loader)
-    Toys::Definition::Tool.new([tool_name], 0, dsl, [])
-  }
-  let(:subtool) { Toys::Definition::Tool.new([tool_name, subtool_name], 0, Toys::Tool, []) }
-  let(:subtool2) { Toys::Definition::Tool.new([tool_name, subtool2_name], 0, Toys::Tool, []) }
-  let(:full_tool) {
-    Toys::Definition::Tool.new([full_tool_name], 0, Toys::Tool, Toys::CLI.default_middleware_stack)
-  }
-  let(:alias_tool) { Toys::Definition::Tool.new([tool_name, alias_name], 0, Toys::Tool, []) }
+  let(:root_tool) { loader.activate_tool_definition([], 0) }
+  let(:tool) { loader.activate_tool_definition([tool_name], 0) }
+  let(:subtool) { loader.activate_tool_definition([tool_name, subtool_name], 0) }
+  let(:subtool2) { loader.activate_tool_definition([tool_name, subtool2_name], 0) }
+  let(:full_tool) { full_loader.activate_tool_definition([full_tool_name], 0) }
+  let(:alias_tool) { loader.activate_tool_definition([tool_name, alias_name], 0) }
   let(:logger) {
     Logger.new(StringIO.new).tap do |lgr|
       lgr.level = Logger::WARN
     end
   }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
   def wrappable(str)
     Toys::Utils::WrappableString.new(str)
   end
@@ -446,7 +437,7 @@ describe Toys::Definition::Tool do
     it "allows empty arguments when none are specified" do
       assert_equal(false, tool.includes_definition?)
       test = self
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -456,7 +447,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_flag(:a, ["-a", "--aa"], desc: "hi there")
       assert_equal(true, tool.includes_definition?)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: nil}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -465,7 +456,7 @@ describe Toys::Definition::Tool do
     it "sets simple boolean flag" do
       test = self
       tool.add_flag(:a, ["-a", "--aa"], desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: true}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa"]))
@@ -474,7 +465,7 @@ describe Toys::Definition::Tool do
     it "defaults value flag to nil" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: nil}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -483,7 +474,7 @@ describe Toys::Definition::Tool do
     it "honors given default of a value flag" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hehe", desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "hehe"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -492,7 +483,7 @@ describe Toys::Definition::Tool do
     it "sets value flag" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "hoho"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "hoho"]))
@@ -501,7 +492,7 @@ describe Toys::Definition::Tool do
     it "converts a value flag" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: Integer, desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: 1234}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "1234"]))
@@ -510,7 +501,7 @@ describe Toys::Definition::Tool do
     it "checks match of a value flag" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: Integer, desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "a1234"]))
@@ -520,7 +511,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_acceptor(Toys::Definition::PatternAcceptor.new("myenum", /foo|bar/))
       tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum", desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "bar"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "bar"]))
@@ -530,7 +521,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_acceptor(Toys::Definition::PatternAcceptor.new("myenum", /foo|bar/))
       tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum", desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_match(/invalid argument: --aa 1234/, usage_error)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "1234"]))
@@ -539,7 +530,7 @@ describe Toys::Definition::Tool do
     it "defaults the name of a value flag" do
       test = self
       tool.add_flag(:a_bc, accept: String, desc: "hi there")
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--a-bc", "hoho"]))
@@ -548,7 +539,7 @@ describe Toys::Definition::Tool do
     it "honors the handler" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hi", handler: ->(v, c) { "#{c}#{v}" })
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "hiho"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "ho"]))
@@ -556,7 +547,7 @@ describe Toys::Definition::Tool do
 
     it "errors on an unknown flag" do
       test = self
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_match(/invalid option: -a/, usage_error)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["-a"]))
@@ -567,7 +558,7 @@ describe Toys::Definition::Tool do
     it "allows empty arguments when none are specified" do
       assert_equal(false, tool.includes_definition?)
       test = self
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal([], args)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -580,7 +571,7 @@ describe Toys::Definition::Tool do
       tool.add_optional_arg(:c)
       tool.add_required_arg(:a, desc: "Hello")
       tool.set_remaining_args(:d)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
       end
       assert_equal(0,
@@ -593,7 +584,7 @@ describe Toys::Definition::Tool do
       tool.add_optional_arg(:c)
       tool.add_required_arg(:a, desc: "Hello")
       tool.set_remaining_args(:d)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo", "bar"]))
@@ -603,7 +594,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_required_arg(:a)
       tool.add_required_arg(:b)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_match(/No value given for required argument B/, usage_error)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo"]))
@@ -613,7 +604,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_optional_arg(:b)
       tool.add_required_arg(:a)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_match(/Extra arguments provided: baz/, usage_error)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo", "bar", "baz"]))
@@ -623,7 +614,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_optional_arg(:b, default: "hello")
       tool.add_required_arg(:a)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal({a: "foo", b: "hello"}, options)
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo"]))
@@ -658,7 +649,7 @@ describe Toys::Definition::Tool do
     it "can be looked up from standard helpers" do
       test = self
       tool.tool_class.include(:fileutils)
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
       assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
@@ -668,17 +659,17 @@ describe Toys::Definition::Tool do
   describe "finish_definition" do
     it "runs middleware config" do
       assert_equal(true, full_tool.flag_definitions.empty?)
-      full_tool.finish_definition(fake_loader)
+      full_tool.finish_definition(full_loader)
       assert_equal(false, full_tool.flag_definitions.empty?)
     end
 
     it "can be called multiple times" do
-      full_tool.finish_definition(fake_loader)
-      full_tool.finish_definition(fake_loader)
+      full_tool.finish_definition(full_loader)
+      full_tool.finish_definition(full_loader)
     end
 
     it "prevents further editing of description" do
-      full_tool.finish_definition(fake_loader)
+      full_tool.finish_definition(full_loader)
       assert_raises(Toys::ToolDefinitionError) do
         full_tool.desc = "hi"
       end
@@ -695,7 +686,7 @@ describe Toys::Definition::Tool do
       tool.add_optional_arg(:arg1)
       tool.add_optional_arg(:arg2)
       tool.add_flag(:sw1, ["-a"])
-      tool.script = proc do
+      tool.runnable = proc do
         test.assert_equal(0, verbosity)
         test.assert_equal(test.tool, tool_definition)
         test.assert_equal(test.tool.full_name, tool_name)
@@ -708,7 +699,7 @@ describe Toys::Definition::Tool do
     end
 
     it "supports exit code" do
-      tool.script = proc do
+      tool.runnable = proc do
         exit(2)
       end
       assert_equal(2, Toys::Executor.new(cli, tool).execute([]))
@@ -717,16 +708,15 @@ describe Toys::Definition::Tool do
     it "supports sub-runs" do
       test = self
       subtool.add_optional_arg(:arg1)
-      subtool.script = proc do
+      subtool.runnable = proc do
         test.assert_equal("hi", self[:arg1])
         run_tool(test.tool_name, test.subtool2_name, "ho", exit_on_nonzero_status: true)
       end
       subtool2.add_optional_arg(:arg2)
-      subtool2.script = proc do
+      subtool2.runnable = proc do
         test.assert_equal("ho", self[:arg2])
         exit(3)
       end
-      cli.loader.put_tool!(subtool2)
       assert_equal(3, Toys::Executor.new(cli, subtool).execute(["hi"]))
     end
   end

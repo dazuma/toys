@@ -30,7 +30,7 @@
 tool "install" do
   desc "Build and install the current gems"
   include :exec
-  script do
+  def run
     set EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       version = capture("./toys-dev system version").strip
@@ -69,7 +69,7 @@ tool "ci" do
     end
     puts color("** Yardoc ok.", :cyan)
   end
-  script do
+  def run
     set EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -89,7 +89,7 @@ end
 tool "yardoc" do
   desc "Generates yardoc for both gems"
   include :exec
-  script do
+  def run
     set EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -105,7 +105,7 @@ end
 tool "clean" do
   desc "Cleans both gems"
   include :exec
-  script do
+  def run
     set EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       ::Dir.chdir("toys-core") do
@@ -124,7 +124,7 @@ tool "release" do
   desc "Releases both gems"
   include :exec
   include :highline
-  script do
+  def run
     set EXIT_ON_NONZERO_STATUS, true
     ::Dir.chdir(::File.dirname(tool_definition.definition_path)) do
       version = capture("./toys-dev system version").strip

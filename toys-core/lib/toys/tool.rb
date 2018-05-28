@@ -293,10 +293,5 @@ module Toys
     def exit(code)
       throw :result, code
     end
-
-    ## @private
-    def self.__binding
-      binding
-    end
   end
 end

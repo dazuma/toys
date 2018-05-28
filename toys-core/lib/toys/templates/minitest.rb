@@ -92,7 +92,7 @@ module Toys
 
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
-          script do
+          run do
             ruby_args = []
             unless template.libs.empty?
               lib_path = template.libs.join(::File::PATH_SEPARATOR)

@@ -3,7 +3,7 @@ append "namespace-1" do
     desc "file tool-1-2 short description"
     long_desc "file tool-1-2 long description"
 
-    script do
+    def run
       puts "file tool-1-2 execution"
     end
   end

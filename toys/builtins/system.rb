@@ -34,7 +34,7 @@ long_desc "Contains tools that inspect, configure, and update Toys itself."
 tool "version" do
   desc "Print current Toys version."
 
-  script do
+  def run
     puts ::Toys::VERSION
   end
 end
@@ -50,10 +50,9 @@ tool "update" do
   include :exec
   include :highline
 
-  script do
+  def run
     logger.info "Checking rubygems for the latest Toys release..."
-    version_info = capture("gem query -q -r -e toys")
-    if version_info =~ /toys\s\((.+)\)/
+    if capture("gem query -q -r -e toys") =~ /toys\s\((.+)\)/
       latest_version = ::Gem::Version.new($1)
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version

@@ -64,6 +64,13 @@ module Toys
     #     toys greet rubyists
     #
     module Tool
+      ## @private
+      def method_added(meth)
+        return if meth != :run
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.mark_runnable if cur_tool
+      end
+
       ##
       # Create an acceptor that can be passed into a flag or arg. An acceptor
       # validates and/or converts a string parameter to a Ruby object. This
@@ -105,6 +112,8 @@ module Toys
       # @param [Proc,nil] converter The validator.
       #
       def acceptor(name, validator = nil, converter = nil, &block)
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         accept =
           case validator
           when ::Regexp
@@ -116,7 +125,7 @@ module Toys
           else
             raise ToolDefinitionError, "Illegal validator: #{validator.inspect}"
           end
-        __cur_tool.add_acceptor(accept)
+        cur_tool.add_acceptor(accept)
         self
       end
 
@@ -130,10 +139,12 @@ module Toys
       #
       def tool(word, &block)
         word = word.to_s
-        subtool_words = @words + [word]
-        next_remaining = Loader.next_remaining_words(@remaining_words, word)
-        subtool_class = @loader.get_tool_class(subtool_words, @priority)
-        DSL::Tool.evaluate(subtool_class, next_remaining, @path, block)
+        subtool_words = @__words + [word]
+        next_remaining = Loader.next_remaining_words(@__remaining_words, word)
+        subtool_class = @__loader.get_tool_definition(subtool_words, @__priority).tool_class
+        DSL::Tool.prepare(subtool_class, next_remaining, @__path) do
+          subtool_class.class_eval(&block)
+        end
         self
       end
       alias name tool
@@ -145,7 +156,7 @@ module Toys
       # @param [String] target The target of the alias
       #
       def alias_tool(word, target)
-        @loader.make_alias(@words + [word.to_s], @words + [target.to_s], @priority)
+        @__loader.make_alias(@__words + [word.to_s], @__words + [target.to_s], @__priority)
         self
       end
 
@@ -155,10 +166,10 @@ module Toys
       # @param [String] word The name of the alias
       #
       def alias_as(word)
-        if @words.empty?
+        if @__words.empty?
           raise ToolDefinitionError, "Cannot make an alias of the root."
         end
-        @loader.make_alias(@words[0..-2] + [word.to_s], @words, @priority)
+        @__loader.make_alias(@__words[0..-2] + [word.to_s], @__words, @__priority)
         self
       end
 
@@ -168,7 +179,7 @@ module Toys
       # @param [String] path The file or directory to include.
       #
       def load(path)
-        @loader.include_path(path, @words, @remaining_words, @priority)
+        @__loader.include_path(path, @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -226,9 +237,8 @@ module Toys
       # @param [Toys::Utils::WrappableString,String,Array<String>] str
       #
       def desc(str)
-        return self if __cur_tool.nil?
-        __cur_tool.lock_definition_path(@path)
-        __cur_tool.desc = str
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.desc = str if cur_tool
         self
       end
       alias short_desc desc
@@ -253,9 +263,8 @@ module Toys
       # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
       #
       def long_desc(*strs)
-        return self if __cur_tool.nil?
-        __cur_tool.lock_definition_path(@path)
-        __cur_tool.long_desc = strs
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.long_desc = strs if cur_tool
         self
       end
 
@@ -300,12 +309,12 @@ module Toys
                accept: nil, default: nil, handler: nil,
                report_collisions: true,
                desc: nil, long_desc: nil)
-        return self if __cur_tool.nil?
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
                                  desc, long_desc)
         yield flag_dsl if block_given?
-        __cur_tool.lock_definition_path(@path)
-        flag_dsl._add_to(__cur_tool, key)
+        flag_dsl._add_to(cur_tool, key)
         self
       end
 
@@ -334,11 +343,11 @@ module Toys
       #     this argument in a block.
       #
       def required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
-        return self if __cur_tool.nil?
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, nil, display_name, desc, long_desc)
         yield arg_dsl if block_given?
-        __cur_tool.lock_definition_path(@path)
-        arg_dsl._add_required_to(__cur_tool, key)
+        arg_dsl._add_required_to(cur_tool, key)
         self
       end
       alias required required_arg
@@ -373,11 +382,11 @@ module Toys
       #
       def optional_arg(key, default: nil, accept: nil, display_name: nil,
                        desc: nil, long_desc: nil)
-        return self if __cur_tool.nil?
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         yield arg_dsl if block_given?
-        __cur_tool.lock_definition_path(@path)
-        arg_dsl._add_optional_to(__cur_tool, key)
+        arg_dsl._add_optional_to(cur_tool, key)
         self
       end
       alias optional optional_arg
@@ -411,11 +420,11 @@ module Toys
       #
       def remaining_args(key, default: [], accept: nil, display_name: nil,
                          desc: nil, long_desc: nil)
-        return self if __cur_tool.nil?
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         yield arg_dsl if block_given?
-        __cur_tool.lock_definition_path(@path)
-        arg_dsl._set_remaining_on(__cur_tool, key)
+        arg_dsl._set_remaining_on(cur_tool, key)
         self
       end
       alias remaining remaining_args
@@ -424,10 +433,8 @@ module Toys
       # Specify the script for this tool. This is a block that will be called,
       # with `self` set to a {Toys::Tool}.
       #
-      def script(&block)
-        return self if __cur_tool.nil?
-        __cur_tool.lock_definition_path(@path)
-        __cur_tool.script = block
+      def run(&block)
+        define_method(:run, &block)
         self
       end
 
@@ -451,43 +458,47 @@ module Toys
       end
 
       ## @private
-      def __cur_tool
-        unless defined? @__cur_tool
-          @__cur_tool = @loader.activate_tool_definition(@words, @priority)
-        end
-        @__cur_tool
-      end
-
-      ## @private
       def self.new_class(words, priority, loader)
         tool_class = ::Class.new(::Toys::Tool)
         tool_class.extend(DSL::Tool)
-        tool_class.instance_variable_set(:@words, words)
-        tool_class.instance_variable_set(:@priority, priority)
-        tool_class.instance_variable_set(:@loader, loader)
-        tool_class.instance_variable_set(:@remaining_words, nil)
-        tool_class.instance_variable_set(:@path, nil)
+        tool_class.instance_variable_set(:@__words, words)
+        tool_class.instance_variable_set(:@__priority, priority)
+        tool_class.instance_variable_set(:@__loader, loader)
+        tool_class.instance_variable_set(:@__remaining_words, nil)
+        tool_class.instance_variable_set(:@__path, nil)
         tool_class
       end
 
       ## @private
-      def self.evaluate(tool_class, remaining_words, path, source)
-        tool_class.instance_variable_set(:@remaining_words, remaining_words)
-        tool_class.instance_variable_set(:@path, path)
-        case source
-        when String
-          ContextualError.capture_path("Error while loading Toys config!", path) do
-            # rubocop:disable Security/Eval
-            eval(source, tool_class.__binding, path, 1)
-            # rubocop:enable Security/Eval
+      def self.activate_tool(tool_class)
+        path = tool_class.instance_variable_get(:@__path)
+        cur_tool =
+          if tool_class.instance_variable_defined?(:@__cur_tool)
+            tool_class.instance_variable_get(:@__cur_tool)
+          else
+            loader = tool_class.instance_variable_get(:@__loader)
+            words = tool_class.instance_variable_get(:@__words)
+            priority = tool_class.instance_variable_get(:@__priority)
+            cur_tool = loader.activate_tool_definition(words, priority)
+            if cur_tool.is_a?(Definition::Alias)
+              raise ToolDefinitionError,
+                    "Cannot configure #{words.join(' ').inspect} because it is an alias"
+            end
+            tool_class.instance_variable_set(:@__cur_tool, cur_tool)
+            cur_tool
           end
-        when ::Proc
-          tool_class.class_eval(&source)
-        end
-        nil
+        cur_tool.lock_definition_path(path) if cur_tool
+        cur_tool
+      end
+
+      ## @private
+      def self.prepare(tool_class, remaining_words, path)
+        tool_class.instance_variable_set(:@__remaining_words, remaining_words)
+        tool_class.instance_variable_set(:@__path, path)
+        yield
       ensure
-        tool_class.instance_variable_set(:@remaining_words, nil)
-        tool_class.instance_variable_set(:@path, nil)
+        tool_class.instance_variable_set(:@__remaining_words, nil)
+        tool_class.instance_variable_set(:@__path, nil)
       end
     end
   end

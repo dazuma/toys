@@ -33,63 +33,75 @@ require "toys/utils/help_text"
 
 describe Toys::Utils::HelpText do
   let(:binary_name) { "toys" }
+  let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
   let(:tool_name) { ["foo", "bar"] }
-  let(:namespace_tool) do
-    Toys::Definition::Tool.new(tool_name, 0, Toys::Tool, [])
-  end
+  let(:subtool_one_name) { tool_name + ["one"] }
+  let(:subtool_two_name) { tool_name + ["two"] }
+
+  let(:single_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool_definition(tool_name, 0).mark_runnable
+    loader
+  }
+  let(:namespace_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool_definition(tool_name, 0)
+    loader.activate_tool_definition(subtool_one_name, 0).mark_runnable
+    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader
+  }
+  let(:runnable_namespace_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool_definition(tool_name, 0).mark_runnable
+    loader.activate_tool_definition(subtool_one_name, 0).mark_runnable
+    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader
+  }
+  let(:recursive_namespace_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool_definition(tool_name, 0)
+    loader.activate_tool_definition(subtool_one_name, 0)
+    loader.activate_tool_definition(subtool_one_name + ["a"], 0).mark_runnable
+    loader.activate_tool_definition(subtool_one_name + ["b"], 0).mark_runnable
+    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader
+  }
+  let(:long_namespace_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool_definition(tool_name, 0)
+    loader.activate_tool_definition(tool_name + [long_tool_name], 0).mark_runnable
+    loader
+  }
+
   let(:normal_tool) do
-    Toys::Definition::Tool.new(tool_name, 0, Toys::Tool, []).tap do |t|
-      t.script = proc {}
-    end
+    single_loader.get_active_tool(tool_name)
+  end
+  let(:runnable_namespace_tool) do
+    runnable_namespace_loader.get_active_tool(tool_name)
+  end
+  let(:namespace_tool) do
+    namespace_loader.get_active_tool(tool_name)
   end
   let(:subtool_one) do
-    Toys::Definition::Tool.new(["foo", "bar", "one"], 0, Toys::Tool, [])
-  end
-  let(:subtool_one_a) do
-    Toys::Definition::Tool.new(["foo", "bar", "one", "a"], 0, Toys::Tool, []).tap do |t|
-      t.script = proc {}
-    end
-  end
-  let(:subtool_one_b) do
-    Toys::Definition::Tool.new(["foo", "bar", "one", "b"], 0, Toys::Tool, []).tap do |t|
-      t.script = proc {}
-    end
+    namespace_loader.get_active_tool(subtool_one_name)
   end
   let(:subtool_two) do
-    Toys::Definition::Tool.new(["foo", "bar", "two"], 0, Toys::Tool, []).tap do |t|
-      t.script = proc {}
-    end
+    namespace_loader.get_active_tool(subtool_two_name)
   end
-  let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
+  let(:recursive_namespace_tool) do
+    recursive_namespace_loader.get_active_tool(tool_name)
+  end
+  let(:long_namespace_tool) do
+    long_namespace_loader.get_active_tool(tool_name)
+  end
   let(:subtool_long) do
-    Toys::Definition::Tool.new(["foo", "bar", long_tool_name], 0, Toys::Tool, [])
-  end
-  let(:empty_loader) do
-    m = Minitest::Mock.new
-    m.expect(:list_subtools, [], [["foo", "bar"], recursive: false])
-    m
-  end
-  let(:namespace_loader) do
-    m = Minitest::Mock.new
-    m.expect(:list_subtools, [subtool_one, subtool_two], [["foo", "bar"], recursive: false])
-    m
-  end
-  let(:recursive_namespace_loader) do
-    m = Minitest::Mock.new
-    m.expect(:list_subtools, [subtool_one, subtool_one_a, subtool_one_b, subtool_two],
-             [["foo", "bar"], recursive: true])
-    m
-  end
-  let(:long_namespace_loader) do
-    m = Minitest::Mock.new
-    m.expect(:list_subtools, [subtool_long], [["foo", "bar"], recursive: false])
-    m
+    long_namespace_loader.get_active_tool(tool_name + [long_tool_name])
   end
 
   describe "short usage" do
     describe "name section" do
       it "renders with no description" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         assert_equal("NAME", help_array[0])
         assert_equal("    toys foo bar", help_array[1])
@@ -98,7 +110,7 @@ describe Toys::Utils::HelpText do
 
       it "renders with a description" do
         normal_tool.desc = "Hello world"
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         assert_equal("NAME", help_array[0])
         assert_equal("    toys foo bar - Hello world", help_array[1])
@@ -107,7 +119,7 @@ describe Toys::Utils::HelpText do
 
       it "renders with wrapping" do
         normal_tool.desc = Toys::Utils::WrappableString.new("Hello world")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 25).split("\n")
         assert_equal("NAME", help_array[0])
         assert_equal("    toys foo bar - Hello", help_array[1])
@@ -117,7 +129,7 @@ describe Toys::Utils::HelpText do
 
       it "does not break the tool name when wrapping" do
         normal_tool.desc = Toys::Utils::WrappableString.new("Hello world")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 5).split("\n")
         assert_equal("NAME", help_array[0])
         assert_equal("    toys foo bar -", help_array[1])
@@ -138,8 +150,9 @@ describe Toys::Utils::HelpText do
         assert_equal("", help_array[index + 3])
       end
 
-      it "is set for a namespace with a script" do
-        help = Toys::Utils::HelpText.new(normal_tool, namespace_loader, binary_name)
+      it "is set for a namespace that is runnable" do
+        help = Toys::Utils::HelpText.new(runnable_namespace_tool, runnable_namespace_loader,
+                                         binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -149,7 +162,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with no flags" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -160,7 +173,7 @@ describe Toys::Utils::HelpText do
       it "is set for a normal tool with flags" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -171,7 +184,7 @@ describe Toys::Utils::HelpText do
       it "is set for a normal tool with required args" do
         normal_tool.add_required_arg(:cc, desc: "set cc")
         normal_tool.add_required_arg(:dd, desc: "set dd")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -182,7 +195,7 @@ describe Toys::Utils::HelpText do
       it "is set for a normal tool with optional args" do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -192,7 +205,7 @@ describe Toys::Utils::HelpText do
 
       it "is set for a normal tool with remaining args" do
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -208,7 +221,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 40).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
@@ -221,7 +234,7 @@ describe Toys::Utils::HelpText do
 
     describe "flags section" do
       it "is not present for a tool with no flags" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         assert_nil(index)
@@ -230,7 +243,7 @@ describe Toys::Utils::HelpText do
       it "is set for a tool with flags" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
@@ -244,7 +257,7 @@ describe Toys::Utils::HelpText do
 
       it "handles no description" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"])
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
@@ -254,7 +267,7 @@ describe Toys::Utils::HelpText do
 
       it "prefers long description over short description" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "short desc", long_desc: "long desc")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
@@ -266,7 +279,7 @@ describe Toys::Utils::HelpText do
       it "wraps long description" do
         long_desc = ["long desc", Toys::Utils::WrappableString.new("hello ruby world")]
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], long_desc: long_desc)
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("FLAGS")
         refute_nil(index)
@@ -280,7 +293,7 @@ describe Toys::Utils::HelpText do
 
     describe "positional args section" do
       it "is not present for a tool with no args" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("POSITIONAL ARGUMENTS")
         assert_nil(index)
@@ -292,7 +305,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("POSITIONAL ARGUMENTS")
         refute_nil(index)
@@ -319,7 +332,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff)
         normal_tool.set_remaining_args(:gg)
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("POSITIONAL ARGUMENTS")
         refute_nil(index)
@@ -339,7 +352,7 @@ describe Toys::Utils::HelpText do
 
       it "prefers long description over short description" do
         normal_tool.add_required_arg(:cc, desc: "short desc", long_desc: "long desc")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("POSITIONAL ARGUMENTS")
         refute_nil(index)
@@ -351,7 +364,7 @@ describe Toys::Utils::HelpText do
       it "wraps long description" do
         long_desc = ["long desc", Toys::Utils::WrappableString.new("hello ruby world")]
         normal_tool.add_required_arg(:cc, long_desc: long_desc)
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("POSITIONAL ARGUMENTS")
         refute_nil(index)
@@ -365,7 +378,7 @@ describe Toys::Utils::HelpText do
 
     describe "subtools section" do
       it "is not present for a normal tool" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("TOOLS")
         assert_nil(index)
@@ -382,7 +395,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a namespace recursive" do
-        help = Toys::Utils::HelpText.new(namespace_tool, recursive_namespace_loader, binary_name)
+        help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                         binary_name)
         help_array = help.help_string(styled: false, recursive: true).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
@@ -419,8 +433,9 @@ describe Toys::Utils::HelpText do
         assert_equal("", usage_array[2])
       end
 
-      it "is set for a namespace with a script" do
-        help = Toys::Utils::HelpText.new(normal_tool, namespace_loader, binary_name)
+      it "is set for a namespace that is runnable" do
+        help = Toys::Utils::HelpText.new(runnable_namespace_tool, runnable_namespace_loader,
+                                         binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar", usage_array[0])
         assert_equal("        toys foo bar TOOL [ARGUMENTS...]", usage_array[1])
@@ -428,7 +443,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a normal tool with no flags" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar", usage_array[0])
         assert_equal(1, usage_array.size)
@@ -436,7 +451,7 @@ describe Toys::Utils::HelpText do
 
       it "is set for a normal tool with flags" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar [FLAGS...]", usage_array[0])
         assert_equal("", usage_array[1])
@@ -445,7 +460,7 @@ describe Toys::Utils::HelpText do
       it "is set for a normal tool with required args" do
         normal_tool.add_required_arg(:cc, desc: "set cc")
         normal_tool.add_required_arg(:dd, desc: "set dd")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar CC DD", usage_array[0])
         assert_equal("", usage_array[1])
@@ -454,7 +469,7 @@ describe Toys::Utils::HelpText do
       it "is set for a normal tool with optional args" do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar [EE] [FF]", usage_array[0])
         assert_equal("", usage_array[1])
@@ -462,7 +477,7 @@ describe Toys::Utils::HelpText do
 
       it "is set for a normal tool with remaining args" do
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar [GG...]", usage_array[0])
         assert_equal("", usage_array[1])
@@ -475,7 +490,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         assert_equal("Usage:  toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
@@ -485,7 +500,7 @@ describe Toys::Utils::HelpText do
 
     describe "subtools section" do
       it "is not present for a normal tool" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Tools:")
         assert_nil(index)
@@ -502,7 +517,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "is set for a namespace recursive" do
-        help = Toys::Utils::HelpText.new(namespace_tool, recursive_namespace_loader, binary_name)
+        help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                         binary_name)
         usage_array = help.usage_string(recursive: true).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -528,7 +544,7 @@ describe Toys::Utils::HelpText do
 
       it "shows desc for long subtool name" do
         subtool_long.desc = Toys::Utils::WrappableString.new("long desc on two lines")
-        help = Toys::Utils::HelpText.new(namespace_tool, long_namespace_loader, binary_name)
+        help = Toys::Utils::HelpText.new(long_namespace_tool, long_namespace_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 49).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
@@ -548,7 +564,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "is not present for a normal tool with no positional args" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Positional arguments:")
         assert_nil(index)
@@ -560,7 +576,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_optional_arg(:ee, desc: "set ee")
         normal_tool.add_optional_arg(:ff, desc: "set ff")
         normal_tool.set_remaining_args(:gg, desc: "set gg")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
@@ -575,7 +591,7 @@ describe Toys::Utils::HelpText do
       it "shows desc for long arg" do
         normal_tool.add_required_arg(:long_long_long_long_long_long_long_long,
                                      desc: Toys::Utils::WrappableString.new("set long arg desc"))
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 47).split("\n")
         index = usage_array.index("Positional arguments:")
         refute_nil(index)
@@ -588,7 +604,7 @@ describe Toys::Utils::HelpText do
 
     describe "flags section" do
       it "is not present for a tool with no flags" do
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
         assert_nil(index)
@@ -597,7 +613,7 @@ describe Toys::Utils::HelpText do
       it "is set for a tool with flags" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
@@ -608,7 +624,7 @@ describe Toys::Utils::HelpText do
 
       it "shows value only for last flag" do
         normal_tool.add_flag(:aa, ["-a VALUE", "--aa"], desc: "set aa")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
@@ -618,7 +634,7 @@ describe Toys::Utils::HelpText do
 
       it "orders single dashes before double dashes" do
         normal_tool.add_flag(:aa, ["--aa", "-a VALUE"], desc: "set aa")
-        help = Toys::Utils::HelpText.new(normal_tool, empty_loader, binary_name)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Flags:")
         refute_nil(index)
