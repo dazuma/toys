@@ -27,11 +27,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "highline"
-
 require "toys/middleware/base"
 require "toys/utils/help_text"
-require "toys/utils/line_output"
+require "toys/utils/terminal"
 
 module Toys
   module Middleware
@@ -54,7 +52,7 @@ module Toys
       #
       def initialize(exit_code: -1, stream: $stderr, styled_output: nil)
         @exit_code = exit_code
-        @output = Utils::LineOutput.new(stream, styled: styled_output)
+        @terminal = Utils::Terminal.new(output: stream, styled: styled_output)
       end
 
       ##
@@ -62,11 +60,10 @@ module Toys
       #
       def run(tool)
         if tool[Tool::Keys::USAGE_ERROR]
-          width = ::HighLine.new.output_cols
           help_text = Utils::HelpText.from_tool(tool)
-          @output.puts(tool[Tool::Keys::USAGE_ERROR], :bright_red, :bold)
-          @output.puts("")
-          @output.puts(help_text.usage_string(wrap_width: width))
+          @terminal.puts(tool[Tool::Keys::USAGE_ERROR], :bright_red, :bold)
+          @terminal.puts("")
+          @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
           tool.exit(@exit_code)
         else
           yield

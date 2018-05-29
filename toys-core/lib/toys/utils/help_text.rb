@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "highline"
+require "toys/utils/terminal"
 
 module Toys
   module Utils
@@ -134,7 +134,7 @@ module Toys
       def find_subtools(recursive, search)
         subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
         return subtools if search.nil? || search.empty?
-        regex = Regexp.new(search, Regexp::IGNORECASE)
+        regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
         subtools.find_all do |tool|
           regex =~ tool.display_name || regex =~ tool.desc.to_s
         end
@@ -284,8 +284,7 @@ module Toys
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
-          @styled = styled
-          @lines = []
+          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
           assemble
         end
 
@@ -301,7 +300,7 @@ module Toys
           add_positional_arguments_section
           add_subtool_list_section
           add_source_section
-          @result = @lines.join("\n") + "\n"
+          @result = @lines.output.string
         end
 
         def add_name_section
@@ -479,11 +478,11 @@ module Toys
         end
 
         def bold(str)
-          @styled ? ::HighLine.color(str, :bold) : str
+          @lines.apply_styles(str, :bold)
         end
 
         def underline(str)
-          @styled ? ::HighLine.color(str, :underline) : str
+          @lines.apply_styles(str, :underline)
         end
 
         def indent_str(str)

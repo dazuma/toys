@@ -49,8 +49,6 @@ require "toys/core_version"
   spec.required_ruby_version = ">= 2.2.0"
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "highline", "~> 1.7"
-
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"

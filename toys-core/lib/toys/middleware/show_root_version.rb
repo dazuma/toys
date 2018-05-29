@@ -28,7 +28,7 @@
 ;
 
 require "toys/middleware/base"
-require "toys/utils/line_output"
+require "toys/utils/terminal"
 
 module Toys
   module Middleware
@@ -65,7 +65,7 @@ module Toys
         @version_string = version_string
         @version_flags = version_flags
         @version_flag_desc = version_flag_desc
-        @output = Utils::LineOutput.new(stream)
+        @terminal = Utils::Terminal.new(output: stream)
       end
 
       ##
@@ -84,7 +84,7 @@ module Toys
       #
       def run(tool)
         if tool[:_show_version]
-          @output.puts(@version_string)
+          @terminal.puts(@version_string)
         else
           yield
         end

@@ -51,36 +51,36 @@ end
 tool "ci" do
   desc "CI target that runs all tests for both gems"
   include :exec
-  include :highline
-  def validate_dir
+  def validate_dir(terminal)
     subcli = cli.child.add_config_path(".toys.rb")
-    puts color("** Checking tests...", :cyan)
+    terminal.puts("** Checking tests...", :cyan)
     exit_on_nonzero_status(subcli.run("test"))
-    puts color("** Tests ok.", :cyan)
-    puts color("** Checking rubocop...", :cyan)
+    terminal.puts("** Tests ok.", :cyan)
+    terminal.puts("** Checking rubocop...", :cyan)
     exit_on_nonzero_status(subcli.run("rubocop"))
-    puts color("** Rubocop ok.", :cyan)
-    puts color("** Checking yardoc...", :cyan)
+    terminal.puts("** Rubocop ok.", :cyan)
+    terminal.puts("** Checking yardoc...", :cyan)
     exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
     stats = capture(["yard", "stats", "--list-undoc"])
     if stats =~ /Undocumented\sObjects:/
-      puts stats
+      terminal.puts stats
       exit(1)
     end
-    puts color("** Yardoc ok.", :cyan)
+    terminal.puts("** Yardoc ok.", :cyan)
   end
   def run
     configure_exec(exit_on_nonzero_status: true)
+    terminal = Toys::Utils::Terminal.new
     ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
       ::Dir.chdir("toys-core") do
-        puts color("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
-        validate_dir
-        puts color("**** TOYS-CORE GEM OK.", :bold, :cyan)
+        terminal.puts("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
+        validate_dir(terminal)
+        terminal.puts("**** TOYS-CORE GEM OK.", :bold, :cyan)
       end
       ::Dir.chdir("toys") do
-        puts color("**** CHECKING TOYS GEM ...", :bold, :cyan)
-        validate_dir
-        puts color("**** TOYS GEM OK.", :bold, :cyan)
+        terminal.puts("**** CHECKING TOYS GEM ...", :bold, :cyan)
+        validate_dir(terminal)
+        terminal.puts("**** TOYS GEM OK.", :bold, :cyan)
       end
     end
   end
@@ -123,12 +123,12 @@ end
 tool "release" do
   desc "Releases both gems"
   include :exec
-  include :highline
   def run
+    terminal = Toys::Utils::Terminal.new
     configure_exec(exit_on_nonzero_status: true)
     ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
       version = capture(["./toys-dev", "system", "version"]).strip
-      exit(1) unless agree("Release toys #{version}? (y/n) ")
+      exit(1) unless terminal.confirm("Release toys #{version}?")
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
         exit_on_nonzero_status(subcli.run("release", "-y"))

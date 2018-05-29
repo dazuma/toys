@@ -92,7 +92,6 @@ module Toys
 
           include :exec
           include :fileutils
-          include :highline
 
           run do
             configure_exec(exit_on_nonzero_status: true)
@@ -107,7 +106,9 @@ module Toys
                 logger.error "Cannot push the gem when there are uncommited changes"
                 exit(1)
               end
-              exit(1) unless option(:yes) || agree("Release #{gemfile}? (y/n) ")
+              unless option(:yes)
+                exit(1) unless Utils::Terminal.new.confirm("Release #{gemfile}?")
+              end
               sh "gem push pkg/#{gemfile}"
               if template.tag
                 sh "git tag v#{version}"

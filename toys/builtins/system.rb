@@ -48,7 +48,6 @@ tool "update" do
   flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
   include :exec
-  include :highline
 
   def run
     logger.info "Checking rubygems for the latest Toys release..."
@@ -56,8 +55,8 @@ tool "update" do
       latest_version = ::Gem::Version.new($1)
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
-        exit(1) unless option(:yes) ||
-                       agree("Update toys from #{cur_version} to #{latest_version}? (y/n) ")
+        prompt = "Update toys from #{cur_version} to #{latest_version}?"
+        exit(1) unless option(:yes) || Utils::Terminal.new.confirm(prompt)
         sh("gem install toys")
       elsif latest_version < cur_version
         logger.warn("Toys is already at experimental version #{cur_version}, which is later than" \

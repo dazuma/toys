@@ -28,7 +28,8 @@
 ;
 
 require "monitor"
-require "highline"
+
+require "toys/utils/terminal"
 
 module Toys
   module Helpers
@@ -59,7 +60,7 @@ module Toys
       #     Defaults to {DEFAULT_FRAME_LENGTH}.
       # @param [Array<String>] frames An array of frames. Defaults to
       #     {DEFAULT_FRAMES}.
-      # @param [Symbol,Array<Symbol>] style A HighLine style or array of styles
+      # @param [Symbol,Array<Symbol>] style A terminal style or array of styles
       #     to apply to all frames in the spinner. Defaults to empty,
       # @param [IO] stream Stream to output the spinner to. Defaults to STDOUT.
       #     Note the spinner will be disabled if this stream is not a tty.
@@ -96,10 +97,11 @@ module Toys
 
         def initialize(stream, frames, style, frame_length)
           @stream = stream
+          terminal = Utils::Terminal.new(output: stream)
           @frames = frames.map do |f|
             [
-              style.empty? ? f : ::HighLine.color(f, *style),
-              ::HighLine.uncolor(f).size
+              terminal.style(f, *style),
+              Utils::Terminal.remove_style_escapes(f).size
             ]
           end
           @frame_length = frame_length

@@ -28,9 +28,8 @@
 ;
 
 require "logger"
-require "highline"
 
-require "toys/utils/line_output"
+require "toys/utils/terminal"
 
 module Toys
   ##
@@ -252,16 +251,16 @@ module Toys
       ##
       # Create an error handler.
       #
-      # @param [IO,Logger,nil] sink Where to write errors. Default is `$stderr`.
+      # @param [IO] output Where to write errors. Default is `$stderr`.
       #
-      def initialize(sink = $stderr)
-        @line_output = Utils::LineOutput.new(sink, log_level: ::Logger::FATAL)
+      def initialize(output = $stderr)
+        @terminal = Utils::Terminal.new(output: output)
       end
 
       ## @private
       def call(error)
-        @line_output.puts(cause_string(error.cause))
-        @line_output.puts(context_string(error), :bold)
+        @terminal.puts(cause_string(error.cause))
+        @terminal.puts(context_string(error), :bold)
         -1
       end
 
@@ -327,6 +326,7 @@ module Toys
       #
       def default_logger(stream = $stderr)
         logger = ::Logger.new(stream)
+        terminal = Utils::Terminal.new(output: stream)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg
@@ -337,7 +337,7 @@ module Toys
             else
               msg.inspect
             end
-          format_log(stream.tty?, time, severity, msg_str)
+          format_log(terminal, time, severity, msg_str)
         end
         logger.level = ::Logger::WARN
         logger
@@ -345,27 +345,25 @@ module Toys
 
       private
 
-      def format_log(is_tty, time, severity, msg)
+      def format_log(terminal, time, severity, msg)
         timestr = time.strftime("%Y-%m-%d %H:%M:%S")
         header = format("[%s %5s]", timestr, severity)
-        if is_tty
-          header =
-            case severity
-            when "FATAL"
-              ::HighLine.color(header, :bright_magenta, :bold, :underline)
-            when "ERROR"
-              ::HighLine.color(header, :bright_red, :bold)
-            when "WARN"
-              ::HighLine.color(header, :bright_yellow)
-            when "INFO"
-              ::HighLine.color(header, :bright_cyan)
-            when "DEBUG"
-              ::HighLine.color(header, :white)
-            else
-              header
-            end
-        end
-        "#{header}  #{msg}\n"
+        styled_header =
+          case severity
+          when "FATAL"
+            terminal.apply_styles(header, :bright_magenta, :bold, :underline)
+          when "ERROR"
+            terminal.apply_styles(header, :bright_red, :bold)
+          when "WARN"
+            terminal.apply_styles(header, :bright_yellow)
+          when "INFO"
+            terminal.apply_styles(header, :bright_cyan)
+          when "DEBUG"
+            terminal.apply_styles(header, :white)
+          else
+            header
+          end
+        "#{styled_header}  #{msg}\n"
       end
     end
   end

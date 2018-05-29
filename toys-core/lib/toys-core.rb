@@ -27,8 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-gem "highline", "~> 1.7"
-
 ##
 # Toys is a Ruby library and command line tool that lets you build your own
 # command line suite of tools (with commands and subcommands) using a Ruby DSL.

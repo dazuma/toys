@@ -27,12 +27,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "highline"
-
 require "toys/middleware/base"
 require "toys/utils/exec"
 require "toys/utils/help_text"
-require "toys/utils/line_output"
+require "toys/utils/terminal"
 
 module Toys
   module Middleware
@@ -170,15 +168,15 @@ module Toys
       def run(tool)
         if tool[:_show_usage]
           help_text = get_help_text(tool)
-          str = help_text.usage_string(wrap_width: output_cols)
-          output.puts(str)
+          str = help_text.usage_string(wrap_width: terminal.width)
+          terminal.puts(str)
         elsif @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
               tool[:_show_help]
           help_text = get_help_text(tool)
           str = help_text.help_string(recursive: tool[:_recursive_subtools],
                                       search: tool[:_search_subtools],
                                       show_source_path: @show_source_path,
-                                      wrap_width: output_cols)
+                                      wrap_width: terminal.width)
           output_help(str)
         else
           yield
@@ -187,19 +185,15 @@ module Toys
 
       private
 
-      def output_cols
-        @output_cols ||= ::HighLine.new(nil, @stream).output_cols
-      end
-
-      def output
-        @output ||= Utils::LineOutput.new(@stream, styled: @styled_output)
+      def terminal
+        @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
       end
 
       def output_help(str)
         if less_path
           Utils::Exec.new.exec([less_path, "-R"], in_from: str)
         else
-          output.puts(str)
+          terminal.puts(str)
         end
       end
 
@@ -225,9 +219,9 @@ module Toys
       end
 
       def report_usage_error(tool, tool_name, help_text)
-        output.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
-        output.puts
-        output.puts help_text.usage_string(wrap_width: output_cols)
+        terminal.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
+        terminal.puts
+        terminal.puts help_text.usage_string(wrap_width: terminal.width)
         tool.exit(1)
       end
 

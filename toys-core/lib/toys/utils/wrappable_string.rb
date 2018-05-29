@@ -27,6 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/utils/terminal"
+
 module Toys
   module Utils
     ##
@@ -99,7 +101,7 @@ module Toys
         line = ""
         line_len = 0
         fragments.each do |frag|
-          frag_len = ::HighLine.uncolor(frag).size
+          frag_len = Utils::Terminal.remove_style_escapes(frag).size
           if line_len.zero?
             line = frag
             line_len = frag_len

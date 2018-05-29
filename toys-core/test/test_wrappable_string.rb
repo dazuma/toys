@@ -29,6 +29,7 @@
 
 require "helper"
 
+require "toys/utils/terminal"
 require "toys/utils/wrappable_string"
 
 describe Toys::Utils::WrappableString do
@@ -74,7 +75,7 @@ describe Toys::Utils::WrappableString do
     end
 
     it "doesn't get confused by ansi style codes" do
-      str = HighLine.color("a b", :bold)
+      str = Toys::Utils::Terminal.new(styled: true).apply_styles("a b", :bold)
       result = Toys::Utils::WrappableString.new(str).wrap(3)
       assert_equal([str], result)
       result2 = Toys::Utils::WrappableString.new(str).wrap(2)
