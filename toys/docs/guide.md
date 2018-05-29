@@ -76,7 +76,7 @@ In the following command:
     toys system blah
 
 There is no subtool `blah` under the `system` namespace, so Toys works backward
-until it finds a legitimate tool. In this case, the `system` namespace itself
+until it finds an existing tool. In this case, the `system` namespace itself
 does exist, so it is interpreted as the tool, and `blah` is interpreted as an
 argument passed to it.
 
@@ -152,8 +152,8 @@ That will cause `--recursive` to be treated as a positional argument. (In this
 case, as we saw earlier, the root tool will respond by printing an error
 message that no subtool named `--recursive` exists.)
 
-Note that a single hyphen by itself `-` is not considered a flag and is treated
-as a positional argument.
+Note that a single hyphen by itself `-` is not considered a flag, nor does it
+disable flag parsing. It is treated as a normal positional argument.
 
 #### Standard Flags
 
@@ -256,8 +256,8 @@ Consider the following example:
       flag :shout, "-s", "--shout", desc: "Greet loudly."
 
       def run
-        greeting = "Hello, #{options[:whom]}!"
-        greeting.upcase! if options[:shout]
+        greeting = "Hello, #{option(:whom)}!"
+        greeting.upcase! if option(:shout)
         puts greeting
       end
     end
@@ -374,7 +374,7 @@ declared a flag named `:shout`:
 
     flag :shout, "-s", "--shout", desc: "Greet loudly."
 
-
+(guid is still incomplete)
 
 ### The Execution Script
 

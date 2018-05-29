@@ -446,7 +446,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "defaults simple boolean flag to nil" do
@@ -456,7 +456,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: nil}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "sets simple boolean flag" do
@@ -465,7 +465,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: true}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa"]))
     end
 
     it "defaults value flag to nil" do
@@ -474,7 +474,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: nil}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "honors given default of a value flag" do
@@ -483,7 +483,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "hehe"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "sets value flag" do
@@ -492,7 +492,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "hoho"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "hoho"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "hoho"]))
     end
 
     it "converts a value flag" do
@@ -501,7 +501,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: 1234}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "1234"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "1234"]))
     end
 
     it "checks match of a value flag" do
@@ -510,7 +510,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_match(/invalid argument: --aa a1234/, usage_error)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "a1234"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "a1234"]))
     end
 
     it "converts a value flag using a custom acceptor" do
@@ -520,7 +520,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "bar"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "bar"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "bar"]))
     end
 
     it "checks match of a value flag using a custom acceptor" do
@@ -530,7 +530,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_match(/invalid argument: --aa 1234/, usage_error)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "1234"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "1234"]))
     end
 
     it "defaults the name of a value flag" do
@@ -539,7 +539,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a_bc: "hoho"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--a-bc", "hoho"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--a-bc", "hoho"]))
     end
 
     it "honors the handler" do
@@ -548,7 +548,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "hiho"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["--aa", "ho"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "ho"]))
     end
 
     it "errors on an unknown flag" do
@@ -556,7 +556,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_match(/invalid option: -a/, usage_error)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["-a"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["-a"]))
     end
   end
 
@@ -567,7 +567,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal([], args)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "recognizes args in order" do
@@ -580,8 +580,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, options)
       end
-      assert_equal(0,
-                   Toys::Executor.new(cli, tool).execute(["foo", "bar", "baz", "hello", "world"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo", "bar", "baz", "hello", "world"]))
     end
 
     it "omits optional args if not provided" do
@@ -593,7 +592,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "foo", b: "bar", c: nil, d: []}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo", "bar"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo", "bar"]))
     end
 
     it "errors if required args are missing" do
@@ -603,7 +602,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_match(/No value given for required argument B/, usage_error)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo"]))
     end
 
     it "errors if there are too many arguments" do
@@ -613,7 +612,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_match(/Extra arguments provided: baz/, usage_error)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo", "bar", "baz"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo", "bar", "baz"]))
     end
 
     it "honors defaults for optional arg" do
@@ -623,7 +622,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal({a: "foo", b: "hello"}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["foo"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo"]))
     end
   end
 
@@ -658,7 +657,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "defaults to nil if not set" do
@@ -682,7 +681,7 @@ describe Toys::Definition::Tool do
       tool.runnable = proc do
         test.assert_equal(:helper1, helper1)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
   end
 
@@ -708,7 +707,7 @@ describe Toys::Definition::Tool do
 
   describe "execution" do
     it "handles no script defined" do
-      assert_equal(-1, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(-1, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "sets context fields" do
@@ -725,14 +724,14 @@ describe Toys::Definition::Tool do
         test.assert_equal(["hello", "-a"], args)
         test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
       end
-      assert_equal(0, Toys::Executor.new(cli, tool).execute(["hello", "-a"]))
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["hello", "-a"]))
     end
 
     it "supports exit code" do
       tool.runnable = proc do
         exit(2)
       end
-      assert_equal(2, Toys::Executor.new(cli, tool).execute([]))
+      assert_equal(2, Toys::Runner.new(cli, tool).run([]))
     end
 
     it "supports sub-runs" do
@@ -747,7 +746,7 @@ describe Toys::Definition::Tool do
         test.assert_equal("ho", self[:arg2])
         exit(3)
       end
-      assert_equal(3, Toys::Executor.new(cli, subtool).execute(["hi"]))
+      assert_equal(3, Toys::Runner.new(cli, subtool).run(["hi"]))
     end
   end
 end

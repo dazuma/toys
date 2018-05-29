@@ -50,8 +50,8 @@ module Toys
       # @param [String,Symbol] name Name of the middleware class to return
       # @return [Class,nil] The class, or `nil` if not found
       #
-      def lookup(name)
-        Utils::ModuleLookup.lookup(:middleware, name)
+      def lookup!(name)
+        Utils::ModuleLookup.lookup!(:middleware, name)
       end
 
       ##
@@ -69,7 +69,7 @@ module Toys
         cls = input.first
         args = input[1..-1]
         if cls.is_a?(::String) || cls.is_a?(::Symbol)
-          cls = lookup(cls)
+          cls = lookup!(cls)
         end
         if cls.is_a?(::Class)
           cls.new(*args)

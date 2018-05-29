@@ -48,8 +48,8 @@ module Toys
     # @param [String,Symbol] name Name of the template class to return
     # @return [Class,nil] The class, or `nil` if not found
     #
-    def self.lookup(name)
-      Utils::ModuleLookup.lookup(:templates, name)
+    def self.lookup!(name)
+      Utils::ModuleLookup.lookup!(:templates, name)
     end
   end
 end

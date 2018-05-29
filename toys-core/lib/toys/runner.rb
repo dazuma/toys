@@ -34,13 +34,13 @@ module Toys
   # An internal class that manages execution of a tool
   # @private
   #
-  class Executor
+  class Runner
     def initialize(cli, tool_definition)
       @cli = cli
       @tool_definition = tool_definition
     end
 
-    def execute(args, verbosity: 0)
+    def run(args, verbosity: 0)
       data = create_data(args, verbosity)
       parse_args(args, data)
       tool = @tool_definition.tool_class.new(@cli, data)

@@ -28,6 +28,7 @@
 ;
 
 require "stringio"
+require "monitor"
 
 begin
   require "io/console"
@@ -100,6 +101,18 @@ module Toys
       }.freeze
 
       ##
+      # Default length of a single spinner frame, in seconds.
+      # @return [Float]
+      #
+      DEFAULT_SPINNER_FRAME_LENGTH = 0.1
+
+      ##
+      # Default set of spinner frames.
+      # @return [Array<String>]
+      #
+      DEFAULT_SPINNER_FRAMES = ["-", "\\", "|", "/"].freeze
+
+      ##
       # Returns a copy of the given string with all ANSI style codes removed.
       #
       # @param [String] str Input string
@@ -148,20 +161,32 @@ module Toys
       attr_accessor :styled
 
       ##
-      # Write a line.
+      # Write a partial line without appending a newline.
+      #
+      # @param [String] str The line to write
+      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      #     partial line.
+      #
+      def write(str = "", *styles)
+        output.write(apply_styles(str, *styles))
+        output.flush
+        self
+      end
+
+      ##
+      # Write a line, appending a newline if one is not already present.
       #
       # @param [String] str The line to write
       # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
       #     entire line.
       #
       def puts(str = "", *styles)
-        output.puts(apply_styles(str, *styles))
-        output.flush
-        self
+        str = "#{str}\n" unless str.end_with?("\n")
+        write(str, *styles)
       end
 
       ##
-      # Write a line.
+      # Write a line, appending a newline if one is not already present.
       #
       # @param [String] str The line to write
       #
@@ -174,20 +199,6 @@ module Toys
       #
       def newline
         puts
-      end
-
-      ##
-      # Buffer a partial line but do not write it out yet because the line
-      # may not yet be complete.
-      #
-      # @param [String] str The line to write
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
-      #     partial line.
-      #
-      def write(str = "", *styles)
-        output.write(apply_styles(str, *styles))
-        output.flush
-        self
       end
 
       ##
@@ -209,11 +220,43 @@ module Toys
       end
 
       ##
+      # Display a spinner during a task. You should provide a block that
+      # performs the long-running task. While the block is executing, a
+      # spinner will be displayed.
+      #
+      # @param [String] leading_text Optional leading string to display to the
+      #     left of the spinner. Default is the empty string.
+      # @param [Float] frame_length Length of a single frame, in seconds.
+      #     Defaults to {DEFAULT_SPINNER_FRAME_LENGTH}.
+      # @param [Array<String>] frames An array of frames. Defaults to
+      #     {DEFAULT_SPINNER_FRAMES}.
+      # @param [Symbol,Array<Symbol>] style A terminal style or array of styles
+      #     to apply to all frames in the spinner. Defaults to empty,
+      # @param [String] final_text Optional final string to display when the
+      #     spinner is complete. Default is the empty string. A common practice
+      #     is to set this to newline.
+      #
+      def spinner(leading_text: "", final_text: "",
+                  frame_length: nil, frames: nil, style: nil)
+        return nil unless block_given?
+        frame_length ||= DEFAULT_SPINNER_FRAME_LENGTH
+        frames ||= DEFAULT_SPINNER_FRAMES
+        output.write(leading_text) unless leading_text.empty?
+        spin = SpinDriver.new(self, frames, Array(style), frame_length)
+        begin
+          yield
+        ensure
+          spin.stop
+          output.write(final_text) unless final_text.empty?
+        end
+      end
+
+      ##
       # Return the terminal size as an array of width, height.
       #
       # @return [Array(Integer,Integer)]
       #
-      def terminal_size
+      def size
         if @output.respond_to?(:tty?) && @output.tty? && @output.respond_to?(:winsize)
           @output.winsize.reverse
         else
@@ -227,7 +270,7 @@ module Toys
       # @return [Integer]
       #
       def width
-        terminal_size[0]
+        size[0]
       end
 
       ##
@@ -236,7 +279,7 @@ module Toys
       # @return [Integer]
       #
       def height
-        terminal_size[1]
+        size[1]
       end
 
       ##
@@ -318,6 +361,50 @@ module Toys
           [38, 2, (rgb >> 8) * 0x11, ((rgb & 0xf0) >> 4) * 0x11, (rgb & 0xf) * 0x11]
         when /^\e\[([\d;]+)m$/
           $1.split(";").map(&:to_i)
+        end
+      end
+
+      ## @private
+      class SpinDriver
+        include ::MonitorMixin
+
+        def initialize(terminal, frames, style, frame_length)
+          @terminal = terminal
+          @frames = frames.map do |f|
+            [@terminal.apply_styles(f, *style), Terminal.remove_style_escapes(f).size]
+          end
+          @frame_length = frame_length
+          @cur_frame = 0
+          @stopping = false
+          @cond = new_cond
+          super()
+          @thread = @terminal.output.tty? ? start_thread : nil
+        end
+
+        def stop
+          synchronize do
+            @stopping = true
+            @cond.broadcast
+          end
+          @thread.join if @thread
+          self
+        end
+
+        private
+
+        def start_thread
+          ::Thread.new do
+            synchronize do
+              until @stopping
+                @terminal.output.write(@frames[@cur_frame][0])
+                @cond.wait(@frame_length)
+                size = @frames[@cur_frame][1]
+                @terminal.output.write("\b" * size + " " * size + "\b" * size)
+                @cur_frame += 1
+                @cur_frame = 0 if @cur_frame >= @frames.size
+              end
+            end
+          end
         end
       end
     end

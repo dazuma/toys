@@ -215,7 +215,7 @@ module Toys
         "Error during tool execution!", tool_definition.source_path,
         tool_name: tool_definition.full_name, tool_args: remaining
       ) do
-        Executor.new(self, tool_definition).execute(remaining, verbosity: verbosity)
+        Runner.new(self, tool_definition).run(remaining, verbosity: verbosity)
       end
     rescue ContextualError => e
       @error_handler.call(e)

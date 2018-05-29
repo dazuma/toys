@@ -79,7 +79,7 @@ module Toys
           e = ContextualError.new(e, banner, opts)
         end
         raise e
-      rescue ::StandardError => e
+      rescue ::ScriptError, ::StandardError => e
         e = ContextualError.new(e, banner)
         add_fields_if_missing(e, opts)
         add_config_path_if_missing(e, path)
@@ -92,7 +92,7 @@ module Toys
       rescue ContextualError => e
         add_fields_if_missing(e, opts)
         raise e
-      rescue ::StandardError => e
+      rescue ::ScriptError, ::StandardError => e
         raise ContextualError.new(e, banner, opts)
       end
 

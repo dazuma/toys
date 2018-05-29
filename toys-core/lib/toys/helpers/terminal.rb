@@ -27,28 +27,52 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/utils/module_lookup"
+require "toys/utils/terminal"
 
 module Toys
-  ##
-  # Namespace for common helper modules
-  #
   module Helpers
     ##
-    # Return a helper module by name.
+    # A helper that provides a simple terminal.
     #
-    # Currently recognized module names are:
-    #
-    # * `:exec` : Methods to help execute subcommands.
-    # * `:fileutils` : The FileUtils standard library methods.
-    # * `:highline` : Methods from the highline gem.
-    # * `:spinner` : Displays a spinner on the terminal.
-    #
-    # @param [String,Symbol] name Name of the helper module to return
-    # @return [Module,nil] The module.
-    #
-    def self.lookup!(name)
-      Utils::ModuleLookup.lookup!(:helpers, name)
+    module Terminal
+      ##
+      # Returns a global terminal instance
+      # @return [Toys::Utils::Terminal]
+      #
+      def terminal
+        self[Terminal] ||= Utils::Terminal.new
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#puts
+      #
+      def puts(str = "", *styles)
+        terminal.puts(str, *styles)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#write
+      #
+      def write(str = "", *styles)
+        terminal.write(str, *styles)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#confirm
+      #
+      def confirm(prompt = "Proceed?")
+        terminal.confirm(prompt)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#spinner
+      #
+      def spinner(leading_text: "", final_text: "",
+                  frame_length: nil, frames: nil, style: nil, &block)
+        terminal.spinner(leading_text: leading_text, final_text: final_text,
+                         frame_length: frame_length, frames: frames, style: style,
+                         &block)
+      end
     end
   end
 end
