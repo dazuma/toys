@@ -55,9 +55,8 @@ flag :delim, "-d", "--delim=VALUE",
 remaining_args :args, desc: "A series of tools to run, separated by the delimiter"
 
 def run
-  delim = option(:delim)
   option(:args)
-    .chunk { |arg| arg == delim ? :_separator : true }
+    .chunk { |arg| arg == option(:delim) ? :_separator : true }
     .each do |_, action|
       code = cli.run(action)
       exit(code) unless code.zero?

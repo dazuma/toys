@@ -51,22 +51,37 @@ tool "update" do
   include :terminal
 
   def run
-    logger.info "Checking rubygems for the latest Toys release..."
-    if capture("gem query -q -r -e toys") =~ /toys\s\((.+)\)/
+    configure_exec(exit_on_nonzero_status: true)
+    version_info = terminal.spinner(leading_text: "Checking rubygems for the latest release... ",
+                                    final_text: "Done.\n") do
+      capture(["gem", "query", "-q", "-r", "-e", "toys"])
+    end
+    if version_info =~ /toys\s\((.+)\)/
       latest_version = ::Gem::Version.new($1)
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
         prompt = "Update toys from #{cur_version} to #{latest_version}?"
         exit(1) unless option(:yes) || confirm(prompt)
-        sh("gem install toys")
+        result = terminal.spinner(leading_text: "Installing Toys version #{latest_version}... ",
+                                  final_text: "Done.\n") do
+          exec(["gem", "install", "toys", "--version", latest_version],
+               out_to: :capture, err_to: :capture)
+        end
+        if result.error?
+          puts(result.captured_out + result.captured_err)
+          puts("Toys failed to install version #{latest_version}", :red, :bold)
+          exit(1)
+        end
+        puts("Toys successfully installed version #{latest_version}", :green, :bold)
       elsif latest_version < cur_version
-        logger.warn("Toys is already at experimental version #{cur_version}, which is later than" \
-                    " the latest released version #{latest_version}")
+        puts("Toys is already at experimental version #{cur_version}, which is later than" \
+             " the latest released version #{latest_version}",
+             :yellow, :bold)
       else
-        logger.warn("Toys is already at the latest version: #{latest_version}")
+        puts("Toys is already at the latest version: #{latest_version}", :green, :bold)
       end
     else
-      logger.error("Could not get latest Toys version")
+      puts("Could not get latest Toys version", :red, :bold)
       exit(1)
     end
   end

@@ -29,106 +29,106 @@
 
 tool "install" do
   desc "Build and install the current gems"
+
   include :exec
+
+  def handle_gem(gem_name, version)
+    ::Dir.chdir(gem_name) do
+      subcli = cli.child.add_config_path(".toys.rb")
+      exit_on_nonzero_status(subcli.run("build"))
+      exec(["gem", "install", "pkg/#{gem_name}-#{version}.gem"])
+    end
+  end
+
   def run
     configure_exec(exit_on_nonzero_status: true)
-    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
+    ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
-      ::Dir.chdir("toys-core") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        exit_on_nonzero_status(subcli.run("build"))
-        exec(["gem", "install", "pkg/toys-core-#{version}.gem"])
-      end
-      ::Dir.chdir("toys") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        exit_on_nonzero_status(subcli.run("build"))
-        exec(["gem", "install", "pkg/toys-#{version}.gem"])
-      end
+      handle_gem("toys-core", version)
+      handle_gem("toys", version)
     end
   end
 end
 
 tool "ci" do
   desc "CI target that runs all tests for both gems"
+
   include :exec
-  def validate_dir(terminal)
-    subcli = cli.child.add_config_path(".toys.rb")
-    terminal.puts("** Checking tests...", :cyan)
-    exit_on_nonzero_status(subcli.run("test"))
-    terminal.puts("** Tests ok.", :cyan)
-    terminal.puts("** Checking rubocop...", :cyan)
-    exit_on_nonzero_status(subcli.run("rubocop"))
-    terminal.puts("** Rubocop ok.", :cyan)
-    terminal.puts("** Checking yardoc...", :cyan)
-    exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
-    stats = capture(["yard", "stats", "--list-undoc"])
-    if stats =~ /Undocumented\sObjects:/
-      terminal.puts stats
-      exit(1)
+  include :terminal
+
+  def handle_gem(gem_name)
+    puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
+    ::Dir.chdir(::File.join(__dir__, gem_name)) do
+      subcli = cli.child.add_config_path(".toys.rb")
+      puts("** Checking tests...", :cyan)
+      exit_on_nonzero_status(subcli.run("test"))
+      puts("** Tests ok.", :cyan)
+      puts("** Checking rubocop...", :cyan)
+      exit_on_nonzero_status(subcli.run("rubocop"))
+      puts("** Rubocop ok.", :cyan)
+      puts("** Checking yardoc...", :cyan)
+      exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
+      stats = capture(["yard", "stats", "--list-undoc"])
+      if stats =~ /Undocumented\sObjects:/
+        puts(stats)
+        exit(1)
+      end
+      puts("** Yardoc ok.", :cyan)
     end
-    terminal.puts("** Yardoc ok.", :cyan)
+    puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
   end
+
   def run
     configure_exec(exit_on_nonzero_status: true)
-    terminal = Toys::Utils::Terminal.new
-    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
-      ::Dir.chdir("toys-core") do
-        terminal.puts("**** CHECKING TOYS-CORE GEM...", :bold, :cyan)
-        validate_dir(terminal)
-        terminal.puts("**** TOYS-CORE GEM OK.", :bold, :cyan)
-      end
-      ::Dir.chdir("toys") do
-        terminal.puts("**** CHECKING TOYS GEM ...", :bold, :cyan)
-        validate_dir(terminal)
-        terminal.puts("**** TOYS GEM OK.", :bold, :cyan)
-      end
-    end
+    handle_gem("toys-core")
+    handle_gem("toys")
   end
 end
 
 tool "yardoc" do
   desc "Generates yardoc for both gems"
+
   include :exec
+
   def run
     configure_exec(exit_on_nonzero_status: true)
-    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
-      ::Dir.chdir("toys-core") do
-        exec(["yardoc"])
-      end
-      ::Dir.chdir("toys") do
-        exec(["yardoc"])
-      end
+    ::Dir.chdir(::File.join(__dir__, "toys-core")) do
+      exec(["yardoc"])
+    end
+    ::Dir.chdir(::File.join(__dir__, "toys")) do
+      exec(["yardoc"])
     end
   end
 end
 
 tool "clean" do
   desc "Cleans both gems"
-  def run
-    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
-      ::Dir.chdir("toys-core") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        status = subcli.run("clean")
-        exit(status) unless status.zero?
-      end
-      ::Dir.chdir("toys") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        status = subcli.run("clean")
-        exit(status) unless status.zero?
-      end
+
+  def handle_gem(gem_name)
+    ::Dir.chdir(::File.join(__dir__, gem_name)) do
+      subcli = cli.child.add_config_path(".toys.rb")
+      status = subcli.run("clean")
+      exit(status) unless status.zero?
     end
+  end
+
+  def run
+    handle_gem("toys-core")
+    handle_gem("toys")
   end
 end
 
 tool "release" do
   desc "Releases both gems"
+
   include :exec
+  include :terminal
+
   def run
-    terminal = Toys::Utils::Terminal.new
     configure_exec(exit_on_nonzero_status: true)
-    ::Dir.chdir(::File.dirname(tool_definition.source_path)) do
+    ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
-      exit(1) unless terminal.confirm("Release toys #{version}?")
+      exit(1) unless confirm("Release toys #{version}?")
       ::Dir.chdir("toys-core") do
         subcli = cli.child.add_config_path(".toys.rb")
         exit_on_nonzero_status(subcli.run("release", "-y"))

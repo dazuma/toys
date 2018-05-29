@@ -70,7 +70,7 @@ current directory. Copy the following into the file, and save it:
       desc "My first tool!"
       flag :whom, default: "world"
       def run
-        puts "Hello, #{options[:whom]}!"
+        puts "Hello, #{option(:whom)}!"
       end
     end
 
@@ -107,9 +107,10 @@ various subtools, such as "version", are available under that namespace.
 
 Toys provides a rich set of useful libraries for writing tools. It gives you a
 logger and automatically provides flags to control verbosity of log output. It
-includes the Highline library, which you can use to produce styled output,
-console-based interfaces, and special effects. It also includes a library that
-makes it easy to control subprocesses.
+includes a simple library that you can use to produce styled output and basic
+console-based interfaces, and another library that makes it easy to spawn and
+control subprocesses. You can also take advantage of a variety of third-party
+libraries such as Highline and TTY.
 
 For a more detailed look at Toys, see the
 {file:docs/tutorial.md Extended Tutorial} and the
