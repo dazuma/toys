@@ -142,10 +142,3 @@ tool "release" do
     end
   end
 end
-
-tool "foo" do
-  include :highline
-  def run
-    puts "hi"
-  end
-end
