@@ -37,8 +37,8 @@ module Toys
     # how to execute the tool, and requesting helper modules and other services.
     # It also lets you define subtools, nested arbitrarily deep, using blocks.
     #
-    # Generally ConfigDSL is invoked from the {Loader}. Applications should not
-    # need to create instances of ConfigDSL directly.
+    # Generally the DSL is invoked from the {Loader}. Applications should not
+    # need to create instances of DSL::Tool directly.
     #
     # ## Simple example
     #
@@ -66,9 +66,8 @@ module Toys
     module Tool
       ## @private
       def method_added(meth)
-        return if meth != :run
         cur_tool = DSL::Tool.activate_tool(self)
-        cur_tool.mark_runnable if cur_tool
+        cur_tool.mark_runnable if cur_tool && meth == :run
       end
 
       ##
@@ -306,13 +305,13 @@ module Toys
       #     requested that is already in use or marked as unusable. Default is
       #     true.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a description
-      #     of the allowed formats. Defaults to the empty string.
+      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description of the allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for a
-      #     description of the allowed formats. (But note that this param takes
-      #     an Array of description lines, rather than a series of arguments.)
-      #     Defaults to the empty array.
+      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
+      #     a description of the allowed formats. (But note that this param
+      #     takes an Array of description lines, rather than a series of
+      #     arguments.) Defaults to the empty array.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
       #
@@ -343,13 +342,13 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a description
-      #     of the allowed formats. Defaults to the empty string.
+      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description of the allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for a
-      #     description of the allowed formats. (But note that this param takes
-      #     an Array of description lines, rather than a series of arguments.)
-      #     Defaults to the empty array.
+      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
+      #     a description of the allowed formats. (But note that this param
+      #     takes an Array of description lines, rather than a series of
+      #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
@@ -381,13 +380,13 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a description
-      #     of the allowed formats. Defaults to the empty string.
+      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description of the allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for a
-      #     description of the allowed formats. (But note that this param takes
-      #     an Array of description lines, rather than a series of arguments.)
-      #     Defaults to the empty array.
+      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
+      #     a description of the allowed formats. (But note that this param
+      #     takes an Array of description lines, rather than a series of
+      #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
@@ -419,13 +418,13 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::ConfigDSL#desc} for a description
-      #     of the allowed formats. Defaults to the empty string.
+      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description of the allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::ConfigDSL#long_desc} for a
-      #     description of the allowed formats. (But note that this param takes
-      #     an Array of description lines, rather than a series of arguments.)
-      #     Defaults to the empty array.
+      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
+      #     a description of the allowed formats. (But note that this param
+      #     takes an Array of description lines, rather than a series of
+      #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
@@ -441,8 +440,8 @@ module Toys
       alias remaining remaining_args
 
       ##
-      # Specify the script for this tool. This is a block that will be called,
-      # with `self` set to a {Toys::Tool}.
+      # Specify how to run this tool. You may do this by providing a block to
+      # this directive, or by defining the `run` method in the tool.
       #
       def run(&block)
         define_method(:run, &block)
@@ -450,12 +449,14 @@ module Toys
       end
 
       ##
-      # Specify that the given module should be mixed in to this tool's script.
-      # Effectively, the module is added to the {Toys::Tool} object.
-      # You may either provide a module directly, or specify the name of a
-      # well-known module.
+      # Specify that the given module should be mixed into this tool, and its
+      # methods made available when running the tool.
       #
-      # @param [Module,Symbol] mod Module or name of well-known module.
+      # You may provide either a module, the string name of a helper that you
+      # have defined in this tool or one of its ancestors, or the symbol name
+      # of a well-known helper.
+      #
+      # @param [Module,Symbol,String] mod Module or module name.
       #
       def include(mod)
         cur_tool = DSL::Tool.activate_tool(self)

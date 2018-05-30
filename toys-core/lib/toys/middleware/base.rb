@@ -30,18 +30,66 @@
 module Toys
   module Middleware
     ##
-    # A base middleware with a no-op implementation.
+    # This is a base middleware with a no-op implementation.
+    #
+    # A middleware is an object that has the opportunity to alter the
+    # configuration and runtime behavior of each tool in a Toys CLI. A CLI
+    # contains an ordered list of middleware, known as the *middleware stack*,
+    # that together define the CLI's default behavior.
+    #
+    # Specifically, a middleware can perform two functions.
+    #
+    # First, it can modify the configuration of a tool. After tools are defined
+    # from configuration, the middleware stack can make modifications to each
+    # tool. A middleware can add flags and arguments to the tool, modify the
+    # description, or make any other changes to how the tool is set up.
+    #
+    # Second, a middleware can intercept and change tool execution. Like a Rack
+    # middleware, a Toys middleware can wrap execution with its own code,
+    # replace it outright, or leave it unmodified.
     #
     class Base
       ##
-      # The base middleware does not affect tool configuration.
+      # This method is called after a tool has been defined, and gives this
+      # middleware the opportunity to modify the tool definition. It is passed
+      # the tool definition object and the loader, and can make any changes to
+      # the tool definition. In most cases, this method should also call
+      # `yield`, which passes control to the next middleware in the stack. A
+      # middleware can disable modifications done by subsequent middleware by
+      # omitting the `yield` call, but this is uncommon.
+      #
+      # The base middleware implementation does nothing and simply yields to
+      # the next middleware. Subclasses should override this if they want to
+      # alter the tool definition.
+      #
+      # @param [Toys::Definition::Tool] _tool_definition The tool definition
+      #     to modify.
+      # @param [Toys::Loader] _loader The loader that loaded this tool.
       #
       def config(_tool_definition, _loader)
         yield
       end
 
       ##
-      # The base middleware does not affect tool execution.
+      # This method is called when the tool is run. It gives the middleware an
+      # opportunity to modify the runtime behavior of the tool. It is passed
+      # the tool instance (i.e. the object that hosts a tool's `run` method),
+      # and you can use this object to access the tool's options and other
+      # context data. In most cases, this method should also call `yield`,
+      # which passes control to the next middleware in the stack. A middleware
+      # can "wrap" normal execution by calling `yield` somewhere in its
+      # implementation of this method, or it can completely replace the
+      # execution behavior by not calling `yield` at all.
+      #
+      # Like a tool's `run` method, this method's return value is unused. If
+      # you want to output from a tool, write to stdout or stderr. If you want
+      # to set the exit status code, call {Toys::Tool#exit} on the tool object.
+      #
+      # The base middleware implementation does nothing and simply yields to
+      # the next middleware. Subclasses should override this if they want to
+      # alter the tool execution.
+      #
+      # @param [Toys::Tool] _tool The tool execution instance.
       #
       def run(_tool)
         yield

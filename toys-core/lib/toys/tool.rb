@@ -42,7 +42,7 @@ module Toys
   # *   Common information such as the {Toys::Definition::Tool} object being
   #     executed, the arguments originally passed to it, or the usage error
   #     string. These well-known keys can be accessed via constants in the
-  #     {Toys::Tool} module.
+  #     {Toys::Tool::Keys} module.
   # *   Common settings such as the verbosity level, and whether to exit
   #     immediately if a subprocess exits with a nonzero result. These keys are
   #     also present as {Toys::Context} constants.

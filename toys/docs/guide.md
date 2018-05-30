@@ -236,7 +236,7 @@ configurations interact.
 
 The format of a Toys configuration file is a Ruby DSL including method calls
 and nested blocks. The actual DSL is specified in the
-[ConfigDSL class](https://www.rubydoc.info/gems/toys-core/Toys/ConfigDSL).
+[Toys::DSL::Tool class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/Tool).
 
 To create a tool, write a `tool` block, giving the tool a name. Within the
 block, set the properties of the tool, including a description, the flags and
@@ -285,16 +285,16 @@ illustrates how to prevent a line from being word-wrapped. This is also a
 useful technique for preserving spaces and indentation.
 
 For more details, see the reference documentation for
-[ConfigDSL#desc](https://www.rubydoc.info/gems/toys-core/Toys%2FConfigDSL:desc)
+[DSL::Tool#desc](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:desc)
 and
-[ConfigDSL#long_desc](https://www.rubydoc.info/gems/toys-core/Toys%2FConfigDSL:long_desc).
+[DSL::Tool#long_desc](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:long_desc).
 
 ### Positional Arguments
 
 Tools may recognize required and optional positional arguments. Each argument
 must provide a name, which defines how the argument value is exposed to the
 tool at execution time. The above example uses the DSL method
-[ConfigDSL#optional_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FConfigDSL:optional_arg)
+[DSL::Tool#optional_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:optional_arg)
 to declare an optional argument named `:whom`. If the argument is provided on
 the command line e.g.
 
@@ -311,7 +311,7 @@ Then the option `:whom` is set to the default value `"world"`.
 Arguments may also be **required** which means they must be provided on the
 command line; otherwise the tool will report a usage error. You may declare a
 required argument using the DSL method
-[ConfigDSL#required_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FConfigDSL:required_arg).
+[DSL::Tool#required_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:required_arg).
 
 When command line arguments are parsed, the required arguments are matched
 first, in order, followed by the optional arguments. For example:
@@ -348,7 +348,7 @@ match `"baz"`.
 
 You can also provide an "argument" to match all remaining unmatched arguments
 at the end, using the DSL method
-[ConfigDSL#remaining_args](https://www.rubydoc.info/gems/toys-core/Toys%2FConfigDSL:remaining_args). For example:
+[DSL::Tool#remaining_args](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:remaining_args). For example:
 
     tool "arguments" do
       optional_arg :arg2

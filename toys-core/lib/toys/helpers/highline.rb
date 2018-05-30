@@ -34,7 +34,12 @@ require "highline"
 module Toys
   module Helpers
     ##
-    # A module that provides access to highline.
+    # A module that provides access to the capabilities of the highline gem.
+    #
+    # You may make these methods available to your tool by including the
+    # following directive in your tool configuration:
+    #
+    #     include :highline
     #
     module Highline
       ##

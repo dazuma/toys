@@ -72,13 +72,13 @@ module Toys
     #    stream of the subprocess. If set to `:controller`, the controller
     #    will control the output stream. If set to `:capture`, the output will
     #    be captured in a string that is available in the
-    #    {Toys::Helpers::Exec::Result} object. If not set, the subprocess
+    #    {Toys::Utils::Exec::Result} object. If not set, the subprocess
     #    standard out is connected to STDOUT of the Toys process.
     # *  **:err_to** (`:controller`,`:capture`) Connects the standard error
     #    stream of the subprocess. If set to `:controller`, the controller
     #    will control the output stream. If set to `:capture`, the output will
     #    be captured in a string that is available in the
-    #    {Toys::Helpers::Exec::Result} object. If not set, the subprocess
+    #    {Toys::Utils::Exec::Result} object. If not set, the subprocess
     #    standard out is connected to STDERR of the Toys process.
     #
     # In addition, the following options recognized by `Process#spawn` are

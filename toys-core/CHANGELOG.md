@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.7 / TBD
+### 0.3.7 / 2018-05-30
 
 * CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.
 * CHANGED: Renamed "script" to "run", and allow setting of runnable by defining a "run" method

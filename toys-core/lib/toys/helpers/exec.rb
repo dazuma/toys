@@ -37,6 +37,11 @@ module Toys
     # in a string. Also provides an interface for controlling a spawned
     # process's streams.
     #
+    # You may make these methods available to your tool by including the
+    # following directive in your tool configuration:
+    #
+    #     include :exec
+    #
     # This is a frontend for {Toys::Utils::Exec}. More information is
     # available in that class's documentation.
     #

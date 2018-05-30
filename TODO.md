@@ -9,7 +9,9 @@
 
 ## Investigations/wishlist
 
+* Named templates the same way as we have named helpers
 * Support directing Exec streams to /dev/null
+* Consider a way to exec_tool that uses fork
 * Range acceptors. May be difficult unless we can limit the types.
 * Line length limit for Terminal
 * Required flags and flag groups. Three types: at_most_one, exactly_one, at_least_one

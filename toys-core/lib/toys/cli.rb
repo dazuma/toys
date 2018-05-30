@@ -257,7 +257,11 @@ module Toys
         @terminal = Utils::Terminal.new(output: output)
       end
 
-      ## @private
+      ##
+      # The error handler routine. Prints out the error message and backtrace.
+      #
+      # @param [Exception] error The error that occurred.
+      #
       def call(error)
         @terminal.puts(cause_string(error.cause))
         @terminal.puts(context_string(error), :bold)
@@ -319,7 +323,7 @@ module Toys
       end
 
       ##
-      # Returns a default logger that logs to `STDERR`.
+      # Returns a default logger that logs to `$stderr`.
       #
       # @param [IO] stream Stream to write to. Defaults to `$stderr`.
       # @return [Logger]

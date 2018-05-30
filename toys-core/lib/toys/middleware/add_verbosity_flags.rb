@@ -36,7 +36,7 @@ module Toys
     #
     # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` flags, if
     # not already defined by the tool. These flags affect the setting of
-    # {Toys::Tool::VERBOSITY}, and, thus, the logger level.
+    # {Toys::Tool::Keys::VERBOSITY}, and, thus, the logger level.
     #
     class AddVerbosityFlags < Base
       ##

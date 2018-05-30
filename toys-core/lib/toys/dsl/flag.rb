@@ -78,6 +78,7 @@ module Toys
       # parsed. It should be a Proc taking two arguments, the new given value
       # and the previous value, and it should return the new value that should
       # be set.
+      #
       # @param [Proc] handler
       #
       def handler(handler)
@@ -88,6 +89,7 @@ module Toys
       ##
       # Set whether to raise an exception if a flag is requested that is
       # already in use or marked as disabled.
+      #
       # @param [Boolean] setting
       #
       def report_collisions(setting)
@@ -96,8 +98,9 @@ module Toys
       end
 
       ##
-      # Set the short description. See {Toys::ConfigDSL#desc} for the allowed
+      # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
       # formats.
+      #
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
       #
       def desc(desc)
@@ -107,8 +110,9 @@ module Toys
 
       ##
       # Adds to the long description. This may be called multiple times, and
-      # the results are cumulative. See {Toys::ConfigDSL#long_desc} for the
+      # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
       # allowed formats.
+      #
       # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
       #
       def long_desc(*long_desc)

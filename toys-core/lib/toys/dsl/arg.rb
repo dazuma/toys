@@ -71,8 +71,9 @@ module Toys
       end
 
       ##
-      # Set the short description. See {Toys::ConfigDSL#desc} for the allowed
+      # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
       # formats.
+      #
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
       #
       def desc(desc)
@@ -82,8 +83,9 @@ module Toys
 
       ##
       # Adds to the long description. This may be called multiple times, and
-      # the results are cumulative. See {Toys::ConfigDSL#long_desc} for the
+      # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
       # allowed formats.
+      #
       # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
       #
       def long_desc(*long_desc)

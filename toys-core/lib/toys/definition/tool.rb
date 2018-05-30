@@ -64,10 +64,7 @@ module Toys
 
       ##
       # Create a new tool.
-      #
       # @private
-      #
-      # @param [Array<String>] full_name The name of the tool
       #
       def initialize(loader, parent, full_name, priority, middleware_stack)
         @parent = parent
@@ -326,11 +323,11 @@ module Toys
       # string (which will be wrapped), or an array of strings, which will be
       # interpreted as string fragments that will be concatenated and wrapped.
       #
-      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] descs
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] long_desc
       #
-      def long_desc=(descs)
+      def long_desc=(long_desc)
         check_definition_state
-        @long_desc = Utils::WrappableString.make_array(descs)
+        @long_desc = Utils::WrappableString.make_array(long_desc)
       end
 
       ##
@@ -515,15 +512,6 @@ module Toys
       end
 
       ##
-      # Mark this tool as runnable
-      #
-      def mark_runnable
-        check_definition_state
-        @runnable = true
-        self
-      end
-
-      ##
       # Set the runnable block
       #
       # @param [Proc] proc The runnable block
@@ -533,9 +521,18 @@ module Toys
       end
 
       ##
-      # Complete definition and run middleware configs
-      # @param [Toys::Loader] loader
+      # Mark this tool as runnable. Should be called from the DSL only.
+      # @private
       #
+      def mark_runnable
+        check_definition_state
+        @runnable = true
+        self
+      end
+
+      ##
+      # Complete definition and run middleware configs. Should be called from
+      # the Loader only.
       # @private
       #
       def finish_definition(loader)

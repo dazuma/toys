@@ -47,16 +47,19 @@ module Toys
       ##
       # Create a base acceptor.
       #
-      # The basic acceptor does not do any validation (i.e. it accepts all
-      # arguments). You may subclass this object and implement the {#match}
+      # The base acceptor does not do any validation (i.e. it accepts all
+      # arguments). You may subclass this object and override the {#match}
       # method to change this behavior.
       #
-      # The converter should take one or more arguments, the first of which is
-      # the entire argument string, and the others of which may be returned
-      # from validation. The converter should return the final converted value
-      # of the argument. If you do not provide a converter, this acceptor will
-      # set the final value to the input argument string by default.
-      # You may provide a converter either as a proc or a block.
+      # The base acceptor lets you provide a converter as a proc. The proc
+      # should take one or more arguments, the first of which is the entire
+      # argument string, and the others of which are any additional values
+      # returned from validation. The converter should return the final
+      # converted value of the argument.
+      #
+      # The converter may be provided either as a proc in the `converter`
+      # parameter, or as a block. If neither is provided, the base acceptor
+      # performs no conversion and uses the argument string.
       #
       # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Proc] converter A converter function. May also be given as a
@@ -105,7 +108,8 @@ module Toys
       end
 
       ##
-      # Convert the given input.
+      # Convert the given input. Uses the converter provided to this object's
+      # constructor. Subclasses may also override this method.
       #
       # @param [String] str Original argument string
       # @param [Object...] extra Zero or more additional arguments comprising
@@ -123,10 +127,11 @@ module Toys
     #
     class PatternAcceptor < Acceptor
       ##
-      # Create an acceptor.
+      # Create a pattern acceptor.
       #
       # You must provide a regular expression as a validator. You may also
-      # provide a converter.
+      # provide a converter proc. See {Toys::Definition::Acceptor} for details
+      # on the converter.
       #
       # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Regexp] regex Regular expression defining value values.
@@ -140,7 +145,7 @@ module Toys
       end
 
       ##
-      # Overrides match to match from the given regex.
+      # Overrides {Toys::Definition::Acceptor#match} to use the given regex.
       #
       def match(str)
         @regex.match(str)
@@ -173,14 +178,15 @@ module Toys
       end
 
       ##
-      # Overrides match to find the value.
+      # Overrides {Toys::Definition::Acceptor#match} to find the value.
       #
       def match(str)
         @values.find { |s, _e| s == str }
       end
 
       ##
-      # Overrides convert to return the original element.
+      # Overrides {Toys::Definition::Acceptor#convert} to return the original
+      # element.
       #
       def convert(_str, elem)
         elem

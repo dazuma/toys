@@ -125,9 +125,9 @@ module Toys
     #    `$HOME:/etc` by default.
     # *  The builtins for the standard toys binary.
     #
+    # @param [Toys::CLI] cli Add paths to this CLI
     # @param [String,nil] directory Starting search directory for configs.
     #     Defaults to the current working directory.
-    # @param [Toys::CLI] cli Add paths to this CLI
     #
     def self.add_standard_paths(cli, directory: nil)
       cli.add_search_path_hierarchy(start: directory)

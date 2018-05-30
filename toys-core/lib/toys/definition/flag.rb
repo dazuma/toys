@@ -228,7 +228,7 @@ module Toys
       end
 
       ##
-      # All optparser flags and acceptor if present
+      # Returns a list suitable for passing to OptionParser.
       # @return [Array]
       #
       def optparser_info
@@ -245,16 +245,26 @@ module Toys
       end
 
       ##
-      # Set description
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      # Set the short description string.
+      #
+      # The description may be provided as a {Toys::Utils::WrappableString}, a
+      # single string (which will be wrapped), or an array of strings, which will
+      # be interpreted as string fragments that will be concatenated and wrapped.
+      #
+      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
       #
       def desc=(desc)
         @desc = Utils::WrappableString.make(desc)
       end
 
       ##
-      # Set long description
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # Set the long description strings.
+      #
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+      # string (which will be wrapped), or an array of strings, which will be
+      # interpreted as string fragments that will be concatenated and wrapped.
+      #
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] long_desc
       #
       def long_desc=(long_desc)
         @long_desc = Utils::WrappableString.make_array(long_desc)

@@ -32,7 +32,14 @@ require "toys/utils/terminal"
 module Toys
   module Helpers
     ##
-    # A helper that provides a simple terminal.
+    # A helper that provides a simple terminal. It includes a set of methods
+    # that produce styled output, get user input, and otherwise interact with
+    # the user's terminal.
+    #
+    # You may make these methods available to your tool by including the
+    # following directive in your tool configuration:
+    #
+    #     include :terminal
     #
     module Terminal
       ##
