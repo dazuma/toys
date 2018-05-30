@@ -6,7 +6,7 @@ Layout/SpaceInsideHashLiteralBraces:
 Metrics/AbcSize:
   Max: 24
 Metrics/ClassLength:
-  Max: 250
+  Max: 300
 Metrics/CyclomaticComplexity:
   Max: 10
 Metrics/LineLength:
@@ -40,15 +40,13 @@ Style/SymbolArray:
 Style/WordArray:
   Enabled: false
 
-# Disable certain checks for templates and tests
+# Disable certain checks for tests
 Metrics/BlockLength:
   Exclude:
-    - "lib/toys/templates/*"
     - "test/**/*"
     - "*.gemspec"
 Metrics/BlockNesting:
   Exclude:
-    - "lib/toys/templates/*"
     - "test/**/*"
 Naming/FileName:
   Exclude:

@@ -27,8 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/utils/terminal"
-
 module Toys
   module Utils
     ##

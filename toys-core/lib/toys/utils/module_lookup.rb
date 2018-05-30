@@ -34,11 +34,7 @@ module Toys
     # used to obtain named helpers, middleware, and templates from the
     # respective modules.
     #
-    # You generally do not need to use these module methods directly. Instead
-    # use the convenience methods {Toys::Helpers.lookup},
-    # {Toys::Middleware.lookup}, or {Toys::Templates.lookup}.
-    #
-    module ModuleLookup
+    class ModuleLookup
       class << self
         ##
         # Convert the given string to a path element. Specifically, converts
@@ -66,47 +62,71 @@ module Toys
         end
 
         ##
-        # Obtain a named module from the given collection. Raises an exception
-        # on failure.
+        # Given a require path, return the module expected to be defined.
         #
-        # @param [String,Symbol] collection The collection to search. Typical
-        #     values are `:helpers`, `:middleware`, and `:templates`.
-        # @param [String,Symbol] name The name of the module to return.
+        # @param [String] path File path, delimited by forward slash
+        # @return [Module] The module loaded from that path
         #
-        # @return [Module] The specified module
-        # @raise [LoadError] No Ruby file containing the given module could
-        #     be found.
-        # @raise [NameError] The given module was not defined.
-        #
-        def lookup!(collection, name)
-          require "toys/#{to_path_name(collection)}/#{to_path_name(name)}"
-          collection_sym = to_module_name(collection)
-          unless ::Toys.constants.include?(collection_sym)
-            raise ::NameError, "Module does not exist: Toys::#{collection_sym}"
+        def path_to_module(path)
+          path.split("/").reduce(::Object) do |running_mod, seg|
+            mod_name = to_module_name(seg)
+            unless running_mod.constants.include?(mod_name)
+              raise ::NameError, "Module #{running_mod.name}::#{mod_name} not found"
+            end
+            running_mod.const_get(mod_name)
           end
-          collection_mod = ::Toys.const_get(collection_sym)
-          name_sym = to_module_name(name)
-          unless collection_mod.constants.include?(name_sym)
-            raise ::NameError, "Module does not exist: Toys::#{collection_sym}::#{name_sym}"
-          end
-          collection_mod.const_get(name_sym)
         end
+      end
 
-        ##
-        # Obtain a named module from the given collection. Returns `nil` on
-        # failure.
-        #
-        # @param [String,Symbol] collection The collection to search. Typical
-        #     values are `:helpers`, `:middleware`, and `:templates`.
-        # @param [String,Symbol] name The name of the module to return.
-        #
-        # @return [Module,nil] The specified module, or `nil` if not found.
-        #
-        def lookup(collection, name)
-          lookup!(collection, name)
-        rescue ::NameError, ::LoadError
-          nil
+      ##
+      # Create an empty ModuleLookup
+      #
+      def initialize
+        @paths = []
+      end
+
+      ##
+      # Add a lookup path for modules.
+      #
+      # @param [String] path_base The base require path
+      # @param [Module] module_base The base module, or `nil` (the default) to
+      #     infer a default from the path base.
+      # @param [Boolean] high_priority If true, add to the head of the lookup
+      #     path, otherwise add to the end.
+      #
+      def add_path(path_base, module_base: nil, high_priority: false)
+        module_base ||= ModuleLookup.path_to_module(path_base)
+        if high_priority
+          @paths.unshift([path_base, module_base])
+        else
+          @paths << [path_base, module_base]
         end
+        self
+      end
+
+      ##
+      # Obtain a named module. Returns `nil` if the name is not present.
+      #
+      # @param [String,Symbol] name The name of the module to return.
+      #
+      # @return [Module] The specified module
+      #
+      def lookup(name)
+        @paths.each do |path_base, module_base|
+          path = "#{path_base}/#{ModuleLookup.to_path_name(name)}"
+          begin
+            require path
+          rescue ::LoadError
+            next
+          end
+          mod_name = ModuleLookup.to_module_name(name)
+          unless module_base.constants.include?(mod_name)
+            raise ::NameError,
+                  "File #{path.inspect} did not define #{module_base.name}::#{mod_name}"
+          end
+          return module_base.const_get(mod_name)
+        end
+        nil
       end
     end
   end

@@ -108,7 +108,8 @@ module Toys
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
         preload_file_name: PRELOAD_FILE_NAME,
-        middleware_stack: default_middleware_stack
+        middleware_stack: default_middleware_stack,
+        template_lookup: default_template_lookup
       )
       add_standard_paths(cli, directory: directory)
       cli
@@ -190,5 +191,9 @@ module Toys
     end
 
     # rubocop:enable Metrics/MethodLength
+
+    def self.default_template_lookup
+      Utils::ModuleLookup.new.add_path("toys/templates")
+    end
   end
 end

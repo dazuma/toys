@@ -2,6 +2,8 @@
 
 ## Immediate tasks
 
+* Named templates the same way as we have named helpers
+
 ## Important tasks
 
 * Improve test coverage
@@ -9,7 +11,6 @@
 
 ## Investigations/wishlist
 
-* Named templates the same way as we have named helpers
 * Support directing Exec streams to /dev/null
 * Consider a way to exec_tool that uses fork
 * Range acceptors. May be difficult unless we can limit the types.
@@ -18,3 +19,4 @@
 * Something to generate output formats
 * System paths tool
 * Namespace clearing/locking
+* Helpers for various gems like pastel and tty-*

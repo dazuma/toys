@@ -27,13 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-require "toys/utils/exec"
-require "toys/utils/help_text"
-require "toys/utils/terminal"
-
 module Toys
-  module Middleware
+  module StandardMiddleware
     ##
     # A middleware that shows help text for the tool when a flag (typically
     # `--help`) is provided. It can also be configured to show help by
@@ -44,7 +39,9 @@ module Toys
     # all subtools recursively rather than only immediate subtools. This
     # middleware can also search for keywords in its subtools.
     #
-    class ShowHelp < Base
+    class ShowHelp
+      include Middleware
+
       ##
       # Default help flags
       # @return [Array<String>]
@@ -226,8 +223,7 @@ module Toys
       end
 
       def add_help_flags(tool_definition)
-        help_flags = Middleware.resolve_flags_spec(@help_flags, tool_definition,
-                                                   DEFAULT_HELP_FLAGS)
+        help_flags = resolve_flags_spec(@help_flags, tool_definition, DEFAULT_HELP_FLAGS)
         unless help_flags.empty?
           tool_definition.add_flag(
             :_show_help, help_flags,
@@ -239,8 +235,7 @@ module Toys
       end
 
       def add_usage_flags(tool_definition)
-        usage_flags = Middleware.resolve_flags_spec(@usage_flags, tool_definition,
-                                                    DEFAULT_USAGE_FLAGS)
+        usage_flags = resolve_flags_spec(@usage_flags, tool_definition, DEFAULT_USAGE_FLAGS)
         unless usage_flags.empty?
           tool_definition.add_flag(
             :_show_usage, usage_flags,
@@ -252,8 +247,8 @@ module Toys
       end
 
       def add_recursive_flags(tool_definition)
-        recursive_flags = Middleware.resolve_flags_spec(@recursive_flags, tool_definition,
-                                                        DEFAULT_RECURSIVE_FLAGS)
+        recursive_flags = resolve_flags_spec(@recursive_flags, tool_definition,
+                                             DEFAULT_RECURSIVE_FLAGS)
         unless recursive_flags.empty?
           tool_definition.add_flag(
             :_recursive_subtools, recursive_flags,
@@ -264,14 +259,27 @@ module Toys
       end
 
       def add_search_flags(tool_definition)
-        search_flags = Middleware.resolve_flags_spec(@search_flags, tool_definition,
-                                                     DEFAULT_SEARCH_FLAGS)
+        search_flags = resolve_flags_spec(@search_flags, tool_definition, DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
           tool_definition.add_flag(
             :_search_subtools, search_flags,
             report_collisions: false,
             desc: "Search subtools for the given regular expression"
           )
+        end
+      end
+
+      def resolve_flags_spec(flags, tool, defaults)
+        flags = flags.call(tool) if flags.respond_to?(:call)
+        case flags
+        when true, :default
+          Array(defaults)
+        when ::String
+          [flags]
+        when ::Array
+          flags
+        else
+          []
         end
       end
     end

@@ -40,14 +40,16 @@ Style/SymbolArray:
 Style/WordArray:
   Enabled: false
 
-# Disable certain checks for builtins and tests
+# Disable certain checks for templates, builtins and tests
 Metrics/BlockLength:
   Exclude:
+    - "lib/toys/templates/*"
     - "test/**/*"
     - "builtins/**/*"
     - "*.gemspec"
 Metrics/BlockNesting:
   Exclude:
+    - "lib/toys/templates/*"
     - "test/**/*"
 Style/BlockDelimiters:
   Exclude:

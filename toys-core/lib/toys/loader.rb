@@ -59,14 +59,24 @@ module Toys
     #     used by the tools defined in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
+    # @param [Toys::Utils::ModuleLookup] helper_lookup A lookup for well-known
+    #     helper modules. Defaults to an empty lookup.
+    # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
+    #     well-known middleware classes. Defaults to an empty lookup.
+    # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
+    #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [])
+    def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [],
+                   helper_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
       if preload_file_name && ::File.extname(preload_file_name) != ".rb"
         raise ::ArgumentError, "Illegal preload file name #{preload_file_name.inspect}"
       end
+      @helper_lookup = helper_lookup || Utils::ModuleLookup.new
+      @middleware_lookup = middleware_lookup || Utils::ModuleLookup.new
+      @template_lookup = template_lookup || Utils::ModuleLookup.new
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @middleware_stack = middleware_stack
@@ -169,23 +179,6 @@ module Toys
     end
 
     ##
-    # Finishes all tool definitions under the given path. This generally means
-    # installing middleware.
-    #
-    # @param [Array<String>] words The path to the tool under which all
-    #     definitions should be finished.
-    #
-    def finish_definitions_in_tree(words)
-      load_for_prefix(words)
-      len = words.length
-      @tool_data.each do |n, td|
-        next if n.length < len || n.slice(0, len) != words
-        tool = td.active_definition || td.top_definition
-        tool.finish_definition(self) if tool.is_a?(Definition::Tool)
-      end
-    end
-
-    ##
     # Returns a tool specified by the given words, with the given priority.
     # Does not do any loading. If the tool is not present, creates it.
     #
@@ -241,36 +234,8 @@ module Toys
     end
 
     ##
-    # Returns a tool given a name. Resolves any aliases.
-    #
-    # @param [Array<String>] words Name of the tool
-    # @param [Array<Array<String>>] looked_up List of names that have already
-    #     been traversed during alias resolution. Used to detect circular
-    #     alias references.
-    # @return [Toys::Definition::Tool,nil] The tool, or `nil` if not found
-    #
-    # @private
-    #
-    def get_active_tool(words, looked_up = [])
-      tool_data = get_tool_data(words)
-      result = tool_data.active_definition
-      case result
-      when Definition::Alias
-        words = result.target_name
-        if looked_up.include?(words)
-          raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
-        end
-        looked_up << words
-        get_active_tool(words, looked_up)
-      when Definition::Tool
-        result
-      else
-        tool_data.top_definition
-      end
-    end
-
-    ##
-    # Get the tool definition for the given name and priority.
+    # Get or create the tool definition for the given name and priority.
+    # May return either a tool or alias definition.
     #
     # @private
     #
@@ -284,8 +249,29 @@ module Toys
       if tool_data.top_priority.nil? || tool_data.top_priority < priority
         tool_data.top_priority = priority
       end
+      middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
       tool_data.definitions[priority] ||=
-        Definition::Tool.new(self, parent, words, priority, @middleware_stack)
+        Definition::Tool.new(self, parent, words, priority, middlewares)
+    end
+
+    ##
+    # Attempt to get a well-known helper module for the given symbolic name.
+    #
+    # @param [Symbol] name Helper name
+    # @return [Module,nil] The helper, or `nil` if not found.
+    #
+    def resolve_standard_helper(name)
+      @helper_lookup.lookup(name)
+    end
+
+    ##
+    # Attempt to get a well-known template class for the given symbolic name.
+    #
+    # @param [Symbol] name Template name
+    # @return [Class,nil] The template, or `nil` if not found.
+    #
+    def resolve_standard_template(name)
+      @template_lookup.lookup(name)
     end
 
     ##
@@ -316,6 +302,66 @@ module Toys
 
     def get_tool_data(words)
       @tool_data[words] ||= ToolData.new({}, nil, nil)
+    end
+
+    ##
+    # Returns the current effective tool given a name. Resolves any aliases.
+    #
+    # If there is an active tool, returns it; otherwise, returns the highest
+    # priority tool that has been defined. If no tool has been defined with
+    # the given name, returns `nil`.
+    #
+    # @private
+    #
+    def get_active_tool(words, looked_up = [])
+      tool_data = get_tool_data(words)
+      result = tool_data.active_definition
+      case result
+      when Definition::Alias
+        words = result.target_name
+        if looked_up.include?(words)
+          raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
+        end
+        looked_up << words
+        get_active_tool(words, looked_up)
+      when Definition::Tool
+        result
+      else
+        tool_data.top_definition
+      end
+    end
+
+    def resolve_middleware(input)
+      input = Array(input)
+      cls = input.first
+      args = input[1..-1]
+      if cls.is_a?(::String) || cls.is_a?(::Symbol)
+        cls = @middleware_lookup.lookup(cls)
+        if cls.nil?
+          raise ::ArgumentError, "Unrecognized middleware name #{input.first.inspect}"
+        end
+      end
+      if cls.is_a?(::Class)
+        cls.new(*args)
+      elsif !args.empty?
+        raise ::ArgumentError, "Unrecognized middleware object of class #{cls.class}"
+      else
+        cls
+      end
+    end
+
+    ##
+    # Finishes all tool definitions under the given path. This generally means
+    # installing middleware.
+    #
+    def finish_definitions_in_tree(words)
+      load_for_prefix(words)
+      len = words.length
+      @tool_data.each do |n, td|
+        next if n.length < len || n.slice(0, len) != words
+        tool = td.active_definition || td.top_definition
+        tool.finish_definition(self) if tool.is_a?(Definition::Tool)
+      end
     end
 
     def load_for_prefix(prefix)

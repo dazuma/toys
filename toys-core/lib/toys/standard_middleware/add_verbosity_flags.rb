@@ -27,10 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-
 module Toys
-  module Middleware
+  module StandardMiddleware
     ##
     # A middleware that provides flags for editing the verbosity.
     #
@@ -38,7 +36,9 @@ module Toys
     # not already defined by the tool. These flags affect the setting of
     # {Toys::Tool::Keys::VERBOSITY}, and, thus, the logger level.
     #
-    class AddVerbosityFlags < Base
+    class AddVerbosityFlags
+      include Middleware
+
       ##
       # Default verbose flags
       # @return [Array<String>]
@@ -84,8 +84,8 @@ module Toys
       private
 
       def add_verbose_flags(tool_definition)
-        verbose_flags = Middleware.resolve_flags_spec(@verbose_flags, tool_definition,
-                                                      DEFAULT_VERBOSE_FLAGS)
+        verbose_flags = resolve_flags_spec(@verbose_flags, tool_definition,
+                                           DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
           tool_definition.add_flag(
             Tool::Keys::VERBOSITY, verbose_flags,
@@ -98,8 +98,7 @@ module Toys
       end
 
       def add_quiet_flags(tool_definition)
-        quiet_flags = Middleware.resolve_flags_spec(@quiet_flags, tool_definition,
-                                                    DEFAULT_QUIET_FLAGS)
+        quiet_flags = resolve_flags_spec(@quiet_flags, tool_definition, DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
           tool_definition.add_flag(
             Tool::Keys::VERBOSITY, quiet_flags,
@@ -108,6 +107,20 @@ module Toys
             desc: "Decrease verbosity",
             long_desc: "Decrease verbosity, causing fewer logging levels to display."
           )
+        end
+      end
+
+      def resolve_flags_spec(flags, tool, defaults)
+        flags = flags.call(tool) if flags.respond_to?(:call)
+        case flags
+        when true, :default
+          Array(defaults)
+        when ::String
+          [flags]
+        when ::Array
+          flags
+        else
+          []
         end
       end
     end

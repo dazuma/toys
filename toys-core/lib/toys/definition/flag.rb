@@ -27,10 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "optparse"
-
-require "toys/utils/wrappable_string"
-
 module Toys
   module Definition
     ##

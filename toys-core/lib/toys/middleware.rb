@@ -27,98 +27,71 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/utils/module_lookup"
-
 module Toys
   ##
-  # Middleware lets you define common behavior across many tools.
+  # This is a base middleware with a no-op implementation.
+  #
+  # A middleware is an object that has the opportunity to alter the
+  # configuration and runtime behavior of each tool in a Toys CLI. A CLI
+  # contains an ordered list of middleware, known as the *middleware stack*,
+  # that together define the CLI's default behavior.
+  #
+  # Specifically, a middleware can perform two functions.
+  #
+  # First, it can modify the configuration of a tool. After tools are defined
+  # from configuration, the middleware stack can make modifications to each
+  # tool. A middleware can add flags and arguments to the tool, modify the
+  # description, or make any other changes to how the tool is set up.
+  #
+  # Second, a middleware can intercept and change tool execution. Like a Rack
+  # middleware, a Toys middleware can wrap execution with its own code,
+  # replace it outright, or leave it unmodified.
   #
   module Middleware
-    class << self
-      ##
-      # Return a well-known middleware class by name.
-      #
-      # Currently recognized middleware names are:
-      #
-      # *  `:add_verbosity_flags` : Adds flags for affecting verbosity.
-      # *  `:handle_usage_errors` : Displays the usage error if one occurs.
-      # *  `:set_default_descriptions` : Sets default descriptions for tools
-      #    that do not have them set explicitly.
-      # *  `:show_help` : Teaches tools to print their usage documentation.
-      # *  `:show_version` : Teaches tools to print their version.
-      #
-      # @param [String,Symbol] name Name of the middleware class to return
-      # @return [Class,nil] The class, or `nil` if not found
-      #
-      def lookup!(name)
-        Utils::ModuleLookup.lookup!(:middleware, name)
-      end
+    ##
+    # This method is called after a tool has been defined, and gives this
+    # middleware the opportunity to modify the tool definition. It is passed
+    # the tool definition object and the loader, and can make any changes to
+    # the tool definition. In most cases, this method should also call
+    # `yield`, which passes control to the next middleware in the stack. A
+    # middleware can disable modifications done by subsequent middleware by
+    # omitting the `yield` call, but this is uncommon.
+    #
+    # The base middleware implementation does nothing and simply yields to
+    # the next middleware. Subclasses should override this if they want to
+    # alter the tool definition.
+    #
+    # @param [Toys::Definition::Tool] _tool_definition The tool definition
+    #     to modify.
+    # @param [Toys::Loader] _loader The loader that loaded this tool.
+    #
+    def config(_tool_definition, _loader)
+      yield
+    end
 
-      ##
-      # Resolves a single middleware. You may pass an instance already
-      # constructed, a middleware class, the name of a well-known middleware
-      # class, or an array where the first element is the lookup name or class,
-      # and subsequent elements are arguments to be passed to the constructor.
-      #
-      # @param [String,Symbol,Array,Object] input The middleware spec
-      # @return [Object] Constructed middleware
-      #
-      def resolve(input)
-        input = Array(input)
-        raise "No middleware found" if input.empty?
-        cls = input.first
-        args = input[1..-1]
-        if cls.is_a?(::String) || cls.is_a?(::Symbol)
-          cls = lookup!(cls)
-        end
-        if cls.is_a?(::Class)
-          cls.new(*args)
-        else
-          raise "Unrecognized middleware class #{cls.class}" unless args.empty?
-          cls
-        end
-      end
-
-      ##
-      # Resolves an array of middleware specs. See {Toys::Middleware.resolve}.
-      #
-      # @param [Array] input An array of middleware specs
-      # @return [Array] An array of constructed middleware
-      #
-      def resolve_stack(input)
-        input.map { |e| resolve(e) }
-      end
-
-      ##
-      # Resolves a typical flags specification. Used often in middleware.
-      #
-      # You may provide any of the following for the `flags` parameter:
-      # *  A string, which becomes the single flag
-      # *  An array of strings
-      # *  The value `false` or `nil` which resolves to no flags
-      # *  The value `true` or `:default` which resolves to the given defaults
-      # *  A proc that takes a tool as argument and returns any of the above.
-      #
-      # Always returns an array of flag strings, even if empty.
-      #
-      # @param [Boolean,String,Array<String>,Proc] flags Flag spec
-      # @param [Toys::Tool] tool The tool
-      # @param [Array<String>] defaults The defaults to use for `true`.
-      # @return [Array<String>] An array of flags
-      #
-      def resolve_flags_spec(flags, tool, defaults)
-        flags = flags.call(tool) if flags.respond_to?(:call)
-        case flags
-        when true, :default
-          Array(defaults)
-        when ::String
-          [flags]
-        when ::Array
-          flags
-        else
-          []
-        end
-      end
+    ##
+    # This method is called when the tool is run. It gives the middleware an
+    # opportunity to modify the runtime behavior of the tool. It is passed
+    # the tool instance (i.e. the object that hosts a tool's `run` method),
+    # and you can use this object to access the tool's options and other
+    # context data. In most cases, this method should also call `yield`,
+    # which passes control to the next middleware in the stack. A middleware
+    # can "wrap" normal execution by calling `yield` somewhere in its
+    # implementation of this method, or it can completely replace the
+    # execution behavior by not calling `yield` at all.
+    #
+    # Like a tool's `run` method, this method's return value is unused. If
+    # you want to output from a tool, write to stdout or stderr. If you want
+    # to set the exit status code, call {Toys::Tool#exit} on the tool object.
+    #
+    # The base middleware implementation does nothing and simply yields to
+    # the next middleware. Subclasses should override this if they want to
+    # alter the tool execution.
+    #
+    # @param [Toys::Tool] _tool The tool execution instance.
+    #
+    def run(_tool)
+      yield
     end
   end
 end

@@ -29,8 +29,6 @@
 
 require "helper"
 
-require "toys/utils/module_lookup"
-
 describe Toys::Utils::ModuleLookup do
   describe "to_path_name" do
     it "handles camel case" do
@@ -76,20 +74,15 @@ describe Toys::Utils::ModuleLookup do
     end
   end
 
-  describe "lookup" do
+  describe "standard_helpers lookup" do
+    let(:module_lookup) { Toys::Utils::ModuleLookup.new.add_path("toys/standard_helpers") }
+
     it "looks up a module" do
-      result = Toys::Utils::ModuleLookup.lookup(:helpers, :exec)
-      assert_equal(Toys::Helpers::Exec, result)
+      assert_equal("Toys::StandardHelpers::Exec", module_lookup.lookup(:exec).name)
     end
 
     it "does not find toplevel modules" do
-      result = Toys::Utils::ModuleLookup.lookup(:helpers, :object)
-      assert_nil(result)
-    end
-
-    it "does not find nonexistent collections" do
-      result = Toys::Utils::ModuleLookup.lookup(:file, :constants)
-      assert_nil(result)
+      assert_nil(module_lookup.lookup(:object))
     end
   end
 end

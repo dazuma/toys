@@ -27,19 +27,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-require "toys/utils/help_text"
-require "toys/utils/terminal"
-
 module Toys
-  module Middleware
+  module StandardMiddleware
     ##
     # This middleware handles the case of a usage error. If a usage error, such
     # as an unrecognized flag or an unfulfilled required argument, is detected,
     # this middleware intercepts execution and displays the error along with
     # the short help string, and terminates execution with an error code.
     #
-    class HandleUsageErrors < Base
+    class HandleUsageErrors
+      include Middleware
+
       ##
       # Create a HandleUsageErrors middleware.
       #

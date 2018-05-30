@@ -27,10 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-
 module Toys
-  module Middleware
+  module StandardMiddleware
     ##
     # This middleware sets default description fields for tools and command
     # line arguments and flags that do not have them set otherwise.
@@ -39,7 +37,9 @@ module Toys
     # root tool by passing parameters to this middleware. For finer control,
     # you can override methods to modify the description generation logic.
     #
-    class SetDefaultDescriptions < Base
+    class SetDefaultDescriptions
+      include Middleware
+
       ##
       # The default description for tools.
       # @return [String]

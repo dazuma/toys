@@ -27,10 +27,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/utils/exec"
-
 module Toys
-  module Helpers
+  module StandardHelpers
     ##
     # A set of helper methods for invoking subcommands. Provides shortcuts for
     # common cases such as invoking Ruby in a subprocess or capturing output

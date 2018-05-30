@@ -1,5 +1,11 @@
 # Release History
 
+### 0.3.8 / TBD
+
+* CHANGED: ModuleLookup is now a customizable class and can have multiple sources.
+* CHANGED: Moved the existing templates to the toys gem since they are rake replacements.
+* ADDED: CLI can now customize the standard helpers, templates, and middleware.
+
 ### 0.3.7.1 / 2018-05-30
 
 * No changes.

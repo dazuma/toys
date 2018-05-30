@@ -27,12 +27,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/utils/gems"
 Toys::Utils::Gems.activate("highline", "~> 1.7")
 require "highline"
 
 module Toys
-  module Helpers
+  module StandardHelpers
     ##
     # A module that provides access to the capabilities of the highline gem.
     #

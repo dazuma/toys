@@ -27,16 +27,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "toys/middleware/base"
-require "toys/utils/terminal"
-
 module Toys
-  module Middleware
+  module StandardMiddleware
     ##
     # A middleware that displays a version string for the root tool if the
     # `--version` flag is given.
     #
-    class ShowRootVersion < Base
+    class ShowRootVersion
+      include Middleware
+
       ##
       # Default version flags
       # @return [Array<String>]

@@ -39,6 +39,11 @@ module Toys
   # @return [String]
   #
   BINARY_PATH = ::ENV["TOYS_BIN_PATH"] || "toys"
+
+  ##
+  # Namespace for standard template classes.
+  #
+  module Templates; end
 end
 
 require "toys/version"

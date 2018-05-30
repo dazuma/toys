@@ -29,9 +29,6 @@
 
 require "helper"
 
-require "toys/utils/terminal"
-require "toys/utils/wrappable_string"
-
 describe Toys::Utils::WrappableString do
   describe "wrap string" do
     it "handles empty string" do

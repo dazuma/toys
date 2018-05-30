@@ -29,8 +29,6 @@
 
 require "optparse"
 
-require "toys/utils/wrappable_string"
-
 module Toys
   module Definition
     ##
@@ -71,12 +69,12 @@ module Toys
         @full_name = full_name.dup.freeze
         @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
         @priority = priority
-        @middleware_stack = Middleware.resolve_stack(middleware_stack)
+        @middleware_stack = middleware_stack
 
         @source_path = nil
         @definition_finished = false
 
-        @desc = Toys::Utils::WrappableString.new("")
+        @desc = Utils::WrappableString.new("")
         @long_desc = []
 
         @default_data = {}

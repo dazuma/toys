@@ -209,7 +209,10 @@ module Toys
       def expand(template_class, *args)
         unless template_class.is_a?(::Class)
           name = template_class.to_s
-          template_class = Templates.lookup!(name)
+          template_class = @__loader.resolve_standard_template(name)
+          if template_class.nil?
+            raise ToolDefinitionError, "Template name not found: #{name.inspect}"
+          end
         end
         template = template_class.new(*args)
         yield template if block_given?
@@ -465,7 +468,7 @@ module Toys
         if mod.is_a?(::String)
           mod = cur_tool.resolve_helper(mod)
         elsif mod.is_a?(::Symbol)
-          mod = Helpers.lookup!(name)
+          mod = @__loader.resolve_standard_helper(name)
         end
         if mod.nil?
           raise ToolDefinitionError, "Module not found: #{name.inspect}"

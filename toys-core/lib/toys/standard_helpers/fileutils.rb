@@ -30,7 +30,7 @@
 require "fileutils"
 
 module Toys
-  module Helpers
+  module StandardHelpers
     ##
     # A module that provides all methods in the "fileutils" standard library.
     #

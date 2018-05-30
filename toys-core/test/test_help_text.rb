@@ -29,8 +29,6 @@
 
 require "helper"
 
-require "toys/utils/help_text"
-
 describe Toys::Utils::HelpText do
   let(:binary_name) { "toys" }
   let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
@@ -74,28 +72,28 @@ describe Toys::Utils::HelpText do
   }
 
   let(:normal_tool) do
-    single_loader.get_active_tool(tool_name)
+    single_loader.get_tool_definition(tool_name, 0)
   end
   let(:runnable_namespace_tool) do
-    runnable_namespace_loader.get_active_tool(tool_name)
+    runnable_namespace_loader.get_tool_definition(tool_name, 0)
   end
   let(:namespace_tool) do
-    namespace_loader.get_active_tool(tool_name)
+    namespace_loader.get_tool_definition(tool_name, 0)
   end
   let(:subtool_one) do
-    namespace_loader.get_active_tool(subtool_one_name)
+    namespace_loader.get_tool_definition(subtool_one_name, 0)
   end
   let(:subtool_two) do
-    namespace_loader.get_active_tool(subtool_two_name)
+    namespace_loader.get_tool_definition(subtool_two_name, 0)
   end
   let(:recursive_namespace_tool) do
-    recursive_namespace_loader.get_active_tool(tool_name)
+    recursive_namespace_loader.get_tool_definition(tool_name, 0)
   end
   let(:long_namespace_tool) do
-    long_namespace_loader.get_active_tool(tool_name)
+    long_namespace_loader.get_tool_definition(tool_name, 0)
   end
   let(:subtool_long) do
-    long_namespace_loader.get_active_tool(tool_name + [long_tool_name])
+    long_namespace_loader.get_tool_definition(tool_name + [long_tool_name], 0)
   end
 
   describe "short usage" do

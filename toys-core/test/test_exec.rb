@@ -30,8 +30,6 @@
 require "helper"
 require "timeout"
 
-require "toys/utils/exec"
-
 describe Toys::Utils::Exec do
   let(:exec) { Toys::Utils::Exec.new }
 
