@@ -64,7 +64,7 @@ tool "update" do
         exit(1) unless option(:yes) || confirm(prompt)
         result = terminal.spinner(leading_text: "Installing Toys version #{latest_version}... ",
                                   final_text: "Done.\n") do
-          exec(["gem", "install", "toys", "--version", latest_version],
+          exec(["gem", "install", "toys", "--version", latest_version.to_s],
                out_to: :capture, err_to: :capture)
         end
         if result.error?

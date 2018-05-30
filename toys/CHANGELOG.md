@@ -1,5 +1,9 @@
 # Release History
 
+### 0.3.7.1 / 2018-05-30
+
+* FIXED: Fix crash in system update.
+
 ### 0.3.7 / 2018-05-30
 
 * CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.
