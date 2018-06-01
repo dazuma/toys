@@ -75,14 +75,15 @@ module Toys
 
       ##
       # Set the optional handler for setting/updating the value when a flag is
-      # parsed. It should be a Proc taking two arguments, the new given value
-      # and the previous value, and it should return the new value that should
-      # be set.
+      # parsed. A handler should be a Proc taking two arguments, the new given
+      # value and the previous value, and it should return the new value that
+      # should be set. You may pass the handler as a Proc (or an object
+      # responding to the `call` method) or you may pass a block.
       #
       # @param [Proc] handler
       #
-      def handler(handler)
-        @handler = handler
+      def handler(handler = nil, &block)
+        @handler = handler || block
         self
       end
 

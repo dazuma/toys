@@ -29,8 +29,6 @@
 
 module Toys
   ##
-  # This is a base middleware with a no-op implementation.
-  #
   # A middleware is an object that has the opportunity to alter the
   # configuration and runtime behavior of each tool in a Toys CLI. A CLI
   # contains an ordered list of middleware, known as the *middleware stack*,
@@ -47,6 +45,11 @@ module Toys
   # middleware, a Toys middleware can wrap execution with its own code,
   # replace it outright, or leave it unmodified.
   #
+  # Generally, a middleware is a class that implements the two methods defined
+  # in this module: {Toys::Middleware#config} and {Toys::Middleware#run}. A
+  # middleware can include this module to get default implementations that do
+  # nothing, but this is not required.
+  #
   module Middleware
     ##
     # This method is called after a tool has been defined, and gives this
@@ -57,9 +60,8 @@ module Toys
     # middleware can disable modifications done by subsequent middleware by
     # omitting the `yield` call, but this is uncommon.
     #
-    # The base middleware implementation does nothing and simply yields to
-    # the next middleware. Subclasses should override this if they want to
-    # alter the tool definition.
+    # This basic implementation does nothing and simply yields to the next
+    # middleware.
     #
     # @param [Toys::Definition::Tool] _tool_definition The tool definition
     #     to modify.
@@ -84,9 +86,8 @@ module Toys
     # you want to output from a tool, write to stdout or stderr. If you want
     # to set the exit status code, call {Toys::Tool#exit} on the tool object.
     #
-    # The base middleware implementation does nothing and simply yields to
-    # the next middleware. Subclasses should override this if they want to
-    # alter the tool execution.
+    # This basic implementation does nothing and simply yields to the next
+    # middleware.
     #
     # @param [Toys::Tool] _tool The tool execution instance.
     #

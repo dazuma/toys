@@ -30,10 +30,11 @@ tasks, can be invoked and passed arguments using familiar unix command line
 arguments and flags. The Toys github repo itself comes with Toys configs
 instead of Rakefiles.
 
-You can also use the core functionality of Toys to create your own command line
-binaries, by using the *toys-core* API, which is available as a separate gem.
-For more info on using toys-core, see
-[https://ruby-doc.info/gems/toys-core](https://ruby-doc.info/gems/toys-core).
+Unlike most command line frameworks, Toys is *not primarily* designed to help
+you build and ship a custom command line binary written in Ruby. However, you
+*can* use it in that way by building witn the "toys-core" API, available as a
+separate gem. For more info on using toys-core, see
+https://ruby-doc.info/gems/toys-core
 
 ## Quick Start
 
@@ -85,7 +86,7 @@ The tool also recognizes a flag on the command line. Try this:
 Toys provides a rich set of features for defining command line arguments and
 flags. It can also validate arguments. Try this:
 
-    toys greet --hello
+    toys greet --bye
 
 Notice that Toys automatically generated a usage summary for your tool. It can
 also automatically generate a full help screen, which you can view using the
@@ -95,22 +96,19 @@ also automatically generate a full help screen, which you can view using the
 
 ### Next steps
 
-You can add any number of additional tools to your `.toys.rb` file. Note also
-that the tools you create in that file are available only in this directory
-and its subdirectories. If you move outside the directory tree, Toys will not
-use that file. Thus, you can define tools scoped to particular directories and
-projects.
+You can add any number of additional tools to your `.toys.rb` config file. Note
+also that the tools you create in the config file are available only in this
+directory and its subdirectories. If you move into a different directory tree,
+Toys will instead look for a config file in that directory. Thus, you can
+define tools scoped to particular projects. You can also define "global" tools
+by creating a `.toys.rb` config in your home directory.
 
-Toys also lets you create hierarchies of tools. The "system version" tool you
-tried earlier is an example. The "system" tool is treated as a namespace, and
-various subtools, such as "version", are available under that namespace.
-
-Toys provides a rich set of useful libraries for writing tools. It gives you a
-logger and automatically provides flags to control verbosity of log output. It
-includes a simple library that you can use to produce styled output and basic
-console-based interfaces, and another library that makes it easy to spawn and
-control subprocesses. You can also take advantage of a variety of third-party
-libraries such as Highline and TTY.
+Toys provides a rich set of useful libraries for writing tools and subtools. It
+gives you a logger and automatically provides flags to control verbosity of log
+output. It includes a simple library that you can use to produce styled output
+and basic console-based interfaces, and another library that makes it easy to
+spawn and control subprocesses. You can also take advantage of a variety of
+third-party libraries such as Highline and TTY.
 
 For a more detailed look at Toys, see the
 {file:docs/tutorial.md Extended Tutorial} and the
@@ -123,8 +121,7 @@ highly experimental, and the code is evolving very rapidly. Please contact the
 author before embarking on a major pull request. More detailed contribution
 guidelines will be provided when the software stabilizes further.
 
-The source can be found on Github at
-[https://github.com/dazuma/toys](https://github.com/dazuma/toys)
+The source can be found on Github at https://github.com/dazuma/toys
 
 ## License
 

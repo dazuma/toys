@@ -31,15 +31,32 @@ require "optparse"
 
 module Toys
   ##
-  # An internal class that manages execution of a tool
-  # @private
+  # An internal class that orchestrates execution of a tool.
+  #
+  # Generaly, you should not need to use this class directly. Instead, run a
+  # tool using {Toys::CLI#run}.
   #
   class Runner
+    ##
+    # Create a runner for a particular tool in a particular CLI.
+    #
+    # @param [Toys::CLI] cli The CLI that is running the tool. This will
+    #     provide needed context information.
+    # @param [Toys::Definition::Tool] tool_definition The tool to run.
+    #
     def initialize(cli, tool_definition)
       @cli = cli
       @tool_definition = tool_definition
     end
 
+    ##
+    # Run the tool, provided given arguments.
+    #
+    # @param [Array<String>] args Command line arguments passed to the tool.
+    # @param [Integer] verbosity Initial verbosity. Default is 0.
+    #
+    # @return [Integer] The resulting status code
+    #
     def run(args, verbosity: 0)
       data = create_data(args, verbosity)
       parse_args(args, data)

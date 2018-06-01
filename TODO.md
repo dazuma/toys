@@ -2,8 +2,6 @@
 
 ## Immediate tasks
 
-* Named templates the same way as we have named helpers
-
 ## Important tasks
 
 * Improve test coverage
@@ -12,6 +10,7 @@
 ## Investigations/wishlist
 
 * Support directing Exec streams to /dev/null
+* Named templates the same way as we have named helpers
 * Consider a way to exec_tool that uses fork
 * Range acceptors. May be difficult unless we can limit the types.
 * Line length limit for Terminal

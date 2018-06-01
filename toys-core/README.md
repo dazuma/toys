@@ -19,8 +19,7 @@ highly experimental, and the code is evolving very rapidly. Please contact the
 author before embarking on a major pull request. More detailed contribution
 guidelines will be provided when the software stabilizes further.
 
-The source can be found on Github at
-[https://github.com/dazuma/toys](https://github.com/dazuma/toys)
+The source can be found on Github at https://github.com/dazuma/toys
 
 ## License
 
