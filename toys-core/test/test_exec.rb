@@ -37,7 +37,7 @@ describe Toys::Utils::Exec do
     it "captures stdout and stderr" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
-                           out_to: :capture, err_to: :capture)
+                           out: :capture, err: :capture)
         assert_equal("hello\n", result.captured_out)
         assert_equal("world\n", result.captured_err)
       end
@@ -45,7 +45,7 @@ describe Toys::Utils::Exec do
 
     it "writes a string to stdin" do
       ::Timeout.timeout(1) do
-        result = exec.ruby(["-e", 'exit gets == "hello" ? 0 : 1'], in_from: "hello")
+        result = exec.ruby(["-e", 'exit gets == "hello" ? 0 : 1'], in: "hello")
         assert_equal(0, result.exit_code)
       end
     end
@@ -76,7 +76,7 @@ describe Toys::Utils::Exec do
                                   ' exit(1) unless STDIN.gets == "2\n";' \
                                   ' STDERR.puts "3"; STDERR.flush ' \
                                   ' exit(1) unless STDIN.gets == "4\n"'],
-                           out_to: :controller, err_to: :controller, in_from: :controller) do |c|
+                           out: :controller, err: :controller, in: :controller) do |c|
           assert_equal("1\n", c.out.gets)
           c.in.puts("2")
           c.in.flush
@@ -93,7 +93,7 @@ describe Toys::Utils::Exec do
     it "closes input stream at the end of the block" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", "i=0; while gets; i+=1; end; sleep(0.1); exit(i)"],
-                           in_from: :controller) do |c|
+                           in: :controller) do |c|
           assert_nil(c.out)
           assert_nil(c.err)
           c.in.puts("A")
@@ -108,21 +108,21 @@ describe Toys::Utils::Exec do
   describe "environment setting" do
     it "is passed into the subprocess" do
       result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'],
-                         out_to: :capture, env: {"FOOBAR" => "hello"})
+                         out: :capture, env: {"FOOBAR" => "hello"})
       assert_equal("hello\n", result.captured_out)
     end
   end
 
   describe "default options" do
     it "is reflected in spawned processes" do
-      exec.configure_defaults(out_to: :capture)
+      exec.configure_defaults(out: :capture)
       result = exec.ruby(["-e", 'puts "hello"'])
       assert_equal("hello\n", result.captured_out)
     end
 
     it "can be overridden in spawned processes" do
-      exec.configure_defaults(out_to: :capture)
-      result = exec.ruby(["-e", 'puts "hello"'], out_to: :controller) do |c|
+      exec.configure_defaults(out: :capture)
+      result = exec.ruby(["-e", 'puts "hello"'], out: :controller) do |c|
         assert_equal("hello\n", c.out.gets)
       end
       assert_nil(result.captured_out)

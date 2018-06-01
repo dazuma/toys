@@ -148,7 +148,9 @@ module Toys
           if opts[:exit_on_nonzero_status]
             proc { |s| tool.exit(s.exitstatus) }
           end
-        opts.merge(nonzero_status_handler: nonzero_status_handler)
+        opts = opts.merge(nonzero_status_handler: nonzero_status_handler)
+        opts.delete(:exit_on_nonzero_status)
+        opts
       end
     end
   end

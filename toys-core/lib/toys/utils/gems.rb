@@ -113,8 +113,8 @@ module Toys
         @terminal.spinner(leading_text: "Getting info on gem #{name.inspect}... ",
                           final_text: "Done.\n") do
           req = ::Gem::Requirement.new(*requirements)
-          result = @exec.exec(["gem", "query", "-q", "-r", "-a", "-e", name], out_to: :capture)
-          if result.captured_out =~ /\(([\w\.,\s]+)\)/
+          result = @exec.capture(["gem", "query", "-q", "-r", "-a", "-e", name])
+          if result =~ /\(([\w\.,\s]+)\)/
             $1.split(", ")
               .map { |v| ::Gem::Version.new(v) }
               .find { |v| !v.prerelease? && req.satisfied_by?(v) }
@@ -128,7 +128,7 @@ module Toys
         @terminal.spinner(leading_text: "Installing gem #{name} #{version}... ",
                           final_text: "Done.\n") do
           result = @exec.exec(["gem", "install", name, "--version", version.to_s],
-                              out_to: :capture, err_to: :capture)
+                              out: :capture, err: :capture)
           if result.error?
             @terminal.puts(result.captured_out + result.captured_err)
             raise InstallFailedError, "Failed to install gem #{name} #{version}"

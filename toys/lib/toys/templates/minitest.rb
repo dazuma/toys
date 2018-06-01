@@ -108,7 +108,7 @@ module Toys
               tests.uniq!
             end
 
-            result = ruby(ruby_args, in_from: :controller) do |controller|
+            result = ruby(ruby_args, in: :controller) do |controller|
               tests.each do |file|
                 controller.in.puts("load '#{file}'")
               end

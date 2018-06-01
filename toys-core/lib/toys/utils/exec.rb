@@ -51,8 +51,8 @@ module Toys
     # then manipulate by providing a block. Your block may read and write
     # connected streams to interact with the process. For example, to redirect
     # data into a subprocess you can connect its input stream to the controller
-    # using the `:in_from` option (see below). Then, in your block, you can
-    # write to that stream via the controller.
+    # using the `:in` option (see below). Then, in your block, you can write to
+    # that stream via the controller.
     #
     # ## Configuration options
     #
@@ -63,18 +63,18 @@ module Toys
     #    If not present, the command is not logged.
     # *  **:log_level** (Integer) Log level for logging the actual command.
     #    Defaults to Logger::INFO if not present.
-    # *  **:in_from** (`:controller`,String) Connects the input stream of the
+    # *  **:in** (`:controller`,String) Connects the input stream of the
     #    subprocess. If set to `:controller`, the controller will control the
     #    input stream. If set to a string, that string will be written to the
     #    input stream. If not set, the input stream will be connected to the
     #    STDIN for the Toys process itself.
-    # *  **:out_to** (`:controller`,`:capture`) Connects the standard output
+    # *  **:out** (`:controller`,`:capture`) Connects the standard output
     #    stream of the subprocess. If set to `:controller`, the controller
     #    will control the output stream. If set to `:capture`, the output will
     #    be captured in a string that is available in the
     #    {Toys::Utils::Exec::Result} object. If not set, the subprocess
     #    standard out is connected to STDOUT of the Toys process.
-    # *  **:err_to** (`:controller`,`:capture`) Connects the standard error
+    # *  **:err** (`:controller`,`:capture`) Connects the standard error
     #    stream of the subprocess. If set to `:controller`, the controller
     #    will control the output stream. If set to `:capture`, the output will
     #    be captured in a string that is available in the
@@ -134,17 +134,17 @@ module Toys
       #     exit code and any captured output.
       #
       def exec(cmd, opts = {}, &block)
+        exec_opts = Opts.new(@default_opts).add(opts)
         spawn_cmd =
           if cmd.is_a?(::Array)
             if cmd.size == 1 && cmd.first.is_a?(::String)
-              [[cmd.first, opts[:argv0] || cmd.first]]
+              [[cmd.first, exec_opts.config_opts[:argv0] || cmd.first]]
             else
               cmd
             end
           else
             [cmd]
           end
-        exec_opts = Opts.new(@default_opts).add(opts)
         executor = Executor.new(exec_opts, spawn_cmd)
         executor.execute(&block)
       end
@@ -195,7 +195,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture(cmd, opts = {})
-        exec(cmd, opts.merge(out_to: :capture)).captured_out
+        exec(cmd, opts.merge(out: :capture)).captured_out
       end
 
       ##
@@ -208,13 +208,14 @@ module Toys
         # @private
         #
         CONFIG_KEYS = %i[
+          argv0
           env
-          err_to
-          in_from
+          err
+          in
           logger
           log_level
           nonzero_status_handler
-          out_to
+          out
         ].freeze
 
         ##
@@ -247,8 +248,10 @@ module Toys
           config.each do |k, v|
             if CONFIG_KEYS.include?(k)
               @config_opts[k] = v
-            elsif SPAWN_KEYS.include?(k)
+            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
               @spawn_opts[k] = v
+            else
+              raise ::ArgumentError, "Unknown key: #{k.inspect}"
             end
           end
           self
@@ -258,8 +261,10 @@ module Toys
           keys.each do |k|
             if CONFIG_KEYS.include?(k)
               @config_opts.delete(k)
-            elsif SPAWN_KEYS.include?(k)
+            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
               @spawn_opts.delete(k)
+            else
+              raise ::ArgumentError, "Unknown key: #{k.inspect}"
             end
           end
           self
@@ -285,7 +290,7 @@ module Toys
 
         ##
         # Return the subcommand's standard input stream (which can be written
-        # to), if the command was configured with `in_from: :controller`.
+        # to), if the command was configured with `in: :controller`.
         # Returns `nil` otherwise.
         # @return [IO,nil]
         #
@@ -293,7 +298,7 @@ module Toys
 
         ##
         # Return the subcommand's standard output stream (which can be read
-        # from), if the command was configured with `out_to: :controller`.
+        # from), if the command was configured with `out: :controller`.
         # Returns `nil` otherwise.
         # @return [IO,nil]
         #
@@ -301,7 +306,7 @@ module Toys
 
         ##
         # Return the subcommand's standard error stream (which can be read
-        # from), if the command was configured with `err_to: :controller`.
+        # from), if the command was configured with `err: :controller`.
         # Returns `nil` otherwise.
         # @return [IO,nil]
         #
@@ -337,14 +342,14 @@ module Toys
 
         ##
         # Returns the captured output string, if the command was configured
-        # with `out_to: :capture`. Returns `nil` otherwise.
+        # with `out: :capture`. Returns `nil` otherwise.
         # @return [String,nil]
         #
         attr_reader :captured_out
 
         ##
         # Returns the captured error string, if the command was configured
-        # with `err_to: :capture`. Returns `nil` otherwise.
+        # with `err: :capture`. Returns `nil` otherwise.
         # @return [String,nil]
         #
         attr_reader :captured_err
@@ -397,8 +402,8 @@ module Toys
 
         def execute(&block)
           setup_in_stream
-          setup_out_stream(:out, :out_to, :out)
-          setup_out_stream(:err, :err_to, :err)
+          setup_out_stream(:out)
+          setup_out_stream(:err)
           log_command
           wait_thread = start_process
           status = control_process(wait_thread, &block)
@@ -447,7 +452,7 @@ module Toys
         end
 
         def setup_in_stream
-          setting = @config_opts[:in_from]
+          setting = @config_opts[:in]
           if setting
             r, w = ::IO.pipe
             @spawn_opts[:in] = r
@@ -459,24 +464,24 @@ module Toys
             when String
               write_string_thread(w, setting)
             else
-              raise "Unknown type for in_from"
+              raise "Unknown type for in"
             end
           end
         end
 
-        def setup_out_stream(stream_name, config_key, spawn_key)
-          setting = @config_opts[config_key]
+        def setup_out_stream(key)
+          setting = @config_opts[key]
           if setting
             r, w = ::IO.pipe
-            @spawn_opts[spawn_key] = w
+            @spawn_opts[key] = w
             @child_streams << w
             case setting
             when :controller
-              @controller_streams[stream_name] = r
+              @controller_streams[key] = r
             when :capture
-              @join_threads << capture_stream_thread(r, stream_name)
+              @join_threads << capture_stream_thread(r, key)
             else
-              raise "Unknown type for #{config_key}"
+              raise "Unknown type for #{key}"
             end
           end
         end

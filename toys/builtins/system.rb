@@ -65,7 +65,7 @@ tool "update" do
         result = terminal.spinner(leading_text: "Installing Toys version #{latest_version}... ",
                                   final_text: "Done.\n") do
           exec(["gem", "install", "toys", "--version", latest_version.to_s],
-               out_to: :capture, err_to: :capture)
+               out: :capture, err: :capture)
         end
         if result.error?
           puts(result.captured_out + result.captured_err)
