@@ -49,7 +49,9 @@ module Toys
           setup(str, ["--#{$1}", "--no-#{$1}"], str, "--", :boolean, nil, nil, nil)
         when /^(--\w[\?\w-]*)$/
           setup(str, [$1], $1, "--", nil, nil, nil, nil)
-        when /^(--\w[\?\w-]*)(=\[| \[|\[=)(\w+)\]$/
+        when /^(--\w[\?\w-]*)([= ])\[(\w+)\]$/
+          setup(str, [$1], $1, "--", :value, :optional, $2, $3)
+        when /^(--\w[\?\w-]*)\[([= ])(\w+)\]$/
           setup(str, [$1], $1, "--", :value, :optional, $2, $3)
         when /^(--\w[\?\w-]*)([= ])(\w+)$/
           setup(str, [$1], $1, "--", :value, :required, $2, $3)
