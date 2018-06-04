@@ -38,22 +38,6 @@ module Toys
     # processes and their streams. It also provides shortcuts for common cases
     # such as invoking Ruby in a subprocess or capturing output in a string.
     #
-    # ## Stream handling
-    #
-    # By default, subprocess streams are connected to the corresponding streams
-    # in the parent process.
-    #
-    # Alternately, input streams may be read from a string you provide, and
-    # you may direct output streams to be captured and their contents exposed
-    # in the result object.
-    #
-    # You may also connect subprocess streams to a controller, which you can
-    # then manipulate by providing a block. Your block may read and write
-    # connected streams to interact with the process. For example, to redirect
-    # data into a subprocess you can connect its input stream to the controller
-    # using the `:in` option (see below). Then, in your block, you can write to
-    # that stream via the controller.
-    #
     # ## Configuration options
     #
     # A variety of options can be used to control subprocesses. These include:
@@ -63,23 +47,12 @@ module Toys
     #    If not present, the command is not logged.
     # *  **:log_level** (Integer) Log level for logging the actual command.
     #    Defaults to Logger::INFO if not present.
-    # *  **:in** (`:controller`,String) Connects the input stream of the
-    #    subprocess. If set to `:controller`, the controller will control the
-    #    input stream. If set to a string, that string will be written to the
-    #    input stream. If not set, the input stream will be connected to the
-    #    STDIN for the Toys process itself.
-    # *  **:out** (`:controller`,`:capture`) Connects the standard output
-    #    stream of the subprocess. If set to `:controller`, the controller
-    #    will control the output stream. If set to `:capture`, the output will
-    #    be captured in a string that is available in the
-    #    {Toys::Utils::Exec::Result} object. If not set, the subprocess
-    #    standard out is connected to STDOUT of the Toys process.
-    # *  **:err** (`:controller`,`:capture`) Connects the standard error
-    #    stream of the subprocess. If set to `:controller`, the controller
-    #    will control the output stream. If set to `:capture`, the output will
-    #    be captured in a string that is available in the
-    #    {Toys::Utils::Exec::Result} object. If not set, the subprocess
-    #    standard out is connected to STDERR of the Toys process.
+    # *  **:in** Connects the input stream of the subprocess. See the section
+    #    on stream handling.
+    # *  **:out** Connects the standard output stream of the subprocess. See
+    #    the section on stream handling.
+    # *  **:err** Connects the standard error stream of the subprocess. See the
+    #    section on stream handling.
     #
     # In addition, the following options recognized by `Process#spawn` are
     # supported.
@@ -95,7 +68,57 @@ module Toys
     #
     # Configuration options may be provided to any method that starts a
     # subprocess. You may also modify default values by calling
-    # {Toys::Utils::Exec#config_defaults}.
+    # {Toys::Utils::Exec#configure_defaults}.
+    #
+    # ## Stream handling
+    #
+    # By default, subprocess streams are connected to the corresponding streams
+    # in the parent process. You can change this behavior, redirecting streams
+    # or providing ways to control them, using the `:in`, `:out`, and `:err`
+    # options.
+    #
+    # Three general strategies are available for custom stream handling. First,
+    # you may redirect to other streams such as files, IO objects, or Ruby
+    # strings. Some of these options map directly to options provided by the
+    # `Process#spawn` method. Second, you may use a controller to manipulate
+    # the streams programmatically. Third, you may capture output stream data
+    # and make it available in the result.
+    #
+    # Following is a full list of the stream handling options, along with how
+    # to specify them using the `:in`, `:out`, and `:err` options.
+    #
+    # *  **Close the stream:** You may close the stream by passing `:close` as
+    #    the option value. This is the same as passing `:close` to
+    #    `Process#spawn`.
+    # *  **Redirect to null:** You may redirect to a null stream by passing
+    #    `:null` as the option value. This connects to a stream that is not
+    #    closed but contains no data, i.e. `/dev/null` on unix systems.
+    # *  **Redirect to a file:** You may redirect to a file. This reads from an
+    #    existing file when connected to `:in`, and creates or appends to a
+    #    file when connected to `:out` or `:err`. To specify a file, use the
+    #    setting `[:file, "/path/to/file"]`. You may also, when writing a file,
+    #    append an optional mode and permission code to the array. For
+    #    example, `[:file, "/path/to/file", "a", 0644]`.
+    # *  **Redirect to an IO object:** You may redirect to an IO object in the
+    #    parent process, by passing the IO object as the option value. You may
+    #    use any IO object. For example, you could connect the child's output
+    #    to the parent's error using `out: $stderr`, or you could connect to an
+    #    existing File stream. Unlike `Process#spawn`, this works for IO
+    #    objects that do not have a corresponding file descriptor (such as
+    #    StringIO objects). In such a case, a thread will be spawned to pipe
+    #    the IO data through to the child process.
+    # *  **Combine with another child stream:** You may redirect one child
+    #    output stream to another, to combine them. To merge the child's error
+    #    stream into its output stream, use `err: [:child, :out]`.
+    # *  **Read from a string:** You may pass a string to the input stream by
+    #    setting `[:string, "the string"]`. This works only for `:in`.
+    # *  **Capture output stream:** You may capture a stream and make it
+    #    available on the {Toys::Utils::Exec::Result} object, using the setting
+    #    `:capture`. This works only for the `:out` and `:err` streams.
+    # *  **Use the controller:** You may hook a stream to the controller using
+    #    the setting `:controller`. You can then manipulate the stream via the
+    #    controller. If you pass a block to {Toys::Utils::Exec#exec}, it yields
+    #    the {Toys::Utils::Exec::Controller}, giving you access to streams.
     #
     class Exec
       ##
@@ -453,41 +476,161 @@ module Toys
 
         def setup_in_stream
           setting = @config_opts[:in]
-          if setting
-            r, w = ::IO.pipe
-            @spawn_opts[:in] = r
-            w.sync = true
-            @child_streams << r
-            case setting
-            when :controller
-              @controller_streams[:in] = w
-            when String
-              write_string_thread(w, setting)
-            else
-              raise "Unknown type for in"
-            end
+          return unless setting
+          case setting
+          when ::Symbol
+            setup_in_stream_of_type(setting, [])
+          when ::Integer
+            setup_in_stream_of_type(:parent, [setting])
+          when ::String
+            setup_in_stream_of_type(:file, [setting])
+          when ::IO, ::StringIO
+            interpret_in_io(setting)
+          when ::Array
+            interpret_in_array(setting)
+          else
+            raise "Unknown value for in: #{setting.inspect}"
           end
+        end
+
+        def interpret_in_io(setting)
+          if setting.fileno.is_a?(::Integer)
+            setup_in_stream_of_type(:parent, [setting.fileno])
+          else
+            setup_in_stream_of_type(:copy_io, [setting])
+          end
+        end
+
+        def interpret_in_array(setting)
+          case setting.first
+          when ::Symbol
+            setup_in_stream_of_type(setting.first, setting[1..-1])
+          when ::String
+            setup_in_stream_of_type(:file, setting)
+          else
+            raise "Unknown value for in: #{setting.inspect}"
+          end
+        end
+
+        def setup_in_stream_of_type(type, args)
+          case type
+          when :controller
+            @controller_streams[:in] = make_in_pipe
+          when :null
+            make_null_stream(:in, "r")
+          when :close
+            @spawn_opts[:in] = type
+          when :parent
+            @spawn_opts[:in] = args.first
+          when :child
+            @spawn_opts[:in] = [:child, args.first]
+          when :string
+            write_string_thread(args.first.to_s)
+          when :copy_io
+            copy_to_in_thread(args.first)
+          when :file
+            interpret_in_file(args)
+          else
+            raise "Unknown type for in: #{type.inspect}"
+          end
+        end
+
+        def interpret_in_file(args)
+          raise "Expected only file name" unless args.size == 1 && args.first.is_a?(::String)
+          @spawn_opts[:in] = args + [::File::RDONLY]
         end
 
         def setup_out_stream(key)
           setting = @config_opts[key]
-          if setting
-            r, w = ::IO.pipe
-            @spawn_opts[key] = w
-            @child_streams << w
-            case setting
-            when :controller
-              @controller_streams[key] = r
-            when :capture
-              @join_threads << capture_stream_thread(r, key)
-            else
-              raise "Unknown type for #{key}"
-            end
+          return unless setting
+          case setting
+          when ::Symbol
+            setup_out_stream_of_type(key, setting, [])
+          when ::Integer
+            setup_out_stream_of_type(key, :parent, [setting])
+          when ::String
+            setup_out_stream_of_type(key, :file, [setting])
+          when ::IO, ::StringIO
+            interpret_out_io(key, setting)
+          when ::Array
+            interpret_out_array(key, setting)
+          else
+            raise "Unknown value for #{key}: #{setting.inspect}"
           end
         end
 
-        def write_string_thread(stream, string)
-          ::Thread.new do
+        def interpret_out_io(key, setting)
+          if setting.fileno.is_a?(::Integer)
+            setup_out_stream_of_type(key, :parent, [setting.fileno])
+          else
+            setup_out_stream_of_type(key, :copy_io, [setting])
+          end
+        end
+
+        def interpret_out_array(key, setting)
+          case setting.first
+          when ::Symbol
+            setup_out_stream_of_type(key, setting.first, setting[1..-1])
+          when ::String
+            setup_out_stream_of_type(key, :file, setting)
+          else
+            raise "Unknown value for #{key}: #{setting.inspect}"
+          end
+        end
+
+        def setup_out_stream_of_type(key, type, args)
+          case type
+          when :controller
+            @controller_streams[key] = make_out_pipe(key)
+          when :null
+            make_null_stream(key, "w")
+          when :close, :out, :err
+            @spawn_opts[key] = type
+          when :parent
+            @spawn_opts[key] = args.first
+          when :child
+            @spawn_opts[key] = [:child, args.first]
+          when :capture
+            capture_stream_thread(key)
+          when :copy_io
+            copy_from_out_thread(key, args.first)
+          when :file
+            interpret_out_file(key, args)
+          else
+            raise "Unknown type for #{key}: #{type.inspect}"
+          end
+        end
+
+        def interpret_out_file(key, args)
+          raise "Expected file name" if args.empty? || !args.first.is_a?(::String)
+          raise "Too many file arguments" if args.size > 3
+          @spawn_opts[key] = args.size == 1 ? args.first : args
+        end
+
+        def make_null_stream(key, mode)
+          f = ::File.open(::File::NULL, mode)
+          @spawn_opts[key] = f
+          @child_streams << f
+        end
+
+        def make_in_pipe
+          r, w = ::IO.pipe
+          @spawn_opts[:in] = r
+          @child_streams << r
+          w.sync = true
+          w
+        end
+
+        def make_out_pipe(key)
+          r, w = ::IO.pipe
+          @spawn_opts[key] = w
+          @child_streams << w
+          r
+        end
+
+        def write_string_thread(string)
+          stream = make_in_pipe
+          @join_threads << ::Thread.new do
             begin
               stream.write string
             ensure
@@ -496,10 +639,35 @@ module Toys
           end
         end
 
-        def capture_stream_thread(stream, name)
-          ::Thread.new do
+        def copy_to_in_thread(io, close: false)
+          stream = make_in_pipe
+          @join_threads << ::Thread.new do
             begin
-              @captures[name] = stream.read
+              ::IO.copy_stream(io, stream)
+            ensure
+              stream.close
+              io.close if close
+            end
+          end
+        end
+
+        def copy_from_out_thread(key, io, close: false)
+          stream = make_out_pipe(key)
+          @join_threads << ::Thread.new do
+            begin
+              ::IO.copy_stream(stream, io)
+            ensure
+              stream.close
+              io.close if close
+            end
+          end
+        end
+
+        def capture_stream_thread(key)
+          stream = make_out_pipe(key)
+          @join_threads << ::Thread.new do
+            begin
+              @captures[key] = stream.read
             ensure
               stream.close
             end

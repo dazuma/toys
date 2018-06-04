@@ -2,9 +2,6 @@
 
 ## Immediate tasks
 
-* Figure out a way for exec to redirect to/from files. Maybe use StringIO instead of String.
-* Support directing Exec streams to /dev/null
-
 ## Important tasks
 
 * Improve test coverage

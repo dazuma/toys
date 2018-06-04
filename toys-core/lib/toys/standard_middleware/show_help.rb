@@ -188,7 +188,7 @@ module Toys
 
       def output_help(str)
         if less_path
-          Utils::Exec.new.exec([less_path, "-R"], in: str)
+          Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
         else
           terminal.puts(str)
         end
