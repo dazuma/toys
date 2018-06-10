@@ -251,7 +251,7 @@ module Toys
 
       ##
       # Returns a list of all custom acceptors used by this tool.
-      # @return [Array<Toys::Tool::Acceptor>]
+      # @return [Array<Toys::Definition::Acceptor>]
       #
       def custom_acceptors
         result = []
@@ -332,7 +332,7 @@ module Toys
       # Add an acceptor to the tool. This acceptor may be refereneced by name
       # when adding a flag or an arg.
       #
-      # @param [Toys::Tool::Acceptor] acceptor The acceptor to add.
+      # @param [Toys::Definition::Acceptor] acceptor The acceptor to add.
       #
       def add_acceptor(acceptor)
         @acceptors[acceptor.name] = acceptor
@@ -374,11 +374,12 @@ module Toys
       #     requested that is already in use or marked as disabled. Default is
       #     true.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::Tool#desc=} for a description of
-      #     allowed formats. Defaults to the empty string.
+      #     description for the flag. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::Tool#long_desc=} for a
-      #     description of allowed formats. Defaults to the empty array.
+      #     Long description for the flag. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
       #
       def add_flag(key, flags = [],
                    accept: nil, default: nil, handler: nil,
@@ -426,11 +427,12 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::Tool#desc=} for a description of
-      #     allowed formats. Defaults to the empty string.
+      #     description for the arg. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::Tool#long_desc=} for a
-      #     description of allowed formats. Defaults to the empty array.
+      #     Long description for the arg. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
       #
       def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
         check_definition_state
@@ -458,11 +460,12 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::Tool#desc=} for a description of
-      #     allowed formats. Defaults to the empty string.
+      #     description for the arg. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::Tool#long_desc=} for a
-      #     description of allowed formats. Defaults to the empty array.
+      #     Long description for the arg. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
       #
       def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
                            desc: nil, long_desc: nil)
@@ -492,11 +495,12 @@ module Toys
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the flag. See {Toys::Tool#desc=} for a description of
-      #     allowed formats. Defaults to the empty string.
+      #     description for the arg. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to the empty string.
       # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag. See {Toys::Tool#long_desc=} for a
-      #     description of allowed formats. Defaults to the empty array.
+      #     Long description for the arg. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
       #
       def set_remaining_args(key, default: [], accept: nil, display_name: nil,
                              desc: nil, long_desc: nil)

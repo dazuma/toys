@@ -143,7 +143,7 @@ module Toys
     # @param [Array<String>] words The name of the parent tool
     # @param [Boolean] recursive If true, return all subtools recursively
     #     rather than just the immediate children (the default)
-    # @return [Array<Toys::Definition::Tool,Tool::Definition::Alias>]
+    # @return [Array<Toys::Definition::Tool,Toys::Definition::Alias>]
     #
     def list_subtools(words, recursive: false)
       load_for_prefix(words)

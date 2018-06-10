@@ -33,6 +33,9 @@ module Toys
     # DSL for a flag definition block. Lets you set flag attributes in a block
     # instead of a long series of keyword arguments.
     #
+    # These directives are available inside a block passed to
+    # {Toys::DSL::Tool#flag}.
+    #
     class Flag
       ## @private
       def initialize(flags, accept, default, handler, report_collisions, desc, long_desc)

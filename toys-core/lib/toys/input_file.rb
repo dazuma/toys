@@ -28,7 +28,8 @@
 ;
 
 ##
-# Internal modules providing constant namespaces for config files.
+# This module is a namespace for constant scopes. Whenever a configuration file
+# is parsed, a module is created under this parent for that file's constants.
 #
 module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   ## @private

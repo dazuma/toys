@@ -37,7 +37,7 @@ module Toys
   #
   class CLI
     ##
-    # Create a CLI
+    # Create a CLI.
     #
     # @param [String,nil] binary_name The binary name displayed in help text.
     #     Optional. Defaults to the ruby program name.
@@ -311,14 +311,14 @@ module Toys
       # Returns a default set of middleware that may be used as a starting
       # point for a typical CLI. This set includes the following in order:
       #
-      # *  {Toys::Middleware::SetDefaultDescriptions} providing defaults for
-      #    description fields
-      # *  {Toys::Middleware::ShowHelp} adding the `--help` flag
-      # *  {Toys::Middleware::HandleUsageErrors}
-      # *  {Toys::Middleware::ShowHelp} providing default behavior for
+      # *  {Toys::StandardMiddleware::SetDefaultDescriptions} providing
+      #    defaults for description fields
+      # *  {Toys::StandardMiddleware::ShowHelp} adding the `--help` flag
+      # *  {Toys::StandardMiddleware::HandleUsageErrors}
+      # *  {Toys::StandardMiddleware::ShowHelp} providing default behavior for
       #    namespaces
-      # *  {Toys::Middleware::AddVerbosityFlags} adding the `--verbose` and
-      #    `--quiet` flags for managing the logger level
+      # *  {Toys::StandardMiddleware::AddVerbosityFlags} adding the `--verbose`
+      #    and `--quiet` flags for managing the logger level
       #
       # @return [Array]
       #

@@ -230,13 +230,14 @@ like so:
 
 ## Defining Tools
 
-Tools are defined by writing Toys **configuration files**. The simplest form of
-a configuration file is a file named `.toys.rb` (note the leading period) in
-the current working directory. Such a file defines tools that are available in
-the current directory, and for this section we will assume we are writing such
-a file. The following section on "Understanding Configurations" will cover the
-larger concerns of how configuration files are looked up and how multiple
-configurations interact.
+In this section, you will learn how to define tools by writing a Toys
+**configuration file**.
+
+A file named `.toys.rb` (note the leading period) in the current working
+directory defines tools available in that directory and its subdirectories. We
+will cover how to write tools, including specifying the functionality of the
+tool, the flags and arguments it takes, and how its description appears in the
+help screen.
 
 ### Basic Config Syntax
 
@@ -752,6 +753,18 @@ Toys allows subtools to be nested arbitrarily deep. Although in practice, more
 than two or three levels of hierarchy can be confusing to use.
 
 ## Understanding Configurations
+
+Commands understood by Toys are defined in configuration files. We covered the
+basic syntax for configuration files in the above section on defining tools. In
+this section, we will take a deeper look at configuration, including:
+
+* Defining subtools in their own file
+* Global and local configurations
+* The `TOYS_PATH`
+* Overriding tools
+* Loading config files from other config files
+
+### Configuration files and directories
 
 
 

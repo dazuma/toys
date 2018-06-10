@@ -184,7 +184,7 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Result] The subprocess result, including
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
       #     exit code and any captured output.
       #
       def ruby(args, opts = {}, &block)

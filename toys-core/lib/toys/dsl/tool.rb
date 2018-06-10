@@ -30,15 +30,12 @@
 module Toys
   module DSL
     ##
-    # This class defines the DSL for a toys configuration file.
+    # This class defines the DSL for a Toys configuration file.
     #
-    # A toys configuration defines one or more named tools. It provides syntax
+    # A Toys configuration defines one or more named tools. It provides syntax
     # for setting the description, defining flags and arguments, specifying
     # how to execute the tool, and requesting helper modules and other services.
     # It also lets you define subtools, nested arbitrarily deep, using blocks.
-    #
-    # Generally the DSL is invoked from the {Loader}. Applications should not
-    # need to create instances of DSL::Tool directly.
     #
     # ## Simple example
     #
@@ -50,8 +47,8 @@ module Toys
     #
     #       optional_arg :recipient, default: "world"
     #
-    #       script do
-    #         puts "Hello, #{self[:recipient]}!"
+    #       def run
+    #         puts "Hello, #{option(:recipient)}!"
     #       end
     #     end
     #
@@ -284,7 +281,7 @@ module Toys
       ##
       # Add a flag to the current tool. Each flag must specify a key which
       # the script may use to obtain the flag value from the context.
-      # You may then provide the flags themselves in `OptionParser` form.
+      # You may then provide the flags themselves in OptionParser form.
       #
       # Attributes of the flag may be passed in as arguments to this method, or
       # set in a block passed to this method.
@@ -321,12 +318,13 @@ module Toys
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil,
                report_collisions: true,
-               desc: nil, long_desc: nil)
+               desc: nil, long_desc: nil,
+               &block)
         cur_tool = DSL::Tool.activate_tool(self)
         return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
                                  desc, long_desc)
-        yield flag_dsl if block_given?
+        flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
         self
       end
@@ -355,11 +353,13 @@ module Toys
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
-      def required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
+      def required_arg(key,
+                       accept: nil, display_name: nil, desc: nil, long_desc: nil,
+                       &block)
         cur_tool = DSL::Tool.activate_tool(self)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, nil, display_name, desc, long_desc)
-        yield arg_dsl if block_given?
+        arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
         self
       end
@@ -393,12 +393,14 @@ module Toys
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
-      def optional_arg(key, default: nil, accept: nil, display_name: nil,
-                       desc: nil, long_desc: nil)
+      def optional_arg(key,
+                       default: nil, accept: nil, display_name: nil,
+                       desc: nil, long_desc: nil,
+                       &block)
         cur_tool = DSL::Tool.activate_tool(self)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
-        yield arg_dsl if block_given?
+        arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
         self
       end
@@ -431,12 +433,14 @@ module Toys
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
       #
-      def remaining_args(key, default: [], accept: nil, display_name: nil,
-                         desc: nil, long_desc: nil)
+      def remaining_args(key,
+                         default: [], accept: nil, display_name: nil,
+                         desc: nil, long_desc: nil,
+                         &block)
         cur_tool = DSL::Tool.activate_tool(self)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
-        yield arg_dsl if block_given?
+        arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
         self
       end

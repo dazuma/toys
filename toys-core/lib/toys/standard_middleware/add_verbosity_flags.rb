@@ -56,12 +56,15 @@ module Toys
       #
       # @param [Boolean,Array<String>,Proc] verbose_flags Specify flags
       #     to increase verbosity. The value may be any of the following:
+      #
       #     *  An array of flags that increase verbosity.
       #     *  The `true` value to use {DEFAULT_VERBOSE_FLAGS}. (Default)
       #     *  The `false` value to disable verbose flags.
       #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean,Array<String>,Proc] quiet_flags Specify flags
       #     to decrease verbosity. The value may be any of the following:
+      #
       #     *  An array of flags that decrease verbosity.
       #     *  The `true` value to use {DEFAULT_QUIET_FLAGS}. (Default)
       #     *  The `false` value to disable quiet flags.

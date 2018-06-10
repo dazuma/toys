@@ -40,7 +40,8 @@ module Toys
   module Definition; end
 
   ##
-  # Namespace for DSL classes.
+  # Namespace for DSL classes. These classes provide the directives that can be
+  # used in configuration files. Most are defined in {Toys::DSL::Tool}.
   #
   module DSL; end
 

@@ -71,30 +71,38 @@ module Toys
       #
       # @param [Boolean,Array<String>,Proc] help_flags Specify flags to
       #     display help. The value may be any of the following:
+      #
       #     *  An array of flags.
       #     *  The `true` value to use {DEFAULT_HELP_FLAGS}.
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean,Array<String>,Proc] usage_flags Specify flags to
       #     display usage. The value may be any of the following:
+      #
       #     *  An array of flags.
       #     *  The `true` value to use {DEFAULT_USAGE_FLAGS}.
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean,Array<String>,Proc] recursive_flags Specify flags
       #     to control recursive subtool search. The value may be any of the
       #     following:
+      #
       #     *  An array of flags.
       #     *  The `true` value to use {DEFAULT_RECURSIVE_FLAGS}.
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean,Array<String>,Proc] search_flags Specify flags
       #     to search subtools for a search term. The value may be any of
       #     the following:
+      #
       #     *  An array of flags.
       #     *  The `true` value to use {DEFAULT_SEARCH_FLAGS}.
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean] default_recursive Whether to search recursively for
       #     subtools by default. Default is `false`.
       # @param [Boolean] fallback_execution Cause the tool to display its own

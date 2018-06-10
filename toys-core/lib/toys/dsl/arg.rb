@@ -33,6 +33,10 @@ module Toys
     # DSL for an arg definition block. Lets you set arg attributes in a block
     # instead of a long series of keyword arguments.
     #
+    # These directives are available inside a block passed to
+    # {Toys::DSL::Tool#required_arg}, {Toys::DSL::Tool#optional_arg}, or
+    # {Toys::DSL::Tool#remaining_args}.
+    #
     class Arg
       ## @private
       def initialize(accept, default, display_name, desc, long_desc)

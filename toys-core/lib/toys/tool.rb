@@ -39,6 +39,7 @@ module Toys
   #
   # Keys that are neither strings nor symbols are by convention used for other
   # context information, including:
+  #
   # *   Common information such as the {Toys::Definition::Tool} object being
   #     executed, the arguments originally passed to it, or the usage error
   #     string. These well-known keys can be accessed via constants in the

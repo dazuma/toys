@@ -3,6 +3,8 @@
 ### 0.3.8 / TBD
 
 * CHANGED: Renamed :in_from, :out_to, and :err_to exec options to :in, :out, :err
+* IMPROVED: Exec raises an error if passed an unknown option.
+* IMPROVED: Exec now accepts nearly all the same stream specifications as Process#spawn.
 
 ### 0.3.7.1 / 2018-05-30
 

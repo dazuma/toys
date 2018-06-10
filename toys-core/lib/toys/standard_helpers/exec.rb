@@ -67,8 +67,8 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     the subprocess streams.
       #
-      # @return [Toys::Utils::Result] The subprocess result, including the exit
-      #     code and any captured output.
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
+      #     the exit code and any captured output.
       #
       def exec(cmd, opts = {}, &block)
         Exec._exec(self).exec(cmd, Exec._setup_exec_opts(opts, self), &block)
@@ -86,8 +86,8 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Result] The subprocess result, including the exit
-      #     code and any captured output.
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
+      #     the exit code and any captured output.
       #
       def ruby(args, opts = {}, &block)
         Exec._exec(self).ruby(args, Exec._setup_exec_opts(opts, self), &block)
