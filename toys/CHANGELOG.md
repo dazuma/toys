@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.8 / TBD
+### 0.3.8 / 2018-06-10
 
 * CHANGED: Renamed helpers to mixins.
 * CHANGED: Renamed :in_from, :out_to, and :err_to exec options to :in, :out, :err

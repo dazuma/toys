@@ -10,7 +10,7 @@
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
-* Named templates the same way as we have named helpers
+* Named templates the same way as we have named mixins
 * Consider a way to exec_tool that uses fork
 * Range acceptors. May be difficult unless we can limit the types.
 * Line length limit for Terminal
@@ -18,4 +18,4 @@
 * Something to generate output formats
 * System paths tool
 * Namespace clearing/locking
-* Helpers for various gems like pastel and tty-*
+* Mixins for various gems like pastel and tty-*. See https://lab.hookops.com/ruby-cli-gems.html

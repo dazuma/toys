@@ -32,5 +32,5 @@ module Toys
   # Current version of Toys core
   # @return [String]
   #
-  CORE_VERSION = "0.3.8.dev".freeze
+  CORE_VERSION = "0.3.8".freeze
 end

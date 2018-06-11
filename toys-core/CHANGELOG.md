@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.8 / TBD
+### 0.3.8 / 2018-06-10
 
 * CHANGED: Renamed helpers to mixins.
 * CHANGED: ModuleLookup is now a customizable class and can have multiple sources.
