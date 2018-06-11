@@ -2,10 +2,11 @@
 
 ### 0.3.8 / TBD
 
+* CHANGED: Renamed helpers to mixins.
 * CHANGED: ModuleLookup is now a customizable class and can have multiple sources.
 * CHANGED: Moved the existing templates to the toys gem since they are rake replacements.
 * CHANGED: Renamed :in_from, :out_to, and :err_to exec options to :in, :out, :err
-* ADDED: CLI can now customize the standard helpers, templates, and middleware.
+* ADDED: CLI can now customize the standard mixins, templates, and middleware.
 * IMPROVED: Exec raises an error if passed an unknown option.
 * IMPROVED: Exec now accepts nearly all the same stream specifications as Process#spawn.
 

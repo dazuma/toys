@@ -46,9 +46,9 @@ module Toys
   module DSL; end
 
   ##
-  # Namespace for standard helper classes.
+  # Namespace for standard mixin classes.
   #
-  module StandardHelpers; end
+  module StandardMixins; end
 
   ##
   # Namespace for standard middleware classes.

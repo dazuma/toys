@@ -82,7 +82,7 @@ module Toys
         OPTPARSER_ACCEPTORS.each { |a| @acceptors[a] = a }
         @used_flags = []
 
-        @helpers = {}
+        @mixins = {}
 
         @flag_definitions = []
         @required_arg_definitions = []
@@ -265,21 +265,21 @@ module Toys
       end
 
       ##
-      # Get the named helper from this tool or its ancestors.
+      # Get the named mixin from this tool or its ancestors.
       #
-      # @param [String] name The helper name
-      # @return [Module,nil] The helper module, or `nil` if not found.
+      # @param [String] name The mixin name
+      # @return [Module,nil] The mixin module, or `nil` if not found.
       #
-      def resolve_helper(name)
-        @helpers.fetch(name.to_s) { |k| @parent ? @parent.resolve_helper(k) : nil }
+      def resolve_mixin(name)
+        @mixins.fetch(name.to_s) { |k| @parent ? @parent.resolve_mixin(k) : nil }
       end
 
       ##
-      # Include the given helper in the tool class.
+      # Include the given mixin in the tool class.
       #
-      # @param [String,Symbol,Module] name The helper name or module
+      # @param [String,Symbol,Module] name The mixin name or module
       #
-      def include_helper(name)
+      def include_mixin(name)
         tool_class.include(name)
         self
       end
@@ -340,13 +340,13 @@ module Toys
       end
 
       ##
-      # Add a named helper module to this tool.
+      # Add a named mixin module to this tool.
       #
-      # @param [String] name The name of the helper.
-      # @param [Module] helper_module The helper module.
+      # @param [String] name The name of the mixin.
+      # @param [Module] mixin_module The mixin module.
       #
-      def add_helper(name, helper_module)
-        @helpers[name.to_s] = helper_module
+      def add_mixin(name, mixin_module)
+        @mixins[name.to_s] = mixin_module
         self
       end
 

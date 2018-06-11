@@ -27,23 +27,56 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "fileutils"
-
 module Toys
-  module StandardHelpers
+  module StandardMixins
     ##
-    # A module that provides all methods in the "fileutils" standard library.
+    # A mixin that provides a simple terminal. It includes a set of methods
+    # that produce styled output, get user input, and otherwise interact with
+    # the user's terminal.
     #
-    # You may make the methods in the `FileUtils` standard library module
-    # available to your tool by including the following directive in your tool
-    # configuration:
+    # You may make these methods available to your tool by including the
+    # following directive in your tool configuration:
     #
-    #     include :fileutils
+    #     include :terminal
     #
-    module Fileutils
-      ## @private
-      def self.included(mod)
-        mod.include(::FileUtils)
+    module Terminal
+      ##
+      # Returns a global terminal instance
+      # @return [Toys::Utils::Terminal]
+      #
+      def terminal
+        self[Terminal] ||= Utils::Terminal.new
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#puts
+      #
+      def puts(str = "", *styles)
+        terminal.puts(str, *styles)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#write
+      #
+      def write(str = "", *styles)
+        terminal.write(str, *styles)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#confirm
+      #
+      def confirm(prompt = "Proceed?")
+        terminal.confirm(prompt)
+      end
+
+      ##
+      # @see Toys::Utils::Terminal#spinner
+      #
+      def spinner(leading_text: "", final_text: "",
+                  frame_length: nil, frames: nil, style: nil, &block)
+        terminal.spinner(leading_text: leading_text, final_text: final_text,
+                         frame_length: frame_length, frames: frames, style: style,
+                         &block)
       end
     end
   end

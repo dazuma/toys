@@ -28,7 +28,7 @@
 ;
 
 module Toys
-  module StandardHelpers
+  module StandardMixins
     ##
     # A set of helper methods for invoking subcommands. Provides shortcuts for
     # common cases such as invoking Ruby in a subprocess or capturing output

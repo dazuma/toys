@@ -34,7 +34,7 @@ module Toys
     #
     # A Toys configuration defines one or more named tools. It provides syntax
     # for setting the description, defining flags and arguments, specifying
-    # how to execute the tool, and requesting helper modules and other services.
+    # how to execute the tool, and requesting mixin modules and other services.
     # It also lets you define subtools, nested arbitrarily deep, using blocks.
     #
     # ## Simple example
@@ -126,16 +126,16 @@ module Toys
       end
 
       ##
-      # Create a named helper module.
+      # Create a named mixin module.
       # This module may be included by name in this tool or any subtool.
       #
       # You should pass a block and define methods in that block.
       #
-      # @param [String] name Name of the helper
+      # @param [String] name Name of the mixin
       #
-      def helper(name, &block)
+      def mixin(name, &block)
         cur_tool = DSL::Tool.activate_tool(self)
-        cur_tool.add_helper(name, ::Module.new(&block)) if cur_tool
+        cur_tool.add_mixin(name, ::Module.new(&block)) if cur_tool
         self
       end
 
@@ -459,9 +459,9 @@ module Toys
       # Specify that the given module should be mixed into this tool, and its
       # methods made available when running the tool.
       #
-      # You may provide either a module, the string name of a helper that you
+      # You may provide either a module, the string name of a mixin that you
       # have defined in this tool or one of its ancestors, or the symbol name
-      # of a well-known helper.
+      # of a well-known mixin.
       #
       # @param [Module,Symbol,String] mod Module or module name.
       #
@@ -470,9 +470,9 @@ module Toys
         return if cur_tool.nil?
         name = mod.to_s
         if mod.is_a?(::String)
-          mod = cur_tool.resolve_helper(mod)
+          mod = cur_tool.resolve_mixin(mod)
         elsif mod.is_a?(::Symbol)
-          mod = @__loader.resolve_standard_helper(name)
+          mod = @__loader.resolve_standard_mixin(name)
         end
         if mod.nil?
           raise ToolDefinitionError, "Module not found: #{name.inspect}"

@@ -29,9 +29,9 @@
 
 require "helper"
 
-module MyHelper
-  def helper1
-    :helper1
+module MyMixin
+  def mixin1
+    :mixin1
   end
 end
 
@@ -650,10 +650,10 @@ describe Toys::Definition::Tool do
     end
   end
 
-  describe "helper module" do
-    it "can be looked up from standard helpers" do
+  describe "mixin module" do
+    it "can be looked up from standard mixins" do
       test = self
-      tool.include_helper(:fileutils)
+      tool.include_mixin(:fileutils)
       tool.runnable = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
@@ -661,25 +661,25 @@ describe Toys::Definition::Tool do
     end
 
     it "defaults to nil if not set" do
-      assert_nil(tool.resolve_helper("myhelper"))
+      assert_nil(tool.resolve_mixin("mymixin"))
     end
 
     it "can be set and retrieved" do
-      tool.add_helper("myhelper", MyHelper)
-      assert_equal(MyHelper, tool.resolve_helper("myhelper"))
+      tool.add_mixin("mymixin", MyMixin)
+      assert_equal(MyMixin, tool.resolve_mixin("mymixin"))
     end
 
     it "can be retrieved from a subtool" do
-      tool.add_helper("myhelper", MyHelper)
-      assert_equal(MyHelper, subtool.resolve_helper("myhelper"))
+      tool.add_mixin("mymixin", MyMixin)
+      assert_equal(MyMixin, subtool.resolve_mixin("mymixin"))
     end
 
     it "mixes into the executable tool" do
       test = self
-      tool.add_helper("myhelper", MyHelper)
-      tool.include_helper("myhelper")
+      tool.add_mixin("mymixin", MyMixin)
+      tool.include_mixin("mymixin")
       tool.runnable = proc do
-        test.assert_equal(:helper1, helper1)
+        test.assert_equal(:mixin1, mixin1)
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end

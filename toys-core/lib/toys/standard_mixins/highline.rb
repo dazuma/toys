@@ -31,9 +31,9 @@ Toys::Utils::Gems.activate("highline", "~> 1.7")
 require "highline"
 
 module Toys
-  module StandardHelpers
+  module StandardMixins
     ##
-    # A module that provides access to the capabilities of the highline gem.
+    # A mixin that provides access to the capabilities of the highline gem.
     #
     # You may make these methods available to your tool by including the
     # following directive in your tool configuration:

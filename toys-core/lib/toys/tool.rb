@@ -47,7 +47,7 @@ module Toys
   # *   Common settings such as the verbosity level, and whether to exit
   #     immediately if a subprocess exits with a nonzero result. These keys are
   #     also present as {Toys::Context} constants.
-  # *   Private information used internally by middleware and helpers.
+  # *   Private information used internally by middleware and mixins.
   #
   # This class provides convenience accessors for common keys and settings, and
   # you can retrieve argument-set keys using the {#options} hash.
@@ -247,7 +247,7 @@ module Toys
     # Returns the subset of the context that uses string or symbol keys. By
     # convention, this includes keys that are set by tool flags and arguments,
     # but does not include well-known context values such as verbosity or
-    # private context values used by middleware or helpers.
+    # private context values used by middleware or mixins.
     #
     # @return [Hash]
     #

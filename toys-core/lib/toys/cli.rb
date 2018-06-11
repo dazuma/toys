@@ -65,9 +65,9 @@ module Toys
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this CLI. If not provided, uses
     #     {Toys::CLI.default_middleware_stack}.
-    # @param [Toys::Utils::ModuleLookup] helper_lookup A lookup for well-known
-    #     helper modules. If not provided, uses
-    #     {Toys::CLI.default_helper_lookup}.
+    # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
+    #     mixin modules. If not provided, uses
+    #     {Toys::CLI.default_mixin_lookup}.
     # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
     #     well-known middleware classes. If not provided, uses
     #     {Toys::CLI.default_middleware_lookup}.
@@ -88,7 +88,7 @@ module Toys
       binary_name: nil, middleware_stack: nil,
       config_dir_name: nil, config_file_name: nil,
       index_file_name: nil, preload_file_name: nil,
-      helper_lookup: nil, middleware_lookup: nil, template_lookup: nil,
+      mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil
     )
       @logger = logger || self.class.default_logger
@@ -99,12 +99,12 @@ module Toys
       @config_file_name = config_file_name
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
-      @helper_lookup = helper_lookup || self.class.default_helper_lookup
+      @mixin_lookup = mixin_lookup || self.class.default_mixin_lookup
       @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
       @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
         index_file_name: index_file_name, preload_file_name: preload_file_name,
-        helper_lookup: @helper_lookup, template_lookup: @template_lookup,
+        mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
       @error_handler = error_handler || DefaultErrorHandler.new
@@ -243,7 +243,7 @@ module Toys
                     index_file_name: @index_file_name,
                     preload_file_name: @preload_file_name,
                     middleware_stack: @middleware_stack,
-                    helper_lookup: @helper_lookup,
+                    mixin_lookup: @mixin_lookup,
                     middleware_lookup: @middleware_lookup,
                     template_lookup: @template_lookup,
                     logger: @logger,
@@ -333,13 +333,13 @@ module Toys
       end
 
       ##
-      # Returns a default ModuleLookup for helpers that points at the
-      # StandardHelpers module.
+      # Returns a default ModuleLookup for mixins that points at the
+      # StandardMixins module.
       #
       # @return [Toys::Utils::ModuleLookup]
       #
-      def default_helper_lookup
-        Utils::ModuleLookup.new.add_path("toys/standard_helpers")
+      def default_mixin_lookup
+        Utils::ModuleLookup.new.add_path("toys/standard_mixins")
       end
 
       ##

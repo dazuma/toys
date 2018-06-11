@@ -74,11 +74,11 @@ describe Toys::Utils::ModuleLookup do
     end
   end
 
-  describe "standard_helpers lookup" do
-    let(:module_lookup) { Toys::Utils::ModuleLookup.new.add_path("toys/standard_helpers") }
+  describe "standard_mixins lookup" do
+    let(:module_lookup) { Toys::Utils::ModuleLookup.new.add_path("toys/standard_mixins") }
 
     it "looks up a module" do
-      assert_equal("Toys::StandardHelpers::Exec", module_lookup.lookup(:exec).name)
+      assert_equal("Toys::StandardMixins::Exec", module_lookup.lookup(:exec).name)
     end
 
     it "does not find toplevel modules" do

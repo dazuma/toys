@@ -59,22 +59,22 @@ module Toys
     #     used by the tools defined in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
-    # @param [Toys::Utils::ModuleLookup] helper_lookup A lookup for well-known
-    #     helper modules. Defaults to an empty lookup.
+    # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
+    #     mixin modules. Defaults to an empty lookup.
     # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
     #     well-known middleware classes. Defaults to an empty lookup.
     # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
     def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [],
-                   helper_lookup: nil, middleware_lookup: nil, template_lookup: nil)
+                   mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
       if preload_file_name && ::File.extname(preload_file_name) != ".rb"
         raise ::ArgumentError, "Illegal preload file name #{preload_file_name.inspect}"
       end
-      @helper_lookup = helper_lookup || Utils::ModuleLookup.new
+      @mixin_lookup = mixin_lookup || Utils::ModuleLookup.new
       @middleware_lookup = middleware_lookup || Utils::ModuleLookup.new
       @template_lookup = template_lookup || Utils::ModuleLookup.new
       @index_file_name = index_file_name
@@ -255,13 +255,13 @@ module Toys
     end
 
     ##
-    # Attempt to get a well-known helper module for the given symbolic name.
+    # Attempt to get a well-known mixin module for the given symbolic name.
     #
-    # @param [Symbol] name Helper name
-    # @return [Module,nil] The helper, or `nil` if not found.
+    # @param [Symbol] name Mixin name
+    # @return [Module,nil] The mixin, or `nil` if not found.
     #
-    def resolve_standard_helper(name)
-      @helper_lookup.lookup(name)
+    def resolve_standard_mixin(name)
+      @mixin_lookup.lookup(name)
     end
 
     ##
