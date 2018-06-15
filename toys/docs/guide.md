@@ -1095,21 +1095,163 @@ Additional mixins are forthcoming...
 
 ## Sharing Code
 
-
+As you accumulate additional and more complex tools, you may find that some of
+your tools need to share some common configuration, data, or logic. You might,
+for example, have a set of admin scripts that need to do some common
+authentication. This section describes several techniques for sharing code
+between tools, and describes the scope of Ruby structures, such as methods,
+classes, and constants, that you might define in your tools.
 
 ### Defining Mixins
 
+We saw earlier that you can mix a module (with all its methods) into your tool
+using the `include` directive. You can specify a module itself, or the name of
+a built-in mixin such as `:exec` or `:terminal`. But you can also define your
+own mixin using the `mixin` directive. A mixin defined in a tool can be
+`include`d in that tool or any of its subtools or their subtools, recursively,
+so it's a useful way to share code. Here's how that works.
 
+Define a mixin using the `mixin` directive, and give it a name and a block. In
+the block, you can define methods that will be made available to any tool that
+includes the mixin, in the same way that you can include a Ruby module.
+
+(Unlike full modules, however, mixins allow only methods to be shared. Mixins
+do not support constants. See the next section on using constants to learn how
+constants are treated by Toys.)
+
+Here's an example. Suppose you had common setup code that you wanted to share
+among your testing tools.
+
+    tool "test" do
+      # Define a mixin, which is just a collection of methods.
+      mixin "common_test_code" do
+        def setup
+          # Do setup here
+        end
+      end
+
+      tool "unit" do
+        # Include the mixin by name
+        include "common_test_code"
+        def run
+          setup  # Mixin methods are made available
+          puts "run only unit tests here..."
+        end
+      end
+
+      tool "integration" do
+        include "common_test_code"
+        def run
+          setup
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
+A mixin is available to the tool in which it is defined, and any subtools and
+descendants defined at the same point in the Toys search path, but not from
+tools defined in a different point in the search path. For example, if you
+define a mixin in a file located in a `.toys` directory, it will be visible to
+descendant tools defined in that same directory, but not in a different `.toys`
+directory.
+
+A common technique, for example, would be to define a mixin in the index file
+in a Toys directory. You can then include it from any subtools defined in other
+files in that same directory.
 
 ### Using Constants
 
+You can define and use cconstants in a Toys file. However, they are subject to
+Ruby's rules regarding constant scope and lookup, which can be confusing. Toys
+tries to simplify those rules and make constant behavior somewhat tractable,
+but if you do use constants (which includes modules and classes defined in a
+Toys file), it is very important to understand how they work.
 
+Constants in Toys are visible only within the Toys file in which they are
+defined. They always behave as though they are defined at the "top level" of
+the file. Even if you define a constant lexically "inside" a tool or a mixin,
+the constant does _not_ end up connected to that tool or mixin; it is always
+defined at the file level.
 
-### Expanding Templates
+    tool "test" do
+      tool "unit" do
+        # This constant is now usable for the rest of the file
+        API_KEY_FOR_TESTING = "12345"
+        def run
+          # It is visible here
+          puts API_KEY_FOR_TESTING
+        end
+      end
+
+      tool "integration" do
+        def run
+          # And it is still visible here
+          puts API_KEY_FOR_TESTING
+        end
+      end
+    end
+
+Because of this, it is highly recommended that you define constants only at the
+top level of a Toys file, so it doesn't "look" like it is scoped to something
+smaller. In particular, do not attempt to define constants in a mixin. The
+constants will not actually be connected to the mixin, and will not be
+available to tools that include the mixin.
+
+Modules and classes defined using the `module` or `class` keyword, are also
+constants, and thus follow the same rules. So you could, for example, define a
+"mixin" module like this:
+
+    module CommonTestCode
+      def setup
+        # Do setup here
+      end
+    end
+
+    tool "test" do
+      tool "unit" do
+        # Include the modules as a mixin
+        include CommonTestCode
+        def run
+          setup  # Module methods are made available
+          puts "run only unit tests here..."
+        end
+      end
+
+      tool "integration" do
+        include CommonTestCode
+        def run
+          setup
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
+The difference between this technique and using the `mixin` directive we saw
+earlier, is that the module here is visible only in the same file it is defined
+in, whereas the mixin directive is visible from _all_ files in the same point
+in the search path.
+
+### Templates
 
 
 
 #### Defining Templates
+
+
+
+## Toys as a Rake Replacement
+
+
+
+### Running Tests
+
+
+
+### Building and Releasing Gems
+
+
+
+### Building Documentation
 
 
 
