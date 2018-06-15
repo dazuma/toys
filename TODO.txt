@@ -2,9 +2,7 @@
 
 ## Immediate tasks
 
-* Allow disabling of argument parsing
 * Rdoc template
-* Named templates the same way as we have named mixins
 
 ## Important tasks
 

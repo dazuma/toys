@@ -59,7 +59,7 @@ module Toys
     #
     def run(args, verbosity: 0)
       data = create_data(args, verbosity)
-      parse_args(args, data)
+      parse_args(args, data) unless @tool_definition.argument_parsing_disabled?
       tool = @tool_definition.tool_class.new(@cli, data)
 
       original_level = @cli.logger.level

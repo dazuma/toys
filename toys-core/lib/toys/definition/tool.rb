@@ -78,16 +78,18 @@ module Toys
         @long_desc = []
 
         @default_data = {}
-        @acceptors = {}
-        OPTPARSER_ACCEPTORS.each { |a| @acceptors[a] = a }
+        @acceptors = create_initial_acceptors
         @used_flags = []
 
         @mixins = {}
+        @templates = {}
 
         @flag_definitions = []
         @required_arg_definitions = []
         @optional_arg_definitions = []
         @remaining_args_definition = nil
+
+        @disable_argument_parsing = false
         @runnable = false
       end
 
@@ -240,6 +242,14 @@ module Toys
       end
 
       ##
+      # Returns true if this tool has disabled argument parsing.
+      # @return [Boolean]
+      #
+      def argument_parsing_disabled?
+        @disable_argument_parsing
+      end
+
+      ##
       # Returns all arg definitions in order: required, optional, remaining.
       # @return [Array<Toys::Definition::Arg>]
       #
@@ -262,6 +272,16 @@ module Toys
           result << a.accept if a.accept.is_a?(Acceptor)
         end
         result.uniq
+      end
+
+      ##
+      # Get the named template from this tool or its ancestors.
+      #
+      # @param [String] name The template name
+      # @return [Class,nil] The template class, or `nil` if not found.
+      #
+      def resolve_template(name)
+        @templates.fetch(name.to_s) { |k| @parent ? @parent.resolve_template(k) : nil }
       end
 
       ##
@@ -351,6 +371,31 @@ module Toys
       end
 
       ##
+      # Add a named template class to this tool.
+      #
+      # @param [String] name The name of the template.
+      # @param [Class] template_class The template class.
+      #
+      def add_template(name, template_class)
+        @templates[name.to_s] = template_class
+        self
+      end
+
+      ##
+      # Disable argument parsing for this tool
+      #
+      def disable_argument_parsing
+        check_definition_state
+        if includes_arguments?
+          raise ToolDefinitionError,
+                "Cannot disable argument parsing for tool #{display_name.inspect}" \
+                " because arguments have already been defined."
+        end
+        @disable_argument_parsing = true
+        self
+      end
+
+      ##
       # Add a flag to the current tool. Each flag must specify a key which
       # the script may use to obtain the flag value from the context.
       # You may then provide the flags themselves in `OptionParser` form.
@@ -385,7 +430,7 @@ module Toys
                    accept: nil, default: nil, handler: nil,
                    report_collisions: true,
                    desc: nil, long_desc: nil)
-        check_definition_state
+        check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
         flag_def = Definition::Flag.new(key, flags, @used_flags, report_collisions,
                                         accept, handler, default)
@@ -404,6 +449,7 @@ module Toys
       # @param [String...] flags The flags to disable
       #
       def disable_flag(*flags)
+        check_definition_state(is_arg: true)
         flags = flags.uniq
         intersection = @used_flags & flags
         unless intersection.empty?
@@ -435,7 +481,7 @@ module Toys
       #     formats. Defaults to the empty array.
       #
       def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
-        check_definition_state
+        check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
         arg_def = Definition::Arg.new(key, :required, accept, nil, desc, long_desc, display_name)
         @required_arg_definitions << arg_def
@@ -469,7 +515,7 @@ module Toys
       #
       def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
                            desc: nil, long_desc: nil)
-        check_definition_state
+        check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
         arg_def = Definition::Arg.new(key, :optional, accept, default,
                                       desc, long_desc, display_name)
@@ -504,7 +550,7 @@ module Toys
       #
       def set_remaining_args(key, default: [], accept: nil, display_name: nil,
                              desc: nil, long_desc: nil)
-        check_definition_state
+        check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
         arg_def = Definition::Arg.new(key, :remaining, accept, default,
                                       desc, long_desc, display_name)
@@ -557,11 +603,16 @@ module Toys
         proc { middleware.config(self, loader, &next_config) }
       end
 
-      def check_definition_state
+      def check_definition_state(is_arg: false)
         if @definition_finished
           raise ToolDefinitionError,
                 "Defintion of tool #{display_name.inspect} is already finished"
         end
+        if is_arg && argument_parsing_disabled?
+          raise ToolDefinitionError,
+                "Tool #{display_name.inspect} has disabled argument parsing"
+        end
+        self
       end
 
       def resolve_acceptor(accept)
@@ -570,6 +621,12 @@ module Toys
           raise ToolDefinitionError, "Unknown acceptor: #{accept.inspect}"
         end
         @acceptors[accept]
+      end
+
+      def create_initial_acceptors
+        acceptors = {}
+        OPTPARSER_ACCEPTORS.each { |a| acceptors[a] = a }
+        acceptors
       end
     end
   end

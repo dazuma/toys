@@ -99,6 +99,7 @@ module Toys
   module Template
     ## @private
     def self.included(mod)
+      return if mod.respond_to?(:to_expand)
       mod.extend(ClassMethods)
       mod.include(Tool::Keys)
     end

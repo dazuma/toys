@@ -140,6 +140,30 @@ module Toys
       end
 
       ##
+      # Create a named template class.
+      # This template may be expanded by name in this tool or any subtool.
+      #
+      # You should pass a block and define the template in that block. You do
+      # not need to include `Toys::Template` in the block. Otherwise, see
+      # {Toys::Template} for information on defining a template. In general,
+      # the block should define an initialize method, and call `to_expand` to
+      # define how to expand the template.
+      #
+      # @param [String] name Name of the template
+      #
+      def template(name, &block)
+        cur_tool = DSL::Tool.activate_tool(self)
+        if cur_tool
+          template_class = ::Class.new do
+            include ::Toys::Template
+          end
+          template_class.class_eval(&block)
+          cur_tool.add_template(name, template_class)
+        end
+        self
+      end
+
+      ##
       # Create a subtool. You must provide a block defining the subtool.
       #
       # If the subtool is already defined (either as a tool or a namespace), the
@@ -204,12 +228,14 @@ module Toys
       # @param [Object...] args Template arguments
       #
       def expand(template_class, *args)
-        unless template_class.is_a?(::Class)
-          name = template_class.to_s
+        name = template_class.to_s
+        if template_class.is_a?(::String)
+          template_class = cur_tool.resolve_template(template_class)
+        elsif template_class.is_a?(::Symbol)
           template_class = @__loader.resolve_standard_template(name)
-          if template_class.nil?
-            raise ToolDefinitionError, "Template name not found: #{name.inspect}"
-          end
+        end
+        if template_class.nil?
+          raise ToolDefinitionError, "Template not found: #{name.inspect}"
         end
         template = template_class.new(*args)
         yield template if block_given?

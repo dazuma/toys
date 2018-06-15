@@ -2,6 +2,8 @@
 
 ### 0.3.9 / TBD
 
+* ADDED: Ability to define named templates in Toys files
+* ADDED: Ability to disable argument parsing
 
 ### 0.3.8 / 2018-06-10
 
