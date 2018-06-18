@@ -16,7 +16,7 @@ them. Furthermore, when writing new scripts, I was repeating the same
 OptionParser boilerplate and common functionality.
 
 Toys was designed to address those problems by providing a framework for
-writing and organizing command line scripts. You provide the actual script
+writing and organizing your own command line scripts. You provide the actual
 functionality, and Toys takes care of all the other details expected from a
 good command line tool. It provides a streamlined interface for defining and
 handling command line flags and positional arguments, and sensible ways to
@@ -25,14 +25,14 @@ usage information at a glance, and it also provides a search feature to help
 you find the script you need.
 
 Toys can also be used to share scripts. For example, it can be used instead of
-Rake to provide build and test scripts for a project--- tools that, unlike Rake
+Rake to provide build and test scripts for a project—tools that, unlike Rake
 tasks, can be invoked and passed arguments using familiar unix command line
 arguments and flags. The Toys github repo itself comes with Toys configs
 instead of Rakefiles.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line binary written in Ruby. However, you
-*can* use it in that way by building witn the "toys-core" API, available as a
+*can* use it in that way by building with the "toys-core" API, available as a
 separate gem. For more info on using toys-core, see
 https://ruby-doc.info/gems/toys-core
 
@@ -63,9 +63,9 @@ The "system version" tool displays the current version of the toys gem.
 
 ### Write your first tool
 
-You can define tools by creating toys *config files*. Using your favorite
-editor, create a new file called `.toys.rb` (note the leading period) in your
-current directory. Copy the following into the file, and save it:
+You can define tools by creating a *Toys file*. Go into any directory, and,
+using your favorite editor, create a new file called `.toys.rb` (note the
+leading period). Copy the following into the file, and save it:
 
     tool "greet" do
       desc "My first tool!"

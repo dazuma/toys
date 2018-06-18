@@ -473,6 +473,20 @@ module Toys
       alias remaining remaining_args
 
       ##
+      # Disable argument parsing for this tool. Arguments will not be parsed
+      # and the options will not be populated. Instead, tools can retrieve the
+      # full unparsed argument list by calling {Toys::Tool#args}.
+      #
+      # This directive is mutually exclusive with any of the directives that
+      # declare arguments or flags.
+      #
+      def disable_argument_parsing
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.disable_argument_parsing unless cur_tool.nil?
+        self
+      end
+
+      ##
       # Specify how to run this tool. You may do this by providing a block to
       # this directive, or by defining the `run` method in the tool.
       #

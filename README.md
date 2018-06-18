@@ -7,7 +7,7 @@ line tools (with commands and subcommands) using a Ruby DSL. Commands can be
 defined globally or scoped to directories.
 
 This repository includes the source for the **toys** gem, which provides the
-`toys` binary itself, and the **toys-core** gem, which provides the underlying
+Toys binary itself, and the **toys-core** gem, which provides the underlying
 command line framework.
 
 ## Contributing

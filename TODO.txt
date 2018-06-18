@@ -4,11 +4,6 @@
 
 * Rdoc template
 
-## Important tasks
-
-* Improve test coverage
-* Write user's guide
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

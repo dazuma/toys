@@ -183,16 +183,17 @@ module Toys
     #
     # @param [String] start The first directory to add. Defaults to the current
     #     working directory.
-    # @param [String] base The last directory to add. Defaults to `"/"`.
+    # @param [Array<String>] terminate Optional list of directories that should
+    #     terminate the search.
     # @param [Boolean] high_priority Add the configs at the head of the
     #     priority list rather than the tail.
     #
-    def add_search_path_hierarchy(start: nil, base: "/", high_priority: false)
+    def add_search_path_hierarchy(start: nil, terminate: [], high_priority: false)
       path = start || ::Dir.pwd
       paths = []
       loop do
+        break if terminate.include?(path)
         paths << path
-        break if path == base
         next_path = ::File.dirname(path)
         break if next_path == path
         path = next_path

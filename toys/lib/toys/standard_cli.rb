@@ -97,11 +97,11 @@ module Toys
     # Create a standard CLI, configured with the appropriate paths and
     # middleware.
     #
-    # @param [String,nil] directory Starting search directory for configs.
+    # @param [String,nil] cur_dir Starting search directory for configs.
     #     Defaults to the current working directory.
     # @return [Toys::CLI]
     #
-    def self.create(directory: nil)
+    def self.create(cur_dir: nil)
       cli = CLI.new(
         binary_name: BINARY_NAME,
         config_dir_name: CONFIG_DIR_NAME,
@@ -111,7 +111,7 @@ module Toys
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup
       )
-      add_standard_paths(cli, directory: directory)
+      add_standard_paths(cli, cur_dir: cur_dir)
       cli
     end
 
@@ -127,17 +127,16 @@ module Toys
     # *  The builtins for the standard toys binary.
     #
     # @param [Toys::CLI] cli Add paths to this CLI
-    # @param [String,nil] directory Starting search directory for configs.
+    # @param [String,nil] cur_dir Starting search directory for configs.
     #     Defaults to the current working directory.
+    # @param [Array<String>,nil] global_dirs Optional list of global
+    #     directories, or `nil` to use the defaults.
     #
-    def self.add_standard_paths(cli, directory: nil)
-      cli.add_search_path_hierarchy(start: directory)
-      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
-      if paths.empty?
-        paths << ::ENV["HOME"] if ::ENV["HOME"]
-        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
-      end
-      paths.each { |path| cli.add_search_path(path) }
+    def self.add_standard_paths(cli, cur_dir: nil, global_dirs: nil)
+      cur_dir ||= ::Dir.pwd
+      global_dirs ||= default_global_dirs
+      cli.add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
+      global_dirs.each { |path| cli.add_search_path(path) }
       cli.add_config_path(BUILTINS_PATH)
       cli
     end
@@ -145,7 +144,7 @@ module Toys
     # rubocop:disable Metrics/MethodLength
 
     ##
-    # Returns a the middleware for the standard Toys CLI.
+    # Returns the middleware for the standard Toys CLI.
     #
     # @return [Array]
     #
@@ -192,6 +191,25 @@ module Toys
 
     # rubocop:enable Metrics/MethodLength
 
+    ##
+    # Returns the default set of global config directories.
+    #
+    # @return [Array<String>]
+    #
+    def self.default_global_dirs
+      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
+      if paths.empty?
+        paths << ::ENV["HOME"] if ::ENV["HOME"]
+        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
+      end
+      paths.map { |path| ::File.realpath(::File.expand_path(path)) }
+    end
+
+    ##
+    # Returns a ModuleLookup for the default templates.
+    #
+    # @return [Toys::Utils::ModuleLookup]
+    #
     def self.default_template_lookup
       Utils::ModuleLookup.new.add_path("toys/templates")
     end

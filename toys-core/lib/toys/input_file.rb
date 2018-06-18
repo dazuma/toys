@@ -44,7 +44,8 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
       include ::Toys::Tool::Keys
       @tool_class = tool_class
     end
-    name = "M#{namespace.object_id}"
+    basename = ::File.basename(path).tr(".-", "_").gsub(/\W/, "")
+    name = "M#{namespace.object_id}_#{basename}"
     const_set(name, namespace)
     str = <<-STR
       module #{name}; @tool_class.class_eval do

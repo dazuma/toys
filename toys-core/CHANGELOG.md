@@ -2,6 +2,7 @@
 
 ### 0.3.9 / TBD
 
+# CHANGED: Cli#add_search_path_hierarchy changed the behavior of the base/terminate param
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
 

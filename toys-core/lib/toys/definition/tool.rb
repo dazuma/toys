@@ -366,7 +366,13 @@ module Toys
       # @param [Module] mixin_module The mixin module.
       #
       def add_mixin(name, mixin_module)
-        @mixins[name.to_s] = mixin_module
+        name = name.to_s
+        if @mixins.key?(name)
+          raise ToolDefinitionError,
+                "A mixin named #{name.inspect} has already been defined in tool" \
+                " #{display_name.inspect}."
+        end
+        @mixins[name] = mixin_module
         self
       end
 
@@ -377,7 +383,13 @@ module Toys
       # @param [Class] template_class The template class.
       #
       def add_template(name, template_class)
-        @templates[name.to_s] = template_class
+        name = name.to_s
+        if @templates.key?(name)
+          raise ToolDefinitionError,
+                "A template named #{name.inspect} has already been defined in tool" \
+                " #{display_name.inspect}."
+        end
+        @templates[name] = template_class
         self
       end
 
