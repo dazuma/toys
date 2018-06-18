@@ -4,6 +4,8 @@
 
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
+* ADDED: Rdoc template
+* FIXED: Templates were not activating needed gems
 
 ### 0.3.8 / 2018-06-10
 

@@ -36,6 +36,12 @@ module Toys
       include Template
 
       ##
+      # Default version requirements for the rubocop gem.
+      # @return [Array<String>]
+      #
+      DEFAULT_GEM_VERSION_REQUIREMENTS = [].freeze
+
+      ##
       # Default tool name
       # @return [String]
       #
@@ -46,20 +52,25 @@ module Toys
       #
       # @param [String] name Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
+      # @param [String,Array<String>] gem_version Version requirements for
+      #     the rubocop gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param [Boolean] fail_on_error If true, exits with a nonzero code if
       #     Rubocop fails. Defaults to true.
       # @param [Array<String>] options Additional options passed to the Rubocop
       #     CLI.
       #
       def initialize(name: DEFAULT_TOOL_NAME,
+                     gem_version: nil,
                      fail_on_error: true,
                      options: [])
         @name = name
+        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @fail_on_error = fail_on_error
         @options = options
       end
 
       attr_accessor :name
+      attr_accessor :gem_version
       attr_accessor :fail_on_error
       attr_accessor :options
 
@@ -67,10 +78,10 @@ module Toys
         tool(template.name) do
           desc "Run rubocop on the current project."
 
-          include :exec
-
           run do
+            ::Toys::Utils::Gems.activate("rubocop", *Array(template.gem_version))
             require "rubocop"
+
             cli = ::RuboCop::CLI.new
             logger.info "Running RuboCop..."
             result = cli.run(template.options)

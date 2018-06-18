@@ -73,7 +73,7 @@ module Toys
 
             files.each do |file|
               if ::File.exist?(file)
-                rm_rf file
+                rm_rf(file)
                 puts "Cleaned: #{file}"
               end
             end

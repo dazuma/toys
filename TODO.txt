@@ -2,8 +2,6 @@
 
 ## Immediate tasks
 
-* Rdoc template
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
@@ -15,3 +13,4 @@
 * Something to generate output formats
 * Namespace clearing/locking
 * Mixins for various gems like pastel and tty-*. See https://lab.hookops.com/ruby-cli-gems.html
+* Rake-like build/dependency features or a way to call out to rake.

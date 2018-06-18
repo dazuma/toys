@@ -36,6 +36,12 @@ module Toys
       include Template
 
       ##
+      # Default version requirements for the minitest gem.
+      # @return [Array<String>]
+      #
+      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 5.0".freeze
+
+      ##
       # Default tool name
       # @return [String]
       #
@@ -58,6 +64,8 @@ module Toys
       #
       # @param [String] name Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
+      # @param [String,Array<String>] gem_version Version requirements for
+      #     the minitest gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param [Array<String>] libs An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
       # @param [Array<String>] files An array of globs indicating the test
@@ -65,17 +73,20 @@ module Toys
       # @param [Boolean] warnings If true, runs tests with Ruby warnings.
       #     Defaults to true.
       #
-      def initialize(name: DEFAULT_TOOL_NAME,
-                     libs: DEFAULT_LIBS,
-                     files: DEFAULT_FILES,
+      def initialize(name: nil,
+                     gem_version: nil,
+                     libs: nil,
+                     files: nil,
                      warnings: true)
-        @name = name
-        @libs = libs
-        @files = files
+        @name = name || DEFAULT_TOOL_NAME
+        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
+        @libs = libs || DEFAULT_LIBS
+        @files = files || DEFAULT_FILES
         @warnings = warnings
       end
 
       attr_accessor :name
+      attr_accessor :gem_version
       attr_accessor :libs
       attr_accessor :files
       attr_accessor :warnings
@@ -93,6 +104,7 @@ module Toys
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
           run do
+            ::Toys::Utils::Gems.activate("minitest", *Array(template.gem_version))
             ruby_args = []
             unless template.libs.empty?
               lib_path = template.libs.join(::File::PATH_SEPARATOR)

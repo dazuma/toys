@@ -27,8 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "rubygems/package"
-
 module Toys
   module Templates
     ##
@@ -95,25 +93,26 @@ module Toys
           include :terminal
 
           run do
+            require "rubygems/package"
             configure_exec(exit_on_nonzero_status: true)
-            gemspec = ::Gem::Specification.load "#{template.gem_name}.gemspec"
+            gemspec = ::Gem::Specification.load("#{template.gem_name}.gemspec")
             version = gemspec.version
             gemfile = "#{template.gem_name}-#{version}.gem"
-            ::Gem::Package.build gemspec
-            mkdir_p "pkg"
-            mv gemfile, "pkg"
+            ::Gem::Package.build(gemspec)
+            mkdir_p("pkg")
+            mv(gemfile, "pkg")
             if template.push_gem
               if ::File.directory?(".git") && capture("git status -s").strip != ""
                 logger.error "Cannot push the gem when there are uncommited changes"
                 exit(1)
               end
               exit(1) unless option(:yes) || confirm("Release #{gemfile}?")
-              sh "gem push pkg/#{gemfile}"
+              exec(["gem", "push", "pkg/#{gemfile}"])
               if template.tag
-                sh "git tag v#{version}"
+                exec(["git", "tag", "v#{version}"])
                 if template.push_tag
                   template.push_tag = "origin" if template.push_tag == true
-                  sh "git push #{template.push_tag} v#{version}"
+                  exec(["git", "push", template.push_tag, "v#{version}"])
                 end
               end
             end

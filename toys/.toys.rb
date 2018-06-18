@@ -35,6 +35,8 @@ expand :rubocop
 
 expand :yardoc
 
+expand :rdoc, output_dir: "doc"
+
 expand :gem_build
 
 expand :gem_build, name: "release", push_gem: true
