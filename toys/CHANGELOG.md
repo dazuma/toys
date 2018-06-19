@@ -5,6 +5,7 @@
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
 * ADDED: Rdoc template
+* ADDED: Exec#exec_tool that supports all the stream redirects
 * FIXED: Templates were not activating needed gems
 
 ### 0.3.8 / 2018-06-10

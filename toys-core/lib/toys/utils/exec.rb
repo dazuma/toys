@@ -28,6 +28,7 @@
 ;
 
 require "logger"
+require "shellwords"
 
 module Toys
   module Utils
@@ -187,22 +188,34 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The subprocess result, including
       #     exit code and any captured output.
       #
-      def ruby(args, opts = {}, &block)
+      def exec_ruby(args, opts = {}, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
         exec(cmd, {argv0: "ruby"}.merge(opts), &block)
       end
+      alias ruby exec_ruby
 
       ##
-      # Execute the given string in a shell. Returns the exit code.
+      # Execute a tool. The command may be given as a single string or an array
+      # of strings, representing the tool to run and the arguments to pass.
       #
-      # @param [String] cmd The shell command to execute.
+      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it, allowing you to interact with the subprocess streams.
+      #
+      # @param [Toys::CLI] cli The CLI to use.
+      # @param [String,Array<String>] cmd The tool to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
-      # @return [Integer] The exit code
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
+      #     exit code and any captured output.
       #
-      def sh(cmd, opts = {})
-        exec(cmd, opts).exit_code
+      def exec_tool(cli, cmd, opts = {}, &block)
+        exec_opts = Opts.new(@default_opts).add(opts)
+        cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+        executor = Executor.new(exec_opts, cmd, fork_cli: cli)
+        executor.execute(&block)
       end
 
       ##
@@ -219,6 +232,51 @@ module Toys
       #
       def capture(cmd, opts = {})
         exec(cmd, opts.merge(out: :capture)).captured_out
+      end
+
+      ##
+      # Spawn a ruby process and pass the given arguments to it.
+      #
+      # Captures standard out and returns it as a string.
+      #
+      # @param [String,Array<String>] args The arguments to ruby.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_ruby(args, opts = {})
+        ruby(args, opts.merge(out: :capture)).captured_out
+      end
+
+      ##
+      # Execute a tool. The command may be given as a single string or an array
+      # of strings, representing the tool to run and the arguments to pass.
+      #
+      # Captures standard out and returns it as a string.
+      #
+      # @param [Toys::CLI] cli The CLI to use.
+      # @param [String,Array<String>] cmd The tool to execute.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_tool(cli, cmd, opts = {})
+        exec_tool(cli, cmd, opts.merge(out: :capture)).captured_out
+      end
+
+      ##
+      # Execute the given string in a shell. Returns the exit code.
+      #
+      # @param [String] cmd The shell command to execute.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [Integer] The exit code
+      #
+      def sh(cmd, opts = {})
+        exec(cmd, opts).exit_code
       end
 
       ##
@@ -413,7 +471,8 @@ module Toys
       # @private
       #
       class Executor
-        def initialize(exec_opts, spawn_cmd)
+        def initialize(exec_opts, spawn_cmd, fork_cli: nil)
+          @fork_cli = fork_cli
           @spawn_cmd = spawn_cmd
           @config_opts = exec_opts.config_opts
           @spawn_opts = exec_opts.spawn_opts
@@ -428,7 +487,9 @@ module Toys
           setup_out_stream(:out)
           setup_out_stream(:err)
           log_command
-          wait_thread = start_process
+          pid = @fork_cli ? start_fork : start_process
+          @child_streams.each(&:close)
+          wait_thread = ::Process.detach(pid)
           status = control_process(wait_thread, &block)
           create_result(status)
         end
@@ -447,9 +508,91 @@ module Toys
           args = []
           args << @config_opts[:env] if @config_opts[:env]
           args.concat(@spawn_cmd)
-          pid = ::Process.spawn(*args, @spawn_opts)
-          @child_streams.each(&:close)
-          ::Process.detach(pid)
+          ::Process.spawn(*args, @spawn_opts)
+        end
+
+        def start_fork
+          pid = ::Process.fork
+          if pid.nil?
+            code = -1
+            begin
+              setup_env_within_fork
+              setup_streams_within_fork
+              code =
+                if @spawn_opts[:chdir]
+                  ::Dir.chdir(@spawn_opts[:chdir]) { run_fork }
+                else
+                  run_fork
+                end
+            ensure
+              ::Kernel.exit!(code)
+            end
+          end
+          pid
+        end
+
+        def setup_env_within_fork
+          if @config_opts[:unsetenv_others]
+            ::ENV.each_key do |k|
+              ::ENV.delete(k) unless @config_opts.key?(k)
+            end
+          end
+          (@config_opts[:env] || {}).each { |k, v| ::ENV[k.to_s] = v.to_s }
+        end
+
+        def setup_streams_within_fork
+          in_stream = interpret_in_stream_within_fork(@spawn_opts[:in])
+          if in_stream == :close
+            $stdin.close
+          elsif in_stream
+            $stdin = in_stream
+          end
+          out_stream = interpret_out_stream_within_fork(@spawn_opts[:out])
+          if out_stream == :close
+            $stdout.close
+          elsif out_stream
+            $stdout = out_stream
+          end
+          err_stream = interpret_out_stream_within_fork(@spawn_opts[:err])
+          if err_stream == :close
+            $stderr.close
+          elsif err_stream
+            $stderr = err_stream
+          end
+        end
+
+        def interpret_in_stream_within_fork(stream)
+          case stream
+          when ::Integer
+            ::IO.open(stream)
+          when ::Array
+            ::File.open(*stream)
+          else
+            stream if stream.respond_to?(:write)
+          end
+        end
+
+        def interpret_out_stream_within_fork(stream)
+          case stream
+          when ::Integer
+            ::IO.open(stream)
+          when ::Array
+            if stream.first == :child
+              if stream[1] == :err
+                $stderr
+              elsif stream[1] == :out
+                $stdout
+              end
+            else
+              ::File.open(*stream)
+            end
+          else
+            stream if stream.respond_to?(:write)
+          end
+        end
+
+        def run_fork
+          @fork_cli.run(*@spawn_cmd)
         end
 
         def control_process(wait_thread)

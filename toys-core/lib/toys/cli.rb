@@ -233,11 +233,12 @@ module Toys
     # Make a clone with the same settings but no paths in the loader.
     # This is sometimes useful for running sub-tools.
     #
+    # @param [Hash] _opts Unused options that can be used by subclasses.
     # @return [Toys::CLI]
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
-    def child
+    def child(_opts = {})
       cli = CLI.new(binary_name: @binary_name,
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,

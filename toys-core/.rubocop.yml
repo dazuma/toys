@@ -6,7 +6,7 @@ Layout/SpaceInsideHashLiteralBraces:
 Metrics/AbcSize:
   Max: 24
 Metrics/ClassLength:
-  Max: 300
+  Max: 400
 Metrics/CyclomaticComplexity:
   Max: 10
 Metrics/LineLength:

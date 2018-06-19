@@ -89,21 +89,30 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The subprocess result, including
       #     the exit code and any captured output.
       #
-      def ruby(args, opts = {}, &block)
-        Exec._exec(self).ruby(args, Exec._setup_exec_opts(opts, self), &block)
+      def exec_ruby(args, opts = {}, &block)
+        Exec._exec(self).exec_ruby(args, Exec._setup_exec_opts(opts, self), &block)
       end
+      alias ruby exec_ruby
 
       ##
-      # Execute the given string in a shell. Returns the exit code.
+      # Execute a tool. The command may be given as a single string or an array
+      # of strings, representing the tool to run and the arguments to pass.
       #
-      # @param [String] cmd The shell command to execute.
+      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it, allowing you to interact with the subprocess streams.
+      #
+      # @param [Toys::CLI] cli The CLI to use.
+      # @param [String,Array<String>] cmd The tool to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
-      # @return [Integer] The exit code
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
+      #     exit code and any captured output.
       #
-      def sh(cmd, opts = {})
-        Exec._exec(self).sh(cmd, Exec._setup_exec_opts(opts, self))
+      def exec_tool(cli, cmd, opts = {}, &block)
+        Exec._exec(self).exec_tool(cli, cmd, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -120,6 +129,51 @@ module Toys
       #
       def capture(cmd, opts = {})
         Exec._exec(self).capture(cmd, Exec._setup_exec_opts(opts, self))
+      end
+
+      ##
+      # Spawn a ruby process and pass the given arguments to it.
+      #
+      # Captures standard out and returns it as a string.
+      #
+      # @param [String,Array<String>] args The arguments to ruby.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_ruby(args, opts = {})
+        Exec._exec(self).capture_ruby(args, Exec._setup_exec_opts(opts, self))
+      end
+
+      ##
+      # Execute a tool. The command may be given as a single string or an array
+      # of strings, representing the tool to run and the arguments to pass.
+      #
+      # Captures standard out and returns it as a string.
+      #
+      # @param [Toys::CLI] cli The CLI to use.
+      # @param [String,Array<String>] cmd The tool to execute.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_tool(cli, cmd, opts = {})
+        Exec._exec(self).capture_tool(cli, cmd, Exec._setup_exec_opts(opts, self))
+      end
+
+      ##
+      # Execute the given string in a shell. Returns the exit code.
+      #
+      # @param [String] cmd The shell command to execute.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [Integer] The exit code
+      #
+      def sh(cmd, opts = {})
+        Exec._exec(self).sh(cmd, Exec._setup_exec_opts(opts, self))
       end
 
       ##
