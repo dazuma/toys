@@ -61,18 +61,13 @@ tool "ci" do
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
       subcli = cli.child.add_config_path(".toys.rb")
       puts("** Checking tests...", :cyan)
-      exit_on_nonzero_status(subcli.run("test"))
+      exec_tool(["test"], cli: subcli)
       puts("** Tests ok.", :cyan)
       puts("** Checking rubocop...", :cyan)
-      exit_on_nonzero_status(subcli.run("rubocop"))
+      exec_tool(["rubocop"], cli: subcli)
       puts("** Rubocop ok.", :cyan)
       puts("** Checking yardoc...", :cyan)
-      exec(["yardoc", "--no-stats", "--no-cache", "--no-output", "--fail-on-warning"])
-      stats = capture(["yard", "stats", "--list-undoc"])
-      if stats =~ /Undocumented\sObjects:/
-        puts(stats)
-        exit(1)
-      end
+      exec_tool(["yardoc", "--no-output"], cli: subcli)
       puts("** Yardoc ok.", :cyan)
     end
     puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)

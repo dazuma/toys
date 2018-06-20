@@ -473,6 +473,20 @@ module Toys
       alias remaining remaining_args
 
       ##
+      # Set an option value statically.
+      #
+      # @param [Symbol] key The key to use to retrieve the value from the
+      #     execution context.
+      # @param [Object] value The value to set.
+      #
+      def set(key, value)
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
+        cur_tool.default_data[key] = value
+        self
+      end
+
+      ##
       # Disable argument parsing for this tool. Arguments will not be parsed
       # and the options will not be populated. Instead, tools can retrieve the
       # full unparsed argument list by calling {Toys::Tool#args}.

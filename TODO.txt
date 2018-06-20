@@ -2,9 +2,6 @@
 
 ## Immediate tasks
 
-* Add more direct options to the yardoc template
-* Find a way to roll the ci features (e.g. interpreting yardoc output) into yardoc template. May require the exec_tool/fork feature above.
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

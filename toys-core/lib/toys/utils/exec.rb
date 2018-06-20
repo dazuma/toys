@@ -190,19 +190,18 @@ module Toys
       #
       def exec_ruby(args, opts = {}, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
-        exec(cmd, {argv0: "ruby"}.merge(opts), &block)
+        log_cmd = args.is_a?(::Array) ? ["ruby"] + args : "ruby #{args}"
+        exec(cmd, {argv0: "ruby", log_cmd: log_cmd}.merge(opts), &block)
       end
       alias ruby exec_ruby
 
       ##
-      # Execute a tool. The command may be given as a single string or an array
-      # of strings, representing the tool to run and the arguments to pass.
+      # Execute a proc in a fork.
       #
       # If you provide a block, a {Toys::Utils::Exec::Controller} will be
       # yielded to it, allowing you to interact with the subprocess streams.
       #
-      # @param [Toys::CLI] cli The CLI to use.
-      # @param [String,Array<String>] cmd The tool to execute.
+      # @param [Proc] func The proc to call.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -211,10 +210,9 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The subprocess result, including
       #     exit code and any captured output.
       #
-      def exec_tool(cli, cmd, opts = {}, &block)
+      def exec_proc(func, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
-        cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-        executor = Executor.new(exec_opts, cmd, fork_cli: cli)
+        executor = Executor.new(exec_opts, func)
         executor.execute(&block)
       end
 
@@ -250,20 +248,18 @@ module Toys
       end
 
       ##
-      # Execute a tool. The command may be given as a single string or an array
-      # of strings, representing the tool to run and the arguments to pass.
+      # Execute a proc in a fork.
       #
       # Captures standard out and returns it as a string.
       #
-      # @param [Toys::CLI] cli The CLI to use.
-      # @param [String,Array<String>] cmd The tool to execute.
+      # @param [Proc] func The proc to call.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_tool(cli, cmd, opts = {})
-        exec_tool(cli, cmd, opts.merge(out: :capture)).captured_out
+      def capture_proc(func, opts = {})
+        exec_proc(func, opts.merge(out: :capture)).captured_out
       end
 
       ##
@@ -290,10 +286,12 @@ module Toys
         #
         CONFIG_KEYS = %i[
           argv0
+          cli
           env
           err
           in
           logger
+          log_cmd
           log_level
           nonzero_status_handler
           out
@@ -471,9 +469,9 @@ module Toys
       # @private
       #
       class Executor
-        def initialize(exec_opts, spawn_cmd, fork_cli: nil)
-          @fork_cli = fork_cli
-          @spawn_cmd = spawn_cmd
+        def initialize(exec_opts, spawn_cmd)
+          @fork_func = spawn_cmd.respond_to?(:call) ? spawn_cmd : nil
+          @spawn_cmd = spawn_cmd.respond_to?(:call) ? nil : spawn_cmd
           @config_opts = exec_opts.config_opts
           @spawn_opts = exec_opts.spawn_opts
           @captures = {}
@@ -484,10 +482,10 @@ module Toys
 
         def execute(&block)
           setup_in_stream
-          setup_out_stream(:out)
-          setup_out_stream(:err)
+          setup_out_stream(:out, $stdout, 1)
+          setup_out_stream(:err, $stderr, 2)
           log_command
-          pid = @fork_cli ? start_fork : start_process
+          pid = @fork_func ? start_fork : start_process
           @child_streams.each(&:close)
           wait_thread = ::Process.detach(pid)
           status = control_process(wait_thread, &block)
@@ -499,8 +497,9 @@ module Toys
         def log_command
           logger = @config_opts[:logger]
           if logger && @config_opts[:log_level] != false
-            cmd_str = @spawn_cmd.size == 1 ? @spawn_cmd.first : @spawn_cmd.inspect
-            logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str)
+            cmd_str = @config_opts[:log_cmd]
+            cmd_str ||= @spawn_cmd.size == 1 ? @spawn_cmd.first : @spawn_cmd.inspect if @spawn_cmd
+            logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str) if cmd_str
           end
         end
 
@@ -514,18 +513,20 @@ module Toys
         def start_fork
           pid = ::Process.fork
           if pid.nil?
-            code = -1
+            explicit_exit = false
             begin
               setup_env_within_fork
               setup_streams_within_fork
-              code =
-                if @spawn_opts[:chdir]
-                  ::Dir.chdir(@spawn_opts[:chdir]) { run_fork }
-                else
-                  run_fork
-                end
+              if @spawn_opts[:chdir]
+                ::Dir.chdir(@spawn_opts[:chdir]) { @fork_func.call(@config_opts) }
+              else
+                @fork_func.call(@config_opts)
+              end
+            rescue ::SystemExit => e
+              explicit_exit = true
+              raise e
             ensure
-              ::Kernel.exit!(code)
+              ::Kernel.exit!(0) unless explicit_exit
             end
           end
           pid
@@ -545,19 +546,19 @@ module Toys
           if in_stream == :close
             $stdin.close
           elsif in_stream
-            $stdin = in_stream
+            $stdin.reopen(in_stream)
           end
           out_stream = interpret_out_stream_within_fork(@spawn_opts[:out])
           if out_stream == :close
             $stdout.close
           elsif out_stream
-            $stdout = out_stream
+            $stdout.reopen(out_stream)
           end
           err_stream = interpret_out_stream_within_fork(@spawn_opts[:err])
           if err_stream == :close
             $stderr.close
           elsif err_stream
-            $stderr = err_stream
+            $stderr.reopen(err_stream)
           end
         end
 
@@ -591,10 +592,6 @@ module Toys
           end
         end
 
-        def run_fork
-          @fork_cli.run(*@spawn_cmd)
-        end
-
         def control_process(wait_thread)
           begin
             if block_given?
@@ -619,6 +616,10 @@ module Toys
 
         def setup_in_stream
           setting = @config_opts[:in]
+          if setting.nil?
+            return if $stdin.respond_to?(:fileno) && $stdin.fileno.zero?
+            setting = $stdin
+          end
           return unless setting
           case setting
           when ::Symbol
@@ -683,9 +684,12 @@ module Toys
           @spawn_opts[:in] = args + [::File::RDONLY]
         end
 
-        def setup_out_stream(key)
+        def setup_out_stream(key, stdstream, stdfileno)
           setting = @config_opts[key]
-          return unless setting
+          if setting.nil?
+            return if setting.respond_to?(:fileno) && setting.fileno == stdfileno
+            setting = stdstream
+          end
           case setting
           when ::Symbol
             setup_out_stream_of_type(key, setting, [])

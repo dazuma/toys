@@ -33,7 +33,11 @@ expand :minitest, libs: ["lib", "test"]
 
 expand :rubocop
 
-expand :yardoc
+expand :yardoc do |t|
+  t.generate_output_flag = true
+  t.fail_on_warning = true
+  t.fail_on_undocumented_objects = true
+end
 
 expand :rdoc, output_dir: "doc"
 

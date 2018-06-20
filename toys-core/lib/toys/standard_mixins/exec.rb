@@ -95,13 +95,31 @@ module Toys
       alias ruby exec_ruby
 
       ##
+      # Execute a proc in a subprocess.
+      #
+      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it, allowing you to interact with the subprocess streams.
+      #
+      # @param [Proc] func The proc to call.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
+      #
+      # @return [Toys::Utils::Exec::Result] The subprocess result, including
+      #     exit code and any captured output.
+      #
+      def exec_proc(func, opts = {}, &block)
+        Exec._exec(self).exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
+      end
+
+      ##
       # Execute a tool. The command may be given as a single string or an array
       # of strings, representing the tool to run and the arguments to pass.
       #
       # If you provide a block, a {Toys::Utils::Exec::Controller} will be
       # yielded to it, allowing you to interact with the subprocess streams.
       #
-      # @param [Toys::CLI] cli The CLI to use.
       # @param [String,Array<String>] cmd The tool to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
@@ -111,8 +129,9 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The subprocess result, including
       #     exit code and any captured output.
       #
-      def exec_tool(cli, cmd, opts = {}, &block)
-        Exec._exec(self).exec_tool(cli, cmd, Exec._setup_exec_opts(opts, self), &block)
+      def exec_tool(cmd, opts = {}, &block)
+        func = Exec._make_tool_caller(cmd)
+        Exec._exec(self).exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -147,20 +166,35 @@ module Toys
       end
 
       ##
+      # Execute a proc in a subprocess.
+      #
+      # Captures standard out and returns it as a string.
+      #
+      # @param [Proc] func The proc to call.
+      # @param [Hash] opts The command options. See the section on
+      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_proc(func, opts = {})
+        Exec._exec(self).capture_proc(func, Exec._setup_exec_opts(opts, self))
+      end
+
+      ##
       # Execute a tool. The command may be given as a single string or an array
       # of strings, representing the tool to run and the arguments to pass.
       #
       # Captures standard out and returns it as a string.
       #
-      # @param [Toys::CLI] cli The CLI to use.
       # @param [String,Array<String>] cmd The tool to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_tool(cli, cmd, opts = {})
-        Exec._exec(self).capture_tool(cli, cmd, Exec._setup_exec_opts(opts, self))
+      def capture_tool(cmd, opts = {})
+        func = Exec._make_tool_caller(cmd)
+        Exec._exec(self).capture_proc(func, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -191,8 +225,19 @@ module Toys
       ## @private
       def self._exec(tool)
         tool[Exec] ||= Utils::Exec.new do |k|
-          k == :logger ? tool[Tool::Keys::LOGGER] : nil
+          case k
+          when :logger
+            tool[Tool::Keys::LOGGER]
+          when :cli
+            tool[Tool::Keys::CLI]
+          end
         end
+      end
+
+      ## @private
+      def self._make_tool_caller(cmd)
+        cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+        proc { |config| ::Kernel.exit(config[:cli].run(*cmd)) }
       end
 
       ## @private
