@@ -512,24 +512,32 @@ module Toys
 
         def start_fork
           pid = ::Process.fork
-          if pid.nil?
-            explicit_exit = false
-            begin
-              setup_env_within_fork
-              setup_streams_within_fork
-              if @spawn_opts[:chdir]
-                ::Dir.chdir(@spawn_opts[:chdir]) { @fork_func.call(@config_opts) }
-              else
-                @fork_func.call(@config_opts)
-              end
-            rescue ::SystemExit => e
-              explicit_exit = true
-              raise e
-            ensure
-              ::Kernel.exit!(0) unless explicit_exit
-            end
+          return pid unless pid.nil?
+          exit_code = -1
+          begin
+            setup_env_within_fork
+            setup_streams_within_fork
+            exit_code = run_fork_func
+          rescue ::SystemExit => e
+            exit_code = nil
+            raise e
+          rescue ::Exception => e # rubocop:disable Lint/RescueException
+            exit_code = -1
+            warn(([e.inspect] + e.backtrace).join("\n"))
+          ensure
+            ::Kernel.exit!(exit_code) if exit_code
           end
-          pid
+        end
+
+        def run_fork_func
+          catch(:result) do
+            if @spawn_opts[:chdir]
+              ::Dir.chdir(@spawn_opts[:chdir]) { @fork_func.call(@config_opts) }
+            else
+              @fork_func.call(@config_opts)
+            end
+            0
+          end
         end
 
         def setup_env_within_fork
