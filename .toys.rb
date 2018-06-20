@@ -59,16 +59,7 @@ tool "ci" do
   def handle_gem(gem_name)
     puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      subcli = cli.child.add_config_path(".toys.rb")
-      puts("** Checking tests...", :cyan)
-      exec_tool(["test"], cli: subcli)
-      puts("** Tests ok.", :cyan)
-      puts("** Checking rubocop...", :cyan)
-      exec_tool(["rubocop"], cli: subcli)
-      puts("** Rubocop ok.", :cyan)
-      puts("** Checking yardoc...", :cyan)
-      exec_tool(["yardoc", "--no-output"], cli: subcli)
-      puts("** Yardoc ok.", :cyan)
+      exec_tool(["ci"], cli: cli.child.add_config_path(".toys.rb"))
     end
     puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
   end

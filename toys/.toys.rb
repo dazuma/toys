@@ -44,3 +44,24 @@ expand :rdoc, output_dir: "doc"
 expand :gem_build
 
 expand :gem_build, name: "release", push_gem: true
+
+tool "ci" do
+  include :exec
+  include :terminal
+
+  def run_stage(name, tool)
+    if exec_tool(tool).success?
+      puts("** #{name} passed", :green, :bold)
+      puts
+    else
+      puts("** CI terminated: #{name} failed!", :red, :bold)
+      exit(1)
+    end
+  end
+
+  def run
+    run_stage("Tests", ["test"])
+    run_stage("Style checker", ["rubocop"])
+    run_stage("Docs generation", ["yardoc", "--no-output"])
+  end
+end

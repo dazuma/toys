@@ -1492,7 +1492,7 @@ your gem:
 See the {Toys::Templates::GemBuild} documentation for details on the various
 options for build tools.
 
-To generate a "clean" tool, you can use the `:clean` build-in template. For
+To generate a "clean" tool, you can use the `:clean` built-in template. For
 example:
 
     expand :clean, paths: ["pkg", "doc", "tmp"]
@@ -1504,10 +1504,93 @@ options for clean tools.
 
 Toys provides an `:rdoc` template for creating tools that generate RDoc
 documentation, and a `:yardoc` template for creating tools that generate YARD.
+Both templates provide a variety of options for controlling documentation
+generation. See {Toys::Templates::Rdoc} and {Toys::Templates::Yardoc} for
+detailed information.
 
 Here's an example for YARD:
 
-    expand :yardoc
+    expand :yardoc, protected: true, markup: "markdown"
+
+### Gem Example
+
+Let's look at an example that combines the techniques above to provide all the
+basic tools for a Ruby gem. It provides:
+
+* A testing tool that can be run with `toys test`
+* Code style checking using Rubocop, run with `toys rubocop`
+* Documentation building using Yardoc, run with `toys yardoc`
+* Gem building, run with `toys build`
+* Gem build and release to Rubygems.org, run with `toys release`
+* A full CI tool, run with `toys ci`, that can be run from your favorite CI
+  system. It runs the tests and style checks, and checks (but does not
+  actually build) the documentation for warnings and completeness.
+
+Below is the full annotated `.toys.rb` file. For many gems, you could drop this
+into the gem source repo with minimal or no modifications. Indeed, this is
+essentially identical to the Toys files provided for the **toys** and
+**toys-core** gems themselves.
+
+    # A "clean" tool that cleans out gem builds (from the pkg directory), and
+    # documentation builds (from doc and .yardoc)
+    expand :clean, paths: ["pkg", "doc", ".yardoc"]
+
+    # This is the "test" tool.
+    expand :minitest, libs: ["lib", "test"]
+
+    # This is the "rubocop" tool.
+    expand :rubocop
+
+    # This is the "yardoc" tool. We cause it to fail on warnings and if there
+    # are any undocumented objects, which is useful for CI. We also configure
+    # the tool so it recognizes the "--no-output" flag. The CI tool will use
+    # this flag to invoke yardoc but suppress output, because it just wants to
+    # check for warnings.
+    expand :yardoc do |t|
+      t.generate_output_flag = true
+      t.fail_on_warning = true
+      t.fail_on_undocumented_objects = true
+    end
+
+    # The normal "build" tool that just builds a gem into the pkg directory.
+    expand :gem_build
+
+    # A full gem "release" tool that builds the gem, and pushes it to rubygems.
+    # This assumes your local rubygems configuration is set up with the proper
+    # credentials.
+    expand :gem_build, name: "release", push_gem: true
+
+    # Now we have a full CI tool. It runs the test, rubocop, and yardoc tools
+    # and checks for errors. This tool could be invoked from Travis-CI or
+    # similar CI system.
+    tool "ci" do
+      # The :exec mixin provides the exec_tool() method that we will use to run
+      # other tools and check their exit status.
+      include :exec
+      # The :terminal mixin provides an enhanced "puts" method that lets you
+      # write styled text to the terminal.
+      include :terminal
+
+      # A helper method, that runs a tool and outputs the result. It also
+      # terminates if the tool reported an error.
+      def run_stage(name, tool)
+        if exec_tool(tool).success?
+          puts("** #{name} passed", :green, :bold)
+          puts
+        else
+          puts("** CI terminated: #{name} failed!", :red, :bold)
+          exit(1)
+        end
+      end
+
+      # The main run method. It just calls the above helper method for the
+      # three tools we want to run for CI
+      def run
+        run_stage("Tests", ["test"])
+        run_stage("Style checker", ["rubocop"])
+        run_stage("Docs generation", ["yardoc", "--no-output"])
+      end
+    end
 
 ## Advanced Tool Definition Techniques
 
