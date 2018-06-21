@@ -17,7 +17,7 @@ by writing configuration files that define the commands that Toys recongizes.
 
 This user's guide covers everything you need to know to use Toys effectively.
 
-## Conceptual overview
+## Conceptual Overview
 
 Toys is a command line *framework*. It provides a binary called `toys` along
 with basic functions such as argument parsing and online help. You provide the
@@ -42,9 +42,9 @@ directories**. It searches for these in the current directory, its ancestors,
 and in the Toys **search path**.
 
 Toys provides various features to help you write tools. This includes providing
-a **logger** for each tool, **helper modules** that provide common functions a
-tool can call, and **templates** which are prefabricated tools that you can
-configure for your needs.
+a **logger** for each tool, **mixins** that provide common functions a tool can
+call, and **templates** which are prefabricated tools that you can configure
+for your needs.
 
 Finally, Toys provides useful **built-in behavior**, including automatically
 providing flags to display help screens and set verbosity. It also includes a
@@ -1426,7 +1426,7 @@ your build tasks. Rake will continue to be your friend in those cases. However,
 for high level tasks such as "run my tests", "build my YARD documentation", or
 "release my gem", you may find Toys easier to use.
 
-### From Rakefiles to Toys files
+### From Rakefiles to Toys Files
 
 If you want to migrate some of your project's build tasks from Rake to Toys,
 there are some common patterns.
@@ -1615,14 +1615,6 @@ To define an alias, use the `alias_tool` directive:
 
     alias_tool "t", "test"
 
-You may also define aliases for a tool within the tool, using the `alias_as`
-directive:
-
-    tool "test" do
-      # Define test tool here...
-      alias_as "t"
-    end
-
 You may create an alias of a subtool, but the alias must have the same parent
 (namespace) tool as the target tool. For example:
 
@@ -1791,8 +1783,66 @@ Note these methods are a bit different from the
 provided by Rubygems. The Toys version attempts to install a missing gem for
 you, whereas Rubygems will just throw an exception.
 
-## Toys Administration using the System Tools
+## Toys Administration Using the System Tools
 
+Toys comes with a few built-in tools, including some that let you administer
+Toys itself. These tools live in the `system` namespace.
 
+### Getting the Toys Version
 
-## Embedding Toys
+You can get the current version of Toys by running:
+
+    toys system version
+
+Note that the same output can be obtained by passing the `--version` flag to
+the root tool:
+
+    toys --version
+
+### Upgrading Toys
+
+To update Toys to the latest released version, run:
+
+    toys system update
+
+This will determine the latest version from Rubygems, and update your Toys
+installation if it is not already current.
+
+Normall it asks you for confirmation before downloading. To disable interactive
+confirmation, pass the `--yes` flag.
+
+A similar effect can of course be obtained simply by `gem install toys`.
+
+## Writing Your Own CLI Using Toys
+
+Toys is not primarily designed to help you write a custom command-line binary,
+but you can use it in that fashion. Toys is factored into two gems:
+**toys-core**, which includes all the underlying machinery for creating
+command-line binaries, and **toys**, which is really just a wrapper that
+provides the `toys` binary itself and its built-in commands and behavior. To
+write your own command line binary based on the Toys system, just require the
+**toys-core** gem and configure your binary the way you want.
+
+Toys-Core is modular and lets you customize much of the behavior of a command
+line binary. For example:
+
+*   Toys itself automatically adds a number of flags, such as `--verbose` and
+    `--help`, to each tool. Toys-Core lets you customize what flags are
+    automatically added for your own command line binary.
+*   Toys itself provides a default way to run tools that have no `run` method:
+    it assumes such tools are namespaces, and displays the online help screen.
+    Toys-Core lets you provide an alternate default run method for your own
+    command line binary.
+*   Toys itself provides several built-in tools, such as `do`, and `system`.
+    Toys-Core lets your own command line binary define its own built-in tools.
+*   Toys itself implements a particular search path for user-provided Toys
+    files, and looks for specific file and directory names such as `.toys.rb`.
+    Toys-Core lets you change the search path, the file/directory names, or
+    disable user-provided Toys files altogether for your own command line
+    binary. Indeed, most command line binaries do not need user-customizable
+    tools, and can ship with only built-in tools.
+*   Toys itself has a particular way of displaying online help and displaying
+    errors. Toys-Core lets your own command line binary customize these.
+
+For more information, see the
+[Toys-Core documentation](https://www.rubydoc.info/gems/toys-core/).

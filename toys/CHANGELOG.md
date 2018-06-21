@@ -2,6 +2,7 @@
 
 ### 0.3.9 / TBD
 
+* CHANGED: Removed alias_as directive since it's incompatible with selective loading.
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
 * ADDED: Rdoc template

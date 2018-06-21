@@ -2,10 +2,11 @@
 
 ## Immediate tasks
 
+* toys system clean: Clean old installations of toys
+
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
-* toys system clean: Clean old installations of toys
 * Range acceptors. May be difficult unless we can limit the types.
 * Line length limit for Terminal
 * Required flags and flag groups. Three types: at_most_one, exactly_one, at_least_one

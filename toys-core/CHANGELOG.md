@@ -2,7 +2,8 @@
 
 ### 0.3.9 / TBD
 
-# CHANGED: Cli#add_search_path_hierarchy changed the behavior of the base/terminate param
+* CHANGED: Cli#add_search_path_hierarchy changed the behavior of the base/terminate param
+* CHANGED: Removed alias_as directive since it's incompatible with selective loading.
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
 * ADDED: Exec#exec_proc and Exec#exec_tool that supports all the stream redirects

@@ -66,7 +66,7 @@ module Toys
       #     block.
       #
       def initialize(name, converter = nil, &block)
-        @name = name
+        @name = name.to_s
         @converter = converter || block
       end
 
@@ -75,14 +75,7 @@ module Toys
       # @return [String]
       #
       attr_reader :name
-
-      ##
-      # Name of the acceptor as a string
-      # @return [String]
-      #
-      def to_s
-        name.to_s
-      end
+      alias to_s name
 
       ##
       # Validate the given input.

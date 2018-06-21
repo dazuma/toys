@@ -195,19 +195,6 @@ module Toys
       end
 
       ##
-      # Create an alias of the current tool.
-      #
-      # @param [String] word The name of the alias
-      #
-      def alias_as(word)
-        if @__words.empty?
-          raise ToolDefinitionError, "Cannot make an alias of the root."
-        end
-        @__loader.make_alias(@__words[0..-2] + [word.to_s], @__words, @__priority)
-        self
-      end
-
-      ##
       # Include another config file or directory at the current location.
       #
       # @param [String] path The file or directory to include.

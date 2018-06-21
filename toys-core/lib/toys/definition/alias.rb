@@ -43,13 +43,13 @@ module Toys
       #
       def initialize(loader, full_name, target, priority)
         @target_name =
-          if target.is_a?(::String)
-            full_name[0..-2] + [target]
+          if target.is_a?(::Array)
+            target.map(&:to_s)
           else
-            target.dup
+            full_name[0..-2] + [target.to_s]
           end
         @target_name.freeze
-        @full_name = full_name.dup.freeze
+        @full_name = full_name.map(&:to_s).freeze
         @priority = priority
         @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
       end
