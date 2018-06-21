@@ -28,6 +28,7 @@
 ;
 
 require "optparse"
+require "set"
 
 module Toys
   module Definition
@@ -44,21 +45,23 @@ module Toys
       # You can reference these acceptors directly. Otherwise, you have to add
       # one explicitly to the tool using {Tool#add_acceptor}.
       #
-      OPTPARSER_ACCEPTORS = [
-        ::Object,
-        ::NilClass,
-        ::String,
-        ::Integer,
-        ::Float,
-        ::Numeric,
-        ::TrueClass,
-        ::FalseClass,
-        ::Array,
-        ::Regexp,
-        ::OptionParser::DecimalInteger,
-        ::OptionParser::OctalInteger,
-        ::OptionParser::DecimalNumeric
-      ].freeze
+      OPTPARSER_ACCEPTORS = ::Set.new(
+        [
+          ::Object,
+          ::NilClass,
+          ::String,
+          ::Integer,
+          ::Float,
+          ::Numeric,
+          ::TrueClass,
+          ::FalseClass,
+          ::Array,
+          ::Regexp,
+          ::OptionParser::DecimalInteger,
+          ::OptionParser::OctalInteger,
+          ::OptionParser::DecimalNumeric
+        ]
+      ).freeze
 
       ##
       # Create a new tool.
@@ -78,9 +81,9 @@ module Toys
         @long_desc = []
 
         @default_data = {}
-        @acceptors = create_initial_acceptors
         @used_flags = []
 
+        @acceptors = {}
         @mixins = {}
         @templates = {}
 
@@ -275,6 +278,36 @@ module Toys
       end
 
       ##
+      # Resolve the given acceptor. You may pass in a
+      # {Toys::Definition::Acceptor}, an acceptor name, a well-known acceptor
+      # understood by OptionParser, or `nil`.
+      #
+      # Returns either `nil` or an acceptor that is usable by OptionParser.
+      #
+      # If an acceptor name is given, it may be resolved by this tool or any of
+      # its ancestors. Raises {Toys::ToolDefinitionError} if the name is not
+      # recognized.
+      #
+      # @param [Object] accept An acceptor input.
+      # @return [Object] The resolved acceptor.
+      #
+      def resolve_acceptor(accept)
+        return accept if accept.nil? || accept.is_a?(Acceptor)
+        name = accept
+        accept = @acceptors.fetch(name) do |k|
+          if @parent
+            @parent.resolve_acceptor(k)
+          elsif OPTPARSER_ACCEPTORS.include?(k)
+            k
+          end
+        end
+        if accept.nil?
+          raise ToolDefinitionError, "Unknown acceptor: #{name.inspect}"
+        end
+        accept
+      end
+
+      ##
       # Get the named template from this tool or its ancestors.
       #
       # @param [String] name The template name
@@ -355,6 +388,11 @@ module Toys
       # @param [Toys::Definition::Acceptor] acceptor The acceptor to add.
       #
       def add_acceptor(acceptor)
+        if @acceptors.key?(acceptor.name)
+          raise ToolDefinitionError,
+                "An acceptor named #{acceptor.name.inspect} has already been" \
+                " defined in tool #{display_name.inspect}."
+        end
         @acceptors[acceptor.name] = acceptor
         self
       end
@@ -625,20 +663,6 @@ module Toys
                 "Tool #{display_name.inspect} has disabled argument parsing"
         end
         self
-      end
-
-      def resolve_acceptor(accept)
-        return accept if accept.nil? || accept.is_a?(Acceptor)
-        unless @acceptors.key?(accept)
-          raise ToolDefinitionError, "Unknown acceptor: #{accept.inspect}"
-        end
-        @acceptors[accept]
-      end
-
-      def create_initial_acceptors
-        acceptors = {}
-        OPTPARSER_ACCEPTORS.each { |a| acceptors[a] = a }
-        acceptors
       end
     end
   end

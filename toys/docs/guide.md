@@ -1594,15 +1594,90 @@ essentially identical to the Toys files provided for the **toys** and
 
 ## Advanced Tool Definition Techniques
 
-
+This section covers some additional features that are often useful for writing
+tools. I've labeled them "advanced", but all that really means is that this
+user's guide didn't happen to have covered them until this section. Each of
+these features is very useful for certain types of tools, and it is good at
+least to know that you *can* do these things, even if you don't use them
+regularly.
 
 ### Aliases
 
+An **alias** is simply an alternate name for a tool. For example, suppose you
+have a tool called `test` that you run with `toys test`. You could define an
+alias `t` that points to `test`; then you can run the same tool with `toys t`.
 
+To define an alias, use the `alias_tool` directive:
+
+    tool "test" do
+      # Define test tool here...
+    end
+
+    alias_tool "t", "test"
+
+You may also define aliases for a tool within the tool, using the `alias_as`
+directive:
+
+    tool "test" do
+      # Define test tool here...
+      alias_as "t"
+    end
+
+You may create an alias of a subtool, but the alias must have the same parent
+(namespace) tool as the target tool. For example:
+
+    tool "gem" do
+      tool "test" do
+        # Define test tool here...
+      end
+
+      # Allows you to invoke `toys gem t`
+      alias_tool "t", "test"
+    end
 
 ### Custom Acceptors
 
+We saw earlier that flags and positional arguments can have acceptors, which
+control the allowed format, and may also convert the string argument to a Ruby
+object. By default, Toys supports the same acceptors recognized by Ruby's
+OptionParser library. And like OptionParser, Toys also lets you define your own
+acceptors.
 
+Define an acceptor using the `acceptor` directive. You provide a name for the
+acceptor, and specify how to validate input strings and how to convert input
+strings to Ruby objects. You may then reference the acceptor in that tool or
+any of its subtools or their subtools, recursively.
+
+There are several ways to define an acceptor.
+
+You may validate input strings against a regular expression, by passing the
+regex to the `acceptor` directive. You may also optionally provide a block to
+convert input strings to objects (or omit the block to use the original string
+as the option value.) For example, a simple hexadecimal input acceptor might
+look like this:
+
+    acceptor("hex", /^[0-9a-fA-F]+$/) { |input| input.to_i(16) }
+
+You may also accept enum values by passing an array of valid values to the
+`acceptor` directive. Inputs will be matched against the `to_s` form of the
+given values, and will be converted to the value itself. For example, one way
+to accept integers from 1 to 5 is:
+
+    acceptor("1to5", [1, 2, 3, 4, 5])
+
+There are various other options. See the reference documentation for
+[Toys::DSL::Tool#acceptor](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:acceptor).
+
+An acceptor is available to the tool in which it is defined, and any subtools
+and descendants defined at the same point in the Toys search path, but not from
+tools defined in a different point in the search path. For example, if you
+define an acceptor in a file located in a `.toys` directory, it will be visible
+to descendant tools defined in that same directory, but not in a different
+`.toys` directory.
+
+A common technique, for example, would be to define an acceptor in the index
+file in a Toys directory. You can then include it from any subtools defined in
+other files in that same directory.
 
 ### Controlling Built-in Flags
 

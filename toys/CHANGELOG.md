@@ -6,6 +6,7 @@
 * ADDED: Ability to disable argument parsing
 * ADDED: Rdoc template
 * ADDED: Exec#exec_proc and Exec#exec_tool that supports all the stream redirects
+* IMPROVED: Acceptors can be looked up recursively in the same way as mixins and templates
 * FIXED: Templates were not activating needed gems
 
 ### 0.3.8 / 2018-06-10

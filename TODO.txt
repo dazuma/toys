@@ -2,6 +2,8 @@
 
 ## Immediate tasks
 
+* Acceptor should probably inherit from parent tools, like mixin and template.
+
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

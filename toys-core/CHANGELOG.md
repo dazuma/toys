@@ -6,6 +6,7 @@
 * ADDED: Ability to define named templates in Toys files
 * ADDED: Ability to disable argument parsing
 * ADDED: Exec#exec_proc and Exec#exec_tool that supports all the stream redirects
+* IMPROVED: Acceptors can be looked up recursively in the same way as mixins and templates
 
 ### 0.3.8 / 2018-06-10
 
