@@ -501,6 +501,19 @@ module Toys
       end
 
       ##
+      # Mark one or more flags as disabled, preventing their use by any
+      # subsequent flag definition. This may be used to prevent middleware from
+      # defining a particular flag.
+      #
+      # @param [String...] flags The flags to disable
+      #
+      def disable_flag(*flags)
+        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool.disable_flag(*flags) unless cur_tool.nil?
+        self
+      end
+
+      ##
       # Specify how to run this tool. You may do this by providing a block to
       # this directive, or by defining the `run` method in the tool.
       #
@@ -532,6 +545,17 @@ module Toys
           raise ToolDefinitionError, "Module not found: #{name.inspect}"
         end
         super(mod)
+      end
+
+      ##
+      # Activate the given gem. If it is not present, attempt to install it (or
+      # inform the user to update the bundle).
+      #
+      # @param [String] name Name of the gem
+      # @param [String...] requirements Version requirements
+      #
+      def gem(name, *requirements)
+        (@__gems ||= Utils::Gems.new).activate(name, *requirements)
       end
 
       ## @private

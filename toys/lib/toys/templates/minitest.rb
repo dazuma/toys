@@ -104,7 +104,7 @@ module Toys
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
           run do
-            ::Toys::Utils::Gems.activate("minitest", *Array(template.gem_version))
+            gem("minitest", *Array(template.gem_version))
             ruby_args = []
             unless template.libs.empty?
               lib_path = template.libs.join(::File::PATH_SEPARATOR)

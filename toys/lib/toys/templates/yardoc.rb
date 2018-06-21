@@ -162,7 +162,7 @@ module Toys
           include :exec
 
           run do
-            ::Toys::Utils::Gems.activate("yard", *Array(template.gem_version))
+            gem("yard", *Array(template.gem_version))
             require "yard"
 
             files = []

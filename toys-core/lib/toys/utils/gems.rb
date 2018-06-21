@@ -74,7 +74,8 @@ module Toys
       end
 
       ##
-      # Activate the given gem.
+      # Activate the given gem. If it is not present, attempt to install it (or
+      # inform the user to update the bundle).
       #
       # @param [String] name Name of the gem
       # @param [String...] requirements Version requirements

@@ -270,6 +270,17 @@ module Toys
     end
 
     ##
+    # Activate the given gem. If it is not present, attempt to install it (or
+    # inform the user to update the bundle).
+    #
+    # @param [String] name Name of the gem
+    # @param [String...] requirements Version requirements
+    #
+    def gem(name, *requirements)
+      (@__data[Utils::Gems] ||= Utils::Gems.new).activate(name, *requirements)
+    end
+
+    ##
     # Exit immediately with the given status code
     #
     # @param [Integer] code The status code, which should be 0 for no error,

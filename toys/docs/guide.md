@@ -1681,19 +1681,115 @@ other files in that same directory.
 
 ### Controlling Built-in Flags
 
+Earlier we saw that certain flags are added automatically to every tool:
+`--verbose`, `--quiet`, `--help`, and so forth. You may occasionally want to
+disable some of these "built-in" flags. There are two ways to do so:
 
+If you want to use one of the built-in flags for another purpose, simply define
+the flag as you choose. Flags explicitly defined by your tool take precedence
+over the built-ins.
+
+For example, normally two built-in flags are provided to decrease the verbosity
+level: `-q` and `--quiet`. If you define `-q` yourself—for example to activate
+a "quick" mode—then `-q` will be repurposed for your flag, but `--quiet` will
+still be present to decrease verbosity.
+
+    # Repurposes -q to set the quiet option
+    flag :quiet, "-q"
+
+You may also completely disable a flag, and _not_ repurpose it, using the
+`disable_flag` directive. It lets you mark one or more flags as "never use".
+
+For example, if you disable the `-q` flag, then `-q` will no longer be a
+built-in flag that decreases the verbosity, but `--quiet` will remain. To
+completely disable decreasing the verbosity, disable both `-q` and `--quiet`.
+
+    # Disables -q but leaves --quiet
+    disable_flag "-q"
+
+    # Completely disables decreasing verbosity
+    disable_flag "-q", "--quiet"
 
 ### Disabling Argument Parsing
 
+Normally Toys handles parsing command line arguments for you. This makes
+writing tools easier, but also allows Toys to generate documentation
+automatically for flags and arguments. However, occasionally you'll not want
+Toys to perform any parsing, but just to give you the command line arguments
+raw. One common case is if your tool turns around and passes its arguments to
+another subprocess.
 
+To disable argument parsing, use the `disable_argument_parsing` directive. This
+directive disables parsing and validation of flags and positional arguments.
+(Thus, it is incompatible with specifying any flags or arguments for the tool.)
+Instead, you can retrieve the raw arguments using the
+[Toys::Tool#args method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:args).
+
+Here is an example that wraps calls to git:
+
+    tool "my-git" do
+      desc "Prints a message, and then calls git normally"
+      disable_argument_parsing
+      def run
+        puts "Calling my-git!"
+        Kernel.exec(["git"] + args)
+      end
+    end
 
 ### Activating Gems
 
+Sometimes implementing a tool will require a third-party gem. Some mixins also
+utilize a gem. Toys provides a way to help the user install such gems if
+needed.
 
+If the gem is needed to *define* the tool, use the `gem` directive to ensure
+the gem is installed and activated. This takes the name of the gem, and an
+optional set of version requirements. If a gem matching the given version
+requirements is installed, it is activated. If not, the gem is installed (which
+the user can confirm or abort). Or, if Toys is being run in a bundle, a message
+is printed informing the user that they need to add the gem to their Gemfile.
 
-### Middleware
+For example, here's a way to configure a tool with flags for each of the
+HighLine styles:
 
+    tool "highline-styles-demo" do
+      gem "highline", "~> 2.0"
+      require "highline"
+      HighLine::BuiltinStyles::STYLES.each do |style|
+        style = style.downcase
+        flag style.to_sym, "--#{style}", "Apply #{style} to the text"
+      end
+      def run
+        # ...
 
+If the gem is *not* needed to define the tool, but is needed to *run* the tool,
+then you can call
+[Toys::Tool#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:gem) from
+your `run` method. Here's an example:
+
+    tool "rake" do
+      disable_argument_passing
+      def run
+        gem "rake", "~> 12.0"
+        Kernel.exec(["rake"] + args)
+      end
+    end
+
+If a gem satisfying the given version constraints is already activated, it
+remains active. If a gem with a conflicting version is already activated, an
+exception is raised.
+
+If you are not in the Toys DSL context—e.g. you are writing a class-based
+mixin—you should use
+[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems:activate)
+instead. For example:
+
+    Toys::Utils::Gems.activate("highline", "~> 2.0")
+
+Note these methods are a bit different from the
+[gem method](http://ruby-doc.org/stdlib-2.5.1/libdoc/rubygems/rdoc/Kernel.html)
+provided by Rubygems. The Toys version attempts to install a missing gem for
+you, whereas Rubygems will just throw an exception.
 
 ## Toys Administration using the System Tools
 

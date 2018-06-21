@@ -116,7 +116,7 @@ module Toys
           include :exec
 
           run do
-            ::Toys::Utils::Gems.activate("rdoc", *Array(template.gem_version))
+            gem("rdoc", *Array(template.gem_version))
             require "rdoc"
 
             files = []
