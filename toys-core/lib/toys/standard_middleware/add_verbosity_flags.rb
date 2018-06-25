@@ -79,8 +79,10 @@ module Toys
       # Configure the tool flags.
       #
       def config(tool_definition, _loader)
-        add_verbose_flags(tool_definition)
-        add_quiet_flags(tool_definition)
+        unless tool_definition.argument_parsing_disabled?
+          add_verbose_flags(tool_definition)
+          add_quiet_flags(tool_definition)
+        end
         yield
       end
 

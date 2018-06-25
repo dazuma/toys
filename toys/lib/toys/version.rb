@@ -32,5 +32,5 @@ module Toys
   # Current version of the Toys command line binary
   # @return [String]
   #
-  VERSION = "0.3.9".freeze
+  VERSION = "0.3.9.1".freeze
 end

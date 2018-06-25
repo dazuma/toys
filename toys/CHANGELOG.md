@@ -1,5 +1,9 @@
 # Release History
 
+### 0.3.9.1 / 2018-06-24
+
+* FIXED: Built-in flags were interfering with disable_argument_parsing
+
 ### 0.3.9 / 2018-06-24
 
 * CHANGED: Removed alias_as directive since it's incompatible with selective loading.

@@ -150,19 +150,21 @@ module Toys
       # Configure flags and default data.
       #
       def config(tool_definition, loader)
-        help_flags = add_help_flags(tool_definition)
-        usage_flags = add_usage_flags(tool_definition)
-        if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
-          if tool_definition.root? && tool_definition.arg_definitions.empty?
-            tool_definition.set_remaining_args(:_tool_name,
-                                               display_name: "TOOL_NAME",
-                                               desc: "The tool for which to display help")
+        unless tool_definition.argument_parsing_disabled?
+          help_flags = add_help_flags(tool_definition)
+          usage_flags = add_usage_flags(tool_definition)
+          if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
+            if tool_definition.root? && tool_definition.arg_definitions.empty?
+              tool_definition.set_remaining_args(:_tool_name,
+                                                 display_name: "TOOL_NAME",
+                                                 desc: "The tool for which to display help")
+            end
           end
-        end
-        if (!help_flags.empty? || @fallback_execution) &&
-           loader.has_subtools?(tool_definition.full_name)
-          add_recursive_flags(tool_definition)
-          add_search_flags(tool_definition)
+          if (!help_flags.empty? || @fallback_execution) &&
+             loader.has_subtools?(tool_definition.full_name)
+            add_recursive_flags(tool_definition)
+            add_search_flags(tool_definition)
+          end
         end
         yield
       end
