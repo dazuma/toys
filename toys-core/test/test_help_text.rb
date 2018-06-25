@@ -96,7 +96,7 @@ describe Toys::Utils::HelpText do
     long_namespace_loader.get_tool_definition(tool_name + [long_tool_name], 0)
   end
 
-  describe "short usage" do
+  describe "help text" do
     describe "name section" do
       it "renders with no description" do
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)

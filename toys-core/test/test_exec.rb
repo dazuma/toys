@@ -54,7 +54,37 @@ describe Toys::Utils::Exec do
     end
   end
 
-  describe "stream specs" do
+  describe "command form" do
+    it "recongizes arrays" do
+      ::Timeout.timeout(1) do
+        result = exec.exec(["echo", "hi"], out: :capture)
+        assert_equal("hi\n", result.captured_out)
+      end
+    end
+
+    it "handles a single element array" do
+      ::Timeout.timeout(1) do
+        result = exec.exec(["echo"], out: :capture)
+        assert_equal("\n", result.captured_out)
+      end
+    end
+
+    it "recongizes strings as shell commands" do
+      ::Timeout.timeout(1) do
+        result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
+        assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+      end
+    end
+
+    it "recongizes an array with argv0" do
+      ::Timeout.timeout(1) do
+        result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
+        assert_equal("meow\n", result.captured_out)
+      end
+    end
+  end
+
+  describe "stream handling for spawn" do
     it "captures stdout and stderr" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", '$stdout.puts "hello"; $stderr.puts "world"'],
@@ -112,6 +142,143 @@ describe Toys::Utils::Exec do
         exec.ruby(["-e", 'puts(gets + "world\n")'],
                   in: input_path, out: output_path)
         assert_equal("hello\nworld\n", ::File.read(output_path))
+      end
+    end
+  end
+
+  describe "stream handling for fork" do
+    it "captures stdout and stderr" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          puts "hello"
+          warn "world"
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture)
+        assert_equal("hello\n", result.captured_out)
+        assert_equal("world\n", result.captured_err)
+      end
+    end
+
+    it "writes a string to stdin" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          exit gets == "hello" ? 0 : 1
+        end
+        result = exec.exec_proc(func, in: [:string, "hello"])
+        assert_equal(0, result.exit_code)
+      end
+    end
+
+    it "combines err into out" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          puts "hello"
+          warn "world"
+        end
+        result = exec.exec_proc(func, out: :capture, err: [:child, :out])
+        assert_match(/hello/, result.captured_out)
+        assert_match(/world/, result.captured_out)
+      end
+    end
+
+    it "handles StringIO" do
+      ::Timeout.timeout(1) do
+        input = ::StringIO.new("hello\n")
+        output = ::StringIO.new
+        func = proc do
+          puts(gets + "world\n")
+        end
+        exec.exec_proc(func, in: input, out: output)
+        assert_equal("hello\nworld\n", output.string)
+      end
+    end
+
+    it "handles file redirects" do
+      tmp_dir = ::File.join(::File.dirname(__dir__), "tmp")
+      input_path = ::File.join(__dir__, "data", "input.txt")
+      output_path = ::File.join(tmp_dir, "output.txt")
+      ::FileUtils.mkdir_p(tmp_dir)
+      ::FileUtils.rm_rf(output_path)
+      ::Timeout.timeout(1) do
+        func = proc do
+          puts(gets + "world\n")
+        end
+        exec.exec_proc(func, in: [:file, input_path], out: [:file, output_path])
+        assert_equal("hello\nworld\n", ::File.read(output_path))
+      end
+    end
+
+    it "closes stdin" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          begin
+            puts gets.inspect
+          rescue ::IOError
+            exit 1
+          end
+        end
+        result = exec.exec_proc(func, in: :close)
+        assert_equal(1, result.exit_code)
+      end
+    end
+
+    it "closes stdout" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          begin
+            puts "hi"
+          rescue ::IOError
+            exit 1
+          end
+        end
+        result = exec.exec_proc(func, out: :close)
+        assert_equal(1, result.exit_code)
+      end
+    end
+
+    it "closes stderr" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          begin
+            # Need to use stderr.puts instead of warn here because warn doesn't
+            # crash if the stream is closed.
+            $stderr.puts "hi" # rubocop:disable Style/StderrPuts
+          rescue ::IOError
+            exit 1
+          end
+        end
+        result = exec.exec_proc(func, err: :close)
+        assert_equal(1, result.exit_code)
+      end
+    end
+
+    it "redirects stdin from null" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          exit gets.nil? ? 0 : 1
+        end
+        result = exec.exec_proc(func, in: :null)
+        assert_equal(0, result.exit_code)
+      end
+    end
+
+    it "redirects stdout to null" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          puts "THIS SHOULD NOT BE DISPLAYED."
+        end
+        result = exec.exec_proc(func, out: :null)
+        assert_equal(0, result.exit_code)
+      end
+    end
+
+    it "redirects stderr to null" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          warn "THIS SHOULD NOT BE DISPLAYED."
+        end
+        result = exec.exec_proc(func, err: :null)
+        assert_equal(0, result.exit_code)
       end
     end
   end

@@ -74,6 +74,19 @@ describe Toys::Utils::ModuleLookup do
     end
   end
 
+  describe "path_to_module" do
+    it "looks up an existing module" do
+      mod = Toys::Utils::ModuleLookup.path_to_module("toys/standard_mixins")
+      assert_equal("Toys::StandardMixins", mod.name)
+    end
+
+    it "raises on a nonexisting module" do
+      assert_raises(::NameError) do
+        Toys::Utils::ModuleLookup.path_to_module("toys/blah_blah_blah")
+      end
+    end
+  end
+
   describe "standard_mixins lookup" do
     let(:module_lookup) { Toys::Utils::ModuleLookup.new.add_path("toys/standard_mixins") }
 

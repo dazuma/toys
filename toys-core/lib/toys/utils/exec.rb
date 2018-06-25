@@ -478,6 +478,7 @@ module Toys
           @controller_streams = {}
           @join_threads = []
           @child_streams = []
+          @parent_streams = []
         end
 
         def execute(&block)
@@ -519,13 +520,11 @@ module Toys
             setup_streams_within_fork
             exit_code = run_fork_func
           rescue ::SystemExit => e
-            exit_code = nil
-            raise e
+            exit_code = e.status
           rescue ::Exception => e # rubocop:disable Lint/RescueException
-            exit_code = -1
             warn(([e.inspect] + e.backtrace).join("\n"))
           ensure
-            ::Kernel.exit!(exit_code) if exit_code
+            ::Kernel.exit!(exit_code)
           end
         end
 
@@ -550,34 +549,42 @@ module Toys
         end
 
         def setup_streams_within_fork
-          in_stream = interpret_in_stream_within_fork(@spawn_opts[:in])
-          if in_stream == :close
-            $stdin.close
-          elsif in_stream
-            $stdin.reopen(in_stream)
-          end
+          @parent_streams.each(&:close)
+          setup_in_stream_within_fork(@spawn_opts[:in])
           out_stream = interpret_out_stream_within_fork(@spawn_opts[:out])
+          err_stream = interpret_out_stream_within_fork(@spawn_opts[:err])
           if out_stream == :close
             $stdout.close
           elsif out_stream
             $stdout.reopen(out_stream)
+            $stdout.sync = true
           end
-          err_stream = interpret_out_stream_within_fork(@spawn_opts[:err])
           if err_stream == :close
             $stderr.close
           elsif err_stream
             $stderr.reopen(err_stream)
+            $stderr.sync = true
           end
         end
 
-        def interpret_in_stream_within_fork(stream)
-          case stream
-          when ::Integer
-            ::IO.open(stream)
-          when ::Array
-            ::File.open(*stream)
-          else
-            stream if stream.respond_to?(:write)
+        def setup_in_stream_within_fork(stream)
+          in_stream =
+            case stream
+            when ::Integer
+              ::IO.open(stream)
+            when ::Array
+              ::File.open(*stream)
+            when ::String
+              ::File.open(stream, "r")
+            when :close
+              :close
+            else
+              stream if stream.respond_to?(:write)
+            end
+          if in_stream == :close
+            $stdin.close
+          elsif in_stream
+            $stdin.reopen(in_stream)
           end
         end
 
@@ -595,6 +602,10 @@ module Toys
             else
               ::File.open(*stream)
             end
+          when ::String
+            ::File.open(stream, "w")
+          when :close
+            :close
           else
             stream if stream.respond_to?(:write)
           end
@@ -772,6 +783,7 @@ module Toys
           r, w = ::IO.pipe
           @spawn_opts[:in] = r
           @child_streams << r
+          @parent_streams << w
           w.sync = true
           w
         end
@@ -780,6 +792,7 @@ module Toys
           r, w = ::IO.pipe
           @spawn_opts[key] = w
           @child_streams << w
+          @parent_streams << r
           r
         end
 
