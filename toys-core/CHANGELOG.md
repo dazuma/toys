@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.9 / TBD
+### 0.3.9 / 2018-06-24
 
 * CHANGED: Cli#add_search_path_hierarchy changed the behavior of the base/terminate param
 * CHANGED: Removed alias_as directive since it's incompatible with selective loading.
