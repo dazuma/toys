@@ -48,9 +48,11 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     name = "M#{namespace.object_id}_#{basename}"
     const_set(name, namespace)
     str = <<-STR
-      module #{name}; @tool_class.class_eval do
-      #{::IO.read(path)}
-      end end
+      module #{name}
+        @tool_class.class_eval do
+          #{::IO.read(path)}
+        end
+      end
     STR
     ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
       ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
