@@ -10,10 +10,9 @@ write and organize scripts to automate their workflows.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line binary written in Ruby. Rather, it
-provides a single multi-command binary called `toys`. You configure this binary
-by writing configuration files that define the commands that Toys recongizes.
-(You can, however, build your own custom command line binary using the separate
-**toys-core** library.)
+provides a single binary called `toys`. You define the commands recognized by
+the Toys binary by writing configuration files. (You can, however, build your
+own custom command line binary using the related **toys-core** library.)
 
 This user's guide covers everything you need to know to use Toys effectively.
 
@@ -43,8 +42,8 @@ and in the Toys **search path**.
 
 Toys provides various features to help you write tools. This includes providing
 a **logger** for each tool, **mixins** that provide common functions a tool can
-call, and **templates** which are prefabricated tools that you can configure
-for your needs.
+call (such as controlling subprocesses and styling output), and **templates**
+which are prefabricated tools that you can configure for your needs.
 
 Finally, Toys provides useful **built-in behavior**, including automatically
 providing flags to display help screens and set verbosity. It also includes a
@@ -89,7 +88,7 @@ argument.
 
 Namespaces such as `system` are themselves tools and can be executed like any
 other tool. In the above case, it takes the argument `frodo`, determines it has
-no subtool of that name, and prints an error message. Most commonly, though,
+no subtool of that name, and prints an error message. More commonly, though,
 you might execute a namespace without arguments:
 
     toys system
@@ -128,17 +127,18 @@ optional **values** for flags. Following are a few examples.
 
 Pass a single short flag (for verbose output).
 
-    toys -v
+    toys system version -v
 
 Pass multiple long flags (for verbose output and recursive subtool search).
 
-    toys --verbose --recursive
+    toys system version --verbose --recursive
 
 You can combine short flags. This does the same as the previous example.
 
-    toys -rv
+    toys system version -rv
 
-Pass a value using a long flag. This searches subtools for the keyword `build`.
+Pass a value using a long flag. The root tool supports the `--search` flag to
+search for tools that have the given keyword.
 
     toys --search=build
     toys --search build
@@ -1332,7 +1332,9 @@ directive by setting properties on the template object.
 #### Template Classes
 
 Finally, templates are classes, and you can create a template directly as a
-class by including the {Toys::Template} module in your class definition.
+class by including the
+[Toys::Template](https://www.rubydoc.info/gems/toys-core/Toys/Template) module
+in your class definition.
 
     class GreetTemplate
       include Toys::Template
@@ -1376,7 +1378,7 @@ following in their Toys file:
 
 Toys was designed to organize scripts that may be "scoped" to a project or
 directory. Rake is also commonly used for this purpose: you can write a
-"Rakefile" that defines rake tasks scoped to a directory. In some ways, Toys
+"Rakefile" that defines rake tasks scoped to a directory. In many cases, Toys
 can be used as a replacement for Rake. Indeed, the Toys repository itself,
 rather than a Rakefile, contains a `.toys.rb` file that defines tools for
 running tests, builds, and so forth.
@@ -1431,10 +1433,10 @@ for high level tasks such as "run my tests", "build my YARD documentation", or
 If you want to migrate some of your project's build tasks from Rake to Toys,
 there are some common patterns.
 
-To create some of these rake tasks, you will typically require a particular
-file from your Rakefile, and/or write some code. Different tools will have
-different mechanisms for generating tasks. For example, a test task might
-be defined like this:
+When you use Rake for these tasks, you will typically require a particular file
+from your Rakefile, and/or write some code. Different tools will have different
+mechanisms for generating tasks. For example, a test task might be defined like
+this:
 
     require "rake/testtask"
     Rake::TestTask.new do |t|
@@ -1514,8 +1516,8 @@ Here's an example for YARD:
 
 ### Gem Example
 
-Let's look at an example that combines the techniques above to provide all the
-basic tools for a Ruby gem. It provides:
+Let's look at a complete example that combines the techniques above to provide
+all the basic tools for a Ruby gem. It includes:
 
 * A testing tool that can be run with `toys test`
 * Code style checking using Rubocop, run with `toys rubocop`
@@ -1686,8 +1688,8 @@ level: `-q` and `--quiet`. If you define `-q` yourself—for example to activate
 a "quick" mode—then `-q` will be repurposed for your flag, but `--quiet` will
 still be present to decrease verbosity.
 
-    # Repurposes -q to set the quiet option
-    flag :quiet, "-q"
+    # Repurposes -q to set the "quick" option instead of "quiet"
+    flag :quick, "-q"
 
 You may also completely disable a flag, and _not_ repurpose it, using the
 `disable_flag` directive. It lets you mark one or more flags as "never use".

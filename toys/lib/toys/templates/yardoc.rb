@@ -160,6 +160,7 @@ module Toys
           end
 
           include :exec
+          include :terminal
 
           run do
             gem("yard", *Array(template.gem_version))
@@ -194,14 +195,24 @@ module Toys
             end
             run_options.concat(files)
 
-            exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) },
-                      exit_on_nonzero_status: true)
+            result = exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) })
+            if result.error?
+              puts("Yardoc encountered errors", :red, :bold) unless verbosity < 0
+              exit(1)
+            end
             unless stats_options.empty?
               result = exec_proc(proc { ::YARD::CLI::Stats.run(*stats_options) }, out: :capture)
               puts result.captured_out
+              if result.error?
+                puts("Yardoc encountered errors", :red, :bold) unless verbosity < 0
+                exit(1)
+              end
               exit_on_nonzero_status(result)
               if template.fail_on_undocumented_objects
-                exit(1) if result.captured_out =~ /Undocumented\sObjects:/
+                if result.captured_out =~ /Undocumented\sObjects:/
+                  puts("Yardoc encountered undocumented objects", :red, :bold) unless verbosity < 0
+                  exit(1)
+                end
               end
             end
           end

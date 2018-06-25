@@ -75,26 +75,33 @@ tool "yardoc" do
   desc "Generates yardoc for both gems"
 
   include :exec
+  include :terminal
+
+  def handle_gem(gem_name)
+    puts("**** Generating Yardoc for #{gem_name}...", :bold, :cyan)
+    ::Dir.chdir(::File.join(__dir__, gem_name)) do
+      subcli = cli.child.add_config_path(".toys.rb")
+      exit_on_nonzero_status(subcli.run("yardoc"))
+    end
+  end
 
   def run
-    configure_exec(exit_on_nonzero_status: true)
-    ::Dir.chdir(::File.join(__dir__, "toys-core")) do
-      exec(["yardoc"])
-    end
-    ::Dir.chdir(::File.join(__dir__, "toys")) do
-      exec(["yardoc"])
-    end
+    handle_gem("toys-core")
+    handle_gem("toys")
   end
 end
 
 tool "clean" do
   desc "Cleans both gems"
 
+  include :exec
+  include :terminal
+
   def handle_gem(gem_name)
+    puts("**** Cleaning #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
       subcli = cli.child.add_config_path(".toys.rb")
-      status = subcli.run("clean")
-      exit(status) unless status.zero?
+      exit_on_nonzero_status(subcli.run("clean"))
     end
   end
 
