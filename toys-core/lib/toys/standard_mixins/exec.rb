@@ -44,6 +44,26 @@ module Toys
     # available in that class's documentation.
     #
     module Exec
+      include Mixin
+
+      ##
+      # Context key for the executor object.
+      # @return [Object]
+      #
+      KEY = ::Object.new.freeze
+
+      to_initialize do |opts = {}|
+        tool = self
+        tool[KEY] = Utils::Exec.new(opts) do |k|
+          case k
+          when :logger
+            tool[Tool::Keys::LOGGER]
+          when :cli
+            tool[Tool::Keys::CLI]
+          end
+        end
+      end
+
       ##
       # Set default configuration keys.
       #
@@ -51,7 +71,7 @@ module Toys
       #     configuration options in the {Toys::Utils::Exec} docs.
       #
       def configure_exec(opts = {})
-        Exec._exec(self).configure_defaults(Exec._setup_exec_opts(opts, self))
+        self[KEY].configure_defaults(Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -71,7 +91,7 @@ module Toys
       #     the exit code and any captured output.
       #
       def exec(cmd, opts = {}, &block)
-        Exec._exec(self).exec(cmd, Exec._setup_exec_opts(opts, self), &block)
+        self[KEY].exec(cmd, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -90,7 +110,7 @@ module Toys
       #     the exit code and any captured output.
       #
       def exec_ruby(args, opts = {}, &block)
-        Exec._exec(self).exec_ruby(args, Exec._setup_exec_opts(opts, self), &block)
+        self[KEY].exec_ruby(args, Exec._setup_exec_opts(opts, self), &block)
       end
       alias ruby exec_ruby
 
@@ -110,7 +130,7 @@ module Toys
       #     exit code and any captured output.
       #
       def exec_proc(func, opts = {}, &block)
-        Exec._exec(self).exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
+        self[KEY].exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -131,7 +151,7 @@ module Toys
       #
       def exec_tool(cmd, opts = {}, &block)
         func = Exec._make_tool_caller(cmd)
-        Exec._exec(self).exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
+        self[KEY].exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
       end
 
       ##
@@ -147,7 +167,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture(cmd, opts = {})
-        Exec._exec(self).capture(cmd, Exec._setup_exec_opts(opts, self))
+        self[KEY].capture(cmd, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -162,7 +182,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture_ruby(args, opts = {})
-        Exec._exec(self).capture_ruby(args, Exec._setup_exec_opts(opts, self))
+        self[KEY].capture_ruby(args, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -177,7 +197,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture_proc(func, opts = {})
-        Exec._exec(self).capture_proc(func, Exec._setup_exec_opts(opts, self))
+        self[KEY].capture_proc(func, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -194,7 +214,7 @@ module Toys
       #
       def capture_tool(cmd, opts = {})
         func = Exec._make_tool_caller(cmd)
-        Exec._exec(self).capture_proc(func, Exec._setup_exec_opts(opts, self))
+        self[KEY].capture_proc(func, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -207,7 +227,7 @@ module Toys
       # @return [Integer] The exit code
       #
       def sh(cmd, opts = {})
-        Exec._exec(self).sh(cmd, Exec._setup_exec_opts(opts, self))
+        self[KEY].sh(cmd, Exec._setup_exec_opts(opts, self))
       end
 
       ##
@@ -220,18 +240,6 @@ module Toys
         status = status.exitstatus if status.respond_to?(:exitstatus)
         exit(status) unless status.zero?
         0
-      end
-
-      ## @private
-      def self._exec(tool)
-        tool[Exec] ||= Utils::Exec.new do |k|
-          case k
-          when :logger
-            tool[Tool::Keys::LOGGER]
-          when :cli
-            tool[Tool::Keys::CLI]
-          end
-        end
       end
 
       ## @private

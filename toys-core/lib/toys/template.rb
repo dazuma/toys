@@ -112,7 +112,7 @@ module Toys
       # Provide the block that implements the template.
       #
       def to_expand(&block)
-        @expander = block
+        self.expander = block
       end
 
       ##

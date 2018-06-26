@@ -135,7 +135,13 @@ module Toys
       #
       def mixin(name, &block)
         cur_tool = DSL::Tool.activate_tool(self)
-        cur_tool.add_mixin(name, ::Module.new(&block)) if cur_tool
+        if cur_tool
+          mixin_mod = ::Module.new do
+            include ::Toys::Mixin
+          end
+          mixin_mod.module_eval(&block)
+          cur_tool.add_mixin(name, mixin_mod)
+        end
         self
       end
 
@@ -518,8 +524,9 @@ module Toys
       # of a well-known mixin.
       #
       # @param [Module,Symbol,String] mod Module or module name.
+      # @param [Object...] args Arguments to pass to the initializer
       #
-      def include(mod)
+      def include(mod, *args)
         cur_tool = DSL::Tool.activate_tool(self)
         return if cur_tool.nil?
         name = mod.to_s
@@ -530,6 +537,9 @@ module Toys
         end
         if mod.nil?
           raise ToolDefinitionError, "Module not found: #{name.inspect}"
+        end
+        if mod.respond_to?(:initializer)
+          cur_tool.add_initializer(mod.initializer, *args) if mod.initializer
         end
         super(mod)
       end

@@ -1,5 +1,10 @@
 # Release History
 
+### 0.3.10 / TBD
+
+* CHANGED: Highline mixin now uses Highline 2.0
+* ADDED: Mixins can provide initializers
+
 ### 0.3.9.1 / 2018-06-24
 
 * FIXED: Built-in flags were interfering with disable_argument_parsing

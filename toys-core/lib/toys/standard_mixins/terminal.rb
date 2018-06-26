@@ -42,12 +42,24 @@ module Toys
     #     include :terminal
     #
     module Terminal
+      include Mixin
+
+      ##
+      # Context key for the terminal object.
+      # @return [Object]
+      #
+      KEY = ::Object.new.freeze
+
+      to_initialize do |opts = {}|
+        self[KEY] = Utils::Terminal.new(opts)
+      end
+
       ##
       # Returns a global terminal instance
       # @return [Toys::Utils::Terminal]
       #
       def terminal
-        self[Terminal] ||= Utils::Terminal.new
+        self[KEY]
       end
 
       ##

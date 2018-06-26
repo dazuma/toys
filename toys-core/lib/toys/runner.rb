@@ -61,6 +61,7 @@ module Toys
       data = create_data(args, verbosity)
       parse_args(args, data) unless @tool_definition.argument_parsing_disabled?
       tool = @tool_definition.tool_class.new(@cli, data)
+      @tool_definition.run_initializers(tool)
 
       original_level = @cli.logger.level
       @cli.logger.level = @cli.base_level - data[Tool::Keys::VERBOSITY]

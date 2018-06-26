@@ -1159,6 +1159,53 @@ A common technique, for example, would be to define a mixin in the index file
 in a Toys directory. You can then include it from any subtools defined in other
 files in that same directory.
 
+#### Mixin initializers
+
+Sometimes a mixin will want to initialize some state before the tool executes.
+For example, the `:highline` mixin creates an instance of Highline during tool
+initialization. To do so, provide a `to_initialize` block in the mixin block.
+The initializer block is called within the context of the tool before it
+initializes, so it has access to the tool's built-in context and options.
+
+If you provide extra arguments when you `include` a mixin, those are passed to
+the initializer block.
+
+For example, suppose the `"common_test_code"` mixin needs to behave differently
+depending on the type of tests (unit vs integration). Let's have the subtools
+pass a value to the mixin's initializer:
+
+    tool "test" do
+      mixin "common_test_code" do
+        # Initialize the mixin, and receive the argument passed to include
+        to_initialize do |type|
+          # Initializers are called in the context of the tool, and so can
+          # affect the tool's state.
+          set(:test_type, type)
+        end
+
+        def setup
+          puts "Setting up #{get(:test_type)}..."
+        end
+      end
+
+      tool "unit" do
+        # Pass an extra argument to include
+        include "common_test_code", "unit"
+        def run
+          setup
+          puts "run only unit tests here..."
+        end
+      end
+
+      tool "integration" do
+        include "common_test_code", "integration"
+        def run
+          setup
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
 ### Using Constants
 
 You can define and use Ruby cconstants, i.e. names beginning with a capital
@@ -1195,7 +1242,7 @@ defined at the file level.
 Because of this, it is highly recommended that you define constants only at the
 top level of a Toys file, so it doesn't "look" like it is scoped to something
 smaller. In particular, do not attempt to define constants in a mixin. The
-constants will not actually be connected to the mixin, and will not be
+constants will not actually be connected to the mixin, and may not be
 available to tools that include the mixin.
 
 Modules and classes defined using the `module` or `class` keyword, are also
@@ -1203,6 +1250,7 @@ constants, and thus follow the same rules. So you could, for example, define a
 "mixin" module like this:
 
     module CommonTestCode
+      include Toys::Mixin
       def setup
         # Do setup here
       end
@@ -1232,6 +1280,10 @@ earlier, is the scope. The module here is accessed via a constant, and so, like
 any constant, it is visible only in the same file it is defined in. The `mixin`
 directive creates mixins that are visible from _all_ files at the same point in
 the search path.
+
+Not also, when you define a mixin in this way, you should include `Toys::Mixin`
+in the module, as illustrated above. This makes `to_initialize` available in
+the module.
 
 ### Templates
 

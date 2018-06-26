@@ -82,6 +82,7 @@ module Toys
 
         @default_data = {}
         @used_flags = []
+        @initializers = []
 
         @acceptors = {}
         @mixins = {}
@@ -619,6 +620,18 @@ module Toys
       end
 
       ##
+      # Add an initializer.
+      #
+      # @param [Proc] proc The initializer block
+      # @param [Object...] args Arguments to pass to the initializer
+      #
+      def add_initializer(proc, *args)
+        check_definition_state
+        @initializers << [proc, args]
+        self
+      end
+
+      ##
       # Mark this tool as runnable. Should be called from the DSL only.
       # @private
       #
@@ -645,6 +658,17 @@ module Toys
           @definition_finished = true
         end
         self
+      end
+
+      ##
+      # Run all initializers against a tool. Should be called from the Runner
+      # only.
+      # @private
+      #
+      def run_initializers(tool)
+        @initializers.each do |func, args|
+          tool.instance_exec(*args, &func)
+        end
       end
 
       private

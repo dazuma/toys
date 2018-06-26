@@ -41,16 +41,28 @@ module Toys
     #     include :highline
     #
     module Highline
+      include Mixin
+
+      ##
+      # Context key for the executor object.
+      # @return [Object]
+      #
+      KEY = ::Object.new.freeze
+
+      to_initialize do |*args|
+        self[KEY] ||= begin
+          h = ::HighLine.new(*args)
+          h.use_color = $stdout.tty?
+          h
+        end
+      end
+
       ##
       # Returns a global highline instance
       # @return [::HighLine]
       #
       def highline
-        self[Highline] ||= begin
-          h = ::HighLine.new
-          h.use_color = $stdout.tty?
-          h
-        end
+        self[KEY]
       end
 
       ##
