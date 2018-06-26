@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-Toys::Utils::Gems.activate("highline", "~> 1.7")
+Toys::Utils::Gems.activate("highline", "~> 2.0")
 require "highline"
 
 module Toys
@@ -47,8 +47,9 @@ module Toys
       #
       def highline
         self[Highline] ||= begin
-          ::HighLine.use_color = $stdout.tty?
-          ::HighLine.new
+          h = ::HighLine.new
+          h.use_color = $stdout.tty?
+          h
         end
       end
 
@@ -88,27 +89,6 @@ module Toys
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine.color HighLine.color
-      #
-      def color(*args, &block)
-        ::HighLine.color(*args, &block)
-      end
-
-      ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine.color_code HighLine.color_code
-      #
-      def color_code(*args, &block)
-        ::HighLine.color_code(*args, &block)
-      end
-
-      ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine.uncolor HighLine.uncolor
-      #
-      def uncolor(*args, &block)
-        ::HighLine.uncolor(*args, &block)
-      end
-
-      ##
       # @see https://www.rubydoc.info/gems/highline/HighLine:indent HighLine#indent
       #
       def indent(*args, &block)
@@ -118,8 +98,43 @@ module Toys
       ##
       # @see https://www.rubydoc.info/gems/highline/HighLine:newline HighLine#newline
       #
-      def newline(*args, &block)
-        highline.newline(*args, &block)
+      def newline
+        highline.newline
+      end
+
+      ##
+      # @see https://www.rubydoc.info/gems/highline/HighLine:puts HighLine#puts
+      #
+      def puts(*args)
+        highline.puts(*args)
+      end
+
+      ##
+      # @see https://www.rubydoc.info/gems/highline/HighLine:color HighLine#color
+      #
+      def color(*args)
+        highline.color(*args)
+      end
+
+      ##
+      # @see https://www.rubydoc.info/gems/highline/HighLine:color_code HighLine#color_code
+      #
+      def color_code(*args)
+        highline.color_code(*args)
+      end
+
+      ##
+      # @see https://www.rubydoc.info/gems/highline/HighLine:uncolor HighLine#uncolor
+      #
+      def uncolor(*args)
+        highline.uncolor(*args)
+      end
+
+      ##
+      # @see https://www.rubydoc.info/gems/highline/HighLine:new_scope HighLine#new_scope
+      #
+      def new_scope
+        highline.new_scope
       end
     end
   end

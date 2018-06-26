@@ -1088,7 +1088,7 @@ and the underyling library
 
 If you prefer the venerable Highline library interface, Toys provides a mixin
 that makes Highline available. It also automatically installs the highline
-gem if it is not available. For more information, see the
+gem (version 2.x) if it is not available. For more information, see the
 [Toys::StandardMixins::Highline mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Highline).
 
 Additional mixins are forthcoming...
@@ -1260,9 +1260,9 @@ arguments to the `expand` directive, such as:
 Alternatively, you may provide a block to `expand`. It will yield the template
 to your block, letting you modify its properties:
 
-    expand :minitest do |tmpl|
-      tmpl.name "unit-test"
-      tmpl.warnings = true
+    expand :minitest do |t|
+      t.name = "unit-test"
+      t.warnings = true
     end
 
 Toys provides several built-in templates that are useful for project and gem

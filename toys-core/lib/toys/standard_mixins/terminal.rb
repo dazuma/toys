@@ -32,7 +32,9 @@ module Toys
     ##
     # A mixin that provides a simple terminal. It includes a set of methods
     # that produce styled output, get user input, and otherwise interact with
-    # the user's terminal.
+    # the user's terminal. This mixin is not as richly featured as other mixins
+    # such as Highline, but it has no gem dependencies so is ideal for basic
+    # cases.
     #
     # You may make these methods available to your tool by including the
     # following directive in your tool configuration:
