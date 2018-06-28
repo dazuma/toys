@@ -32,7 +32,8 @@ require "helper"
 describe Toys::Definition::Arg do
   let(:arg) {
     Toys::Definition::Arg.new(
-      "hello-there!", :required, Integer, -1, "description", ["long", "description"])
+      "hello-there!", :required, Integer, -1, "description", ["long", "description"]
+    )
   }
 
   it "passes through attributes" do

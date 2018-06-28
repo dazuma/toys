@@ -294,7 +294,8 @@ describe Toys::Definition::Flag do
   end
 
   it "chooses the last long flag's value label and delim as canonical" do
-    flag = Toys::Definition::Flag.new(:abc, ["--aa LAV", "--bb=VAL", "-aFOO"], [], true, nil, nil, nil)
+    flag = Toys::Definition::Flag.new(:abc, ["--aa LAV", "--bb=VAL", "-aFOO"], [],
+                                      true, nil, nil, nil)
     assert_equal(3, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:required, flag.value_type)
@@ -346,13 +347,13 @@ describe Toys::Definition::Flag do
 
   it "updates used flags" do
     used_flags = []
-    flag = Toys::Definition::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], used_flags, true, nil, nil, nil)
+    Toys::Definition::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], used_flags, true, nil, nil, nil)
     assert_equal(["--aa", "--no-aa", "--bb", "-a"], used_flags)
   end
 
   it "reports collisions with used flags" do
     assert_raises(Toys::ToolDefinitionError) do
-       Toys::Definition::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], ["--aa"], true, nil, nil, nil)
+      Toys::Definition::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], ["--aa"], true, nil, nil, nil)
     end
   end
 end
