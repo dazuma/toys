@@ -1343,7 +1343,7 @@ Following is a simple template example:
       to_expand do |template|
         tool template.name do
           desc "A greeting tool generated from a template"
-          run do
+          to_run do
             puts "Hello, #{template.whom}!"
           end
         end
@@ -1365,8 +1365,8 @@ passed to the block, so it can access the template configuration when
 generating directives. The "greet" template in the above example generates a
 tool whose name is set by the template's `name` property.
 
-Notice that in the above example, we used `run do`, providing a _block_ for the
-tool's execution, rather than `def run`, providing a method. Both forms are
+Notice that in the above example, we used `to_run do`, providing a _block_ for
+the tool's execution, rather than `def run`, providing a method. Both forms are
 valid and will work in a template (as well in a normal Toys file), but the
 block form is often useful in a template because you can access the `template`
 variable inside the block, whereas it would not be accessible if you defined a
@@ -1401,7 +1401,7 @@ in your class definition.
       to_expand do |template|
         tool template.name do
           desc "A greeting tool generated from a template"
-          run do
+          to_run do
             puts "Hello, #{template.whom}!"
           end
         end

@@ -103,7 +103,7 @@ module Toys
 
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
-          run do
+          to_run do
             gem("minitest", *Array(template.gem_version))
             ruby_args = []
             unless template.libs.empty?

@@ -495,7 +495,7 @@ module Toys
 
       ##
       # Mark one or more flags as disabled, preventing their use by any
-      # subsequent flag definition. This may be used to prevent middleware from
+      # subsequent flag definition. This can be used to prevent middleware from
       # defining a particular flag.
       #
       # @param [String...] flags The flags to disable
@@ -507,10 +507,10 @@ module Toys
       end
 
       ##
-      # Specify how to run this tool. You may do this by providing a block to
+      # Specify how to run this tool. You can do this by providing a block to
       # this directive, or by defining the `run` method in the tool.
       #
-      def run(&block)
+      def to_run(&block)
         define_method(:run, &block)
         self
       end

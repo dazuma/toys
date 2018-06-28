@@ -2,8 +2,6 @@
 
 ## Immediate tasks
 
-* Arguments for including a mixin (maybe via mixin_included callback?)
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

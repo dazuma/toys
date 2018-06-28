@@ -78,7 +78,7 @@ module Toys
         tool(template.name) do
           desc "Run rubocop on the current project."
 
-          run do
+          to_run do
             gem("rubocop", *Array(template.gem_version))
             require "rubocop"
 

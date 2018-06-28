@@ -77,7 +77,7 @@ module Toys
   #       to_expand do |template|
   #         desc "Prints a greeting to #{template.name}"
   #         tool "templated-greeting" do
-  #           run do
+  #           to_run do
   #             puts "Hello, #{template.name}!"
   #           end
   #         end

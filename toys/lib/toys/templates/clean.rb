@@ -63,7 +63,7 @@ module Toys
 
           include :fileutils
 
-          run do
+          to_run do
             files = []
             patterns = Array(template.paths)
             patterns.each do |pattern|

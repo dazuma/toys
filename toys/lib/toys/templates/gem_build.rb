@@ -92,7 +92,7 @@ module Toys
           include :fileutils
           include :terminal
 
-          run do
+          to_run do
             require "rubygems/package"
             configure_exec(exit_on_nonzero_status: true)
             gemspec = ::Gem::Specification.load("#{template.gem_name}.gemspec")

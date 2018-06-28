@@ -2,6 +2,7 @@
 
 ### 0.3.10 / TBD
 
+* CHANGED: "run" directive renamed to "to_run"
 * CHANGED: Highline mixin now uses Highline 2.0
 * ADDED: Mixins can provide initializers
 

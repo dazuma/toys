@@ -115,7 +115,7 @@ module Toys
 
           include :exec
 
-          run do
+          to_run do
             gem("rdoc", *Array(template.gem_version))
             require "rdoc"
 

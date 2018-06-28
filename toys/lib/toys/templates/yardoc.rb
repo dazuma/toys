@@ -162,7 +162,7 @@ module Toys
           include :exec
           include :terminal
 
-          run do
+          to_run do
             gem("yard", *Array(template.gem_version))
             require "yard"
 

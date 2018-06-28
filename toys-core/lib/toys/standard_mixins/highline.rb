@@ -50,11 +50,8 @@ module Toys
       KEY = ::Object.new.freeze
 
       to_initialize do |*args|
-        self[KEY] ||= begin
-          h = ::HighLine.new(*args)
-          h.use_color = $stdout.tty?
-          h
-        end
+        self[KEY] = ::HighLine.new(*args)
+        self[KEY].use_color = $stdout.tty?
       end
 
       ##
