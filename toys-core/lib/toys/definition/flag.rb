@@ -43,6 +43,8 @@ module Toys
           setup(str, [$1], $1, "-", nil, nil, nil, nil)
         when /^(-[\?\w])( ?)\[(\w+)\]$/
           setup(str, [$1], $1, "-", :value, :optional, $2, $3)
+        when /^(-[\?\w])\[( )(\w+)\]$/
+          setup(str, [$1], $1, "-", :value, :optional, $2, $3)
         when /^(-[\?\w])( ?)(\w+)$/
           setup(str, [$1], $1, "-", :value, :required, $2, $3)
         when /^--\[no-\](\w[\?\w-]*)$/

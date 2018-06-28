@@ -616,7 +616,7 @@ module Toys
       # @param [Proc] proc The runnable block
       #
       def runnable=(proc)
-        @tool_class.run(&proc)
+        @tool_class.to_run(&proc)
       end
 
       ##

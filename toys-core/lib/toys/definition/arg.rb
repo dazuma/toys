@@ -39,7 +39,7 @@ module Toys
       # Create an Arg definition
       # @private
       #
-      def initialize(key, type, accept, default, desc, long_desc, display_name)
+      def initialize(key, type, accept, default, desc, long_desc, display_name = nil)
         @key = key
         @type = type
         @accept = accept
@@ -103,7 +103,7 @@ module Toys
         result = input
         optparse = ::OptionParser.new
         optparse.accept(accept) if accept.is_a?(Acceptor)
-        optparse.on("--abc=VALUE", accept) { |v| result = v }
+        optparse.on("--abc VALUE", accept) { |v| result = v }
         optparse.parse(["--abc", input])
         result
       end
