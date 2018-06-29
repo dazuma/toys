@@ -33,12 +33,6 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
-    ##
-    # Default "path" for an added block
-    # @return [String]
-    #
-    DEFAULT_BLOCK_PATH = "(Block)".freeze
-
     ## @private
     ToolData = ::Struct.new(:definitions, :top_priority, :active_priority) do
       def top_definition
@@ -109,17 +103,19 @@ module Toys
     end
 
     ##
-    # Add a configuration block to the loader, either as a proc object or as a
-    # block.
+    # Add a configuration block to the loader.
     #
-    # @param [Proc] proc A proc containing some configuration.
     # @param [Boolean] high_priority If true, add this block at the top of the
     #     priority list. Defaults to false, indicating the block should be at
     #     the bottom of the priority list.
+    # @param [String] path The "path" that will be shown in documentation for
+    #     tools defined in this block. If omitted, a default unique string will
+    #     be generated.
     #
-    def add_block(proc = nil, high_priority: false, path: nil, &block)
+    def add_block(high_priority: false, path: nil, &block)
+      path ||= "(Block #{block.object_id})"
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      @worklist << [proc || block, path || DEFAULT_BLOCK_PATH, [], priority]
+      @worklist << [block, path, [], priority]
       self
     end
 
@@ -152,7 +148,7 @@ module Toys
           break if p.empty? || p.length <= cur_prefix.length
           p = p.slice(0..-2)
         end
-        return nil if cur_prefix.empty?
+        return get_tool_definition([], @min_priority) if cur_prefix.empty?
         cur_prefix = cur_prefix.slice(0..-2)
       end
     end

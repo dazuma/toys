@@ -152,6 +152,20 @@ module Toys
     end
 
     ##
+    # Add a configuration block to the loader.
+    #
+    # @param [Boolean] high_priority Add the config at the head of the priority
+    #     list rather than the tail.
+    # @param [String] path The "path" that will be shown in documentation for
+    #     tools defined in this block. If omitted, a default unique string will
+    #     be generated.
+    #
+    def add_config_block(high_priority: false, path: nil, &block)
+      @loader.add_block(high_priority: high_priority, path: path, &block)
+      self
+    end
+
+    ##
     # Searches the given directory for a well-known config directory and/or
     # config file. If found, these are added to the loader.
     #

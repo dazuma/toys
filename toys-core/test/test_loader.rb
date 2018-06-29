@@ -40,6 +40,13 @@ describe Toys::Loader do
     Toys::Utils::WrappableString.new(str)
   end
 
+  describe "empty" do
+    it "still has a root tool" do
+      tool, _remaining = loader.lookup([])
+      refute_nil(tool)
+    end
+  end
+
   describe "configuration block" do
     it "loads tools" do
       loader.add_block(path: "test block") do
