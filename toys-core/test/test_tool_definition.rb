@@ -35,6 +35,12 @@ module MyMixin
   end
 end
 
+module MyTemplate
+  include Toys::Template
+  to_expand do |t|
+  end
+end
+
 describe Toys::Definition::Tool do
   let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
   let(:full_cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
@@ -439,6 +445,41 @@ describe Toys::Definition::Tool do
     end
   end
 
+  describe "acceptor" do
+    let(:acceptor_name) { "acc1" }
+    let(:acceptor) { Toys::Definition::Acceptor.new(acceptor_name) }
+
+    it "resolves well-known acceptors" do
+      assert_equal(Integer, tool.resolve_acceptor(Integer))
+    end
+
+    it "resolves the nil acceptor" do
+      assert_nil(tool.resolve_acceptor(nil))
+    end
+
+    it "can be added and resolved" do
+      tool.add_acceptor(acceptor)
+      assert_equal(acceptor, tool.resolve_acceptor(acceptor_name))
+    end
+
+    it "raises if not found" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.resolve_acceptor("acc2")
+      end
+    end
+
+    it "can be resolved in a subtool" do
+      tool.add_acceptor(acceptor)
+      assert_equal(acceptor, subtool.resolve_acceptor(acceptor_name))
+    end
+
+    it "can be referenced in a flag" do
+      tool.add_acceptor(acceptor)
+      tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+      assert_equal(acceptor, tool.flag_definitions.first.accept)
+    end
+  end
+
   describe "option parsing" do
     it "allows empty arguments when none are specified" do
       assert_equal(false, tool.includes_definition?)
@@ -624,6 +665,15 @@ describe Toys::Definition::Tool do
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run(["foo"]))
     end
+
+    it "can be disabled" do
+      test = self
+      tool.disable_argument_parsing
+      tool.runnable = proc do
+        test.assert_equal(["foo", "--bar"], args)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["foo", "--bar"]))
+    end
   end
 
   describe "source path" do
@@ -685,6 +735,22 @@ describe Toys::Definition::Tool do
     end
   end
 
+  describe "template class" do
+    it "defaults to nil if not set" do
+      assert_nil(tool.resolve_template("mytemplate"))
+    end
+
+    it "can be set and retrieved" do
+      tool.add_mixin("mytemplate", MyTemplate)
+      assert_equal(MyTemplate, tool.resolve_mixin("mytemplate"))
+    end
+
+    it "can be retrieved from a subtool" do
+      tool.add_mixin("mytemplate", MyTemplate)
+      assert_equal(MyTemplate, subtool.resolve_mixin("mytemplate"))
+    end
+  end
+
   describe "finish_definition" do
     it "runs middleware config" do
       assert_equal(true, full_tool.flag_definitions.empty?)
@@ -702,6 +768,17 @@ describe Toys::Definition::Tool do
       assert_raises(Toys::ToolDefinitionError) do
         full_tool.desc = "hi"
       end
+    end
+  end
+
+  describe "initializer" do
+    it "runs at the beginning" do
+      test = self
+      tool.add_initializer(proc { |a| set(:a, a) }, 123)
+      tool.runnable = proc do
+        test.assert_equal(123, option(:a))
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
   end
 
