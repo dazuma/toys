@@ -312,8 +312,7 @@ on the command line e.g.
 
     toys greet ruby
 
-Then the option `:whom` is set to the string `"ruby"`. The value is made
-available via the `options` hash in the tools's script. Otherwise, if the
+Then the option `:whom` is set to the string `"ruby"`. Otherwise, if the
 argument is omitted, e.g.
 
     toys greet
@@ -659,14 +658,14 @@ Let's revisit the "greet" example we covered earlier.
     end
 
 Note how the `run` method uses the
-[Toys::Tool#option](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:option)
+[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
 method to access values that were assigned by flags or positional arguments.
 Note also that you can produce output or interact with the console using the
 normal Ruby `$stdout`, `$stderr`, and `$stdin` streams.
 
 If a tool's `run` method finishes normally, Toys will exit with a result code
 of 0, indicating success. You may exit immediately and/or provide a nonzero
-result using the
+result by calling the
 [Toys::Tool#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:exit)
 method:
 
@@ -930,7 +929,7 @@ Generally, your tool is executed in an object of type
 [Toys::Tool](https://www.rubydoc.info/gems/toys-core/Toys/Tool). This class
 defines a number of methods, and provides access to a variety of data and
 objects relevant to your tool. We have already seen earlier how to use the
-[Toys::Tool#option](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:option)
+[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
 method to retrieve option values, and how to use the
 [Toys::Tool#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:exit)
 method to exit immediately and return an exit code. Now we will cover other
@@ -955,12 +954,6 @@ are defined in the
 They range from the tool name and the original command line arguments passed to
 it (before they were parsed), to references to some of the Toys objects that
 can be used to do things like write to the log or look up and call other tools.
-
-(The `get` method also returns the options that were set by flags or command
-line arguments if you pass the corresponding option keys. However, it is
-generally good practice to use
-[Toys::Tool#option](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:option)
-to get option values.)
 
 Most of the important context also can be accessed from convenience methods.
 For example, the `TOOL_NAME` is also available from the

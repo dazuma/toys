@@ -14,3 +14,4 @@
 * Mixins for various gems like pastel and tty-*. See https://lab.hookops.com/ruby-cli-gems.html
 * Rake-like build/dependency features or a way to call out to rake.
 * Consider allowing period or colon as command separators.
+* Integrate with the "less" tool in exec.

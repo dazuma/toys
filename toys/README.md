@@ -110,7 +110,8 @@ and basic console-based interfaces, and another library that makes it easy to
 spawn and control subprocesses. You can also take advantage of a variety of
 third-party libraries such as Highline and TTY.
 
-For a more detailed look at Toys, see the {file:docs/guide.md User Guide}.
+For a more detailed look at Toys, see the
+[User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
 
 ## Contributing
 
