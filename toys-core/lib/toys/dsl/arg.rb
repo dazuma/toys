@@ -44,7 +44,7 @@ module Toys
         @default = default
         @display_name = display_name
         @desc = desc
-        @long_desc = long_desc
+        @long_desc = long_desc || []
       end
 
       ##
@@ -70,7 +70,7 @@ module Toys
       # @param [String] display_name
       #
       def display_name(display_name)
-        @handler = display_name
+        @display_name = display_name
         self
       end
 

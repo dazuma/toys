@@ -45,7 +45,7 @@ module Toys
         @handler = handler
         @report_collisions = report_collisions
         @desc = desc
-        @long_desc = long_desc
+        @long_desc = long_desc || []
       end
 
       ##

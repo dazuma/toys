@@ -5,6 +5,7 @@
 * CHANGED: Dropped Tool#option. Use Tool#get instead.
 * CHANGED: "run" directive renamed to "to_run"
 * CHANGED: Highline mixin now uses Highline 2.0
+* CHANGED: Middleware-added keys no longer show up in the options hash
 * ADDED: Mixins can provide initializers
 * ADDED: Loader can load an inline block
 

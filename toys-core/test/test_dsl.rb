@@ -291,7 +291,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         desc "this is a desc"
       end
-      tool, _remaining = loader.lookup(["foo", "hi"])
+      tool, _remaining = loader.lookup([])
       assert_equal("this is a desc", tool.desc.to_s)
     end
   end
@@ -301,7 +301,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         long_desc "this is a desc", "with multiple lines"
       end
-      tool, _remaining = loader.lookup(["foo", "hi"])
+      tool, _remaining = loader.lookup([])
       ld = tool.long_desc
       assert_equal(2, ld.size)
       assert_equal("this is a desc", ld[0].to_s)
@@ -313,7 +313,7 @@ describe Toys::DSL::Tool do
         long_desc "this is a desc", "with multiple lines"
         long_desc "and an append"
       end
-      tool, _remaining = loader.lookup(["foo", "hi"])
+      tool, _remaining = loader.lookup([])
       ld = tool.long_desc
       assert_equal(3, ld.size)
       assert_equal("this is a desc", ld[0].to_s)
@@ -323,23 +323,295 @@ describe Toys::DSL::Tool do
   end
 
   describe "flag directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        flag(:foo, "--bar",
+             accept: Integer, default: -1,
+             handler: proc { |s| s.to_i - 1 },
+             desc: "short description",
+             long_desc: ["long description", "in two lines"])
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.flag_definitions.size)
+      flag = tool.flag_definitions[0]
+      assert_equal(:foo, flag.key)
+      assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
+      assert_equal(Integer, flag.accept)
+      assert_equal(-1, flag.default)
+      assert_equal("short description", flag.desc.to_s)
+      assert_equal("in two lines", flag.long_desc[1].to_s)
+      assert_equal(3, flag.handler.call("4"))
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+    end
+
+    it "recognizes block configuration" do
+      loader.add_block do
+        flag(:foo) do
+          flags "--bar"
+          accept Integer
+          default(-1)
+          handler do |s|
+            s.to_i - 1
+          end
+          desc "short description"
+          long_desc "long description", "in two lines"
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.flag_definitions.size)
+      flag = tool.flag_definitions[0]
+      assert_equal(:foo, flag.key)
+      assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
+      assert_equal(Integer, flag.accept)
+      assert_equal(-1, flag.default)
+      assert_equal("short description", flag.desc.to_s)
+      assert_equal("in two lines", flag.long_desc[1].to_s)
+      assert_equal(3, flag.handler.call("4"))
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+    end
   end
 
   describe "required_arg directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        required(:foo,
+                 accept: Integer,
+                 display_name: "FOOOO",
+                 desc: "short description",
+                 long_desc: ["long description", "in two lines"])
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.required_arg_definitions.size)
+      arg = tool.required_arg_definitions[0]
+      assert_equal(:foo, arg.key)
+      assert_equal(:required, arg.type)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
+
+    it "recognizes block configuration" do
+      loader.add_block do
+        required(:foo) do
+          accept Integer
+          display_name "FOOOO"
+          desc "short description"
+          long_desc "long description", "in two lines"
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.required_arg_definitions.size)
+      arg = tool.required_arg_definitions[0]
+      assert_equal(:foo, arg.key)
+      assert_equal(:required, arg.type)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
   end
 
   describe "optional_arg directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        optional(:foo,
+                 default: -1, accept: Integer,
+                 display_name: "FOOOO",
+                 desc: "short description",
+                 long_desc: ["long description", "in two lines"])
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.optional_arg_definitions.size)
+      arg = tool.optional_arg_definitions[0]
+      assert_equal(:foo, arg.key)
+      assert_equal(:optional, arg.type)
+      assert_equal(-1, arg.default)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
+
+    it "recognizes block configuration" do
+      loader.add_block do
+        optional(:foo) do
+          default(-1)
+          accept Integer
+          display_name "FOOOO"
+          desc "short description"
+          long_desc "long description", "in two lines"
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.optional_arg_definitions.size)
+      arg = tool.optional_arg_definitions[0]
+      assert_equal(:foo, arg.key)
+      assert_equal(:optional, arg.type)
+      assert_equal(-1, arg.default)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
   end
 
   describe "remaining_args directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        remaining(:foo,
+                  default: [-1], accept: Integer,
+                  display_name: "FOOOO",
+                  desc: "short description",
+                  long_desc: ["long description", "in two lines"])
+      end
+      tool, _remaining = loader.lookup([])
+      refute_nil(tool.remaining_args_definition)
+      arg = tool.remaining_args_definition
+      assert_equal(:foo, arg.key)
+      assert_equal(:remaining, arg.type)
+      assert_equal([-1], arg.default)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
+
+    it "recognizes block configuration" do
+      loader.add_block do
+        remaining(:foo) do
+          default([-1])
+          accept Integer
+          display_name "FOOOO"
+          desc "short description"
+          long_desc "long description", "in two lines"
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      refute_nil(tool.remaining_args_definition)
+      arg = tool.remaining_args_definition
+      assert_equal(:foo, arg.key)
+      assert_equal(:remaining, arg.type)
+      assert_equal([-1], arg.default)
+      assert_equal(Integer, arg.accept)
+      assert_equal("short description", arg.desc.to_s)
+      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("FOOOO", arg.display_name)
+    end
   end
 
   describe "set directive" do
+    it "sets a single key" do
+      loader.add_block do
+        set(:foo, "bar")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal("bar", tool.default_data[:foo])
+    end
+
+    it "sets multiple keys" do
+      loader.add_block do
+        set(foo: "bar", hello: "world", one: 2)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal("bar", tool.default_data[:foo])
+      assert_equal("world", tool.default_data[:hello])
+      assert_equal(2, tool.default_data[:one])
+    end
   end
 
   describe "disable_argument_parsing directive" do
+    it "disables argument parsing" do
+      loader.add_block do
+        disable_argument_parsing
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.argument_parsing_disabled?)
+    end
+
+    it "prevents invoking flag and arg directives" do
+      test = self
+      loader.add_block do
+        disable_argument_parsing
+        test.assert_raises(Toys::ToolDefinitionError) do
+          flag :hello
+        end
+        test.assert_raises(Toys::ToolDefinitionError) do
+          required_arg :hello
+        end
+        test.assert_raises(Toys::ToolDefinitionError) do
+          optional_arg :hello
+        end
+        test.assert_raises(Toys::ToolDefinitionError) do
+          remaining_args :hello
+        end
+      end
+      loader.lookup([])
+    end
+
+    it "cannot be invoked if a flag already exists" do
+      test = self
+      loader.add_block do
+        flag :hello
+        test.assert_raises(Toys::ToolDefinitionError) do
+          disable_argument_parsing
+        end
+      end
+      loader.lookup([])
+    end
+
+    it "cannot be invoked if an arg already exists" do
+      test = self
+      loader.add_block do
+        required_arg :hello
+        test.assert_raises(Toys::ToolDefinitionError) do
+          disable_argument_parsing
+        end
+      end
+      loader.lookup([])
+    end
   end
 
   describe "disable_flag directive" do
+    it "adds a flag to the used list" do
+      loader.add_block do
+        disable_flag "-a", "--bb"
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(["-a", "--bb"], tool.used_flags)
+    end
+
+    it "prevents flags from being defined" do
+      loader.add_block do
+        disable_flag "-a", "--bb"
+        flag :foo, "-a", report_collisions: false
+        flag :bar, "--bb", "--baa", report_collisions: false
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(1, tool.flag_definitions.size)
+      flag = tool.flag_definitions[0]
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--baa", flag.flag_syntax[0].canonical_str)
+    end
+
+    it "cannot disable already-defined flags" do
+      test = self
+      loader.add_block do
+        flag :foo, "-a"
+        flag :bar, "--bb", "--baa"
+        test.assert_raises(Toys::ToolDefinitionError) do
+          disable_flag "-a"
+        end
+        test.assert_raises(Toys::ToolDefinitionError) do
+          disable_flag "--bb"
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_definitions.size)
+      flag = tool.flag_definitions[1]
+      assert_equal(2, flag.flag_syntax.size)
+    end
   end
 end

@@ -307,6 +307,7 @@ module Toys
           analyze_flag_syntax(flag)
         end
         @flag_type ||= :boolean
+        @value_type ||= :required if @flag_type == :value
         flag_syntax.each do |flag|
           flag.configure_canonical(@flag_type, @value_type, @value_label, @value_delim)
         end

@@ -474,10 +474,14 @@ module Toys
       #     execution context.
       # @param [Object] value The value to set.
       #
-      def set(key, value)
+      def set(key, value = nil)
         cur_tool = DSL::Tool.activate_tool(self)
         return self if cur_tool.nil?
-        cur_tool.default_data[key] = value
+        if key.is_a?(::Hash)
+          cur_tool.default_data.merge!(key)
+        else
+          cur_tool.default_data[key] = value
+        end
         self
       end
 
