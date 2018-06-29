@@ -258,18 +258,6 @@ module Toys
     end
 
     ##
-    # Returns the value of the given option. Returns only options with string
-    # or symbol keys; returns `nil` if passed other well-known context keys
-    # such as verbosity.
-    #
-    # @param [String,Symbol] key
-    # @return [Object]
-    #
-    def option(key)
-      key.is_a?(::Symbol) || key.is_a?(::String) ? @__data[key] : nil
-    end
-
-    ##
     # Activate the given gem. If it is not present, attempt to install it (or
     # inform the user to update the bundle).
     #

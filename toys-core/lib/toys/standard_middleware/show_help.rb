@@ -67,6 +67,36 @@ module Toys
       DEFAULT_SEARCH_FLAGS = ["-s WORD", "--search=WORD"].freeze
 
       ##
+      # Key set when the show help flag is present
+      # @return [Object]
+      #
+      SHOW_HELP_KEY = Object.new.freeze
+
+      ##
+      # Key set when the show usage flag is present
+      # @return [Object]
+      #
+      SHOW_USAGE_KEY = Object.new.freeze
+
+      ##
+      # Key for the recursive setting
+      # @return [Object]
+      #
+      RECURSIVE_SUBTOOLS_KEY = Object.new.freeze
+
+      ##
+      # Key for the search string
+      # @return [Object]
+      #
+      SEARCH_STRING_KEY = Object.new.freeze
+
+      ##
+      # Key for the tool name
+      # @return [Object]
+      #
+      TOOL_NAME_KEY = Object.new.freeze
+
+      ##
       # Create a ShowHelp middleware.
       #
       # @param [Boolean,Array<String>,Proc] help_flags Specify flags to
@@ -155,7 +185,7 @@ module Toys
           usage_flags = add_usage_flags(tool_definition)
           if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
             if tool_definition.root? && tool_definition.arg_definitions.empty?
-              tool_definition.set_remaining_args(:_tool_name,
+              tool_definition.set_remaining_args(TOOL_NAME_KEY,
                                                  display_name: "TOOL_NAME",
                                                  desc: "The tool for which to display help")
             end
@@ -173,15 +203,15 @@ module Toys
       # Display help text if requested.
       #
       def run(tool)
-        if tool[:_show_usage]
+        if tool[SHOW_USAGE_KEY]
           help_text = get_help_text(tool)
           str = help_text.usage_string(wrap_width: terminal.width)
           terminal.puts(str)
         elsif @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
-              tool[:_show_help]
+              tool[SHOW_HELP_KEY]
           help_text = get_help_text(tool)
-          str = help_text.help_string(recursive: tool[:_recursive_subtools],
-                                      search: tool[:_search_subtools],
+          str = help_text.help_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
+                                      search: tool[SEARCH_STRING_KEY],
                                       show_source_path: @show_source_path,
                                       wrap_width: terminal.width)
           output_help(str)
@@ -216,7 +246,7 @@ module Toys
       end
 
       def get_help_text(tool)
-        tool_name = tool[:_tool_name]
+        tool_name = tool[TOOL_NAME_KEY]
         return Utils::HelpText.from_tool(tool) if tool_name.nil? || tool_name.empty?
         loader = tool[Tool::Keys::LOADER]
         tool_definition, rest = loader.lookup(tool_name)
@@ -236,7 +266,7 @@ module Toys
         help_flags = resolve_flags_spec(@help_flags, tool_definition, DEFAULT_HELP_FLAGS)
         unless help_flags.empty?
           tool_definition.add_flag(
-            :_show_help, help_flags,
+            SHOW_HELP_KEY, help_flags,
             report_collisions: false,
             desc: "Display help for this tool"
           )
@@ -248,7 +278,7 @@ module Toys
         usage_flags = resolve_flags_spec(@usage_flags, tool_definition, DEFAULT_USAGE_FLAGS)
         unless usage_flags.empty?
           tool_definition.add_flag(
-            :_show_usage, usage_flags,
+            SHOW_USAGE_KEY, usage_flags,
             report_collisions: false,
             desc: "Display a brief usage string for this tool"
           )
@@ -261,7 +291,7 @@ module Toys
                                              DEFAULT_RECURSIVE_FLAGS)
         unless recursive_flags.empty?
           tool_definition.add_flag(
-            :_recursive_subtools, recursive_flags,
+            RECURSIVE_SUBTOOLS_KEY, recursive_flags,
             report_collisions: false, default: @default_recursive,
             desc: "Show all subtools recursively (default is #{@default_recursive})"
           )
@@ -272,7 +302,7 @@ module Toys
         search_flags = resolve_flags_spec(@search_flags, tool_definition, DEFAULT_SEARCH_FLAGS)
         unless search_flags.empty?
           tool_definition.add_flag(
-            :_search_subtools, search_flags,
+            SEARCH_STRING_KEY, search_flags,
             report_collisions: false,
             desc: "Search subtools for the given regular expression"
           )

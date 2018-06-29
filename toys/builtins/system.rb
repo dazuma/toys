@@ -61,7 +61,7 @@ tool "update" do
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
         prompt = "Update toys from #{cur_version} to #{latest_version}?"
-        exit(1) unless option(:yes) || confirm(prompt)
+        exit(1) unless get(:yes) || confirm(prompt)
         result = terminal.spinner(leading_text: "Installing Toys version #{latest_version}... ",
                                   final_text: "Done.\n") do
           exec(["gem", "install", "toys", "--version", latest_version.to_s],

@@ -27,6 +27,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+expected_lib_path = ::File.absolute_path(::File.join(::File.dirname(__dir__), "toys-core", "lib"))
+unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
+  puts "NOTE: Rerunning toys binary from the local repo"
+  ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
+end
+
+
 expand :clean, paths: ["pkg", "doc", ".yardoc"]
 
 expand :minitest, libs: ["lib", "test"]

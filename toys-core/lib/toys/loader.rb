@@ -33,6 +33,12 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
+    ##
+    # Default "path" for an added block
+    # @return [String]
+    #
+    DEFAULT_BLOCK_PATH = "(Block)".freeze
+
     ## @private
     ToolData = ::Struct.new(:definitions, :top_priority, :active_priority) do
       def top_definition
@@ -80,7 +86,7 @@ module Toys
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @middleware_stack = middleware_stack
-      @load_worklist = []
+      @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
     end
@@ -97,8 +103,23 @@ module Toys
       paths = Array(path)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
       paths.each do |p|
-        @load_worklist << [check_path(p), [], priority]
+        @worklist << [:file, check_path(p), [], priority]
       end
+      self
+    end
+
+    ##
+    # Add a configuration block to the loader, either as a proc object or as a
+    # block.
+    #
+    # @param [Proc] proc A proc containing some configuration.
+    # @param [Boolean] high_priority If true, add this block at the top of the
+    #     priority list. Defaults to false, indicating the block should be at
+    #     the bottom of the priority list.
+    #
+    def add_block(proc = nil, high_priority: false, path: nil, &block)
+      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      @worklist << [proc || block, path || DEFAULT_BLOCK_PATH, [], priority]
       self
     end
 
@@ -279,8 +300,26 @@ module Toys
     #
     # @private
     #
-    def include_path(path, words, remaining_words, priority)
-      handle_path(check_path(path), words, remaining_words, priority)
+    def load_path(path, words, remaining_words, priority)
+      load_validated_path(check_path(path), words, remaining_words, priority)
+    end
+
+    ##
+    # Load configuration from the given proc.
+    #
+    # @private
+    #
+    def load_proc(proc, words, remaining_words, priority, path)
+      if remaining_words
+        tool_class = get_tool_definition(words, priority).tool_class
+        ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
+          ::Toys::ContextualError.capture("Error while loading Toys config!") do
+            tool_class.class_eval(&proc)
+          end
+        end
+      else
+        @worklist << [proc, path, words, priority]
+      end
     end
 
     ##
@@ -365,22 +404,27 @@ module Toys
     end
 
     def load_for_prefix(prefix)
-      cur_worklist = @load_worklist
-      @load_worklist = []
-      cur_worklist.each do |path, words, priority|
-        handle_path(path, words, calc_remaining_words(prefix, words), priority)
+      cur_worklist = @worklist
+      @worklist = []
+      cur_worklist.each do |source, path, words, priority|
+        remaining_words = calc_remaining_words(prefix, words)
+        if source.respond_to?(:call)
+          load_proc(source, words, remaining_words, priority, path)
+        elsif source == :file
+          load_validated_path(path, words, remaining_words, priority)
+        end
       end
     end
 
-    def handle_path(path, words, remaining_words, priority)
+    def load_validated_path(path, words, remaining_words, priority)
       if remaining_words
-        load_path(path, words, remaining_words, priority)
+        load_relevant_path(path, words, remaining_words, priority)
       else
-        @load_worklist << [path, words, priority]
+        @worklist << [:file, path, words, priority]
       end
     end
 
-    def load_path(path, words, remaining_words, priority)
+    def load_relevant_path(path, words, remaining_words, priority)
       if ::File.extname(path) == ".rb"
         tool_class = get_tool_definition(words, priority).tool_class
         Toys::InputFile.evaluate(tool_class, remaining_words, path)
@@ -404,7 +448,7 @@ module Toys
       return unless @index_file_name
       index_path = ::File.join(path, @index_file_name)
       index_path = check_path(index_path, type: :file, lenient: true)
-      load_path(index_path, words, remaining_words, priority) if index_path
+      load_relevant_path(index_path, words, remaining_words, priority) if index_path
     end
 
     def load_child_in(path, child, words, remaining_words, priority)
@@ -414,7 +458,7 @@ module Toys
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
-      handle_path(child_path, next_words, next_remaining, priority)
+      load_validated_path(child_path, next_words, next_remaining, priority)
     end
 
     def check_path(path, lenient: false, type: nil)

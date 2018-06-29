@@ -48,7 +48,7 @@ module Toys
     #       optional_arg :recipient, default: "world"
     #
     #       def run
-    #         puts "Hello, #{option(:recipient)}!"
+    #         puts "Hello, #{get(:recipient)}!"
     #       end
     #     end
     #
@@ -206,7 +206,7 @@ module Toys
       # @param [String] path The file or directory to include.
       #
       def load(path)
-        @__loader.include_path(path, @__words, @__remaining_words, @__priority)
+        @__loader.load_path(path, @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -221,6 +221,8 @@ module Toys
       # @param [Object...] args Template arguments
       #
       def expand(template_class, *args)
+        cur_tool = DSL::Tool.activate_tool(self)
+        return self if cur_tool.nil?
         name = template_class.to_s
         if template_class.is_a?(::String)
           template_class = cur_tool.resolve_template(template_class)
@@ -293,7 +295,7 @@ module Toys
       #
       def long_desc(*strs)
         cur_tool = DSL::Tool.activate_tool(self)
-        cur_tool.long_desc = strs if cur_tool
+        cur_tool.append_long_desc(strs) if cur_tool
         self
       end
 

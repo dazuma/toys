@@ -776,7 +776,7 @@ describe Toys::Definition::Tool do
       test = self
       tool.add_initializer(proc { |a| set(:a, a) }, 123)
       tool.runnable = proc do
-        test.assert_equal(123, option(:a))
+        test.assert_equal(123, get(:a))
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end

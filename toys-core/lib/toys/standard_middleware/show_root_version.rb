@@ -49,6 +49,12 @@ module Toys
       DEFAULT_VERSION_FLAG_DESC = "Display the version".freeze
 
       ##
+      # Key set when the version flag is present
+      # @return [Object]
+      #
+      SHOW_VERSION_KEY = Object.new.freeze
+
+      ##
       # Create a ShowVersion middleware
       #
       # @param [String] version_string The string that should be displayed.
@@ -72,7 +78,7 @@ module Toys
       #
       def config(tool_definition, _loader)
         if @version_string && tool_definition.root?
-          tool_definition.add_flag(:_show_version, @version_flags,
+          tool_definition.add_flag(SHOW_VERSION_KEY, @version_flags,
                                    report_collisions: false, desc: @version_flag_desc)
         end
         yield
@@ -82,7 +88,7 @@ module Toys
       # This middleware displays the version.
       #
       def run(tool)
-        if tool[:_show_version]
+        if tool[SHOW_VERSION_KEY]
           @terminal.puts(@version_string)
         else
           yield

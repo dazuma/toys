@@ -71,7 +71,7 @@ leading period). Copy the following into the file, and save it:
       desc "My first tool!"
       flag :whom, default: "world"
       def run
-        puts "Hello, #{option(:whom)}!"
+        puts "Hello, #{get(:whom)}!"
       end
     end
 

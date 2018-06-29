@@ -383,6 +383,20 @@ module Toys
       end
 
       ##
+      # Append long description strings.
+      #
+      # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+      # string (which will be wrapped), or an array of strings, which will be
+      # interpreted as string fragments that will be concatenated and wrapped.
+      #
+      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] long_desc
+      #
+      def append_long_desc(long_desc)
+        check_definition_state
+        @long_desc += Utils::WrappableString.make_array(long_desc)
+      end
+
+      ##
       # Add an acceptor to the tool. This acceptor may be refereneced by name
       # when adding a flag or an arg.
       #

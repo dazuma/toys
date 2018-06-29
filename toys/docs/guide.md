@@ -265,8 +265,8 @@ Consider the following example:
       flag :shout, "-s", "--shout", desc: "Greet loudly."
 
       def run
-        greeting = "Hello, #{option(:whom)}!"
-        greeting.upcase! if option(:shout)
+        greeting = "Hello, #{get(:whom)}!"
+        greeting.upcase! if get(:shout)
         puts greeting
       end
     end
@@ -455,7 +455,7 @@ integer during parsing:
     tool "args-demo" do
       required_arg :age, accept: Integer
       def run
-        age = option(:age)  # This is an integer
+        age = get(:age)  # This is an integer
         ...
 
 If you pass a non-integer for this argument, Toys will report a usage error.
@@ -542,7 +542,7 @@ integer during parsing:
     tool "args-demo" do
       flag :age, accept: Integer
       def run
-        option(:age)  # This is an integer
+        get(:age)  # This is an integer
         ...
 
 If you pass a non-integer for this flag value, Toys will report a usage error.
@@ -652,8 +652,8 @@ Let's revisit the "greet" example we covered earlier.
       flag :shout, "-s", "--shout"
 
       def run
-        greeting = "Hello, #{option(:whom)}!"
-        greeting.upcase! if option(:shout)
+        greeting = "Hello, #{get(:whom)}!"
+        greeting.upcase! if get(:shout)
         puts greeting
       end
     end
@@ -796,7 +796,7 @@ For example, one way to create a "greet" tool, as we saw before, is to write a
     tool "greet" do
       optional_arg :whom, default: "world"
       def run
-        puts "Hello, #{option(:whom)}"
+        puts "Hello, #{get(:whom)}"
       end
     end
 
@@ -805,7 +805,7 @@ creating a file `greet.rb` inside that directory. The contents would be:
 
     optional_arg :whom, default: "world"
     def run
-      puts "Hello, #{option(:whom)}"
+      puts "Hello, #{get(:whom)}"
     end
 
 Notice that we did not use a `tool "greet"` block here. That is because the

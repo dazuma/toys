@@ -40,6 +40,21 @@ describe Toys::Loader do
     Toys::Utils::WrappableString.new(str)
   end
 
+  describe "configuration block" do
+    it "loads tools" do
+      loader.add_block(path: "test block") do
+        tool "tool-1" do
+          desc "block tool-1 description"
+        end
+      end
+      tool, remaining = loader.lookup(["tool-1"])
+      assert_equal("block tool-1 description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal("test block", tool.source_path)
+      assert_equal([], remaining)
+    end
+  end
+
   describe "path with config items" do
     before do
       loader.add_path(File.join(cases_dir, "config-items", ".toys"))
