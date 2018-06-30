@@ -63,7 +63,7 @@ module Toys
     module Tool
       ## @private
       def method_added(meth)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         cur_tool.mark_runnable if cur_tool && meth == :run
       end
 
@@ -108,7 +108,7 @@ module Toys
       # @param [Proc,nil] converter The validator.
       #
       def acceptor(name, validator = nil, converter = nil, &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, false)
         return self if cur_tool.nil?
         accept =
           case validator
@@ -134,7 +134,7 @@ module Toys
       # @param [String] name Name of the mixin
       #
       def mixin(name, &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, false)
         if cur_tool
           mixin_mod = ::Module.new do
             include ::Toys::Mixin
@@ -158,7 +158,7 @@ module Toys
       # @param [String] name Name of the template
       #
       def template(name, &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, false)
         if cur_tool
           template_class = ::Class.new do
             include ::Toys::Template
@@ -221,7 +221,7 @@ module Toys
       # @param [Object...] args Template arguments
       #
       def expand(template_class, *args)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         name = template_class.to_s
         if template_class.is_a?(::String)
@@ -268,7 +268,7 @@ module Toys
       # @param [Toys::Utils::WrappableString,String,Array<String>] str
       #
       def desc(str)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         cur_tool.desc = str if cur_tool
         self
       end
@@ -294,7 +294,7 @@ module Toys
       # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
       #
       def long_desc(*strs)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         cur_tool.append_long_desc(strs) if cur_tool
         self
       end
@@ -341,7 +341,7 @@ module Toys
                report_collisions: true,
                desc: nil, long_desc: nil,
                &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
                                  desc, long_desc)
@@ -377,7 +377,7 @@ module Toys
       def required_arg(key,
                        accept: nil, display_name: nil, desc: nil, long_desc: nil,
                        &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, nil, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
@@ -418,7 +418,7 @@ module Toys
                        default: nil, accept: nil, display_name: nil,
                        desc: nil, long_desc: nil,
                        &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
@@ -458,7 +458,7 @@ module Toys
                          default: [], accept: nil, display_name: nil,
                          desc: nil, long_desc: nil,
                          &block)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
@@ -475,7 +475,7 @@ module Toys
       # @param [Object] value The value to set.
       #
       def set(key, value = nil)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
@@ -494,7 +494,7 @@ module Toys
       # declare arguments or flags.
       #
       def disable_argument_parsing
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         cur_tool.disable_argument_parsing unless cur_tool.nil?
         self
       end
@@ -507,7 +507,7 @@ module Toys
       # @param [String...] flags The flags to disable
       #
       def disable_flag(*flags)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         cur_tool.disable_flag(*flags) unless cur_tool.nil?
         self
       end
@@ -533,7 +533,7 @@ module Toys
       # @param [Object...] args Arguments to pass to the initializer
       #
       def include(mod, *args)
-        cur_tool = DSL::Tool.activate_tool(self)
+        cur_tool = DSL::Tool.current_tool(self, true)
         return if cur_tool.nil?
         name = mod.to_s
         if mod.is_a?(::String)
@@ -574,24 +574,28 @@ module Toys
       end
 
       ## @private
-      def self.activate_tool(tool_class)
+      def self.current_tool(tool_class, activate)
+        memoize_var = activate ? :@__active_tool : :@__cur_tool
         path = tool_class.instance_variable_get(:@__path)
-        cur_tool =
-          if tool_class.instance_variable_defined?(:@__cur_tool)
-            tool_class.instance_variable_get(:@__cur_tool)
-          else
-            loader = tool_class.instance_variable_get(:@__loader)
-            words = tool_class.instance_variable_get(:@__words)
-            priority = tool_class.instance_variable_get(:@__priority)
-            cur_tool = loader.activate_tool_definition(words, priority)
-            if cur_tool.is_a?(Definition::Alias)
-              raise ToolDefinitionError,
-                    "Cannot configure #{words.join(' ').inspect} because it is an alias"
+        if tool_class.instance_variable_defined?(memoize_var)
+          cur_tool = tool_class.instance_variable_get(memoize_var)
+        else
+          loader = tool_class.instance_variable_get(:@__loader)
+          words = tool_class.instance_variable_get(:@__words)
+          priority = tool_class.instance_variable_get(:@__priority)
+          cur_tool =
+            if activate
+              loader.activate_tool_definition(words, priority)
+            else
+              loader.get_tool_definition(words, priority)
             end
-            tool_class.instance_variable_set(:@__cur_tool, cur_tool)
-            cur_tool
+          if cur_tool.is_a?(Definition::Alias)
+            raise ToolDefinitionError,
+                  "Cannot configure #{words.join(' ').inspect} because it is an alias"
           end
-        cur_tool.lock_source_path(path) if cur_tool
+          tool_class.instance_variable_set(memoize_var, cur_tool)
+        end
+        cur_tool.lock_source_path(path) if cur_tool && activate
         cur_tool
       end
 

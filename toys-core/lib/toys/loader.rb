@@ -44,6 +44,9 @@ module Toys
       end
     end
 
+    ## @private
+    LOW_PRIORITY = -999_999
+
     ##
     # Create a Loader
     #
@@ -148,7 +151,7 @@ module Toys
           break if p.empty? || p.length <= cur_prefix.length
           p = p.slice(0..-2)
         end
-        return get_tool_definition([], @min_priority) if cur_prefix.empty?
+        return get_tool_definition([], LOW_PRIORITY) if cur_prefix.empty?
         cur_prefix = cur_prefix.slice(0..-2)
       end
     end

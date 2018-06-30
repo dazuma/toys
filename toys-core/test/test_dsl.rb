@@ -164,6 +164,27 @@ describe Toys::DSL::Tool do
       acc = tool.resolve_acceptor("acc1")
       assert_kind_of(Toys::Definition::Acceptor, acc)
     end
+
+    it "works even when the hosting tool is not active" do
+      loader.add_block do
+        tool "host" do
+          desc "the one"
+        end
+      end
+      loader.add_block do
+        tool "host" do
+          desc "not the one"
+          acceptor("acc1", &:upcase)
+          tool "foo" do
+          end
+        end
+      end
+      host_tool, _remaining = loader.lookup(["host"])
+      assert_equal("the one", host_tool.desc.to_s)
+      foo_tool, _remaining = loader.lookup(["host", "foo"])
+      acc = foo_tool.resolve_acceptor("acc1")
+      assert_kind_of(Toys::Definition::Acceptor, acc)
+    end
   end
 
   describe "mixin directive" do
@@ -236,6 +257,33 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["bar"])
       assert_nil(tool.resolve_mixin("mixin1"))
     end
+
+    it "works even when the hosting tool is not active" do
+      loader.add_block do
+        tool "host" do
+          desc "the one"
+        end
+      end
+      loader.add_block do
+        tool "host" do
+          desc "not the one"
+          mixin("mixin1") do
+            to_initialize do
+              set(:foo, 1)
+            end
+            def foo
+              :foo
+            end
+          end
+          tool "foo" do
+            include "mixin1"
+          end
+        end
+      end
+      host_tool, _remaining = loader.lookup(["host"])
+      assert_equal("the one", host_tool.desc.to_s)
+      loader.lookup(["host", "foo"]) # Should allow mixin1
+    end
   end
 
   describe "template directive" do
@@ -283,6 +331,38 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["foo", "hi"])
       assert_equal(["foo", "hi"], tool.full_name)
       assert_equal(2, cli.run(["foo", "hi"]))
+    end
+
+    it "works even when the hosting tool is not active" do
+      loader.add_block do
+        tool "host" do
+          desc "the one"
+        end
+      end
+      loader.add_block do
+        tool "host" do
+          desc "not the one"
+          template("t1") do
+            def initialize(name)
+              @name = name
+            end
+            attr_reader :name
+            to_expand do |t|
+              tool t.name do
+                def run
+                  exit(2)
+                end
+              end
+            end
+          end
+          tool "foo" do
+            expand "t1", "hi"
+          end
+        end
+      end
+      host_tool, _remaining = loader.lookup(["host"])
+      assert_equal("the one", host_tool.desc.to_s)
+      loader.lookup(["host", "foo"]) # Should allow mixin1
     end
   end
 
