@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.10 / TBD
+### 0.3.10 / 2018-06-30
 
 * CHANGED: Dropped Tool#option. Use Tool#get instead.
 * CHANGED: "run" directive renamed to "to_run"
