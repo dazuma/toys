@@ -451,6 +451,42 @@ describe Toys::DSL::Tool do
       assert_equal(:value, flag.flag_type)
       assert_equal(:required, flag.value_type)
     end
+
+    it "defines a getter for a valid symbol key" do
+      loader.add_block do
+        flag(:abc_2def?)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for another valid symbol key" do
+      loader.add_block do
+        flag(:_abc_2def!)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a string key" do
+      loader.add_block do
+        flag("abc_def1?")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_def1?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a symbol representing an invalid method name" do
+      loader.add_block do
+        flag(:"1abc")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
   end
 
   describe "required_arg directive" do
@@ -491,6 +527,42 @@ describe Toys::DSL::Tool do
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
+    end
+
+    it "defines a getter for a valid symbol key" do
+      loader.add_block do
+        required(:abc_2def?)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for another valid symbol key" do
+      loader.add_block do
+        required(:_abc_2def!)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a string key" do
+      loader.add_block do
+        required("abc_def1?")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_def1?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a symbol representing an invalid method name" do
+      loader.add_block do
+        required(:"1abc")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end
 
@@ -536,6 +608,42 @@ describe Toys::DSL::Tool do
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
     end
+
+    it "defines a getter for a valid symbol key" do
+      loader.add_block do
+        optional(:abc_2def?)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for another valid symbol key" do
+      loader.add_block do
+        optional(:_abc_2def!)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a string key" do
+      loader.add_block do
+        optional("abc_def1?")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_def1?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a symbol representing an invalid method name" do
+      loader.add_block do
+        optional(:"1abc")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
   end
 
   describe "remaining_args directive" do
@@ -580,12 +688,48 @@ describe Toys::DSL::Tool do
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
     end
+
+    it "defines a getter for a valid symbol key" do
+      loader.add_block do
+        remaining(:abc_2def?)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for another valid symbol key" do
+      loader.add_block do
+        remaining(:_abc_2def!)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a string key" do
+      loader.add_block do
+        remaining("abc_def1?")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_def1?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a symbol representing an invalid method name" do
+      loader.add_block do
+        remaining(:"1abc")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
   end
 
-  describe "set directive" do
+  describe "static directive" do
     it "sets a single key" do
       loader.add_block do
-        set(:foo, "bar")
+        static(:foo, "bar")
       end
       tool, _remaining = loader.lookup([])
       assert_equal("bar", tool.default_data[:foo])
@@ -593,12 +737,48 @@ describe Toys::DSL::Tool do
 
     it "sets multiple keys" do
       loader.add_block do
-        set(foo: "bar", hello: "world", one: 2)
+        static(foo: "bar", hello: "world", one: 2)
       end
       tool, _remaining = loader.lookup([])
       assert_equal("bar", tool.default_data[:foo])
       assert_equal("world", tool.default_data[:hello])
       assert_equal(2, tool.default_data[:one])
+    end
+
+    it "defines a getter for a valid symbol key" do
+      loader.add_block do
+        static(:abc_2def?, "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for another valid symbol key" do
+      loader.add_block do
+        static(:_abc_2def!, "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a string key" do
+      loader.add_block do
+        static("abc_def1?", "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_def1?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for a symbol representing an invalid method name" do
+      loader.add_block do
+        static(:"1abc", "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end
 

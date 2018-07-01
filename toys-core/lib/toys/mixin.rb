@@ -66,8 +66,12 @@ module Toys
   #
   #       # Mixin methods are called with self set to the tool and can affect
   #       # the tool state.
+  #       def counter_value
+  #         get(:counter_value)
+  #       end
+  #
   #       def increment
-  #         self[:counter_value] += 1
+  #         set(:counter_value, counter_value + 1)
   #         logger.info("Incremented counter")
   #       end
   #     end
@@ -79,8 +83,9 @@ module Toys
   #       include MyCounterMixin, 1
   #
   #       def run
+  #         # Mixin methods can be called.
   #         5.times { increment }
-  #         puts "Final value is #{get(:counter_value)}"
+  #         puts "Final value is #{counter_value}"
   #       end
   #     end
   #

@@ -265,8 +265,8 @@ Consider the following example:
       flag :shout, "-s", "--shout", desc: "Greet loudly."
 
       def run
-        greeting = "Hello, #{get(:whom)}!"
-        greeting.upcase! if get(:shout)
+        greeting = "Hello, #{whom}!"
+        greeting.upcase! if shout
         puts greeting
       end
     end
@@ -454,7 +454,7 @@ integer during parsing:
     tool "args-demo" do
       required_arg :age, accept: Integer
       def run
-        age = get(:age)  # This is an integer
+        puts "Next year I will be #{age + 1}"  # Age is an integer
         ...
 
 If you pass a non-integer for this argument, Toys will report a usage error.
@@ -505,8 +505,8 @@ You can also declare the value to be optional:
 
     flag :whom, "--whom[=VALUE]"
     flag :whom, "--whom [VALUE]"
-    flag :whom, "-wVALUE"
-    flag :whom, "-w VALUE"
+    flag :whom, "-w[VALUE]"
+    flag :whom, "-w [VALUE]"
 
 Note that if you define multiple flags together, they will all be coerced to
 the same "type". That is, if one takes a value, they all will implicitly take
@@ -541,7 +541,7 @@ integer during parsing:
     tool "args-demo" do
       flag :age, accept: Integer
       def run
-        get(:age)  # This is an integer
+        puts "Next year I will be #{age + 1}"  # Age is an integer
         ...
 
 If you pass a non-integer for this flag value, Toys will report a usage error.
@@ -651,17 +651,38 @@ Let's revisit the "greet" example we covered earlier.
       flag :shout, "-s", "--shout"
 
       def run
-        greeting = "Hello, #{get(:whom)}!"
-        greeting.upcase! if get(:shout)
+        greeting = "Hello, #{whom}!"
+        greeting.upcase! if shout
         puts greeting
       end
     end
 
-Note how the `run` method uses the
+Note that you can produce output or interact with the console using the normal
+Ruby `$stdout`, `$stderr`, and `$stdin` streams.
+
+Note also how the `run` method can access values that were assigned by flags or
+positional arguments by just calling a method with that flag or argument name.
+When you declare a flag or argument, if the option name is a symbol that is a
+valid Ruby method name, Toys will provide a method of that name that you can
+call to get the value.
+
+If you create a flag or argument whose option name is not a symbol _or_ is not
+a valid method name, you can still get the value by calling the
 [Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
-method to access values that were assigned by flags or positional arguments.
-Note also that you can produce output or interact with the console using the
-normal Ruby `$stdout`, `$stderr`, and `$stdin` streams.
+method. For example:
+
+    tool "greet" do
+      # The name "whom-to-greet" is not a valid method name.
+      optional_arg "whom-to-greet", default: "world"
+      flag :shout, "-s", "--shout"
+
+      def run
+        # We can access the "whom-to-greet" option using the "get" method.
+        greeting = "Hello, #{get('whom-to-greet')}!"
+        greeting.upcase! if shout
+        puts greeting
+      end
+    end
 
 If a tool's `run` method finishes normally, Toys will exit with a result code
 of 0, indicating success. You may exit immediately and/or provide a nonzero
@@ -680,7 +701,26 @@ exit with a nonzero code.
 
 Finally, you may also define additional methods within the tool. These are
 available to be called by your `run` method, and can be used to decompose your
-tool implementation.
+tool implementation. Here's a contrived example:
+
+    tool "greet-many" do
+      # Support any number of arguments on the command line
+      remaining_args :whom, default: ["world"]
+      flag :shout, "-s", "--shout"
+
+      # You can define helper methods like this.
+      def greet(name)
+        greeting = "Hello, #{name}!"
+        greeting.upcase! if shout
+        puts greeting
+      end
+
+      def run
+        whom.each do |name|
+          greet(name)
+        end
+      end
+    end
 
 This should be enough to get you started implementing tools. A variety of
 additional features are available for your tool implementation and will be
@@ -795,7 +835,7 @@ For example, one way to create a "greet" tool, as we saw before, is to write a
     tool "greet" do
       optional_arg :whom, default: "world"
       def run
-        puts "Hello, #{get(:whom)}"
+        puts "Hello, #{whom}"
       end
     end
 
@@ -804,7 +844,7 @@ creating a file `greet.rb` inside that directory. The contents would be:
 
     optional_arg :whom, default: "world"
     def run
-      puts "Hello, #{get(:whom)}"
+      puts "Hello, #{whom}"
     end
 
 Notice that we did not use a `tool "greet"` block here. That is because the

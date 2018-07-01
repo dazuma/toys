@@ -10,7 +10,7 @@ Toys-Core is the command line tool framework underlying Toys. It can be used
 to create command line binaries using the internal Toys APIs.
 
 To get started using toys-core for your own command line binary, see the
-{file:docs/getting-started.md Getting Started Guide}.
+[Getting Started Guide](https://www.rubydoc.info/gems/toys-core/file/docs/getting-started.md)
 
 ## Contributing
 

@@ -34,7 +34,7 @@ Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line binary written in Ruby. However, you
 *can* use it in that way by building with the "toys-core" API, available as a
 separate gem. For more info on using toys-core, see
-https://ruby-doc.info/gems/toys-core
+https://www.rubydoc.info/gems/toys-core
 
 ## Quick Start
 
@@ -71,7 +71,7 @@ leading period). Copy the following into the file, and save it:
       desc "My first tool!"
       flag :whom, default: "world"
       def run
-        puts "Hello, #{get(:whom)}!"
+        puts "Hello, #{whom}!"
       end
     end
 

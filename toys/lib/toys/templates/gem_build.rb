@@ -106,7 +106,7 @@ module Toys
                 logger.error "Cannot push the gem when there are uncommited changes"
                 exit(1)
               end
-              exit(1) unless get(:yes) || confirm("Release #{gemfile}?")
+              exit(1) unless yes || confirm("Release #{gemfile}?")
               exec(["gem", "push", "pkg/#{gemfile}"])
               if template.tag
                 exec(["git", "tag", "v#{version}"])

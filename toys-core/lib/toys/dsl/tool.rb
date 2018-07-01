@@ -48,7 +48,7 @@ module Toys
     #       optional_arg :recipient, default: "world"
     #
     #       def run
-    #         puts "Hello, #{get(:recipient)}!"
+    #         puts "Hello, #{recipient}!"
     #       end
     #     end
     #
@@ -304,11 +304,17 @@ module Toys
       # the script may use to obtain the flag value from the context.
       # You may then provide the flags themselves in OptionParser form.
       #
-      # Attributes of the flag may be passed in as arguments to this method, or
-      # set in a block passed to this method.
+      # If the given key is a symbol representing a valid method name, then a
+      # helper method is automatically added to retrieve the value. Otherwise,
+      # if the key is a string or does not represent a valid method name, the
+      # tool can retrieve the value by calling {Toys::Tool#get}.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # Attributes of the flag may be passed in as arguments to this method, or
+      # set in a block passed to this method. If you provide a block, you can
+      # use directives in {Toys::DSL::Flag} within the block.
+      #
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [String...] flags The flags in OptionParser format.
       # @param [Object] accept An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
@@ -343,10 +349,11 @@ module Toys
                &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
-                                 desc, long_desc)
+        flag_dsl = DSL::Flag.new(flags, accept, default, handler,
+                                 report_collisions, desc, long_desc)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
+        DSL::Tool.maybe_add_getter(self, key)
         self
       end
 
@@ -355,8 +362,17 @@ module Toys
       # a key which the script may use to obtain the argument value from the
       # context.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # If the given key is a symbol representing a valid method name, then a
+      # helper method is automatically added to retrieve the value. Otherwise,
+      # if the key is a string or does not represent a valid method name, the
+      # tool can retrieve the value by calling {Toys::Tool#get}.
+      #
+      # Attributes of the arg may be passed in as arguments to this method, or
+      # set in a block passed to this method. If you provide a block, you can
+      # use directives in {Toys::DSL::Arg} within the block.
+      #
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] accept An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
@@ -375,13 +391,15 @@ module Toys
       #     this argument in a block.
       #
       def required_arg(key,
-                       accept: nil, display_name: nil, desc: nil, long_desc: nil,
+                       accept: nil, display_name: nil,
+                       desc: nil, long_desc: nil,
                        &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::Arg.new(accept, nil, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
+        DSL::Tool.maybe_add_getter(self, key)
         self
       end
       alias required required_arg
@@ -392,8 +410,17 @@ module Toys
       # context. If an optional argument is not given on the command line, the
       # value is set to the given default.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # If the given key is a symbol representing a valid method name, then a
+      # helper method is automatically added to retrieve the value. Otherwise,
+      # if the key is a string or does not represent a valid method name, the
+      # tool can retrieve the value by calling {Toys::Tool#get}.
+      #
+      # Attributes of the arg may be passed in as arguments to this method, or
+      # set in a block passed to this method. If you provide a block, you can
+      # use directives in {Toys::DSL::Arg} within the block.
+      #
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] default The default value. This is the value that will
       #     be set in the context if this argument is not provided on the command
       #     line. Defaults to `nil`.
@@ -423,6 +450,7 @@ module Toys
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
+        DSL::Tool.maybe_add_getter(self, key)
         self
       end
       alias optional optional_arg
@@ -432,8 +460,17 @@ module Toys
       # specify a key which the script may use to obtain the remaining args from
       # the context.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # If the given key is a symbol representing a valid method name, then a
+      # helper method is automatically added to retrieve the value. Otherwise,
+      # if the key is a string or does not represent a valid method name, the
+      # tool can retrieve the value by calling {Toys::Tool#get}.
+      #
+      # Attributes of the arg may be passed in as arguments to this method, or
+      # set in a block passed to this method. If you provide a block, you can
+      # use directives in {Toys::DSL::Arg} within the block.
+      #
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] default The default value. This is the value that will
       #     be set in the context if no unmatched arguments are provided on the
       #     command line. Defaults to the empty array `[]`.
@@ -463,6 +500,7 @@ module Toys
         arg_dsl = DSL::Arg.new(accept, default, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
+        DSL::Tool.maybe_add_getter(self, key)
         self
       end
       alias remaining remaining_args
@@ -470,17 +508,26 @@ module Toys
       ##
       # Set an option value statically.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # If the given key is a symbol representing a valid method name, then a
+      # helper method is automatically added to retrieve the value. Otherwise,
+      # if the key is a string or does not represent a valid method name, the
+      # tool can retrieve the value by calling {Toys::Tool#get}.
+      #
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] value The value to set.
       #
-      def set(key, value = nil)
+      def static(key, value = nil)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
+          key.each_key do |k|
+            DSL::Tool.maybe_add_getter(self, k)
+          end
         else
           cur_tool.default_data[key] = value
+          DSL::Tool.maybe_add_getter(self, key)
         end
         self
       end
@@ -607,6 +654,17 @@ module Toys
       ensure
         tool_class.instance_variable_set(:@__remaining_words, nil)
         tool_class.instance_variable_set(:@__path, nil)
+      end
+
+      ## @private
+      def self.maybe_add_getter(tool_class, key)
+        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!\?]?$/
+          tool_class.class_eval do
+            define_method(key) do
+              self[key]
+            end
+          end
+        end
       end
     end
   end

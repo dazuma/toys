@@ -110,9 +110,8 @@ module Toys
               lib_path = template.libs.join(::File::PATH_SEPARATOR)
               ruby_args << "-I#{lib_path}"
             end
-            ruby_args << "-w" if self[:warnings]
+            ruby_args << "-w" if warnings
 
-            tests = self[:tests]
             if tests.empty?
               Array(template.files).each do |pattern|
                 tests.concat(::Dir.glob(pattern))

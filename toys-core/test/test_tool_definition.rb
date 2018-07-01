@@ -787,7 +787,7 @@ describe Toys::Definition::Tool do
       assert_equal(-1, Toys::Runner.new(cli, tool).run([]))
     end
 
-    it "sets context fields" do
+    it "makes context fields available via convenience methods" do
       test = self
       tool.add_optional_arg(:arg1)
       tool.add_optional_arg(:arg2)
@@ -800,6 +800,35 @@ describe Toys::Definition::Tool do
         test.assert_equal("toys", binary_name)
         test.assert_equal(["hello", "-a"], args)
         test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["hello", "-a"]))
+    end
+
+    it "makes context fields available via get" do
+      test = self
+      tool.add_optional_arg(:arg1)
+      tool.add_optional_arg(:arg2)
+      tool.add_flag(:sw1, ["-a"])
+      tool.runnable = proc do
+        test.assert_equal(0, get(Toys::Tool::Keys::VERBOSITY))
+        test.assert_equal(test.tool, get(Toys::Tool::Keys::TOOL_DEFINITION))
+        test.assert_equal(test.tool.full_name, get(Toys::Tool::Keys::TOOL_NAME))
+        test.assert_instance_of(Logger, get(Toys::Tool::Keys::LOGGER))
+        test.assert_equal("toys", get(Toys::Tool::Keys::BINARY_NAME))
+        test.assert_equal(["hello", "-a"], get(Toys::Tool::Keys::ARGS))
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["hello", "-a"]))
+    end
+
+    it "makes options available via get" do
+      test = self
+      tool.add_optional_arg(:arg1)
+      tool.add_optional_arg(:arg2)
+      tool.add_flag(:sw1, ["-a"])
+      tool.runnable = proc do
+        test.assert_equal(true, get(:sw1))
+        test.assert_equal("hello", get(:arg1))
+        test.assert_nil(get(:arg2))
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run(["hello", "-a"]))
     end

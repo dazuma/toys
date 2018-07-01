@@ -251,15 +251,15 @@ module Toys
         loader = tool[Tool::Keys::LOADER]
         tool_definition, rest = loader.lookup(tool_name)
         help_text = Utils::HelpText.new(tool_definition, loader, tool[Tool::Keys::BINARY_NAME])
-        report_usage_error(tool, tool_name, help_text) unless rest.empty?
+        report_usage_error(tool_name, help_text) unless rest.empty?
         help_text
       end
 
-      def report_usage_error(tool, tool_name, help_text)
+      def report_usage_error(tool_name, help_text)
         terminal.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
         terminal.puts
         terminal.puts help_text.usage_string(wrap_width: terminal.width)
-        tool.exit(1)
+        Tool.exit(1)
       end
 
       def add_help_flags(tool_definition)
@@ -309,8 +309,8 @@ module Toys
         end
       end
 
-      def resolve_flags_spec(flags, tool, defaults)
-        flags = flags.call(tool) if flags.respond_to?(:call)
+      def resolve_flags_spec(flags, tool_definition, defaults)
+        flags = flags.call(tool_definition) if flags.respond_to?(:call)
         case flags
         when true, :default
           Array(defaults)

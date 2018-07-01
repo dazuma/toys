@@ -1,5 +1,10 @@
 # Release History
 
+### 0.3.11 / TBD
+
+* CHANGED: Renamed "set" directive to "static" to reduce confusion with Tool#set.
+* ADDED: Convenience methods for getting option values
+
 ### 0.3.10 / 2018-06-30
 
 * CHANGED: Dropped Tool#option. Use Tool#get instead.

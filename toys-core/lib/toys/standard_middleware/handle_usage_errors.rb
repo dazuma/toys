@@ -62,7 +62,7 @@ module Toys
           @terminal.puts(tool[Tool::Keys::USAGE_ERROR], :bright_red, :bold)
           @terminal.puts("")
           @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
-          tool.exit(@exit_code)
+          Tool.exit(@exit_code)
         else
           yield
         end

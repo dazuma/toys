@@ -156,7 +156,7 @@ module Toys
                  default: template.generate_output,
                  desc: "Whether to generate output"
           else
-            set :generate_output, template.generate_output
+            static :generate_output, template.generate_output
           end
 
           include :exec
@@ -178,7 +178,7 @@ module Toys
             stats_options = template.stats_options.dup
             stats_options << "--list-undoc" if template.fail_on_undocumented_objects
             run_options << "--fail-on-warning" if template.fail_on_warning
-            run_options << "--no-output" unless get(:generate_output)
+            run_options << "--no-output" unless generate_output
             run_options << "--output-dir" << template.output_dir if template.output_dir
             run_options << "--no-public" unless template.show_public
             run_options << "--protected" if template.show_protected

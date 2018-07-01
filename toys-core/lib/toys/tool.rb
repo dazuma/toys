@@ -272,9 +272,19 @@ module Toys
     # Exit immediately with the given status code
     #
     # @param [Integer] code The status code, which should be 0 for no error,
-    #     or nonzero for an error condition.
+    #     or nonzero for an error condition. Default is 0.
     #
-    def exit(code)
+    def exit(code = 0)
+      throw :result, code
+    end
+
+    ##
+    # Exit immediately with the given status code
+    #
+    # @param [Integer] code The status code, which should be 0 for no error,
+    #     or nonzero for an error condition. Default is 0.
+    #
+    def self.exit(code = 0)
       throw :result, code
     end
   end

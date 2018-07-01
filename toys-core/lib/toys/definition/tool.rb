@@ -465,8 +465,8 @@ module Toys
       # the script may use to obtain the flag value from the context.
       # You may then provide the flags themselves in `OptionParser` form.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Array<String>] flags The flags in OptionParser format.
       # @param [Object] accept An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
@@ -529,8 +529,8 @@ module Toys
       # a key which the script may use to obtain the argument value from the
       # context.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] accept An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
@@ -559,8 +559,8 @@ module Toys
       # context. If an optional argument is not given on the command line, the
       # value is set to the given default.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] default The default value. This is the value that will
       #     be set in the context if this argument is not provided on the command
       #     line. Defaults to `nil`.
@@ -594,8 +594,8 @@ module Toys
       # specify a key which the script may use to obtain the remaining args
       # from the context.
       #
-      # @param [Symbol] key The key to use to retrieve the value from the
-      #     execution context.
+      # @param [String,Symbol] key The key to use to retrieve the value from
+      #     the execution context.
       # @param [Object] default The default value. This is the value that will
       #     be set in the context if no unmatched arguments are provided on the
       #     command line. Defaults to the empty array `[]`.
