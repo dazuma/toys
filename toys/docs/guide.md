@@ -1866,7 +1866,7 @@ instead. For example:
     Toys::Utils::Gems.activate("highline", "~> 2.0")
 
 Note these methods are a bit different from the
-[gem method](http://ruby-doc.org/stdlib-2.5.1/libdoc/rubygems/rdoc/Kernel.html)
+[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
 provided by Rubygems. The Toys version attempts to install a missing gem for
 you, whereas Rubygems will just throw an exception.
 
