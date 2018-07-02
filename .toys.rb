@@ -36,7 +36,7 @@ end
 tool "install" do
   desc "Build and install the current gems"
 
-  include :exec
+  include :exec, exit_on_nonzero_status: true
 
   def handle_gem(gem_name, version)
     ::Dir.chdir(gem_name) do
@@ -47,7 +47,6 @@ tool "install" do
   end
 
   def run
-    configure_exec(exit_on_nonzero_status: true)
     ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
       handle_gem("toys-core", version)
@@ -59,7 +58,7 @@ end
 tool "ci" do
   desc "CI target that runs all tests for both gems"
 
-  include :exec
+  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
@@ -71,7 +70,6 @@ tool "ci" do
   end
 
   def run
-    configure_exec(exit_on_nonzero_status: true)
     handle_gem("toys-core")
     handle_gem("toys")
   end
@@ -80,14 +78,13 @@ end
 tool "yardoc" do
   desc "Generates yardoc for both gems"
 
-  include :exec
+  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
     puts("**** Generating Yardoc for #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      subcli = cli.child.add_config_path(".toys.rb")
-      exit_on_nonzero_status(subcli.run("yardoc"))
+      exec_tool(["yardoc"], cli: cli.child.add_config_path(".toys.rb"))
     end
   end
 
@@ -100,14 +97,13 @@ end
 tool "clean" do
   desc "Cleans both gems"
 
-  include :exec
+  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
     puts("**** Cleaning #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      subcli = cli.child.add_config_path(".toys.rb")
-      exit_on_nonzero_status(subcli.run("clean"))
+      exec_tool(["clean"], cli: cli.child.add_config_path(".toys.rb"))
     end
   end
 
@@ -120,11 +116,10 @@ end
 tool "release" do
   desc "Releases both gems"
 
-  include :exec
+  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def run
-    configure_exec(exit_on_nonzero_status: true)
     ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
       exit(1) unless confirm("Release toys #{version}?")
