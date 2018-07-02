@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.

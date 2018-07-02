@@ -2,6 +2,7 @@
 
 ### 0.3.11 / TBD
 
+* CHANGED: Require Ruby 2.3 or later
 * CHANGED: Renamed "set" directive to "static" to reduce confusion with Tool#set.
 * ADDED: Convenience methods for getting option values
 
