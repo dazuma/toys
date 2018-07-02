@@ -25,6 +25,9 @@ Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:
   Enabled: false
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - "builtins/**/*.rb"
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:

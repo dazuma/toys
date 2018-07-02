@@ -55,6 +55,12 @@ module Toys
     # *   An array of ANSI codes as integers.
     #
     class Terminal
+      ##
+      # Fatal terminal error.
+      #
+      class TerminalError < ::StandardError
+      end
+
       ## ANSI style code to clear styles
       CLEAR_CODE = "\e[0m"
 
@@ -207,23 +213,29 @@ module Toys
       # Confirm with the user.
       #
       # @param [String] prompt Prompt string. Defaults to `"Proceed?"`.
-      # @param [Boolean] default Default value (defaults to false).
+      # @param [Boolean,nil] default Default value, or `nil` for no default.
+      #     Uses `nil` if not specified.
       # @return [Boolean]
       #
-      def confirm(prompt = "Proceed?", default: false)
-        y = default ? "Y" : "y"
-        n = default ? "n" : "N"
+      def confirm(prompt = "Proceed?", default: nil)
+        y = default == true ? "Y" : "y"
+        n = default == false ? "n" : "N"
         write("#{prompt} (#{y}/#{n}) ")
-        resp = input.gets.to_s.strip
+        resp = input.gets
         case resp
         when /^y/i
           true
         when /^n/i
           false
-        when ""
+        when nil
+          raise TerminalError, "Cannot confirm because the input stream is at eof." if default.nil?
           default
         else
-          confirm("Please answer \"y\" or \"n\"")
+          if !resp.strip.empty? || default.nil?
+            confirm("Please answer \"y\" or \"n\"")
+          else
+            default
+          end
         end
       end
 

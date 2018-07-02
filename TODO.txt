@@ -2,6 +2,8 @@
 
 ## Immediate tasks
 
+* Copy leading comments to the top of input_file.rb strings.
+
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
@@ -14,3 +16,4 @@
 * Rake-like build/dependency features or a way to call out to rake.
 * Consider allowing period or colon as command separators.
 * Integrate with the "less" tool in exec.
+* Use stty to get terminal size in terminal.rb
