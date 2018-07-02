@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 append "namespace-1" do
   tool "tool-1-2" do
     desc "file tool-1-2 short description"

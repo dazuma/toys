@@ -48,20 +48,28 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     end
     basename = ::File.basename(path).tr(".-", "_").gsub(/\W/, "")
     name = "M#{namespace.object_id}_#{basename}"
-    const_set(name, namespace)
-    str = <<-STR
-      module #{name}
-        @tool_class.class_eval do
-          #{::IO.read(path)}
+    str = build_eval_string(name, ::IO.read(path))
+    if str
+      const_set(name, namespace)
+      ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
+        ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
+          # rubocop:disable Security/Eval
+          eval(str, __binding, path, 0)
+          # rubocop:enable Security/Eval
         end
       end
-    STR
-    ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
-      ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
-        # rubocop:disable Security/Eval
-        eval(str, __binding, path, 0)
-        # rubocop:enable Security/Eval
-      end
     end
+  end
+
+  ## @private
+  def self.build_eval_string(module_name, string)
+    index = string.index(/^\s*[^#\s]/)
+    return nil if index.nil?
+    "#{string[0, index]}\n" \
+      "module #{module_name}\n" \
+      "@tool_class.class_eval do\n" \
+      "#{string[index..-1]}\n" \
+      "end\n" \
+      "end\n"
   end
 end

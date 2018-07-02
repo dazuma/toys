@@ -2,8 +2,6 @@
 
 ## Immediate tasks
 
-* Copy leading comments to the top of input_file.rb strings.
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

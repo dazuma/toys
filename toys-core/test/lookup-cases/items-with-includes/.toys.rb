@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 load File.join(File.dirname(__dir__), "config-items", ".toys.rb")
 load File.join(File.dirname(__dir__), "config-items", ".toys")
 

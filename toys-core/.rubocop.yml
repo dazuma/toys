@@ -25,9 +25,6 @@ Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:
   Enabled: false
-Style/FrozenStringLiteralComment:
-  Exclude:
-    - "test/lookup-cases/**/*.rb"
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:

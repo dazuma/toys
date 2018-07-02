@@ -1,5 +1,13 @@
 # Release History
 
+### 0.4.0 / TBD
+
+Now declaring this alpha quality, and soft-locking the usage. Will try not to
+make further backward-incompatible changes.
+
+* CHANGED: Utils::Terminal#confirm default is now unset by default
+* IMPROVED: Toys files can now have magic comments.
+
 ### 0.3.11 / 2018-07-02
 
 * CHANGED: Require Ruby 2.3 or later

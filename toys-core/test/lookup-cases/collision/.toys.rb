@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 tool "tool-1" do
   desc "index tool-1 short description"
   long_desc "index tool-1 long description"
