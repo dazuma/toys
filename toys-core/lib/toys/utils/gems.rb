@@ -62,16 +62,17 @@ module Toys
       #
       # @param [String] name Name of the gem
       # @param [String...] requirements Version requirements
+      # @param [Boolean] default_confirm Default response for the confirmation prompt
       #
-      def self.activate(name, *requirements)
-        new.activate(name, *requirements)
+      def self.activate(name, *requirements, default_confirm: false)
+        new.activate(name, *requirements, default_confirm: default_confirm)
       end
 
       ##
       # Create a new gem activator.
       #
-      def initialize
-        @terminal = Terminal.new(output: $stderr)
+      def initialize(input: $stdin, output: $stderr)
+        @terminal = Terminal.new(input: input, output: output)
         @exec = Exec.new
       end
 
@@ -81,11 +82,12 @@ module Toys
       #
       # @param [String] name Name of the gem
       # @param [String...] requirements Version requirements
+      # @param [Boolean] default_confirm Default response for the confirmation prompt
       #
-      def activate(name, *requirements)
+      def activate(name, *requirements, default_confirm: false)
         gem(name, *requirements)
       rescue ::Gem::MissingSpecError
-        install_gem(name, requirements)
+        install_gem(name, requirements, default_confirm: default_confirm)
       rescue ::Gem::LoadError => e
         if ::ENV["BUNDLE_GEMFILE"]
           raise GemfileUpdateNeededError.new(gem_requirements_text(name, requirements),
@@ -100,9 +102,10 @@ module Toys
         "#{name.inspect}, #{requirements.map(&:inspect).join(', ')}"
       end
 
-      def install_gem(name, requirements)
+      def install_gem(name, requirements, default_confirm: false)
         requirements_text = gem_requirements_text(name, requirements)
-        response = @terminal.confirm("Gem needed: #{requirements_text}. Install?")
+        response = @terminal.confirm("Gem needed: #{requirements_text}. Install?",
+                                     default: default_confirm)
         unless response
           raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"
         end

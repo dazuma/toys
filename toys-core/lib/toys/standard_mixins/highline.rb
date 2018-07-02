@@ -37,16 +37,33 @@ module Toys
     ##
     # A mixin that provides access to the capabilities of the highline gem.
     #
+    # This mixin requires the highline gem, version 2.0 or later. It will
+    # attempt to install the gem if it is not available.
+    #
     # You may make these methods available to your tool by including the
     # following directive in your tool configuration:
     #
     #     include :highline
     #
+    # A HighLine object will then be available by calling the {#highline}
+    # method. For information on using this object, see the
+    # [Highline documentation](https://www.rubydoc.info/gems/highline). Some of
+    # the most common HighLine methods, such as `say`, are also mixed into the
+    # tool and can be called directly.
+    #
+    # You can configure the HighLine object by passing options to the `include`
+    # directive. For example:
+    #
+    #     include :highline, my_stdin, my_stdout
+    #
+    # The arguments will be passed on to the
+    # [HighLine constructor](https://www.rubydoc.info/gems/highline/HighLine:initialize).
+    #
     module Highline
       include Mixin
 
       ##
-      # Context key for the executor object.
+      # Context key for the highline object.
       # @return [Object]
       #
       KEY = ::Object.new.freeze

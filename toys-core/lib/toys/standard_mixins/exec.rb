@@ -45,6 +45,23 @@ module Toys
     # This is a frontend for {Toys::Utils::Exec}. More information is
     # available in that class's documentation.
     #
+    # ## Configuration Options
+    #
+    # Subprocesses may be configured using the options in the
+    # {Toys::Utils::Exec} class. These include a variety of options supported
+    # by `Process#spawn`, and some options supported by {Toys::Utils::Exec}
+    # itself.
+    #
+    # In addition, this mixin supports one more option,
+    # `exit_on_nonzero_status`. When set to true, if any subprocess returns a
+    # nonzero result code, the tool will immediately exit with that same code,
+    # similar to `set -e` in a bash script.
+    #
+    # You can set initial configuration by passing options to the `include`
+    # directive. For example:
+    #
+    #     include :exec, exit_on_nonzero_status: true
+    #
     module Exec
       include Mixin
 
@@ -56,6 +73,7 @@ module Toys
 
       to_initialize do |opts = {}|
         tool = self
+        opts = Exec._setup_exec_opts(opts, tool)
         tool[KEY] = Utils::Exec.new(opts) do |k|
           case k
           when :logger
@@ -69,8 +87,10 @@ module Toys
       ##
       # Set default configuration keys.
       #
-      # @param [Hash] opts The default options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} docs.
+      # All options listed in the {Toys::Utils::Exec} documentation are
+      # supported, plus the `exit_on_nonzero_status` option.
+      #
+      # @param [Hash] opts The default options.
       #
       def configure_exec(opts = {})
         self[KEY].configure_defaults(Exec._setup_exec_opts(opts, self))
@@ -84,8 +104,9 @@ module Toys
       # yielded to it, allowing you to interact with the subprocess streams.
       #
       # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. All options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     the subprocess streams.
       #
@@ -103,8 +124,9 @@ module Toys
       # yielded to it, allowing you to interact with the subprocess streams.
       #
       # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. All options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     for the subprocess streams.
       #
@@ -123,8 +145,9 @@ module Toys
       # yielded to it, allowing you to interact with the subprocess streams.
       #
       # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -143,8 +166,9 @@ module Toys
       # yielded to it, allowing you to interact with the subprocess streams.
       #
       # @param [String,Array<String>] cmd The tool to execute.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -163,8 +187,9 @@ module Toys
       # Captures standard out and returns it as a string.
       #
       # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. All options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       #
       # @return [String] What was written to standard out.
       #
@@ -178,8 +203,9 @@ module Toys
       # Captures standard out and returns it as a string.
       #
       # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. All options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       #
       # @return [String] What was written to standard out.
       #
@@ -193,8 +219,9 @@ module Toys
       # Captures standard out and returns it as a string.
       #
       # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       #
       # @return [String] What was written to standard out.
       #
@@ -209,8 +236,9 @@ module Toys
       # Captures standard out and returns it as a string.
       #
       # @param [String,Array<String>] cmd The tool to execute.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       #
       # @return [String] What was written to standard out.
       #
@@ -223,8 +251,9 @@ module Toys
       # Execute the given string in a shell. Returns the exit code.
       #
       # @param [String] cmd The shell command to execute.
-      # @param [Hash] opts The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @param [Hash] opts The command options. All options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
       #
       # @return [Integer] The exit code
       #

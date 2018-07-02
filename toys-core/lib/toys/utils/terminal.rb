@@ -207,15 +207,21 @@ module Toys
       # Confirm with the user.
       #
       # @param [String] prompt Prompt string. Defaults to `"Proceed?"`.
+      # @param [Boolean] default Default value (defaults to false).
       # @return [Boolean]
       #
-      def confirm(prompt = "Proceed?")
-        write("#{prompt} (y/n) ")
-        resp = input.gets
-        if resp =~ /^y/i
+      def confirm(prompt = "Proceed?", default: false)
+        y = default ? "Y" : "y"
+        n = default ? "n" : "N"
+        write("#{prompt} (#{y}/#{n}) ")
+        resp = input.gets.to_s.strip
+        case resp
+        when /^y/i
           true
-        elsif resp =~ /^n/i
+        when /^n/i
           false
+        when ""
+          default
         else
           confirm("Please answer \"y\" or \"n\"")
         end

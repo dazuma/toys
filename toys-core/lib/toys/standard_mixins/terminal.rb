@@ -43,6 +43,18 @@ module Toys
     #
     #     include :terminal
     #
+    # A Terminal object will then be available by calling the {#terminal}
+    # method. For information on using this object, see the documentation for
+    # {Toys::Utils::Terminal}. Some of the most useful methods are also mixed
+    # into the tool and can be called directly.
+    #
+    # You can configure the Terminal object by passing options to the `include`
+    # directive. For example:
+    #
+    #     include :terminal, styled: true
+    #
+    # The arguments will be passed on to {Toys::Utils::Terminal#initialize}.
+    #
     module Terminal
       include Mixin
 
@@ -81,8 +93,8 @@ module Toys
       ##
       # @see Toys::Utils::Terminal#confirm
       #
-      def confirm(prompt = "Proceed?")
-        terminal.confirm(prompt)
+      def confirm(prompt = "Proceed?", default: false)
+        terminal.confirm(prompt, default: default)
       end
 
       ##
