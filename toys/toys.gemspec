@@ -41,12 +41,14 @@ require "toys/version"
 
   spec.summary = "Framework for creating personal command line tools"
   spec.description =
-    "Toys is a command line binary that lets you build your own personal" \
-    " suite of command line tools using a Ruby DSL. Toys handles argument" \
-    " parsing, error reporting, logging, help text, and many other details" \
-    " for you. It is designed for software developers, IT specialists, and" \
-    " other power users who want to write and organize scripts to automate" \
-    " their workflows."
+    "Toys is a configurable command line tool. Write commands using a simple" \
+    " DSL, and Toys will take care of all the command line details such as" \
+    " argument parsing, online help, and error reporting. Commands can be" \
+    " global or scoped to particular directories. Toys is designed for" \
+    " software developers, IT specialists, and other power users who want to" \
+    " write and organize scripts to automate their workflows. It can also be" \
+    " used as a Rake replacement, providing a more natural command line" \
+    " interface for your project's build tasks."
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
@@ -64,6 +66,6 @@ require "toys/version"
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"
-  spec.add_development_dependency "rubocop", "~> 0.55.0"
-  spec.add_development_dependency "yard", "~> 0.9"
+  spec.add_development_dependency "rubocop", "~> 0.57.2"
+  spec.add_development_dependency "yard", "~> 0.9.14"
 end

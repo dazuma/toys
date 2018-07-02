@@ -1,40 +1,12 @@
 # Toys
 
-Toys is a command line binary that lets you build your own personal suite of
-command line tools using a Ruby DSL. Toys handles argument parsing, error
-reporting, logging, help text, and many other details for you. Toys is designed
-for software developers, IT specialists, and other power users who want to
-write and organize scripts to automate their workflows.
-
-I wrote Toys because I was accumulating dozens of ad hoc Ruby scripts that I
-had written to automate various tasks in my workflow, everything from
-refreshing credentials, to displaying git history in my favorite format, to
-running builds and tests of complex multi-component projects. It was becoming
-difficult to remember which scripts did what, and what arguments each required,
-and I was constantly digging back into their source just to remember how to use
-them. Furthermore, when writing new scripts, I was repeating the same
-OptionParser boilerplate and common functionality.
-
-Toys was designed to address those problems by providing a framework for
-writing and organizing your own command line scripts. You provide the actual
-functionality, and Toys takes care of all the other details expected from a
-good command line tool. It provides a streamlined interface for defining and
-handling command line flags and positional arguments, and sensible ways to
-organize shared code. It automatically generates help text, so you can see
-usage information at a glance, and it also provides a search feature to help
-you find the script you need.
-
-Toys can also be used to share scripts. For example, it can be used instead of
-Rake to provide build and test scripts for a project—tools that, unlike Rake
-tasks, can be invoked and passed arguments using familiar unix command line
-arguments and flags. The Toys github repo itself comes with Toys configs
-instead of Rakefiles.
-
-Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line binary written in Ruby. However, you
-*can* use it in that way by building with the "toys-core" API, available as a
-separate gem. For more info on using toys-core, see
-https://www.rubydoc.info/gems/toys-core
+Toys is a configurable command line tool. Write commands using a simple DSL,
+and Toys will take care of all the command line details such as argument
+parsing, online help, and error reporting. Commands can be global or scoped to
+particular directories. Toys is designed for software developers, IT
+specialists, and other power users who want to write and organize scripts to
+automate their workflows. It can also be used as a Rake replacement, providing
+a more natural command line interface for your project's build tasks.
 
 ## Quick Start
 
@@ -88,8 +60,8 @@ flags. It can also validate arguments. Try this:
 
     toys greet --bye
 
-Notice that Toys automatically generated a usage summary for your tool. It can
-also automatically generate a full help screen, which you can view using the
+Notice that Toys automatically generated a usage summary for your tool. It also
+automatically generates a full help screen, which you can view using the
 `--help` flag:
 
     toys greet --help
@@ -101,7 +73,7 @@ also that the tools you create in the config file are available only in this
 directory and its subdirectories. If you move into a different directory tree,
 Toys will instead look for a config file in that directory. Thus, you can
 define tools scoped to particular projects. You can also define "global" tools
-by creating a `.toys.rb` config in your home directory.
+by creating a `.toys.rb` file in your home directory.
 
 Toys provides a rich set of useful libraries for writing tools and subtools. It
 gives you a logger and automatically provides flags to control verbosity of log
@@ -113,14 +85,37 @@ third-party libraries such as Highline and TTY.
 For a more detailed look at Toys, see the
 [User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
 
-## Contributing
+## Why Toys?
 
-While we appreciate contributions, please note that this software is currently
-highly experimental, and the code is evolving very rapidly. Please contact the
-author before embarking on a major pull request. More detailed contribution
-guidelines will be provided when the software stabilizes further.
+I wrote Toys because I was accumulating dozens of ad hoc Ruby scripts that I
+had written to automate various tasks in my workflow, everything from
+refreshing credentials, to displaying git history in my favorite format, to
+running builds and tests of complex multi-component projects. It was becoming
+difficult to remember which scripts did what, and what arguments each required,
+and I was constantly digging back into their source just to remember how to use
+them. Furthermore, when writing new scripts, I was repeating the same
+OptionParser boilerplate and common functionality.
 
-The source can be found on Github at https://github.com/dazuma/toys
+Toys was designed to address those problems by providing a framework for
+writing and organizing your own command line scripts. You provide the actual
+functionality, and Toys takes care of all the other details expected from a
+good command line tool. It provides a streamlined interface for defining and
+handling command line flags and positional arguments, and sensible ways to
+organize shared code. It automatically generates help text, so you can see
+usage information at a glance, and it also provides a search feature to help
+you find the script you need.
+
+Toys can also be used to share scripts. For example, it can be used instead of
+Rake to provide build and test scripts for a project—tools that, unlike Rake
+tasks, can be invoked and passed arguments using familiar unix command line
+arguments and flags. The Toys github repo itself comes with Toys config files
+instead of Rakefiles.
+
+Unlike most command line frameworks, Toys is *not primarily* designed to help
+you build and ship a custom command line binary written in Ruby. However, you
+*can* use it in that way by building with the "toys-core" API, available as a
+separate gem. For more info on using toys-core, see
+https://www.rubydoc.info/gems/toys-core
 
 ## License
 
@@ -129,3 +124,5 @@ Copyright 2018 Daniel Azuma
 This software is licensed under the 3-clause BSD license.
 
 See the LICENSE.md file for more information.
+
+The source can be found on Github at https://github.com/dazuma/toys

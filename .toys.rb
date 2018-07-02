@@ -32,6 +32,14 @@ unless ::ENV["TOYS_CORE_LIB_PATH"] == ::File.absolute_path(::File.join(__dir__, 
   ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
 end
 
+gems = ::Toys::Utils::Gems.new(suppress_confirm: true)
+gems.activate "highline", "~> 2.0"
+gems.activate "minitest", "~> 5.11"
+gems.activate "minitest-focus", "~> 1.1"
+gems.activate "minitest-rg", "~> 5.2"
+gems.activate "rubocop", "~> 0.57.2"
+gems.activate "yard", "~> 0.9.14"
+
 
 tool "install" do
   desc "Build and install the current gems"

@@ -161,7 +161,7 @@ module Toys
           tool.exit(-1)
         end
       end
-      @tool_definition.middleware_stack.reverse.each do |middleware|
+      @tool_definition.middleware_stack.reverse_each do |middleware|
         executor = make_executor(middleware, tool, executor)
       end
       catch(:result) do

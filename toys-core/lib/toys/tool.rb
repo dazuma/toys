@@ -265,9 +265,14 @@ module Toys
     #
     # @param [String] name Name of the gem
     # @param [String...] requirements Version requirements
+    # @param [Boolean] suppress_confirm Suppress the confirmation prompt and just use the given
+    #     `default_confirm` value.
+    # @param [Boolean] default_confirm Default response for the confirmation prompt
     #
-    def gem(name, *requirements)
-      (@__data[Utils::Gems] ||= Utils::Gems.new).activate(name, *requirements)
+    def gem(name, *requirements, suppress_confirm: false, default_confirm: true)
+      (@__data[Utils::Gems] ||= Utils::Gems.new).activate(name, *requirements,
+                                                          suppress_confirm: suppress_confirm,
+                                                          default_confirm: default_confirm)
     end
 
     ##
