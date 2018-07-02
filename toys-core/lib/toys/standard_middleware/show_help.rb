@@ -289,13 +289,16 @@ module Toys
       def add_recursive_flags(tool_definition)
         recursive_flags = resolve_flags_spec(@recursive_flags, tool_definition,
                                              DEFAULT_RECURSIVE_FLAGS)
-        unless recursive_flags.empty?
+        if recursive_flags.empty?
+          tool_definition.default_data[RECURSIVE_SUBTOOLS_KEY] = @default_recursive
+        else
           tool_definition.add_flag(
             RECURSIVE_SUBTOOLS_KEY, recursive_flags,
             report_collisions: false, default: @default_recursive,
             desc: "Show all subtools recursively (default is #{@default_recursive})"
           )
         end
+        recursive_flags
       end
 
       def add_search_flags(tool_definition)
@@ -307,6 +310,7 @@ module Toys
             desc: "Search subtools for the given regular expression"
           )
         end
+        search_flags
       end
 
       def resolve_flags_spec(flags, tool_definition, defaults)

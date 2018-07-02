@@ -1,0 +1,65 @@
+# Copyright 2018 Daniel Azuma
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# * Neither the name of the copyright holder, nor the names of any other
+#   contributors to this software, may be used to endorse or promote products
+#   derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+;
+
+require "helper"
+require "stringio"
+require "toys/standard_middleware/show_root_version"
+
+describe Toys::StandardMiddleware::ShowRootVersion do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
+    end
+  }
+  let(:binary_name) { "toys" }
+  let(:version_string) { "v1.2.3" }
+  let(:string_io) { ::StringIO.new }
+  let(:cli) {
+    middleware = [[Toys::StandardMiddleware::ShowRootVersion,
+                   version_string: version_string, stream: string_io]]
+    Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: middleware)
+  }
+
+  it "displays a version string for the root" do
+    cli.add_config_block do
+      tool "foo" do
+      end
+    end
+    assert_equal(0, cli.run("--version"))
+    assert_equal(version_string, string_io.string.strip)
+  end
+
+  it "does not alter non-root" do
+    cli.add_config_block do
+      tool "foo" do
+      end
+    end
+    refute_equal(0, cli.run("foo", "--version"))
+  end
+end

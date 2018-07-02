@@ -44,9 +44,6 @@ module Toys
       end
     end
 
-    ## @private
-    LOW_PRIORITY = -999_999
-
     ##
     # Create a Loader
     #
@@ -86,6 +83,7 @@ module Toys
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
+      get_tool_definition([], -999_999)
     end
 
     ##
@@ -151,7 +149,7 @@ module Toys
           break if p.empty? || p.length <= cur_prefix.length
           p = p.slice(0..-2)
         end
-        return get_tool_definition([], LOW_PRIORITY) if cur_prefix.empty?
+        raise "Unexpected error" if cur_prefix.empty?
         cur_prefix = cur_prefix.slice(0..-2)
       end
     end

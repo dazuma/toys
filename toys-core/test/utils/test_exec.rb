@@ -33,6 +33,9 @@ require "fileutils"
 
 describe Toys::Utils::Exec do
   let(:exec) { Toys::Utils::Exec.new }
+  let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
+  let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
+  let(:output_path) { ::File.join(tmp_dir, "output.txt") }
 
   describe "exit codes" do
     it "detects zero exit codes" do
@@ -120,9 +123,6 @@ describe Toys::Utils::Exec do
     end
 
     it "handles file redirects" do
-      tmp_dir = ::File.join(::File.dirname(__dir__), "tmp")
-      input_path = ::File.join(__dir__, "data", "input.txt")
-      output_path = ::File.join(tmp_dir, "output.txt")
       ::FileUtils.mkdir_p(tmp_dir)
       ::FileUtils.rm_rf(output_path)
       ::Timeout.timeout(1) do
@@ -133,9 +133,6 @@ describe Toys::Utils::Exec do
     end
 
     it "interprets bare strings as file names" do
-      tmp_dir = ::File.join(::File.dirname(__dir__), "tmp")
-      input_path = ::File.join(__dir__, "data", "input.txt")
-      output_path = ::File.join(tmp_dir, "output.txt")
       ::FileUtils.mkdir_p(tmp_dir)
       ::FileUtils.rm_rf(output_path)
       ::Timeout.timeout(1) do
@@ -194,9 +191,6 @@ describe Toys::Utils::Exec do
     end
 
     it "handles file redirects" do
-      tmp_dir = ::File.join(::File.dirname(__dir__), "tmp")
-      input_path = ::File.join(__dir__, "data", "input.txt")
-      output_path = ::File.join(tmp_dir, "output.txt")
       ::FileUtils.mkdir_p(tmp_dir)
       ::FileUtils.rm_rf(output_path)
       ::Timeout.timeout(1) do
