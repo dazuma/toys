@@ -2,8 +2,6 @@
 
 ## Immediate tasks
 
-* Document how to use third party gems like tty-*.
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices

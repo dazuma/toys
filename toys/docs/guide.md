@@ -1124,8 +1124,6 @@ that makes Highline available. It also automatically installs the highline
 gem (version 2.x) if it is not available. For more information, see the
 [Toys::StandardMixins::Highline mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Highline).
 
-Additional mixins are forthcoming...
-
 ## Sharing Code
 
 As you accumulate additional and more complex tools, you may find that some of
@@ -1679,6 +1677,144 @@ essentially identical to the Toys files provided for the **toys** and
       end
     end
 
+## Using Third-Party Gems
+
+The Ruby community has developed many resources for building command line
+tools, including a variety of gems that provide alternate command line parsing,
+control of the ANSI terminal, formatted output such as trees and tables, and
+effects such as hidden input, progress bars, various subprocess tools, and so
+forth.
+
+This section describes how to use a third-party gem in your tool.
+
+### Activating Gems
+
+The toys gem itself includes only two gems: **toys** and **toys-core**. It has
+no other gem dependencies. However, if you want to use a third-party gem in
+your tool, Toys provides a convenient mechanism to ensure the gem is installed.
+
+If the gem is needed to *define* the tool, use the `gem` directive to ensure
+the gem is installed and activated. This takes the name of the gem, and an
+optional set of version requirements. If a gem matching the given version
+requirements is installed, it is activated. If not, the gem is installed (which
+the user can confirm or abort). Or, if Toys is being run in a bundle, a message
+is printed informing the user that they need to add the gem to their Gemfile.
+
+For example, here's a way to configure a tool with flags for each of the
+HighLine styles:
+
+    tool "highline-styles-demo" do
+      gem "highline", "~> 2.0"
+      require "highline"
+      HighLine::BuiltinStyles::STYLES.each do |style|
+        style = style.downcase
+        flag style.to_sym, "--#{style}", "Apply #{style} to the text"
+      end
+      def run
+        # ...
+
+If the gem is *not* needed to define the tool, but is needed to *run* the tool,
+then you can call
+[Toys::Tool#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:gem) from
+your `run` method. Here's an example:
+
+    tool "rake" do
+      disable_argument_passing
+      def run
+        gem "rake", "~> 12.0"
+        Kernel.exec(["rake"] + args)
+      end
+    end
+
+If a gem satisfying the given version constraints is already activated, it
+remains active. If a gem with a conflicting version is already activated, an
+exception is raised.
+
+If you are not in the Toys DSL context—e.g. you are writing a class-based
+mixin—you should use
+[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems:activate)
+instead. For example:
+
+    Toys::Utils::Gems.activate("highline", "~> 2.0")
+
+Note these methods are a bit different from the
+[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
+provided by Rubygems. The Toys version attempts to install a missing gem for
+you, whereas Rubygems will just throw an exception.
+
+### Useful Gems
+
+Now that you know how to ensure a gem is installed, let's look at some third-
+party gems that you might find useful when writing tools.
+
+We already saw how to use the **highline** gem. Highline generally provides two
+features: terminal styling, and prompts. For these capabilities and many more,
+you might also consider [TTY](https://github.com/piotrmurach/tty). It comprises
+a suite of gems that you can use separately or in tandem. Here are a few
+examples.
+
+To produce styled output, consider
+[Pastel](https://github.com/piotrmurach/pastel).
+
+    tool "fancy-output" do
+      def run
+        gem "pastel", "~> 0.7"
+        require "pastel"
+        pastel = Pastel.new
+        puts pastel.red("Rubies!")
+      end
+    end
+
+To create rich user prompts, consider
+[tty-prompt](https://github.com/piotrmurach/tty-prompt).
+
+    tool "favorite-language" do
+      def run
+        gem "tty-prompt", "~> 0.16"
+        require "tty-prompt"
+        prompt = TTY::Prompt.new
+        lang = prompt.select("What is your favorite language?",
+                             %w[Elixir Java Python Ruby Rust Other])
+        prompt.say("#{lang} is awesome!")
+      end
+    end
+
+To create tabular output, consider
+[tty-table](https://github.com/piotrmurach/tty-table).
+
+    tool "matrix" do
+      def run
+        gem "tty-table", "~> 0.10"
+        require "tty-table"
+        table = TTY::Table.new(["Language", "Creator"],
+                               [["Ruby", "Matz"],
+                                ["Python", "Guido"],
+                                ["Elixir", "Jose"]])
+        puts table.render(:ascii)
+      end
+    end
+
+To show progress, consider
+[tty-progressbar](https://github.com/piotrmurach/tty-progressbar) for
+deterministic processes, or
+[tty-spinner](https://github.com/piotrmurach/tty-spinner) for
+non-deterministic.
+
+    tool "waiting" do
+      def run
+        gem "tty-progressbar", "~> 0.15"
+        require "tty-progressbar"
+        bar = TTY::ProgressBar.new("Waiting [:bar]", total: 30)
+        30.times do
+          sleep(0.1)
+          bar.advance(1)
+        end
+      end
+    end
+
+A variety of other useful gems can also be found in
+[this article](https://lab.hookops.com/ruby-cli-gems.html).
+
 ## Advanced Tool Definition Techniques
 
 This section covers some additional features that are often useful for writing
@@ -1814,61 +1950,6 @@ Here is an example that wraps calls to git:
         Kernel.exec(["git"] + args)
       end
     end
-
-### Activating Gems
-
-Sometimes implementing a tool will require a third-party gem. Some mixins also
-utilize a gem. Toys provides a way to help the user install such gems if
-needed.
-
-If the gem is needed to *define* the tool, use the `gem` directive to ensure
-the gem is installed and activated. This takes the name of the gem, and an
-optional set of version requirements. If a gem matching the given version
-requirements is installed, it is activated. If not, the gem is installed (which
-the user can confirm or abort). Or, if Toys is being run in a bundle, a message
-is printed informing the user that they need to add the gem to their Gemfile.
-
-For example, here's a way to configure a tool with flags for each of the
-HighLine styles:
-
-    tool "highline-styles-demo" do
-      gem "highline", "~> 2.0"
-      require "highline"
-      HighLine::BuiltinStyles::STYLES.each do |style|
-        style = style.downcase
-        flag style.to_sym, "--#{style}", "Apply #{style} to the text"
-      end
-      def run
-        # ...
-
-If the gem is *not* needed to define the tool, but is needed to *run* the tool,
-then you can call
-[Toys::Tool#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:gem) from
-your `run` method. Here's an example:
-
-    tool "rake" do
-      disable_argument_passing
-      def run
-        gem "rake", "~> 12.0"
-        Kernel.exec(["rake"] + args)
-      end
-    end
-
-If a gem satisfying the given version constraints is already activated, it
-remains active. If a gem with a conflicting version is already activated, an
-exception is raised.
-
-If you are not in the Toys DSL context—e.g. you are writing a class-based
-mixin—you should use
-[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems:activate)
-instead. For example:
-
-    Toys::Utils::Gems.activate("highline", "~> 2.0")
-
-Note these methods are a bit different from the
-[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
-provided by Rubygems. The Toys version attempts to install a missing gem for
-you, whereas Rubygems will just throw an exception.
 
 ## Toys Administration Using the System Tools
 
