@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.2
+  TargetRubyVersion: 2.3
 
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
@@ -28,6 +28,8 @@ Style/FormatStringToken:
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
+  Enabled: false
+Style/MixinGrouping:
   Enabled: false
 Style/PerlBackrefs:
   Enabled: false

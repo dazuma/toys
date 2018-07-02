@@ -29,7 +29,65 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "minitest/autorun"
-require "minitest/focus"
-require "minitest/rg"
-require "toys-core"
+require "helper"
+require "toys/standard_mixins/terminal"
+
+describe Toys::StandardMixins::Terminal do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
+    end
+  }
+  let(:binary_name) { "toys" }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+
+  it "provides a terminal instance" do
+    cli.add_config_block do
+      tool "foo" do
+        include :terminal
+        def run
+          exit(terminal.is_a?(::Toys::Utils::Terminal) ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("foo"))
+  end
+
+  it "supports styled puts with forced style" do
+    cli.add_config_block do
+      tool "foo" do
+        include :terminal, styled: true
+        def run
+          puts "hello", :bold
+        end
+      end
+      tool "bar" do
+        include :exec
+        def run
+          result = capture_tool(["foo"])
+          exit(result == "\e[1mhello\n\e[0m" ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("bar"))
+  end
+
+  it "supports unstyled puts by default when capturing" do
+    cli.add_config_block do
+      tool "foo" do
+        include :terminal
+        def run
+          puts "hello", :bold
+        end
+      end
+      tool "bar" do
+        include :exec
+        def run
+          result = capture_tool(["foo"])
+          exit(result == "hello\n" ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("bar"))
+  end
+end

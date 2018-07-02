@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -39,13 +41,13 @@ module Toys
       # Default version requirements for the yard gem.
       # @return [String]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 0.9".freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 0.9"
 
       ##
       # Default tool name
       # @return [String]
       #
-      DEFAULT_TOOL_NAME = "yardoc".freeze
+      DEFAULT_TOOL_NAME = "yardoc"
 
       ##
       # Create the template settings for the Yardoc template.
@@ -197,20 +199,22 @@ module Toys
 
             result = exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) })
             if result.error?
-              puts("Yardoc encountered errors", :red, :bold) unless verbosity < 0
+              puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
               exit(1)
             end
             unless stats_options.empty?
               result = exec_proc(proc { ::YARD::CLI::Stats.run(*stats_options) }, out: :capture)
               puts result.captured_out
               if result.error?
-                puts("Yardoc encountered errors", :red, :bold) unless verbosity < 0
+                puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
                 exit(1)
               end
               exit_on_nonzero_status(result)
               if template.fail_on_undocumented_objects
                 if result.captured_out =~ /Undocumented\sObjects:/
-                  puts("Yardoc encountered undocumented objects", :red, :bold) unless verbosity < 0
+                  unless verbosity.negative?
+                    puts("Yardoc encountered undocumented objects", :red, :bold)
+                  end
                   exit(1)
                 end
               end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -32,5 +34,5 @@ module Toys
   # Current version of the Toys command line binary
   # @return [String]
   #
-  VERSION = "0.3.11.dev".freeze
+  VERSION = "0.3.11.dev"
 end

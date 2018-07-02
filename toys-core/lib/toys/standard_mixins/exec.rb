@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -238,7 +240,7 @@ module Toys
       def exit_on_nonzero_status(status)
         status = status.exit_code if status.respond_to?(:exit_code)
         status = status.exitstatus if status.respond_to?(:exitstatus)
-        exit(status) unless status.zero?
+        Tool.exit(status) unless status.zero?
         0
       end
 

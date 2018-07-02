@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -46,7 +48,7 @@ module Toys
       # Default description for the version flags
       # @return [String]
       #
-      DEFAULT_VERSION_FLAG_DESC = "Display the version".freeze
+      DEFAULT_VERSION_FLAG_DESC = "Display the version"
 
       ##
       # Key set when the version flag is present

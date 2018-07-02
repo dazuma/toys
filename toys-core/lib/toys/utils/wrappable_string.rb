@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -113,7 +115,7 @@ module Toys
             line = "#{line} #{frag}"
           end
         end
-        lines << line if line_len > 0
+        lines << line if line_len.positive?
         lines
       end
 

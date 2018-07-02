@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -294,8 +296,7 @@ module Toys
       # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
       #
       def long_desc(*strs)
-        cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.append_long_desc(strs) if cur_tool
+        DSL::Tool.current_tool(self, true)&.append_long_desc(strs)
         self
       end
 
@@ -541,8 +542,7 @@ module Toys
       # declare arguments or flags.
       #
       def disable_argument_parsing
-        cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.disable_argument_parsing unless cur_tool.nil?
+        DSL::Tool.current_tool(self, true)&.disable_argument_parsing
         self
       end
 
@@ -554,8 +554,7 @@ module Toys
       # @param [String...] flags The flags to disable
       #
       def disable_flag(*flags)
-        cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.disable_flag(*flags) unless cur_tool.nil?
+        DSL::Tool.current_tool(self, true)&.disable_flag(*flags)
         self
       end
 

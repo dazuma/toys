@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -51,7 +53,7 @@ require "toys/version"
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
                ::Dir.glob("*.md") + ::Dir.glob("docs/**/*.md") +
                ::Dir.glob("bin/*") + [".yardopts"]
-  spec.required_ruby_version = ">= 2.2.0"
+  spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
 
   spec.bindir = "bin"

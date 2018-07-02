@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -45,37 +47,37 @@ module Toys
     # Standard toys configuration directory name
     # @return [String]
     #
-    CONFIG_DIR_NAME = ".toys".freeze
+    CONFIG_DIR_NAME = ".toys"
 
     ##
     # Standard toys configuration file name
     # @return [String]
     #
-    CONFIG_FILE_NAME = ".toys.rb".freeze
+    CONFIG_FILE_NAME = ".toys.rb"
 
     ##
     # Standard index file name in a toys configuration
     # @return [String]
     #
-    INDEX_FILE_NAME = ".toys.rb".freeze
+    INDEX_FILE_NAME = ".toys.rb"
 
     ##
     # Standard toys preload file name
     # @return [String]
     #
-    PRELOAD_FILE_NAME = ".preload.rb".freeze
+    PRELOAD_FILE_NAME = ".preload.rb"
 
     ##
     # Name of standard toys binary
     # @return [String]
     #
-    BINARY_NAME = "toys".freeze
+    BINARY_NAME = "toys"
 
     ##
     # Short description for the standard root tool
     # @return [String]
     #
-    DEFAULT_ROOT_DESC = "Your personal command line tool".freeze
+    DEFAULT_ROOT_DESC = "Your personal command line tool"
 
     ##
     # Help text for the standard root tool
@@ -85,13 +87,13 @@ module Toys
       "Toys is your personal command line tool. You can add to the list of commands below by" \
       " writing scripts in Ruby using a simple DSL, and Toys will organize and document them" \
       " and make them available globally or scoped to specific directories that you choose." \
-      " For detailed information, see https://www.rubydoc.info/gems/toys".freeze
+      " For detailed information, see https://www.rubydoc.info/gems/toys"
 
     ##
     # Short description for the verion flag
     # @return [String]
     #
-    DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys.".freeze
+    DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys."
 
     ##
     # Create a standard CLI, configured with the appropriate paths and

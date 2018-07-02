@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -46,9 +48,10 @@ require "toys/core_version"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("*.md") +
                ::Dir.glob("docs/**/*.md") + [".yardopts"]
-  spec.required_ruby_version = ">= 2.2.0"
+  spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
 
+  spec.add_development_dependency "highline", "~> 2.0"
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -45,7 +47,7 @@ module Toys
       # Default tool name
       # @return [String]
       #
-      DEFAULT_TOOL_NAME = "rubocop".freeze
+      DEFAULT_TOOL_NAME = "rubocop"
 
       ##
       # Create the template settings for the Rubocop template.

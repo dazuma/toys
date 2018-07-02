@@ -29,7 +29,46 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "minitest/autorun"
-require "minitest/focus"
-require "minitest/rg"
-require "toys-core"
+require "helper"
+require "toys/standard_mixins/highline"
+
+describe Toys::StandardMixins::Highline do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
+    end
+  }
+  let(:binary_name) { "toys" }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+
+  it "provides a highline instance" do
+    cli.add_config_block do
+      tool "foo" do
+        include :highline
+        def run
+          exit(highline.is_a?(::HighLine) ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("foo"))
+  end
+
+  it "supports say" do
+    cli.add_config_block do
+      tool "foo" do
+        include :highline
+        def run
+          say "hello"
+        end
+      end
+      tool "bar" do
+        include :exec
+        def run
+          result = capture_tool(["foo"])
+          exit(result == "hello\n" ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("bar"))
+  end
+end

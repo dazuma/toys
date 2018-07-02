@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -39,19 +41,19 @@ module Toys
       # Default version requirements for the rdoc gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ">= 5.0.0".freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = ">= 5.0.0"
 
       ##
       # Default tool name
       # @return [String]
       #
-      DEFAULT_TOOL_NAME = "rdoc".freeze
+      DEFAULT_TOOL_NAME = "rdoc"
 
       ##
       # Default output directory
       # @return [String]
       #
-      DEFAULT_OUTPUT_DIR = "html".freeze
+      DEFAULT_OUTPUT_DIR = "html"
 
       ##
       # Create the template settings for the Rdoc template.

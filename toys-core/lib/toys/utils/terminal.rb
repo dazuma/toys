@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -54,7 +56,7 @@ module Toys
     #
     class Terminal
       ## ANSI style code to clear styles
-      CLEAR_CODE = "\e[0m".freeze
+      CLEAR_CODE = "\e[0m"
 
       ## Standard ANSI style codes
       BUILTIN_STYLE_NAMES = {
@@ -386,7 +388,7 @@ module Toys
             @stopping = true
             @cond.broadcast
           end
-          @thread.join if @thread
+          @thread&.join
           self
         end
 

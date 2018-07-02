@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -39,13 +41,13 @@ module Toys
       # Default version requirements for the minitest gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 5.0".freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 5.0"
 
       ##
       # Default tool name
       # @return [String]
       #
-      DEFAULT_TOOL_NAME = "test".freeze
+      DEFAULT_TOOL_NAME = "test"
 
       ##
       # Default set of library paths

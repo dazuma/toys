@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -44,19 +46,19 @@ module Toys
       # The default description for tools.
       # @return [String]
       #
-      DEFAULT_TOOL_DESC = "(No tool description available)".freeze
+      DEFAULT_TOOL_DESC = "(No tool description available)"
 
       ##
       # The default description for namespaces.
       # @return [String]
       #
-      DEFAULT_NAMESPACE_DESC = "(A namespace of tools)".freeze
+      DEFAULT_NAMESPACE_DESC = "(A namespace of tools)"
 
       ##
       # The default description for the root tool.
       # @return [String]
       #
-      DEFAULT_ROOT_DESC = "Command line tool built using the toys-core gem.".freeze
+      DEFAULT_ROOT_DESC = "Command line tool built using the toys-core gem."
 
       ##
       # The default long description for the root tool.

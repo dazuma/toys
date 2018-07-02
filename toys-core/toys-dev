@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 ::ENV["TOYS_CORE_LIB_PATH"] = ::File.absolute_path(::File.join(__dir__, "lib"))
 ::ENV["TOYS_BIN_PATH"] = ::File.absolute_path(__FILE__)

@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.2
+  TargetRubyVersion: 2.3
 
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
@@ -25,9 +25,14 @@ Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:
   Enabled: false
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - "test/lookup-cases/**/*.rb"
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
+  Enabled: false
+Style/MixinGrouping:
   Enabled: false
 Style/PerlBackrefs:
   Enabled: false

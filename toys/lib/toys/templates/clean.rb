@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -39,7 +41,7 @@ module Toys
       # Default tool name
       # @return [String]
       #
-      DEFAULT_TOOL_NAME = "clean".freeze
+      DEFAULT_TOOL_NAME = "clean"
 
       ##
       # Create the template settings for the Clean template.

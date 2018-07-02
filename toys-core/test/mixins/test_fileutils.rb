@@ -29,7 +29,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-require "minitest/autorun"
-require "minitest/focus"
-require "minitest/rg"
-require "toys-core"
+require "helper"
+require "toys/standard_mixins/fileutils"
+
+describe Toys::StandardMixins::Fileutils do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
+    end
+  }
+  let(:binary_name) { "toys" }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+
+  it "adds fileutils module" do
+    cli.add_config_block do
+      tool "foo" do
+        include :fileutils
+        def run
+          exit(self.class.included_modules.include?(::FileUtils) ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("foo"))
+  end
+end
