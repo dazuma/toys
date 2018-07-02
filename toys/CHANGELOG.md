@@ -1,6 +1,6 @@
 # Release History
 
-### 0.3.11 / TBD
+### 0.3.11 / 2018-07-02
 
 * CHANGED: Require Ruby 2.3 or later
 * CHANGED: Renamed "set" directive to "static" to reduce confusion with Tool#set.

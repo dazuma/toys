@@ -34,5 +34,5 @@ module Toys
   # Current version of the Toys command line binary
   # @return [String]
   #
-  VERSION = "0.3.11.dev"
+  VERSION = "0.3.11"
 end
