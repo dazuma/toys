@@ -7,7 +7,9 @@ make further backward-incompatible changes.
 
 * CHANGED: Utils::Terminal#confirm default is now unset by default
 * IMPROVED: Toys::Utils::Gems can suppress the confirmation prompt
-* IMPROVED: Toys files can now have magic comments.
+* IMPROVED: Magic comments are now honored in toys files.
+* IMPROVED: Utils::Gems installation is now much faster.
+* FIXED: Utils::Gems didn't reset the specifications on Ruby 2.3.
 
 ### 0.3.11 / 2018-07-02
 
