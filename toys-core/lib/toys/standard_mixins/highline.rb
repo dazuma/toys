@@ -74,7 +74,7 @@ module Toys
       end
 
       ##
-      # Returns a global highline instance
+      # Returns a tool-wide highline instance
       # @return [::HighLine]
       #
       def highline

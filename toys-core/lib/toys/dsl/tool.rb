@@ -594,7 +594,7 @@ module Toys
           cur_tool.add_initializer(mod.initialization_callback, *args)
         end
         if mod.respond_to?(:inclusion_callback) && mod.inclusion_callback
-          class_exec(self, *args, &mod.inclusion_callback)
+          class_exec(*args, &mod.inclusion_callback)
         end
         super(mod)
       end

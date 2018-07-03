@@ -55,20 +55,20 @@ module Toys
     module Gems
       include Mixin
 
-      to_include do |tool_class, opts = {}|
-        tool_class.singleton_class.class_eval do
-          define_method(:gems) do
-            @__gems ||= Utils::Gems.new(opts)
-          end
+      to_include do |opts = {}|
+        @__gems = Utils::Gems.new(opts)
 
-          define_method(:gem) do |name, *requirements|
-            gems.activate(name, *requirements)
-          end
+        def self.gems
+          @__gems
+        end
+
+        def self.gem(name, *requirements)
+          gems.activate(name, *requirements)
         end
       end
 
       ##
-      # Returns a global instance of {Toys::Utils::Gems}.
+      # Returns a tool-wide instance of {Toys::Utils::Gems}.
       #
       def gems
         self.class.gems

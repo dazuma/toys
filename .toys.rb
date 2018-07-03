@@ -40,14 +40,15 @@ gem "minitest-rg", "~> 5.2"
 gem "rubocop", "~> 0.57.2"
 gem "yard", "~> 0.9.14"
 
-
 tool "install" do
   desc "Build and install the current gems"
 
   include :exec, exit_on_nonzero_status: true
+  include :terminal
 
   def handle_gem(gem_name, version)
-    ::Dir.chdir(gem_name) do
+    puts("**** Installing #{gem_name} #{version} from local build...", :bold, :cyan)
+    ::Dir.chdir(::File.join(__dir__, gem_name)) do
       subcli = cli.child.add_config_path(".toys.rb")
       exit_on_nonzero_status(subcli.run("build"))
       exec(["gem", "install", "pkg/#{gem_name}-#{version}.gem"])
@@ -55,11 +56,9 @@ tool "install" do
   end
 
   def run
-    ::Dir.chdir(__dir__) do
-      version = capture(["./toys-dev", "system", "version"]).strip
-      handle_gem("toys-core", version)
-      handle_gem("toys", version)
-    end
+    version = capture(["./toys-dev", "system", "version"], chdir: __dir__).strip
+    handle_gem("toys-core", version)
+    handle_gem("toys", version)
   end
 end
 
@@ -127,18 +126,19 @@ tool "release" do
   include :exec, exit_on_nonzero_status: true
   include :terminal
 
+  def handle_gem(gem_name)
+    puts("**** Releasing #{gem_name}...", :bold, :cyan)
+    ::Dir.chdir(gem_name) do
+      exec_tool(["release", "-y"], cli: cli.child.add_config_path(".toys.rb"))
+    end
+  end
+
   def run
     ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
       exit(1) unless confirm("Release toys #{version}?")
-      ::Dir.chdir("toys-core") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        exit_on_nonzero_status(subcli.run("release", "-y"))
-      end
-      ::Dir.chdir("toys") do
-        subcli = cli.child.add_config_path(".toys.rb")
-        exit_on_nonzero_status(subcli.run("release", "-y"))
-      end
+      handle_gem("toys-core")
+      handle_gem("toys")
       exec(["git", "tag", "v#{version}"])
       exec(["git", "push", "origin", "v#{version}"])
     end

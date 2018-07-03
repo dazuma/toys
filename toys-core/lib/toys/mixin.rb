@@ -53,9 +53,9 @@ module Toys
   # `to_initialize` block is passed any extra arguments that were provided to
   # the `include` directive.
   #
-  # The `to_include` block is called when your mixin is included in the tool
-  # class. It is passed the tool class, along with any extra arguments that
-  # were passed to the `include` directive. It can be used to issue directives
+  # The `to_include` block is called in the context of your tool class when
+  # your mixin is included. It is also passed any extra arguments that were
+  # provided to the `include` directive. It can be used to issue directives
   # or define methods on the DSL, specific to the mixin.
   #
   # ## Example

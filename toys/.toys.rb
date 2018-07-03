@@ -33,7 +33,6 @@ unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
   ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
 end
 
-
 expand :clean, paths: ["pkg", "doc", ".yardoc"]
 
 expand :minitest, libs: ["lib", "test"]
@@ -58,8 +57,7 @@ tool "ci" do
 
   def run_stage(name, tool)
     if exec_tool(tool).success?
-      puts("** #{name} passed", :green, :bold)
-      puts
+      puts("** #{name} passed\n\n", :green, :bold)
     else
       puts("** CI terminated: #{name} failed!", :red, :bold)
       exit(1)
