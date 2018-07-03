@@ -1,11 +1,12 @@
 # Release History
 
-### 0.4.0 / TBD
+### 0.4.0 / 2018-07-03
 
-Now declaring this alpha quality, and soft-locking the usage. Will try not to
-make further backward-incompatible changes.
+Now declaring this alpha quality. Backward-incompatible changes are still
+possible from this point, but we'll try to avoid them.
 
 * CHANGED: Utils::Terminal#confirm default is now unset by default
+* CHANGED: Moved gem install/activation methods into a mixin
 * IMPROVED: Toys::Utils::Gems can suppress the confirmation prompt
 * IMPROVED: Magic comments are now honored in toys files.
 

@@ -118,7 +118,7 @@ module Toys
           include :exec
 
           to_run do
-            gem("rdoc", *Array(template.gem_version))
+            Utils::Gems.new.activate("rdoc", *Array(template.gem_version))
             require "rdoc"
 
             files = []

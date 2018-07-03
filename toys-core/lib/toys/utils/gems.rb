@@ -58,18 +58,14 @@ module Toys
       end
 
       ##
-      # Activate the given gem.
+      # Activate the given gem. If it is not present, attempt to install it (or
+      # inform the user to update the bundle).
       #
       # @param [String] name Name of the gem
       # @param [String...] requirements Version requirements
-      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and just use the given
-      #     `default_confirm` value.
-      # @param [Boolean] default_confirm Default response for the confirmation prompt
       #
-      def self.activate(name, *requirements, suppress_confirm: nil, default_confirm: nil)
-        new.activate(name, *requirements,
-                     suppress_confirm: suppress_confirm,
-                     default_confirm: default_confirm)
+      def self.activate(name, *requirements)
+        new.activate(name, *requirements)
       end
 
       ##
@@ -77,9 +73,11 @@ module Toys
       #
       # @param [IO] input Input IO
       # @param [IO] output Output IO
-      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and just use the given
-      #     `default_confirm` value.
-      # @param [Boolean] default_confirm Default response for the confirmation prompt
+      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and
+      #     just use the given `default_confirm` value. Default is false,
+      #     indicating the confirmation prompt appears by default.
+      # @param [Boolean] default_confirm Default response for the confirmation
+      #     prompt. Default is true.
       #
       def initialize(input: $stdin,
                      output: $stderr,
@@ -97,13 +95,8 @@ module Toys
       #
       # @param [String] name Name of the gem
       # @param [String...] requirements Version requirements
-      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and just use the given
-      #     `default_confirm` value.
-      # @param [Boolean] default_confirm Default response for the confirmation prompt
       #
-      def activate(name, *requirements, suppress_confirm: nil, default_confirm: nil)
-        suppress_confirm = suppress_confirm.nil? ? @suppress_confirm : suppress_confirm
-        default_confirm = default_confirm.nil? ? @default_confirm : default_confirm
+      def activate(name, *requirements)
         gem(name, *requirements)
       rescue ::Gem::LoadError => e1
         is_missing_spec =
@@ -113,7 +106,7 @@ module Toys
             e1.message.include?("Could not find")
           end
         if is_missing_spec
-          install_gem(name, requirements, suppress_confirm, default_confirm)
+          install_gem(name, requirements)
           begin
             gem(name, *requirements)
           rescue ::Gem::LoadError => e2
@@ -130,14 +123,14 @@ module Toys
         "#{name.inspect}, #{requirements.map(&:inspect).join(', ')}"
       end
 
-      def install_gem(name, requirements, suppress_confirm, default_confirm)
+      def install_gem(name, requirements)
         requirements_text = gem_requirements_text(name, requirements)
         response =
-          if suppress_confirm
-            default_confirm
+          if @suppress_confirm
+            @default_confirm
           else
             @terminal.confirm("Gem needed: #{requirements_text}. Install?",
-                              default: default_confirm)
+                              default: @default_confirm)
           end
         unless response
           raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"

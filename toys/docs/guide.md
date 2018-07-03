@@ -1523,17 +1523,24 @@ The toys gem itself includes only two gems: **toys** and **toys-core**. It has
 no other gem dependencies. However, if you want to use a third-party gem in
 your tool, Toys provides a convenient mechanism to ensure the gem is installed.
 
-If the gem is needed to *define* the tool, use the `gem` directive to ensure
-the gem is installed and activated. This takes the name of the gem, and an
+To access the gem services, include the `:gems` mixin. This mixin adds a `gem`
+directive to ensure a gem is installed and activated when you're defining a
+tool, and a `gem` method to ensure a gem is available when you're running a
+tool.
+
+Both the `gem` directive and the `gem` method take the name of the gem, and an
 optional set of version requirements. If a gem matching the given version
 requirements is installed, it is activated. If not, the gem is installed (which
 the user can confirm or abort). Or, if Toys is being run in a bundle, a message
 is printed informing the user that they need to add the gem to their Gemfile.
 
 For example, here's a way to configure a tool with flags for each of the
-HighLine styles:
+HighLine styles. Because highline is needed to decide what flags to define, we
+use the `gem` directive to ensure highline is installed while the tool is being
+defined.
 
     tool "highline-styles-demo" do
+      include :gems
       gem "highline", "~> 2.0"
       require "highline"
       HighLine::BuiltinStyles::STYLES.each do |style|
@@ -1543,16 +1550,17 @@ HighLine styles:
       def run
         # ...
 
-If the gem is *not* needed to define the tool, but is needed to *run* the tool,
-then you can call
-[Toys::Tool#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:gem) from
-your `run` method. Here's an example:
+Here's an example tool that just runs `rake`. Because it requires rake to be
+installed in order to *run* the tool, we call the
+[Toys::StandardMixins::Gems#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FStandardMixins%2FGems:gem)
+method provided by the `:gems` mixin when running.
 
     tool "rake" do
-      disable_argument_passing
+      include :gems
+      remaining_args :rake_args
       def run
         gem "rake", "~> 12.0"
-        Kernel.exec(["rake"] + args)
+        Kernel.exec(["rake"] + rake_args)
       end
     end
 
@@ -1560,9 +1568,9 @@ If a gem satisfying the given version constraints is already activated, it
 remains active. If a gem with a conflicting version is already activated, an
 exception is raised.
 
-If you are not in the Toys DSL context—e.g. you are writing a class-based
+If you are not in the Toys DSL context—for example from a class-based
 mixin—you should use
-[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems:activate)
+[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems.activate)
 instead. For example:
 
     Toys::Utils::Gems.activate("highline", "~> 2.0")

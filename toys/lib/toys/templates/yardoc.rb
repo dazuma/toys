@@ -165,7 +165,7 @@ module Toys
           include :terminal
 
           to_run do
-            gem("yard", *Array(template.gem_version))
+            Utils::Gems.new.activate("yard", *Array(template.gem_version))
             require "yard"
 
             files = []

@@ -81,7 +81,7 @@ module Toys
           desc "Run rubocop on the current project."
 
           to_run do
-            gem("rubocop", *Array(template.gem_version))
+            Utils::Gems.new.activate("rubocop", *Array(template.gem_version))
             require "rubocop"
 
             cli = ::RuboCop::CLI.new

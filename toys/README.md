@@ -9,6 +9,12 @@ users who want to write and organize scripts to automate their workflows. It
 can also be used as a Rake replacement, providing a more natural command line
 interface for your project's build tasks.
 
+Unlike most command line frameworks, Toys is *not primarily* designed to help
+you build and ship a custom command line binary written in Ruby. However, you
+*can* use it in that way by building with the "toys-core" API, available as a
+separate gem. For more info on using toys-core, see
+https://www.rubydoc.info/gems/toys-core
+
 ## Quick Start
 
 Here's a five-minute tutorial to get a feel of what Toys can do.
@@ -111,12 +117,6 @@ Rake to provide build and test scripts for a project—tools that, unlike Rake
 tasks, can be invoked and passed arguments using familiar unix command line
 arguments and flags. The Toys github repo itself comes with Toys config files
 instead of Rakefiles.
-
-Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line binary written in Ruby. However, you
-*can* use it in that way by building with the "toys-core" API, available as a
-separate gem. For more info on using toys-core, see
-https://www.rubydoc.info/gems/toys-core
 
 ## License
 

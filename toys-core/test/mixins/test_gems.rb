@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -27,48 +29,29 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-expected_lib_path = ::File.absolute_path(::File.join(::File.dirname(__dir__), "toys-core", "lib"))
-unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
-  puts "NOTE: Rerunning toys binary from the local repo\n\n"
-  ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
-end
+require "helper"
+require "toys/standard_mixins/gems"
 
-
-expand :clean, paths: ["pkg", "doc", ".yardoc"]
-
-expand :minitest, libs: ["lib", "test"]
-
-expand :rubocop
-
-expand :yardoc do |t|
-  t.generate_output_flag = true
-  t.fail_on_warning = true
-  t.fail_on_undocumented_objects = true
-end
-
-expand :rdoc, output_dir: "doc"
-
-expand :gem_build
-
-expand :gem_build, name: "release", push_gem: true
-
-tool "ci" do
-  include :exec
-  include :terminal
-
-  def run_stage(name, tool)
-    if exec_tool(tool).success?
-      puts("** #{name} passed", :green, :bold)
-      puts
-    else
-      puts("** CI terminated: #{name} failed!", :red, :bold)
-      exit(1)
+describe Toys::StandardMixins::Gems do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
     end
-  end
+  }
+  let(:binary_name) { "toys" }
+  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
 
-  def run
-    run_stage("Tests", ["test"])
-    run_stage("Style checker", ["rubocop"])
-    run_stage("Docs generation", ["yardoc", "--no-output"])
+  it "provides a gems instance" do
+    test = self
+    cli.add_config_block do
+      tool "foo" do
+        include :gems
+        test.assert_instance_of(Toys::Utils::Gems, gems)
+        def run
+          exit(gems.is_a?(Toys::Utils::Gems) ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, cli.run("foo"))
   end
 end

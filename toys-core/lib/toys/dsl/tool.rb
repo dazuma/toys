@@ -590,26 +590,13 @@ module Toys
         if mod.nil?
           raise ToolDefinitionError, "Module not found: #{name.inspect}"
         end
-        if mod.respond_to?(:initializer)
-          cur_tool.add_initializer(mod.initializer, *args) if mod.initializer
+        if mod.respond_to?(:initialization_callback) && mod.initialization_callback
+          cur_tool.add_initializer(mod.initialization_callback, *args)
+        end
+        if mod.respond_to?(:inclusion_callback) && mod.inclusion_callback
+          class_exec(self, *args, &mod.inclusion_callback)
         end
         super(mod)
-      end
-
-      ##
-      # Activate the given gem. If it is not present, attempt to install it (or
-      # inform the user to update the bundle).
-      #
-      # @param [String] name Name of the gem
-      # @param [String...] requirements Version requirements
-      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and just use the given
-      #     `default_confirm` value.
-      # @param [Boolean] default_confirm Default response for the confirmation prompt
-      #
-      def gem(name, *requirements, suppress_confirm: nil, default_confirm: nil)
-        (@__gems ||= Utils::Gems.new).activate(name, *requirements,
-                                               suppress_confirm: suppress_confirm,
-                                               default_confirm: default_confirm)
       end
 
       ## @private
