@@ -105,14 +105,23 @@ module Toys
         suppress_confirm = suppress_confirm.nil? ? @suppress_confirm : suppress_confirm
         default_confirm = default_confirm.nil? ? @default_confirm : default_confirm
         gem(name, *requirements)
-      rescue ::Gem::MissingSpecError
-        install_gem(name, requirements, suppress_confirm, default_confirm)
-      rescue ::Gem::LoadError => e
-        if ::ENV["BUNDLE_GEMFILE"]
-          raise GemfileUpdateNeededError.new(gem_requirements_text(name, requirements),
-                                             ::ENV["BUNDLE_GEMFILE"])
+      rescue ::Gem::LoadError => e1
+        is_missing_spec =
+          if defined?(::Gem::MissingSpecError)
+            e1.is_a?(::Gem::MissingSpecError)
+          else
+            e1.message.include?("Could not find")
+          end
+        if is_missing_spec
+          install_gem(name, requirements, suppress_confirm, default_confirm)
+          begin
+            gem(name, *requirements)
+          rescue ::Gem::LoadError => e2
+            report_error(name, requirements, e2)
+          end
+        else
+          report_error(name, requirements, e1)
         end
-        raise ActivationFailedError, e.message
       end
 
       private
@@ -133,37 +142,28 @@ module Toys
         unless response
           raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"
         end
-        version = find_best_version(name, requirements)
-        raise InstallFailedError, "No gem found matching #{requirements_text}." unless version
-        perform_install(name, version)
-        activate(name, *requirements)
+        perform_install(name, requirements)
       end
 
-      def find_best_version(name, requirements)
-        @terminal.spinner(leading_text: "Getting info on gem #{name.inspect}... ",
-                          final_text: "Done.\n") do
-          req = ::Gem::Requirement.new(*requirements)
-          result = @exec.capture(["gem", "query", "-q", "-r", "-a", "-e", name])
-          if result =~ /\(([\w\.,\s]+)\)/
-            $1.split(", ")
-              .map { |v| ::Gem::Version.new(v) }
-              .find { |v| !v.prerelease? && req.satisfied_by?(v) }
-          else
-            raise InstallFailedError, "Unable to determine existing versions of gem #{name.inspect}"
-          end
+      def perform_install(name, requirements)
+        result = @terminal.spinner(leading_text: "Installing gem #{name}... ",
+                                   final_text: "Done.\n") do
+          @exec.exec(["gem", "install", name, "--version", requirements.join(",")],
+                     out: :capture, err: :capture)
         end
+        @terminal.puts(result.captured_out + result.captured_err)
+        if result.error?
+          raise InstallFailedError, "Failed to install gem #{name}"
+        end
+        ::Gem::Specification.reset
       end
 
-      def perform_install(name, version)
-        @terminal.spinner(leading_text: "Installing gem #{name} #{version}... ",
-                          final_text: "Done.\n") do
-          result = @exec.exec(["gem", "install", name, "--version", version.to_s],
-                              out: :capture, err: :capture)
-          if result.error?
-            @terminal.puts(result.captured_out + result.captured_err)
-            raise InstallFailedError, "Failed to install gem #{name} #{version}"
-          end
+      def report_error(name, requirements, err)
+        if ::ENV["BUNDLE_GEMFILE"]
+          raise GemfileUpdateNeededError.new(gem_requirements_text(name, requirements),
+                                             ::ENV["BUNDLE_GEMFILE"])
         end
+        raise ActivationFailedError, err.message
       end
     end
   end
