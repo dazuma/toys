@@ -98,6 +98,7 @@ module Toys
           desc "Run minitest on the current project."
 
           include :exec
+          include :gems
 
           flag :warnings, "-w", "--[no-]warnings",
                default: template.warnings,
@@ -106,7 +107,8 @@ module Toys
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
           to_run do
-            Utils::Gems.new.activate("minitest", *Array(template.gem_version))
+            gem "minitest", *Array(template.gem_version)
+
             ruby_args = []
             unless template.libs.empty?
               lib_path = template.libs.join(::File::PATH_SEPARATOR)

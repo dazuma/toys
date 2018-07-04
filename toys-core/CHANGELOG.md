@@ -3,7 +3,7 @@
 ### 0.4.0 / 2018-07-03
 
 Now declaring this alpha quality. Backward-incompatible changes are still
-possible from this point, but we'll try to avoid them.
+possible from this point, but I'll try to avoid them.
 
 * CHANGED: Utils::Terminal#confirm default is now unset by default
 * CHANGED: Moved gem install/activation methods into a mixin

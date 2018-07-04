@@ -115,10 +115,11 @@ module Toys
         tool(template.name) do
           desc "Run rdoc on the current project."
 
-          include :exec
+          include :exec, exit_on_nonzero_status: true
+          include :gems
 
           to_run do
-            Utils::Gems.new.activate("rdoc", *Array(template.gem_version))
+            gem "rdoc", *Array(template.gem_version)
             require "rdoc"
 
             files = []
@@ -137,8 +138,7 @@ module Toys
             args << "-T" << template.template if template.template
             args << "-f" << template.generator if template.generator
 
-            exec_proc(proc { RDoc::RDoc.new.document(args + files) },
-                      exit_on_nonzero_status: true)
+            exec_proc(proc { RDoc::RDoc.new.document(args + files) })
           end
         end
       end
