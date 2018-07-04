@@ -52,6 +52,14 @@ expand :gem_build
 expand :gem_build, name: "release", push_gem: true
 
 tool "ci" do
+  desc "Run all CI checks"
+
+  long_desc "The CI tool runs all CI checks for the toys gem, including unit" \
+              " tests, rubocop, and documentation checks. It is useful for" \
+              " running tests in normal development, as well as being the" \
+              " entrypoint for CI systems like Travis. Any failure will" \
+              " result in a nonzero result code."
+
   include :exec
   include :terminal
 

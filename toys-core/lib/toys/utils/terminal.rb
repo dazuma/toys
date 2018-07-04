@@ -219,7 +219,7 @@ module Toys
       #
       def confirm(prompt = "Proceed?", default: nil)
         y = default == true ? "Y" : "y"
-        n = default == false ? "n" : "N"
+        n = default == false ? "N" : "n"
         write("#{prompt} (#{y}/#{n}) ")
         resp = input.gets
         case resp

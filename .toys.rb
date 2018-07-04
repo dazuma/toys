@@ -65,6 +65,12 @@ end
 tool "ci" do
   desc "CI target that runs all tests for both gems"
 
+  long_desc "The CI tool runs all CI checks for both gems, including unit" \
+              " tests, rubocop, and documentation checks. It is useful for" \
+              " running tests in normal development, as well as being the" \
+              " entrypoint for CI systems like Travis. Any failure will" \
+              " result in a nonzero result code."
+
   include :exec, exit_on_nonzero_status: true
   include :terminal
 

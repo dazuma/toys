@@ -1,5 +1,9 @@
 # Release History
 
+### 0.4.1 / 2018-07-03
+
+* FIXED: Terminal#confirm uppercased "N" for the wrong default.
+
 ### 0.4.0 / 2018-07-03
 
 Now declaring this alpha quality. Backward-incompatible changes are still
