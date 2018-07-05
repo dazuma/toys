@@ -34,6 +34,7 @@ require "helper"
 describe Toys::Utils::Terminal do
   let(:input) { ::StringIO.new }
   let(:output) { ::StringIO.new }
+  let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output, styled: true) }
 
   describe "remove_style_escapes" do
     it "removes clear code" do
@@ -49,8 +50,6 @@ describe Toys::Utils::Terminal do
   end
 
   describe "style interpretation" do
-    let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output, styled: true) }
-
     it "interprets symbolic colors" do
       str = terminal.apply_styles("hello", :yellow)
       assert_equal("\e[33mhello\e[0m", str)
@@ -68,8 +67,6 @@ describe Toys::Utils::Terminal do
   end
 
   describe "styled output" do
-    let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output, styled: true) }
-
     it "writes and clears styles" do
       terminal.write("hello", :bold)
       assert_equal("\e[1mhello\e[0m", output.string)
@@ -113,6 +110,36 @@ describe Toys::Utils::Terminal do
     it "does not add an extra newline with puts" do
       terminal.puts("hello\n")
       assert_equal("hello\n", output.string)
+    end
+  end
+
+  describe "confirm" do
+    it "Displays a default prompt" do
+      input = StringIO.new "y\n"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal(true, terminal.confirm)
+      assert_equal("Proceed? (y/n) ", output.string)
+    end
+
+    it "Displays a custom prompt" do
+      input = StringIO.new "n\n"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal(false, terminal.confirm("ok?"))
+      assert_equal("ok? (y/n) ", output.string)
+    end
+
+    it "Displays a prompt with default of yes" do
+      input = StringIO.new
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal(true, terminal.confirm("ok?", default: true))
+      assert_equal("ok? (Y/n) ", output.string)
+    end
+
+    it "Displays a prompt with default of no" do
+      input = StringIO.new
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal(false, terminal.confirm("ok?", default: false))
+      assert_equal("ok? (y/N) ", output.string)
     end
   end
 end

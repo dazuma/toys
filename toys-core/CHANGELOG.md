@@ -1,5 +1,7 @@
 # Release History
 
+### 0.4.2 / TBD
+
 ### 0.4.1 / 2018-07-03
 
 * FIXED: Terminal#confirm uppercased "N" for the wrong default.

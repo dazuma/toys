@@ -93,7 +93,7 @@ module Toys
       ##
       # @see Toys::Utils::Terminal#confirm
       #
-      def confirm(prompt = "Proceed?", default: false)
+      def confirm(prompt = "Proceed?", default: nil)
         terminal.confirm(prompt, default: default)
       end
 

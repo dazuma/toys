@@ -34,5 +34,5 @@ module Toys
   # Current version of Toys core
   # @return [String]
   #
-  CORE_VERSION = "0.4.1"
+  CORE_VERSION = "0.4.2.dev"
 end
