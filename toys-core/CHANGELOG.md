@@ -1,6 +1,6 @@
 # Release History
 
-### 0.4.2 / TBD
+### 0.4.2 / 2018-07-08
 
 * FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.
 * IMPROVED: The `include?` method extended to support mixin names in a tool dsl.
