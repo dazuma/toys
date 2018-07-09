@@ -189,6 +189,46 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "include directive" do
+    it "supports normal modules" do
+      test = self
+      loader.add_block do
+        include ::FileUtils
+        test.assert_equal(true, include?(::FileUtils))
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.include?(::FileUtils))
+      assert_equal(false, tool.tool_class.include?(:fileutils))
+    end
+
+    it "supports builtin mixins" do
+      loader.add_block do
+        include :exec
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.include?(Toys::StandardMixins::Exec))
+      assert_equal(true, tool.tool_class.include?(:exec))
+    end
+
+    it "does not allow multiple inclusion of the same module" do
+      test = self
+      loader.add_block do
+        include :terminal, styled: true
+        test.assert_raises(Toys::ToolDefinitionError) do
+          include :terminal, styled: false
+        end
+        def run
+          exit(1) if terminal.styled
+          exit(2)
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.include?(Toys::StandardMixins::Terminal))
+      assert_equal(true, tool.tool_class.include?(:terminal))
+      assert_equal(1, cli.run([]))
+    end
+  end
+
   describe "mixin directive" do
     it "creates a simple mixin" do
       loader.add_block do

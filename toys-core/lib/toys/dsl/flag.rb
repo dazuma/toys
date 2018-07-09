@@ -53,7 +53,9 @@ module Toys
       ##
       # Add flags in OptionParser format. This may be called multiple times,
       # and the results are cumulative.
+      #
       # @param [String...] flags
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flags(*flags)
         @flags += flags
@@ -62,7 +64,9 @@ module Toys
 
       ##
       # Set the OptionParser acceptor.
+      #
       # @param [Object] accept
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def accept(accept)
         @accept = accept
@@ -71,7 +75,9 @@ module Toys
 
       ##
       # Set the default value.
+      #
       # @param [Object] default
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def default(default)
         @default = default
@@ -86,6 +92,7 @@ module Toys
       # responding to the `call` method) or you may pass a block.
       #
       # @param [Proc] handler
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def handler(handler = nil, &block)
         @handler = handler || block
@@ -97,6 +104,7 @@ module Toys
       # already in use or marked as disabled.
       #
       # @param [Boolean] setting
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def report_collisions(setting)
         @report_collisions = setting
@@ -108,6 +116,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def desc(desc)
         @desc = desc
@@ -120,6 +129,7 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def long_desc(*long_desc)
         @long_desc += long_desc

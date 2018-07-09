@@ -108,6 +108,7 @@ module Toys
       # @param [String] name The acceptor name.
       # @param [Regexp,Array,nil] validator The validator.
       # @param [Proc,nil] converter The validator.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def acceptor(name, validator = nil, converter = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -134,6 +135,7 @@ module Toys
       # You should pass a block and define methods in that block.
       #
       # @param [String] name Name of the mixin
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def mixin(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -158,6 +160,7 @@ module Toys
       # define how to expand the template.
       #
       # @param [String] name Name of the template
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def template(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -178,6 +181,7 @@ module Toys
       # old definition is discarded and replaced with the new definition.
       #
       # @param [String] word The name of the subtool
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def tool(word, &block)
         word = word.to_s
@@ -196,6 +200,7 @@ module Toys
       #
       # @param [String] word The name of the alias
       # @param [String] target The target of the alias
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def alias_tool(word, target)
         @__loader.make_alias(@__words + [word.to_s], @__words + [target.to_s], @__priority)
@@ -203,9 +208,11 @@ module Toys
       end
 
       ##
-      # Include another config file or directory at the current location.
+      # Load another config file or directory, as if its contents were inserted
+      # at the current location.
       #
-      # @param [String] path The file or directory to include.
+      # @param [String] path The file or directory to load.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def load(path)
         @__loader.load_path(path, @__words, @__remaining_words, @__priority)
@@ -221,6 +228,7 @@ module Toys
       # @param [Class,String,Symbol] template_class The template, either as a
       #     class or a well-known name.
       # @param [Object...] args Template arguments
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def expand(template_class, *args)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -268,6 +276,7 @@ module Toys
       #     desc ["This sentence will not be wrapped."]
       #
       # @param [Toys::Utils::WrappableString,String,Array<String>] str
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def desc(str)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -294,6 +303,7 @@ module Toys
       #               ["This line will not be wrapped."]
       #
       # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def long_desc(*strs)
         DSL::Tool.current_tool(self, true)&.append_long_desc(strs)
@@ -342,6 +352,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil,
@@ -390,6 +401,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def required_arg(key,
                        accept: nil, display_name: nil,
@@ -441,6 +453,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def optional_arg(key,
                        default: nil, accept: nil, display_name: nil,
@@ -491,6 +504,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
       #     this argument in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def remaining_args(key,
                          default: [], accept: nil, display_name: nil,
@@ -517,6 +531,7 @@ module Toys
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
       # @param [Object] value The value to set.
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def static(key, value = nil)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -541,6 +556,8 @@ module Toys
       # This directive is mutually exclusive with any of the directives that
       # declare arguments or flags.
       #
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
       def disable_argument_parsing
         DSL::Tool.current_tool(self, true)&.disable_argument_parsing
         self
@@ -552,6 +569,7 @@ module Toys
       # defining a particular flag.
       #
       # @param [String...] flags The flags to disable
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def disable_flag(*flags)
         DSL::Tool.current_tool(self, true)&.disable_flag(*flags)
@@ -559,8 +577,12 @@ module Toys
       end
 
       ##
-      # Specify how to run this tool. You can do this by providing a block to
-      # this directive, or by defining the `run` method in the tool.
+      # Specify how to run this tool. Typically you do this by defining a
+      # method namd `run`. Alternatively, you can pass a block to this method.
+      # You may want to do this if your method needs access to local variables
+      # in the lexical scope.
+      #
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def to_run(&block)
         define_method(:run, &block)
@@ -581,14 +603,9 @@ module Toys
       def include(mod, *args)
         cur_tool = DSL::Tool.current_tool(self, true)
         return if cur_tool.nil?
-        name = mod.to_s
-        if mod.is_a?(::String)
-          mod = cur_tool.resolve_mixin(mod)
-        elsif mod.is_a?(::Symbol)
-          mod = @__loader.resolve_standard_mixin(name)
-        end
-        if mod.nil?
-          raise ToolDefinitionError, "Module not found: #{name.inspect}"
+        mod = DSL::Tool.resolve_mixin(mod, cur_tool, @__loader)
+        if included_modules.include?(mod)
+          raise ToolDefinitionError, "Mixin already included: #{mod.name}"
         end
         if mod.respond_to?(:initialization_callback) && mod.initialization_callback
           cur_tool.add_initializer(mod.initialization_callback, *args)
@@ -597,6 +614,23 @@ module Toys
           class_exec(*args, &mod.inclusion_callback)
         end
         super(mod)
+      end
+
+      ##
+      # Determine if the given module/mixin has already been included.
+      #
+      # You may provide either a module, the string name of a mixin that you
+      # have defined in this tool or one of its ancestors, or the symbol name
+      # of a well-known mixin.
+      #
+      # @param [Module,Symbol,String] mod Module or module name.
+      # @return [Boolean,nil] A boolean value, or `nil` if the current tool
+      #     is not active.
+      #
+      def include?(mod)
+        cur_tool = DSL::Tool.current_tool(self, false)
+        return if cur_tool.nil?
+        super(DSL::Tool.resolve_mixin(mod, cur_tool, @__loader))
       end
 
       ## @private
@@ -656,6 +690,20 @@ module Toys
             end
           end
         end
+      end
+
+      ## @private
+      def self.resolve_mixin(mod, cur_tool, loader)
+        name = mod.to_s
+        if mod.is_a?(::String)
+          mod = cur_tool.resolve_mixin(mod)
+        elsif mod.is_a?(::Symbol)
+          mod = loader.resolve_standard_mixin(name)
+        end
+        unless mod.is_a?(::Module)
+          raise ToolDefinitionError, "Module not found: #{name.inspect}"
+        end
+        mod
       end
     end
   end

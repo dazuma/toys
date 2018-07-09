@@ -2,6 +2,9 @@
 
 ### 0.4.2 / TBD
 
+* FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.
+* IMPROVED: The `include?` method extended to support mixin names in a tool dsl.
+
 ### 0.4.1 / 2018-07-03
 
 * FIXED: Terminal#confirm uppercased "N" for the wrong default.

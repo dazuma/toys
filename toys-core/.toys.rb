@@ -32,7 +32,7 @@ unless ::ENV["TOYS_CORE_LIB_PATH"] == ::File.absolute_path(::File.join(__dir__, 
   ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
 end
 
-expand :clean, paths: ["pkg", "doc", ".yardoc"]
+expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp"]
 
 expand :minitest, libs: ["lib", "test"]
 

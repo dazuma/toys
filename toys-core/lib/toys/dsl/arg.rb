@@ -51,7 +51,9 @@ module Toys
 
       ##
       # Set the OptionParser acceptor.
+      #
       # @param [Object] accept
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def accept(accept)
         @accept = accept
@@ -60,7 +62,9 @@ module Toys
 
       ##
       # Set the default value.
+      #
       # @param [Object] default
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def default(default)
         @default = default
@@ -69,7 +73,9 @@ module Toys
 
       ##
       # Set the name of this arg as it appears in help screens.
+      #
       # @param [String] display_name
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def display_name(display_name)
         @display_name = display_name
@@ -81,6 +87,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def desc(desc)
         @desc = desc
@@ -93,6 +100,7 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
+      # @return [Toys::DSL::Tool] self, for chaining.
       #
       def long_desc(*long_desc)
         @long_desc += long_desc
