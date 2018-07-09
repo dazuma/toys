@@ -145,8 +145,10 @@ tool "release" do
       exit(1) unless confirm("Release toys #{version}?")
       handle_gem("toys-core")
       handle_gem("toys")
+      puts("**** Tagging v#{version}...", :bold, :cyan)
       exec(["git", "tag", "v#{version}"])
       exec(["git", "push", "origin", "v#{version}"])
+      puts("**** Release complete!", :bold, :green)
     end
   end
 end
