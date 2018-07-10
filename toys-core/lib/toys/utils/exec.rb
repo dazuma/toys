@@ -50,6 +50,8 @@ module Toys
     #    If not present, the command is not logged.
     # *  **:log_level** (Integer) Log level for logging the actual command.
     #    Defaults to Logger::INFO if not present.
+    # *  **:background** (Boolean) Runs the process in the background,
+    #    returning a controller object instead of a result object.
     # *  **:in** Connects the input stream of the subprocess. See the section
     #    on stream handling.
     # *  **:out** Connects the standard output stream of the subprocess. See
@@ -147,8 +149,8 @@ module Toys
       # Execute a command. The command may be given as a single string to pass
       # to a shell, or an array of strings indicating a posix command.
       #
-      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
-      # yielded to it, allowing you to interact with the subprocess streams.
+      # If the process is not set to run in the background, and a block is
+      # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param [String,Array<String>] cmd The command to execute.
       # @param [Hash] opts The command options. See the section on
@@ -156,8 +158,9 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Result] The subprocess result, including
-      #     exit code and any captured output.
+      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
+      #     subprocess controller or result, depending on whether the process
+      #     is running in the background or foreground.
       #
       def exec(cmd, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
@@ -178,8 +181,8 @@ module Toys
       ##
       # Spawn a ruby process and pass the given arguments to it.
       #
-      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
-      # yielded to it, allowing you to interact with the subprocess streams.
+      # If the process is not set to run in the background, and a block is
+      # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param [String,Array<String>] args The arguments to ruby.
       # @param [Hash] opts The command options. See the section on
@@ -187,8 +190,9 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Result] The subprocess result, including
-      #     exit code and any captured output.
+      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
+      #     subprocess controller or result, depending on whether the process
+      #     is running in the background or foreground.
       #
       def exec_ruby(args, opts = {}, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
@@ -200,8 +204,8 @@ module Toys
       ##
       # Execute a proc in a fork.
       #
-      # If you provide a block, a {Toys::Utils::Exec::Controller} will be
-      # yielded to it, allowing you to interact with the subprocess streams.
+      # If the process is not set to run in the background, and a block is
+      # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param [Proc] func The proc to call.
       # @param [Hash] opts The command options. See the section on
@@ -209,8 +213,9 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Result] The subprocess result, including
-      #     exit code and any captured output.
+      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
+      #     subprocess controller or result, depending on whether the process
+      #     is running in the background or foreground.
       #
       def exec_proc(func, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
@@ -223,58 +228,79 @@ module Toys
       # to a shell, or an array of strings indicating a posix command.
       #
       # Captures standard out and returns it as a string.
+      # Cannot be run in the background.
+      #
+      # If a block is provided, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it.
       #
       # @param [String,Array<String>] cmd The command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture(cmd, opts = {})
-        exec(cmd, opts.merge(out: :capture)).captured_out
+      def capture(cmd, opts = {}, &block)
+        exec(cmd, opts.merge(out: :capture, background: false), &block).captured_out
       end
 
       ##
       # Spawn a ruby process and pass the given arguments to it.
       #
       # Captures standard out and returns it as a string.
+      # Cannot be run in the background.
+      #
+      # If a block is provided, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it.
       #
       # @param [String,Array<String>] args The arguments to ruby.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_ruby(args, opts = {})
-        ruby(args, opts.merge(out: :capture)).captured_out
+      def capture_ruby(args, opts = {}, &block)
+        ruby(args, opts.merge(out: :capture, background: false), &block).captured_out
       end
 
       ##
       # Execute a proc in a fork.
       #
       # Captures standard out and returns it as a string.
+      # Cannot be run in the background.
+      #
+      # If a block is provided, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it.
       #
       # @param [Proc] func The proc to call.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_proc(func, opts = {})
-        exec_proc(func, opts.merge(out: :capture)).captured_out
+      def capture_proc(func, opts = {}, &block)
+        exec_proc(func, opts.merge(out: :capture, background: false), &block).captured_out
       end
 
       ##
       # Execute the given string in a shell. Returns the exit code.
+      # Cannot be run in the background.
       #
       # @param [String] cmd The shell command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
       #
       # @return [Integer] The exit code
       #
-      def sh(cmd, opts = {})
-        exec(cmd, opts).exit_code
+      def sh(cmd, opts = {}, &block)
+        exec(cmd, opts.merge(background: false), &block).exit_code
       end
 
       ##
@@ -288,6 +314,7 @@ module Toys
         #
         CONFIG_KEYS = %i[
           argv0
+          background
           cli
           env
           err
@@ -356,17 +383,24 @@ module Toys
       end
 
       ##
-      # An object of this type is passed to a subcommand control block.
+      # An object that controls a subprocess. This object is returned from an
+      # execution running in the background, or is yielded to a control block
+      # for an execution running in the foreground.
       # You may use this object to interact with the subcommand's streams,
-      # and/or send signals to the process.
+      # send signals to the process, and get its result.
       #
       class Controller
         ## @private
-        def initialize(ins, out, err, pid)
-          @in = ins
-          @out = out
-          @err = err
+        def initialize(controller_streams, captures, pid, join_threads, nonzero_status_handler)
+          @in = controller_streams[:in]
+          @out = controller_streams[:out]
+          @err = controller_streams[:err]
+          @captures = captures
           @pid = pid
+          @join_threads = join_threads
+          @nonzero_status_handler = nonzero_status_handler
+          @wait_thread = ::Process.detach(pid)
+          @result = nil
         end
 
         ##
@@ -407,6 +441,47 @@ module Toys
         #
         def kill(signal)
           ::Process.kill(signal, pid)
+        end
+
+        ##
+        # Determine whether the subcommand is still executing
+        #
+        # @return [Boolean]
+        #
+        def executing?
+          @wait_thread.status ? true : false
+        end
+
+        ##
+        # Wait for the subcommand to complete, and return a result object.
+        #
+        # @param [Numeric,nil] timeout The timeout in seconds, or `nil` to
+        #     wait indefinitely.
+        # @return [Toys::Utils::Exec::Result,nil] The result object, or `nil`
+        #     if a timeout occurred.
+        #
+        def result(timeout: nil)
+          return nil unless @wait_thread.join(timeout)
+          @result ||= begin
+            close_streams
+            @join_threads.each(&:join)
+            status = @wait_thread.value
+            if @nonzero_status_handler && status.exitstatus != 0
+              @nonzero_status_handler.call(status)
+            end
+            Result.new(@captures[:out], @captures[:err], status)
+          end
+        end
+
+        ##
+        # Close all the controller's streams.
+        # @private
+        #
+        def close_streams
+          @in.close if @in && !@in.closed?
+          @out.close if @out && !@out.closed?
+          @err.close if @err && !@err.closed?
+          self
         end
       end
 
@@ -483,16 +558,22 @@ module Toys
           @parent_streams = []
         end
 
-        def execute(&block)
+        def execute
           setup_in_stream
           setup_out_stream(:out, $stdout, 1)
           setup_out_stream(:err, $stderr, 2)
           log_command
           pid = @fork_func ? start_fork : start_process
           @child_streams.each(&:close)
-          wait_thread = ::Process.detach(pid)
-          status = control_process(wait_thread, &block)
-          create_result(status)
+          controller = Controller.new(@controller_streams, @captures, pid, @join_threads,
+                                      @config_opts[:nonzero_status_handler])
+          return controller if @config_opts[:background]
+          begin
+            yield controller if block_given?
+          ensure
+            controller.close_streams
+          end
+          controller.result
         end
 
         private
@@ -611,28 +692,6 @@ module Toys
           else
             stream if stream.respond_to?(:write)
           end
-        end
-
-        def control_process(wait_thread)
-          begin
-            if block_given?
-              controller = Controller.new(
-                @controller_streams[:in], @controller_streams[:out], @controller_streams[:err],
-                wait_thread.pid
-              )
-              yield controller
-            end
-          ensure
-            @controller_streams.each_value(&:close)
-          end
-          @join_threads.each(&:join)
-          wait_thread.value
-        end
-
-        def create_result(status)
-          nonzero_status_handler = @config_opts[:nonzero_status_handler]
-          nonzero_status_handler.call(status) if nonzero_status_handler && status.exitstatus != 0
-          Result.new(@captures[:out], @captures[:err], status)
         end
 
         def setup_in_stream

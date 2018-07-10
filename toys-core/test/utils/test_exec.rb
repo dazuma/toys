@@ -315,6 +315,55 @@ describe Toys::Utils::Exec do
     end
   end
 
+  describe "backgrounding" do
+    it "determines whether processes are executing" do
+      ::Timeout.timeout(1) do
+        controller1 = exec.exec(["sleep", "0.4"], background: true)
+        controller2 = exec.exec(["sleep", "0.2"], background: true)
+        sleep(0.1)
+        assert_equal(true, controller1.executing?)
+        assert_equal(true, controller2.executing?)
+        sleep(0.2)
+        assert_equal(true, controller1.executing?)
+        assert_equal(false, controller2.executing?)
+        sleep(0.2)
+        assert_equal(false, controller1.executing?)
+        assert_equal(false, controller2.executing?)
+      end
+    end
+
+    it "waits for results and captures output" do
+      ::Timeout.timeout(1) do
+        controller1 = exec.ruby(["-e", "sleep(0.4); puts 'hi1'; exit(1)"],
+                                background: true, out: :capture)
+        controller2 = exec.ruby(["-e", "sleep(0.2); puts 'hi2'; exit(2)"],
+                                background: true, out: :capture)
+        result2 = controller2.result
+        assert_equal(2, result2.exit_code)
+        assert_equal("hi2\n", result2.captured_out)
+        assert_equal(true, controller1.executing?)
+        assert_equal(false, controller2.executing?)
+        result1 = controller1.result
+        assert_equal(1, result1.exit_code)
+        assert_equal("hi1\n", result1.captured_out)
+        assert_equal(false, controller1.executing?)
+      end
+    end
+
+    it "times out waiting for results" do
+      ::Timeout.timeout(1) do
+        controller = exec.ruby(["-e", "sleep(0.2); puts 'hi'; exit(1)"],
+                               background: true, out: :capture)
+        assert_nil(controller.result(timeout: 0.1))
+        assert_equal(true, controller.executing?)
+        result = controller.result(timeout: 0.2)
+        assert_equal(1, result.exit_code)
+        assert_equal("hi\n", result.captured_out)
+        assert_equal(false, controller.executing?)
+      end
+    end
+  end
+
   describe "environment setting" do
     it "is passed into the subprocess" do
       result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'],

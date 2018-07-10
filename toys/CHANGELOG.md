@@ -2,6 +2,9 @@
 
 ### 0.4.3 / TBD
 
+* IMPROVED: Exec mixin methods can now spawn subprocesses in the background
+* IMPROVED: Exec mixin capture methods can now yield a controller
+
 ### 0.4.2 / 2018-07-08
 
 * FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.
