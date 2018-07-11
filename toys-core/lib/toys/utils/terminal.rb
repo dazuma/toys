@@ -192,6 +192,7 @@ module Toys
         str = "#{str}\n" unless str.end_with?("\n")
         write(str, *styles)
       end
+      alias say puts
 
       ##
       # Write a line, appending a newline if one is not already present.

@@ -82,6 +82,7 @@ module Toys
       def puts(str = "", *styles)
         terminal.puts(str, *styles)
       end
+      alias say puts
 
       ##
       # @see Toys::Utils::Terminal#write

@@ -97,7 +97,11 @@ module Toys
     #    `Process#spawn`.
     # *  **Redirect to null:** You may redirect to a null stream by passing
     #    `:null` as the option value. This connects to a stream that is not
-    #    closed but contains no data, i.e. `/dev/null` on unix systems.
+    #    closed but contains no data, i.e. `/dev/null` on unix systems. This is
+    #    the default if the subprocess is run in the background.
+    # *  **Inherit parent stream:** You may inherit the corresponding stream in
+    #    the parent process by passing `:inherit` as the option value. This is
+    #    the default if the subprocess is *not* run in the background.
     # *  **Redirect to a file:** You may redirect to a file. This reads from an
     #    existing file when connected to `:in`, and creates or appends to a
     #    file when connected to `:out` or `:err`. To specify a file, use the
@@ -174,8 +178,8 @@ module Toys
           else
             [cmd]
           end
-        executor = Executor.new(exec_opts, spawn_cmd)
-        executor.execute(&block)
+        executor = Executor.new(exec_opts, spawn_cmd, block)
+        executor.execute
       end
 
       ##
@@ -219,8 +223,8 @@ module Toys
       #
       def exec_proc(func, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
-        executor = Executor.new(exec_opts, func)
-        executor.execute(&block)
+        executor = Executor.new(exec_opts, func, block)
+        executor.execute
       end
 
       ##
@@ -546,7 +550,7 @@ module Toys
       # @private
       #
       class Executor
-        def initialize(exec_opts, spawn_cmd)
+        def initialize(exec_opts, spawn_cmd, block)
           @fork_func = spawn_cmd.respond_to?(:call) ? spawn_cmd : nil
           @spawn_cmd = spawn_cmd.respond_to?(:call) ? nil : spawn_cmd
           @config_opts = exec_opts.config_opts
@@ -556,20 +560,23 @@ module Toys
           @join_threads = []
           @child_streams = []
           @parent_streams = []
+          @block = block
+          @background = @config_opts[:background]
+          @default_stream = @background ? :null : :inherit
         end
 
         def execute
           setup_in_stream
-          setup_out_stream(:out, $stdout, 1)
-          setup_out_stream(:err, $stderr, 2)
+          setup_out_stream(:out)
+          setup_out_stream(:err)
           log_command
           pid = @fork_func ? start_fork : start_process
           @child_streams.each(&:close)
           controller = Controller.new(@controller_streams, @captures, pid, @join_threads,
                                       @config_opts[:nonzero_status_handler])
-          return controller if @config_opts[:background]
+          return controller if @background
           begin
-            yield controller if block_given?
+            @block&.call(controller)
           ensure
             controller.close_streams
           end
@@ -695,11 +702,7 @@ module Toys
         end
 
         def setup_in_stream
-          setting = @config_opts[:in]
-          if setting.nil?
-            return if $stdin.respond_to?(:fileno) && $stdin.fileno.zero?
-            setting = $stdin
-          end
+          setting = @config_opts[:in] || @default_stream
           return unless setting
           case setting
           when ::Symbol
@@ -742,6 +745,8 @@ module Toys
             @controller_streams[:in] = make_in_pipe
           when :null
             make_null_stream(:in, "r")
+          when :inherit
+            @spawn_opts[:in] = :in
           when :close
             @spawn_opts[:in] = type
           when :parent
@@ -764,12 +769,8 @@ module Toys
           @spawn_opts[:in] = args + [::File::RDONLY]
         end
 
-        def setup_out_stream(key, stdstream, stdfileno)
-          setting = @config_opts[key]
-          if setting.nil?
-            return if setting.respond_to?(:fileno) && setting.fileno == stdfileno
-            setting = stdstream
-          end
+        def setup_out_stream(key)
+          setting = @config_opts[key] || @default_stream
           case setting
           when ::Symbol
             setup_out_stream_of_type(key, setting, [])
@@ -811,6 +812,8 @@ module Toys
             @controller_streams[key] = make_out_pipe(key)
           when :null
             make_null_stream(key, "w")
+          when :inherit
+            @spawn_opts[key] = key
           when :close, :out, :err
             @spawn_opts[key] = type
           when :parent

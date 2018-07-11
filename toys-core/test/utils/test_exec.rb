@@ -90,6 +90,28 @@ describe Toys::Utils::Exec do
   end
 
   describe "stream handling for spawn" do
+    it "inherits parent streams" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          script = <<-SCRIPT
+            if gets == "hello"
+              puts "abc"
+              warn "def"
+              exit(2)
+            else
+              exit(1)
+            end
+          SCRIPT
+          r = exec.ruby(["-e", script], out: :inherit, in: :inherit, err: :inherit)
+          exit(r.exit_code)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal(2, result.exit_code)
+        assert_equal("abc\n", result.captured_out)
+        assert_equal("def\n", result.captured_err)
+      end
+    end
+
     it "captures stdout and stderr" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", '$stdout.puts "hello"; $stderr.puts "world"'],
@@ -143,9 +165,68 @@ describe Toys::Utils::Exec do
         assert_equal("hello\nworld\n", ::File.read(output_path))
       end
     end
+
+    it "inherits parent streams by default when running in the foreground" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          script = <<-SCRIPT
+            if gets == "hello"
+              puts "abc"
+              warn "def"
+              exit(2)
+            else
+              exit(1)
+            end
+          SCRIPT
+          r = exec.ruby(["-e", script])
+          exit(r.exit_code)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal(2, result.exit_code)
+        assert_equal("abc\n", result.captured_out)
+        assert_equal("def\n", result.captured_err)
+      end
+    end
+
+    it "redirects to null by default when running in the background" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          script = <<-SCRIPT
+            puts "abc"
+            warn "def"
+          SCRIPT
+          exec.ruby(["-e", script], background: true).result(timeout: 0.5)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal("", result.captured_out)
+        assert_equal("", result.captured_err)
+      end
+    end
   end
 
   describe "stream handling for fork" do
+    it "inherits parent streams" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          f = proc do
+            if gets == "hello"
+              puts "abc"
+              warn "def"
+              exit(2)
+            else
+              exit(1)
+            end
+          end
+          r = exec.exec_proc(f, out: :inherit, in: :inherit, err: :inherit)
+          exit(r.exit_code)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal(2, result.exit_code)
+        assert_equal("abc\n", result.captured_out)
+        assert_equal("def\n", result.captured_err)
+      end
+    end
+
     it "captures stdout and stderr" do
       ::Timeout.timeout(1) do
         func = proc do
@@ -275,6 +356,50 @@ describe Toys::Utils::Exec do
         end
         result = exec.exec_proc(func, err: :null)
         assert_equal(0, result.exit_code)
+      end
+    end
+
+    it "inherits parent streams by default when running in the foreground" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          f = proc do
+            if gets == "hello"
+              puts "abc"
+              warn "def"
+              exit(2)
+            else
+              exit(1)
+            end
+          end
+          r = exec.exec_proc(f)
+          exit(r.exit_code)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal(2, result.exit_code)
+        assert_equal("abc\n", result.captured_out)
+        assert_equal("def\n", result.captured_err)
+      end
+    end
+
+    it "redirects to null by default when running in the background" do
+      ::Timeout.timeout(1) do
+        func = proc do
+          f = proc do
+            if gets.nil?
+              puts "abc"
+              warn "def"
+              exit(2)
+            else
+              exit(1)
+            end
+          end
+          r = exec.exec_proc(f, background: true).result(timeout: 0.5)
+          exit(r.exit_code)
+        end
+        result = exec.exec_proc(func, out: :capture, err: :capture, in: [:string, "hello"])
+        assert_equal(2, result.exit_code)
+        assert_equal("", result.captured_out)
+        assert_equal("", result.captured_err)
       end
     end
   end
