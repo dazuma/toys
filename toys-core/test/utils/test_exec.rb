@@ -481,7 +481,7 @@ describe Toys::Utils::Exec do
                                background: true, out: :capture)
         assert_nil(controller.result(timeout: 0.1))
         assert_equal(true, controller.executing?)
-        result = controller.result(timeout: 0.2)
+        result = controller.result(timeout: 0.4)
         assert_equal(1, result.exit_code)
         assert_equal("hi\n", result.captured_out)
         assert_equal(false, controller.executing?)
