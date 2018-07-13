@@ -1,6 +1,6 @@
 # Release History
 
-### 0.4.3 / TBD
+### 0.4.3 / 2018-07-13
 
 * IMPROVED: Utils::Exec methods can now spawn subprocesses in the background
 * IMPROVED: Utils::Exec capture methods can now yield a controller

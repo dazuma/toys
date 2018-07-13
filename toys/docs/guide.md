@@ -1519,7 +1519,7 @@ This section describes how to use a third-party gem in your tool.
 
 ### Activating Gems
 
-The toys gem itself includes only two gems: **toys** and **toys-core**. It has
+The toys binary itself uses only two gems: **toys** and **toys-core**. It has
 no other gem dependencies. However, if you want to use a third-party gem in
 your tool, Toys provides a convenient mechanism to ensure the gem is installed.
 

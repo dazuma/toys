@@ -561,8 +561,7 @@ module Toys
           @child_streams = []
           @parent_streams = []
           @block = block
-          @background = @config_opts[:background]
-          @default_stream = @background ? :null : :inherit
+          @default_stream = @config_opts[:background] ? :null : :inherit
         end
 
         def execute
@@ -574,7 +573,7 @@ module Toys
           @child_streams.each(&:close)
           controller = Controller.new(@controller_streams, @captures, pid, @join_threads,
                                       @config_opts[:nonzero_status_handler])
-          return controller if @background
+          return controller if @config_opts[:background]
           begin
             @block&.call(controller)
           ensure
