@@ -4,6 +4,8 @@
 
 * Guide: Document preloading
 * Guide: Note the "self::"" syntax in the discussion on constants
+* Terminal#ask
+* Use stty to get terminal size in terminal.rb
 
 ## Investigations/wishlist
 
@@ -17,7 +19,6 @@
 * Rake-like build/dependency features or a way to call out to rake.
 * Consider allowing period or colon as command separators.
 * Integrate with the "less" tool in exec.
-* Use stty to get terminal size in terminal.rb
 * .data directory in loader
 * .preload directory in loader
 * .lib directory in loader

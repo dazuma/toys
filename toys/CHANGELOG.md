@@ -1,5 +1,10 @@
 # Release History
 
+### 0.4.4 / TBD
+
+* FIXED: Utils::Exec wasn't closing streams after copying.
+* ADDED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.
+
 ### 0.4.3 / 2018-07-13
 
 * IMPROVED: Exec mixin methods can now spawn subprocesses in the background

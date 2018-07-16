@@ -438,14 +438,138 @@ module Toys
         attr_reader :pid
 
         ##
+        # Captures the remaining data in the given stream.
+        # After calling this, do not read directly from the stream.
+        #
+        # @param [:out,:err] which Which stream to capture
+        #
+        def capture(which)
+          stream = stream_for(which)
+          @join_threads << ::Thread.new do
+            begin
+              @captures[which] = stream.read
+            ensure
+              stream.close
+            end
+          end
+          self
+        end
+
+        ##
+        # Captures the remaining data in the stdandard output stream.
+        # After calling this, do not read directly from the stream.
+        #
+        def capture_out
+          capture(:out)
+        end
+
+        ##
+        # Captures the remaining data in the stdandard error stream.
+        # After calling this, do not read directly from the stream.
+        #
+        def capture_err
+          capture(:err)
+        end
+
+        ##
+        # Redirects the remainder of the given stream.
+        #
+        # You may specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you may optionally
+        # provide the mode and permissions for the call to `File#open`. You can
+        # also specify the value `:null` to indicate the null file.
+        #
+        # After calling this, do not interact directly with the stream.
+        #
+        # @param [:in,:out,:err] which Which stream to redirect
+        # @param [IO,StringIO,String,:null] io Where to redirect the stream
+        # @param [Object...] io_args The mode and permissions for opening the
+        #     file, if redirecting to/from a file.
+        #
+        def redirect(which, io, *io_args)
+          io = ::File::NULL if io == :null
+          if io.is_a?(::String)
+            io_args = which == :in ? ["r"] : ["w"] if io_args.empty?
+            io = ::File.open(io, *io_args)
+          end
+          stream = stream_for(which, allow_in: true)
+          @join_threads << ::Thread.new do
+            begin
+              if which == :in
+                ::IO.copy_stream(io, stream)
+              else
+                ::IO.copy_stream(stream, io)
+              end
+            ensure
+              stream.close
+              io.close
+            end
+          end
+        end
+
+        ##
+        # Redirects the remainder of the standard input stream.
+        #
+        # You may specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you may optionally
+        # provide the mode and permissions for the call to `File#open`. You can
+        # also specify the value `:null` to indicate the null file.
+        #
+        # After calling this, do not interact directly with the stream.
+        #
+        # @param [IO,StringIO,String,:null] io Where to redirect the stream
+        # @param [Object...] io_args The mode and permissions for opening the
+        #     file, if redirecting from a file.
+        #
+        def redirect_in(io, *io_args)
+          redirect(:in, io, *io_args)
+        end
+
+        ##
+        # Redirects the remainder of the standard output stream.
+        #
+        # You may specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you may optionally
+        # provide the mode and permissions for the call to `File#open`. You can
+        # also specify the value `:null` to indicate the null file.
+        #
+        # After calling this, do not interact directly with the stream.
+        #
+        # @param [IO,StringIO,String,:null] io Where to redirect the stream
+        # @param [Object...] io_args The mode and permissions for opening the
+        #     file, if redirecting to a file.
+        #
+        def redirect_out(io, *io_args)
+          redirect(:out, io, *io_args)
+        end
+
+        ##
+        # Redirects the remainder of the standard error stream.
+        #
+        # You may specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you may optionally
+        # provide the mode and permissions for the call to `File#open`.
+        #
+        # After calling this, do not interact directly with the stream.
+        #
+        # @param [IO,StringIO,String] io Where to redirect the stream
+        # @param [Object...] io_args The mode and permissions for opening the
+        #     file, if redirecting to a file.
+        #
+        def redirect_err(io, *io_args)
+          redirect(:err, io, *io_args)
+        end
+
+        ##
         # Send the given signal to the process. The signal may be specified
         # by name or number.
         #
-        # @param [Integer,String] signal The signal to send.
+        # @param [Integer,String] sig The signal to send.
         #
-        def kill(signal)
-          ::Process.kill(signal, pid)
+        def kill(sig)
+          ::Process.kill(sig, pid)
         end
+        alias signal kill
 
         ##
         # Determine whether the subcommand is still executing
@@ -486,6 +610,29 @@ module Toys
           @out.close if @out && !@out.closed?
           @err.close if @err && !@err.closed?
           self
+        end
+
+        private
+
+        def stream_for(which, allow_in: false)
+          stream = nil
+          case which
+          when :out
+            stream = @out
+            @out = nil
+          when :err
+            stream = @err
+            @err = nil
+          when :in
+            if allow_in
+              stream = @in
+              @in = nil
+            end
+          else
+            raise ::ArgumentError, "Unknown stream #{which}"
+          end
+          raise ::ArgumentError, "Stream #{which} not available" unless stream
+          stream
         end
       end
 
@@ -639,24 +786,12 @@ module Toys
 
         def setup_streams_within_fork
           @parent_streams.each(&:close)
-          setup_in_stream_within_fork(@spawn_opts[:in])
-          out_stream = interpret_out_stream_within_fork(@spawn_opts[:out])
-          err_stream = interpret_out_stream_within_fork(@spawn_opts[:err])
-          if out_stream == :close
-            $stdout.close
-          elsif out_stream
-            $stdout.reopen(out_stream)
-            $stdout.sync = true
-          end
-          if err_stream == :close
-            $stderr.close
-          elsif err_stream
-            $stderr.reopen(err_stream)
-            $stderr.sync = true
-          end
+          setup_in_stream_within_fork(@spawn_opts[:in], $stdin)
+          setup_out_stream_within_fork(@spawn_opts[:out], $stdout)
+          setup_out_stream_within_fork(@spawn_opts[:err], $stderr)
         end
 
-        def setup_in_stream_within_fork(stream)
+        def setup_in_stream_within_fork(stream, stdstream)
           in_stream =
             case stream
             when ::Integer
@@ -671,32 +806,43 @@ module Toys
               stream if stream.respond_to?(:write)
             end
           if in_stream == :close
-            $stdin.close
+            stdstream.close
           elsif in_stream
-            $stdin.reopen(in_stream)
+            stdstream.reopen(in_stream)
           end
         end
 
-        def interpret_out_stream_within_fork(stream)
-          case stream
-          when ::Integer
-            ::IO.open(stream)
-          when ::Array
-            if stream.first == :child
-              if stream[1] == :err
-                $stderr
-              elsif stream[1] == :out
-                $stdout
-              end
+        def setup_out_stream_within_fork(stream, stdstream)
+          out_stream =
+            case stream
+            when ::Integer
+              ::IO.open(stream)
+            when ::Array
+              interpret_out_array_within_fork(stream)
+            when ::String
+              ::File.open(stream, "w")
+            when :close
+              :close
             else
-              ::File.open(*stream)
+              stream if stream.respond_to?(:write)
             end
-          when ::String
-            ::File.open(stream, "w")
-          when :close
-            :close
+          if out_stream == :close
+            stdstream.close
+          elsif out_stream
+            stdstream.reopen(out_stream)
+            stdstream.sync = true
+          end
+        end
+
+        def interpret_out_array_within_fork(stream)
+          if stream.first == :child
+            if stream[1] == :err
+              $stderr
+            elsif stream[1] == :out
+              $stdout
+            end
           else
-            stream if stream.respond_to?(:write)
+            ::File.open(*stream)
           end
         end
 
@@ -870,26 +1016,26 @@ module Toys
           end
         end
 
-        def copy_to_in_thread(io, close: false)
+        def copy_to_in_thread(io)
           stream = make_in_pipe
           @join_threads << ::Thread.new do
             begin
               ::IO.copy_stream(io, stream)
             ensure
               stream.close
-              io.close if close
+              io.close
             end
           end
         end
 
-        def copy_from_out_thread(key, io, close: false)
+        def copy_from_out_thread(key, io)
           stream = make_out_pipe(key)
           @join_threads << ::Thread.new do
             begin
               ::IO.copy_stream(stream, io)
             ensure
               stream.close
-              io.close if close
+              io.close
             end
           end
         end

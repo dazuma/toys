@@ -438,6 +438,31 @@ describe Toys::Utils::Exec do
         assert_equal(3, result.exit_code)
       end
     end
+
+    it "captures streams" do
+      ::Timeout.timeout(1) do
+        result = exec.ruby(["-e", '$stdout.puts "hello"; $stderr.puts "world"'],
+                           out: :controller, err: :controller) do |controller|
+          controller.capture_out
+          controller.capture_err
+        end
+        assert_equal("hello\n", result.captured_out)
+        assert_equal("world\n", result.captured_err)
+      end
+    end
+
+    it "handles file redirects" do
+      ::FileUtils.mkdir_p(tmp_dir)
+      ::FileUtils.rm_rf(output_path)
+      ::Timeout.timeout(1) do
+        exec.ruby(["-e", 'puts(gets + "world\n")'],
+                  in: :controller, out: :controller) do |controller|
+          controller.redirect_in(input_path)
+          controller.redirect_out(output_path)
+        end
+        assert_equal("hello\nworld\n", ::File.read(output_path))
+      end
+    end
   end
 
   describe "backgrounding" do
