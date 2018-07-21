@@ -3,9 +3,7 @@
 ## Immediate tasks
 
 * Guide: Document preloading
-* Guide: Note the "self::"" syntax in the discussion on constants
-* Terminal#ask
-* Use stty to get terminal size in terminal.rb
+* Guide: Note the "self::" syntax in the discussion on constants
 
 ## Investigations/wishlist
 
@@ -23,3 +21,4 @@
 * .preload directory in loader
 * .lib directory in loader
 * Figure out how/whether to support customizing middleware in toys files
+* Additional ways to find terminal size

@@ -113,6 +113,22 @@ describe Toys::Utils::Terminal do
     end
   end
 
+  describe "ask" do
+    it "Displays a prompt and gets a result" do
+      input = StringIO.new "hello\n"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal("hello", terminal.ask("What? "))
+      assert_equal("What? ", output.string)
+    end
+
+    it "Displays a prompt with default and gets a default result" do
+      input = StringIO.new "\n"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal("hi", terminal.ask("What?  ", default: "hi"))
+      assert_equal("What? [hi]  ", output.string)
+    end
+  end
+
   describe "confirm" do
     it "Displays a default prompt" do
       input = StringIO.new "y\n"
@@ -124,22 +140,29 @@ describe Toys::Utils::Terminal do
     it "Displays a custom prompt" do
       input = StringIO.new "n\n"
       terminal = Toys::Utils::Terminal.new(input: input, output: output)
-      assert_equal(false, terminal.confirm("ok?"))
+      assert_equal(false, terminal.confirm("ok? "))
       assert_equal("ok? (y/n) ", output.string)
     end
 
     it "Displays a prompt with default of yes" do
-      input = StringIO.new
+      input = StringIO.new "\n"
       terminal = Toys::Utils::Terminal.new(input: input, output: output)
-      assert_equal(true, terminal.confirm("ok?", default: true))
+      assert_equal(true, terminal.confirm("ok? ", default: true))
       assert_equal("ok? (Y/n) ", output.string)
     end
 
     it "Displays a prompt with default of no" do
+      input = StringIO.new "\n"
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
+      assert_equal(false, terminal.confirm("ok? ", default: false))
+      assert_equal("ok? (y/N) ", output.string)
+    end
+
+    it "Handles input EOF" do
       input = StringIO.new
       terminal = Toys::Utils::Terminal.new(input: input, output: output)
-      assert_equal(false, terminal.confirm("ok?", default: false))
-      assert_equal("ok? (y/N) ", output.string)
+      assert_equal(true, terminal.confirm(default: true))
+      assert_equal("Proceed? (Y/n) ", output.string)
     end
   end
 end

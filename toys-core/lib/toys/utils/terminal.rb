@@ -35,7 +35,7 @@ require "monitor"
 begin
   require "io/console"
 rescue ::LoadError # rubocop:disable Lint/HandleExceptions
-  # TODO: use stty to get terminal size
+  # TODO: alternate methods of getting terminal size
 end
 
 module Toys
@@ -211,32 +211,60 @@ module Toys
       end
 
       ##
+      # Ask a question and get a response.
+      #
+      # @param [String] prompt Required prompt string.
+      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      #     prompt.
+      # @param [String,nil] default Default value, or `nil` for no default.
+      #     Uses `nil` if not specified.
+      # @param [:default,String,nil] trailing_text Trailing text appended to
+      #     the prompt, `nil` for none, or `:default` to show the default.
+      # @return [String]
+      #
+      def ask(prompt, *styles, default: nil, trailing_text: :default)
+        if trailing_text == :default
+          trailing_text = default.nil? ? nil : "[#{default}]"
+        end
+        if trailing_text
+          ptext, pspaces, = prompt.partition(/\s+$/)
+          prompt = "#{ptext} #{trailing_text}#{pspaces}"
+        end
+        write(prompt, *styles)
+        resp = input.gets.to_s.chomp
+        resp.empty? ? default.to_s : resp
+      end
+
+      ##
       # Confirm with the user.
       #
       # @param [String] prompt Prompt string. Defaults to `"Proceed?"`.
+      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      #     prompt.
       # @param [Boolean,nil] default Default value, or `nil` for no default.
       #     Uses `nil` if not specified.
       # @return [Boolean]
       #
-      def confirm(prompt = "Proceed?", default: nil)
-        y = default == true ? "Y" : "y"
-        n = default == false ? "N" : "n"
-        write("#{prompt} (#{y}/#{n}) ")
-        resp = input.gets
-        case resp
-        when /^y/i
-          true
-        when /^n/i
-          false
-        when nil
-          raise TerminalError, "Cannot confirm because the input stream is at eof." if default.nil?
-          default
-        else
-          if !resp.strip.empty? || default.nil?
-            confirm("Please answer \"y\" or \"n\"")
+      def confirm(prompt = "Proceed? ", *styles, default: nil)
+        default_val, trailing_text =
+          case default
+          when true
+            ["y", "(Y/n)"]
+          when false
+            ["n", "(y/N)"]
           else
-            default
+            [nil, "(y/n)"]
           end
+        resp = ask(prompt, *styles, default: default_val, trailing_text: trailing_text)
+        return true if resp =~ /^y/i
+        return false if resp =~ /^n/i
+        if resp.nil? && default.nil?
+          raise TerminalError, "Cannot confirm because the input stream is at eof."
+        end
+        if !resp.strip.empty? || default.nil?
+          confirm('Please answer "y" or "n"', default: default)
+        else
+          default
         end
       end
 

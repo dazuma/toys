@@ -3,7 +3,8 @@
 ### 0.4.4 / TBD
 
 * FIXED: Utils::Exec wasn't closing streams after copying.
-* ADDED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.
+* IMPROVED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.
+* ADDED: Terminal#ask
 
 ### 0.4.3 / 2018-07-13
 
