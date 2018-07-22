@@ -1286,7 +1286,7 @@ pass a value to the mixin's initializer:
 
 ### Using Constants
 
-You can define and use Ruby cconstants, i.e. names beginning with a capital
+You can define and use Ruby constants, i.e. names beginning with a capital
 letter, in a Toys file. However, they are subject to Ruby's rules regarding
 constant scope and lookup, which can be confusing, especially in a DSL. Toys
 tries to simplify those rules and make constant behavior somewhat tractable,
@@ -1294,10 +1294,10 @@ but if you do use constants (which includes modules and classes defined in a
 Toys file), it is important to understand how they work.
 
 Constants in Toys are visible only within the Toys file in which they are
-defined. They always behave as though they are defined at the "top level" of
+defined. They normally behave as though they are defined at the "top level" of
 the file. Even if you define a constant lexically "inside" a tool or a mixin,
-the constant does _not_ end up connected to that tool or mixin; it is always
-defined at the file level.
+the constant does _not_ end up connected to that tool or mixin; it is defined
+at the file level.
 
     tool "test" do
       tool "unit" do
@@ -1317,11 +1317,13 @@ defined at the file level.
       end
     end
 
+(Note it is still possible to attach constants to a tool or mixin by defining
+them with `self::`. However, this isn't very common practice in Ruby.)
+
 Because of this, it is highly recommended that you define constants only at the
 top level of a Toys file, so it doesn't "look" like it is scoped to something
-smaller. In particular, do not attempt to define constants in a mixin. The
-constants will not actually be connected to the mixin, and may not be
-available to tools that include the mixin.
+smaller. In particular, do not attempt to define constants in a mixin, unless
+you scope them with `self::`.
 
 Modules and classes defined using the `module` or `class` keyword, are also
 constants, and thus follow the same rules. So you could, for example, define a

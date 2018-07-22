@@ -2,8 +2,7 @@
 
 ## Immediate tasks
 
-* Guide: Document preloading
-* Guide: Note the "self::" syntax in the discussion on constants
+* Document or drop preloading
 
 ## Investigations/wishlist
 
@@ -19,6 +18,5 @@
 * Integrate with the "less" tool in exec.
 * .data directory in loader
 * .preload directory in loader
-* .lib directory in loader
 * Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size

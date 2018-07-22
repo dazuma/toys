@@ -92,10 +92,17 @@ module Toys
       end
 
       ##
+      # @see Toys::Utils::Terminal#ask
+      #
+      def ask(prompt, *styles, default: nil, trailing_text: :default)
+        terminal.ask(prompt, *styles, default: default, trailing_text: trailing_text)
+      end
+
+      ##
       # @see Toys::Utils::Terminal#confirm
       #
-      def confirm(prompt = "Proceed?", default: nil)
-        terminal.confirm(prompt, default: default)
+      def confirm(prompt = "Proceed?", *styles, default: nil)
+        terminal.confirm(prompt, *styles, default: default)
       end
 
       ##
