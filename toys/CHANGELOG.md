@@ -1,6 +1,6 @@
 # Release History
 
-### 0.4.4 / TBD
+### 0.4.4 / 2018-07-21
 
 * FIXED: Utils::Exec wasn't closing streams after copying.
 * IMPROVED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.
