@@ -1740,7 +1740,8 @@ can use either or both tools, depending on your needs.
 
 Toys provides a built-in template for minitest, called `:minitest`. It is
 implemented by the template class {Toys::Templates::Minitest}, and it uses the
-minitest gem, which is provided with most recent versions of Ruby.
+minitest gem, which is provided with most recent versions of Ruby. The
+following directive uses the minitest template to create a tool called `test`:
 
     expand :minitest, files: ["test/test*.rb"], libs: ["lib", "ext"]
 
@@ -1748,7 +1749,8 @@ See the {Toys::Templates::Minitest} documentation for details on the various
 options.
 
 If you want to enforce code style using the "rubocop" gem, you can use the
-built-in `:rubocop` template:
+built-in `:rubocop` template. The following directive uses this template to
+create a tool called `rubocop`:
 
     expand :rubocop
 
@@ -1759,9 +1761,12 @@ options.
 
 The `:gem_build` built-in template can generate a variety of build and release
 tools for gems, and is a useful alternative to the Rake tasks provided by
-bundler. It is implemented by {Toys::Templates::GemBuild}.
+bundler. It is implemented by {Toys::Templates::GemBuild}. The following
+directive uses this template to create a tool called `build`:
 
-Expanding `:gem_build` by default looks for a gemspec file in the current
+    expand :gem_build
+
+The `:gem_build` template by default looks for a gemspec file in the current
 directory, and builds that gem into a `pkg` directory. You can also build a
 specific gem if you have multiple gemspec files.
 
@@ -1775,7 +1780,7 @@ your gem:
 See the {Toys::Templates::GemBuild} documentation for details on the various
 options for build tools.
 
-To generate a "clean" tool, you can use the `:clean` built-in template. For
+To create a "clean" tool, you can use the `:clean` built-in template. For
 example:
 
     expand :clean, paths: ["pkg", "doc", "tmp"]
@@ -1791,7 +1796,7 @@ Both templates provide a variety of options for controlling documentation
 generation. See {Toys::Templates::Rdoc} and {Toys::Templates::Yardoc} for
 detailed information.
 
-Here's an example for YARD:
+Here's an example for YARD, creating a tool called `yardoc`:
 
     expand :yardoc, protected: true, markup: "markdown"
 
@@ -1813,6 +1818,8 @@ Below is the full annotated `.toys.rb` file. For many gems, you could drop this
 into the gem source repo with minimal or no modifications. Indeed, it is
 nearly identical to the Toys files provided for the **toys** and **toys-core**
 gems themselves.
+
+    # This file is .toys.rb
 
     # A "clean" tool that cleans out gem builds (from the pkg directory), and
     # documentation builds (from doc and .yardoc)
@@ -1843,7 +1850,7 @@ gems themselves.
     # credentials.
     expand :gem_build, name: "release", push_gem: true
 
-    # Now we have a full CI tool. It runs the test, rubocop, and yardoc tools
+    # Now we create a full CI tool. It runs the test, rubocop, and yardoc tools
     # and checks for errors. This tool could be invoked from Travis-CI or
     # similar CI system.
     tool "ci" do

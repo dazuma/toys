@@ -19,7 +19,7 @@ https://www.rubydoc.info/gems/toys-core
 
 Here's a five-minute tutorial to get a feel of what Toys can do.
 
-### Install toys
+### Install Toys
 
 Install the **toys** gem using:
 

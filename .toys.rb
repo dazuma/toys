@@ -142,7 +142,7 @@ tool "release" do
   def run
     ::Dir.chdir(__dir__) do
       version = capture(["./toys-dev", "system", "version"]).strip
-      exit(1) unless confirm("Release toys #{version}?")
+      exit(1) unless confirm("Release toys #{version}? ")
       handle_gem("toys-core")
       handle_gem("toys")
       puts("**** Tagging v#{version}...", :bold, :cyan)

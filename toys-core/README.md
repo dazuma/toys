@@ -5,10 +5,24 @@ a simple DSL, and Toys will provide the command line binary and take care of
 all the details such as argument parsing, online help, and error reporting.
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to create your own command line binaries using the internal Toys APIs.
+to create your own command line binaries using the internal Toys APIs. To get
+started with Toys-Core, see the
+[User's Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md)
 
-To get started with toys-core, see the
-[Getting Started Guide](https://www.rubydoc.info/gems/toys-core/file/docs/getting-started.md)
+## Quick Start
+
+Here's a ten-minute tutorial to get a feel for how to write a basic command
+line binary using Toys-Core.
+
+### Install Toys
+
+Install the **toys-core** gem using:
+
+    gem install toys-core
+
+You may also install the **toys** gem...
+
+(To be written)
 
 ## License
 
