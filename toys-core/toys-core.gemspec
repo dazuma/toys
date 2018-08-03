@@ -55,6 +55,6 @@ require "toys/core_version"
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"
-  spec.add_development_dependency "rubocop", "~> 0.57.2"
+  spec.add_development_dependency "rubocop", "~> 0.58.2"
   spec.add_development_dependency "yard", "~> 0.9.14"
 end

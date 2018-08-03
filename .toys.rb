@@ -37,7 +37,7 @@ gem "highline", "~> 2.0"
 gem "minitest", "~> 5.11"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
-gem "rubocop", "~> 0.57.2"
+gem "rubocop", "~> 0.58.2"
 gem "yard", "~> 0.9.14"
 
 tool "install" do
