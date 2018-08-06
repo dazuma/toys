@@ -1,8 +1,8 @@
 # TODO items
 
-## Immediate tasks
+This is a dumping ground of ideas and future directions for Toys.
 
-* Document or drop preloading
+## Immediate tasks
 
 ## Investigations/wishlist
 
@@ -17,6 +17,6 @@
 * Consider allowing period or colon as command separators.
 * Integrate with the "less" tool in exec.
 * .data directory in loader
-* .preload directory in loader
+* .preload file/directory in loader
 * Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size
