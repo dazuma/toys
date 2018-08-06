@@ -58,12 +58,6 @@ module Toys
     #     loaded first as a standalone configuration file. If not provided,
     #     standalone configuration files are disabled.
     #     The default toys CLI sets this to `".toys.rb"`.
-    # @param [String,nil] preload_file_name A file with this name that appears
-    #     in any configuration directory (not just a toplevel directory) is
-    #     loaded before any configuration files. It is not treated as a
-    #     configuration file in that the configuration DSL is not honored. You
-    #     may use such a file to define auxiliary Ruby modules and classes that
-    #     used by the tools defined in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this CLI. If not provided, uses
     #     {Toys::CLI.default_middleware_stack}.
@@ -88,8 +82,7 @@ module Toys
     #
     def initialize(
       binary_name: nil, middleware_stack: nil,
-      config_dir_name: nil, config_file_name: nil,
-      index_file_name: nil, preload_file_name: nil,
+      config_dir_name: nil, config_file_name: nil, index_file_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil
     )
@@ -100,12 +93,11 @@ module Toys
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
-      @preload_file_name = preload_file_name
       @mixin_lookup = mixin_lookup || self.class.default_mixin_lookup
       @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
       @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
-        index_file_name: index_file_name, preload_file_name: preload_file_name,
+        index_file_name: index_file_name,
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
@@ -259,7 +251,6 @@ module Toys
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,
                     index_file_name: @index_file_name,
-                    preload_file_name: @preload_file_name,
                     middleware_stack: @middleware_stack,
                     mixin_lookup: @mixin_lookup,
                     middleware_lookup: @middleware_lookup,

@@ -1,6 +1,8 @@
 # Release History
 
-### 0.4.5 / TBD
+### 0.4.5 / 2018-08-05
+
+* CHANGED: Dropped preload file feature
 
 ### 0.4.4 / 2018-07-21
 

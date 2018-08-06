@@ -53,12 +53,6 @@ module Toys
     #     in any configuration directory (not just a toplevel directory) is
     #     loaded first as a standalone configuration file. If not provided,
     #     standalone configuration files are disabled.
-    # @param [String,nil] preload_file_name A file with this name that appears
-    #     in any configuration directory (not just a toplevel directory) is
-    #     loaded before any configuration files. It is not treated as a
-    #     configuration file in that the configuration DSL is not honored. You
-    #     may use such a file to define auxiliary Ruby modules and classes that
-    #     used by the tools defined in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
     # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
@@ -68,19 +62,15 @@ module Toys
     # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, preload_file_name: nil, middleware_stack: [],
+    def initialize(index_file_name: nil, middleware_stack: [],
                    mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
-      end
-      if preload_file_name && ::File.extname(preload_file_name) != ".rb"
-        raise ::ArgumentError, "Illegal preload file name #{preload_file_name.inspect}"
       end
       @mixin_lookup = mixin_lookup || Utils::ModuleLookup.new
       @middleware_lookup = middleware_lookup || Utils::ModuleLookup.new
       @template_lookup = template_lookup || Utils::ModuleLookup.new
       @index_file_name = index_file_name
-      @preload_file_name = preload_file_name
       @middleware_stack = middleware_stack
       @worklist = []
       @tool_data = {}
@@ -428,19 +418,11 @@ module Toys
         tool_class = get_tool_definition(words, priority).tool_class
         Toys::InputFile.evaluate(tool_class, remaining_words, path)
       else
-        require_preload_in(path)
         load_index_in(path, words, remaining_words, priority)
         ::Dir.entries(path).each do |child|
           load_child_in(path, child, words, remaining_words, priority)
         end
       end
-    end
-
-    def require_preload_in(path)
-      return unless @preload_file_name
-      preload_path = ::File.join(path, @preload_file_name)
-      preload_path = check_path(preload_path, type: :file, lenient: true)
-      require preload_path if preload_path
     end
 
     def load_index_in(path, words, remaining_words, priority)
@@ -452,7 +434,7 @@ module Toys
 
     def load_child_in(path, child, words, remaining_words, priority)
       return if child.start_with?(".")
-      return if [@preload_file_name, @index_file_name].include?(child)
+      return if child == @index_file_name
       child_path = check_path(::File.join(path, child))
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
