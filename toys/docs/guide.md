@@ -433,8 +433,8 @@ an example:
                  long_desc: ["Long descriptions may have multiple lines.",
                              "This is the second line."]
 
-See the [above section on Descriptions](#descriptions) for more information on
-how descriptions are rendered and word wrapped.
+See the [above section on Descriptions](#Tool_Descriptions) for more
+information on how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
 way, Toys provides an alternate syntax for defining arguments using a block.
@@ -477,7 +477,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
+[section below on Custom Acceptors](#Custom_Acceptors) for more information.
 
 ### Flags
 
@@ -570,7 +570,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
+[section below on Custom Acceptors](#Custom_Acceptors) for more information.
 
 #### Defaults and Handlers
 
@@ -619,7 +619,7 @@ like this:
 Note that both flags affect the same option value, `VERBOSITY`. The first
 increments it each time it appears, and the second decrements it. A tool can
 query this option and get an integer telling the requested verbosity level, as
-you will see [below](#logging-and-verbosity).
+you will see [below](#Logging_and_Verbosity).
 
 #### Descriptions and the Flags DSL
 
@@ -633,7 +633,7 @@ directive. The `desc:` argument takes a single string description, while the
          long_desc: ["Long descriptions may have multiple lines.",
                      "This is the second line."]
 
-See the [above section on Descriptions](#descriptions) for more information on
+See the [above section on Descriptions](#Tool_Descriptions) for more information on
 how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -659,7 +659,7 @@ your tools.
 
 Note: If you do not define the `run` method for a tool, Toys provides a default
 implementation that displays the tool's help screen. This is typically used for
-namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
+namespaces, as we shall see [below](#Namespaces_and_Subtools). Most tools,
 however, should define `run`.
 
 Let's revisit the "greet" example we covered earlier.
@@ -824,7 +824,7 @@ than two or three levels of hierarchy can be confusing to use.
 ## Understanding Toys Files
 
 Toys commands are defined in Toys files. We covered the basic syntax for these
-files in the [above section on defining tools](#defining-tools). In this
+files in the [above section on defining tools](#Defining_Tools). In this
 section, we will take a deeper look at what you can do with Toys files.
 
 ### Toys Directories
@@ -929,7 +929,7 @@ in the separate file `.toys/test/unit.rb`.
 Toys also loads index files first before other files in the directory. This
 means they are convenient places to define shared code that can be used by all
 the subtools defined in that directory, as we shall see later in the
-[section on sharing code](#sharing-code).
+[section on sharing code](#Sharing_Code).
 
 ### The Toys Search Path
 
@@ -1047,7 +1047,7 @@ or the
 [Toys::Tool#verbosity method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:verbosity).
 The verbosity is set to 0 by default. This corresponds to a logger level of
 `WARN`. That is, warnings, errors, and fatals are displayed, while infos and
-debugs are not. However, [as we saw earlier](#standard-flags), most tools
+debugs are not. However, [as we saw earlier](#Standard_Flags), most tools
 automatically respond to the `--verbose` and `--quiet` flags, (or `-v` and
 `-q`), which increment and decrement the verbosity value, respectively. If you
 run a tool with `-v`, the verbosity is incremented to 1, and the logger level
@@ -1076,7 +1076,7 @@ execute, and return a process status object (i.e. 0 for success, and nonzero
 for error). Make sure you handle the exit status. For example, in most cases,
 you should probably exit if the tool you are calling returns a nonzero code.
 
-You may also use the `exec` mixin [described below](#executing-subprocesses) to
+You may also use the `exec` mixin [described below](#Executing_Subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
 capture or manipulate that tool's input or output.
 
@@ -1084,7 +1084,7 @@ capture or manipulate that tool's input or output.
 
 The methods of [Toys::Tool](https://www.rubydoc.info/gems/toys-core/Toys/Tool)
 are not the only methods available for your tool to call. We
-[saw earlier](#tool-execution-basics) that a tool can define additional methods
+[saw earlier](#Tool_Execution_Basics) that a tool can define additional methods
 that you can use as helpers.
 
 You can also include **mixins**, which are modules that bring in a whole set of
@@ -1109,7 +1109,7 @@ We will look at a few examples of the use of these mixins below. Built-in
 mixins have names that are symbols.
 
 You can also define your own mixins, as we will see in the
-[next section on sharing code](#defining-mixins).
+[upcoming section on defining mixins](#Defining-Mixins).
 
 ### Executing Subprocesses
 
@@ -1167,7 +1167,7 @@ more information, see the
 
 You may also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
-[useful gems](#useful-gems) provides some examples.
+[useful gems](#Useful_Gems) provides some examples.
 
 ## Sharing Code
 
@@ -1180,7 +1180,7 @@ classes, and constants, that you might define in your tools.
 
 ### Defining Mixins
 
-We [saw earlier](#helper-methods-and-mixins) that you can mix a module (with
+We [saw earlier](#Helper_Methods_and_Mixins) that you can mix a module (with
 all its methods) into your tool using the `include` directive. You can specify
 a module itself, or the name of a built-in mixin such as `:exec` or
 `:terminal`. But you can also define your own mixin using the `mixin`
@@ -1195,7 +1195,7 @@ includes the mixin, in the same way that you can include a Ruby module.
 
 (Note that, unlike full modules, mixins allow only methods to be shared. Mixins
 do not support constants. See the next section on
-[using constants](#using-constants) to learn how Toys handles constants.)
+[using constants](#Using_Constants) to learn how Toys handles constants.)
 
 Here's an example. Suppose you had common setup code that you wanted to share
 among your testing tools.
@@ -1402,7 +1402,7 @@ development, including templates that generate build, test, and documentation
 tools. The `:minitest` template illustrated above is one of these built-in
 templates. Like built-in mixins, built-in template names are always symbols.
 You can read more about them in the next section on using
-[Toys as a Rake replacement](#toys-as-a-rake-replacement).
+[Toys as a Rake replacement](#Toys_as_a_Rake_Replacement).
 
 You may also write your own templates. Here's how...
 

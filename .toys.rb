@@ -37,8 +37,9 @@ gem "highline", "~> 2.0"
 gem "minitest", "~> 5.11"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
-gem "rubocop", "~> 0.58.2"
-gem "yard", "~> 0.9.14"
+gem "redcarpet", "~> 3.0"
+gem "rubocop", "~> 0.59.1"
+gem "yard", "~> 0.9.16"
 
 tool "install" do
   desc "Build and install the current gems"
