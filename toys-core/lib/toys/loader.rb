@@ -55,6 +55,9 @@ module Toys
     #     standalone configuration files are disabled.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
+    # @param [String] extra_delimiters A string containing characters that can
+    #     function as delimiters in a tool name. Defaults to empty. Allowed
+    #     characters are period, colon, and slash.
     # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
     # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
@@ -62,7 +65,7 @@ module Toys
     # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, middleware_stack: [],
+    def initialize(index_file_name: nil, middleware_stack: [], extra_delimiters: "",
                    mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
@@ -75,6 +78,7 @@ module Toys
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
+      @extra_delimiters = process_extra_delimiters(extra_delimiters)
       get_tool_definition([], -999_999)
     end
 
@@ -123,23 +127,23 @@ module Toys
     # Returns a tuple of the found tool, and the array of remaining arguments
     # that are not part of the tool name and should be passed as tool args.
     #
-    # @param [String] args Command line arguments
+    # @param [Array<String>] args Command line arguments
     # @return [Array(Toys::Definition::Tool,Array<String>)]
     #
     def lookup(args)
-      orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
+      orig_prefix, args = find_orig_prefix(args)
       cur_prefix = orig_prefix
       loop do
         load_for_prefix(cur_prefix)
-        p = orig_prefix
+        prefix = orig_prefix
         loop do
-          tool_definition = get_active_tool(p, [])
+          tool_definition = get_active_tool(prefix, [])
           if tool_definition
             finish_definitions_in_tree(tool_definition.full_name)
-            return [tool_definition, args.slice(p.length..-1)]
+            return [tool_definition, args.slice(prefix.length..-1)]
           end
-          break if p.empty? || p.length <= cur_prefix.length
-          p = p.slice(0..-2)
+          break if prefix.empty? || prefix.length <= cur_prefix.length
+          prefix = prefix.slice(0..-2)
         end
         raise "Unexpected error" if cur_prefix.empty?
         cur_prefix = cur_prefix.slice(0..-2)
@@ -327,6 +331,28 @@ module Toys
     end
 
     private
+
+    ALLOWED_DELIMITERS = %r{^[\./:]*$}
+
+    def process_extra_delimiters(input)
+      unless ALLOWED_DELIMITERS =~ input
+        raise ::ArgumentError, "Illegal delimiters in #{input.inspect}"
+      end
+      chars = ::Regexp.escape(input.chars.uniq.join)
+      chars.empty? ? nil : ::Regexp.new("[#{chars}]")
+    end
+
+    def find_orig_prefix(args)
+      if @extra_delimiters
+        first_split = (args.first || "").split(@extra_delimiters)
+        if first_split.size > 1
+          args = first_split + args.slice(1..-1)
+          return [first_split, args]
+        end
+      end
+      orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
+      [orig_prefix, args]
+    end
 
     def get_tool_data(words)
       @tool_data[words] ||= ToolData.new({}, nil, nil)

@@ -58,6 +58,16 @@ describe "toys system version" do
     assert_equal(Toys::VERSION, output.strip)
   end
 
+  it "prints the system version using period as delimiter" do
+    output = Toys::TestHelper.capture_toys("system.version")
+    assert_equal(Toys::VERSION, output.strip)
+  end
+
+  it "prints the system version using colon as delimiter" do
+    output = Toys::TestHelper.capture_toys("system:version")
+    assert_equal(Toys::VERSION, output.strip)
+  end
+
   it "prints help when passed --help flag" do
     output = Toys::TestHelper.capture_toys("system", "version", "--help").split("\n")
     assert_equal("NAME", output[0])

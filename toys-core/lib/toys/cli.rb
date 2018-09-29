@@ -61,6 +61,9 @@ module Toys
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this CLI. If not provided, uses
     #     {Toys::CLI.default_middleware_stack}.
+    # @param [String] extra_delimiters A string containing characters that can
+    #     function as delimiters in a tool name. Defaults to empty. Allowed
+    #     characters are period, colon, and slash.
     # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
     #     mixin modules. If not provided, uses
     #     {Toys::CLI.default_mixin_lookup}.
@@ -81,7 +84,7 @@ module Toys
     #     Default is a {Toys::CLI::DefaultErrorHandler} writing to the logger.
     #
     def initialize(
-      binary_name: nil, middleware_stack: nil,
+      binary_name: nil, middleware_stack: nil, extra_delimiters: "",
       config_dir_name: nil, config_file_name: nil, index_file_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil
@@ -89,6 +92,7 @@ module Toys
       @logger = logger || self.class.default_logger
       @base_level = base_level || @logger.level
       @middleware_stack = middleware_stack || self.class.default_middleware_stack
+      @extra_delimiters = extra_delimiters
       @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
@@ -97,7 +101,7 @@ module Toys
       @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
       @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
-        index_file_name: index_file_name,
+        index_file_name: index_file_name, extra_delimiters: @extra_delimiters,
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
@@ -252,6 +256,7 @@ module Toys
                     config_file_name: @config_file_name,
                     index_file_name: @index_file_name,
                     middleware_stack: @middleware_stack,
+                    extra_delimiters: @extra_delimiters,
                     mixin_lookup: @mixin_lookup,
                     middleware_lookup: @middleware_lookup,
                     template_lookup: @template_lookup,

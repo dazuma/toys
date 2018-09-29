@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Copyright 2018 Daniel Azuma
 #
 # All rights reserved.
@@ -37,7 +39,7 @@ gem "highline", "~> 2.0"
 gem "minitest", "~> 5.11"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
-gem "redcarpet", "~> 3.0"
+gem "redcarpet", "~> 3.4"
 gem "rubocop", "~> 0.59.1"
 gem "yard", "~> 0.9.16"
 

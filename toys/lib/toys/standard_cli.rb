@@ -68,6 +68,12 @@ module Toys
     BINARY_NAME = "toys"
 
     ##
+    # Delimiter characters recognized
+    # @return [String]
+    #
+    EXTRA_DELIMITERS = ":."
+
+    ##
     # Short description for the standard root tool
     # @return [String]
     #
@@ -103,6 +109,7 @@ module Toys
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
+        extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup
       )

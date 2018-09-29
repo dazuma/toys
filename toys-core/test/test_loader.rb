@@ -35,6 +35,9 @@ describe Toys::Loader do
   let(:loader) {
     Toys::Loader.new(index_file_name: ".toys.rb")
   }
+  let(:delimiters_loader) {
+    Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ".:")
+  }
   let(:cases_dir) {
     File.join(__dir__, "lookup-cases")
   }
@@ -166,6 +169,40 @@ describe Toys::Loader do
       loader.lookup([])
       assert_equal(true, loader.tool_defined?(["namespace-1", "tool-1-3"]))
       assert_equal(true, loader.tool_defined?(["tool-1"]))
+    end
+  end
+
+  describe "extra delimiters" do
+    before do
+      delimiters_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+    end
+
+    it "recognizes only specified delimiters" do
+      tool, remaining = delimiters_loader.lookup(["namespace-1;tool-1-3"])
+      assert_equal([], tool.full_name)
+      assert_nil(tool.simple_name)
+      assert_equal(["namespace-1;tool-1-3"], remaining)
+    end
+
+    it "finds a subtool" do
+      tool, remaining = delimiters_loader.lookup(["namespace-1.tool-1-3"])
+      assert_equal("normal tool-1-3 short description", tool.desc.to_s)
+      assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
+      assert_equal([], remaining)
+    end
+
+    it "finds the nearest namespace if a query doesn't match" do
+      tool, remaining = delimiters_loader.lookup(["namespace-1.tool-blah"])
+      assert_equal(false, tool.runnable?)
+      assert_equal(["namespace-1"], tool.full_name)
+      assert_equal(["tool-blah"], remaining)
+    end
+
+    it "finds a subtool if a delimiter isn't used" do
+      tool, remaining = delimiters_loader.lookup(["namespace-1", "tool-1-3"])
+      assert_equal("normal tool-1-3 short description", tool.desc.to_s)
+      assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
+      assert_equal([], remaining)
     end
   end
 

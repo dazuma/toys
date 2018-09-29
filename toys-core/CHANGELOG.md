@@ -1,5 +1,9 @@
 # Release History
 
+### 0.5.0 / TBD
+
+* ADDED: Several additional characters can optionally be used as tool path delimiters.
+
 ### 0.4.5 / 2018-08-05
 
 * CHANGED: Dropped preload file feature

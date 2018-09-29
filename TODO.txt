@@ -4,6 +4,11 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
+* Allow override=true or false for same-priority collisions.
+* Rake-like build/dependency features or a way to call out to rake.
+* .data directory in loader
+* .lib directory in loader
+
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
@@ -13,10 +18,6 @@ This is a dumping ground of ideas and future directions for Toys.
 * Required flags and flag groups. Three types: at_most_one, exactly_one, at_least_one
 * Something to generate output formats
 * Namespace clearing/locking
-* Rake-like build/dependency features or a way to call out to rake.
-* Consider allowing period or colon as command separators.
 * Integrate with the "less" tool in exec.
-* .data directory in loader
-* .preload file/directory in loader
 * Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size
