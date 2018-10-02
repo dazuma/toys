@@ -63,6 +63,16 @@ describe Toys::DSL::Tool do
       assert_equal(["foo", "bar"], tool.full_name)
       assert_equal(["baz"], remaining)
     end
+
+    it "supports arrays" do
+      loader.add_block do
+        tool ["foo", "bar"] do
+        end
+      end
+      tool, remaining = loader.lookup(["foo", "bar", "baz"])
+      assert_equal(["foo", "bar"], tool.full_name)
+      assert_equal(["baz"], remaining)
+    end
   end
 
   describe "method definition" do
@@ -397,14 +407,13 @@ describe Toys::DSL::Tool do
               end
             end
           end
-          tool "foo" do
-            expand "t1", "hi"
-          end
+          expand "t1", "subtool"
         end
       end
       host_tool, _remaining = loader.lookup(["host"])
       assert_equal("the one", host_tool.desc.to_s)
-      loader.lookup(["host", "foo"]) # Should allow mixin1
+      tool, _remaining = loader.lookup(["host", "subtool"])
+      assert_equal(["host", "subtool"], tool.full_name)
     end
   end
 

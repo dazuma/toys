@@ -34,6 +34,8 @@ module Toys
   # The Loader service loads tools from configuration files, and finds the
   # appropriate tool given a set of command line arguments.
   #
+  # This class is not thread-safe.
+  #
   class Loader
     ## @private
     ToolData = ::Struct.new(:definitions, :top_priority, :active_priority) do
@@ -193,13 +195,16 @@ module Toys
     end
 
     ##
-    # Returns a tool specified by the given words, with the given priority.
-    # Does not do any loading. If the tool is not present, creates it.
+    # Returns the active tool specified by the given words, with the given
+    # priority, without doing any loading. If the given priority matches the
+    # currently active tool, returns it. If the given priority is lower than
+    # the active priority, returns `nil`. If the given priority is higher than
+    # the active priority, returns and activates a new tool.
     #
     # @param [Array<String>] words The name of the tool.
     # @param [Integer] priority The priority of the request.
     # @return [Toys::Definition::Tool,Toys::Definition::Alias,nil] The tool or
-    #     alias, or `nil` if the given priority is insufficient
+    #     alias, or `nil` if the given priority is insufficient.
     #
     # @private
     #
@@ -263,9 +268,10 @@ module Toys
       if tool_data.top_priority.nil? || tool_data.top_priority < priority
         tool_data.top_priority = priority
       end
-      middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
-      tool_data.definitions[priority] ||=
+      tool_data.definitions[priority] ||= begin
+        middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
         Definition::Tool.new(self, parent, words, priority, middlewares)
+      end
     end
 
     ##

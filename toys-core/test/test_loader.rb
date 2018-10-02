@@ -65,6 +65,32 @@ describe Toys::Loader do
       assert_equal("test block", tool.source_path)
       assert_equal([], remaining)
     end
+
+    it "loads multiple blocks" do
+      loader.add_block(path: "test block 1") do
+        tool "tool-1" do
+          desc "block 1 tool-1 description"
+        end
+      end
+      loader.add_block(path: "test block 2") do
+        tool "tool-1" do
+          desc "block 2 tool-1 description"
+        end
+        tool "tool-2" do
+          desc "block 2 tool-2 description"
+        end
+      end
+      tool, remaining = loader.lookup(["tool-1"])
+      assert_equal("block 1 tool-1 description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal("test block 1", tool.source_path)
+      assert_equal([], remaining)
+      tool, remaining = loader.lookup(["tool-2"])
+      assert_equal("block 2 tool-2 description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal("test block 2", tool.source_path)
+      assert_equal([], remaining)
+    end
   end
 
   describe "path with config items" do

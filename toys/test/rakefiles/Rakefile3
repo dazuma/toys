@@ -1,0 +1,6 @@
+desc "Foo description"
+task :foo, :one_two, :three do |t, args|
+  puts "executing foo"
+  puts args[:one_two].inspect
+  puts args[:three].inspect
+end

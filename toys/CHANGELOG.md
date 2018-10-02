@@ -3,6 +3,9 @@
 ### 0.5.0 / TBD
 
 * ADDED: Period and colon are recognized as tool path delimiters.
+* ADDED: New rake template that supports loading rake tasks as tools.
+* IMPROVED: The tool directive can now take an array as the tool name.
+* FIXED: Template instantiation was failing if the hosting tool was priority-masked.
 
 ### 0.4.5 / 2018-08-05
 

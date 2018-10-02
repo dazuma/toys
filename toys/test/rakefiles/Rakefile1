@@ -1,0 +1,11 @@
+desc "Foo1 description"
+task :foo1 do
+  puts "executing foo1"
+end
+
+namespace :ns1 do
+  desc "Foo2 description"
+  task :foo2 do
+    puts "executing foo2"
+  end
+end

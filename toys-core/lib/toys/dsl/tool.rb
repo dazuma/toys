@@ -180,13 +180,17 @@ module Toys
       # If the subtool is already defined (either as a tool or a namespace), the
       # old definition is discarded and replaced with the new definition.
       #
-      # @param [String] word The name of the subtool
+      # @param [String,Array<String>] words The name of the subtool
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def tool(word, &block)
-        word = word.to_s
-        subtool_words = @__words + [word]
-        next_remaining = Loader.next_remaining_words(@__remaining_words, word)
+      def tool(words, &block)
+        subtool_words = @__words
+        next_remaining = @__remaining_words
+        Array(words).each do |word|
+          word = word.to_s
+          subtool_words += [word]
+          next_remaining = Loader.next_remaining_words(next_remaining, word)
+        end
         subtool_class = @__loader.get_tool_definition(subtool_words, @__priority).tool_class
         DSL::Tool.prepare(subtool_class, next_remaining, @__path) do
           subtool_class.class_eval(&block)
@@ -231,8 +235,7 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def expand(template_class, *args)
-        cur_tool = DSL::Tool.current_tool(self, true)
-        return self if cur_tool.nil?
+        cur_tool = DSL::Tool.current_tool(self, false)
         name = template_class.to_s
         if template_class.is_a?(::String)
           template_class = cur_tool.resolve_template(template_class)

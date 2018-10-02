@@ -1,0 +1,9 @@
+desc "Foo1 description from 2"
+task :bar1 do
+  puts "executing bar1 from 2"
+end
+
+desc "Foo1 description from 2"
+task :foo1 => :bar1 do
+  puts "executing foo1 from 2"
+end

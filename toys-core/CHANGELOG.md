@@ -2,7 +2,9 @@
 
 ### 0.5.0 / TBD
 
+* FIXED: Template instantiation was failing if the hosting tool was priority-masked.
 * ADDED: Several additional characters can optionally be used as tool path delimiters.
+* IMPROVED: The tool directive can now take an array as the tool name.
 
 ### 0.4.5 / 2018-08-05
 
