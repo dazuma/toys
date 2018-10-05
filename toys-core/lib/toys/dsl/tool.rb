@@ -64,9 +64,8 @@ module Toys
     #
     module Tool
       ## @private
-      def method_added(meth)
-        cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.mark_runnable if cur_tool && meth == :run
+      def method_added(_meth)
+        DSL::Tool.current_tool(self, true)&.check_definition_state
       end
 
       ##
@@ -177,13 +176,16 @@ module Toys
       ##
       # Create a subtool. You must provide a block defining the subtool.
       #
-      # If the subtool is already defined (either as a tool or a namespace), the
-      # old definition is discarded and replaced with the new definition.
-      #
       # @param [String,Array<String>] words The name of the subtool
+      # @param [:combine,:reset,:ignore] if_defined What to do if a definition
+      #     already exists for this tool. Possible values are `:combine` (the
+      #     default) indicating the definition should be combined with the
+      #     existing definition, `:reset` indicating the earlier definition
+      #     should be reset and the new definition applied instead, or
+      #     `:ignore` indicating the new definition should be ignored.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def tool(words, &block)
+      def tool(words, if_defined: :combine, &block)
         subtool_words = @__words
         next_remaining = @__remaining_words
         Array(words).each do |word|
@@ -191,7 +193,16 @@ module Toys
           subtool_words += [word]
           next_remaining = Loader.next_remaining_words(next_remaining, word)
         end
-        subtool_class = @__loader.get_tool_definition(subtool_words, @__priority).tool_class
+        subtool = @__loader.get_tool_definition(subtool_words, @__priority)
+        if subtool.includes_definition?
+          case if_defined
+          when :ignore
+            return self
+          when :reset
+            subtool.reset_definition(@__loader)
+          end
+        end
+        subtool_class = subtool.tool_class
         DSL::Tool.prepare(subtool_class, next_remaining, @__path) do
           subtool_class.class_eval(&block)
         end
@@ -610,11 +621,14 @@ module Toys
         if included_modules.include?(mod)
           raise ToolDefinitionError, "Mixin already included: #{mod.name}"
         end
-        if mod.respond_to?(:initialization_callback) && mod.initialization_callback
-          cur_tool.add_initializer(mod.initialization_callback, *args)
+        cur_tool.mark_includes_modules
+        if mod.respond_to?(:initialization_callback)
+          callback = mod.initialization_callback
+          cur_tool.add_initializer(callback, *args) if callback
         end
-        if mod.respond_to?(:inclusion_callback) && mod.inclusion_callback
-          class_exec(*args, &mod.inclusion_callback)
+        if mod.respond_to?(:inclusion_callback)
+          callback = mod.inclusion_callback
+          class_exec(*args, &callback) if callback
         end
         super(mod)
       end
@@ -651,7 +665,6 @@ module Toys
       ## @private
       def self.current_tool(tool_class, activate)
         memoize_var = activate ? :@__active_tool : :@__cur_tool
-        path = tool_class.instance_variable_get(:@__path)
         if tool_class.instance_variable_defined?(memoize_var)
           cur_tool = tool_class.instance_variable_get(memoize_var)
         else
@@ -670,7 +683,10 @@ module Toys
           end
           tool_class.instance_variable_set(memoize_var, cur_tool)
         end
-        cur_tool.lock_source_path(path) if cur_tool && activate
+        if cur_tool && activate
+          path = tool_class.instance_variable_get(:@__path)
+          cur_tool.lock_source_path(path)
+        end
         cur_tool
       end
 

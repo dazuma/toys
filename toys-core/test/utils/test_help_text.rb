@@ -37,39 +37,40 @@ describe Toys::Utils::HelpText do
   let(:tool_name) { ["foo", "bar"] }
   let(:subtool_one_name) { tool_name + ["one"] }
   let(:subtool_two_name) { tool_name + ["two"] }
+  let(:runnable) { proc {} }
 
   let(:single_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0).mark_runnable
+    loader.activate_tool_definition(tool_name, 0).runnable = runnable
     loader
   }
   let(:namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool_definition(tool_name, 0)
-    loader.activate_tool_definition(subtool_one_name, 0).mark_runnable
-    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader.activate_tool_definition(subtool_one_name, 0).runnable = runnable
+    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
     loader
   }
   let(:runnable_namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0).mark_runnable
-    loader.activate_tool_definition(subtool_one_name, 0).mark_runnable
-    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader.activate_tool_definition(tool_name, 0).runnable = runnable
+    loader.activate_tool_definition(subtool_one_name, 0).runnable = runnable
+    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
     loader
   }
   let(:recursive_namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool_definition(tool_name, 0)
     loader.activate_tool_definition(subtool_one_name, 0)
-    loader.activate_tool_definition(subtool_one_name + ["a"], 0).mark_runnable
-    loader.activate_tool_definition(subtool_one_name + ["b"], 0).mark_runnable
-    loader.activate_tool_definition(subtool_two_name, 0).mark_runnable
+    loader.activate_tool_definition(subtool_one_name + ["a"], 0).runnable = runnable
+    loader.activate_tool_definition(subtool_one_name + ["b"], 0).runnable = runnable
+    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
     loader
   }
   let(:long_namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool_definition(tool_name, 0)
-    loader.activate_tool_definition(tool_name + [long_tool_name], 0).mark_runnable
+    loader.activate_tool_definition(tool_name + [long_tool_name], 0).runnable = runnable
     loader
   }
 

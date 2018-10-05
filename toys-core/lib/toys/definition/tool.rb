@@ -72,9 +72,24 @@ module Toys
       def initialize(loader, parent, full_name, priority, middleware_stack)
         @parent = parent
         @full_name = full_name.dup.freeze
-        @tool_class = DSL::Tool.new_class(@full_name, priority, loader)
         @priority = priority
         @middleware_stack = middleware_stack
+
+        @acceptors = {}
+        @mixins = {}
+        @templates = {}
+
+        reset_definition(loader)
+      end
+
+      ##
+      # Reset the definition of this tool, deleting all definition data but
+      # leaving named acceptors, mixins, and templates intact.
+      # Should be called only from the DSL.
+      # @private
+      #
+      def reset_definition(loader)
+        @tool_class = DSL::Tool.new_class(@full_name, @priority, loader)
 
         @source_path = nil
         @definition_finished = false
@@ -86,17 +101,13 @@ module Toys
         @used_flags = []
         @initializers = []
 
-        @acceptors = {}
-        @mixins = {}
-        @templates = {}
-
         @flag_definitions = []
         @required_arg_definitions = []
         @optional_arg_definitions = []
         @remaining_args_definition = nil
 
         @disable_argument_parsing = false
-        @runnable = false
+        @includes_modules = false
       end
 
       ##
@@ -209,7 +220,15 @@ module Toys
       # @return [Boolean]
       #
       def runnable?
-        @runnable
+        tool_class.public_instance_methods(false).include?(:run)
+      end
+
+      ##
+      # Returns true if this tool has at least one included module.
+      # @return [Boolean]
+      #
+      def includes_modules?
+        @includes_modules
       end
 
       ##
@@ -236,7 +255,8 @@ module Toys
       # @return [Boolean]
       #
       def includes_definition?
-        includes_arguments? || runnable?
+        includes_arguments? || runnable? || argument_parsing_disabled? ||
+          includes_modules? || includes_description?
       end
 
       ##
@@ -648,12 +668,12 @@ module Toys
       end
 
       ##
-      # Mark this tool as runnable. Should be called from the DSL only.
+      # Mark this tool as having at least one module included
       # @private
       #
-      def mark_runnable
+      def mark_includes_modules
         check_definition_state
-        @runnable = true
+        @includes_modules = true
         self
       end
 
@@ -687,12 +707,11 @@ module Toys
         end
       end
 
-      private
-
-      def make_config_proc(middleware, loader, next_config)
-        proc { middleware.config(self, loader, &next_config) }
-      end
-
+      ##
+      # Check that the tool can still be defined. Should be called internally
+      # or from the DSL only.
+      # @private
+      #
       def check_definition_state(is_arg: false)
         if @definition_finished
           raise ToolDefinitionError,
@@ -703,6 +722,12 @@ module Toys
                 "Tool #{display_name.inspect} has disabled argument parsing"
         end
         self
+      end
+
+      private
+
+      def make_config_proc(middleware, loader, next_config)
+        proc { middleware.config(self, loader, &next_config) }
       end
     end
   end

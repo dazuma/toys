@@ -85,7 +85,7 @@ module Toys
         ::Rake.application = rake
         ::Rake.load_rakefile(template.rakefile_path)
         rake.tasks.each do |task|
-          tool(template.prefix + task.name.split(":")) do
+          tool(template.prefix + task.name.split(":"), if_defined: :ignore) do
             comments = task.full_comment.to_s.split("\n")
             unless comments.empty?
               desc(comments.first)

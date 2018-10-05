@@ -73,6 +73,56 @@ describe Toys::DSL::Tool do
       assert_equal(["foo", "bar"], tool.full_name)
       assert_equal(["baz"], remaining)
     end
+
+    it "combines tool information" do
+      loader.add_block do
+        tool "foo" do
+          long_desc "hello", "world"
+        end
+        tool "foo" do
+          long_desc "foo", "bar"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      ld = tool.long_desc
+      assert_equal(4, ld.size)
+      assert_equal("hello", ld[0].to_s)
+      assert_equal("world", ld[1].to_s)
+      assert_equal("foo", ld[2].to_s)
+      assert_equal("bar", ld[3].to_s)
+    end
+
+    it "resets on redefinition" do
+      loader.add_block do
+        tool "foo" do
+          long_desc "hello", "world"
+        end
+        tool "foo", if_defined: :reset do
+          long_desc "foo", "bar"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      ld = tool.long_desc
+      assert_equal(2, ld.size)
+      assert_equal("foo", ld[0].to_s)
+      assert_equal("bar", ld[1].to_s)
+    end
+
+    it "ignores on redefinition" do
+      loader.add_block do
+        tool "foo" do
+          long_desc "hello", "world"
+        end
+        tool "foo", if_defined: :ignore do
+          long_desc "foo", "bar"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      ld = tool.long_desc
+      assert_equal(2, ld.size)
+      assert_equal("hello", ld[0].to_s)
+      assert_equal("world", ld[1].to_s)
+    end
   end
 
   describe "method definition" do

@@ -62,6 +62,23 @@ describe "rake template" do
     assert_equal(["bar"], remaining)
   end
 
+  it "does not replace existing tools" do
+    loader.add_block do
+      tool "foo1" do
+        desc "Real foo1 description"
+      end
+      expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile1")
+    end
+    tool, remaining = loader.lookup(["foo1", "bar"])
+    assert_equal(["foo1"], tool.full_name)
+    assert_equal("Real foo1 description", tool.desc.to_s)
+    assert_equal(["bar"], remaining)
+    tool, remaining = loader.lookup(["ns1", "foo2", "bar"])
+    assert_equal(["ns1", "foo2"], tool.full_name)
+    assert_equal("Foo2 description", tool.desc.to_s)
+    assert_equal(["bar"], remaining)
+  end
+
   it "creates tools from multiple rakefiles" do
     loader.add_block do
       expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile2")

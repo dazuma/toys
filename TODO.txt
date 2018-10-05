@@ -4,8 +4,6 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Allow override=true or false for same-priority collisions.
-* Rake-like build/dependency features or a way to call out to rake.
 * .data directory in loader
 * .lib directory in loader
 

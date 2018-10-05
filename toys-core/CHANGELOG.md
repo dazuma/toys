@@ -5,6 +5,7 @@
 * FIXED: Template instantiation was failing if the hosting tool was priority-masked.
 * ADDED: Several additional characters can optionally be used as tool path delimiters.
 * IMPROVED: The tool directive can now take an array as the tool name.
+* IMPROVED: The tool directive can now take an `if_defined` argument.
 
 ### 0.4.5 / 2018-08-05
 
