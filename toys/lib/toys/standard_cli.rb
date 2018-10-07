@@ -183,6 +183,7 @@ module Toys
           :show_help,
           help_flags: true,
           usage_flags: true,
+          list_flags: true,
           recursive_flags: true,
           search_flags: true,
           default_recursive: true,

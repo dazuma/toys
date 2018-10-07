@@ -424,6 +424,45 @@ describe Toys::Utils::HelpText do
     end
   end
 
+  describe "list string" do
+    it "is set for a namespace non-recursive" do
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
+      list_array = help.list_string(styled: false).split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("one", list_array[2])
+      assert_equal("two", list_array[3])
+      assert_equal(4, list_array.size)
+    end
+
+    it "is set for a namespace recursive" do
+      help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                       binary_name)
+      list_array = help.list_string(styled: false, recursive: true).split("\n")
+      assert_equal("Recursive list of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("one", list_array[2])
+      assert_equal("one a", list_array[3])
+      assert_equal("one b", list_array[4])
+      assert_equal("two", list_array[5])
+      assert_equal(6, list_array.size)
+    end
+
+    it "shows subtool desc" do
+      subtool_one.desc = "one desc"
+      subtool_one.long_desc = ["long desc"]
+      subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
+      list_array = help.list_string(styled: false, wrap_width: 16).split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("one - one desc", list_array[2])
+      assert_equal("two - two desc", list_array[3])
+      assert_equal("    on two lines", list_array[4])
+      assert_equal(5, list_array.size)
+    end
+  end
+
   describe "usage string" do
     describe "synopsis" do
       it "is set for a namespace" do

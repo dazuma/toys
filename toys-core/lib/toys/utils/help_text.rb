@@ -129,6 +129,29 @@ module Toys
         assembler.result
       end
 
+      ##
+      # Generate a subtool list string.
+      #
+      # @param [Boolean] recursive If true, and the tool is a namespace,
+      #     display all subcommands recursively. Defaults to false.
+      # @param [String,nil] search An optional string to search for when
+      #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
+      # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
+      #     disable wrap. Default is `nil`.
+      # @param [Boolean] styled Output ansi styles. Default is `true`.
+      #
+      # @return [String] A usage string.
+      #
+      def list_string(recursive: false, search: nil,
+                      indent: nil, wrap_width: nil, styled: true)
+        indent ||= DEFAULT_INDENT
+        subtools = find_subtools(recursive, search)
+        assembler = ListStringAssembler.new(@tool, subtools, recursive, search,
+                                            indent, wrap_width, styled)
+        assembler.result
+      end
+
       private
 
       def find_subtools(recursive, search)
@@ -491,6 +514,86 @@ module Toys
 
         def indent2_str(str)
           "#{' ' * (@indent + @indent2)}#{str}"
+        end
+      end
+
+      ## @private
+      class ListStringAssembler
+        def initialize(tool, subtools, recursive, search_term, indent, wrap_width, styled)
+          @tool = tool
+          @subtools = subtools
+          @recursive = recursive
+          @search_term = search_term
+          @indent = indent
+          @wrap_width = wrap_width
+          assemble(styled)
+        end
+
+        attr_reader :result
+
+        private
+
+        def assemble(styled)
+          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
+          add_header
+          add_list
+          @result = @lines.output.string
+        end
+
+        def add_header
+          top_line = @recursive ? "Recursive list of tools" : "List of tools"
+          @lines <<
+            if @tool.root?
+              "#{top_line}:"
+            else
+              "#{top_line} under #{bold(@tool.display_name)}:"
+            end
+          @lines << ""
+          if @search_term
+            @lines << "Showing search results for \"#{@search_term}\""
+            @lines << ""
+          end
+        end
+
+        def add_list
+          name_len = @tool.full_name.length
+          @subtools.each do |subtool|
+            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
+            desc =
+              if subtool.is_a?(Definition::Alias)
+                "(Alias of #{subtool.display_target})"
+              else
+                subtool.desc
+              end
+            add_prefix_with_desc(bold(tool_name), desc)
+          end
+        end
+
+        def add_prefix_with_desc(prefix, desc)
+          if desc.empty?
+            @lines << prefix
+          elsif !desc.is_a?(Utils::WrappableString)
+            @lines << "#{prefix} - #{desc}"
+          else
+            desc = wrap_indent(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
+            @lines << desc[0]
+            desc[1..-1].each do |line|
+              @lines << indent_str(line)
+            end
+          end
+        end
+
+        def wrap_indent(input)
+          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
+          Utils::WrappableString.wrap_lines(input, @wrap_width, @wrap_width - @indent)
+        end
+
+        def bold(str)
+          @lines.apply_styles(str, :bold)
+        end
+
+        def indent_str(str)
+          "#{' ' * @indent}#{str}"
         end
       end
     end

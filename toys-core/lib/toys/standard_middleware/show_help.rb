@@ -57,6 +57,12 @@ module Toys
       DEFAULT_USAGE_FLAGS = ["--usage"].freeze
 
       ##
+      # Default list subtools flags
+      # @return [Array<String>]
+      #
+      DEFAULT_LIST_FLAGS = ["--tools"].freeze
+
+      ##
       # Default recursive flags
       # @return [Array<String>]
       #
@@ -79,6 +85,12 @@ module Toys
       # @return [Object]
       #
       SHOW_USAGE_KEY = Object.new.freeze
+
+      ##
+      # Key set when the show subtool list flag is present
+      # @return [Object]
+      #
+      SHOW_LIST_KEY = Object.new.freeze
 
       ##
       # Key for the recursive setting
@@ -114,6 +126,14 @@ module Toys
       #
       #     *  An array of flags.
       #     *  The `true` value to use {DEFAULT_USAGE_FLAGS}.
+      #     *  The `false` value for no flags. (Default)
+      #     *  A proc that takes a tool and returns any of the above.
+      #
+      # @param [Boolean,Array<String>,Proc] list_flags Specify flags to
+      #     display subtool list. The value may be any of the following:
+      #
+      #     *  An array of flags.
+      #     *  The `true` value to use {DEFAULT_LIST_FLAGS}.
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
@@ -156,6 +176,7 @@ module Toys
       #
       def initialize(help_flags: false,
                      usage_flags: false,
+                     list_flags: false,
                      recursive_flags: false,
                      search_flags: false,
                      default_recursive: false,
@@ -167,6 +188,7 @@ module Toys
                      styled_output: nil)
         @help_flags = help_flags
         @usage_flags = usage_flags
+        @list_flags = list_flags
         @recursive_flags = recursive_flags
         @search_flags = search_flags
         @default_recursive = default_recursive ? true : false
@@ -183,19 +205,16 @@ module Toys
       #
       def config(tool_definition, loader)
         unless tool_definition.argument_parsing_disabled?
+          has_subtools = loader.has_subtools?(tool_definition.full_name)
           help_flags = add_help_flags(tool_definition)
           usage_flags = add_usage_flags(tool_definition)
-          if @allow_root_args && (!help_flags.empty? || !usage_flags.empty?)
-            if tool_definition.root? && tool_definition.arg_definitions.empty?
-              tool_definition.set_remaining_args(TOOL_NAME_KEY,
-                                                 display_name: "TOOL_NAME",
-                                                 desc: "The tool for which to display help")
-            end
-          end
-          if (!help_flags.empty? || @fallback_execution) &&
-             loader.has_subtools?(tool_definition.full_name)
+          list_flags = has_subtools ? add_list_flags(tool_definition) : []
+          if (!help_flags.empty? || !list_flags.empty? || @fallback_execution) && has_subtools
             add_recursive_flags(tool_definition)
             add_search_flags(tool_definition)
+          end
+          if !help_flags.empty? || !usage_flags.empty? || !list_flags.empty?
+            add_root_args(tool_definition)
           end
         end
         yield
@@ -206,17 +225,16 @@ module Toys
       #
       def run(tool)
         if tool[SHOW_USAGE_KEY]
-          help_text = get_help_text(tool)
-          str = help_text.usage_string(wrap_width: terminal.width)
-          terminal.puts(str)
-        elsif @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
-              tool[SHOW_HELP_KEY]
-          help_text = get_help_text(tool)
-          str = help_text.help_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
-                                      search: tool[SEARCH_STRING_KEY],
-                                      show_source_path: @show_source_path,
-                                      wrap_width: terminal.width)
-          output_help(str)
+          terminal.puts(get_help_text(tool).usage_string(wrap_width: terminal.width))
+        elsif tool[SHOW_LIST_KEY]
+          terminal.puts(get_help_text(tool).list_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
+                                                        search: tool[SEARCH_STRING_KEY],
+                                                        wrap_width: terminal.width))
+        elsif should_show_help(tool)
+          output_help(get_help_text(tool).help_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
+                                                      search: tool[SEARCH_STRING_KEY],
+                                                      show_source_path: @show_source_path,
+                                                      wrap_width: terminal.width))
         else
           yield
         end
@@ -226,6 +244,11 @@ module Toys
 
       def terminal
         @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
+      end
+
+      def should_show_help(tool)
+        @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
+          tool[SHOW_HELP_KEY]
       end
 
       def output_help(str)
@@ -288,6 +311,18 @@ module Toys
         usage_flags
       end
 
+      def add_list_flags(tool_definition)
+        list_flags = resolve_flags_spec(@list_flags, tool_definition, DEFAULT_LIST_FLAGS)
+        unless list_flags.empty?
+          tool_definition.add_flag(
+            SHOW_LIST_KEY, list_flags,
+            report_collisions: false,
+            desc: "List the subtools under this tool"
+          )
+        end
+        list_flags
+      end
+
       def add_recursive_flags(tool_definition)
         recursive_flags = resolve_flags_spec(@recursive_flags, tool_definition,
                                              DEFAULT_RECURSIVE_FLAGS)
@@ -314,6 +349,14 @@ module Toys
           )
         end
         search_flags
+      end
+
+      def add_root_args(tool_definition)
+        if @allow_root_args && tool_definition.root? && tool_definition.arg_definitions.empty?
+          tool_definition.set_remaining_args(TOOL_NAME_KEY,
+                                             display_name: "TOOL_NAME",
+                                             desc: "The tool for which to display help")
+        end
       end
 
       def resolve_flags_spec(flags, tool_definition, defaults)

@@ -6,6 +6,7 @@
 * ADDED: Several additional characters can optionally be used as tool path delimiters.
 * ADDED: Support for preloaded files and directories
 * ADDED: Support for data directories
+* ADDED: Ability to display just the list of subtools of a tool
 * IMPROVED: The tool directive can now take an array as the tool name.
 * IMPROVED: The tool directive can now take an `if_defined` argument.
 

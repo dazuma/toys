@@ -66,6 +66,16 @@ describe Toys::StandardMiddleware::ShowHelp do
     assert_match(/Usage:\s+toys foo/, string_io.string)
   end
 
+  it "causes a tool to respond to list flags" do
+    cli = make_cli(list_flags: true)
+    cli.add_config_block do
+      tool "foo" do
+      end
+    end
+    cli.run("--tools")
+    assert_match(/List of tools:/, string_io.string)
+  end
+
   it "implements fallback execution" do
     cli = make_cli(fallback_execution: true)
     cli.add_config_block do
