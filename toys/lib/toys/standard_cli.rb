@@ -102,9 +102,10 @@ module Toys
     # @return [String]
     #
     DEFAULT_ROOT_LONG_DESC =
-      "Toys is your personal command line tool. You can add to the list of commands below by" \
-      " writing scripts in Ruby using a simple DSL, and Toys will organize and document them" \
-      " and make them available globally or scoped to specific directories that you choose." \
+      "Toys is your personal command line tool. You can write commands using a simple Ruby DSL," \
+      " and Toys will automatically organize them, parse arguments, and provide documentation." \
+      " Tools can be global or scoped to specific directories. You can also use Toys instead of" \
+      " Rake to provide build and maintenance scripts for your projects." \
       " For detailed information, see https://www.rubydoc.info/gems/toys"
 
     ##

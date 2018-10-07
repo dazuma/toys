@@ -297,7 +297,8 @@ module Toys
           tool_definition.add_flag(
             RECURSIVE_SUBTOOLS_KEY, recursive_flags,
             report_collisions: false, default: @default_recursive,
-            desc: "Show all subtools recursively (default is #{@default_recursive})"
+            desc: "List all subtools recursively when displaying help" \
+                  " (default is #{@default_recursive})"
           )
         end
         recursive_flags
@@ -309,7 +310,7 @@ module Toys
           tool_definition.add_flag(
             SEARCH_STRING_KEY, search_flags,
             report_collisions: false,
-            desc: "Search subtools for the given regular expression"
+            desc: "Search subtools for the given regular expression when displaying help"
           )
         end
         search_flags
