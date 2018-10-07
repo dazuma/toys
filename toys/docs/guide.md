@@ -79,6 +79,13 @@ words. Tools are arranged hierarchically. In this case, `system` is a
 **namespace** for tools related to the Toys system, and `version` is one of its
 **subtools**. It prints the current Toys version.
 
+The words in a tool name can be delimited with spaces as shown above, or
+alternately periods or colons. The following commands also invoke the tool
+`system version`:
+
+    toys system.version
+    toys system:version
+
 In the following command:
 
          |TOOL| |ARG|
@@ -1509,6 +1516,152 @@ following in their Toys file:
     require "my_analysis"
     expand MyAnalysis::ToysTemplate
 
+### Preloading Ruby Files
+
+For more complicated tools, you might want to write normal Ruby modules and
+classes as helpers. Toys provides a way to write Ruby code outside of its DSL
+and incorporate it into your tool definitions, using "preloaded" files.
+
+A preloaded file is loaded using the standard Ruby `require` mechanism, before
+tools are defined. You can use such files to define Ruby classes, modules, and
+other code that may be used and shared by your tools.
+
+To use preloaded files, you must define your tools inside a
+[Toys directory](#Toys_Directories). Before any tools inside a directory are
+loaded, any file named `.preload.rb` in the directory is automatically
+required. Additionally, any Ruby files inside a subdirectory called `.preload`
+are also automatically required.
+
+For example, take the following directory structure:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .preload.rb   <-- required first
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+       |
+       +- test/
+          |
+          +- .preload/
+          |  |
+          |  +- my_classes.rb  <-- required before unit.rb
+          |  |
+          |  +- my_modules.rb  <-- also required before unit.rb
+          |
+          +- unit.rb   <-- defines "test unit" (and its subtools)
+
+Toys will execute
+
+    require ".toys/.preload.rb"
+
+first before loading any of the tools in the `.toys` directory (or any of its
+subdirectories). Thus, you can define classes used by both the `greet` and the
+`test unit` tool in this file.
+
+Furthermore, Toys will also execute
+
+    require ".toys/test/.preload/my_classes.rb"
+    require ".toys/test/.preload/my_modules.rb"
+
+first before loading any of the tools in the `test` subdirectory. Thus, any
+additional classes needed by `test unit` can be defined in these files.
+
+Either a single `.preload.rb` file or a `.preload` directory, or both, may be
+used. If both are present, the `.preload.rb` file is loaded first before the
+`.preload` directory contents.
+
+### Data Files
+
+If your tools require images, archives, keys, or other such static data, Toys
+provides a convenient place to put data files that can be looked up by tools
+either during definition or runtime.
+
+To use data files, you must define your tools inside a
+[Toys directory](#Toys_Directories). Within the Toys directory, create a
+directory named `.data` and copy your data files there. You may "find" a data
+file using the `find_data` directive in a Toys file, or by calling the
+`find_data` method in a tool. The `find_data` mechanism takes a relative path
+to a file, locates a matching file (or directory) among the data files, and
+returns the full path to that file system object. You may then read the file
+or perform any other operation on it.
+
+For example, take the following directory structure:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .data
+       |  |
+       |  +- greeting.txt
+       |  |
+       |  +- desc/
+       |     |
+       |     +- short.txt
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+
+The data files in `.toys/.data` are available to any tool in the `.toys`
+directory or any of its subdirectories. For example, suppose we want our
+"greet" tool to use the contents of `greeting.txt`. We can call `find_data` to
+read those contents when the tool is executed:
+
+    # greet.rb
+    desc "Print a friendly greeting."
+    optional_arg :whom, default: "world", desc: "Whom to greet."
+    def run
+      greeting = IO.read(find_data("greeting.txt")).strip
+      puts "#{greeting}, #{whom}!"
+    end
+
+You can include directories in the argument to `find_data`. For example, here
+is how to use the `find_data` directive to read the short description from the
+file "desc/short.txt":
+
+    # greet.rb
+    desc IO.read(find_data("desc/short.txt")).strip
+    optional_arg :whom, default: "world", desc: "Whom to greet."
+    def run
+      greeting = IO.read(find_data("greeting.txt")).strip
+      puts "#{greeting}, #{whom}!"
+    end
+
+The `find_data` mechanism will return the "closest" file or directory found.
+In the example below, there is a `desc/short.txt` file in the `.data` directory
+at the top level, but there is also a `desc/short.txt` file in the `.data`
+directory under `test`. Tools under the `test` directory will find the more
+specific data file, while other tools will find the more general file.
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .data
+       |  |
+       |  +- greeting.txt
+       |  |
+       |  +- desc/
+       |     |
+       |     +- short.txt  <-- default description for all tools
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+       |
+       +- test/
+          |
+          +- .data
+          |  |
+          |  +- desc/
+          |     |
+          |     +- short.txt  <-- override description for test tools
+          |
+          +- unit.rb   <-- defines "test unit" (and its subtools)
+
+If, however, you find `greeting.txt` from a tool under `test`, it will still
+find the more general `.toys/.data/greeting.txt` file because there is no
+overriding file under `.toys/test/.data`.
+
 ## Using Third-Party Gems
 
 The Ruby community has developed many resources for building command line
@@ -1662,7 +1815,7 @@ directory. Rake is also commonly used for this purpose: you can write a
 "Rakefile" that defines rake tasks scoped to a directory. In many cases, Toys
 can be used as a replacement for Rake. Indeed, the Toys repository itself
 contains a `.toys.rb` file that defines tools for running tests, builds, and so
-forth, instead of a Rakefile that is otherwise often used for this purpose.
+forth, instead of a Rakefile.
 
 This section will explore the differences between Toys and Rake, and describe
 how to use Toys for some of the things traditionally done with Rake.
@@ -1709,15 +1862,77 @@ your build tasks. Rake will continue to be your friend in those cases. However,
 for high level tasks such as "run my tests", "build my YARD documentation", or
 "release my gem", you may find Toys easier to use.
 
+### Using Toys to Invoke Rake Tasks
+
+If you've already written a Rakefile for your project, Toys provides a
+convenient way to invoke your existing Rake tasks using Toys. The built-in
+`:rake` template reads a Rakefile and automatically generates corresponding
+tools.
+
+In the same directory as your Rakefile, create a `.toys.rb` file with the
+following contents:
+
+    # In .toys.rb
+    expand :rake
+
+Now within that directory, if you had a task called `test`, you can invoke it
+with:
+
+    toys test
+
+Similarly, a task named `test:integration` can be invoekd with either of the
+following:
+
+    toys test integration
+    toys test:integration
+
+Rake tasks with arguments are mapped to tool arguments, making it easier to
+invoke those tasks using Toys. For example, consider a Rake task with two
+arguments, defined as follows:
+
+    # In Rakefile
+    task :my_task, [:first, :second] do |task, args|
+      do_something_with args[:first]
+      do_something_else_with args[:second]
+    end
+
+would have to be invoked as follows using rake:
+
+    rake my_task[value1,value2]
+
+You may even need to escape the brackets if you are using a shell that treats
+them specially. Toys will let you pass them as normal command line arguments:
+
+    toys my_task value1 value2
+
+The `:rake` template provides several options. If your Rakefile is named
+something other than `Rakefile` or isn't in the current directory, you can
+pass an explicit path to it when expanding the template:
+
+    # In .toys.rb
+    expand :rake, rakefile_path: "path/to/my_rakefile"
+
+You may also choose to pass arguments as named flags rather than command line
+arguments. Set `:use_flags` when expanding the template:
+
+    # In .toys.rb
+    expand :rake, use_flags: true
+
+Now with this option, to pass arguments to the tool, use the argument names as
+flags:
+
+    toys my_task --first=value1 --second=value2
+
 ### From Rakefiles to Toys Files
 
-If you want to migrate some of your project's build tasks from Rake to Toys,
-there are some common patterns.
+Invoking Rake tasks using Toys is an easy first step, but eventually you will
+likely want to migrate some of your project's build tasks from Rake to Toys.
+The remainder of this section describes the common patterns and features Toys
+provides for writing build tasks that are traditionally done with Rake.
 
-When you use Rake for these tasks, you will typically require a particular file
-from your Rakefile, and/or write some code. Different tools will have different
-mechanisms for generating tasks. For example, a test task might be defined like
-this:
+Many common Rake tasks can be generated using code provided by either Rake or
+the third party library. Different libraries provide different mechanisms for
+task generation. For example, a test task might be defined like this:
 
     require "rake/testtask"
     Rake::TestTask.new do |t|

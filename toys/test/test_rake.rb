@@ -131,6 +131,16 @@ describe "rake template" do
     assert(tool.optional_arg_definitions.empty?)
     assert_equal(:one_two, tool.flag_definitions[0].key)
     assert_equal(:three, tool.flag_definitions[1].key)
+    assert_output("executing foo\n\"hi\"\n\"there\"\n") do
+      cli.run("foo", "--one_two=hi", "--three", "there")
+    end
+  end
+
+  it "allows dashes in flags" do
+    rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+    loader.add_block do
+      expand :rake, rakefile_path: rakefile_path, use_flags: true
+    end
     assert_output("executing foo\n\"hello\"\nnil\n") do
       cli.run("foo", "--one-two=hello")
     end

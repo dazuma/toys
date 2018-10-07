@@ -38,12 +38,6 @@ module Toys
       include Template
 
       ##
-      # Default version requirements for the rdoc gem.
-      # @return [Array<String>]
-      #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ">= 12.0.0"
-
-      ##
       # Default path to the Rakefile.
       # @return [String]
       #
@@ -52,27 +46,22 @@ module Toys
       ##
       # Create the template settings for the rake template.
       #
-      # @param [Array<String>] prefix Name prefix for tools to create. Defaults
-      #     to `[]`.
-      # @param [String,Array<String>] gem_version Version requirements for
-      #     the rake gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
+      # @param [String,Array<String>,nil] gem_version Version requirements for
+      #     the rake gem. Defaults to nil, indicating no version requirement.
       # @param [String] rakefile_path Path to the Rakefile. Defaults to
       #     {DEFAULT_RAKEFILE_PATH}.
       # @param [Boolean] use_flags Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
       #
-      def initialize(prefix: [],
-                     gem_version: nil,
+      def initialize(gem_version: nil,
                      rakefile_path: nil,
                      use_flags: false)
-        @prefix = prefix
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
+        @gem_version = gem_version
         @rakefile_path = rakefile_path || DEFAULT_RAKEFILE_PATH
         @use_flags = use_flags
       end
 
-      attr_accessor :prefix
       attr_accessor :gem_version
       attr_accessor :rakefile_path
       attr_accessor :use_flags
@@ -85,7 +74,7 @@ module Toys
         ::Rake.application = rake
         ::Rake.load_rakefile(template.rakefile_path)
         rake.tasks.each do |task|
-          tool(template.prefix + task.name.split(":"), if_defined: :ignore) do
+          tool(task.name.split(":"), if_defined: :ignore) do
             comments = task.full_comment.to_s.split("\n")
             unless comments.empty?
               desc(comments.first)
@@ -93,8 +82,8 @@ module Toys
             end
             if template.use_flags
               task.arg_names.each do |arg|
-                spec = Templates::Rake.flag_spec(arg)
-                flag(arg, spec) if spec
+                specs = Templates::Rake.flag_specs(arg)
+                flag(arg, *specs) unless specs.empty?
               end
               to_run do
                 args = task.arg_names.map { |arg| self[arg] }
@@ -113,10 +102,15 @@ module Toys
       end
 
       ## @private
-      def self.flag_spec(arg)
-        name = arg.to_s.gsub(/\W/, "").tr("_", "-").downcase
-        return nil if name.empty?
-        "--#{name}=VALUE"
+      def self.flag_specs(arg)
+        name = arg.to_s.gsub(/\W/, "").downcase
+        specs = []
+        unless name.empty?
+          specs << "--#{name}=VALUE"
+          name2 = name.tr("_", "-")
+          specs << "--#{name2}=VALUE" unless name2 == name
+        end
+        specs
       end
     end
   end
