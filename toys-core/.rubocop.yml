@@ -6,7 +6,7 @@ Layout/EmptyLineAfterGuardClause:
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 Metrics/AbcSize:
-  Max: 24
+  Max: 25
 Metrics/ClassLength:
   Max: 400
 Metrics/CyclomaticComplexity:
@@ -14,7 +14,7 @@ Metrics/CyclomaticComplexity:
 Metrics/LineLength:
   Max: 100
 Metrics/MethodLength:
-  Max: 24
+  Max: 25
 Metrics/ModuleLength:
   Max: 300
 Metrics/ParameterLists:
@@ -27,6 +27,10 @@ Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:
   Enabled: false
+Style/GlobalVars:
+  Exclude:
+    - "test/lookup-cases/preloads/**/*.rb"
+    - "test/test_loader.rb"
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:

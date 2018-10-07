@@ -260,6 +260,18 @@ module Toys
     end
 
     ##
+    # Find the given data file or directory in this tool's search path.
+    #
+    # @param [String] path The path to find
+    # @param [nil,:file,:directory] type Type of file system object to find,
+    #     or nil to return any type.
+    # @return [String,nil] Absolute path of the result, or nil if not found.
+    #
+    def find_data(path, type: nil)
+      @__data[Keys::TOOL_DEFINITION].find_data(path, type: type)
+    end
+
+    ##
     # Exit immediately with the given status code
     #
     # @param [Integer] code The status code, which should be 0 for no error,

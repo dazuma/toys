@@ -38,7 +38,11 @@ describe Toys::Runner do
     end
   }
   let(:binary_name) { "toys" }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+  let(:cli) {
+    Toys::CLI.new(binary_name: binary_name, logger: logger,
+                  middleware_stack: [], index_file_name: ".toys.rb",
+                  data_directory_name: ".data")
+  }
   let(:loader) { cli.loader }
   let(:tool_name) { "foo" }
   let(:subtool_name) { "bar" }
@@ -324,6 +328,13 @@ describe Toys::Runner do
         exit(3)
       end
       assert_equal(3, Toys::Runner.new(cli, subtool).run(["hi"]))
+    end
+
+    it "accesses data from run" do
+      lookup_dir = File.join(__dir__, "lookup-cases", "data-finder")
+      loader.add_path(lookup_dir)
+      tool, _remaining = loader.lookup(["ns-1", "ns-1a", "foo"])
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
   end
 end

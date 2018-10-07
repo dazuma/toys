@@ -4,6 +4,9 @@
 
 * ADDED: Period and colon are recognized as tool path delimiters.
 * ADDED: New rake template that supports loading rake tasks as tools.
+* ADDED: Files named ".preload.rb" and files in a ".preload" directory are loaded before tools are defined.
+* ADDED: Directories named ".data" can contain data files accessible from tools.
+* ADDED: Support for data directories
 * IMPROVED: The tool directive can now take an array as the tool name.
 * IMPROVED: The tool directive can now take an `if_defined` argument.
 * FIXED: Template instantiation was failing if the hosting tool was priority-masked.

@@ -92,6 +92,7 @@ module Toys
         @tool_class = DSL::Tool.new_class(@full_name, @priority, loader)
 
         @source_path = nil
+        @data_finder = nil
         @definition_finished = false
 
         @desc = Utils::WrappableString.new("")
@@ -366,14 +367,16 @@ module Toys
       # already set, raises {Toys::ToolDefinitionError}
       #
       # @param [String] path The path to the file defining this tool
+      # @param [Toys::Definition::DataFinder] data_finder Data finder
       #
-      def lock_source_path(path)
+      def lock_source_path(path, data_finder)
         if source_path && source_path != path
           raise ToolDefinitionError,
                 "Cannot redefine tool #{display_name.inspect} in #{path}" \
                 " (already defined in #{source_path})"
         end
         @source_path = path
+        @data_finder = data_finder
       end
 
       ##
@@ -665,6 +668,18 @@ module Toys
         check_definition_state
         @initializers << [proc, args]
         self
+      end
+
+      ##
+      # Find the given data file or directory in this tool's search path.
+      #
+      # @param [String] path The path to find
+      # @param [nil,:file,:directory] type Type of file system object to find,
+      #     or nil to return any type.
+      # @return [String,nil] Absolute path of the result, or nil if not found.
+      #
+      def find_data(path, type: nil)
+        @data_finder ? @data_finder.find_data(path, type: type) : nil
       end
 
       ##

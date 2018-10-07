@@ -58,6 +58,19 @@ module Toys
     #     loaded first as a standalone configuration file. If not provided,
     #     standalone configuration files are disabled.
     #     The default toys CLI sets this to `".toys.rb"`.
+    # @param [String,nil] preload_file_name A file with this name that appears
+    #     in any configuration directory is preloaded before any tools in that
+    #     configuration directory are defined.
+    #     The default toys CLI sets this to `".preload.rb"`.
+    # @param [String,nil] preload_directory_name A directory with this name
+    #     that appears in any configuration directory is searched for Ruby
+    #     files, which are preloaded before any tools in that configuration
+    #     directory are defined.
+    #     The default toys CLI sets this to `".preload"`.
+    # @param [String,nil] data_directory_name A directory with this name that
+    #     appears in any configuration directory is added to the data directory
+    #     search path for any tool file in that directory.
+    #     The default toys CLI sets this to `".data"`.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this CLI. If not provided, uses
     #     {Toys::CLI.default_middleware_stack}.
@@ -86,6 +99,7 @@ module Toys
     def initialize(
       binary_name: nil, middleware_stack: nil, extra_delimiters: "",
       config_dir_name: nil, config_file_name: nil, index_file_name: nil,
+      preload_file_name: nil, preload_directory_name: nil, data_directory_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil
     )
@@ -97,11 +111,16 @@ module Toys
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
+      @preload_file_name = preload_file_name
+      @preload_directory_name = preload_directory_name
+      @data_directory_name = data_directory_name
       @mixin_lookup = mixin_lookup || self.class.default_mixin_lookup
       @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
       @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
         index_file_name: index_file_name, extra_delimiters: @extra_delimiters,
+        preload_directory_name: @preload_directory_name, preload_file_name: @preload_file_name,
+        data_directory_name: @data_directory_name,
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
@@ -255,6 +274,9 @@ module Toys
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,
                     index_file_name: @index_file_name,
+                    preload_directory_name: @preload_directory_name,
+                    preload_file_name: @preload_file_name,
+                    data_directory_name: @data_directory_name,
                     middleware_stack: @middleware_stack,
                     extra_delimiters: @extra_delimiters,
                     mixin_lookup: @mixin_lookup,

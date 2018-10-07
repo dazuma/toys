@@ -8,7 +8,7 @@ Layout/SpaceInsideHashLiteralBraces:
 Metrics/AbcSize:
   Exclude:
     - "builtins/**/*"
-  Max: 24
+  Max: 25
 Metrics/ClassLength:
   Max: 250
 Metrics/CyclomaticComplexity:

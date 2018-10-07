@@ -55,6 +55,16 @@ module Toys
     #     in any configuration directory (not just a toplevel directory) is
     #     loaded first as a standalone configuration file. If not provided,
     #     standalone configuration files are disabled.
+    # @param [String,nil] preload_file_name A file with this name that appears
+    #     in any configuration directory is preloaded before any tools in that
+    #     configuration directory are defined.
+    # @param [String,nil] preload_directory_name A directory with this name
+    #     that appears in any configuration directory is searched for Ruby
+    #     files, which are preloaded before any tools in that configuration
+    #     directory are defined.
+    # @param [String,nil] data_directory_name A directory with this name that
+    #     appears in any configuration directory is added to the data directory
+    #     search path for any tool file in that directory.
     # @param [Array] middleware_stack An array of middleware that will be used
     #     by default for all tools loaded by this loader.
     # @param [String] extra_delimiters A string containing characters that can
@@ -67,7 +77,8 @@ module Toys
     # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, middleware_stack: [], extra_delimiters: "",
+    def initialize(index_file_name: nil, preload_directory_name: nil, preload_file_name: nil,
+                   data_directory_name: nil, middleware_stack: [], extra_delimiters: "",
                    mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
@@ -76,6 +87,9 @@ module Toys
       @middleware_lookup = middleware_lookup || Utils::ModuleLookup.new
       @template_lookup = template_lookup || Utils::ModuleLookup.new
       @index_file_name = index_file_name
+      @preload_file_name = preload_file_name
+      @preload_directory_name = preload_directory_name
+      @empty_data_finder = Definition::DataFinder.create_empty(data_directory_name)
       @middleware_stack = middleware_stack
       @worklist = []
       @tool_data = {}
@@ -96,7 +110,7 @@ module Toys
       paths = Array(path)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
       paths.each do |p|
-        @worklist << [:file, check_path(p), [], priority]
+        @worklist << [:file, check_path(p), [], @empty_data_finder, priority]
       end
       self
     end
@@ -114,7 +128,7 @@ module Toys
     def add_block(high_priority: false, path: nil, &block)
       path ||= "(Block #{block.object_id})"
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      @worklist << [block, path, [], priority]
+      @worklist << [block, path, [], @empty_data_finder, priority]
       self
     end
 
@@ -300,7 +314,7 @@ module Toys
     # @private
     #
     def load_path(path, words, remaining_words, priority)
-      load_validated_path(check_path(path), words, remaining_words, priority)
+      load_validated_path(check_path(path), words, remaining_words, @empty_data_finder, priority)
     end
 
     ##
@@ -311,13 +325,13 @@ module Toys
     def load_proc(proc, words, remaining_words, priority, path)
       if remaining_words
         tool_class = get_tool_definition(words, priority).tool_class
-        ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path) do
+        ::Toys::DSL::Tool.prepare(tool_class, remaining_words, path, @empty_data_finder) do
           ::Toys::ContextualError.capture("Error while loading Toys config!") do
             tool_class.class_eval(&proc)
           end
         end
       else
-        @worklist << [proc, path, words, priority]
+        @worklist << [proc, path, words, @empty_data_finder, priority]
       end
     end
 
@@ -427,51 +441,73 @@ module Toys
     def load_for_prefix(prefix)
       cur_worklist = @worklist
       @worklist = []
-      cur_worklist.each do |source, path, words, priority|
+      cur_worklist.each do |source, path, words, data_finder, priority|
         remaining_words = calc_remaining_words(prefix, words)
         if source.respond_to?(:call)
           load_proc(source, words, remaining_words, priority, path)
         elsif source == :file
-          load_validated_path(path, words, remaining_words, priority)
+          load_validated_path(path, words, remaining_words, data_finder, priority)
         end
       end
     end
 
-    def load_validated_path(path, words, remaining_words, priority)
+    def load_validated_path(path, words, remaining_words, data_finder, priority)
       if remaining_words
-        load_relevant_path(path, words, remaining_words, priority)
+        load_relevant_path(path, words, remaining_words, data_finder, priority)
       else
-        @worklist << [:file, path, words, priority]
+        @worklist << [:file, path, words, data_finder, priority]
       end
     end
 
-    def load_relevant_path(path, words, remaining_words, priority)
+    def load_relevant_path(path, words, remaining_words, data_finder, priority)
       if ::File.extname(path) == ".rb"
         tool_class = get_tool_definition(words, priority).tool_class
-        Toys::InputFile.evaluate(tool_class, remaining_words, path)
+        InputFile.evaluate(tool_class, remaining_words, path, data_finder)
       else
-        load_index_in(path, words, remaining_words, priority)
+        do_preload(path)
+        data_finder = data_finder.finder_for(path)
+        load_index_in(path, words, remaining_words, data_finder, priority)
         ::Dir.entries(path).each do |child|
-          load_child_in(path, child, words, remaining_words, priority)
+          load_child_in(path, child, words, remaining_words, data_finder, priority)
         end
       end
     end
 
-    def load_index_in(path, words, remaining_words, priority)
+    def load_index_in(path, words, remaining_words, data_finder, priority)
       return unless @index_file_name
       index_path = ::File.join(path, @index_file_name)
       index_path = check_path(index_path, type: :file, lenient: true)
-      load_relevant_path(index_path, words, remaining_words, priority) if index_path
+      load_relevant_path(index_path, words, remaining_words, data_finder, priority) if index_path
     end
 
-    def load_child_in(path, child, words, remaining_words, priority)
+    def load_child_in(path, child, words, remaining_words, data_finder, priority)
       return if child.start_with?(".")
       return if child == @index_file_name
       child_path = check_path(::File.join(path, child))
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
-      load_validated_path(child_path, next_words, next_remaining, priority)
+      load_validated_path(child_path, next_words, next_remaining, data_finder, priority)
+    end
+
+    def do_preload(path)
+      if @preload_file_name
+        preload_file = ::File.join(path, @preload_file_name)
+        if !::File.directory?(preload_file) && ::File.readable?(preload_file)
+          require preload_file
+        end
+      end
+      if @preload_directory_name
+        preload_dir = ::File.join(path, @preload_directory_name)
+        if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
+          ::Dir.entries(preload_dir).each do |child|
+            preload_file = ::File.join(preload_dir, child)
+            if !::File.directory?(preload_file) && ::File.readable?(preload_file)
+              require preload_file
+            end
+          end
+        end
+      end
     end
 
     def check_path(path, lenient: false, type: nil)

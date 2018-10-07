@@ -203,7 +203,7 @@ module Toys
           end
         end
         subtool_class = subtool.tool_class
-        DSL::Tool.prepare(subtool_class, next_remaining, @__path) do
+        DSL::Tool.prepare(subtool_class, next_remaining, @__path, @__data_finder) do
           subtool_class.class_eval(&block)
         end
         self
@@ -650,6 +650,18 @@ module Toys
         super(DSL::Tool.resolve_mixin(mod, cur_tool, @__loader))
       end
 
+      ##
+      # Find the given data path (file or directory)
+      #
+      # @param [String] path The path to find
+      # @param [nil,:file,:directory] type Type of file system object to find,
+      #     or nil to return any type.
+      # @return [String,nil] Absolute path of the result, or nil if not found.
+      #
+      def find_data(path, type: nil)
+        @__data_finder ? @__data_finder.find_data(path, type: type) : nil
+      end
+
       ## @private
       def self.new_class(words, priority, loader)
         tool_class = ::Class.new(::Toys::Tool)
@@ -659,6 +671,7 @@ module Toys
         tool_class.instance_variable_set(:@__loader, loader)
         tool_class.instance_variable_set(:@__remaining_words, nil)
         tool_class.instance_variable_set(:@__path, nil)
+        tool_class.instance_variable_set(:@__data_finder, nil)
         tool_class
       end
 
@@ -685,19 +698,22 @@ module Toys
         end
         if cur_tool && activate
           path = tool_class.instance_variable_get(:@__path)
-          cur_tool.lock_source_path(path)
+          data_finder = tool_class.instance_variable_get(:@__data_finder)
+          cur_tool.lock_source_path(path, data_finder)
         end
         cur_tool
       end
 
       ## @private
-      def self.prepare(tool_class, remaining_words, path)
+      def self.prepare(tool_class, remaining_words, path, data_finder)
         tool_class.instance_variable_set(:@__remaining_words, remaining_words)
         tool_class.instance_variable_set(:@__path, path)
+        tool_class.instance_variable_set(:@__data_finder, data_finder)
         yield
       ensure
         tool_class.instance_variable_set(:@__remaining_words, nil)
         tool_class.instance_variable_set(:@__path, nil)
+        tool_class.instance_variable_set(:@__data_finder, nil)
       end
 
       ## @private

@@ -35,9 +35,6 @@ describe Toys::Loader do
   let(:loader) {
     Toys::Loader.new(index_file_name: ".toys.rb")
   }
-  let(:delimiters_loader) {
-    Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ".:")
-  }
   let(:cases_dir) {
     File.join(__dir__, "lookup-cases")
   }
@@ -199,6 +196,10 @@ describe Toys::Loader do
   end
 
   describe "extra delimiters" do
+    let(:delimiters_loader) {
+      Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ".:")
+    }
+
     before do
       delimiters_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
     end
@@ -327,6 +328,73 @@ describe Toys::Loader do
       tool, remaining = loader.lookup(["alias-2", "tool-blah"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal(["tool-blah"], remaining)
+    end
+  end
+
+  describe "preloads" do
+    let(:preloading_loader) {
+      Toys::Loader.new(index_file_name: ".toys.rb",
+                       preload_file_name: ".preload.rb",
+                       preload_directory_name: ".preload")
+    }
+
+    before do
+      $toys_preload_ns1 = nil
+      $toys_preload_ns2 = nil
+      $toys_preload_ns3 = nil
+      $toys_preload_ns1a_preloaded1 = nil
+      $toys_preload_ns1a_preloaded2 = nil
+      loader.add_path(File.join(cases_dir, "preloads"))
+      preloading_loader.add_path(File.join(cases_dir, "preloads"))
+    end
+
+    it "finds a simple preload file" do
+      assert_nil($toys_preload_ns2)
+      preloading_loader.lookup(["ns-2", "foo"])
+      assert_equal(:hi, $toys_preload_ns2)
+    end
+
+    it "finds nested preload files" do
+      assert_nil($toys_preload_ns1)
+      assert_nil($toys_preload_ns1a_preloaded1)
+      assert_nil($toys_preload_ns1a_preloaded2)
+      preloading_loader.lookup(["ns-1", "ns-1a", "foo"])
+      assert_equal(:hi, $toys_preload_ns1)
+      assert_equal(:hi, $toys_preload_ns1a_preloaded1)
+      assert_equal(:hi, $toys_preload_ns1a_preloaded2)
+    end
+
+    it "ignores preloads if not configured" do
+      loader.lookup(["ns-3", "foo"])
+      assert_nil($toys_preload_ns3)
+    end
+  end
+
+  describe "data finder" do
+    let(:finding_loader) {
+      Toys::Loader.new(index_file_name: ".toys.rb",
+                       data_directory_name: ".data")
+    }
+
+    before do
+      loader.add_path(File.join(cases_dir, "data-finder"))
+      finding_loader.add_path(File.join(cases_dir, "data-finder"))
+    end
+
+    it "finds data during loading" do
+      finding_loader.lookup(["ns-1", "foo"])
+    end
+
+    it "overrides data during loading" do
+      finding_loader.lookup(["ns-1", "ns-1a", "foo"])
+    end
+
+    it "reports lack of data during loading" do
+      finding_loader.lookup(["ns-3", "foo"])
+    end
+
+    it "ignores data during loading if not configured" do
+      loader.lookup(["ns-2", "foo"])
     end
   end
 end

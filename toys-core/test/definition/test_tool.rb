@@ -488,20 +488,20 @@ describe Toys::Definition::Tool do
     end
 
     it "can be set" do
-      tool.lock_source_path("path1")
+      tool.lock_source_path("path1", nil)
       assert_equal("path1", tool.source_path)
     end
 
     it "can be set repeatedly to the same value" do
-      tool.lock_source_path("path1")
-      tool.lock_source_path("path1")
+      tool.lock_source_path("path1", nil)
+      tool.lock_source_path("path1", nil)
       assert_equal("path1", tool.source_path)
     end
 
     it "prevents defining from multiple paths" do
-      tool.lock_source_path("path1")
+      tool.lock_source_path("path1", nil)
       assert_raises(Toys::ToolDefinitionError) do
-        tool.lock_source_path("path2")
+        tool.lock_source_path("path2", nil)
       end
     end
   end

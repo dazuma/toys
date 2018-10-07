@@ -62,6 +62,24 @@ module Toys
     INDEX_FILE_NAME = ".toys.rb"
 
     ##
+    # Standard preload directory name in a toys configuration
+    # @return [String]
+    #
+    PRELOAD_DIRECTORY_NAME = ".preload"
+
+    ##
+    # Standard preload file name in a toys configuration
+    # @return [String]
+    #
+    PRELOAD_FILE_NAME = ".preload.rb"
+
+    ##
+    # Standard data directory name in a toys configuration
+    # @return [String]
+    #
+    DATA_DIRECTORY_NAME = ".data"
+
+    ##
     # Name of standard toys binary
     # @return [String]
     #
@@ -109,6 +127,9 @@ module Toys
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
+        preload_file_name: PRELOAD_FILE_NAME,
+        preload_directory_name: PRELOAD_DIRECTORY_NAME,
+        data_directory_name: DATA_DIRECTORY_NAME,
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup

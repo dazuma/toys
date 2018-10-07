@@ -4,9 +4,6 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* .data directory in loader
-* .lib directory in loader
-
 ## Investigations/wishlist
 
 * toys system lint: Check toys file structure and practices
