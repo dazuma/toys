@@ -1,5 +1,7 @@
 # Release History
 
+### 0.5.1 / TBD
+
 ### 0.5.0 / 2018-10-07
 
 * FIXED: Template instantiation was failing if the hosting tool was priority-masked.

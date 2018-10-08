@@ -6,6 +6,7 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Investigations/wishlist
 
+* toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
 * toys system clean: Clean old installations of toys
 * Range acceptors. May be difficult unless we can limit the types.
