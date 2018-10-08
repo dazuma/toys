@@ -1,6 +1,6 @@
 # Release History
 
-### 0.5.0 / TBD
+### 0.5.0 / 2018-10-07
 
 * ADDED: Period and colon are recognized as tool path delimiters.
 * ADDED: New rake template that supports loading rake tasks as tools.
