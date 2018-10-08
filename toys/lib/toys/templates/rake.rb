@@ -50,20 +50,25 @@ module Toys
       #     the rake gem. Defaults to nil, indicating no version requirement.
       # @param [String] rakefile_path Path to the Rakefile. Defaults to
       #     {DEFAULT_RAKEFILE_PATH}.
+      # @param [Boolean] only_described Tools are generated only for rake tasks
+      #     with descriptions. Default is false.
       # @param [Boolean] use_flags Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
       #
       def initialize(gem_version: nil,
                      rakefile_path: nil,
+                     only_described: false,
                      use_flags: false)
         @gem_version = gem_version
         @rakefile_path = rakefile_path || DEFAULT_RAKEFILE_PATH
+        @only_described = only_described
         @use_flags = use_flags
       end
 
       attr_accessor :gem_version
       attr_accessor :rakefile_path
+      attr_accessor :only_described
       attr_accessor :use_flags
 
       to_expand do |template|
@@ -74,8 +79,9 @@ module Toys
         ::Rake.application = rake
         ::Rake.load_rakefile(template.rakefile_path)
         rake.tasks.each do |task|
+          comments = task.full_comment.to_s.split("\n")
+          next if comments.empty? && template.only_described
           tool(task.name.split(":"), if_defined: :ignore) do
-            comments = task.full_comment.to_s.split("\n")
             unless comments.empty?
               desc(comments.first)
               long_desc(*comments)

@@ -145,4 +145,24 @@ describe "rake template" do
       cli.run("foo", "--one-two=hello")
     end
   end
+
+  it "creates tools without a description by default" do
+    rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+    loader.add_block do
+      expand :rake, rakefile_path: rakefile_path
+    end
+    tool, remaining = loader.lookup(["bar"])
+    assert_equal(["bar"], tool.full_name)
+    assert_equal([], remaining)
+  end
+
+  it "does not creates tools without a description if requested" do
+    rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+    loader.add_block do
+      expand :rake, rakefile_path: rakefile_path, only_described: true
+    end
+    tool, remaining = loader.lookup(["bar"])
+    assert_equal([], tool.full_name)
+    assert_equal(["bar"], remaining)
+  end
 end

@@ -4,3 +4,7 @@ task :foo, :one_two, :three do |t, args|
   puts args[:one_two].inspect
   puts args[:three].inspect
 end
+
+task :bar do
+  puts "executing bar"
+end
