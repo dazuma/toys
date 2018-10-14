@@ -122,23 +122,25 @@ module Toys
             gem "rdoc", *Array(template.gem_version)
             require "rdoc"
 
-            files = []
-            patterns = Array(template.files)
-            patterns = ["lib/**/*.rb"] if patterns.empty?
-            patterns.each do |pattern|
-              files.concat(::Dir.glob(pattern))
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              files = []
+              patterns = Array(template.files)
+              patterns = ["lib/**/*.rb"] if patterns.empty?
+              patterns.each do |pattern|
+                files.concat(::Dir.glob(pattern))
+              end
+              files.uniq!
+
+              args = template.options.dup
+              args << "-o" << template.output_dir
+              args << "--markup" << template.markup if template.markup
+              args << "--main" << template.main if template.main
+              args << "--title" << template.title if template.title
+              args << "-T" << template.template if template.template
+              args << "-f" << template.generator if template.generator
+
+              exec_proc(proc { RDoc::RDoc.new.document(args + files) })
             end
-            files.uniq!
-
-            args = template.options.dup
-            args << "-o" << template.output_dir
-            args << "--markup" << template.markup if template.markup
-            args << "--main" << template.main if template.main
-            args << "--title" << template.title if template.title
-            args << "-T" << template.template if template.template
-            args << "-f" << template.generator if template.generator
-
-            exec_proc(proc { RDoc::RDoc.new.document(args + files) })
           end
         end
       end

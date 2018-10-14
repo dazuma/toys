@@ -109,28 +109,30 @@ module Toys
           to_run do
             gem "minitest", *Array(template.gem_version)
 
-            ruby_args = []
-            unless template.libs.empty?
-              lib_path = template.libs.join(::File::PATH_SEPARATOR)
-              ruby_args << "-I#{lib_path}"
-            end
-            ruby_args << "-w" if warnings
-
-            if tests.empty?
-              Array(template.files).each do |pattern|
-                tests.concat(::Dir.glob(pattern))
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              ruby_args = []
+              unless template.libs.empty?
+                lib_path = template.libs.join(::File::PATH_SEPARATOR)
+                ruby_args << "-I#{lib_path}"
               end
-              tests.uniq!
-            end
+              ruby_args << "-w" if warnings
 
-            result = ruby(ruby_args, in: :controller) do |controller|
-              tests.each do |file|
-                controller.in.puts("load '#{file}'")
+              if tests.empty?
+                Array(template.files).each do |pattern|
+                  tests.concat(::Dir.glob(pattern))
+                end
+                tests.uniq!
               end
-            end
-            if result.error?
-              logger.error("Minitest failed!")
-              exit(result.exit_code)
+
+              result = ruby(ruby_args, in: :controller) do |controller|
+                tests.each do |file|
+                  controller.in.puts("load '#{file}'")
+                end
+              end
+              if result.error?
+                logger.error("Minitest failed!")
+                exit(result.exit_code)
+              end
             end
           end
         end

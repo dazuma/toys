@@ -165,4 +165,13 @@ describe "rake template" do
     assert_equal([], tool.full_name)
     assert_equal(["bar"], remaining)
   end
+
+  it "searches up for rakefiles" do
+    Dir.chdir(File.join(__dir__, "rake-dirs", "dir1", "dir2")) do
+      loader.add_path(File.join(__dir__, "rake-dirs", ".toys.rb"))
+      tool, remaining = loader.lookup(["foo1", "bar"])
+      assert_equal(["foo1"], tool.full_name)
+      assert_equal(["bar"], remaining)
+    end
+  end
 end

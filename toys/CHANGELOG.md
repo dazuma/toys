@@ -2,6 +2,8 @@
 
 ### 0.5.1 / TBD
 
+* IMPROVED: Build tool templates run in the correct directory.
+* IMPROVED: Rake template searches parent directories for Rakefile
 * IMPROVED: Context directory is now available to tools.
 
 ### 0.5.0 / 2018-10-07

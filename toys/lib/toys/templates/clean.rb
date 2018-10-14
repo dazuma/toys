@@ -66,17 +66,17 @@ module Toys
           include :fileutils
 
           to_run do
-            files = []
-            patterns = Array(template.paths)
-            patterns.each do |pattern|
-              files.concat(::Dir.glob(pattern))
-            end
-            files.uniq!
-
-            files.each do |file|
-              if ::File.exist?(file)
-                rm_rf(file)
-                puts "Cleaned: #{file}"
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              files = []
+              patterns = Array(template.paths)
+              patterns.each do |pattern|
+                files.concat(::Dir.glob(pattern))
+              end
+              files.uniq.each do |file|
+                if ::File.exist?(file)
+                  rm_rf(file)
+                  puts "Cleaned: #{file}"
+                end
               end
             end
           end

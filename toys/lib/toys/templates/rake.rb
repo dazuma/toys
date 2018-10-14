@@ -50,8 +50,8 @@ module Toys
       #     the rake gem. Defaults to nil, indicating no version requirement.
       # @param [String] rakefile_path Path to the Rakefile. Defaults to
       #     {DEFAULT_RAKEFILE_PATH}.
-      # @param [Boolean] only_described Tools are generated only for rake tasks
-      #     with descriptions. Default is false.
+      # @param [Boolean] only_described If true, tools are generated only for
+      #     rake tasks with descriptions. Default is false.
       # @param [Boolean] use_flags Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
@@ -74,10 +74,9 @@ module Toys
       to_expand do |template|
         gem "rake", *Array(template.gem_version)
         require "rake"
-        ::Rake::TaskManager.record_task_metadata = true
-        rake = ::Rake::Application.new
-        ::Rake.application = rake
-        ::Rake.load_rakefile(template.rakefile_path)
+        path = Templates::Rake.find_rakefile(template.rakefile_path, context_directory)
+        raise "Cannot find #{template.rakefile_path}" unless path
+        rake = Templates::Rake.prepare_rake(path)
         rake.tasks.each do |task|
           comments = task.full_comment.to_s.split("\n")
           next if comments.empty? && template.only_described
@@ -93,14 +92,18 @@ module Toys
               end
               to_run do
                 args = task.arg_names.map { |arg| self[arg] }
-                task.invoke(*args)
+                Dir.chdir(context_directory || Dir.getwd) do
+                  task.invoke(*args)
+                end
               end
             else
               task.arg_names.each do |arg|
                 optional_arg(arg)
               end
               to_run do
-                task.invoke(*args)
+                Dir.chdir(context_directory || Dir.getwd) do
+                  task.invoke(*args)
+                end
               end
             end
           end
@@ -117,6 +120,32 @@ module Toys
           specs << "--#{name2}=VALUE" unless name2 == name
         end
         specs
+      end
+
+      ## @private
+      def self.find_rakefile(path, context_dir)
+        if path == ::File.absolute_path(path)
+          return ::File.file?(path) && ::File.readable?(path) ? path : nil
+        end
+        dir = ::Dir.getwd
+        50.times do
+          rakefile_path = ::File.expand_path(path, dir)
+          return rakefile_path if ::File.file?(rakefile_path) && ::File.readable?(rakefile_path)
+          break if dir == context_dir
+          next_dir = ::File.dirname(dir)
+          break if dir == next_dir
+          dir = next_dir
+        end
+        nil
+      end
+
+      ## @private
+      def self.prepare_rake(rakefile_path)
+        ::Rake::TaskManager.record_task_metadata = true
+        rake = ::Rake::Application.new
+        ::Rake.application = rake
+        ::Rake.load_rakefile(rakefile_path)
+        rake
       end
     end
   end

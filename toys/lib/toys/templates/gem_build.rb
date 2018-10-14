@@ -77,7 +77,9 @@ module Toys
 
       to_expand do |template|
         unless template.gem_name
-          candidates = ::Dir.glob("*.gemspec")
+          candidates = ::Dir.chdir(context_directory || ::Dir.getwd) do
+            ::Dir.glob("*.gemspec")
+          end
           if candidates.empty?
             raise ToolDefinitionError, "Could not find a gemspec"
           end
@@ -90,31 +92,32 @@ module Toys
 
           flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
-          include :exec
+          include :exec, exit_on_nonzero_status: true
           include :fileutils
           include :terminal
 
           to_run do
             require "rubygems/package"
-            configure_exec(exit_on_nonzero_status: true)
-            gemspec = ::Gem::Specification.load("#{template.gem_name}.gemspec")
-            version = gemspec.version
-            gemfile = "#{template.gem_name}-#{version}.gem"
-            ::Gem::Package.build(gemspec)
-            mkdir_p("pkg")
-            mv(gemfile, "pkg")
-            if template.push_gem
-              if ::File.directory?(".git") && capture("git status -s").strip != ""
-                logger.error "Cannot push the gem when there are uncommited changes"
-                exit(1)
-              end
-              exit(1) unless yes || confirm("Release #{gemfile}?", default: true)
-              exec(["gem", "push", "pkg/#{gemfile}"])
-              if template.tag
-                exec(["git", "tag", "v#{version}"])
-                if template.push_tag
-                  template.push_tag = "origin" if template.push_tag == true
-                  exec(["git", "push", template.push_tag, "v#{version}"])
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              gemspec = ::Gem::Specification.load("#{template.gem_name}.gemspec")
+              version = gemspec.version
+              gemfile = "#{template.gem_name}-#{version}.gem"
+              ::Gem::Package.build(gemspec)
+              mkdir_p("pkg")
+              mv(gemfile, "pkg")
+              if template.push_gem
+                if ::File.directory?(".git") && capture("git status -s").strip != ""
+                  logger.error "Cannot push the gem when there are uncommited changes"
+                  exit(1)
+                end
+                exit(1) unless yes || confirm("Release #{gemfile}?", default: true)
+                exec(["gem", "push", "pkg/#{gemfile}"])
+                if template.tag
+                  exec(["git", "tag", "v#{version}"])
+                  if template.push_tag
+                    template.push_tag = "origin" if template.push_tag == true
+                    exec(["git", "push", template.push_tag, "v#{version}"])
+                  end
                 end
               end
             end

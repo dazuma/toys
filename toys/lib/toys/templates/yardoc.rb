@@ -169,54 +169,56 @@ module Toys
             gem "yard", *Array(template.gem_version)
             require "yard"
 
-            files = []
-            patterns = Array(template.files)
-            patterns = ["lib/**/*.rb"] if patterns.empty?
-            patterns.each do |pattern|
-              files.concat(::Dir.glob(pattern))
-            end
-            files.uniq!
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              files = []
+              patterns = Array(template.files)
+              patterns = ["lib/**/*.rb"] if patterns.empty?
+              patterns.each do |pattern|
+                files.concat(::Dir.glob(pattern))
+              end
+              files.uniq!
 
-            run_options = template.options.dup
-            stats_options = template.stats_options.dup
-            stats_options << "--list-undoc" if template.fail_on_undocumented_objects
-            run_options << "--fail-on-warning" if template.fail_on_warning
-            run_options << "--no-output" unless generate_output
-            run_options << "--output-dir" << template.output_dir if template.output_dir
-            run_options << "--no-public" unless template.show_public
-            run_options << "--protected" if template.show_protected
-            run_options << "--private" if template.show_private
-            run_options << "--no-private" if template.hide_private_tag
-            run_options << "-r" << template.readme if template.readme
-            run_options << "-m" << template.markup if template.markup
-            run_options << "-t" << template.template if template.template
-            run_options << "-p" << template.template_path if template.template_path
-            run_options << "-f" << template.format if template.format
-            unless stats_options.empty?
-              run_options << "--no-stats"
-              stats_options << "--use-cache"
-            end
-            run_options.concat(files)
+              run_options = template.options.dup
+              stats_options = template.stats_options.dup
+              stats_options << "--list-undoc" if template.fail_on_undocumented_objects
+              run_options << "--fail-on-warning" if template.fail_on_warning
+              run_options << "--no-output" unless generate_output
+              run_options << "--output-dir" << template.output_dir if template.output_dir
+              run_options << "--no-public" unless template.show_public
+              run_options << "--protected" if template.show_protected
+              run_options << "--private" if template.show_private
+              run_options << "--no-private" if template.hide_private_tag
+              run_options << "-r" << template.readme if template.readme
+              run_options << "-m" << template.markup if template.markup
+              run_options << "-t" << template.template if template.template
+              run_options << "-p" << template.template_path if template.template_path
+              run_options << "-f" << template.format if template.format
+              unless stats_options.empty?
+                run_options << "--no-stats"
+                stats_options << "--use-cache"
+              end
+              run_options.concat(files)
 
-            result = exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) })
-            if result.error?
-              puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
-              exit(1)
-            end
-            unless stats_options.empty?
-              result = exec_proc(proc { ::YARD::CLI::Stats.run(*stats_options) }, out: :capture)
-              puts result.captured_out
+              result = exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) })
               if result.error?
                 puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
                 exit(1)
               end
-              exit_on_nonzero_status(result)
-              if template.fail_on_undocumented_objects
-                if result.captured_out =~ /Undocumented\sObjects:/
-                  unless verbosity.negative?
-                    puts("Yardoc encountered undocumented objects", :red, :bold)
-                  end
+              unless stats_options.empty?
+                result = exec_proc(proc { ::YARD::CLI::Stats.run(*stats_options) }, out: :capture)
+                puts result.captured_out
+                if result.error?
+                  puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
                   exit(1)
+                end
+                exit_on_nonzero_status(result)
+                if template.fail_on_undocumented_objects
+                  if result.captured_out =~ /Undocumented\sObjects:/
+                    unless verbosity.negative?
+                      puts("Yardoc encountered undocumented objects", :red, :bold)
+                    end
+                    exit(1)
+                  end
                 end
               end
             end

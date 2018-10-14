@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 desc "Foo description"
 task :foo, :one_two, :three do |t, args|
   puts "executing foo"

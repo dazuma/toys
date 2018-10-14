@@ -86,12 +86,14 @@ module Toys
             gem "rubocop", *Array(template.gem_version)
             require "rubocop"
 
-            cli = ::RuboCop::CLI.new
-            logger.info "Running RuboCop..."
-            result = cli.run(template.options)
-            if result.nonzero?
-              logger.error "RuboCop failed!"
-              exit(1) if template.fail_on_error
+            ::Dir.chdir(context_directory || ::Dir.getwd) do
+              cli = ::RuboCop::CLI.new
+              logger.info "Running RuboCop..."
+              result = cli.run(template.options)
+              if result.nonzero?
+                logger.error "RuboCop failed!"
+                exit(1) if template.fail_on_error
+              end
             end
           end
         end
