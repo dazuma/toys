@@ -387,10 +387,10 @@ module Toys
         end
 
         def add_source_section
-          return unless @tool.source_path && @show_source_path
+          return unless @tool.source_name && @show_source_path
           @lines << ""
           @lines << bold("SOURCE")
-          @lines << indent_str("Defined in #{@tool.source_path}")
+          @lines << indent_str("Defined in #{@tool.source_name}")
         end
 
         def add_description_section

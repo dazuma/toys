@@ -173,12 +173,12 @@ module Toys
     #
     # @param [Boolean] high_priority Add the config at the head of the priority
     #     list rather than the tail.
-    # @param [String] path The "path" that will be shown in documentation for
-    #     tools defined in this block. If omitted, a default unique string will
-    #     be generated.
+    # @param [String] name The source name that will be shown in documentation
+    #     for tools defined in this block. If omitted, a default unique string
+    #     will be generated.
     #
-    def add_config_block(high_priority: false, path: nil, &block)
-      @loader.add_block(high_priority: high_priority, path: path, &block)
+    def add_config_block(high_priority: false, name: nil, &block)
+      @loader.add_block(high_priority: high_priority, name: name, &block)
       self
     end
 

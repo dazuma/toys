@@ -91,8 +91,7 @@ module Toys
       def reset_definition(loader)
         @tool_class = DSL::Tool.new_class(@full_name, @priority, loader)
 
-        @source_path = nil
-        @data_finder = nil
+        @source = nil
         @definition_finished = false
 
         @desc = Utils::WrappableString.new("")
@@ -187,9 +186,30 @@ module Toys
 
       ##
       # Returns the path to the file that contains the definition of this tool.
-      # @return [String]
+      # Returns nil if no path is known, or the source is a block.
+      # @return [String,nil]
       #
-      attr_reader :source_path
+      def source_path
+        @source&.source_path
+      end
+
+      ##
+      # Returns the user-visible string form of the tool source.
+      # Returns nil if no source is known.
+      # @return [String,nil]
+      #
+      def source_name
+        @source&.source_name
+      end
+
+      ##
+      # Returns the context directory containing the definition of this tool.
+      # Returns nil if there is no context.
+      # @return [String,nil]
+      #
+      def context_directory
+        @source&.context_directory
+      end
 
       ##
       # Returns the local name of this tool.
@@ -366,17 +386,15 @@ module Toys
       # A tool may be defined from at most one path. If a different path is
       # already set, raises {Toys::ToolDefinitionError}
       #
-      # @param [String] path The path to the file defining this tool
-      # @param [Toys::Definition::DataFinder] data_finder Data finder
+      # @param [Toys::Definition::SourceInfo] source Source info
       #
-      def lock_source_path(path, data_finder)
-        if source_path && source_path != path
+      def lock_source(source)
+        if @source && @source.source != source.source
           raise ToolDefinitionError,
-                "Cannot redefine tool #{display_name.inspect} in #{path}" \
-                " (already defined in #{source_path})"
+                "Cannot redefine tool #{display_name.inspect} in #{source.source_name}" \
+                " (already defined in #{@source.source_name})"
         end
-        @source_path = path
-        @data_finder = data_finder
+        @source = source
       end
 
       ##
@@ -679,7 +697,7 @@ module Toys
       # @return [String,nil] Absolute path of the result, or nil if not found.
       #
       def find_data(path, type: nil)
-        @data_finder ? @data_finder.find_data(path, type: type) : nil
+        @source ? @source.find_data(path, type: type) : nil
       end
 
       ##

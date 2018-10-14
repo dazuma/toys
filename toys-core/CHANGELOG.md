@@ -2,6 +2,9 @@
 
 ### 0.5.1 / TBD
 
+* CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourcePath.
+* IMPROVED: Context directory is now available to tools.
+
 ### 0.5.0 / 2018-10-07
 
 * FIXED: Template instantiation was failing if the hosting tool was priority-masked.

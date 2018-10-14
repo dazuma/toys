@@ -482,26 +482,31 @@ describe Toys::Definition::Tool do
     end
   end
 
-  describe "source path" do
+  describe "source info" do
+    let(:source_path) { File.expand_path(__FILE__) }
+    let(:source_path2) { File.expand_path(__dir__) }
+    let(:source_info) { Toys::Definition::SourceInfo.create_path_root(source_path) }
+    let(:source_info2) { Toys::Definition::SourceInfo.create_path_root(source_path2) }
+
     it "starts at nil" do
       assert_nil(tool.source_path)
     end
 
     it "can be set" do
-      tool.lock_source_path("path1", nil)
-      assert_equal("path1", tool.source_path)
+      tool.lock_source(source_info)
+      assert_equal(source_path, tool.source_path)
     end
 
     it "can be set repeatedly to the same value" do
-      tool.lock_source_path("path1", nil)
-      tool.lock_source_path("path1", nil)
-      assert_equal("path1", tool.source_path)
+      tool.lock_source(source_info)
+      tool.lock_source(source_info)
+      assert_equal(source_path, tool.source_path)
     end
 
     it "prevents defining from multiple paths" do
-      tool.lock_source_path("path1", nil)
+      tool.lock_source(source_info)
       assert_raises(Toys::ToolDefinitionError) do
-        tool.lock_source_path("path2", nil)
+        tool.lock_source(source_info2)
       end
     end
   end

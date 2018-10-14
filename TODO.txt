@@ -4,6 +4,10 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
+* Private tasks (names begin with underscore, do not display in tool lists)
+* Option to prevent tool creation when not in the right directory.
+* Standard build templates cd into correct directory
+
 ## Investigations/wishlist
 
 * toys system new: Create toys files and gems

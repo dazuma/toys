@@ -203,7 +203,7 @@ module Toys
           end
         end
         subtool_class = subtool.tool_class
-        DSL::Tool.prepare(subtool_class, next_remaining, @__path, @__data_finder) do
+        DSL::Tool.prepare(subtool_class, next_remaining, @__source.last) do
           subtool_class.class_eval(&block)
         end
         self
@@ -230,7 +230,7 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def load(path)
-        @__loader.load_path(path, @__words, @__remaining_words, @__priority)
+        @__loader.load_path(@__source.last, path, @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -659,7 +659,18 @@ module Toys
       # @return [String,nil] Absolute path of the result, or nil if not found.
       #
       def find_data(path, type: nil)
-        @__data_finder ? @__data_finder.find_data(path, type: type) : nil
+        @__source.last.find_data(path, type: type)
+      end
+
+      ##
+      # Return the context directory containing the definition of this tool.
+      # May return nil if there is no context (e.g. the tool is being defined
+      # from a block).
+      #
+      # @return [String,nil] Context directory
+      #
+      def context_directory
+        @__source.last.context_directory
       end
 
       ## @private
@@ -670,8 +681,7 @@ module Toys
         tool_class.instance_variable_set(:@__priority, priority)
         tool_class.instance_variable_set(:@__loader, loader)
         tool_class.instance_variable_set(:@__remaining_words, nil)
-        tool_class.instance_variable_set(:@__path, nil)
-        tool_class.instance_variable_set(:@__data_finder, nil)
+        tool_class.instance_variable_set(:@__source, [])
         tool_class
       end
 
@@ -697,23 +707,19 @@ module Toys
           tool_class.instance_variable_set(memoize_var, cur_tool)
         end
         if cur_tool && activate
-          path = tool_class.instance_variable_get(:@__path)
-          data_finder = tool_class.instance_variable_get(:@__data_finder)
-          cur_tool.lock_source_path(path, data_finder)
+          source = tool_class.instance_variable_get(:@__source).last
+          cur_tool.lock_source(source)
         end
         cur_tool
       end
 
       ## @private
-      def self.prepare(tool_class, remaining_words, path, data_finder)
+      def self.prepare(tool_class, remaining_words, source)
         tool_class.instance_variable_set(:@__remaining_words, remaining_words)
-        tool_class.instance_variable_set(:@__path, path)
-        tool_class.instance_variable_set(:@__data_finder, data_finder)
+        tool_class.instance_variable_get(:@__source).push(source)
         yield
       ensure
-        tool_class.instance_variable_set(:@__remaining_words, nil)
-        tool_class.instance_variable_set(:@__path, nil)
-        tool_class.instance_variable_set(:@__data_finder, nil)
+        tool_class.instance_variable_get(:@__source).pop
       end
 
       ## @private

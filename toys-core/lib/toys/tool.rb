@@ -272,6 +272,17 @@ module Toys
     end
 
     ##
+    # Return the context directory containing the definition of this tool.
+    # May return nil if there is no context (e.g. the tool is being defined
+    # from a block).
+    #
+    # @return [String,nil] Context directory
+    #
+    def context_directory
+      @__data[Keys::TOOL_DEFINITION].context_directory
+    end
+
+    ##
     # Exit immediately with the given status code
     #
     # @param [Integer] code The status code, which should be 0 for no error,
