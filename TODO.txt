@@ -4,8 +4,6 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Figure out how to do a single .toys.rb file at the toplevel and handle build tools in subdirectories
-
 ## Investigations/wishlist
 
 * toys system new: Create toys files and gems

@@ -651,6 +651,15 @@ module Toys
       end
 
       ##
+      # Return the current source info object.
+      #
+      # @return [Toys::Definition::SourceInfo] Source info.
+      #
+      def source_info
+        @__source.last
+      end
+
+      ##
       # Find the given data path (file or directory)
       #
       # @param [String] path The path to find
@@ -659,7 +668,7 @@ module Toys
       # @return [String,nil] Absolute path of the result, or nil if not found.
       #
       def find_data(path, type: nil)
-        @__source.last.find_data(path, type: type)
+        source_info.find_data(path, type: type)
       end
 
       ##
@@ -670,7 +679,7 @@ module Toys
       # @return [String,nil] Context directory
       #
       def context_directory
-        @__source.last.context_directory
+        source_info.context_directory
       end
 
       ## @private

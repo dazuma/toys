@@ -6,6 +6,7 @@
 * IMPROVED: Context directory is now available to tools.
 * IMPROVED: Optionally omit hidden subtools (i.e. names beginning with underscore)
   from help screens.
+* IMPROVED: SourceInfo#context_directory is now settable.
 
 ### 0.5.0 / 2018-10-07
 

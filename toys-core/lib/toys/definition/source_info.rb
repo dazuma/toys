@@ -61,11 +61,12 @@ module Toys
       attr_reader :parent
 
       ##
-      # Return the context directory path (containing the toplevel toys file
-      # or directory)
-      # @return [String]
+      # Return the context directory path (normally the directory containing
+      # the toplevel toys file or directory). May return nil if there is no
+      # context (e.g. the tool is being defined from a block).
+      # @return [String,nil]
       #
-      attr_reader :context_directory
+      attr_accessor :context_directory
 
       ##
       # Return the source, which may be a path or a proc.
