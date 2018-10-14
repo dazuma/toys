@@ -175,9 +175,11 @@ module Toys
     # @param [Array<String>] words The name of the parent tool
     # @param [Boolean] recursive If true, return all subtools recursively
     #     rather than just the immediate children (the default)
+    # @param [Boolean] include_hidden If true, include hidden subtools,
+    #     e.g. names beginning with underscores.
     # @return [Array<Toys::Definition::Tool,Toys::Definition::Alias>]
     #
-    def list_subtools(words, recursive: false)
+    def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
       found_tools = []
       len = words.length
@@ -192,6 +194,7 @@ module Toys
         found_tools << tool unless tool.nil?
       end
       sort_tools_by_name(found_tools)
+      include_hidden ? found_tools : filter_hidden_subtools(found_tools)
     end
 
     ##
@@ -509,7 +512,7 @@ module Toys
     end
 
     def sort_tools_by_name(tools)
-      tools.sort do |a, b|
+      tools.sort! do |a, b|
         a = a.full_name
         b = b.full_name
         while !a.empty? && !b.empty? && a.first == b.first
@@ -518,6 +521,19 @@ module Toys
         end
         a.first.to_s <=> b.first.to_s
       end
+    end
+
+    def filter_hidden_subtools(tools)
+      result = []
+      tools.each_with_index do |tool, index|
+        next if tool.full_name.last.to_s.start_with?("_")
+        unless tool.runnable?
+          next_tool = tools[index + 1]
+          next if next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
+        end
+        result << tool
+      end
+      result
     end
 
     def calc_remaining_words(words1, words2)

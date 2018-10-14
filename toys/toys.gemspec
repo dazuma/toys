@@ -67,8 +67,9 @@ require "toys/version"
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"
+  spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "redcarpet", "~> 3.4"
-  spec.add_development_dependency "rubocop", "~> 0.59.1"
+  spec.add_development_dependency "rubocop", "~> 0.59.2"
   spec.add_development_dependency "yard", "~> 0.9.16"
 
   if spec.respond_to?(:metadata)

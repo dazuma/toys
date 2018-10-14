@@ -113,6 +113,28 @@ describe Toys::StandardMiddleware::ShowHelp do
     assert_match(/bar - was met/, string_io.string)
   end
 
+  it "does not show hidden tools by default" do
+    cli = make_cli(fallback_execution: true, show_all_subtools_flags: true)
+    cli.add_config_block do
+      tool "_bar" do
+        desc "was met"
+      end
+    end
+    cli.run
+    refute_match(/bar - was met/, string_io.string)
+  end
+
+  it "Shows hidden tools when requested" do
+    cli = make_cli(fallback_execution: true, show_all_subtools_flags: true)
+    cli.add_config_block do
+      tool "_bar" do
+        desc "was met"
+      end
+    end
+    cli.run("--all")
+    assert_match(/_bar - was met/, string_io.string)
+  end
+
   it "does not recurse by default" do
     cli = make_cli(fallback_execution: true)
     cli.add_config_block do

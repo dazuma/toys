@@ -83,6 +83,7 @@ module Toys
           tool(task.name.split(":"), if_defined: :ignore) do
             unless comments.empty?
               desc(comments.first)
+              comments << "" << "Defined as a Rake task in #{path}"
               long_desc(*comments)
             end
             if template.use_flags

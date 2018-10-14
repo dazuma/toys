@@ -4,7 +4,7 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Private tasks (names begin with underscore, do not display in tool lists)
+* Figure out how to do a single .toys.rb file at the toplevel and handle build tools in subdirectories
 
 ## Investigations/wishlist
 

@@ -172,6 +172,12 @@ describe "rake template" do
       tool, remaining = loader.lookup(["foo1", "bar"])
       assert_equal(["foo1"], tool.full_name)
       assert_equal(["bar"], remaining)
+      rakefile_path = File.join(__dir__, "rake-dirs", "dir1", "Rakefile")
+      expected_comments = [
+        "Foo1 description", "",
+        "Defined as a Rake task in #{rakefile_path}"
+      ]
+      assert_equal(expected_comments, tool.long_desc.map(&:to_s))
     end
   end
 end

@@ -186,6 +186,7 @@ module Toys
           list_flags: true,
           recursive_flags: true,
           search_flags: true,
+          show_all_subtools_flags: true,
           default_recursive: true,
           allow_root_args: true,
           show_source_path: true,

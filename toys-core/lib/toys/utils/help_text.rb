@@ -83,7 +83,9 @@ module Toys
       # Generate a short usage string.
       #
       # @param [Boolean] recursive If true, and the tool is a namespace,
-      #     display all subcommands recursively. Defaults to false.
+      #     display all subtools recursively. Defaults to false.
+      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      #     names begin with underscore.) Default is false.
       # @param [Integer] left_column_width Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
@@ -92,10 +94,11 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def usage_string(recursive: false, left_column_width: nil, indent: nil, wrap_width: nil)
+      def usage_string(recursive: false, include_hidden: false,
+                       left_column_width: nil, indent: nil, wrap_width: nil)
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, nil)
+        subtools = find_subtools(recursive, nil, include_hidden)
         assembler = UsageStringAssembler.new(@tool, @binary_name, subtools,
                                              indent, left_column_width, wrap_width)
         assembler.result
@@ -105,9 +108,11 @@ module Toys
       # Generate a long help string.
       #
       # @param [Boolean] recursive If true, and the tool is a namespace,
-      #     display all subcommands recursively. Defaults to false.
+      #     display all subtools recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
-      #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      #     listing subtools. Defaults to `nil` which finds all subtools.
+      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      #     names begin with underscore.) Default is false.
       # @param [Boolean] show_source_path If true, shows the source path
       #     section. Defaults to false.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
@@ -119,11 +124,12 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def help_string(recursive: false, search: nil, show_source_path: false,
+      def help_string(recursive: false, search: nil, include_hidden: false,
+                      show_source_path: false,
                       indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, search)
+        subtools = find_subtools(recursive, search, include_hidden)
         assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search, show_source_path,
                                             indent, indent2, wrap_width, styled)
         assembler.result
@@ -133,9 +139,11 @@ module Toys
       # Generate a subtool list string.
       #
       # @param [Boolean] recursive If true, and the tool is a namespace,
-      #     display all subcommands recursively. Defaults to false.
+      #     display all subtools recursively. Defaults to false.
       # @param [String,nil] search An optional string to search for when
-      #     listing subcommands. Defaults to `nil` which finds all subcommands.
+      #     listing subtools. Defaults to `nil` which finds all subtools.
+      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      #     names begin with underscore.) Default is false.
       # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
       # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
@@ -143,10 +151,10 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def list_string(recursive: false, search: nil,
+      def list_string(recursive: false, search: nil, include_hidden: false,
                       indent: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, search)
+        subtools = find_subtools(recursive, search, include_hidden)
         assembler = ListStringAssembler.new(@tool, subtools, recursive, search,
                                             indent, wrap_width, styled)
         assembler.result
@@ -154,8 +162,9 @@ module Toys
 
       private
 
-      def find_subtools(recursive, search)
-        subtools = @loader.list_subtools(@tool.full_name, recursive: recursive)
+      def find_subtools(recursive, search, include_hidden)
+        subtools = @loader.list_subtools(@tool.full_name,
+                                         recursive: recursive, include_hidden: include_hidden)
         return subtools if search.nil? || search.empty?
         regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
         subtools.find_all do |tool|

@@ -75,6 +75,12 @@ module Toys
       DEFAULT_SEARCH_FLAGS = ["-s WORD", "--search=WORD"].freeze
 
       ##
+      # Default show-all-subtools flags
+      # @return [Array<String>]
+      #
+      DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS = ["--all"].freeze
+
+      ##
       # Key set when the show help flag is present
       # @return [Object]
       #
@@ -103,6 +109,12 @@ module Toys
       # @return [Object]
       #
       SEARCH_STRING_KEY = Object.new.freeze
+
+      ##
+      # Key for the show-all-subtools setting
+      # @return [Object]
+      #
+      SHOW_ALL_SUBTOOLS_KEY = Object.new.freeze
 
       ##
       # Key for the tool name
@@ -155,8 +167,19 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
+      # @param [Boolean,Array<String>,Proc] show_all_subtools_flags Specify
+      #     flags to show all subtools, including hidden tools and non-runnable
+      #     namespaces. The value may be any of the following:
+      #
+      #     *  An array of flags.
+      #     *  The `true` value to use {DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS}.
+      #     *  The `false` value for no flags. (Default)
+      #     *  A proc that takes a tool and returns any of the above.
+      #
       # @param [Boolean] default_recursive Whether to search recursively for
       #     subtools by default. Default is `false`.
+      # @param [Boolean] default_show_all_subtools Whether to show all subtools
+      #     by default. Default is `false`.
       # @param [Boolean] fallback_execution Cause the tool to display its own
       #     help text if it is not otherwise runnable. This is mostly useful
       #     for namespaces, which have children are not runnable. Default is
@@ -179,7 +202,9 @@ module Toys
                      list_flags: false,
                      recursive_flags: false,
                      search_flags: false,
+                     show_all_subtools_flags: false,
                      default_recursive: false,
+                     default_show_all_subtools: false,
                      fallback_execution: false,
                      allow_root_args: false,
                      show_source_path: false,
@@ -191,7 +216,9 @@ module Toys
         @list_flags = list_flags
         @recursive_flags = recursive_flags
         @search_flags = search_flags
+        @show_all_subtools_flags = show_all_subtools_flags
         @default_recursive = default_recursive ? true : false
+        @default_show_all_subtools = default_show_all_subtools ? true : false
         @fallback_execution = fallback_execution
         @allow_root_args = allow_root_args
         @show_source_path = show_source_path
@@ -212,6 +239,7 @@ module Toys
           if (!help_flags.empty? || !list_flags.empty? || @fallback_execution) && has_subtools
             add_recursive_flags(tool_definition)
             add_search_flags(tool_definition)
+            add_show_all_subtools_flags(tool_definition)
           end
           if !help_flags.empty? || !usage_flags.empty? || !list_flags.empty?
             add_root_args(tool_definition)
@@ -223,16 +251,18 @@ module Toys
       ##
       # Display help text if requested.
       #
-      def run(tool)
+      def run(tool) # rubocop:disable Metrics/AbcSize
         if tool[SHOW_USAGE_KEY]
           terminal.puts(get_help_text(tool).usage_string(wrap_width: terminal.width))
         elsif tool[SHOW_LIST_KEY]
           terminal.puts(get_help_text(tool).list_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
                                                         search: tool[SEARCH_STRING_KEY],
+                                                        include_hidden: tool[SHOW_ALL_SUBTOOLS_KEY],
                                                         wrap_width: terminal.width))
         elsif should_show_help(tool)
           output_help(get_help_text(tool).help_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
                                                       search: tool[SEARCH_STRING_KEY],
+                                                      include_hidden: tool[SHOW_ALL_SUBTOOLS_KEY],
                                                       show_source_path: @show_source_path,
                                                       wrap_width: terminal.width))
         else
@@ -288,67 +318,82 @@ module Toys
       end
 
       def add_help_flags(tool_definition)
-        help_flags = resolve_flags_spec(@help_flags, tool_definition, DEFAULT_HELP_FLAGS)
-        unless help_flags.empty?
+        flags = resolve_flags_spec(@help_flags, tool_definition, DEFAULT_HELP_FLAGS)
+        unless flags.empty?
           tool_definition.add_flag(
-            SHOW_HELP_KEY, help_flags,
+            SHOW_HELP_KEY, flags,
             report_collisions: false,
             desc: "Display help for this tool"
           )
         end
-        help_flags
+        flags
       end
 
       def add_usage_flags(tool_definition)
-        usage_flags = resolve_flags_spec(@usage_flags, tool_definition, DEFAULT_USAGE_FLAGS)
-        unless usage_flags.empty?
+        flags = resolve_flags_spec(@usage_flags, tool_definition, DEFAULT_USAGE_FLAGS)
+        unless flags.empty?
           tool_definition.add_flag(
-            SHOW_USAGE_KEY, usage_flags,
+            SHOW_USAGE_KEY, flags,
             report_collisions: false,
             desc: "Display a brief usage string for this tool"
           )
         end
-        usage_flags
+        flags
       end
 
       def add_list_flags(tool_definition)
-        list_flags = resolve_flags_spec(@list_flags, tool_definition, DEFAULT_LIST_FLAGS)
-        unless list_flags.empty?
+        flags = resolve_flags_spec(@list_flags, tool_definition, DEFAULT_LIST_FLAGS)
+        unless flags.empty?
           tool_definition.add_flag(
-            SHOW_LIST_KEY, list_flags,
+            SHOW_LIST_KEY, flags,
             report_collisions: false,
             desc: "List the subtools under this tool"
           )
         end
-        list_flags
+        flags
       end
 
       def add_recursive_flags(tool_definition)
-        recursive_flags = resolve_flags_spec(@recursive_flags, tool_definition,
-                                             DEFAULT_RECURSIVE_FLAGS)
-        if recursive_flags.empty?
+        flags = resolve_flags_spec(@recursive_flags, tool_definition, DEFAULT_RECURSIVE_FLAGS)
+        if flags.empty?
           tool_definition.default_data[RECURSIVE_SUBTOOLS_KEY] = @default_recursive
         else
           tool_definition.add_flag(
-            RECURSIVE_SUBTOOLS_KEY, recursive_flags,
+            RECURSIVE_SUBTOOLS_KEY, flags,
             report_collisions: false, default: @default_recursive,
             desc: "List all subtools recursively when displaying help" \
                   " (default is #{@default_recursive})"
           )
         end
-        recursive_flags
+        flags
       end
 
       def add_search_flags(tool_definition)
-        search_flags = resolve_flags_spec(@search_flags, tool_definition, DEFAULT_SEARCH_FLAGS)
-        unless search_flags.empty?
+        flags = resolve_flags_spec(@search_flags, tool_definition, DEFAULT_SEARCH_FLAGS)
+        unless flags.empty?
           tool_definition.add_flag(
-            SEARCH_STRING_KEY, search_flags,
+            SEARCH_STRING_KEY, flags,
             report_collisions: false,
             desc: "Search subtools for the given regular expression when displaying help"
           )
         end
-        search_flags
+        flags
+      end
+
+      def add_show_all_subtools_flags(tool_definition)
+        flags = resolve_flags_spec(@show_all_subtools_flags, tool_definition,
+                                   DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS)
+        if flags.empty?
+          tool_definition.default_data[SHOW_ALL_SUBTOOLS_KEY] = @default_show_all_subtools
+        else
+          tool_definition.add_flag(
+            SHOW_ALL_SUBTOOLS_KEY, flags,
+            report_collisions: false, default: @default_show_all_subtools,
+            desc: "List all subtools including hidden subtools and namespaces" \
+                  " (default is #{@default_show_all_subtools})"
+          )
+        end
+        flags
       end
 
       def add_root_args(tool_definition)

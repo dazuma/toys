@@ -3,8 +3,13 @@
 ### 0.5.1 / TBD
 
 * IMPROVED: Build tool templates run in the correct directory.
-* IMPROVED: Rake template searches parent directories for Rakefile
+* IMPROVED: Rake template searches parent directories for Rakefile.
+* IMPROVED: Rake tasks show the Rakefile path in the long description.
 * IMPROVED: Context directory is now available to tools.
+* IMPROVED: Subtools whose names begin with underscore are no longer listed in help
+  screens unless the `--all` flag is given.
+* IMPROVED: Non-runnable namespaces are no longer displayed in recursive subtool
+  lists if their children are already displayed.
 
 ### 0.5.0 / 2018-10-07
 

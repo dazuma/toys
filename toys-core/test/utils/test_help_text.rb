@@ -37,6 +37,7 @@ describe Toys::Utils::HelpText do
   let(:tool_name) { ["foo", "bar"] }
   let(:subtool_one_name) { tool_name + ["one"] }
   let(:subtool_two_name) { tool_name + ["two"] }
+  let(:hidden_subtool_name) { tool_name + ["_three"] }
   let(:runnable) { proc {} }
 
   let(:single_loader) {
@@ -49,6 +50,7 @@ describe Toys::Utils::HelpText do
     loader.activate_tool_definition(tool_name, 0)
     loader.activate_tool_definition(subtool_one_name, 0).runnable = runnable
     loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool_definition(hidden_subtool_name, 0).runnable = runnable
     loader
   }
   let(:runnable_namespace_loader) {
@@ -385,7 +387,7 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a namespace non-recursive" do
+      it "shows subtools non-recursively" do
         help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("TOOLS")
@@ -395,10 +397,34 @@ describe Toys::Utils::HelpText do
         assert_equal(index + 3, help_array.size)
       end
 
-      it "is set for a namespace recursive" do
+      it "shows hidden tools when requested" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
+        help_array = help.help_string(styled: false, include_hidden: true).split("\n")
+        index = help_array.index("TOOLS")
+        refute_nil(index)
+        assert_equal("    _three", help_array[index + 1])
+        assert_equal("    one", help_array[index + 2])
+        assert_equal("    two", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
+      end
+
+      it "shows recursively omitting redundant namespaces" do
         help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
                                          binary_name)
         help_array = help.help_string(styled: false, recursive: true).split("\n")
+        index = help_array.index("TOOLS")
+        refute_nil(index)
+        assert_equal("    one a", help_array[index + 1])
+        assert_equal("    one b", help_array[index + 2])
+        assert_equal("    two", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
+      end
+
+      it "shows recursively including namespaces when requested" do
+        help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                         binary_name)
+        help_array = help.help_string(styled: false, recursive: true,
+                                      include_hidden: true).split("\n")
         index = help_array.index("TOOLS")
         refute_nil(index)
         assert_equal("    one", help_array[index + 1])
@@ -425,7 +451,7 @@ describe Toys::Utils::HelpText do
   end
 
   describe "list string" do
-    it "is set for a namespace non-recursive" do
+    it "shows subtools non-recursively" do
       help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
       list_array = help.list_string(styled: false).split("\n")
       assert_equal("List of tools under foo bar:", list_array[0])
@@ -435,10 +461,34 @@ describe Toys::Utils::HelpText do
       assert_equal(4, list_array.size)
     end
 
-    it "is set for a namespace recursive" do
+    it "shows hidden subtools when requested" do
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
+      list_array = help.list_string(styled: false, include_hidden: true).split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("_three", list_array[2])
+      assert_equal("one", list_array[3])
+      assert_equal("two", list_array[4])
+      assert_equal(5, list_array.size)
+    end
+
+    it "shows subtools recursively omitting redundant namespaces" do
       help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
                                        binary_name)
       list_array = help.list_string(styled: false, recursive: true).split("\n")
+      assert_equal("Recursive list of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("one a", list_array[2])
+      assert_equal("one b", list_array[3])
+      assert_equal("two", list_array[4])
+      assert_equal(5, list_array.size)
+    end
+
+    it "shows subtools recursively including namespaces when requested" do
+      help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                       binary_name)
+      list_array = help.list_string(styled: false, recursive: true,
+                                    include_hidden: true).split("\n")
       assert_equal("Recursive list of tools under foo bar:", list_array[0])
       assert_equal("", list_array[1])
       assert_equal("one", list_array[2])
@@ -546,7 +596,7 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a namespace non-recursive" do
+      it "shows subtools non-recursively" do
         help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string.split("\n")
         index = usage_array.index("Tools:")
@@ -556,10 +606,33 @@ describe Toys::Utils::HelpText do
         assert_equal(index + 3, usage_array.size)
       end
 
-      it "is set for a namespace recursive" do
+      it "shows hidden subtools when requested" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
+        usage_array = help.usage_string(include_hidden: true).split("\n")
+        index = usage_array.index("Tools:")
+        refute_nil(index)
+        assert_match(/^\s{4}_three\s{27}$/, usage_array[index + 1])
+        assert_match(/^\s{4}one\s{30}$/, usage_array[index + 2])
+        assert_match(/^\s{4}two\s{30}$/, usage_array[index + 3])
+        assert_equal(index + 4, usage_array.size)
+      end
+
+      it "shows subtools recursive" do
         help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
                                          binary_name)
         usage_array = help.usage_string(recursive: true).split("\n")
+        index = usage_array.index("Tools:")
+        refute_nil(index)
+        assert_match(/^\s{4}one a\s{28}$/, usage_array[index + 1])
+        assert_match(/^\s{4}one b\s{28}$/, usage_array[index + 2])
+        assert_match(/^\s{4}two\s{30}$/, usage_array[index + 3])
+        assert_equal(index + 4, usage_array.size)
+      end
+
+      it "shows subtools including namespaces when requested" do
+        help = Toys::Utils::HelpText.new(recursive_namespace_tool, recursive_namespace_loader,
+                                         binary_name)
+        usage_array = help.usage_string(recursive: true, include_hidden: true).split("\n")
         index = usage_array.index("Tools:")
         refute_nil(index)
         assert_match(/^\s{4}one\s{30}$/, usage_array[index + 1])
