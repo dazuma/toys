@@ -2,5 +2,5 @@
 
 desc "Foo1 description"
 task :foo1 do
-  puts "executing foo1"
+  puts "Found = #{File.file?('Rakefile')}"
 end

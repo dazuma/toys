@@ -166,7 +166,7 @@ describe "rake template" do
     assert_equal(["bar"], remaining)
   end
 
-  it "searches up for rakefiles" do
+  it "searches up the directory tree for rakefiles" do
     Dir.chdir(File.join(__dir__, "rake-dirs", "dir1", "dir2")) do
       loader.add_path(File.join(__dir__, "rake-dirs", ".toys.rb"))
       tool, remaining = loader.lookup(["foo1", "bar"])
@@ -178,6 +178,15 @@ describe "rake template" do
         "Defined as a Rake task in #{rakefile_path}"
       ]
       assert_equal(expected_comments, tool.long_desc.map(&:to_s))
+    end
+  end
+
+  it "sets the current working directory to the Rakefile directory" do
+    Dir.chdir(File.join(__dir__, "rake-dirs", "dir1", "dir2")) do
+      loader.add_path(File.join(__dir__, "rake-dirs", ".toys.rb"))
+      assert_output("Found = true\n") do
+        cli.run("foo1")
+      end
     end
   end
 end

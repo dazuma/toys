@@ -91,10 +91,6 @@ and basic console-based interfaces, and another library that makes it easy to
 spawn and control subprocesses. You can also take advantage of a variety of
 third-party libraries such as Highline and TTY.
 
-Finally, Toys can be used in place of Rake to provide build scripts for your
-project. Unlike Rake tasks, Toys uses typical unix argument passing conventions
-and thus may be easier to use.
-
 For a more detailed look at Toys, see the
 [User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
 
