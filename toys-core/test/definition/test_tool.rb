@@ -489,18 +489,18 @@ describe Toys::Definition::Tool do
     let(:source_info2) { Toys::Definition::SourceInfo.create_path_root(source_path2) }
 
     it "starts at nil" do
-      assert_nil(tool.source_path)
+      assert_nil(tool.source_info)
     end
 
     it "can be set" do
       tool.lock_source(source_info)
-      assert_equal(source_path, tool.source_path)
+      assert_equal(source_path, tool.source_info.source_path)
     end
 
     it "can be set repeatedly to the same value" do
       tool.lock_source(source_info)
       tool.lock_source(source_info)
-      assert_equal(source_path, tool.source_path)
+      assert_equal(source_path, tool.source_info.source_path)
     end
 
     it "prevents defining from multiple paths" do

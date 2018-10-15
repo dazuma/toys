@@ -1,12 +1,13 @@
 # Release History
 
-### 0.5.1 / TBD
+### 0.6.0 / TBD
 
-* CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourcePath.
-* IMPROVED: Context directory is now available to tools.
+* CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourceInfo.
+* CHANGED: Removed Toys::Definition#find_data. Use Toys::Definition#source_info and call find_data.
+* IMPROVED: Context directory is kept in SourceInfo and available in the DSL and the tool runtime.
 * IMPROVED: Optionally omit hidden subtools (i.e. names beginning with underscore)
-  from help screens.
-* IMPROVED: SourceInfo#context_directory is now settable.
+  from subtool lists.
+* IMPROVED: Optionally omit non-runnable namespaces from recursive subtool lists.
 
 ### 0.5.0 / 2018-10-07
 

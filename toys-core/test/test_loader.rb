@@ -59,7 +59,7 @@ describe Toys::Loader do
       tool, remaining = loader.lookup(["tool-1"])
       assert_equal("block tool-1 description", tool.desc.to_s)
       assert_equal(true, tool.definition_finished?)
-      assert_equal("test block", tool.source_name)
+      assert_equal("test block", tool.source_info.source_name)
       assert_equal([], remaining)
     end
 
@@ -80,12 +80,12 @@ describe Toys::Loader do
       tool, remaining = loader.lookup(["tool-1"])
       assert_equal("block 1 tool-1 description", tool.desc.to_s)
       assert_equal(true, tool.definition_finished?)
-      assert_equal("test block 1", tool.source_name)
+      assert_equal("test block 1", tool.source_info.source_name)
       assert_equal([], remaining)
       tool, remaining = loader.lookup(["tool-2"])
       assert_equal("block 2 tool-2 description", tool.desc.to_s)
       assert_equal(true, tool.definition_finished?)
-      assert_equal("test block 2", tool.source_name)
+      assert_equal("test block 2", tool.source_info.source_name)
       assert_equal([], remaining)
     end
   end
@@ -147,7 +147,7 @@ describe Toys::Loader do
       tool, remaining = loader.lookup(["tool-1"])
       assert_equal("normal tool-1 short description", tool.desc.to_s)
       assert_equal([], remaining)
-      assert_equal(cases_dir, tool.context_directory)
+      assert_equal(cases_dir, tool.source_info.context_directory)
     end
 
     it "finds a subtool directly defined" do
@@ -155,7 +155,7 @@ describe Toys::Loader do
       assert_equal("normal tool-1-3 short description", tool.desc.to_s)
       assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)
-      assert_equal(cases_dir, tool.context_directory)
+      assert_equal(cases_dir, tool.source_info.context_directory)
     end
 
     it "finds a namespace directly defined" do
@@ -285,13 +285,13 @@ describe Toys::Loader do
     it "gets an item from a root-level file include" do
       tool, _remaining = loader.lookup(["namespace-1", "tool-1-1"])
       assert_equal("file tool-1-1 short description", tool.desc.to_s)
-      assert_equal(cases_dir, tool.context_directory)
+      assert_equal(cases_dir, tool.source_info.context_directory)
     end
 
     it "gets an item from non-root-level include" do
       tool, _remaining = loader.lookup(["namespace-0", "namespace-1", "tool-1-1"])
       assert_equal("normal tool-1-1 short description", tool.desc.to_s)
-      assert_equal(cases_dir, tool.context_directory)
+      assert_equal(cases_dir, tool.source_info.context_directory)
     end
 
     it "does not load an include if not needed" do

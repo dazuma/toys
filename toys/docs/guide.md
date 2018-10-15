@@ -1079,13 +1079,13 @@ which can be used to call another tool:
     end
 
 Pass the tool name and arguments as arguments to the run method. It will
-execute, and return a process status object (i.e. 0 for success, and nonzero
-for error). Make sure you handle the exit status. For example, in most cases,
-you should probably exit if the tool you are calling returns a nonzero code.
+execute, and return a process status code (i.e. 0 for success, and nonzero for
+error). Make sure you handle the exit status. For example, in most cases, you
+should probably exit if the tool you are calling returns a nonzero code.
 
 You may also use the `exec` mixin [described below](#Executing_Subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
-capture or manipulate that tool's input or output.
+capture or manipulate that tool's input or output stream.
 
 ### Helper Methods and Mixins
 
@@ -1571,96 +1571,6 @@ additional classes needed by `test unit` can be defined in these files.
 Either a single `.preload.rb` file or a `.preload` directory, or both, may be
 used. If both are present, the `.preload.rb` file is loaded first before the
 `.preload` directory contents.
-
-### Data Files
-
-If your tools require images, archives, keys, or other such static data, Toys
-provides a convenient place to put data files that can be looked up by tools
-either during definition or runtime.
-
-To use data files, you must define your tools inside a
-[Toys directory](#Toys_Directories). Within the Toys directory, create a
-directory named `.data` and copy your data files there. You may "find" a data
-file using the `find_data` directive in a Toys file, or by calling the
-`find_data` method in a tool. The `find_data` mechanism takes a relative path
-to a file, locates a matching file (or directory) among the data files, and
-returns the full path to that file system object. You may then read the file
-or perform any other operation on it.
-
-For example, take the following directory structure:
-
-    (current directory)
-    |
-    +- .toys/
-       |
-       +- .data
-       |  |
-       |  +- greeting.txt
-       |  |
-       |  +- desc/
-       |     |
-       |     +- short.txt
-       |
-       +- greet.rb   <-- defines "greet" (and subtools)
-
-The data files in `.toys/.data` are available to any tool in the `.toys`
-directory or any of its subdirectories. For example, suppose we want our
-"greet" tool to use the contents of `greeting.txt`. We can call `find_data` to
-read those contents when the tool is executed:
-
-    # greet.rb
-    desc "Print a friendly greeting."
-    optional_arg :whom, default: "world", desc: "Whom to greet."
-    def run
-      greeting = IO.read(find_data("greeting.txt")).strip
-      puts "#{greeting}, #{whom}!"
-    end
-
-You can include directories in the argument to `find_data`. For example, here
-is how to use the `find_data` directive to read the short description from the
-file "desc/short.txt":
-
-    # greet.rb
-    desc IO.read(find_data("desc/short.txt")).strip
-    optional_arg :whom, default: "world", desc: "Whom to greet."
-    def run
-      greeting = IO.read(find_data("greeting.txt")).strip
-      puts "#{greeting}, #{whom}!"
-    end
-
-The `find_data` mechanism will return the "closest" file or directory found.
-In the example below, there is a `desc/short.txt` file in the `.data` directory
-at the top level, but there is also a `desc/short.txt` file in the `.data`
-directory under `test`. Tools under the `test` directory will find the more
-specific data file, while other tools will find the more general file.
-
-    (current directory)
-    |
-    +- .toys/
-       |
-       +- .data
-       |  |
-       |  +- greeting.txt
-       |  |
-       |  +- desc/
-       |     |
-       |     +- short.txt  <-- default description for all tools
-       |
-       +- greet.rb   <-- defines "greet" (and subtools)
-       |
-       +- test/
-          |
-          +- .data
-          |  |
-          |  +- desc/
-          |     |
-          |     +- short.txt  <-- override description for test tools
-          |
-          +- unit.rb   <-- defines "test unit" (and its subtools)
-
-If, however, you find `greeting.txt` from a tool under `test`, it will still
-find the more general `.toys/.data/greeting.txt` file because there is no
-overriding file under `.toys/test/.data`.
 
 ## Using Third-Party Gems
 
@@ -2232,6 +2142,102 @@ Here is an example that wraps calls to git:
         Kernel.exec(["git"] + args)
       end
     end
+
+### Data Files
+
+If your tools require images, archives, keys, or other such static data, Toys
+provides a convenient place to put data files that can be looked up by tools
+either during definition or runtime.
+
+To use data files, you must define your tools inside a
+[Toys directory](#Toys_Directories). Within the Toys directory, create a
+directory named `.data` and copy your data files there. You may "find" a data
+file while defining tools, by using the
+[Toys::DSL::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:find_data)
+directive in a Toys file. You may find data at tool execution time by calling
+[Toys::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:find_data)
+which is a convenience method for getting the tool definition object using the
+`TOOL_DEFINITION` key, and calling
+[Toys::Definition::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDefinition%2FTool:find_data)
+on it. In either case, `find_data` takes a relative path to a file, locates a
+matching file (or directory) among the data files, and returns the full path to
+that file system object. You may then read the file or perform any other
+operation on it.
+
+For example, take the following directory structure:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .data
+       |  |
+       |  +- greeting.txt
+       |  |
+       |  +- desc/
+       |     |
+       |     +- short.txt
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+
+The data files in `.toys/.data` are available to any tool in the `.toys`
+directory or any of its subdirectories. For example, suppose we want our
+"greet" tool to use the contents of `greeting.txt`. We can call `find_data` to
+read those contents when the tool is executed:
+
+    # greet.rb
+    desc "Print a friendly greeting."
+    optional_arg :whom, default: "world", desc: "Whom to greet."
+    def run
+      greeting = IO.read(find_data("greeting.txt")).strip
+      puts "#{greeting}, #{whom}!"
+    end
+
+You can include directories in the argument to `find_data`. For example, here
+is how to use the `find_data` directive to read the short description from the
+file "desc/short.txt":
+
+    # greet.rb
+    desc IO.read(find_data("desc/short.txt")).strip
+    optional_arg :whom, default: "world", desc: "Whom to greet."
+    def run
+      greeting = IO.read(find_data("greeting.txt")).strip
+      puts "#{greeting}, #{whom}!"
+    end
+
+The `find_data` mechanism will return the "closest" file or directory found.
+In the example below, there is a `desc/short.txt` file in the `.data` directory
+at the top level, but there is also a `desc/short.txt` file in the `.data`
+directory under `test`. Tools under the `test` directory will find the more
+specific data file, while other tools will find the more general file.
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .data
+       |  |
+       |  +- greeting.txt
+       |  |
+       |  +- desc/
+       |     |
+       |     +- short.txt  <-- default description for all tools
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+       |
+       +- test/
+          |
+          +- .data
+          |  |
+          |  +- desc/
+          |     |
+          |     +- short.txt  <-- override description for test tools
+          |
+          +- unit.rb   <-- defines "test unit" (and its subtools)
+
+If, however, you find `greeting.txt` from a tool under `test`, it will still
+find the more general `.toys/.data/greeting.txt` file because there is no
+overriding file under `.toys/test/.data`.
 
 ## Toys Administration Using the System Tools
 

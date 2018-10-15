@@ -79,6 +79,13 @@ module Toys
       TOOL_DEFINITION = ::Object.new.freeze
 
       ##
+      # Context key for the `Toys::Definition::SourceInfo` describing the
+      # source of this tool.
+      # @return [Object]
+      #
+      TOOL_SOURCE = ::Object.new.freeze
+
+      ##
       # Context key for the full name of the tool being executed. Value is an
       # array of strings.
       # @return [Object]
@@ -157,6 +164,14 @@ module Toys
     #
     def tool_definition
       @__data[Keys::TOOL_DEFINITION]
+    end
+
+    ##
+    # Return the source of the tool being executed.
+    # @return [Toys::Definition::SourceInfo]
+    #
+    def tool_source
+      @__data[Keys::TOOL_SOURCE]
     end
 
     ##
@@ -268,7 +283,7 @@ module Toys
     # @return [String,nil] Absolute path of the result, or nil if not found.
     #
     def find_data(path, type: nil)
-      @__data[Keys::TOOL_DEFINITION].find_data(path, type: type)
+      @__data[Keys::TOOL_SOURCE].find_data(path, type: type)
     end
 
     ##
@@ -279,7 +294,7 @@ module Toys
     # @return [String,nil] Context directory
     #
     def context_directory
-      @__data[Keys::TOOL_DEFINITION].context_directory
+      @__data[Keys::TOOL_SOURCE].context_directory
     end
 
     ##

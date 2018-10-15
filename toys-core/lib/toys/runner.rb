@@ -79,6 +79,7 @@ module Toys
     def create_data(args, base_verbosity)
       data = @tool_definition.default_data.dup
       data[Tool::Keys::TOOL_DEFINITION] = @tool_definition
+      data[Tool::Keys::TOOL_SOURCE] = @tool_definition.source_info
       data[Tool::Keys::TOOL_NAME] = @tool_definition.full_name
       data[Tool::Keys::VERBOSITY] = base_verbosity
       data[Tool::Keys::ARGS] = args

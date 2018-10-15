@@ -91,7 +91,7 @@ module Toys
       def reset_definition(loader)
         @tool_class = DSL::Tool.new_class(@full_name, @priority, loader)
 
-        @source = nil
+        @source_info = nil
         @definition_finished = false
 
         @desc = Utils::WrappableString.new("")
@@ -185,31 +185,11 @@ module Toys
       attr_reader :middleware_stack
 
       ##
-      # Returns the path to the file that contains the definition of this tool.
-      # Returns nil if no path is known, or the source is a block.
-      # @return [String,nil]
+      # Returns info on the source of this tool, or nil if the source is not
+      # defined.
+      # @return [Toys::Definition::SourceInfo,nil]
       #
-      def source_path
-        @source&.source_path
-      end
-
-      ##
-      # Returns the user-visible string form of the tool source.
-      # Returns nil if no source is known.
-      # @return [String,nil]
-      #
-      def source_name
-        @source&.source_name
-      end
-
-      ##
-      # Returns the context directory containing the definition of this tool.
-      # Returns nil if there is no context.
-      # @return [String,nil]
-      #
-      def context_directory
-        @source&.context_directory
-      end
+      attr_reader :source_info
 
       ##
       # Returns the local name of this tool.
@@ -389,12 +369,12 @@ module Toys
       # @param [Toys::Definition::SourceInfo] source Source info
       #
       def lock_source(source)
-        if @source && @source.source != source.source
+        if source_info && source_info.source != source.source
           raise ToolDefinitionError,
                 "Cannot redefine tool #{display_name.inspect} in #{source.source_name}" \
-                " (already defined in #{@source.source_name})"
+                " (already defined in #{source_info.source_name})"
         end
-        @source = source
+        @source_info = source
       end
 
       ##
@@ -686,18 +666,6 @@ module Toys
         check_definition_state
         @initializers << [proc, args]
         self
-      end
-
-      ##
-      # Find the given data file or directory in this tool's search path.
-      #
-      # @param [String] path The path to find
-      # @param [nil,:file,:directory] type Type of file system object to find,
-      #     or nil to return any type.
-      # @return [String,nil] Absolute path of the result, or nil if not found.
-      #
-      def find_data(path, type: nil)
-        @source ? @source.find_data(path, type: type) : nil
       end
 
       ##

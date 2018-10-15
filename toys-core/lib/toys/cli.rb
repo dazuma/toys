@@ -251,7 +251,7 @@ module Toys
         @loader.lookup(args.flatten)
       end
       ContextualError.capture_path(
-        "Error during tool execution!", tool_definition.source_path,
+        "Error during tool execution!", tool_definition.source_info&.source_path,
         tool_name: tool_definition.full_name, tool_args: remaining
       ) do
         Runner.new(self, tool_definition).run(remaining, verbosity: verbosity)
