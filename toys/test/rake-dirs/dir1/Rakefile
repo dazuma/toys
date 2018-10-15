@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+raise "Wrong dir!" unless File.file?("Rakefile")
+
 desc "Foo1 description"
 task :foo1 do
-  puts "Found = #{File.file?('Rakefile')}"
+  value = File.file?("Rakefile")
+  puts "Found = #{value}"
 end

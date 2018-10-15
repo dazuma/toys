@@ -77,7 +77,7 @@ module Toys
         rakefile_path = Templates::Rake.find_rakefile(template.rakefile_path, context_directory)
         raise "Cannot find #{template.rakefile_path}" unless rakefile_path
         context_dir = ::File.dirname(rakefile_path)
-        rake = Templates::Rake.prepare_rake(rakefile_path)
+        rake = Templates::Rake.prepare_rake(rakefile_path, context_dir)
         rake.tasks.each do |task|
           comments = task.full_comment.to_s.split("\n")
           next if comments.empty? && template.only_described
@@ -94,7 +94,7 @@ module Toys
               end
               to_run do
                 args = task.arg_names.map { |arg| self[arg] }
-                Dir.chdir(context_dir) do
+                ::Dir.chdir(context_dir) do
                   task.invoke(*args)
                 end
               end
@@ -103,7 +103,7 @@ module Toys
                 optional_arg(arg)
               end
               to_run do
-                Dir.chdir(context_dir) do
+                ::Dir.chdir(context_dir) do
                   task.invoke(*args)
                 end
               end
@@ -142,11 +142,13 @@ module Toys
       end
 
       ## @private
-      def self.prepare_rake(rakefile_path)
+      def self.prepare_rake(rakefile_path, context_dir)
         ::Rake::TaskManager.record_task_metadata = true
         rake = ::Rake::Application.new
         ::Rake.application = rake
-        ::Rake.load_rakefile(rakefile_path)
+        ::Dir.chdir(context_dir) do
+          ::Rake.load_rakefile(rakefile_path)
+        end
         rake
       end
     end
