@@ -1,6 +1,6 @@
 # Release History
 
-### 0.6.0 / TBD
+### 0.6.0 / 2018-10-20
 
 * CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourceInfo.
 * CHANGED: Removed Toys::Definition#find_data. Use Toys::Definition#source_info and call find_data.

@@ -1724,8 +1724,8 @@ Toys was designed to organize scripts that may be "scoped" to a project or
 directory. Rake is also commonly used for this purpose: you can write a
 "Rakefile" that defines rake tasks scoped to a directory. In many cases, Toys
 can be used as a replacement for Rake. Indeed, the Toys repository itself
-contains a `.toys.rb` file that defines tools for running tests, builds, and so
-forth, instead of a Rakefile.
+contains a `.toys.rb` file instead of a Rakefile for running tests, builds, and
+so forth.
 
 This section will explore the differences between Toys and Rake, and describe
 how to use Toys for some of the things traditionally done with Rake.
@@ -1769,7 +1769,7 @@ it focuses on making it easy to define imperative tasks.
 All told, this boils down to the principle of using the best tool for the job.
 There will be times when you need to express file-based dependencies in some of
 your build tasks. Rake will continue to be your friend in those cases. However,
-for high level tasks such as "run my tests", "build my YARD documentation", or
+for imperative tasks such as "run my tests", "build my YARD documentation", or
 "release my gem", you may find Toys easier to use.
 
 ### Using Toys to Invoke Rake Tasks
@@ -1865,17 +1865,18 @@ can use either or both tools, depending on your needs.
 
 Toys provides a built-in template for minitest, called `:minitest`. It is
 implemented by the template class {Toys::Templates::Minitest}, and it uses the
-minitest gem, which is provided with most recent versions of Ruby. The
-following directive uses the minitest template to create a tool called `test`:
+[minitest gem](https://rubygems.org/gems/minitest). The following directive
+uses the minitest template to create a tool called `test`:
 
     expand :minitest, files: ["test/test*.rb"], libs: ["lib", "ext"]
 
 See the {Toys::Templates::Minitest} documentation for details on the various
 options.
 
-If you want to enforce code style using the "rubocop" gem, you can use the
-built-in `:rubocop` template. The following directive uses this template to
-create a tool called `rubocop`:
+If you want to enforce code style using the
+[rubocop gem](https://rubygems.org/gems/rubocop), you can use the built-in
+`:rubocop` template. The following directive uses this template to create a
+tool called `rubocop`:
 
     expand :rubocop
 
@@ -1930,13 +1931,13 @@ Here's an example for YARD, creating a tool called `yardoc`:
 Let's look at a complete example that combines the techniques above to provide
 all the basic tools for a Ruby gem. It includes:
 
-* A testing tool that can be run with `toys test`
-* Code style checking using Rubocop, run with `toys rubocop`
-* Documentation building using Yardoc, run with `toys yardoc`
-* Gem building, run with `toys build`
-* Gem build and release to Rubygems.org, run with `toys release`
-* A full CI tool, run with `toys ci`, that can be run from your favorite CI
-  system. It runs the tests and style checks, and checks (but does not
+* A testing tool that can be invoked using `toys test`
+* Code style checking using Rubocop, invoked using `toys rubocop`
+* Documentation building using Yardoc, invoked using `toys yardoc`
+* Gem building, invoked using `toys build`
+* Gem build and release to Rubygems.org, invoked using `toys release`
+* A full CI tool, invoked using `toys ci`, that can be run from your favorite
+  CI system. It runs the tests and style checks, and checks (but does not
   actually build) the documentation for warnings and completeness.
 
 Below is the full annotated `.toys.rb` file. For many gems, you could drop this
@@ -2121,10 +2122,10 @@ completely disable decreasing the verbosity, disable both `-q` and `--quiet`.
 
 Normally Toys handles parsing command line arguments for you. This makes
 writing tools easier, and also allows Toys to generate documentation
-automatically for flags and arguments. However, occasionally you'll not want
-Toys to perform any parsing, but just to give you the command line arguments
+automatically for flags and arguments. However, occasionally you'll want Toys
+not to perform any parsing, but just to give you the command line arguments
 raw. One common case is if your tool turns around and passes its arguments
-verbatim to another subprocess.
+verbatim to a subprocess.
 
 To disable argument parsing, use the `disable_argument_parsing` directive. This
 directive disables parsing and validation of flags and positional arguments.
@@ -2151,18 +2152,19 @@ either during definition or runtime.
 
 To use data files, you must define your tools inside a
 [Toys directory](#Toys_Directories). Within the Toys directory, create a
-directory named `.data` and copy your data files there. You may "find" a data
-file while defining tools, by using the
+directory named `.data` and copy your data files there.
+
+You may then "find" a data file by providing the relative path to the file from
+the `.data` directory. When defining a tool, use the
 [Toys::DSL::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:find_data)
-directive in a Toys file. You may find data at tool execution time by calling
+directive in a Toys file. Or, at tool execution time, call
 [Toys::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:find_data)
-which is a convenience method for getting the tool definition object using the
-`TOOL_DEFINITION` key, and calling
-[Toys::Definition::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDefinition%2FTool:find_data)
-on it. In either case, `find_data` takes a relative path to a file, locates a
-matching file (or directory) among the data files, and returns the full path to
-that file system object. You may then read the file or perform any other
-operation on it.
+(which is a convenience method for getting the tool source object using the
+`TOOL_SOURCE` key, and calling
+[Toys::Definition::SourceInfo#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDefinition%2FSourceInfo:find_data)
+on it). In either case, `find_data` locates a matching file (or directory)
+among the data files, and returns the full path to that file system object. You
+may then read the file or perform any other operation on it.
 
 For example, take the following directory structure:
 
@@ -2170,7 +2172,7 @@ For example, take the following directory structure:
     |
     +- .toys/
        |
-       +- .data
+       +- .data/
        |  |
        |  +- greeting.txt
        |  |
@@ -2215,7 +2217,7 @@ specific data file, while other tools will find the more general file.
     |
     +- .toys/
        |
-       +- .data
+       +- .data/
        |  |
        |  +- greeting.txt
        |  |
@@ -2227,7 +2229,7 @@ specific data file, while other tools will find the more general file.
        |
        +- test/
           |
-          +- .data
+          +- .data/
           |  |
           |  +- desc/
           |     |
@@ -2238,6 +2240,135 @@ specific data file, while other tools will find the more general file.
 If, however, you find `greeting.txt` from a tool under `test`, it will still
 find the more general `.toys/.data/greeting.txt` file because there is no
 overriding file under `.toys/test/.data`.
+
+### The Context Directory
+
+The **context directory** for a tool is the directory containing the toplevel
+`.toys.rb` file or the `.toys` directory within which the tool is defined. It
+is sometimes useful for tools that expect to be run from a specific working
+directory.
+
+For example, suppose you have a Ruby project directory:
+
+    my-project/
+    |
+    +- .toys.rb  <-- project tools defined here
+    |
+    +- lib/
+    |
+    +- test/
+    |
+    etc...
+
+Now suppose you defined a tool that lists the tests:
+
+    tool "list-tests" do
+      def run
+        puts Dir.glob("test/**/*.rb").join("\n")
+      end
+    end
+
+This tool assumes it will be run from the main project directory (`my-project`
+in the above case). However, Toys lets you invoke tools even if you are in a
+subdirectory:
+
+    cd lib
+    toys list-tests  # Does not work
+
+Rake handles this by actually changing the current working directory to the
+directory containing the active Rakefile. Toys, however, does not change the
+working directory unless you tell it. You can make the `list-tests` tool work
+correctly by changing the directory to the context directory (which is the
+directory containing the `.toys.rb` file, i.e. the `my-project` directory.)
+
+    tool "list-tests" do
+      def run
+        Dir.chdir context_directory do
+          puts Dir.glob("test/**/*.rb").join("\n")
+        end
+      end
+    end
+
+Note the context directory is different from `__dir__`. It is not necessarily
+the directory containing the file being executed, but the directory containing
+the toys directory structure. So if your tool definition is inside a `.toys`
+directory, it will still work:
+
+    my-project/   <-- context_directory still points here
+    |
+    +- .toys/
+    |  |
+    |  +- list-tests.rb   <-- tool defined here
+    |
+    +- lib/
+    |
+    +- test/
+    |
+    etc...
+
+This behavior is particularly useful for build tools. Indeed, all the build
+tools described in the section on
+[Toys as a Rake Replacement](#Toys_as_a_Rake_Replacement) automatically move
+into the context directory when they execute.
+
+#### Changing the Context Directory
+
+It is even possible to modify the context directory, causing tools that use the
+context directory (such as the standard build tools) to run in a different
+directory. Here is an example:
+
+Suppose you have a repository with multiple gems, each in its own directory:
+
+    my-repo/
+    |
+    +- .toys.rb  <-- all project tools defined here
+    |
+    +- gem1/
+    |  |
+    |  +- lib/
+    |  |
+    |  +- test/
+    |
+    +- gem2/
+    |  |
+    |  +- lib/
+    |  |
+    |  +- test/
+    |
+    etc...
+
+Assuming all the gems use the same set of build tools, it is possible to define
+those tools once in a single `.toys.rb` file and have it run in a particular
+gem directory depending on your current location. For example, you can cd into
+`gem1` or even `gem1/lib` to have the tools run on `gem1`. Because the standard
+build tools execute within the context directory, you can accomplish this by
+setting the context directory to the gem directory corresponding to the current
+location. That is, if the working directory is `my-repo/gem1/lib`, set the
+context directory to `my-repo/gem1`. Here's what that could look like:
+
+    # .toys.rb content
+
+    require "pathname"
+    base_dir = Pathname.new context_directory
+    cur_dir = Pathname.new Dir.getwd
+
+    # The gem name is the first segment of the relative path from the context
+    # directory to the current directory.
+    relative_path = cur_dir.relative_path_from(base_dir).to_s
+    gem_name = relative_path.split("/").first
+
+    # Only proceed if we're truly in a subdirectory
+    if gem_name && gem_name != "." && gem_name != ".."
+
+      # Now set the context directory to the gem directory.
+      set_context_directory base_dir.join(gem_name).to_s
+
+      # Define the build tools. Each of these uses the custom context directory
+      # set above, and thus runs for the selected gem.
+      expand :minitest
+      expand :gem_build
+      # etc.
+    end
 
 ## Toys Administration Using the System Tools
 
@@ -2271,8 +2402,8 @@ A similar effect can of course be obtained simply by `gem install toys`.
 
 ## Writing Your Own CLI Using Toys
 
-Toys is not primarily designed to help you write a custom command-line binary,
-but you can use it in that fashion. Toys is factored into two gems:
+Although Toys is not primarily designed to help you write a custom command-line
+binary, you can use it in that way. Toys is factored into two gems:
 **toys-core**, which includes all the underlying machinery for creating
 command-line binaries, and **toys**, which is really just a wrapper that
 provides the `toys` binary itself and its built-in commands and behavior. To
@@ -2290,7 +2421,8 @@ line binary. For example:
     Toys-Core lets you provide an alternate default run method for your own
     command line binary.
 *   Toys itself provides several built-in tools, such as `do`, and `system`.
-    Toys-Core lets your own command line binary define its own built-in tools.
+    Toys-Core lets you write your own command line binary with its own built-in
+    tools.
 *   Toys itself implements a particular search path for user-provided Toys
     files, and looks for specific file and directory names such as `.toys.rb`.
     Toys-Core lets you change the search path, the file/directory names, or

@@ -401,4 +401,31 @@ describe Toys::Loader do
       loader.lookup(["ns-2", "foo"])
     end
   end
+
+  describe "context directory" do
+    let(:custom_dir) { "/path/to/dir" }
+
+    it "can be set" do
+      dir = custom_dir
+      loader.add_block(name: "test block") do
+        desc "a description"
+        tool "ns1" do
+          set_context_directory(dir)
+          desc "a description"
+          tool "tool1" do
+            desc "a description"
+          end
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      assert_nil(tool.source_info.context_directory)
+      assert_nil(tool.context_directory)
+      tool, _remaining = loader.lookup(["ns1"])
+      assert_nil(tool.source_info.context_directory)
+      assert_equal(custom_dir, tool.context_directory)
+      tool, _remaining = loader.lookup(["ns1", "tool1"])
+      assert_nil(tool.source_info.context_directory)
+      assert_equal(custom_dir, tool.context_directory)
+    end
+  end
 end

@@ -23,6 +23,9 @@ Metrics/PerceivedComplexity:
   Max: 10
 Naming/PredicateName:
   Enabled: false
+Naming/AccessorMethodName:
+  Exclude:
+    - "lib/toys/dsl/tool.rb"
 Style/BracesAroundHashParameters:
   Enabled: false
 Style/FormatStringToken:

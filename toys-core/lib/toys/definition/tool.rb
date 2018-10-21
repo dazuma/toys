@@ -108,6 +108,7 @@ module Toys
 
         @disable_argument_parsing = false
         @includes_modules = false
+        @custom_context_directory = nil
       end
 
       ##
@@ -190,6 +191,13 @@ module Toys
       # @return [Toys::Definition::SourceInfo,nil]
       #
       attr_reader :source_info
+
+      ##
+      # Returns the custom context directory set for this tool, or nil if none
+      # is set.
+      # @return [String,nil]
+      #
+      attr_reader :custom_context_directory
 
       ##
       # Returns the local name of this tool.
@@ -666,6 +674,38 @@ module Toys
         check_definition_state
         @initializers << [proc, args]
         self
+      end
+
+      ##
+      # Set the custom context directory.
+      #
+      # @param [String] dir
+      #
+      def custom_context_directory=(dir)
+        check_definition_state
+        @custom_context_directory = dir
+      end
+
+      ##
+      # Return the effective context directory.
+      # If there is a custom context directory, uses that. Otherwise, looks for
+      # a custom context directory up the tool ancestor chain. If none is
+      # found, uses the default context directory from the source info. It is
+      # possible for there to be no context directory at all, in which case,
+      # returns nil.
+      #
+      # @return [String,nil]
+      #
+      def context_directory
+        lookup_custom_context_directory || source_info&.context_directory
+      end
+
+      ##
+      # Lookup the custom context directory in this tool and its ancestors.
+      # @private
+      #
+      def lookup_custom_context_directory
+        custom_context_directory || @parent&.lookup_custom_context_directory
       end
 
       ##

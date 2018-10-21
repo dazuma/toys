@@ -287,14 +287,16 @@ module Toys
     end
 
     ##
-    # Return the context directory containing the definition of this tool.
-    # May return nil if there is no context (e.g. the tool is being defined
-    # from a block).
+    # Return the context directory for this tool. Generally, this defaults
+    # to the directory containing the toys config directory structure being
+    # read, but it may be changed by setting a different context directory
+    # for the tool.
+    # May return nil if there is no context.
     #
     # @return [String,nil] Context directory
     #
     def context_directory
-      @__data[Keys::TOOL_SOURCE].context_directory
+      @__data[Keys::TOOL_DEFINITION].context_directory
     end
 
     ##

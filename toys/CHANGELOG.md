@@ -1,6 +1,6 @@
 # Release History
 
-### 0.6.0 / TBD
+### 0.6.0 / 2018-10-20
 
 * FIXED: Build tools cd into the context directory when running.
 * FIXED: Rakefiles are evaluated and tasks are run in the Rakefile's directory.

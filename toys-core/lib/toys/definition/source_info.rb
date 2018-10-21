@@ -66,7 +66,7 @@ module Toys
       # context (e.g. the tool is being defined from a block).
       # @return [String,nil]
       #
-      attr_accessor :context_directory
+      attr_reader :context_directory
 
       ##
       # Return the source, which may be a path or a proc.
@@ -120,7 +120,7 @@ module Toys
             return full_path if ::File.readable?(full_path)
           end
         end
-        parent ? parent.find_data(path, type: type) : nil
+        parent&.find_data(path, type: type)
       end
 
       ##

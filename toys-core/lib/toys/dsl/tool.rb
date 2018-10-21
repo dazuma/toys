@@ -203,7 +203,7 @@ module Toys
           end
         end
         subtool_class = subtool.tool_class
-        DSL::Tool.prepare(subtool_class, next_remaining, @__source.last) do
+        DSL::Tool.prepare(subtool_class, next_remaining, source_info) do
           subtool_class.class_eval(&block)
         end
         self
@@ -230,7 +230,7 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def load(path)
-        @__loader.load_path(@__source.last, path, @__words, @__remaining_words, @__priority)
+        @__loader.load_path(source_info, path, @__words, @__remaining_words, @__priority)
         self
       end
 
@@ -672,14 +672,28 @@ module Toys
       end
 
       ##
-      # Return the context directory containing the definition of this tool.
-      # May return nil if there is no context (e.g. the tool is being defined
-      # from a block).
+      # Return the context directory for this tool. Generally, this defaults
+      # to the directory containing the toys config directory structure being
+      # read, but it may be changed by setting a different context directory
+      # for the tool.
+      # May return nil if there is no context.
       #
       # @return [String,nil] Context directory
       #
       def context_directory
-        source_info.context_directory
+        DSL::Tool.current_tool(self, false)&.context_directory
+      end
+
+      ##
+      # Set a custom context directory for this tool.
+      #
+      # @param [String] dir Context directory
+      #
+      def set_context_directory(dir)
+        cur_tool = DSL::Tool.current_tool(self, false)
+        return if cur_tool.nil?
+        cur_tool.custom_context_directory = dir
+        self
       end
 
       ## @private

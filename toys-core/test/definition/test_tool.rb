@@ -581,4 +581,29 @@ describe Toys::Definition::Tool do
       end
     end
   end
+
+  describe "context directory" do
+    let(:source_path) { File.expand_path(__FILE__) }
+    let(:default_context_dir) { File.expand_path(__dir__) }
+    let(:source_info) { Toys::Definition::SourceInfo.create_path_root(source_path) }
+
+    it "defaults to nil" do
+      assert_nil(tool.context_directory)
+    end
+
+    it "defaults to source info" do
+      tool.lock_source(source_info)
+      assert_equal(default_context_dir, tool.context_directory)
+    end
+
+    it "can be set" do
+      tool.custom_context_directory = "hi/there"
+      assert_equal("hi/there", tool.context_directory)
+    end
+
+    it "can be set in an ancestor tool" do
+      tool.custom_context_directory = "hi/there"
+      assert_equal("hi/there", subtool.context_directory)
+    end
+  end
 end
