@@ -4,7 +4,7 @@
 
 * CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourceInfo.
 * CHANGED: Removed Toys::Definition#find_data. Use Toys::Definition#source_info and call find_data.
-* IMPROVED: Context directory is kept in SourceInfo and available in the DSL and the tool runtime.
+* ADDED: Context directory is kept in SourceInfo and available in the DSL and the tool runtime.
 * IMPROVED: Optionally omit hidden subtools (i.e. names beginning with underscore)
   from subtool lists.
 * IMPROVED: Optionally omit non-runnable namespaces from recursive subtool lists.

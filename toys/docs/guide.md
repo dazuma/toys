@@ -2291,8 +2291,8 @@ directory containing the `.toys.rb` file, i.e. the `my-project` directory.)
 
 Note the context directory is different from `__dir__`. It is not necessarily
 the directory containing the file being executed, but the directory containing
-the toys directory structure. So if your tool definition is inside a `.toys`
-directory, it will still work:
+the entire toys directory structure. So if your tool definition is inside a
+`.toys` directory, it will still work:
 
     my-project/   <-- context_directory still points here
     |

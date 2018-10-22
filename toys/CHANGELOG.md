@@ -4,9 +4,9 @@
 
 * FIXED: Build tools cd into the context directory when running.
 * FIXED: Rakefiles are evaluated and tasks are run in the Rakefile's directory.
+* ADDED: Context directory is available in the DSL and the tool runtime.
 * IMPROVED: Rake template searches parent directories for Rakefile.
 * IMPROVED: Rake tasks show the Rakefile path in the long description.
-* IMPROVED: Context directory is available in the DSL and the tool runtime.
 * IMPROVED: Subtools whose names begin with underscore are no longer listed in help
   screens unless the `--all` flag is given.
 * IMPROVED: Non-runnable namespaces are no longer displayed in recursive subtool
