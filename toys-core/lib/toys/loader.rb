@@ -526,7 +526,7 @@ module Toys
     def filter_hidden_subtools(tools)
       result = []
       tools.each_with_index do |tool, index|
-        next if tool.full_name.last.to_s.start_with?("_")
+        next if tool.full_name.any? { |n| n.start_with?("_") }
         unless tool.runnable?
           next_tool = tools[index + 1]
           next if next_tool && next_tool.full_name.slice(0..-2) == tool.full_name

@@ -681,7 +681,7 @@ module Toys
       # @return [String,nil] Context directory
       #
       def context_directory
-        DSL::Tool.current_tool(self, false)&.context_directory
+        DSL::Tool.current_tool(self, false)&.context_directory || source_info.context_directory
       end
 
       ##
