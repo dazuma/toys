@@ -1,5 +1,7 @@
 # Release History
 
+### 0.6.1 / Unreleased
+
 ### 0.6.0 / 2018-10-22
 
 * CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourceInfo.
