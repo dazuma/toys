@@ -1,6 +1,6 @@
 # Toys
 
-[![Travis-CI Build Status](https://travis-ci.org/dazuma/toys.svg)](https://travis-ci.org/dazuma/toys/)
+[![CircleCI](https://circleci.com/gh/dazuma/toys/tree/master.svg?style=svg)](https://circleci.com/gh/dazuma/toys/tree/master)
 
 Toys is a configurable command line tool. Write commands in config files using
 a simple DSL, and Toys will provide the command line binary and take care of
