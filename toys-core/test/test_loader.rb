@@ -459,6 +459,23 @@ describe Toys::Loader do
       end
     }
 
+    let(:aliases_loader) {
+      loader.add_block(name: "test block") do
+        tool "ns1" do
+          tool "tool1" do
+            desc "hi"
+          end
+          alias_tool "tool1_alias", "tool1"
+          alias_tool "_tool1_alias", "tool1"
+        end
+        alias_tool "ns1_alias", "ns1"
+        alias_tool "_ns1_alias", "ns1"
+        tool "_tool2" do
+        end
+        alias_tool "tool2_alias", "_tool2"
+      end
+    }
+
     it "loads a list" do
       subtools = subtools_loader.list_subtools([])
       assert_equal(2, subtools.size)
@@ -493,6 +510,21 @@ describe Toys::Loader do
       assert_equal(["ns2", "tool3"], subtools[5].full_name)
       assert_equal(["ns3"], subtools[6].full_name)
       assert_equal(["ns3", "tool1"], subtools[7].full_name)
+    end
+
+    it "loads a list including aliases" do
+      subtools = aliases_loader.list_subtools(["ns1"])
+      assert_equal(2, subtools.size)
+      assert_equal(["ns1", "tool1"], subtools[0].full_name)
+      assert_equal(["ns1", "tool1_alias"], subtools[1].full_name)
+    end
+
+    it "loads a list omitting hidden aliases" do
+      subtools = aliases_loader.list_subtools([], recursive: true)
+      assert_equal(3, subtools.size)
+      assert_equal(["ns1", "tool1"], subtools[0].full_name)
+      assert_equal(["ns1", "tool1_alias"], subtools[1].full_name)
+      assert_equal(["ns1_alias"], subtools[2].full_name)
     end
   end
 end

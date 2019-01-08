@@ -374,24 +374,29 @@ module Toys
     # priority tool that has been defined. If no tool has been defined with
     # the given name, returns `nil`.
     #
-    # @private
-    #
     def get_active_tool(words, looked_up = [])
       tool_data = get_tool_data(words)
       result = tool_data.active_definition
       case result
       when Definition::Alias
-        words = result.target_name
-        if looked_up.include?(words)
-          raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
-        end
-        looked_up << words
-        get_active_tool(words, looked_up)
+        resolve_alias(result, looked_up)
       when Definition::Tool
         result
       else
         tool_data.top_definition
       end
+    end
+
+    ##
+    # Resolves the given alias
+    #
+    def resolve_alias(alias_tool, looked_up = [])
+      words = alias_tool.target_name
+      if looked_up.include?(words)
+        raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
+      end
+      looked_up << words
+      get_active_tool(words, looked_up)
     end
 
     def resolve_middleware(input)
@@ -526,14 +531,15 @@ module Toys
     def filter_hidden_subtools(tools)
       result = []
       tools.each_with_index do |tool, index|
-        next if tool.full_name.any? { |n| n.start_with?("_") }
-        unless tool.runnable?
-          next_tool = tools[index + 1]
-          next if next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
-        end
-        result << tool
+        result << tool unless tool_hidden?(tool, tools[index + 1])
       end
       result
+    end
+
+    def tool_hidden?(tool, next_tool)
+      return true if tool.full_name.any? { |n| n.start_with?("_") }
+      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a? Definition::Alias
+      !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 
     def calc_remaining_words(words1, words2)

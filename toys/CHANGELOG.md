@@ -1,6 +1,8 @@
 # Release History
 
-### 0.6.1 / Unreleased
+### 0.6.1 / 2019-01-07
+
+* FIXED: The presence of aliases caused subtool listing to crash.
 
 ### 0.6.0 / 2018-10-22
 
