@@ -41,7 +41,7 @@ gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
 gem "rake", "~> 12.0"
 gem "redcarpet", "~> 3.4"
-gem "rubocop", "~> 0.59.2"
+gem "rubocop", "~> 0.62.0"
 gem "yard", "~> 0.9.16"
 
 tool "install" do

@@ -341,7 +341,7 @@ module Toys
 
     private
 
-    ALLOWED_DELIMITERS = %r{^[\./:]*$}
+    ALLOWED_DELIMITERS = %r{^[\./:]*$}.freeze
 
     def process_extra_delimiters(input)
       unless ALLOWED_DELIMITERS =~ input
