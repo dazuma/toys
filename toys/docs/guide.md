@@ -1790,7 +1790,7 @@ with:
 
     toys test
 
-Similarly, a task named `test:integration` can be invoekd with either of the
+Similarly, a task named `test:integration` can be invoked with either of the
 following:
 
     toys test integration

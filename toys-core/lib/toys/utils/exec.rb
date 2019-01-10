@@ -48,8 +48,11 @@ module Toys
     # *  **:env** (Hash) Environment variables to pass to the subprocess
     # *  **:logger** (Logger) Logger to use for logging the actual command.
     #    If not present, the command is not logged.
-    # *  **:log_level** (Integer) Log level for logging the actual command.
-    #    Defaults to Logger::INFO if not present.
+    # *  **:log_level** (Integer,false) Level for logging the actual command.
+    #    Defaults to Logger::INFO if not present. You may also pass `false` to
+    #    disable logging of the command.
+    # *  **:log_cmd** (String) The string logged for the actual command.
+    #    Defaults to the `inspect` representation of the command.
     # *  **:background** (Boolean) Runs the process in the background,
     #    returning a controller object instead of a result object.
     # *  **:in** Connects the input stream of the subprocess. See the section
@@ -456,7 +459,7 @@ module Toys
         end
 
         ##
-        # Captures the remaining data in the stdandard output stream.
+        # Captures the remaining data in the standard output stream.
         # After calling this, do not read directly from the stream.
         #
         def capture_out
@@ -464,7 +467,7 @@ module Toys
         end
 
         ##
-        # Captures the remaining data in the stdandard error stream.
+        # Captures the remaining data in the standard error stream.
         # After calling this, do not read directly from the stream.
         #
         def capture_err
