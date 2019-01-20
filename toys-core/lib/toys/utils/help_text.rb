@@ -193,7 +193,7 @@ module Toys
 
         def assemble
           add_synopsis_section
-          add_flags_section
+          add_flag_group_sections
           add_positional_arguments_section if @tool.runnable?
           add_subtool_list_section
           @result = @lines.join("\n") + "\n"
@@ -224,12 +224,14 @@ module Toys
           ([@binary_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
         end
 
-        def add_flags_section
-          return if @tool.flag_definitions.empty?
-          @lines << ""
-          @lines << "Flags:"
-          @tool.flag_definitions.each do |flag|
-            add_flag(flag)
+        def add_flag_group_sections
+          @tool.flag_groups.each do |group|
+            next if group.empty?
+            @lines << ""
+            @lines << group.desc.to_s + ":"
+            group.flag_definitions.each do |flag|
+              add_flag(flag)
+            end
           end
         end
 
@@ -328,7 +330,7 @@ module Toys
           add_name_section
           add_synopsis_section
           add_description_section
-          add_flags_section
+          add_flag_group_sections
           add_positional_arguments_section
           add_subtool_list_section
           add_source_section
@@ -412,14 +414,22 @@ module Toys
           end
         end
 
-        def add_flags_section
-          return if @tool.flag_definitions.empty?
-          @lines << ""
-          @lines << bold("FLAGS")
-          precede_with_blank = false
-          @tool.flag_definitions.each do |flag|
-            add_indented_section(flag_spec_string(flag), flag, precede_with_blank)
-            precede_with_blank = true
+        def add_flag_group_sections
+          @tool.flag_groups.each do |group|
+            next if group.empty?
+            @lines << ""
+            @lines << bold(group.desc.to_s.upcase)
+            precede_with_blank = false
+            unless group.long_desc.empty?
+              wrap_indent(group.long_desc).each do |line|
+                @lines << indent_str(line)
+              end
+              precede_with_blank = true
+            end
+            group.flag_definitions.each do |flag|
+              add_indented_section(flag_spec_string(flag), flag, precede_with_blank)
+              precede_with_blank = true
+            end
           end
         end
 

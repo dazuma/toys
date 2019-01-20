@@ -4,9 +4,7 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Help text should show flag groups
 * Help text should sort flags
-* Common middleware should put common flags into a group
 * Should "global" toys paths (e.g. /etc) not bubble up to parent directories?
 
 ## Investigations/wishlist

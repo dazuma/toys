@@ -101,7 +101,7 @@ module Toys
         @used_flags = []
         @initializers = []
 
-        default_flag_group = Definition::FlagGroup::Optional.new(nil, nil, nil)
+        default_flag_group = Definition::FlagGroup.new(nil, nil, nil)
         @flag_groups = [default_flag_group]
         @flag_group_names = {nil => default_flag_group}
 
@@ -515,9 +515,13 @@ module Toys
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
       #
-      def append_flag_group(type, name: nil, desc: nil, long_desc: nil)
-        @flag_groups.push(make_flag_group(type, name, desc, long_desc))
+      def append_flag_group(type, name: nil, desc: nil, long_desc: nil, report_collisions: true)
+        group = make_flag_group(type, name, desc, long_desc, report_collisions)
+        @flag_groups.push(group) if group
         self
       end
 
@@ -535,9 +539,13 @@ module Toys
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
       #
-      def prepend_flag_group(type, name: nil, desc: nil, long_desc: nil)
-        @flag_groups.unshift(make_flag_group(type, name, desc, long_desc))
+      def prepend_flag_group(type, name: nil, desc: nil, long_desc: nil, report_collisions: true)
+        group = make_flag_group(type, name, desc, long_desc, report_collisions)
+        @flag_groups.unshift(group) if group
         self
       end
 
@@ -591,9 +599,11 @@ module Toys
                                         accept, handler, default, display_name, group)
         flag_def.desc = desc if desc
         flag_def.long_desc = long_desc if long_desc
-        @flag_definitions << flag_def if flag_def.active?
+        if flag_def.active?
+          @flag_definitions << flag_def
+          group << flag_def
+        end
         @default_data[key] = default
-        group << flag_def
         self
       end
 
@@ -827,8 +837,9 @@ module Toys
 
       private
 
-      def make_flag_group(type, name, desc, long_desc)
+      def make_flag_group(type, name, desc, long_desc, report_collisions)
         if !name.nil? && @flag_group_names.key?(name)
+          return nil unless report_collisions
           raise ToolDefinitionError, "Flag group #{name} already exists"
         end
         unless type.is_a?(::Class)

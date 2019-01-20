@@ -43,7 +43,7 @@ module Toys
         @name = name
         @desc = Utils::WrappableString.make(desc || default_desc)
         @long_desc = Utils::WrappableString.make_array(long_desc || default_long_desc)
-        @flags = []
+        @flag_definitions = []
       end
 
       ##
@@ -69,19 +69,19 @@ module Toys
       # Do not modify the returned array.
       # @return [Array<Toys::Definition::Flag>]
       #
-      attr_reader :flags
+      attr_reader :flag_definitions
 
       ##
       # Returns true if this group is empty
       # @return [Boolean]
       #
       def empty?
-        flags.empty?
+        flag_definitions.empty?
       end
 
       ## @private
       def <<(flag)
-        @flags << flag
+        flag_definitions << flag
       end
 
       ## @private
@@ -105,7 +105,7 @@ module Toys
       class Required < FlagGroup
         ## @private
         def validation_error(seen)
-          flags.each do |flag|
+          flag_definitions.each do |flag|
             unless seen.include?(flag.key)
               return "Flag \"#{flag.display_name}\" is required"
             end
@@ -137,7 +137,7 @@ module Toys
         ## @private
         def validation_error(seen)
           set_flag = nil
-          flags.each do |flag|
+          flag_definitions.each do |flag|
             if seen.include?(flag.key)
               if set_flag
                 return "Exactly one out of group \"#{desc}\" is required, but both" \
@@ -164,7 +164,7 @@ module Toys
         ## @private
         def validation_error(seen)
           set_flag = nil
-          flags.each do |flag|
+          flag_definitions.each do |flag|
             if seen.include?(flag.key)
               if set_flag
                 return "At most one out of group \"#{desc}\" is required, but both" \
@@ -189,7 +189,7 @@ module Toys
       class AtLeastOne < FlagGroup
         ## @private
         def validation_error(seen)
-          flags.each do |flag|
+          flag_definitions.each do |flag|
             return nil if seen.include?(flag.key)
           end
           "At least one out of group \"#{desc}\" is required"

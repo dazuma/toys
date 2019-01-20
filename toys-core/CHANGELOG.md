@@ -1,5 +1,9 @@
 # Release History
 
+### Unreleased
+
+* ADDED: Flag groups, which enforce policies around which flags are required.
+
 ### 0.6.1 / 2019-01-07
 
 * FIXED: The presence of aliases caused subtool listing to crash.

@@ -243,7 +243,7 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a tool with flags" do
+      it "is set for a tool with flags in the default group" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
@@ -291,6 +291,34 @@ describe Toys::Utils::HelpText do
         assert_equal("        hello ruby", help_array[index + 3])
         assert_equal("        world", help_array[index + 4])
         assert_equal(index + 5, help_array.size)
+      end
+
+      it "shows separate sections per flag group" do
+        normal_tool.prepend_flag_group(:required, name: :required,
+                                                  long_desc: "List of required args")
+        normal_tool.add_flag(:opt1, ["--opt1=VAL"], desc: "set opt1")
+        normal_tool.add_flag(:opt2, ["--opt2=VAL"], desc: "set opt2")
+        normal_tool.add_flag(:req1, ["--req1=VAL"], group: :required, desc: "set req1")
+        normal_tool.add_flag(:req2, ["--req2=VAL"], group: :required, desc: "set req2")
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        help_array = help.help_string(styled: false).split("\n")
+        req_index = help_array.index("REQUIRED FLAGS")
+        opt_index = help_array.index("FLAGS")
+        refute_nil(req_index)
+        assert_equal("    List of required args", help_array[req_index + 1])
+        assert_equal("", help_array[req_index + 2])
+        assert_equal("    --req1=VAL", help_array[req_index + 3])
+        assert_equal("        set req1", help_array[req_index + 4])
+        assert_equal("", help_array[req_index + 5])
+        assert_equal("    --req2=VAL", help_array[req_index + 6])
+        assert_equal("        set req2", help_array[req_index + 7])
+        assert_equal(opt_index, req_index + 9)
+        assert_equal("    --opt1=VAL", help_array[opt_index + 1])
+        assert_equal("        set opt1", help_array[opt_index + 2])
+        assert_equal("", help_array[opt_index + 3])
+        assert_equal("    --opt2=VAL", help_array[opt_index + 4])
+        assert_equal("        set opt2", help_array[opt_index + 5])
+        assert_equal(opt_index + 6, help_array.size)
       end
     end
 
@@ -723,7 +751,7 @@ describe Toys::Utils::HelpText do
         assert_nil(index)
       end
 
-      it "is set for a tool with flags" do
+      it "is set for a tool with flags in the default group" do
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa")
         normal_tool.add_flag(:bb, ["--[no-]bb"], desc: "set bb")
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
@@ -753,6 +781,24 @@ describe Toys::Utils::HelpText do
         refute_nil(index)
         assert_match(/^\s{4}-a, --aa VALUE\s{19}set aa$/, usage_array[index + 1])
         assert_equal(index + 2, usage_array.size)
+      end
+
+      it "shows separate sections per flag group" do
+        normal_tool.prepend_flag_group(:required, name: :required,
+                                                  long_desc: "List of required args")
+        normal_tool.add_flag(:opt1, ["--opt1=VAL"])
+        normal_tool.add_flag(:opt2, ["--opt2=VAL"])
+        normal_tool.add_flag(:req1, ["--req1=VAL"], group: :required)
+        normal_tool.add_flag(:req2, ["--req2=VAL"], group: :required)
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        usage_array = help.usage_string.split("\n")
+        req_index = usage_array.index("Required flags:")
+        opt_index = usage_array.index("Flags:")
+        assert(req_index < opt_index)
+        assert_match(/^\s{8}--req1=VAL/, usage_array[req_index + 1])
+        assert_match(/^\s{8}--req2=VAL/, usage_array[req_index + 2])
+        assert_match(/^\s{8}--opt1=VAL/, usage_array[opt_index + 1])
+        assert_match(/^\s{8}--opt2=VAL/, usage_array[opt_index + 2])
       end
     end
   end

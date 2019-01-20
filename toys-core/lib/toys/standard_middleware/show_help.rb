@@ -232,6 +232,7 @@ module Toys
       #
       def config(tool_definition, loader)
         unless tool_definition.argument_parsing_disabled?
+          StandardMiddleware.append_common_flag_group(tool_definition)
           has_subtools = loader.has_subtools?(tool_definition.full_name)
           help_flags = add_help_flags(tool_definition)
           usage_flags = add_usage_flags(tool_definition)
@@ -323,7 +324,8 @@ module Toys
           tool_definition.add_flag(
             SHOW_HELP_KEY, flags,
             report_collisions: false,
-            desc: "Display help for this tool"
+            desc: "Display help for this tool",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags
@@ -335,7 +337,8 @@ module Toys
           tool_definition.add_flag(
             SHOW_USAGE_KEY, flags,
             report_collisions: false,
-            desc: "Display a brief usage string for this tool"
+            desc: "Display a brief usage string for this tool",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags
@@ -347,7 +350,8 @@ module Toys
           tool_definition.add_flag(
             SHOW_LIST_KEY, flags,
             report_collisions: false,
-            desc: "List the subtools under this tool"
+            desc: "List the subtools under this tool",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags
@@ -362,7 +366,8 @@ module Toys
             RECURSIVE_SUBTOOLS_KEY, flags,
             report_collisions: false, default: @default_recursive,
             desc: "List all subtools recursively when displaying help" \
-                  " (default is #{@default_recursive})"
+                  " (default is #{@default_recursive})",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags
@@ -374,7 +379,8 @@ module Toys
           tool_definition.add_flag(
             SEARCH_STRING_KEY, flags,
             report_collisions: false,
-            desc: "Search subtools for the given regular expression when displaying help"
+            desc: "Search subtools for the given regular expression when displaying help",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags
@@ -390,7 +396,8 @@ module Toys
             SHOW_ALL_SUBTOOLS_KEY, flags,
             report_collisions: false, default: @default_show_all_subtools,
             desc: "List all subtools including hidden subtools and namespaces" \
-                  " (default is #{@default_show_all_subtools})"
+                  " (default is #{@default_show_all_subtools})",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
         flags

@@ -82,6 +82,7 @@ module Toys
       #
       def config(tool_definition, _loader)
         unless tool_definition.argument_parsing_disabled?
+          StandardMiddleware.append_common_flag_group(tool_definition)
           add_verbose_flags(tool_definition)
           add_quiet_flags(tool_definition)
         end
@@ -99,7 +100,8 @@ module Toys
             report_collisions: false,
             handler: ->(_val, cur) { cur + 1 },
             desc: "Increase verbosity",
-            long_desc: "Increase verbosity, causing additional logging levels to display."
+            long_desc: "Increase verbosity, causing additional logging levels to display.",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
       end
@@ -112,7 +114,8 @@ module Toys
             report_collisions: false,
             handler: ->(_val, cur) { cur - 1 },
             desc: "Decrease verbosity",
-            long_desc: "Decrease verbosity, causing fewer logging levels to display."
+            long_desc: "Decrease verbosity, causing fewer logging levels to display.",
+            group: StandardMiddleware::COMMON_FLAG_GROUP
           )
         end
       end

@@ -29,59 +29,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-##
-# Toys is a Ruby library and command line tool that lets you build your own
-# command line suite of tools (with commands and subcommands) using a Ruby DSL.
-# You can define commands globally or configure special commands scoped to
-# individual directories.
-#
 module Toys
   ##
-  # Namespace for object definition classes.
+  # Namespace for standard middleware classes.
   #
-  module Definition; end
+  module StandardMiddleware
+    ## @private
+    COMMON_FLAG_GROUP = :__common
 
-  ##
-  # Namespace for DSL classes. These classes provide the directives that can be
-  # used in configuration files. Most are defined in {Toys::DSL::Tool}.
-  #
-  module DSL; end
-
-  ##
-  # Namespace for standard mixin classes.
-  #
-  module StandardMixins; end
-
-  ##
-  # Namespace for common utility classes.
-  #
-  module Utils; end
+    ## @private
+    def self.append_common_flag_group(tool)
+      tool.append_flag_group(
+        :optional,
+        name: COMMON_FLAG_GROUP,
+        desc: "Common flags",
+        report_collisions: false
+      )
+      COMMON_FLAG_GROUP
+    end
+  end
 end
-
-require "toys/cli"
-require "toys/core_version"
-require "toys/definition/acceptor"
-require "toys/definition/alias"
-require "toys/definition/arg"
-require "toys/definition/flag"
-require "toys/definition/flag_group"
-require "toys/definition/source_info"
-require "toys/definition/tool"
-require "toys/dsl/arg"
-require "toys/dsl/flag"
-require "toys/dsl/tool"
-require "toys/errors"
-require "toys/input_file"
-require "toys/loader"
-require "toys/middleware"
-require "toys/mixin"
-require "toys/runner"
-require "toys/standard_middleware"
-require "toys/template"
-require "toys/tool"
-require "toys/utils/exec"
-require "toys/utils/gems"
-require "toys/utils/help_text"
-require "toys/utils/module_lookup"
-require "toys/utils/terminal"
-require "toys/utils/wrappable_string"
