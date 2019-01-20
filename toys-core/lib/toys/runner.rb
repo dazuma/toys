@@ -88,8 +88,9 @@ module Toys
     end
 
     def parse_args(args, data)
-      optparse = create_option_parser(data)
+      optparse, seen = create_option_parser(data)
       remaining = optparse.parse(args)
+      validate_flags(args, seen)
       remaining = parse_required_args(remaining, args, data)
       remaining = parse_optional_args(remaining, data)
       parse_remaining_args(remaining, args, data)
@@ -98,6 +99,7 @@ module Toys
     end
 
     def create_option_parser(data)
+      seen = []
       optparse = ::OptionParser.new
       # The following clears out the Officious (hidden default flags).
       optparse.remove
@@ -106,13 +108,21 @@ module Toys
       optparse.new
       @tool_definition.flag_definitions.each do |flag|
         optparse.on(*flag.optparser_info) do |val|
+          seen << flag.key
           data[flag.key] = flag.handler.call(val, data[flag.key])
         end
       end
       @tool_definition.custom_acceptors do |accept|
         optparse.accept(accept)
       end
-      optparse
+      [optparse, seen]
+    end
+
+    def validate_flags(args, seen)
+      @tool_definition.flag_groups.each do |group|
+        error = group.validation_error(seen)
+        raise create_parse_error(args, error) if error
+      end
     end
 
     def parse_required_args(remaining, args, data)
@@ -148,7 +158,7 @@ module Toys
     end
 
     def create_parse_error(path, reason)
-      OptionParser::ParseError.new(*path).tap do |e|
+      ::OptionParser::ParseError.new(*path).tap do |e|
         e.reason = reason
       end
     end

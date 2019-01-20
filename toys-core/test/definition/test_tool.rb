@@ -418,6 +418,37 @@ describe Toys::Definition::Tool do
     end
   end
 
+  describe "flag groups" do
+    it "has a default group" do
+      assert_equal(1, tool.flag_groups.size)
+      group = tool.flag_groups.first
+      assert_nil(group.name)
+      tool.add_flag(:a, ["-a"])
+      flag = tool.flag_definitions.first
+      assert_equal(group, flag.group)
+      assert_equal([flag], group.flags)
+    end
+
+    it "appends a flag group" do
+      tool.append_flag_group(:required)
+      assert_equal(Toys::Definition::FlagGroup::Optional, tool.flag_groups[0].class)
+      assert_equal(Toys::Definition::FlagGroup::Required, tool.flag_groups[1].class)
+    end
+
+    it "prepends a flag group" do
+      tool.prepend_flag_group(:required)
+      assert_equal(Toys::Definition::FlagGroup::Required, tool.flag_groups[0].class)
+      assert_equal(Toys::Definition::FlagGroup::Optional, tool.flag_groups[1].class)
+    end
+
+    it "adds to a flag group by name" do
+      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag(:a, ["-a"], group: :mygroup)
+      flag = tool.flag_definitions.first
+      assert_equal(:mygroup, flag.group.name)
+    end
+  end
+
   describe "used_flags" do
     it "starts empty" do
       assert_equal([], tool.used_flags)

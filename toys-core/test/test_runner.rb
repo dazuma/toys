@@ -171,6 +171,26 @@ describe Toys::Runner do
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run(["-a"]))
     end
+
+    it "supports flags in a group" do
+      test = self
+      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag(:a, ["-a"], group: :mygroup)
+      tool.runnable = proc do
+        test.assert_equal({a: true}, options)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["-a"]))
+    end
+
+    it "errors when a required flag is not provided" do
+      test = self
+      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag(:a, ["-a"], group: :mygroup)
+      tool.runnable = proc do
+        test.assert_match(/Flag "-a" is required/, usage_error)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
+    end
   end
 
   describe "argument parsing" do

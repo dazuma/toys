@@ -120,7 +120,9 @@ module Toys
       # Create a Flag definition
       # @private
       #
-      def initialize(key, flags, used_flags, report_collisions, accept, handler, default)
+      def initialize(key, flags, used_flags, report_collisions, accept, handler,
+                     default, display_name, group)
+        @group = group
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
@@ -133,7 +135,14 @@ module Toys
         create_default_flag_if_needed(needs_val)
         remove_used_flags(used_flags, report_collisions)
         canonicalize(needs_val)
+        @display_name = determine_display_name(display_name)
       end
+
+      ##
+      # Returns the flag group containing this flag
+      # @return [Toys::Definition::FlagGroup]
+      #
+      attr_reader :group
 
       ##
       # Returns the key.
@@ -204,6 +213,12 @@ module Toys
       # @return [String,nil]
       #
       attr_reader :value_delim
+
+      ##
+      # Returns the display name of this flag.
+      # @return [String]
+      #
+      attr_reader :display_name
 
       ##
       # Returns an array of FlagSyntax including only single-dash flags
@@ -329,6 +344,14 @@ module Toys
         @value_type = flag.value_type
         @value_label = flag.value_label
         @value_delim = flag.value_delim
+      end
+
+      def determine_display_name(name)
+        return name if name
+        flag_syntax.each do |flag|
+          name = flag.canonical_str if !name || name.size < flag.canonical_str.size
+        end
+        name || key.to_s
       end
     end
   end
