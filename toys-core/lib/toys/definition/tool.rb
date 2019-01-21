@@ -802,6 +802,9 @@ module Toys
             end
             config_proc.call
           end
+          flag_groups.each do |flag_group|
+            flag_group.flag_definitions.sort_by!(&:sort_str)
+          end
           @definition_finished = true
         end
         self

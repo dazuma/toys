@@ -3,6 +3,8 @@
 ### Unreleased
 
 * ADDED: Flag groups, which enforce policies around which flags are required.
+* CHANGED: Flags within a group are sorted in help screens.
+* CHANGED: Canonical flag within a flag definition is now the first rather than the last.
 
 ### 0.6.1 / 2019-01-07
 

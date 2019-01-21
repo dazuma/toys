@@ -3,6 +3,7 @@
 ### Unreleased
 
 * ADDED: Flag groups, which enforce policies around which flags are required.
+* CHANGED: Flags within a group are sorted in help screens.
 
 ### 0.6.1 / 2019-01-07
 

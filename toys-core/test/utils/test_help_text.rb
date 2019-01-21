@@ -792,7 +792,7 @@ describe Toys::Utils::HelpText do
         normal_tool.add_flag(:req2, ["--req2=VAL"], group: :required)
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string.split("\n")
-        req_index = usage_array.index("Required flags:")
+        req_index = usage_array.index("Required Flags:")
         opt_index = usage_array.index("Flags:")
         assert(req_index < opt_index)
         assert_match(/^\s{8}--req1=VAL/, usage_array[req_index + 1])

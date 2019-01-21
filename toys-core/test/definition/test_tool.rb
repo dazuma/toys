@@ -402,15 +402,15 @@ describe Toys::Definition::Tool do
         assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE", Integer], flag.optparser_info)
       end
 
-      it "gets value label from last double flag" do
-        tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--aa=VALU", "--dd=VAL"])
+      it "gets value label from first double flag" do
+        tool.add_flag(:a, ["-a", "--dd=VAL", "-cVALUE", "--aa=VALU", "--bb"])
         flag = tool.flag_definitions.first
         assert_equal("VAL", flag.value_label)
         assert_equal("=", flag.value_delim)
       end
 
-      it "gets value label from last single flag" do
-        tool.add_flag(:a, ["-a VAL", "--bb", "-cVALUE", "--aa"])
+      it "gets value label from first single flag" do
+        tool.add_flag(:a, ["-cVALUE", "--bb", "-a VAL", "--aa"])
         flag = tool.flag_definitions.first
         assert_equal("VALUE", flag.value_label)
         assert_equal("", flag.value_delim)
@@ -598,6 +598,14 @@ describe Toys::Definition::Tool do
       assert_equal(true, full_tool.flag_definitions.empty?)
       full_tool.finish_definition(full_loader)
       assert_equal(false, full_tool.flag_definitions.empty?)
+    end
+
+    it "sorts flag groups" do
+      full_tool.add_flag(:foo, ["--foo"])
+      full_tool.add_flag(:bar, ["--bar"])
+      full_tool.finish_definition(full_loader)
+      assert_equal(:bar, full_tool.flag_groups.first.flag_definitions[0].key)
+      assert_equal(:foo, full_tool.flag_groups.first.flag_definitions[1].key)
     end
 
     it "can be called multiple times" do

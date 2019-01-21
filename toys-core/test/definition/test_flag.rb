@@ -44,6 +44,7 @@ describe Toys::Definition::FlagSyntax do
       assert_nil(fs.value_delim)
       assert_nil(fs.value_label)
       assert_equal("-a", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes single dash flag with required value and no whitespace" do
@@ -57,6 +58,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal("", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("-aFOO", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value and no whitespace" do
@@ -70,6 +72,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal("", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("-a[FOO]", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes single dash flag with required value and whitespace" do
@@ -83,6 +86,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("-a FOO", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value and whitespace" do
@@ -96,6 +100,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("-a [FOO]", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value and whitespace within brackets" do
@@ -109,6 +114,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("-a[ FOO]", fs.canonical_str)
+      assert_equal("a", fs.sort_str)
     end
 
     it "recognizes double dash flag with no value" do
@@ -122,6 +128,7 @@ describe Toys::Definition::FlagSyntax do
       assert_nil(fs.value_delim)
       assert_nil(fs.value_label)
       assert_equal("--abc", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes double dash flag with required value delimited by =" do
@@ -135,6 +142,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal("=", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc=FOO", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value delimited by = outside brackets" do
@@ -148,6 +156,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal("=", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc=[FOO]", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value delimited by = within brackets" do
@@ -161,6 +170,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal("=", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc[=FOO]", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes single dash flag with required value delimited by whitespace" do
@@ -174,6 +184,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc FOO", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value delimited by whitespace outside brackets" do
@@ -187,6 +198,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc [FOO]", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes single dash flag with optional value delimited by whitespace within brackets" do
@@ -200,6 +212,7 @@ describe Toys::Definition::FlagSyntax do
       assert_equal(" ", fs.value_delim)
       assert_equal("FOO", fs.value_label)
       assert_equal("--abc[ FOO]", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
 
     it "recognizes double dash flag with negation" do
@@ -213,6 +226,7 @@ describe Toys::Definition::FlagSyntax do
       assert_nil(fs.value_delim)
       assert_nil(fs.value_label)
       assert_equal("--[no-]abc", fs.canonical_str)
+      assert_equal("abc", fs.sort_str)
     end
   end
 
@@ -295,15 +309,28 @@ describe Toys::Definition::Flag do
     assert_equal(Integer, flag.accept)
   end
 
-  it "chooses the last long flag's value label and delim as canonical" do
-    flag = Toys::Definition::Flag.new(:abc, ["--aa LAV", "--bb=VAL", "-aFOO"], [],
+  it "chooses the first long flag's value label and delim as canonical" do
+    flag = Toys::Definition::Flag.new(:abc, ["--bb=VAL", "--aa LAV", "-aFOO"], [],
                                       true, nil, nil, nil, nil, nil)
     assert_equal(3, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:required, flag.value_type)
     assert_equal("VAL", flag.value_label)
     assert_equal("=", flag.value_delim)
-    assert_equal("--aa LAV", flag.display_name)
+    assert_equal("--bb=VAL", flag.display_name)
+    assert_equal("bb", flag.sort_str)
+  end
+
+  it "chooses the first short flag's value label and delim as canonical" do
+    flag = Toys::Definition::Flag.new(:abc, ["-aFOO", "-b BAR"], [],
+                                      true, nil, nil, nil, nil, nil)
+    assert_equal(2, flag.flag_syntax.size)
+    assert_equal(:value, flag.flag_type)
+    assert_equal(:required, flag.value_type)
+    assert_equal("FOO", flag.value_label)
+    assert_equal("", flag.value_delim)
+    assert_equal("-aFOO", flag.display_name)
+    assert_equal("a", flag.sort_str)
   end
 
   it "canonicalizes to required value flags" do
@@ -317,6 +344,7 @@ describe Toys::Definition::Flag do
     assert_equal("--bb VAL", flag.flag_syntax[1].canonical_str)
     assert_equal("-a VAL", flag.flag_syntax[2].canonical_str)
     assert_equal("--aa VAL", flag.display_name)
+    assert_equal("aa", flag.sort_str)
   end
 
   it "canonicalizes to optional value flags" do
@@ -330,6 +358,7 @@ describe Toys::Definition::Flag do
     assert_equal("--bb [VAL]", flag.flag_syntax[2].canonical_str)
     assert_equal("-a [VAL]", flag.flag_syntax[3].canonical_str)
     assert_equal("--aa [VAL]", flag.display_name)
+    assert_equal("aa", flag.sort_str)
   end
 
   it "canonicalizes to boolean flags" do
@@ -340,6 +369,7 @@ describe Toys::Definition::Flag do
     assert_equal(:boolean, flag.flag_syntax[1].flag_type)
     assert_equal(:boolean, flag.flag_syntax[2].flag_type)
     assert_equal("--[no-]aa", flag.display_name)
+    assert_equal("aa", flag.sort_str)
   end
 
   it "honors provided display name" do

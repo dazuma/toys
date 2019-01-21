@@ -44,7 +44,7 @@ describe Toys::Definition::FlagGroup do
   describe "Required" do
     it "sets the default descriptions" do
       group = Toys::Definition::FlagGroup::Required.new(nil, nil, nil)
-      assert_equal("Required flags", group.desc.to_s)
+      assert_equal("Required Flags", group.desc.to_s)
       assert_equal("These flags are required.", group.long_desc.first.to_s)
     end
 

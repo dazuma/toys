@@ -115,7 +115,7 @@ module Toys
 
         ## @private
         def default_desc
-          "Required flags"
+          "Required Flags"
         end
 
         ## @private

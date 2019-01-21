@@ -42,7 +42,7 @@ module Toys
       tool.append_flag_group(
         :optional,
         name: COMMON_FLAG_GROUP,
-        desc: "Common flags",
+        desc: "Common Flags",
         report_collisions: false
       )
       COMMON_FLAG_GROUP

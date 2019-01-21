@@ -41,24 +41,24 @@ module Toys
       #
       def initialize(str)
         case str
-        when /^(-[\?\w])$/
-          setup(str, [$1], $1, "-", nil, nil, nil, nil)
-        when /^(-[\?\w])( ?)\[(\w+)\]$/
-          setup(str, [$1], $1, "-", :value, :optional, $2, $3)
-        when /^(-[\?\w])\[( )(\w+)\]$/
-          setup(str, [$1], $1, "-", :value, :optional, $2, $3)
-        when /^(-[\?\w])( ?)(\w+)$/
-          setup(str, [$1], $1, "-", :value, :required, $2, $3)
+        when /^(-([\?\w]))$/
+          setup(str, [$1], $1, $2, "-", nil, nil, nil, nil)
+        when /^(-([\?\w]))( ?)\[(\w+)\]$/
+          setup(str, [$1], $1, $2, "-", :value, :optional, $3, $4)
+        when /^(-([\?\w]))\[( )(\w+)\]$/
+          setup(str, [$1], $1, $2, "-", :value, :optional, $3, $4)
+        when /^(-([\?\w]))( ?)(\w+)$/
+          setup(str, [$1], $1, $2, "-", :value, :required, $3, $4)
         when /^--\[no-\](\w[\?\w-]*)$/
-          setup(str, ["--#{$1}", "--no-#{$1}"], str, "--", :boolean, nil, nil, nil)
-        when /^(--\w[\?\w-]*)$/
-          setup(str, [$1], $1, "--", nil, nil, nil, nil)
-        when /^(--\w[\?\w-]*)([= ])\[(\w+)\]$/
-          setup(str, [$1], $1, "--", :value, :optional, $2, $3)
-        when /^(--\w[\?\w-]*)\[([= ])(\w+)\]$/
-          setup(str, [$1], $1, "--", :value, :optional, $2, $3)
-        when /^(--\w[\?\w-]*)([= ])(\w+)$/
-          setup(str, [$1], $1, "--", :value, :required, $2, $3)
+          setup(str, ["--#{$1}", "--no-#{$1}"], str, $1, "--", :boolean, nil, nil, nil)
+        when /^(--(\w[\?\w-]*))$/
+          setup(str, [$1], $1, $2, "--", nil, nil, nil, nil)
+        when /^(--(\w[\?\w-]*))([= ])\[(\w+)\]$/
+          setup(str, [$1], $1, $2, "--", :value, :optional, $3, $4)
+        when /^(--(\w[\?\w-]*))\[([= ])(\w+)\]$/
+          setup(str, [$1], $1, $2, "--", :value, :optional, $3, $4)
+        when /^(--(\w[\?\w-]*))([= ])(\w+)$/
+          setup(str, [$1], $1, $2, "--", :value, :required, $3, $4)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
@@ -67,6 +67,7 @@ module Toys
       attr_reader :original_str
       attr_reader :flags
       attr_reader :str_without_value
+      attr_reader :sort_str
       attr_reader :flag_style
       attr_reader :flag_type
       attr_reader :value_type
@@ -91,11 +92,12 @@ module Toys
 
       private
 
-      def setup(original_str, flags, str_without_value, flag_style, flag_type, value_type,
-                value_delim, value_label)
+      def setup(original_str, flags, str_without_value, sort_str, flag_style, flag_type,
+                value_type, value_delim, value_label)
         @original_str = original_str
         @flags = flags
         @str_without_value = str_without_value
+        @sort_str = sort_str
         @flag_style = flag_style
         @flag_type = flag_type
         @value_type = value_type
@@ -135,7 +137,7 @@ module Toys
         create_default_flag_if_needed(needs_val)
         remove_used_flags(used_flags, report_collisions)
         canonicalize(needs_val)
-        @display_name = determine_display_name(display_name)
+        summarize(display_name)
       end
 
       ##
@@ -219,6 +221,12 @@ module Toys
       # @return [String]
       #
       attr_reader :display_name
+
+      ##
+      # Returns a string that can be used to sort this flag
+      # @return [String]
+      #
+      attr_reader :sort_str
 
       ##
       # Returns an array of FlagSyntax including only single-dash flags
@@ -317,10 +325,10 @@ module Toys
         @value_type = nil
         @value_label = needs_val ? "VALUE" : nil
         @value_delim = " "
-        single_flag_syntax.each do |flag|
+        single_flag_syntax.reverse_each do |flag|
           analyze_flag_syntax(flag)
         end
-        double_flag_syntax.each do |flag|
+        double_flag_syntax.reverse_each do |flag|
           analyze_flag_syntax(flag)
         end
         @flag_type ||= :boolean
@@ -346,12 +354,16 @@ module Toys
         @value_delim = flag.value_delim
       end
 
-      def determine_display_name(name)
-        return name if name
-        flag_syntax.each do |flag|
-          name = flag.canonical_str if !name || name.size < flag.canonical_str.size
-        end
-        name || key.to_s
+      def summarize(name)
+        @display_name =
+          name ||
+          double_flag_syntax.first&.canonical_str ||
+          single_flag_syntax.first&.canonical_str ||
+          key.to_s
+        @sort_str =
+          double_flag_syntax.first&.sort_str ||
+          single_flag_syntax.first&.sort_str ||
+          ""
       end
     end
   end
