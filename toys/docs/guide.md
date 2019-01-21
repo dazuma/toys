@@ -1022,9 +1022,10 @@ When Toys runs, it looks for tools in a **search path**. Specifically:
     working directory*.
 (2) It does the same in the *parent directory* of the current directory, and
     then its parent, all the way up to the root of the file system.
-(3) It does the same in the current user's *home directory*.
+(3) It does the same in the current user's *home directory* (but does not
+    proceed to parents of the home directory).
 (4) It does the same in the system configuration directory (i.e. `/etc` on unix
-    systems)
+    systems).
 
 It uses the *first* implementation that it finds for the requested tool. For
 example, if the tool `greet` is defined in the `.toys.rb` file in the current

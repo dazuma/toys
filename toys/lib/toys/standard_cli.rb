@@ -115,6 +115,12 @@ module Toys
     DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys."
 
     ##
+    # Name of the toys path environment variable
+    # @return [String]
+    #
+    TOYS_PATH_ENV = "TOYS_PATH"
+
+    ##
     # Create a standard CLI, configured with the appropriate paths and
     # middleware.
     #
@@ -223,12 +229,13 @@ module Toys
     # @return [Array<String>]
     #
     def self.default_global_dirs
-      paths = ::ENV["TOYS_PATH"].to_s.split(::File::PATH_SEPARATOR)
-      if paths.empty?
-        paths << ::ENV["HOME"] if ::ENV["HOME"]
-        paths << "/etc" if ::File.directory?("/etc") && ::File.readable?("/etc")
-      end
-      paths.map { |path| ::File.realpath(::File.expand_path(path)) }
+      paths = ::ENV[TOYS_PATH_ENV].to_s.split(::File::PATH_SEPARATOR)
+      paths = [::Dir.home, "/etc"] if paths.empty?
+      paths
+        .compact
+        .uniq
+        .select { |path| ::File.directory?(path) && ::File.readable?(path) }
+        .map { |path| ::File.realpath(::File.expand_path(path)) }
     end
 
     ##

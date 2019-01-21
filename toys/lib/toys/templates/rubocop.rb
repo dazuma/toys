@@ -87,9 +87,9 @@ module Toys
             require "rubocop"
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              cli = ::RuboCop::CLI.new
+              rubocop = ::RuboCop::CLI.new
               logger.info "Running RuboCop..."
-              result = cli.run(template.options)
+              result = rubocop.run(template.options)
               if result.nonzero?
                 logger.error "RuboCop failed!"
                 exit(1) if template.fail_on_error
