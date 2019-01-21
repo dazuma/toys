@@ -430,19 +430,19 @@ describe Toys::Definition::Tool do
     end
 
     it "appends a flag group" do
-      tool.append_flag_group(:required)
+      tool.add_flag_group(type: :required)
       assert_equal(Toys::Definition::FlagGroup, tool.flag_groups[0].class)
       assert_equal(Toys::Definition::FlagGroup::Required, tool.flag_groups[1].class)
     end
 
     it "prepends a flag group" do
-      tool.prepend_flag_group(:required)
+      tool.add_flag_group(type: :required, prepend: true)
       assert_equal(Toys::Definition::FlagGroup::Required, tool.flag_groups[0].class)
       assert_equal(Toys::Definition::FlagGroup, tool.flag_groups[1].class)
     end
 
     it "adds to a flag group by name" do
-      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag_group(type: :required, name: :mygroup)
       tool.add_flag(:a, ["-a"], group: :mygroup)
       flag = tool.flag_definitions.first
       assert_equal(:mygroup, flag.group.name)

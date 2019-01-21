@@ -32,7 +32,9 @@ that have **subtools**.
 
 Tools may recognize command line arguments in the form of **flags** and
 **positional arguments**. Flags can optionally take **values**, while
-positional arguments may be **required** or **optional**.
+positional arguments may be **required** or **optional**. Flags may be
+organized into **flag groups** which support different kinds of constraints on
+which flags are required.
 
 The configuration of a tool may include **descriptions**, for the tool itself,
 and for each command line argument. These descriptions are displayed in the
@@ -193,10 +195,13 @@ their own) always behave as though `--help` is invoked. (They do recognize the
 flag, but it has no additional effect.) Namespaces also support the following
 additional flags:
 
+*   `--all` which displays all subtools, including
+    [hidden subtools](#Hidden_Tools) and namespaces.
 *   `--[no-]recursive` (also `-r`) which displays all subtools recursively,
     instead of only the immediate subtools.
 *   `--search=TERM` which displays only subtools whose name or description
     contain the specified search term.
+*   `--tools` which displays just the list of subtools.
 
 Finally, the root tool also supports:
 
@@ -656,6 +661,72 @@ way, Toys provides an alternate syntax for defining flags using a block.
 
 For detailed info on configuring an flag using a block, see the
 [Toys::DSL::Flag class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/Flag).
+
+#### Flag Groups
+
+Flags may be organized into groups. This serves two functions:
+
+*   Grouping related flags in the help and usage screens
+*   Implementing required flags and other constraints
+
+To create a simple flag group, use the `flag_group` directive, and provide a
+block that defines the group's flags. You may also provide a group description
+that appears in the help screen.
+
+    flag_group desc: "Debug flags" do
+      flag :debug, "-D", desc: "Enable debugger"
+      flag :warnings, "-W[VAL]", desc: "Enable warnings"
+    end
+
+Flag groups may have a "type" that specifies constraints on the flags contained
+in the group. Flags in a simple group like the above are ordinary optional
+flags. However, you may specify that flags in the group are required using the
+`all_required` directive:
+
+    all_required desc: "Login flags (all required)" do
+      flag :username, "--username=VAL", desc: "Set the username (required)"
+      flag :password, "--password=VAL", desc: "Set the password (required)"
+    end
+
+If the tool is invoked without providing each of these required flags, it will
+display an option parsing error.
+
+The `all_required` directive is actually just shorthand for passing
+`type: :required` to the `flag_group` directive. So the above is the same as:
+
+    flag_group type: :required, desc: "Login flags (all required)" do
+      flag :username, "--username=VAL", desc: "Set the username (required)"
+      flag :password, "--password=VAL", desc: "Set the password (required)"
+    end
+
+There are several other types of flag groups:
+
+*   The `:exactly_one` type, which you can create using the directive
+    `exactly_one_required`. Exactly one, and no more than one, flag from the
+    group must be provided on the command line to avoid an error.
+*   The `:at_most_one` type, which you can create using the directive
+    `at_most_one_required`. At most one flag from the group must be provided
+    on the command line to avoid an error.
+*   The `:at_least_one` type, which you can create using the directive
+    `at_least_one_required`. At least one flag from the group must be provided
+    on the command line to avoid an error.
+
+Flag group types are useful for a variety of tools. For example, suppose you
+are writing a tool that deploys an app to one of several different kinds of
+targets---say, a server, a VM, or a container. You could provide this
+configuration for your tool with a flag group:
+
+    tool "deploy" do
+      exactly_one_required desc: "Deployment targets" do
+        flag :server, "--server=IP_ADDR"
+        flag :vm, "--vm=VM_ID"
+        flag :container, "--container=CONTAINER_ID"
+      end
+
+      def run
+        # Now exactly one of server, vm, or container will be set.
+      end
+    end
 
 ### Tool Execution Basics
 
@@ -2369,6 +2440,17 @@ context directory to `my-repo/gem1`. Here's what that could look like:
       expand :gem_build
       # etc.
     end
+
+### Hidden Tools
+
+Tools whose name begins with an underscore (e.g. `_foo`) are called "hidden"
+tools. They can be executed the same as any other tool, but are normally
+omitted from the subtool list displayed in help and usage screens. You may use
+hidden tools as "internal" tools that are meant to be called only as part of
+the implementation of other tools.
+
+If you pass the `--all` flag when displaying help, the help screen will include
+hidden tools in the subtools list.
 
 ## Toys Administration Using the System Tools
 

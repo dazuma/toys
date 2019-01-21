@@ -590,6 +590,181 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "flag_group directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        flag_group(type: :required, desc: "short description",
+                   long_desc: ["long description", "in two lines"],
+                   name: :my_group, report_collisions: false, prepend: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      assert_nil(tool.flag_groups.last.name)
+      group = tool.flag_groups.first
+      assert_equal(:my_group, group.name)
+      assert_equal("short description", group.desc.to_s)
+      assert_equal("in two lines", group.long_desc[1].to_s)
+      assert_equal(Toys::Definition::FlagGroup::Required, group.class)
+    end
+
+    it "provides a block that defines flags" do
+      loader.add_block do
+        flag_group(name: :my_group) do
+          flag(:inside_group)
+        end
+        flag(:outside_group)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      default_group, my_group = tool.flag_groups
+      assert_equal(:my_group, my_group.name)
+      assert_equal(1, my_group.flag_definitions.size)
+      assert_equal(:inside_group, my_group.flag_definitions.first.key)
+      assert_equal(1, default_group.flag_definitions.size)
+      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+    end
+  end
+
+  describe "all_required directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        all_required(desc: "short description",
+                     long_desc: ["long description", "in two lines"],
+                     name: :my_group, report_collisions: false, prepend: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      assert_nil(tool.flag_groups.last.name)
+      group = tool.flag_groups.first
+      assert_equal(:my_group, group.name)
+      assert_equal("short description", group.desc.to_s)
+      assert_equal("in two lines", group.long_desc[1].to_s)
+      assert_equal(Toys::Definition::FlagGroup::Required, group.class)
+    end
+
+    it "provides a block that defines flags" do
+      loader.add_block do
+        all_required(name: :my_group) do
+          flag(:inside_group)
+        end
+        flag(:outside_group)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      default_group, my_group = tool.flag_groups
+      assert_equal(:my_group, my_group.name)
+      assert_equal(1, my_group.flag_definitions.size)
+      assert_equal(:inside_group, my_group.flag_definitions.first.key)
+      assert_equal(1, default_group.flag_definitions.size)
+      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+    end
+  end
+
+  describe "at_most_one_required directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        at_most_one_required(desc: "short description",
+                             long_desc: ["long description", "in two lines"],
+                             name: :my_group, report_collisions: false, prepend: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      assert_nil(tool.flag_groups.last.name)
+      group = tool.flag_groups.first
+      assert_equal(:my_group, group.name)
+      assert_equal("short description", group.desc.to_s)
+      assert_equal("in two lines", group.long_desc[1].to_s)
+      assert_equal(Toys::Definition::FlagGroup::AtMostOne, group.class)
+    end
+
+    it "provides a block that defines flags" do
+      loader.add_block do
+        at_most_one_required(name: :my_group) do
+          flag(:inside_group)
+        end
+        flag(:outside_group)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      default_group, my_group = tool.flag_groups
+      assert_equal(:my_group, my_group.name)
+      assert_equal(1, my_group.flag_definitions.size)
+      assert_equal(:inside_group, my_group.flag_definitions.first.key)
+      assert_equal(1, default_group.flag_definitions.size)
+      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+    end
+  end
+
+  describe "at_least_one_required directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        at_least_one_required(desc: "short description",
+                              long_desc: ["long description", "in two lines"],
+                              name: :my_group, report_collisions: false, prepend: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      assert_nil(tool.flag_groups.last.name)
+      group = tool.flag_groups.first
+      assert_equal(:my_group, group.name)
+      assert_equal("short description", group.desc.to_s)
+      assert_equal("in two lines", group.long_desc[1].to_s)
+      assert_equal(Toys::Definition::FlagGroup::AtLeastOne, group.class)
+    end
+
+    it "provides a block that defines flags" do
+      loader.add_block do
+        at_least_one_required(name: :my_group) do
+          flag(:inside_group)
+        end
+        flag(:outside_group)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      default_group, my_group = tool.flag_groups
+      assert_equal(:my_group, my_group.name)
+      assert_equal(1, my_group.flag_definitions.size)
+      assert_equal(:inside_group, my_group.flag_definitions.first.key)
+      assert_equal(1, default_group.flag_definitions.size)
+      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+    end
+  end
+
+  describe "exactly_one_required directive" do
+    it "recognizes keyword arguments" do
+      loader.add_block do
+        exactly_one_required(desc: "short description",
+                             long_desc: ["long description", "in two lines"],
+                             name: :my_group, report_collisions: false, prepend: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      assert_nil(tool.flag_groups.last.name)
+      group = tool.flag_groups.first
+      assert_equal(:my_group, group.name)
+      assert_equal("short description", group.desc.to_s)
+      assert_equal("in two lines", group.long_desc[1].to_s)
+      assert_equal(Toys::Definition::FlagGroup::ExactlyOne, group.class)
+    end
+
+    it "provides a block that defines flags" do
+      loader.add_block do
+        exactly_one_required(name: :my_group) do
+          flag(:inside_group)
+        end
+        flag(:outside_group)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(2, tool.flag_groups.size)
+      default_group, my_group = tool.flag_groups
+      assert_equal(:my_group, my_group.name)
+      assert_equal(1, my_group.flag_definitions.size)
+      assert_equal(:inside_group, my_group.flag_definitions.first.key)
+      assert_equal(1, default_group.flag_definitions.size)
+      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+    end
+  end
+
   describe "required_arg directive" do
     it "recognizes keyword arguments" do
       loader.add_block do

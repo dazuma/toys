@@ -39,12 +39,8 @@ module Toys
 
     ## @private
     def self.append_common_flag_group(tool)
-      tool.append_flag_group(
-        :optional,
-        name: COMMON_FLAG_GROUP,
-        desc: "Common Flags",
-        report_collisions: false
-      )
+      tool.add_flag_group(type: :optional, name: COMMON_FLAG_GROUP,
+                          desc: "Common Flags", report_collisions: false)
       COMMON_FLAG_GROUP
     end
   end

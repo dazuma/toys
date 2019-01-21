@@ -174,7 +174,7 @@ describe Toys::Runner do
 
     it "supports flags in a group" do
       test = self
-      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag_group(type: :required, name: :mygroup)
       tool.add_flag(:a, ["-a"], group: :mygroup)
       tool.runnable = proc do
         test.assert_equal({a: true}, options)
@@ -184,7 +184,7 @@ describe Toys::Runner do
 
     it "errors when a required flag is not provided" do
       test = self
-      tool.append_flag_group(:required, name: :mygroup)
+      tool.add_flag_group(type: :required, name: :mygroup)
       tool.add_flag(:a, ["-a"], group: :mygroup)
       tool.runnable = proc do
         test.assert_match(/Flag "-a" is required/, usage_error)

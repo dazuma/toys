@@ -325,6 +325,174 @@ module Toys
       end
 
       ##
+      # Create a flag group. If a block is given, flags defined in the block
+      # belong to the group. The flags in the group are listed together in
+      # help screens.
+      #
+      # Example:
+      #
+      #     flag_group desc: "Debug Flags" do
+      #       flag :debug, "-D", desc: "Enable debugger"
+      #       flag :warnings, "-W[VAL]", desc: "Enable warnings"
+      #     end
+      #
+      # @param [Symbol] type The type of group. Allowed values: `:required`,
+      #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
+      #     Default is `:optional`.
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to `"Flags"`.
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #     Long description for the flag group. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
+      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      #     name.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
+      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
+      #     add flags to this group in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def flag_group(type: :optional, desc: nil, long_desc: nil, name: nil,
+                     report_collisions: true, prepend: false, &block)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
+        cur_tool.add_flag_group(type: type, desc: desc, long_desc: long_desc, name: name,
+                                report_collisions: report_collisions, prepend: prepend)
+        group = prepend ? cur_tool.flag_groups.first : cur_tool.flag_groups.last
+        flag_group_dsl = DSL::FlagGroup.new(self, cur_tool, group)
+        flag_group_dsl.instance_exec(flag_group_dsl, &block) if block
+        self
+      end
+
+      ##
+      # Create a flag group of type `:required`. If a block is given, flags
+      # defined in the block belong to the group. All flags in this group are
+      # required.
+      #
+      # Example:
+      #
+      #     all_required do
+      #       flag :username, "--username=VAL", desc: "Set the username (required)"
+      #       flag :password, "--password=VAL", desc: "Set the password (required)"
+      #     end
+      #
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to `"Flags"`.
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #     Long description for the flag group. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
+      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      #     name.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
+      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
+      #     add flags to this group in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def all_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                       prepend: false, &block)
+        flag_group(type: :required, desc: desc, long_desc: long_desc,
+                   name: name, report_collisions: report_collisions, prepend: prepend, &block)
+      end
+
+      ##
+      # Create a flag group of type `:at_most_one`. If a block is given, flags
+      # defined in the block belong to the group. At most one flag in this
+      # group must be provided on the command line.
+      #
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to `"Flags"`.
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #     Long description for the flag group. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
+      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      #     name.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
+      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
+      #     add flags to this group in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def at_most_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                               prepend: false, &block)
+        flag_group(type: :at_most_one, desc: desc, long_desc: long_desc,
+                   name: name, report_collisions: report_collisions, prepend: prepend, &block)
+      end
+
+      ##
+      # Create a flag group of type `:at_least_one`. If a block is given, flags
+      # defined in the block belong to the group. At least one flag in this
+      # group must be provided on the command line.
+      #
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to `"Flags"`.
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #     Long description for the flag group. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
+      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      #     name.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
+      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
+      #     add flags to this group in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def at_least_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                                prepend: false, &block)
+        flag_group(type: :at_least_one, desc: desc, long_desc: long_desc,
+                   name: name, report_collisions: report_collisions, prepend: prepend, &block)
+      end
+
+      ##
+      # Create a flag group of type `:exactly_one`. If a block is given, flags
+      # defined in the block belong to the group. Exactly one flag in this
+      # group must be provided on the command line.
+      #
+      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description of  allowed formats. Defaults to `"Flags"`.
+      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      #     Long description for the flag group. See
+      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     formats. Defaults to the empty array.
+      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      #     name.
+      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      #     the given name is already taken. If `false`, ignore. Default is
+      #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
+      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
+      #     add flags to this group in a block.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def exactly_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                               prepend: false, &block)
+        flag_group(type: :exactly_one, desc: desc, long_desc: long_desc,
+                   name: name, report_collisions: report_collisions, prepend: prepend, &block)
+      end
+
+      ##
       # Add a flag to the current tool. Each flag must specify a key which
       # the script may use to obtain the flag value from the context.
       # You may then provide the flags themselves in OptionParser form.
@@ -356,6 +524,9 @@ module Toys
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
+      # @param [Toys::Definition::FlagGroup,String,Symbol,nil] group Group for
+      #     this flag. You may provide a group name, a FlagGroup object, or
+      #     `nil` which denotes the default group.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
@@ -364,19 +535,21 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
+      # @param [String] display_name A display name for this flag, used in help
+      #     text and error messages.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil,
-               report_collisions: true,
-               desc: nil, long_desc: nil,
+               report_collisions: true, group: nil,
+               desc: nil, long_desc: nil, display_name: nil,
                &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler,
-                                 report_collisions, desc, long_desc)
+        flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
+                                 group, desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)

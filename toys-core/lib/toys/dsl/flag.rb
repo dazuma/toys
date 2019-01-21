@@ -40,14 +40,17 @@ module Toys
     #
     class Flag
       ## @private
-      def initialize(flags, accept, default, handler, report_collisions, desc, long_desc)
+      def initialize(flags, accept, default, handler, report_collisions,
+                     group, desc, long_desc, display_name)
         @flags = flags
         @accept = accept
         @default = default
         @handler = handler
         @report_collisions = report_collisions
+        @group = group
         @desc = desc
         @long_desc = long_desc || []
+        @display_name = display_name
       end
 
       ##
@@ -55,7 +58,7 @@ module Toys
       # and the results are cumulative.
       #
       # @param [String...] flags
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def flags(*flags)
         @flags += flags
@@ -66,7 +69,7 @@ module Toys
       # Set the OptionParser acceptor.
       #
       # @param [Object] accept
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def accept(accept)
         @accept = accept
@@ -77,7 +80,7 @@ module Toys
       # Set the default value.
       #
       # @param [Object] default
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def default(default)
         @default = default
@@ -92,7 +95,7 @@ module Toys
       # responding to the `call` method) or you may pass a block.
       #
       # @param [Proc] handler
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def handler(handler = nil, &block)
         @handler = handler || block
@@ -104,7 +107,7 @@ module Toys
       # already in use or marked as disabled.
       #
       # @param [Boolean] setting
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def report_collisions(setting)
         @report_collisions = setting
@@ -116,7 +119,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def desc(desc)
         @desc = desc
@@ -129,10 +132,33 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::Flag] self, for chaining.
       #
       def long_desc(*long_desc)
         @long_desc += long_desc
+        self
+      end
+
+      ##
+      # Set the group. A group may be set by name or group object. Setting
+      # `nil` selects the default group.
+      #
+      # @param [String,Symbol,Toys::Definition::FlagGroup,nil] group
+      # @return [Toys::DSL::Flag] self, for chaining.
+      #
+      def group(group)
+        @group = group
+        self
+      end
+
+      ##
+      # Set the display name. This may be used in help text and error messages.
+      #
+      # @param [String] display_name
+      # @return [Toys::DSL::Flag] self, for chaining.
+      #
+      def display_name(display_name)
+        @display_name = display_name
         self
       end
 
@@ -140,8 +166,8 @@ module Toys
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @accept, default: @default, handler: @handler,
-                      report_collisions: @report_collisions,
-                      desc: @desc, long_desc: @long_desc)
+                      report_collisions: @report_collisions, group: @group,
+                      desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end
     end
   end

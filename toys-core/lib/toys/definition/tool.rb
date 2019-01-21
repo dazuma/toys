@@ -502,12 +502,11 @@ module Toys
       end
 
       ##
-      # Add a flag group to the end of the group list.
+      # Add a flag group to the group list.
       #
       # @param [Symbol] type The type of group. Allowed values: `:required`,
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
-      #     name.
+      #     Default is `:optional`.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
@@ -515,37 +514,31 @@ module Toys
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
-      #     the given name is already taken. If `false`, ignore. Default is
-      #     `true`.
-      #
-      def append_flag_group(type, name: nil, desc: nil, long_desc: nil, report_collisions: true)
-        group = make_flag_group(type, name, desc, long_desc, report_collisions)
-        @flag_groups.push(group) if group
-        self
-      end
-
-      ##
-      # Add a flag group to the beginning of the group list.
-      #
-      # @param [Symbol] type The type of group. Allowed values: `:required`,
-      #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
-      #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
+      # @param [Boolean] prepend If `true`, prepend rather than append the
+      #     group to the list. Default is `false`.
       #
-      def prepend_flag_group(type, name: nil, desc: nil, long_desc: nil, report_collisions: true)
-        group = make_flag_group(type, name, desc, long_desc, report_collisions)
-        @flag_groups.unshift(group) if group
+      def add_flag_group(type: :optional, desc: nil, long_desc: nil,
+                         name: nil, report_collisions: true, prepend: false)
+        if !name.nil? && @flag_group_names.key?(name)
+          return self unless report_collisions
+          raise ToolDefinitionError, "Flag group #{name} already exists"
+        end
+        unless type.is_a?(::Class)
+          type = Utils::ModuleLookup.to_module_name(type)
+          type = Definition::FlagGroup.const_get(type)
+        end
+        group = type.new(name, desc, long_desc)
+        @flag_group_names[name] = group unless name.nil?
+        if prepend
+          @flag_groups.unshift(group)
+        else
+          @flag_groups.push(group)
+        end
         self
       end
 
@@ -572,6 +565,9 @@ module Toys
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as disabled. Default is
       #     true.
+      # @param [Toys::Definition::FlagGroup,String,Symbol,nil] group Group for
+      #     this flag. You may provide a group name, a FlagGroup object, or
+      #     `nil` which denotes the default group.
       # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
       #     description for the flag. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to the empty string.
@@ -581,13 +577,11 @@ module Toys
       #     formats. Defaults to the empty array.
       # @param [String] display_name A display name for this flag, used in help
       #     text and error messages.
-      # @param [Toys::Definition::FlagGroup] group FlagGroup for this flag.
       #
       def add_flag(key, flags = [],
                    accept: nil, default: nil, handler: nil,
-                   report_collisions: true,
-                   desc: nil, long_desc: nil, display_name: nil,
-                   group: nil)
+                   report_collisions: true, group: nil,
+                   desc: nil, long_desc: nil, display_name: nil)
         unless group.is_a?(Definition::FlagGroup)
           group_name = group
           group = @flag_group_names[group_name]
@@ -839,20 +833,6 @@ module Toys
       end
 
       private
-
-      def make_flag_group(type, name, desc, long_desc, report_collisions)
-        if !name.nil? && @flag_group_names.key?(name)
-          return nil unless report_collisions
-          raise ToolDefinitionError, "Flag group #{name} already exists"
-        end
-        unless type.is_a?(::Class)
-          type = Utils::ModuleLookup.to_module_name(type)
-          type = Definition::FlagGroup.const_get(type)
-        end
-        group = type.new(name, desc, long_desc)
-        @flag_group_names[name] = group unless name.nil?
-        group
-      end
 
       def make_config_proc(middleware, loader, next_config)
         proc { middleware.config(self, loader, &next_config) }
