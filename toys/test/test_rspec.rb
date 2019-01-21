@@ -29,58 +29,43 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-expected_lib_path = ::File.absolute_path(::File.join(::File.dirname(__dir__), "toys-core", "lib"))
-unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
-  puts "NOTE: Rerunning toys binary from the local repo\n\n"
-  ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
-end
+require "helper"
 
-include :gems, suppress_confirm: true
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.8"
-
-expand :clean, paths: ["pkg", "doc", ".yardoc"]
-
-expand :minitest, libs: ["lib", "test"]
-
-expand :rubocop
-
-expand :yardoc do |t|
-  t.generate_output_flag = true
-  t.fail_on_warning = true
-  t.fail_on_undocumented_objects = true
-end
-
-expand :rdoc, output_dir: "doc"
-
-expand :gem_build
-
-expand :gem_build, name: "release", push_gem: true
-
-tool "ci" do
-  desc "Run all CI checks"
-
-  long_desc "The CI tool runs all CI checks for the toys gem, including unit" \
-              " tests, rubocop, and documentation checks. It is useful for" \
-              " running tests in normal development, as well as being the" \
-              " entrypoint for CI systems like Travis. Any failure will" \
-              " result in a nonzero result code."
-
-  include :exec
-  include :terminal
-
-  def run_stage(name, tool)
-    if exec_tool(tool).success?
-      puts("** #{name} passed\n\n", :green, :bold)
-    else
-      puts("** CI terminated: #{name} failed!", :red, :bold)
-      exit(1)
+describe "rspec template" do
+  let(:logger) {
+    Logger.new(StringIO.new).tap do |lgr|
+      lgr.level = Logger::WARN
     end
+  }
+  let(:binary_name) { "toys" }
+  let(:cli) {
+    Toys::CLI.new(
+      binary_name: binary_name,
+      logger: logger,
+      middleware_stack: [],
+      template_lookup: Toys::Utils::ModuleLookup.new.add_path("toys/templates")
+    )
+  }
+  let(:loader) { cli.loader }
+  let(:executor) { Toys::Utils::Exec.new(out: :capture, err: :capture) }
+
+  it "executes a successful spec" do
+    loader.add_block do
+      expand :rspec, libs: File.join(__dir__, "rspec-cases", "lib1"),
+                     pattern: File.join(__dir__, "rspec-cases", "spec", "*_spec.rb")
+    end
+    result = executor.exec_proc(proc { exit cli.run("spec") })
+    assert(result.success?)
+    assert_match(/1 example, 0 failures/, result.captured_out)
   end
 
-  def run
-    run_stage("Tests", ["test"])
-    run_stage("Style checker", ["rubocop"])
-    run_stage("Docs generation", ["yardoc", "--no-output"])
+  it "executes an unsuccessful spec" do
+    loader.add_block do
+      expand :rspec, libs: File.join(__dir__, "rspec-cases", "lib2"),
+                     pattern: File.join(__dir__, "rspec-cases", "spec", "*_spec.rb")
+    end
+    result = executor.exec_proc(proc { exit cli.run("spec") })
+    assert(result.error?)
+    assert_match(/1 example, 1 failure/, result.captured_out)
   end
 end

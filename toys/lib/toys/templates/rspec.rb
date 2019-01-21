@@ -110,7 +110,7 @@ module Toys
             gem "rspec", *Array(template.gem_version)
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              rspec_libs = template.libs
+              rspec_libs = Array(template.libs)
               rspec_pattern = specs.join(" ")
               rspec_pattern = template.pattern if rspec_pattern.empty?
               rspec_warnings = warnings
