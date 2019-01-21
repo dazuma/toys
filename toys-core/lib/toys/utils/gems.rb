@@ -129,7 +129,7 @@ module Toys
           if @suppress_confirm
             @default_confirm
           else
-            @terminal.confirm("Gem needed: #{requirements_text}. Install?",
+            @terminal.confirm("Gem needed: #{requirements_text}. Install? ",
                               default: @default_confirm)
           end
         unless response

@@ -4,8 +4,6 @@ This is a dumping ground of ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* RSpec template
-
 ## Investigations/wishlist
 
 * toys system new: Create toys files and gems

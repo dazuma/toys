@@ -1935,14 +1935,22 @@ can use either or both tools, depending on your needs.
 
 ### Running Tests
 
-Toys provides a built-in template for minitest, called `:minitest`. It is
-implemented by the template class {Toys::Templates::Minitest}, and it uses the
-[minitest gem](https://rubygems.org/gems/minitest). The following directive
-uses the minitest template to create a tool called `test`:
+Toys provides a built-in template called `:minitest` for running unit tests
+with [minitest](https://github.com/seattlerb/minitest). The following example
+directive uses the minitest template to create a tool called `test`:
 
     expand :minitest, files: ["test/test*.rb"], libs: ["lib", "ext"]
 
-See the {Toys::Templates::Minitest} documentation for details on the various
+See the {Toys::Templates::Minitest} documentation for details on the available
+options.
+
+Toys also provides a built-in template called `:rspec` for running BDD examples
+using [RSpec](http://rspec.info). The following example directive uses this
+template to create a tool called `spec`:
+
+    expand :rspec, pattern: "spec/**/*_spec.rb", libs: ["lib, "ext"]
+
+See the {Toys::Templates::Rspec} documentation for details on the available
 options.
 
 If you want to enforce code style using the
