@@ -35,10 +35,6 @@ unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
   ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
 end
 
-include :gems, suppress_confirm: true
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.8"
-
 expand :clean, paths: ["pkg", "doc", ".yardoc"]
 
 expand :minitest, libs: ["lib", "test"]

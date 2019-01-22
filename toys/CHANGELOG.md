@@ -5,6 +5,7 @@
 * ADDED: A template for creating tools that invoke RSpec.
 * ADDED: Flag groups, which enforce policies around which flags are required.
 * CHANGED: Flags within a group are sorted in the help screens.
+* IMPROVED: The minitest template now honors all standard minitest flags.
 
 ### 0.6.1 / 2019-01-07
 

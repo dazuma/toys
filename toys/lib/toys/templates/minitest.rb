@@ -79,11 +79,15 @@ module Toys
                      gem_version: nil,
                      libs: nil,
                      files: nil,
+                     seed: nil,
+                     verbose: false,
                      warnings: true)
         @name = name || DEFAULT_TOOL_NAME
         @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @libs = libs || DEFAULT_LIBS
         @files = files || DEFAULT_FILES
+        @seed = seed
+        @verbose = verbose
         @warnings = warnings
       end
 
@@ -91,6 +95,8 @@ module Toys
       attr_accessor :gem_version
       attr_accessor :libs
       attr_accessor :files
+      attr_accessor :seed
+      attr_accessor :verbose
       attr_accessor :warnings
 
       to_expand do |template|
@@ -100,9 +106,15 @@ module Toys
           include :exec
           include :gems
 
+          flag :seed, "-s", "--seed SEED",
+               default: template.seed, desc: "Sets random seed."
           flag :warnings, "-w", "--[no-]warnings",
                default: template.warnings,
                desc: "Turn on Ruby warnings (defaults to #{template.warnings})"
+          flag :name, "-n", "--name PATTERN",
+               desc: "Filter run on /regexp/ or string."
+          flag :exclude, "-e", "--exclude PATTERN",
+               desc: "Exclude /regexp/ or string from run."
 
           remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
 
@@ -111,11 +123,16 @@ module Toys
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               ruby_args = []
-              unless template.libs.empty?
-                lib_path = template.libs.join(::File::PATH_SEPARATOR)
-                ruby_args << "-I#{lib_path}"
-              end
+              libs = Array(template.libs)
+              ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
+              ruby_args << "-"
+              ruby_args << "--seed" << seed if seed
+              vv = verbosity
+              vv += 1 if template.verbose
+              ruby_args << "--verbose" if vv.positive?
+              ruby_args << "--name" << name if name
+              ruby_args << "--exclude" << exclude if exclude
 
               if tests.empty?
                 Array(template.files).each do |pattern|
@@ -124,7 +141,8 @@ module Toys
                 tests.uniq!
               end
 
-              result = ruby(ruby_args, in: :controller) do |controller|
+              result = exec_ruby(ruby_args, in: :controller) do |controller|
+                controller.in.puts("require 'minitest/autorun'")
                 tests.each do |file|
                   controller.in.puts("load '#{file}'")
                 end

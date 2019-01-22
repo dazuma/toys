@@ -41,7 +41,7 @@ module Toys
       # Default version requirements for the rspec gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 3.0"
+      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 3.1"
 
       ##
       # Default tool name
@@ -54,6 +54,12 @@ module Toys
       # @return [Array<String>]
       #
       DEFAULT_LIBS = ["lib"].freeze
+
+      ##
+      # Default order type
+      # @return [String]
+      #
+      DEFAULT_ORDER = "defined"
 
       ##
       # Default spec file glob
@@ -70,6 +76,12 @@ module Toys
       #     the rspec gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param [Array<String>] libs An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
+      # @param [String] options The path to a custom options file.
+      # @param [String] order The order in which to run examples. Default is
+      #     {DEFAULT_ORDER}.
+      # @param [String] format Choose a formatter code. Default is `p`.
+      # @param [String] out Write output to a file instead of stdout.
+      # @param [Boolean] backtrace Enable full backtrace (default is false).
       # @param [String] pattern A glob indicating the spec files to load.
       #     Defaults to {DEFAULT_PATTERN}.
       # @param [Boolean] warnings If true, runs specs with Ruby warnings.
@@ -78,11 +90,21 @@ module Toys
       def initialize(name: nil,
                      gem_version: nil,
                      libs: nil,
+                     options: nil,
+                     order: nil,
+                     format: nil,
+                     out: nil,
+                     backtrace: false,
                      pattern: nil,
                      warnings: true)
         @name = name || DEFAULT_TOOL_NAME
         @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @libs = libs || DEFAULT_LIBS
+        @options = options
+        @order = order || DEFAULT_ORDER
+        @format = format || "p"
+        @out = out
+        @backtrace = backtrace
         @pattern = pattern || DEFAULT_PATTERN
         @warnings = warnings
       end
@@ -90,6 +112,11 @@ module Toys
       attr_accessor :name
       attr_accessor :gem_version
       attr_accessor :libs
+      attr_accessor :options
+      attr_accessor :order
+      attr_accessor :format
+      attr_accessor :out
+      attr_accessor :backtrace
       attr_accessor :pattern
       attr_accessor :warnings
 
@@ -100,32 +127,59 @@ module Toys
           include :exec
           include :gems
 
+          flag :order, "--order TYPE",
+               default: template.order,
+               desc: "Run examples by the specified order type (default: #{template.order})"
+          flag :format, "-f", "--format FORMATTER",
+               default: template.format,
+               desc: "Choose a formatter (default: #{template.format})"
+          flag :out, "-o", "--out FILE",
+               default: template.out,
+               desc: "Write output to a file (default: #{template.out.inspect})"
+          flag :backtrace, "-b", "--[no-]backtrace",
+               default: template.backtrace,
+               desc: "Enable full backtrace (default: #{template.backtrace})"
           flag :warnings, "-w", "--[no-]warnings",
                default: template.warnings,
-               desc: "Turn on Ruby warnings (defaults to #{template.warnings})"
+               desc: "Turn on Ruby warnings (default: #{template.warnings})"
+          flag :pattern, "-P", "--pattern PATTERN",
+               default: template.pattern,
+               desc: "Load files matching pattern (default: #{template.pattern.inspect})"
+          flag :exclude_pattern, "--exclude-pattern PATTERN",
+               desc: "Load files except those matching pattern."
+          flag :example, "-e", "--example STRING",
+               desc: "Run examples whose full nested names include STRING" \
+                     " (may be used more than once)."
+          flag :tag, "-t", "--tag TAG",
+               desc: "Run examples with the specified tag, or exclude" \
+                     " examples by adding ~ before the tag."
 
-          remaining_args :specs, desc: "Specs to run (defaults to all specs)"
+          remaining_args :files, desc: "Paths to the specs to run (defaults to all specs)"
 
           to_run do
             gem "rspec", *Array(template.gem_version)
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              rspec_libs = Array(template.libs)
-              rspec_pattern = specs.join(" ")
-              rspec_pattern = template.pattern if rspec_pattern.empty?
-              rspec_warnings = warnings
+              ruby_args = []
+              libs = Array(template.libs)
+              ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
+              ruby_args << "-w" if warnings
+              ruby_args << "-"
+              ruby_args << "--options" << template.options if template.options
+              ruby_args << "--order" << order if order
+              ruby_args << "--format" << format if format
+              ruby_args << "--out" << out if out
+              ruby_args << "--backtrace" if backtrace
+              ruby_args << "--pattern" << pattern
+              ruby_args << "--exclude-pattern" << exclude_pattern if exclude_pattern
+              ruby_args << "--example" << example if example
+              ruby_args << "--tag" << tag if tag
+              ruby_args.concat(files)
 
-              result = exec_proc(proc do
-                $VERBOSE = 2 if rspec_warnings
-                rspec_libs.each do |lib|
-                  $LOAD_PATH.unshift(lib)
-                end
-                require "rspec/core"
-                ARGV.clear
-                ARGV.concat(["--pattern", rspec_pattern])
-                ::RSpec::Core::Runner.invoke
-              end)
-
+              result = exec_ruby(ruby_args, in: :controller) do |controller|
+                controller.in.puts("require 'rspec/core'")
+                controller.in.puts("::RSpec::Core::Runner.invoke")
+              end
               if result.error?
                 logger.error("RSpec failed!")
                 exit(result.exit_code)
