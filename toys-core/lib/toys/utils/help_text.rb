@@ -360,13 +360,9 @@ module Toys
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
-          if !@subtools.empty? && !@tool.runnable?
-            add_synopsis_clause(namespace_synopsis)
-          end
+          add_synopsis_clause(namespace_synopsis) if !@subtools.empty? && !@tool.runnable?
           add_synopsis_clause(tool_synopsis)
-          if !@subtools.empty? && @tool.runnable?
-            add_synopsis_clause(namespace_synopsis)
-          end
+          add_synopsis_clause(namespace_synopsis) if !@subtools.empty? && @tool.runnable?
         end
 
         def add_synopsis_clause(synopsis)
@@ -379,13 +375,75 @@ module Toys
 
         def tool_synopsis
           synopsis = [full_binary_name]
-          @tool.flag_definitions.each do |flag_def|
-            synopsis << "[#{flag_spec_string(flag_def)}]"
+          @tool.flag_groups.each do |flag_group|
+            case flag_group
+            when Definition::FlagGroup::Required
+              add_required_group_to_synopsis(flag_group, synopsis)
+            when Definition::FlagGroup::ExactlyOne
+              add_exactly_one_group_to_synopsis(flag_group, synopsis)
+            when Definition::FlagGroup::AtMostOne
+              add_at_most_one_group_to_synopsis(flag_group, synopsis)
+            when Definition::FlagGroup::AtLeastOne
+              add_at_least_one_group_to_synopsis(flag_group, synopsis)
+            else
+              add_ordinary_group_to_synopsis(flag_group, synopsis)
+            end
           end
           @tool.arg_definitions.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
           wrap_indent_indent2(Utils::WrappableString.new(synopsis))
+        end
+
+        def add_ordinary_group_to_synopsis(flag_group, synopsis)
+          flag_group.flag_definitions.each do |flag_def|
+            synopsis << "[#{flag_spec_string(flag_def, true)}]"
+          end
+        end
+
+        def add_required_group_to_synopsis(flag_group, synopsis)
+          flag_group.flag_definitions.each do |flag_def|
+            synopsis << "(#{flag_spec_string(flag_def, true)})"
+          end
+        end
+
+        def add_exactly_one_group_to_synopsis(flag_group, synopsis)
+          return if flag_group.empty?
+          synopsis << "("
+          first = true
+          flag_group.flag_definitions.each do |flag_def|
+            if first
+              first = false
+            else
+              synopsis << "|"
+            end
+            synopsis << flag_spec_string(flag_def, true)
+          end
+          synopsis << ")"
+        end
+
+        def add_at_most_one_group_to_synopsis(flag_group, synopsis)
+          return if flag_group.empty?
+          synopsis << "["
+          first = true
+          flag_group.flag_definitions.each do |flag_def|
+            if first
+              first = false
+            else
+              synopsis << "|"
+            end
+            synopsis << flag_spec_string(flag_def, true)
+          end
+          synopsis << "]"
+        end
+
+        def add_at_least_one_group_to_synopsis(flag_group, synopsis)
+          return if flag_group.empty?
+          synopsis << "("
+          flag_group.flag_definitions.each do |flag_def|
+            synopsis << "[#{flag_spec_string(flag_def, true)}]"
+          end
+          synopsis << ")"
         end
 
         def namespace_synopsis
@@ -433,7 +491,7 @@ module Toys
           end
         end
 
-        def flag_spec_string(flag)
+        def flag_spec_string(flag, in_synopsis = false)
           flag.flag_syntax.map do |fs|
             str = bold(fs.str_without_value)
             if fs.flag_type != :value
@@ -443,7 +501,7 @@ module Toys
             else
               "#{str}#{fs.value_delim}#{underline(fs.value_label)}"
             end
-          end.join(", ")
+          end.join(in_synopsis ? " | " : ", ")
         end
 
         def add_positional_arguments_section

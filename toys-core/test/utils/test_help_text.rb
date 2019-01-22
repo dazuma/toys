@@ -180,7 +180,7 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
-        assert_equal("    toys foo bar [-aVALUE, --aa=VALUE] [--[no-]bb]", help_array[index + 1])
+        assert_equal("    toys foo bar [-aVALUE | --aa=VALUE] [--[no-]bb]", help_array[index + 1])
         assert_equal("", help_array[index + 2])
       end
 
@@ -228,10 +228,74 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false, wrap_width: 40).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
-        assert_equal("    toys foo bar [-aVALUE, --aa=VALUE]", help_array[index + 1])
+        assert_equal("    toys foo bar [-aVALUE | --aa=VALUE]", help_array[index + 1])
         assert_equal("        [--[no-]bb] CC DD [EE] [FF]", help_array[index + 2])
         assert_equal("        [GG...]", help_array[index + 3])
         assert_equal("", help_array[index + 4])
+      end
+
+      it "is set for a tool with a required group" do
+        normal_tool.add_flag_group(type: :required, name: :mygroup)
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa", group: :mygroup)
+        normal_tool.add_flag(:bb, ["-b", "--bb=VALUE"], desc: "set bb", group: :mygroup)
+        normal_tool.add_flag(:cc, ["-c", "--cc=VALUE"], desc: "set cc")
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal(
+          "    toys foo bar [-cVALUE | --cc=VALUE]" \
+              " (-aVALUE | --aa=VALUE) (-bVALUE | --bb=VALUE)",
+          help_array[index + 1]
+        )
+      end
+
+      it "is set for a tool with an exactly-one group" do
+        normal_tool.add_flag_group(type: :exactly_one, name: :mygroup)
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa", group: :mygroup)
+        normal_tool.add_flag(:bb, ["-b", "--bb=VALUE"], desc: "set bb", group: :mygroup)
+        normal_tool.add_flag(:cc, ["-c", "--cc=VALUE"], desc: "set cc")
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal(
+          "    toys foo bar [-cVALUE | --cc=VALUE]" \
+              " ( -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE )",
+          help_array[index + 1]
+        )
+      end
+
+      it "is set for a tool with an at-most-one group" do
+        normal_tool.add_flag_group(type: :at_most_one, name: :mygroup)
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa", group: :mygroup)
+        normal_tool.add_flag(:bb, ["-b", "--bb=VALUE"], desc: "set bb", group: :mygroup)
+        normal_tool.add_flag(:cc, ["-c", "--cc=VALUE"], desc: "set cc")
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal(
+          "    toys foo bar [-cVALUE | --cc=VALUE]" \
+              " [ -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE ]",
+          help_array[index + 1]
+        )
+      end
+
+      it "is set for a tool with an at-least-one group" do
+        normal_tool.add_flag_group(type: :at_least_one, name: :mygroup)
+        normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], desc: "set aa", group: :mygroup)
+        normal_tool.add_flag(:bb, ["-b", "--bb=VALUE"], desc: "set bb", group: :mygroup)
+        normal_tool.add_flag(:cc, ["-c", "--cc=VALUE"], desc: "set cc")
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal(
+          "    toys foo bar [-cVALUE | --cc=VALUE]" \
+              " ( [-aVALUE | --aa=VALUE] [-bVALUE | --bb=VALUE] )",
+          help_array[index + 1]
+        )
       end
     end
 
