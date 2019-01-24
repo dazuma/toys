@@ -1,6 +1,6 @@
 # Release History
 
-### 0.7.0 / Unreleased
+### 0.7.0 / 2019-01-23
 
 * ADDED: Flag groups, which enforce policies around which flags are required.
 * CHANGED: Flags within a group are sorted in help screens.

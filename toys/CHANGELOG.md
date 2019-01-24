@@ -1,6 +1,6 @@
 # Release History
 
-### 0.7.0 / Unreleased
+### 0.7.0 / 2019-01-23
 
 * ADDED: A template for creating tools that invoke RSpec.
 * ADDED: Flag groups, which enforce policies around which flags are required.
