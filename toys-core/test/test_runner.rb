@@ -357,4 +357,62 @@ describe Toys::Runner do
       assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
   end
+
+  describe "interrupt handling" do
+    it "handles interrupt without an interrupt block" do
+      tool.runnable = proc do
+        raise ::Interrupt
+      end
+      assert_raises(Interrupt) do
+        Toys::Runner.new(cli, tool).run([])
+      end
+    end
+
+    it "supports an interrupt block with no argument" do
+      tool.runnable = proc do
+        raise ::Interrupt
+      end
+      tool.interruptable = proc do
+        exit(2)
+      end
+      assert_equal(2, Toys::Runner.new(cli, tool).run([]))
+    end
+
+    it "supports propagating an interrupt" do
+      tool.runnable = proc do
+        raise ::Interrupt
+      end
+      tool.interruptable = proc do |ex|
+        raise ex
+      end
+      assert_raises(Interrupt) do
+        Toys::Runner.new(cli, tool).run([])
+      end
+    end
+
+    it "supports an interrupt block with an argument" do
+      test = self
+      tool.runnable = proc do
+        raise ::Interrupt
+      end
+      tool.interruptable = proc do |ex|
+        test.assert_instance_of(Interrupt, ex)
+        exit(2)
+      end
+      assert_equal(2, Toys::Runner.new(cli, tool).run([]))
+    end
+
+    it "supports nested interrupts" do
+      counter = 0
+      tool.runnable = proc do
+        raise ::Interrupt
+      end
+      tool.interruptable = proc do |ex|
+        counter += 1
+        raise Interrupt if ex.cause.nil?
+        exit(counter)
+      end
+      assert_equal(2, Toys::Runner.new(cli, tool).run([]))
+    end
+  end
 end

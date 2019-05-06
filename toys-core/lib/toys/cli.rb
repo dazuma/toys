@@ -256,7 +256,7 @@ module Toys
       ) do
         Runner.new(self, tool_definition).run(remaining, verbosity: verbosity)
       end
-    rescue ContextualError => e
+    rescue ContextualError, ::Interrupt => e
       @error_handler.call(e)
     end
 
@@ -309,9 +309,19 @@ module Toys
       # @param [Exception] error The error that occurred.
       #
       def call(error)
-        @terminal.puts(cause_string(error.cause))
-        @terminal.puts(context_string(error), :bold)
-        -1
+        case error
+        when ContextualError
+          @terminal.puts(cause_string(error.cause))
+          @terminal.puts(context_string(error), :bold)
+          -1
+        when ::Interrupt
+          @terminal.puts
+          @terminal.puts("INTERRUPTED", :bold)
+          130
+        else
+          @terminal.puts(cause_string(error))
+          1
+        end
       end
 
       private

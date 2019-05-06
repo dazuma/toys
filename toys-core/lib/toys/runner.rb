@@ -165,11 +165,16 @@ module Toys
 
     def perform_execution(tool)
       executor = proc do
-        if @tool_definition.runnable?
-          tool.run
-        else
+        unless @tool_definition.runnable?
           @cli.logger.fatal("No implementation for tool #{@tool_definition.display_name.inspect}")
           tool.exit(-1)
+        end
+        interruptable = @tool_definition.interruptable?
+        begin
+          tool.run
+        rescue ::Interrupt => ex
+          raise ex unless interruptable
+          handle_interrupt(tool, ex)
         end
       end
       @tool_definition.middleware_stack.reverse_each do |middleware|
@@ -179,6 +184,17 @@ module Toys
         executor.call
         0
       end
+    end
+
+    def handle_interrupt(tool, exception)
+      if tool.method(:interrupt).arity.zero?
+        tool.interrupt
+      else
+        tool.interrupt(exception)
+      end
+    rescue ::Interrupt => ex
+      raise ex if ex.equal?(exception)
+      handle_interrupt(tool, ex)
     end
 
     def make_executor(middleware, tool, next_executor)

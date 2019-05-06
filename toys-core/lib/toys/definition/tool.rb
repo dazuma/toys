@@ -243,6 +243,14 @@ module Toys
       end
 
       ##
+      # Returns true if this tool handles interrupts.
+      # @return [Boolean]
+      #
+      def interruptable?
+        tool_class.public_instance_methods(false).include?(:interrupt)
+      end
+
+      ##
       # Returns true if this tool has at least one included module.
       # @return [Boolean]
       #
@@ -726,6 +734,15 @@ module Toys
       #
       def runnable=(proc)
         @tool_class.to_run(&proc)
+      end
+
+      ##
+      # Set the interruptable block
+      #
+      # @param [Proc] proc The interrupt block
+      #
+      def interruptable=(proc)
+        @tool_class.to_interrupt(&proc)
       end
 
       ##

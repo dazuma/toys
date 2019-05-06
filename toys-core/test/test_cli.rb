@@ -38,7 +38,14 @@ describe Toys::CLI do
     end
   }
   let(:binary_name) { "toys" }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+  let(:error_io) { ::StringIO.new }
+  let(:error_handler) { Toys::CLI::DefaultErrorHandler.new(error_io) }
+  let(:cli) {
+    Toys::CLI.new(
+      binary_name: binary_name, logger: logger, middleware_stack: [],
+      error_handler: error_handler
+    )
+  }
 
   it "runs a tool" do
     cli.add_config_block do
@@ -49,6 +56,30 @@ describe Toys::CLI do
       end
     end
     assert_equal(3, cli.run("foo"))
+  end
+
+  it "handles an error" do
+    cli.add_config_block do
+      tool "foo" do
+        def run
+          raise "whoops"
+        end
+      end
+    end
+    assert_equal(-1, cli.run("foo"))
+    assert_match(/RuntimeError: whoops/, error_io.string)
+  end
+
+  it "handles an interrupt" do
+    cli.add_config_block do
+      tool "foo" do
+        def run
+          raise ::Interrupt
+        end
+      end
+    end
+    assert_equal(130, cli.run("foo"))
+    assert_match(/INTERRUPT/, error_io.string)
   end
 
   it "creates a child" do

@@ -586,9 +586,9 @@ You may also create **custom acceptors**. See the
 
 #### Defaults and Handlers
 
-Currently, flags are always optional; a flag can appear in a command line zero,
-one, or any number of times. If a flag is not passed in the command line
-arguments for a tool, by default its corresponding option value will be `nil`.
+Flags are usually optional; a flag can appear in a command line zero, one, or
+any number of times. If a flag is not passed in the command line arguments for
+a tool, by default its corresponding option value will be `nil`.
 
 You may change this by providing a default value for a flag:
 
@@ -724,7 +724,8 @@ configuration for your tool with a flag group:
       end
 
       def run
-        # Now exactly one of server, vm, or container will be set.
+        # Now exactly one of server, vm, or container will be set. The other
+        # two options will be their default value, nil.
       end
     end
 
@@ -1857,13 +1858,13 @@ following contents:
     # In .toys.rb
     expand :rake
 
-Now within that directory, if you had a task called `test`, you can invoke it
-with:
+Now within that directory, if you had a Rake task called `test`, you can invoke
+it with:
 
     toys test
 
-Similarly, a task named `test:integration` can be invoked with either of the
-following:
+Similarly, a Rake task named `test:integration` can be invoked with either of
+the following:
 
     toys test integration
     toys test:integration
@@ -2221,6 +2222,64 @@ Here is an example that wraps calls to git:
       def run
         puts "Calling my-git!"
         Kernel.exec(["git"] + args)
+      end
+    end
+
+### Handling Interrupts
+
+If you interrupt a running tool, say, by hitting `CTRL`-`C`, Toys will normally
+terminate execution and display the message `INTERRUPTED` on the standard error
+stream. If your tool needs to handle interrupts itself, you can rescue the
+`Interrupt` exception or call `Signal.trap`.
+
+Alternatively, you can implement the `interrupt` method in your tool. If this
+method is present, Toys will handle interrupts as follows:
+
+1.  Toys will terminate the tool's `run` method by raising an `Interrupt`
+    exception. Any `ensure` blocks will be called.
+2.  Toys will call the `interrupt` method. If this method takes an argument,
+    Toys will pass it the `Interrupt` exception object.
+3.  The `interrupt` method is then responsible for tool execution from that
+    point. It may terminate execution by returning or calling `exit`, or it may
+    restart or resume processing. It may also propagate the interrupt up and
+    invoke the normal Toys interrupt handling by re-raising the same interrupt
+    object.
+4.  If another interrupt takes place during the execution of the `interrupt`
+    method, Toys will terminate it by raising a second `Interrupt` exception
+    (calling any `ensure` blocks). Then, `interrupt` will be called _again_ and
+    passed the new exception. Any additional interrupts will be handled
+    similarly.
+
+Because the `interrupt` method is called again even if the interrupt handling
+is itself interrupted, you might consider detecting this case if your interrupt
+handler might be long-running. You can tell how many interrupts have taken
+place by looking at the `Exception#cause` property of the exception. The first
+interrupt will have a cause of `nil`. The second interrupt (i.e. the interrupt
+raised the first time the interrupt handler is itself interrupted) will have
+its cause point to the first interrupt (which in turn has a `nil` cause.) The
+third interrupt's cause will point to the second interrupt, and so on.
+
+Here is an example that performs a long-running task. The first two times the
+task is interrupted, it is restarted. The third time, it is terminated.
+
+    tool "long-running" do
+      def long_task(is_restart)
+        puts "task #{is_restart ? 're' : ''}starting..."
+        sleep 10
+        puts "task finished!"
+      end
+
+      def run
+        long_task(false)
+      end
+
+      def interrupt(ex)
+        # The third interrupt will have a non-nil ex.cause.cause.
+        # At that time, just give up and re-raise the exception, which causes
+        # it to propagate out and invoke the standard Toys interrupt handler.
+        raise ex if ex.cause&.cause
+        # Otherwise, restart the long task.
+        long_task(true)
       end
     end
 

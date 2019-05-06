@@ -1,5 +1,10 @@
 # Release History
 
+### 0.8.0 / Unreleased
+
+* ADDED: Tools can provide an interrupt handler.
+* IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
+
 ### 0.7.0 / 2019-01-23
 
 * ADDED: A template for creating tools that invoke RSpec.

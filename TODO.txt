@@ -17,3 +17,4 @@ This is a dumping ground of ideas and future directions for Toys.
 * Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size
 * Convenience methods for creating pipes/splits/joins in exec
+* Investigate shell completion

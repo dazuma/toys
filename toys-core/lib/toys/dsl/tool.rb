@@ -777,6 +777,19 @@ module Toys
       end
 
       ##
+      # Specify how to handle interrupts. Typically you do this by defining a
+      # method namd `interrupt`. Alternatively, you can pass a block to this
+      # method. You may want to do this if your method needs access to local
+      # variables in the lexical scope.
+      #
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def to_interrupt(&block)
+        define_method(:interrupt, &block)
+        self
+      end
+
+      ##
       # Specify that the given module should be mixed into this tool, and its
       # methods made available when running the tool.
       #
