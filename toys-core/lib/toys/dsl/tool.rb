@@ -516,11 +516,15 @@ module Toys
       # @param [Object] default The default value. This is the value that will
       #     be set in the context if this flag is not provided on the command
       #     line. Defaults to `nil`.
-      # @param [Proc,nil] handler An optional handler for setting/updating the
-      #     value. If given, it should take two arguments, the new given value
-      #     and the previous value, and it should return the new value that
-      #     should be set. The default handler simply replaces the previous
-      #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+      # @param [Proc,nil,:set,:push] handler An optional handler for
+      #     setting/updating the value. A handler is a proc taking two
+      #     arguments, the given value and the previous value, returning the
+      #     new value that should be set. You may also specify a predefined
+      #     named handler. The `:set` handler (the default) replaces the
+      #     previous value (effectively `-> (val, _prev) { val }`). The
+      #     `:push` handler expects the previous value to be an array and
+      #     pushes the given value onto it; it should be combined with setting
+      #     `default: []` and is intended for "multi-valued" flags.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.

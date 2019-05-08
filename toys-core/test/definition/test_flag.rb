@@ -405,4 +405,22 @@ describe Toys::Definition::Flag do
                                  true, nil, nil, nil, nil, nil)
     end
   end
+
+  it "defaults to the set handler" do
+    flag = Toys::Definition::Flag.new(:abc, [], [], true, nil, nil, nil, nil, nil)
+    assert_equal(Toys::Definition::Flag::SET_HANDLER, flag.handler)
+    assert_equal(1, flag.handler.call(1, 2))
+  end
+
+  it "recognizes the set handler" do
+    flag = Toys::Definition::Flag.new(:abc, [], [], true, nil, :set, nil, nil, nil)
+    assert_equal(Toys::Definition::Flag::SET_HANDLER, flag.handler)
+    assert_equal(1, flag.handler.call(1, 2))
+  end
+
+  it "recognizes the push handler" do
+    flag = Toys::Definition::Flag.new(:abc, [], [], true, nil, :push, [], nil, nil)
+    assert_equal(Toys::Definition::Flag::PUSH_HANDLER, flag.handler)
+    assert_equal([1, 2], flag.handler.call(2, [1]))
+  end
 end

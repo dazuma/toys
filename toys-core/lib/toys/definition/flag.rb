@@ -113,10 +113,22 @@ module Toys
     #
     class Flag
       ##
-      # The default handler replaces the previous value.
+      # The set handler replaces the previous value.
       # @return [Proc]
       #
-      DEFAULT_HANDLER = ->(val, _prev) { val }
+      SET_HANDLER = ->(val, _prev) { val }
+
+      ##
+      # The push handler pushes the given value using the `<<` operator.
+      # @return [Proc]
+      #
+      PUSH_HANDLER = ->(val, prev) { prev.nil? ? [val] : prev << val }
+
+      ##
+      # The default handler is the set handler, replacing the previous value.
+      # @return [Proc]
+      #
+      DEFAULT_HANDLER = SET_HANDLER
 
       ##
       # Create a Flag definition
@@ -128,7 +140,7 @@ module Toys
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
-        @handler = handler || DEFAULT_HANDLER
+        @handler = resolve_handler(handler)
         @desc = Utils::WrappableString.make(desc)
         @long_desc = Utils::WrappableString.make_array(long_desc)
         @default = default
@@ -296,6 +308,21 @@ module Toys
       end
 
       private
+
+      def resolve_handler(handler)
+        case handler
+        when ::Proc
+          handler
+        when nil, :default
+          DEFAULT_HANDLER
+        when :set
+          SET_HANDLER
+        when :push, :append
+          PUSH_HANDLER
+        else
+          raise ToolDefinitionError, "Unknown handler: #{handler.inspect}"
+        end
+      end
 
       def create_default_flag_if_needed(needs_val)
         return unless @flag_syntax.empty?

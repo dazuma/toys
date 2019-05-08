@@ -3,6 +3,7 @@
 ### 0.8.0 / Unreleased
 
 * ADDED: Tools can provide an interrupt handler.
+* ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
 
 ### 0.7.0 / 2019-01-23

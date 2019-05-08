@@ -633,6 +633,20 @@ increments it each time it appears, and the second decrements it. A tool can
 query this option and get an integer telling the requested verbosity level, as
 you will see [below](#Logging_and_Verbosity).
 
+Toys provides a few built-in handlers that can be specified by name. We already
+discussed the default handler that can be specified by its name `:set` or by
+simply omitting the `handler:` option. Another named handler is `:push`. This
+handler is intended for flags that take values and can be provided more than
+once. The final value is then an array of values. For example:
+
+    flag :include, "-I", "--include PATH", default: [], handler: :push
+
+An invocation can provide any number of `--include` flags, and the `:include`
+option will be set to an array of the given paths.
+
+The `:push` handler is equivalent to
+`proc { |val, array| array.nil? ? [val] : array << val }`.
+
 #### Descriptions and the Flags DSL
 
 Flags may also have short and long descriptions, which are displayed in online

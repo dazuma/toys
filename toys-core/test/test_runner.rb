@@ -155,13 +155,22 @@ describe Toys::Runner do
       assert_equal(0, Toys::Runner.new(cli, tool).run(["--a-bc", "hoho"]))
     end
 
-    it "honors the handler" do
+    it "honors a proc handler" do
       test = self
       tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hi", handler: ->(v, c) { "#{c}#{v}" })
       tool.runnable = proc do
         test.assert_equal({a: "hiho"}, options)
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "ho"]))
+    end
+
+    it "honors the push handler" do
+      test = self
+      tool.add_flag(:a, ["-a", "--aa=VALUE"], handler: :push)
+      tool.runnable = proc do
+        test.assert_equal({a: ["hi", "ho"]}, options)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run(["--aa", "hi", "-a", "ho"]))
     end
 
     it "errors on an unknown flag" do
