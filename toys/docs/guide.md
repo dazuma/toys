@@ -1251,7 +1251,7 @@ First, there is `:terminal`, which provides some basic terminal features such
 as styled output and simple spinners. For information, see the
 [Toys::StandardMixins::Terminal mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Terminal)
 and the underyling library
-[Toys::Utils::Terminal](https://www.rubydoc.info/gems/toys-core/Toys/Utils/Terminal).
+[Toys::Terminal](https://www.rubydoc.info/gems/toys-core/Toys/Terminal).
 
 If you prefer the venerable Highline library interface, Toys provides a mixin
 called `:highline` that automatically installs the highline gem (version 2.x)
@@ -1675,6 +1675,11 @@ The toys binary itself uses only two gems: **toys** and **toys-core**. It has
 no other gem dependencies. However, if you want to use a third-party gem in
 your tool, Toys provides a convenient mechanism to ensure the gem is installed.
 
+(Note that you generally do not use bundler when running Toys; i.e. you do not
+normally run `bundle exec toys`. This is because Toys is intended as a
+general-purpose tool that can be run anywhere. It would be inconvenient to have
+to include Gemfiles in every directory where you might want to run it.)
+
 To access the gem services, include the `:gems` mixin. This mixin adds a `gem`
 directive to ensure a gem is installed and activated when you're defining a
 tool, and a `gem` method to ensure a gem is available when you're running a
@@ -1723,8 +1728,13 @@ exception is raised.
 If you are not in the Toys DSL context—for example from a class-based
 mixin—you should use
 [Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems.activate)
-instead. For example:
+instead. (Note that you must `require "toys/utils/gems"` explicitly before
+invoking the
+[Toys::Utils::Gems](https://www.rubydoc.info/gems/toys-core/Toys/Utils/Gems)
+class because, like all classes under `Toys::Utils`, Toys does not load it
+automatically.) For example:
 
+    require "toys/utils/gems"
     Toys::Utils::Gems.activate("highline", "~> 2.0")
 
 Note these methods are a bit different from the

@@ -113,10 +113,10 @@ usage information at a glance, and it also provides a search feature to help
 you find the script you need.
 
 Toys can also be used to share scripts. For example, it can be used instead of
-Rake to provide build and test scripts for a project—tools that, unlike Rake
-tasks, can be invoked and passed arguments and flags using familiar unix
-command line conventions. The Toys github repo itself comes with Toys config
-files instead of Rakefiles.
+Rake to provide build and test scripts for a project. Unlike Rake tasks,
+scripts written for Toys can be invoked and passed arguments and flags using
+familiar unix command line conventions. The Toys github repo itself comes with
+Toys scripts instead of Rakefiles.
 
 ## License
 

@@ -2,8 +2,11 @@
 
 ### 0.8.0 / Unreleased
 
+* ADDED: Tab completion for bash.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
+* CHANGED: Lifted ModuleLookup, Terminal, and WrappableString out of the Utils module.
+* CHANGED: The remaining files under "toys/utils" must now be required explicitly.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
 
 ### 0.7.0 / 2019-01-23

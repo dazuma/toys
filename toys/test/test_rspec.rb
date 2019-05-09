@@ -30,6 +30,7 @@
 ;
 
 require "helper"
+require "toys/utils/exec"
 
 describe "rspec template" do
   let(:logger) {
@@ -43,7 +44,7 @@ describe "rspec template" do
       binary_name: binary_name,
       logger: logger,
       middleware_stack: [],
-      template_lookup: Toys::Utils::ModuleLookup.new.add_path("toys/templates")
+      template_lookup: Toys::ModuleLookup.new.add_path("toys/templates")
     )
   }
   let(:loader) { cli.loader }

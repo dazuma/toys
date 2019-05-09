@@ -30,6 +30,7 @@
 ;
 
 require "helper"
+require "toys/utils/help_text"
 
 describe Toys::Utils::HelpText do
   let(:binary_name) { "toys" }
@@ -121,7 +122,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "renders with wrapping" do
-        normal_tool.desc = Toys::Utils::WrappableString.new("Hello world")
+        normal_tool.desc = Toys::WrappableString.new("Hello world")
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 25).split("\n")
         assert_equal("NAME", help_array[0])
@@ -131,7 +132,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "does not break the tool name when wrapping" do
-        normal_tool.desc = Toys::Utils::WrappableString.new("Hello world")
+        normal_tool.desc = Toys::WrappableString.new("Hello world")
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 5).split("\n")
         assert_equal("NAME", help_array[0])
@@ -344,7 +345,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "wraps long description" do
-        long_desc = ["long desc", Toys::Utils::WrappableString.new("hello ruby world")]
+        long_desc = ["long desc", Toys::WrappableString.new("hello ruby world")]
         normal_tool.add_flag(:aa, ["-a", "--aa=VALUE"], long_desc: long_desc)
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
@@ -457,7 +458,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "wraps long description" do
-        long_desc = ["long desc", Toys::Utils::WrappableString.new("hello ruby world")]
+        long_desc = ["long desc", Toys::WrappableString.new("hello ruby world")]
         normal_tool.add_required_arg(:cc, long_desc: long_desc)
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
@@ -529,7 +530,7 @@ describe Toys::Utils::HelpText do
       it "shows subtool desc" do
         subtool_one.desc = "one desc"
         subtool_one.long_desc = ["long desc"]
-        subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
+        subtool_two.desc = Toys::WrappableString.new("two desc on two lines")
         help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         help_array = help.help_string(styled: false, wrap_width: 20).split("\n")
         index = help_array.index("TOOLS")
@@ -593,7 +594,7 @@ describe Toys::Utils::HelpText do
     it "shows subtool desc" do
       subtool_one.desc = "one desc"
       subtool_one.long_desc = ["long desc"]
-      subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
+      subtool_two.desc = Toys::WrappableString.new("two desc on two lines")
       help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
       list_array = help.list_string(styled: false, wrap_width: 16).split("\n")
       assert_equal("List of tools under foo bar:", list_array[0])
@@ -736,7 +737,7 @@ describe Toys::Utils::HelpText do
 
       it "shows subtool desc" do
         subtool_one.desc = "one desc"
-        subtool_two.desc = Toys::Utils::WrappableString.new("two desc on two lines")
+        subtool_two.desc = Toys::WrappableString.new("two desc on two lines")
         help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 49).split("\n")
         index = usage_array.index("Tools:")
@@ -748,7 +749,7 @@ describe Toys::Utils::HelpText do
       end
 
       it "shows desc for long subtool name" do
-        subtool_long.desc = Toys::Utils::WrappableString.new("long desc on two lines")
+        subtool_long.desc = Toys::WrappableString.new("long desc on two lines")
         help = Toys::Utils::HelpText.new(long_namespace_tool, long_namespace_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 49).split("\n")
         index = usage_array.index("Tools:")
@@ -795,7 +796,7 @@ describe Toys::Utils::HelpText do
 
       it "shows desc for long arg" do
         normal_tool.add_required_arg(:long_long_long_long_long_long_long_long,
-                                     desc: Toys::Utils::WrappableString.new("set long arg desc"))
+                                     desc: Toys::WrappableString.new("set long arg desc"))
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, binary_name)
         usage_array = help.usage_string(wrap_width: 47).split("\n")
         index = usage_array.index("Positional arguments:")

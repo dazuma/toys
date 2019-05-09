@@ -29,6 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/utils/exec"
+
 module Toys
   module StandardMixins
     ##

@@ -29,6 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/utils/gems"
+
 module Toys
   module StandardMixins
     ##

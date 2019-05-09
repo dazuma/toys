@@ -39,7 +39,7 @@ describe Toys::Loader do
     File.join(__dir__, "lookup-cases")
   }
   def wrappable(str)
-    Toys::Utils::WrappableString.new(str)
+    Toys::WrappableString.new(str)
   end
 
   describe "empty" do

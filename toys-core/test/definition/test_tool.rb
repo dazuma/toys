@@ -66,7 +66,7 @@ describe Toys::Definition::Tool do
   let(:full_tool) { full_loader.activate_tool_definition([full_tool_name], 0) }
   let(:alias_tool) { loader.activate_tool_definition([tool_name, alias_name], 0) }
   def wrappable(str)
-    Toys::Utils::WrappableString.new(str)
+    Toys::WrappableString.new(str)
   end
 
   describe "name field" do

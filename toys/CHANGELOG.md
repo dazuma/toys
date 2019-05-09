@@ -2,6 +2,7 @@
 
 ### 0.8.0 / Unreleased
 
+* ADDED: Tab completion for bash.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.

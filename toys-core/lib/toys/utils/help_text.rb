@@ -38,6 +38,9 @@ module Toys
     # flags, and arguments. It is used by middleware that implements help
     # and related options.
     #
+    # This class is not loaded by default. Before using it directly, you should
+    # `require "toys/utils/help_text"`
+    #
     class HelpText
       ##
       # Default width of first column
@@ -298,7 +301,7 @@ module Toys
         end
 
         def wrap_desc(desc)
-          Utils::WrappableString.wrap_lines(desc, @right_column_wrap_width)
+          WrappableString.wrap_lines(desc, @right_column_wrap_width)
         end
 
         def indent_str(str)
@@ -318,7 +321,7 @@ module Toys
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
-          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
+          @lines = Terminal.new(output: ::StringIO.new, styled: styled)
           assemble
         end
 
@@ -346,10 +349,10 @@ module Toys
         def add_prefix_with_desc(prefix, desc)
           if desc.empty?
             @lines << indent_str(prefix)
-          elsif !desc.is_a?(Utils::WrappableString)
+          elsif !desc.is_a?(WrappableString)
             @lines << indent_str("#{prefix} - #{desc}")
           else
-            desc = wrap_indent_indent2(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
+            desc = wrap_indent_indent2(WrappableString.new(["#{prefix} -"] + desc.fragments))
             @lines << indent_str(desc[0])
             desc[1..-1].each do |line|
               @lines << indent2_str(line)
@@ -392,7 +395,7 @@ module Toys
           @tool.arg_definitions.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
-          wrap_indent_indent2(Utils::WrappableString.new(synopsis))
+          wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
         def add_ordinary_group_to_synopsis(flag_group, synopsis)
@@ -448,7 +451,7 @@ module Toys
 
         def namespace_synopsis
           synopsis = [full_binary_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
-          wrap_indent_indent2(Utils::WrappableString.new(synopsis))
+          wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
         def full_binary_name
@@ -562,19 +565,19 @@ module Toys
         end
 
         def wrap_indent(input)
-          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
-          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent)
+          return WrappableString.wrap_lines(input, nil) unless @wrap_width
+          WrappableString.wrap_lines(input, @wrap_width - @indent)
         end
 
         def wrap_indent2(input)
-          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
-          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent - @indent2)
+          return WrappableString.wrap_lines(input, nil) unless @wrap_width
+          WrappableString.wrap_lines(input, @wrap_width - @indent - @indent2)
         end
 
         def wrap_indent_indent2(input)
-          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
-          Utils::WrappableString.wrap_lines(input, @wrap_width - @indent,
-                                            @wrap_width - @indent - @indent2)
+          return WrappableString.wrap_lines(input, nil) unless @wrap_width
+          WrappableString.wrap_lines(input, @wrap_width - @indent,
+                                     @wrap_width - @indent - @indent2)
         end
 
         def bold(str)
@@ -611,7 +614,7 @@ module Toys
         private
 
         def assemble(styled)
-          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
+          @lines = Terminal.new(output: ::StringIO.new, styled: styled)
           add_header
           add_list
           @result = @lines.output.string
@@ -649,10 +652,10 @@ module Toys
         def add_prefix_with_desc(prefix, desc)
           if desc.empty?
             @lines << prefix
-          elsif !desc.is_a?(Utils::WrappableString)
+          elsif !desc.is_a?(WrappableString)
             @lines << "#{prefix} - #{desc}"
           else
-            desc = wrap_indent(Utils::WrappableString.new(["#{prefix} -"] + desc.fragments))
+            desc = wrap_indent(WrappableString.new(["#{prefix} -"] + desc.fragments))
             @lines << desc[0]
             desc[1..-1].each do |line|
               @lines << indent_str(line)
@@ -661,8 +664,8 @@ module Toys
         end
 
         def wrap_indent(input)
-          return Utils::WrappableString.wrap_lines(input, nil) unless @wrap_width
-          Utils::WrappableString.wrap_lines(input, @wrap_width, @wrap_width - @indent)
+          return WrappableString.wrap_lines(input, nil) unless @wrap_width
+          WrappableString.wrap_lines(input, @wrap_width, @wrap_width - @indent)
         end
 
         def bold(str)

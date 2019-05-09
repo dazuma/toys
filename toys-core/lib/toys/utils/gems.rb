@@ -29,10 +29,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/utils/exec"
+
 module Toys
   module Utils
     ##
-    # A helper module that activates and installs gems
+    # A helper module that activates and installs gems.
+    #
+    # This class is not loaded by default. Before using it directly, you should
+    # `require "toys/utils/gems"`
     #
     class Gems
       ##
@@ -84,7 +89,7 @@ module Toys
                      suppress_confirm: false,
                      default_confirm: true)
         @terminal = Terminal.new(input: input, output: output)
-        @exec = Exec.new
+        @exec = Utils::Exec.new
         @suppress_confirm = suppress_confirm ? true : false
         @default_confirm = default_confirm ? true : false
       end
@@ -98,26 +103,30 @@ module Toys
       #
       def activate(name, *requirements)
         gem(name, *requirements)
-      rescue ::Gem::LoadError => e1
-        is_missing_spec =
-          if defined?(::Gem::MissingSpecError)
-            e1.is_a?(::Gem::MissingSpecError)
-          else
-            e1.message.include?("Could not find")
-          end
-        if is_missing_spec
-          install_gem(name, requirements)
-          begin
-            gem(name, *requirements)
-          rescue ::Gem::LoadError => e2
-            report_error(name, requirements, e2)
-          end
-        else
-          report_error(name, requirements, e1)
-        end
+      rescue ::Gem::LoadError => e
+        handle_activation_error(e)
       end
 
       private
+
+      def handle_activation_error(error)
+        is_missing_spec =
+          if defined?(::Gem::MissingSpecError)
+            error.is_a?(::Gem::MissingSpecError)
+          else
+            error.message.include?("Could not find")
+          end
+        unless is_missing_spec
+          report_error(name, requirements, error)
+          return
+        end
+        install_gem(name, requirements)
+        begin
+          gem(name, *requirements)
+        rescue ::Gem::LoadError => e
+          report_error(name, requirements, e)
+        end
+      end
 
       def gem_requirements_text(name, requirements)
         "#{name.inspect}, #{requirements.map(&:inspect).join(', ')}"

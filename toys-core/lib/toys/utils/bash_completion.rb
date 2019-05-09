@@ -32,12 +32,15 @@
 module Toys
   module Utils
     ##
-    # Implementation of bash tab completion.
-    # Provides completion for subtools and flags.
+    # Implementation of bash tab completion. Provides completion for subtools
+    # and flags.
+    #
+    # This class is not loaded by default. Before using it directly, you should
+    # `require "toys/utils/bash_completion"`
     #
     class BashCompletion
       ##
-      # Create a completion.
+      # Create a completion handler.
       #
       # @param [Toys::Loader] loader A loader that provides tools
       # @param [Boolean] complete_subtools Include subtool names in completions
@@ -56,7 +59,7 @@ module Toys
       #
       def run
         words, last = analyze_line
-        exit 1 unless words.shift
+        exit(1) unless words.shift
         compute_completions(words, last).each do |completion|
           puts completion
         end

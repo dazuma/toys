@@ -267,10 +267,10 @@ module Toys
       # displayed with the tool in a subtool list. You may also use the
       # equivalent method `short_desc`.
       #
-      # The description is a {Toys::Utils::WrappableString}, which may be word-
-      # wrapped when displayed in a help screen. You may pass a
-      # {Toys::Utils::WrappableString} directly to this method, or you may pass
-      # any input that can be used to construct a wrappable string:
+      # The description is a {Toys::WrappableString}, which may be word-wrapped
+      # when displayed in a help screen. You may pass a {Toys::WrappableString}
+      # directly to this method, or you may pass any input that can be used to
+      # construct a wrappable string:
       #
       # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
       #     newlines, and multiple consecutive whitespace will be turned into a
@@ -289,7 +289,7 @@ module Toys
       #
       #     desc ["This sentence will not be wrapped."]
       #
-      # @param [Toys::Utils::WrappableString,String,Array<String>] str
+      # @param [Toys::WrappableString,String,Array<String>] str
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def desc(str)
@@ -316,7 +316,7 @@ module Toys
       #               "",
       #               ["This line will not be wrapped."]
       #
-      # @param [Toys::Utils::WrappableString,String,Array<String>...] strs
+      # @param [Toys::WrappableString,String,Array<String>...] strs
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def long_desc(*strs)
@@ -339,10 +339,10 @@ module Toys
       # @param [Symbol] type The type of group. Allowed values: `:required`,
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       #     Default is `:optional`.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
@@ -381,10 +381,10 @@ module Toys
       #       flag :password, "--password=VAL", desc: "Set the password (required)"
       #     end
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
@@ -410,10 +410,10 @@ module Toys
       # defined in the block belong to the group. At most one flag in this
       # group must be provided on the command line.
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
@@ -439,10 +439,10 @@ module Toys
       # defined in the block belong to the group. At least one flag in this
       # group must be provided on the command line.
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
@@ -468,10 +468,10 @@ module Toys
       # defined in the block belong to the group. Exactly one flag in this
       # group must be provided on the command line.
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Definition::Tool#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
@@ -531,10 +531,10 @@ module Toys
       # @param [Toys::Definition::FlagGroup,String,Symbol,nil] group Group for
       #     this flag. You may provide a group name, a FlagGroup object, or
       #     `nil` which denotes the default group.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -582,10 +582,10 @@ module Toys
       #     Optional. If not specified, accepts any value as a string.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -634,10 +634,10 @@ module Toys
       #     Optional. If not specified, accepts any value as a string.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -685,10 +685,10 @@ module Toys
       #     Optional. If not specified, accepts any value as a string.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of

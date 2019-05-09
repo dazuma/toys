@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
+require "toys/utils/gems"
 Toys::Utils::Gems.activate("highline", "~> 2.0")
 require "highline"
 

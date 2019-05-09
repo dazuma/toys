@@ -70,11 +70,11 @@ module Toys
     # @param [String] extra_delimiters A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
-    # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
+    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
-    # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
+    # @param [Toys::ModuleLookup] middleware_lookup A lookup for
     #     well-known middleware classes. Defaults to an empty lookup.
-    # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
+    # @param [Toys::ModuleLookup] template_lookup A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
     def initialize(index_file_name: nil, preload_directory_name: nil, preload_file_name: nil,
@@ -83,9 +83,9 @@ module Toys
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
-      @mixin_lookup = mixin_lookup || Utils::ModuleLookup.new
-      @middleware_lookup = middleware_lookup || Utils::ModuleLookup.new
-      @template_lookup = template_lookup || Utils::ModuleLookup.new
+      @mixin_lookup = mixin_lookup || ModuleLookup.new
+      @middleware_lookup = middleware_lookup || ModuleLookup.new
+      @template_lookup = template_lookup || ModuleLookup.new
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @preload_directory_name = preload_directory_name

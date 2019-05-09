@@ -52,7 +52,7 @@ module Toys
       #
       def initialize(exit_code: -1, stream: $stderr, styled_output: nil)
         @exit_code = exit_code
-        @terminal = Utils::Terminal.new(output: stream, styled: styled_output)
+        @terminal = Terminal.new(output: stream, styled: styled_output)
       end
 
       ##
@@ -60,6 +60,7 @@ module Toys
       #
       def run(tool)
         if tool[Tool::Keys::USAGE_ERROR]
+          require "toys/utils/help_text"
           help_text = Utils::HelpText.from_tool(tool)
           @terminal.puts(tool[Tool::Keys::USAGE_ERROR], :bright_red, :bold)
           @terminal.puts("")

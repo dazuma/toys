@@ -72,7 +72,7 @@ module Toys
         @version_string = version_string
         @version_flags = version_flags
         @version_flag_desc = version_flag_desc
-        @terminal = Utils::Terminal.new(output: stream)
+        @terminal = Terminal.new(output: stream)
       end
 
       ##

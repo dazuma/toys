@@ -274,7 +274,7 @@ module Toys
       private
 
       def terminal
-        @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
+        @terminal ||= Terminal.new(output: @stream, styled: @styled_output)
       end
 
       def should_show_help(tool)
@@ -284,6 +284,7 @@ module Toys
 
       def output_help(str)
         if less_path
+          require "toys/utils/exec"
           Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
         else
           terminal.puts(str)
@@ -302,6 +303,7 @@ module Toys
       end
 
       def get_help_text(tool)
+        require "toys/utils/help_text"
         tool_name = tool[TOOL_NAME_KEY]
         return Utils::HelpText.from_tool(tool) if tool_name.nil? || tool_name.empty?
         loader = tool[Tool::Keys::LOADER]

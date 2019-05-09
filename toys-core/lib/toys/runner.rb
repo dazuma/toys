@@ -172,9 +172,9 @@ module Toys
         interruptable = @tool_definition.interruptable?
         begin
           tool.run
-        rescue ::Interrupt => ex
-          raise ex unless interruptable
-          handle_interrupt(tool, ex)
+        rescue ::Interrupt => e
+          raise e unless interruptable
+          handle_interrupt(tool, e)
         end
       end
       @tool_definition.middleware_stack.reverse_each do |middleware|
@@ -192,9 +192,9 @@ module Toys
       else
         tool.interrupt(exception)
       end
-    rescue ::Interrupt => ex
-      raise ex if ex.equal?(exception)
-      handle_interrupt(tool, ex)
+    rescue ::Interrupt => e
+      raise e if e.equal?(exception)
+      handle_interrupt(tool, e)
     end
 
     def make_executor(middleware, tool, next_executor)

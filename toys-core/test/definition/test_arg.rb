@@ -46,9 +46,9 @@ describe Toys::Definition::Arg do
   end
 
   it "computes descriptions" do
-    assert_equal(Toys::Utils::WrappableString.new("description"), arg.desc)
-    assert_equal([Toys::Utils::WrappableString.new("long"),
-                  Toys::Utils::WrappableString.new("description")], arg.long_desc)
+    assert_equal(Toys::WrappableString.new("description"), arg.desc)
+    assert_equal([Toys::WrappableString.new("long"),
+                  Toys::WrappableString.new("description")], arg.long_desc)
   end
 
   it "computes display name" do

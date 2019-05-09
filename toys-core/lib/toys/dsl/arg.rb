@@ -86,7 +86,7 @@ module Toys
       # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
       # formats.
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc
+      # @param [String,Array<String>,Toys::WrappableString] desc
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def desc(desc)
@@ -99,7 +99,7 @@ module Toys
       # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
       # allowed formats.
       #
-      # @param [String,Array<String>,Toys::Utils::WrappableString...] long_desc
+      # @param [String,Array<String>,Toys::WrappableString...] long_desc
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def long_desc(*long_desc)

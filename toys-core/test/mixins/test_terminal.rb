@@ -46,7 +46,7 @@ describe Toys::StandardMixins::Terminal do
       tool "foo" do
         include :terminal
         def run
-          exit(terminal.is_a?(::Toys::Utils::Terminal) ? 1 : 2)
+          exit(terminal.is_a?(::Toys::Terminal) ? 1 : 2)
         end
       end
     end

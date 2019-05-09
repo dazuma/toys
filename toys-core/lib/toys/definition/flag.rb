@@ -141,8 +141,8 @@ module Toys
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @accept = accept
         @handler = resolve_handler(handler)
-        @desc = Utils::WrappableString.make(desc)
-        @long_desc = Utils::WrappableString.make_array(long_desc)
+        @desc = WrappableString.make(desc)
+        @long_desc = WrappableString.make_array(long_desc)
         @default = default
         needs_val = (!accept.nil? && accept != ::TrueClass && accept != ::FalseClass) ||
                     (!default.nil? && default != true && default != false)
@@ -184,13 +184,13 @@ module Toys
 
       ##
       # Returns the short description string.
-      # @return [Toys::Utils::WrappableString]
+      # @return [Toys::WrappableString]
       #
       attr_reader :desc
 
       ##
       # Returns the long description strings as an array.
-      # @return [Array<Toys::Utils::WrappableString>]
+      # @return [Array<Toys::WrappableString>]
       #
       attr_reader :long_desc
 
@@ -284,27 +284,27 @@ module Toys
       ##
       # Set the short description string.
       #
-      # The description may be provided as a {Toys::Utils::WrappableString}, a
-      # single string (which will be wrapped), or an array of strings, which will
-      # be interpreted as string fragments that will be concatenated and wrapped.
+      # The description may be provided as a {Toys::WrappableString}, a single
+      # string (which will be wrapped), or an array of strings, which will be
+      # interpreted as string fragments that will be concatenated and wrapped.
       #
-      # @param [Toys::Utils::WrappableString,String,Array<String>] desc
+      # @param [Toys::WrappableString,String,Array<String>] desc
       #
       def desc=(desc)
-        @desc = Utils::WrappableString.make(desc)
+        @desc = WrappableString.make(desc)
       end
 
       ##
       # Set the long description strings.
       #
-      # Each string may be provided as a {Toys::Utils::WrappableString}, a single
+      # Each string may be provided as a {Toys::WrappableString}, a single
       # string (which will be wrapped), or an array of strings, which will be
       # interpreted as string fragments that will be concatenated and wrapped.
       #
-      # @param [Array<Toys::Utils::WrappableString,String,Array<String>>] long_desc
+      # @param [Array<Toys::WrappableString,String,Array<String>>] long_desc
       #
       def long_desc=(long_desc)
-        @long_desc = Utils::WrappableString.make_array(long_desc)
+        @long_desc = WrappableString.make_array(long_desc)
       end
 
       private

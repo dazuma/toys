@@ -77,14 +77,13 @@ module Toys
     # @param [String] extra_delimiters A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
-    # @param [Toys::Utils::ModuleLookup] mixin_lookup A lookup for well-known
-    #     mixin modules. If not provided, uses
-    #     {Toys::CLI.default_mixin_lookup}.
-    # @param [Toys::Utils::ModuleLookup] middleware_lookup A lookup for
-    #     well-known middleware classes. If not provided, uses
+    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known mixin
+    #     modules. If not provided, uses {Toys::CLI.default_mixin_lookup}.
+    # @param [Toys::ModuleLookup] middleware_lookup A lookup for well-known
+    #     middleware classes. If not provided, uses
     #     {Toys::CLI.default_middleware_lookup}.
-    # @param [Toys::Utils::ModuleLookup] template_lookup A lookup for
-    #     well-known template classes. If not provided, uses
+    # @param [Toys::ModuleLookup] template_lookup A lookup for well-known
+    #     template classes. If not provided, uses
     #     {Toys::CLI.default_template_lookup}.
     # @param [Logger,nil] logger The logger to use. If not provided, a default
     #     logger that writes to `STDERR` is used.
@@ -300,7 +299,7 @@ module Toys
       # @param [IO] output Where to write errors. Default is `$stderr`.
       #
       def initialize(output = $stderr)
-        @terminal = Utils::Terminal.new(output: output)
+        @terminal = Terminal.new(output: output)
       end
 
       ##
@@ -382,29 +381,29 @@ module Toys
       # Returns a default ModuleLookup for mixins that points at the
       # StandardMixins module.
       #
-      # @return [Toys::Utils::ModuleLookup]
+      # @return [Toys::ModuleLookup]
       #
       def default_mixin_lookup
-        Utils::ModuleLookup.new.add_path("toys/standard_mixins")
+        ModuleLookup.new.add_path("toys/standard_mixins")
       end
 
       ##
       # Returns a default ModuleLookup for middleware that points at the
       # StandardMiddleware module.
       #
-      # @return [Toys::Utils::ModuleLookup]
+      # @return [Toys::ModuleLookup]
       #
       def default_middleware_lookup
-        Utils::ModuleLookup.new.add_path("toys/standard_middleware")
+        ModuleLookup.new.add_path("toys/standard_middleware")
       end
 
       ##
       # Returns a default empty ModuleLookup for templates.
       #
-      # @return [Toys::Utils::ModuleLookup]
+      # @return [Toys::ModuleLookup]
       #
       def default_template_lookup
-        Utils::ModuleLookup.new
+        ModuleLookup.new
       end
 
       ##
@@ -415,7 +414,7 @@ module Toys
       #
       def default_logger(stream = $stderr)
         logger = ::Logger.new(stream)
-        terminal = Utils::Terminal.new(output: stream)
+        terminal = Terminal.new(output: stream)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg

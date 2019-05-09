@@ -241,10 +241,10 @@ module Toys
     ##
     # Returns a ModuleLookup for the default templates.
     #
-    # @return [Toys::Utils::ModuleLookup]
+    # @return [Toys::ModuleLookup]
     #
     def self.default_template_lookup
-      Utils::ModuleLookup.new.add_path("toys/templates")
+      ModuleLookup.new.add_path("toys/templates")
     end
   end
 end

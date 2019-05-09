@@ -77,10 +77,10 @@ module Toys
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
-      # @param [String,Array<String>,Toys::Utils::WrappableString] desc Short
+      # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::Utils::WrappableString>] long_desc
+      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of

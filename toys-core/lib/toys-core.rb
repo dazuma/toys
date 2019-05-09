@@ -55,6 +55,10 @@ module Toys
   ##
   # Namespace for common utility classes.
   #
+  # These classes are not loaded by default, and must be required explicitly.
+  # For example, before using {Toys::Utils::Exec}, you must
+  # `require "toys/utils/exec"`.
+  #
   module Utils; end
 end
 
@@ -76,13 +80,10 @@ require "toys/input_file"
 require "toys/loader"
 require "toys/middleware"
 require "toys/mixin"
+require "toys/module_lookup"
 require "toys/runner"
 require "toys/standard_middleware"
 require "toys/template"
+require "toys/terminal"
 require "toys/tool"
-require "toys/utils/exec"
-require "toys/utils/gems"
-require "toys/utils/help_text"
-require "toys/utils/module_lookup"
-require "toys/utils/terminal"
-require "toys/utils/wrappable_string"
+require "toys/wrappable_string"

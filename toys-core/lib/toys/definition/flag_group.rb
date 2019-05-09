@@ -41,8 +41,8 @@ module Toys
       #
       def initialize(name, desc, long_desc)
         @name = name
-        @desc = Utils::WrappableString.make(desc || default_desc)
-        @long_desc = Utils::WrappableString.make_array(long_desc || default_long_desc)
+        @desc = WrappableString.make(desc || default_desc)
+        @long_desc = WrappableString.make_array(long_desc || default_long_desc)
         @flag_definitions = []
       end
 
@@ -54,13 +54,13 @@ module Toys
 
       ##
       # Returns the short description string.
-      # @return [Toys::Utils::WrappableString]
+      # @return [Toys::WrappableString]
       #
       attr_reader :desc
 
       ##
       # Returns the long description strings as an array.
-      # @return [Array<Toys::Utils::WrappableString>]
+      # @return [Array<Toys::WrappableString>]
       #
       attr_reader :long_desc
 

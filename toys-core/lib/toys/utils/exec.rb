@@ -41,6 +41,9 @@ module Toys
     # processes and their streams. It also provides shortcuts for common cases
     # such as invoking Ruby in a subprocess or capturing output in a string.
     #
+    # This class is not loaded by default. Before using it directly, you should
+    # `require "toys/utils/exec"`
+    #
     # ## Configuration options
     #
     # A variety of options can be used to control subprocesses. These include:

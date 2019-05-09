@@ -32,6 +32,7 @@
 require "helper"
 require "timeout"
 require "fileutils"
+require "toys/utils/exec"
 
 describe Toys::Utils::Exec do
   let(:exec) { Toys::Utils::Exec.new }
