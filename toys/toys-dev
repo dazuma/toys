@@ -4,4 +4,5 @@
 ::ENV["TOYS_CORE_LIB_PATH"] =
   ::File.absolute_path(::File.join(::File.dirname(__dir__), "toys-core", "lib"))
 ::ENV["TOYS_BIN_PATH"] = ::File.absolute_path(__FILE__)
-load ::File.join(__dir__, "bin", "toys")
+bin = ::ENV["TOYS_BASH_COMPLETION"] ? "bash-completion-toys" : "toys"
+load ::File.join(__dir__, "bin", bin)

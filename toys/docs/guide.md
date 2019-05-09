@@ -2562,7 +2562,23 @@ installation if it is not already current.
 Normall it asks you for confirmation before downloading. To disable interactive
 confirmation, pass the `--yes` flag.
 
-A similar effect can of course be obtained simply by `gem install toys`.
+A similar effect can of course be obtained by running `gem install toys`.
+
+### Installing Tab Completion for Bash
+
+Toys provides basic tab completion for the bash shell. Currently, tool names
+and flags are auto-completed. The following command sets up tab completion in
+the current shell:
+
+    $(toys system bash-completion)
+
+Typically, you will want to include the above in your `.bashrc` or other bash
+initialization file. You may also run the following convenience command to
+add the appropriate lines to a `.bashrc` file:
+
+    toys system bash-completion --install /path/to/my/bashrc
+
+At this time, only bash is supported.
 
 ## Writing Your Own CLI Using Toys
 

@@ -52,14 +52,14 @@ require "toys/version"
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
+  spec.files = ::Dir.glob("lib/**/*.rb") + ["builtins/.toys.rb"] +
                ::Dir.glob("*.md") + ::Dir.glob("docs/**/*.md") +
                ::Dir.glob("bin/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
 
   spec.bindir = "bin"
-  spec.executables = ["toys"]
+  spec.executables = ["toys", "bash-completion-toys"]
 
   spec.add_dependency "toys-core", "= #{::Toys::VERSION}"
 
