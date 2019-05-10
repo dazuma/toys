@@ -3,7 +3,8 @@
 # Toys-Core User Guide
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to create command line binaries using the internal Toys APIs.
+to create command line binaries by writing *Toys files*, similarly to how
+scripts are written for Toys.
 
 This user's guide covers everything you need to know to build your own command
 line binaries in Ruby using the Toys-Core framework.

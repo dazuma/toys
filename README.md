@@ -19,7 +19,7 @@ This repository includes the source for two gems:
 
 ## Quick Start
 
-Here's a five-minute tutorial to get a feel of what Toys can do.
+Here's a tutorial to help you get a feel of what Toys can do.
 
 ### Install toys
 
@@ -42,11 +42,17 @@ Let's run one of them:
 
 The "system version" tool displays the current version of the toys gem.
 
+Toys also provides optional tab completion for bash. To install it, add the
+following lines to your bash configuration file (e.g. `.bashrc` or `.profile`).
+
+    # Install tab completion for toys
+    $(toys system bash-completion)
+
 ### Write your first tool
 
 You can define tools by creating a *Toys file*. Go into any directory, and,
 using your favorite editor, create a new file called `.toys.rb` (note the
-leading period). Copy the following into the file, and save it:
+leading period). Copy the following text into the file, and save it:
 
     tool "greet" do
       desc "My first tool!"
@@ -75,30 +81,195 @@ automatically generates a full help screen, which you can view using the
 
     toys greet --help
 
-### Next steps
+### A more sophisticated example
 
-You can add any number of additional tools to your `.toys.rb` config file. Note
-also that the tools you create in the config file are available only in this
-directory and its subdirectories. If you move into a different directory tree,
-Toys will instead look for a config file in that directory. Thus, you can
-define tools scoped to particular projects. You can also define "global" tools
-by creating a `.toys.rb` file in your home directory.
+Let's take a look at another example that exercises some of the features you're
+likely to see in real-world usage. Add the following to your `.toys.rb` file.
+(You don't need to replace the greet tool you just wrote; just add this new
+tool to the end of the file.)
 
-Toys provides a rich set of useful libraries for writing tools and subtools. It
-gives you a logger and automatically provides flags to control verbosity of log
-output. It includes a simple library that you can use to produce styled output
-and basic console-based interfaces, and another library that makes it easy to
-spawn and control subprocesses. You can also take advantage of a variety of
-third-party libraries such as Highline and TTY.
+    tool "new-repo" do
+      desc "Create a new git repo"
 
-For a more detailed look at Toys, see the
+      optional_arg :name, desc: "Name of the directory to create"
+
+      include :exec, exit_on_nonzero_status: true
+      include :fileutils
+      include :terminal
+
+      def run
+        if name.nil?
+          response = ask "Please enter a directory name: "
+          set :name, response
+        end
+        if File.exist? name
+          puts "Aborting because #{name} already exists", :red, :bold
+          exit 1
+        end
+        logger.info "Creating new repo in directory #{name}..."
+        mkdir name
+        cd name do
+          create_repo
+        end
+        puts "Created repo in #{name}", :green, :bold
+      end
+
+      def create_repo
+        exec "git init"
+        File.write ".gitignore", <<~CONTENT
+          tmp
+          .DS_STORE
+        CONTENT
+        # You can add additional files here.
+        exec "git add ."
+        exec "git commit -m 'Initial commit'"
+      end
+    end
+
+Now you should have an additional tool called `new-repo` available. Type
+
+    toys
+
+to see a list of the tools available, and you should see both the `greet` tool
+we started with, and the new `new-repo` tool. (You may include any number of
+tools in your `.toys.rb` file, and you can even break it up into multiple files
+if it starts getting unwieldly.)
+
+This new tool creates a directory containing a newly created git repo. It
+assumes you have `git` available on your path. Try running it:
+
+    toys new-repo foo
+
+That should create a directory `foo`, initialize a git repository within it,
+and make a commit.
+
+Notice that this tool accepts a positional command line argument. Toys supports
+any combination of flags and required and optional arguments. This tool's
+argument is declared with a description string, which you can see if you view
+the tool's help:
+
+    toys new-repo --help
+
+The argument is marked as "optional" which means you can omit it. Notice that
+the tool's code detects that it has been omitted and responds by prompting you
+interactively for a directory name. You can also mark a positional argument as
+"required", which causes Toys to report a usage error if it is omitted.
+
+Next, notice this tool includes two methods, `create_repo` as well as `run`.
+The "entrypoint" for a tool is always the `run` method, but each tool is
+actually a class under the hood, and you can add any helper methods you want.
+You can even define and include modules if you want to share code across tools.
+
+For our tool, notice that the three "include" lines are taking symbols rather
+than modules. These symbols are the names of some of Toys's built-in helper
+*mixins*, which are configurable modules that enhance your tool. They may
+provide methods your tool can call, or invoke other behavior. In our example:
+
+*   The `:exec` mixin provides a variety of methods for running external
+    commands. In this example, we use the `exec` method to run shell
+    commands, but you can also signal and control these commands, capture
+    and redirect streams, and so forth. Note that we pass the
+    `:exit_on_nonzero_status` option, which configures the `:exec` mixin to
+    abort the tool automatically if any of the external commands fails (similar
+    to `set -e` in bash). This is a common pattern when writing tools. (If you
+    want more control, the `:exec` mixin also provides ways to respond to
+    result codes individually.)
+*   The `:fileutils` mixin provides the methods of the Ruby `FileUtils`
+    library, such as `mkdir` and `cd` used in this example. It's effectively
+    shorthand for `require "fileutils"; include ::FileUtils`.
+*   The `:terminal` mixin provides styled output, as you can see with the style
+    codes being passed to `puts`. It also provides some user interaction
+    commands such as `ask`, as well as spinners and other controls. You can see
+    operation of the `:terminal` mixin in the tool's output, which is styled
+    either green (for success) or red (on error) when running on a supported
+    tty.
+
+Now try running this:
+
+    toys new-repo bar --verbose
+
+You'll notice some diagnostic log output. Toys provides a standard Ruby Logger
+for each tool, and you can use it to emit diagnostic logs directly as
+demonstrated in the example. Some other Toys features might also emit log
+entries: the `:exec` mixin, for example, by default logs every external command
+it runs (although this can be customized). 
+
+By default, only warnings and higher severity logs are displayed, but you can
+change that by applying the `--verbose` or `--quiet` flags as we have done
+here. These flags, like `--help`, are provided automatically to every tool.
+
+### A Better Rake?
+
+Let's look at one more example. Traditionally, Ruby developers often use
+Rakefiles to write scripts for tasks such as build, test, and deploy. But Rake
+is really designed for dependency management, not for writing scripts. As a
+result, some elements, such as passing arguments to a task, are very clumsy
+with Rake.
+
+If you have a project with a Rakefile, move into that directory and create a
+new file called `.toys.rb` in that same directory (next to the Rakefile). Add
+the following line to your `.toys.rb` file:
+
+    expand :rake
+
+This syntax is called a "template expansion." It's a way to generate tools
+programmatically. In this case, the `:rake` template reads your Rakefile and
+generates Toys tools corresponding to all your Rake tasks! If you run:
+
+    toys
+
+You'll see that your Rake tasks can now be invoked from Toys. So if you have a
+`rake test` task, you can run it using `toys test`.
+
+Note that if you normally run Rake with Bundler (e.g. `bundle exec rake test`),
+you may need to add toys to your Gemfile and invoke toys with Bundler as well
+(i.e. `bundle exec toys test`) in order for Toys to run your Rake task
+successfully. However, when Toys is not wrapping Rake, normal practice is *not*
+to use Bundler. Toys provides its own mechanisms to activate and even install
+needed gems for you.
+
+So far, we've made Toys a front-end for your Rake tasks. This may be useful by
+itself. Toys lets you pass command line arguments "normally" to tools, whereas
+Rake requires a weird square bracket syntax (which may also require escaping
+depending on your shell.) Toys also provides more sophisticated online help.
+
+But you also might find Toys a more natural way to *write* tasks, and indeed
+you can often rewrite an entire Rakefile as a Toys file and get quite a bit of
+benefit in readability and maintainability. For an example, see the
+[Toys file for the Toys repo itself](https://github.com/dazuma/toys/blob/master/toys/.toys.rb).
+This is one of the Toys files that I use to develop, test, and release Toys
+itself. You'll notice most of it consists of template expansions. Toys provides
+templates for a lot of common build, test, and release tasks for Ruby gems.
+
+If you're feeling adventurous, try translating some of your Rake tasks into
+native Toys tools. You can do so in your existing `.toys.rb` file. Keep the
+`expand :rake` at the *end* of the file, and locate your tools (whether simple
+tools or template expansions) before it. That way, your Toys-native tools will
+take precedence, and `expand :rake` will proxy out to Rake only for the
+remaining tasks.
+
+### Learning more
+
+This introduction should be enough to get you started, but Toys is a deep tool
+with many more features, all explained in detail in the
 [User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+
+For example, Toys lets you create tool namespaces and "subtools", and search
+for tools by name and description. There are various ways to validate and
+interpret command line arguments. You can create your own mixins and templates,
+and take advantage of a variety of third-party libraries such as Highline and
+TTY. In addition, Toys lets you "scope" your tools to a directory or an entire
+directory tree, so you can have tools specific to different projects. Finally,
+if you outgrow `.toys.rb` files, you can create `.toys` directories containing
+many tool definitions, shared code, normal Ruby classes, and even data files
+for use by tools.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line binary written in Ruby. However, you
 *can* use it in that way by building with the "toys-core" API, available as a
-separate gem. For more info on using toys-core, see
-https://www.rubydoc.info/gems/toys-core
+separate gem. You would effectively write your command line binary using the
+same Toys DSL that you use to write `.toys.rb` files. For more info on using
+toys-core, see https://www.rubydoc.info/gems/toys-core
 
 ## Why Toys?
 
@@ -112,7 +283,7 @@ them. Furthermore, when writing new scripts, I was repeating the same
 OptionParser boilerplate and common functionality.
 
 Toys was designed to address those problems by providing a framework for
-writing and organizing your own command line scripts. You provide the actual
+writing *and organizing* your own command line scripts. You provide the actual
 functionality, and Toys takes care of all the other details expected from a
 good command line tool. It provides a streamlined interface for defining and
 handling command line flags and positional arguments, and sensible ways to
@@ -121,10 +292,10 @@ usage information at a glance, and it also provides a search feature to help
 you find the script you need.
 
 Toys can also be used to share scripts. For example, it can be used instead of
-Rake to provide build and test scripts for a project—tools that, unlike Rake
-tasks, can be invoked and passed arguments and flags using familiar unix
-command line conventions. The Toys github repo itself comes with Toys config
-files instead of Rakefiles.
+Rake to provide build and test scripts for a project. Unlike Rake tasks,
+scripts written for Toys can be invoked and passed arguments and flags using
+familiar unix command line conventions. The Toys github repo itself comes with
+Toys scripts instead of Rakefiles.
 
 ## License
 

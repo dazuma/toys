@@ -41,7 +41,7 @@ module Toys
   #
   module TestHelper
     ## Name of the local dev binary
-    TOYS_BINARY = ::File.join(::File.dirname(__dir__), "toys-dev")
+    TOYS_BINARY = ::File.join(::File.dirname(::File.dirname(__dir__)), "toys-dev")
 
     ##
     # Execute toys and capture the result

@@ -29,10 +29,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-expected_lib_path = ::File.absolute_path(::File.join(::File.dirname(__dir__), "toys-core", "lib"))
-unless ::ENV["TOYS_CORE_LIB_PATH"] == expected_lib_path
-  ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
-end
+# Run this against local Toys code instead of installed Toys gems.
+# This is to support development of Toys itself. Most Toys files should not
+# include this.
+::Kernel.exec(::File.join(::File.dirname(__dir__), "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
 expand :clean, paths: ["pkg", "doc", ".yardoc"]
 

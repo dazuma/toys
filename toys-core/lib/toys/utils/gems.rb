@@ -104,12 +104,12 @@ module Toys
       def activate(name, *requirements)
         gem(name, *requirements)
       rescue ::Gem::LoadError => e
-        handle_activation_error(e)
+        handle_activation_error(e, name, requirements)
       end
 
       private
 
-      def handle_activation_error(error)
+      def handle_activation_error(error, name, requirements)
         is_missing_spec =
           if defined?(::Gem::MissingSpecError)
             error.is_a?(::Gem::MissingSpecError)

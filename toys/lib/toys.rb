@@ -53,11 +53,15 @@ end
 
 require "toys/version"
 
-if ::ENV["TOYS_CORE_LIB_PATH"]
-  $LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
-else
-  gem "toys-core", "= #{::Toys::VERSION}"
+# Add toys-core to the load path. The Toys debug scripts will set this
+# environment variable explicitly, but in production, we get it from rubygems.
+# We prepend to $LOAD_PATH directly rather than calling Kernel.gem, so that we
+# don't get clobbered in case someone sets up bundler later.
+::ENV["TOYS_CORE_LIB_PATH"] ||= begin
+  dep = Gem::Dependency.new("toys-core", "= #{::Toys::VERSION}")
+  dep.to_spec.full_require_paths.first
 end
-require "toys-core"
+$LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
 
+require "toys-core"
 require "toys/standard_cli"

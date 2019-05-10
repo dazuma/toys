@@ -29,9 +29,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ;
 
-unless ::ENV["TOYS_CORE_LIB_PATH"] == ::File.absolute_path(::File.join(__dir__, "toys-core", "lib"))
-  ::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV)
-end
+# Run this against local Toys code instead of installed Toys gems.
+# This is to support development of Toys itself. Most Toys files should not
+# include this.
+::Kernel.exec(::File.join(__dir__, "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
 include :gems, suppress_confirm: true
 gem "highline", "~> 2.0"
