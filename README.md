@@ -8,20 +8,20 @@ all the details such as argument parsing, online help, and error reporting.
 
 Toys is designed for software developers, IT professionals, and other power
 users who want to write and organize scripts to automate their workflows. It
-can also be used as a Rake replacement, providing a more natural command line
-interface for your project's build tasks.
+can also be used as a replacement for Rake, providing a more natural command
+line interface for your project's build tasks.
 
 This repository includes the source for two gems:
 
-*   **toys** provides the Toys binary itself and all its capabilities.
+*   **toys** provides the Toys executable itself and all its capabilities.
 *   **toys-core** provides the underlying command line framework, and can be
-    used to build other command line binaries.
+    used to build other command line executables.
 
-## Quick Start
+## Introductory tutorial
 
 Here's a tutorial to help you get a feel of what Toys can do.
 
-### Install toys
+### Install Toys
 
 Install the **toys** gem using:
 
@@ -198,7 +198,7 @@ By default, only warnings and higher severity logs are displayed, but you can
 change that by applying the `--verbose` or `--quiet` flags as we have done
 here. These flags, like `--help`, are provided automatically to every tool.
 
-### A Better Rake?
+### A better Rake?
 
 Let's look at one more example. Traditionally, Ruby developers often use
 Rakefiles to write scripts for tasks such as build, test, and deploy. But Rake
@@ -223,35 +223,38 @@ You'll see that your Rake tasks can now be invoked from Toys. So if you have a
 
 Note that if you normally run Rake with Bundler (e.g. `bundle exec rake test`),
 you may need to add toys to your Gemfile and invoke toys with Bundler as well
-(i.e. `bundle exec toys test`) in order for Toys to run your Rake task
-successfully. However, when Toys is not wrapping Rake, normal practice is *not*
-to use Bundler. Toys provides its own mechanisms to activate and even install
-needed gems for you.
+(i.e. `bundle exec toys test`). This is because Toys is just calling the Rake
+API to run your task, and, well, if your Rake task requires a bundle, then you
+need to set it up. However, when Toys is not wrapping Rake, typical practice is
+actually *not* to use Bundler. Toys provides its own mechanisms to activate and
+even install needed gems for you.
 
 So far, we've made Toys a front-end for your Rake tasks. This may be useful by
 itself. Toys lets you pass command line arguments "normally" to tools, whereas
 Rake requires a weird square bracket syntax (which may also require escaping
-depending on your shell.) Toys also provides more sophisticated online help.
+depending on your shell.) Toys also provides more sophisticated online help
+than Rake does.
 
 But you also might find Toys a more natural way to *write* tasks, and indeed
 you can often rewrite an entire Rakefile as a Toys file and get quite a bit of
 benefit in readability and maintainability. For an example, see the
 [Toys file for the Toys repo itself](https://github.com/dazuma/toys/blob/master/toys/.toys.rb).
-This is one of the Toys files that I use to develop, test, and release Toys
-itself. You'll notice most of it consists of template expansions. Toys provides
-templates for a lot of common build, test, and release tasks for Ruby gems.
+It contains the Toys scripts that I use to develop, test, and release Toys
+itself. Yes, Toys is self-hosted. You'll notice most of this Toys file consists
+of template expansions. Toys provides templates for a lot of common build,
+test, and release tasks for Ruby projects.
 
 If you're feeling adventurous, try translating some of your Rake tasks into
 native Toys tools. You can do so in your existing `.toys.rb` file. Keep the
-`expand :rake` at the *end* of the file, and locate your tools (whether simple
-tools or template expansions) before it. That way, your Toys-native tools will
-take precedence, and `expand :rake` will proxy out to Rake only for the
-remaining tasks.
+`expand :rake` line at the *end* of the file, and locate your tools (whether
+simple tools or template expansions) before it. That way, your Toys-native
+tools will take precedence, and `expand :rake` will proxy out to Rake only for
+the remaining tasks.
 
 ### Learning more
 
-This introduction should be enough to get you started, but Toys is a deep tool
-with many more features, all explained in detail in the
+This introduction should be enough to get you started. However, Toys is a deep
+tool with many more features, all explained in detail in the
 [User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
 
 For example, Toys lets you create tool namespaces and "subtools", and search

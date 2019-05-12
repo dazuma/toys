@@ -256,7 +256,7 @@ module Toys
         Runner.new(self, tool_definition).run(remaining, verbosity: verbosity)
       end
     rescue ContextualError, ::Interrupt => e
-      @error_handler.call(e)
+      @error_handler.call(e).to_i
     end
 
     ##
@@ -303,9 +303,11 @@ module Toys
       end
 
       ##
-      # The error handler routine. Prints out the error message and backtrace.
+      # The error handler routine. Prints out the error message and backtrace,
+      # and returns the correct result code.
       #
       # @param [Exception] error The error that occurred.
+      # @return [Integer] The result code for the execution.
       #
       def call(error)
         case error

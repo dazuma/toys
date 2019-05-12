@@ -32,7 +32,7 @@
 module Toys
   module Templates
     ##
-    # A template for tools that build and release gems
+    # A template for tools that build, install, and release gems
     #
     class GemBuild
       include Template
@@ -51,6 +51,7 @@ module Toys
       # @param [String] gem_name Name of the gem to build. If not provided,
       #     defaults to the first gemspec file it finds.
       # @param [Boolean] push_gem If true, pushes the built gem to rubygems.
+      # @param [Boolean] install_gem If true, installs the built gem locally.
       # @param [Boolean] tag If true, tags the git repo with the gem version.
       # @param [Boolean,String] push_tag If truthy, pushes the new tag to
       #     a git remote. You may specify which remote by setting the value to
@@ -60,11 +61,13 @@ module Toys
       def initialize(name: DEFAULT_TOOL_NAME,
                      gem_name: nil,
                      push_gem: false,
+                     install_gem: false,
                      tag: false,
                      push_tag: false)
         @name = name
         @gem_name = gem_name
         @push_gem = push_gem
+        @install_gem = install_gem
         @tag = tag
         @push_tag = push_tag
       end
@@ -72,6 +75,7 @@ module Toys
       attr_accessor :name
       attr_accessor :gem_name
       attr_accessor :push_gem
+      attr_accessor :install_gem
       attr_accessor :tag
       attr_accessor :push_tag
 
@@ -85,10 +89,13 @@ module Toys
           end
           template.gem_name = candidates.first.sub(/\.gemspec$/, "")
         end
-        task_type = template.push_gem ? "Release" : "Build"
+        task_names = []
+        task_names << "Install" if template.install_gem
+        task_names << "Release" if template.push_gem
+        task_names = task_names.empty? ? "Build" : task_names.join(" and ")
 
         tool(template.name) do
-          desc "#{task_type} the gem: #{template.gem_name}"
+          desc "#{task_names} the gem: #{template.gem_name}"
 
           flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
 
@@ -105,12 +112,16 @@ module Toys
               ::Gem::Package.build(gemspec)
               mkdir_p("pkg")
               mv(gemfile, "pkg")
+              if template.install_gem
+                exit(1) unless yes || confirm("Install #{gemfile}? ", default: true)
+                exec ["gem", "install", "pkg/#{gemfile}"]
+              end
               if template.push_gem
                 if ::File.directory?(".git") && capture("git status -s").strip != ""
                   logger.error "Cannot push the gem when there are uncommited changes"
                   exit(1)
                 end
-                exit(1) unless yes || confirm("Release #{gemfile}?", default: true)
+                exit(1) unless yes || confirm("Release #{gemfile}? ", default: true)
                 exec(["gem", "push", "pkg/#{gemfile}"])
                 if template.tag
                   exec(["git", "tag", "v#{version}"])

@@ -52,7 +52,7 @@ require "toys/version"
   spec.license = "BSD-3-Clause"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = ::Dir.glob("lib/**/*.rb") + ["builtins/.toys.rb"] +
+  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
                ::Dir.glob("*.md") + ::Dir.glob("docs/**/*.md") +
                ::Dir.glob("bin/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.3.0"
@@ -70,7 +70,7 @@ require "toys/version"
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "redcarpet", "~> 3.4"
   spec.add_development_dependency "rspec", "~> 3.8"
-  spec.add_development_dependency "rubocop", "~> 0.62.0"
+  spec.add_development_dependency "rubocop", "~> 0.68.1"
   spec.add_development_dependency "yard", "~> 0.9.16"
 
   if spec.respond_to?(:metadata)

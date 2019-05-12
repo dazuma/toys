@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "toys-core"
+
+cli = ::Toys::CLI.new
+
+cli.add_config_block do
+  desc "Display a simple greeting"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
+
+exit(cli.run(::ARGV))

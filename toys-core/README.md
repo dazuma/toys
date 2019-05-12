@@ -1,20 +1,29 @@
-# Toys
+# Toys-Core
 
 Toys is a configurable command line tool. Write commands in config files using
 a simple DSL, and Toys will provide the command line binary and take care of
 all the details such as argument parsing, online help, and error reporting.
+
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to create your own command line binaries using the internal Toys APIs.
+to write command line binaries using the same Toys DSL and the power of the
+Toys APIs.
 
 For more detailed information about Toys-Core, see the
 [Toys-Core User's Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md).
 For background information about Toys itself, see the
+[Toys README](https://www.rubydoc.info/gems/toys) and the
 [Toys User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
 
-## Quick Start
+## Introductory tutorial
 
-Here's a ten-minute tutorial to get a feel for how to write a basic command
-line binary using Toys-Core.
+Here's a tutorial to help you get a feel for how to write a basic command line
+binary using Toys-Core.
+
+It assumes basic familiarity with Toys, so, if you have not done so, I
+recommend first walking through the tutorial in the
+[Toys README](https://www.rubydoc.info/gems/toys). It also assumes you are
+running a unix-like system such as Linux or macOS. Some commands might need to
+be modified if you're running on Windows.
 
 ### Install Toys
 
@@ -25,77 +34,290 @@ Install the **toys-core** gem using:
 You may also install the **toys** gem, which brings in **toys-core** as a
 dependency.
 
-### Create a Toys File
+### Create a new executable
 
-A *Toys File* is a configuration file used by Toys to define commands, called
-"tools" in Toys lingo. If you've used the **toys** binary itself, you've
-probably written one already. You use the same file format when you create your
-own command line binary using Toys-Core.
+We'll start by creating an executable binary. Using your favorite text editor,
+create new a file called `mycmd`, copy the following into it, and save it:
 
-Create a new empty directory. In the directory, using your favorite text
-editor, create a file called `tools.rb`. Copy the following into the file, and
-save it:
+    #!/usr/bin/env ruby
+    # frozen_string_literal: true
 
-    tool "greet" do
-      desc "My first tool!"
+    require "toys-core"
+
+    cli = Toys::CLI.new
+
+    exit(cli.run(*ARGV))
+
+Make sure the file's executable bit is set:
+
+    chmod a+x mycmd
+
+That's it! This is a fully-functional Toys-based executable! Let's see what
+happens when you run it:
+
+    ./mycmd
+
+Just as with Toys itself, you get a help screen by default (since we haven't
+yet actually implemented any behavior.) As you can see, some of the same
+features from Toys are present already: online help, and `--verbose` and
+`--quiet` flags. These features can of course all be customized, but they're
+useful to have to start off.
+
+### Add some functionality
+
+You implement the functionality of your executable using the same DSL that you
+use to write Toys files. You could point your executable at a directory
+containing actual Toys files, but the simplest option is to provide the
+information to the Toys CLI object in a block.
+
+Let's add some functionality. 
+
+    #!/usr/bin/env ruby
+    # frozen_string_literal: true
+
+    require "toys-core"
+
+    cli = Toys::CLI.new
+
+    #### Insert the following block ...
+    cli.add_config_block do
+      desc "My first executable!"
       flag :whom, default: "world"
       def run
         puts "Hello, #{whom}!"
       end
     end
 
-If you're already familiar with writing Toys Files, feel free to modify and
-experiment with it.
+    exit(cli.run(*ARGV))
 
-### Create Your Binary
+If you went through the tutorial in the README for the Toys gem, this should
+look familiar. Let's run it now, and experiment with passing flags to it.
 
-Now we will write a command line binary that uses that Toys File. In the same
-new directory, create a new file called `mycmd`. Copy the following into it:
+    ./mycmd
+    ./mycmd --whom=ruby
+    ./mycmd --bye
+    ./mycmd --help
+
+Notice that we did not create a `tool` block, but instead set up description,
+flags, and functionality directly in the configuration block. This configures
+the "root tool", i.e. what happens when you run the executable without passing
+a tool name to it. (Note, it's legal to do this in Toys as well, by setting
+functionality at the "top level" of a `.toys.rb` file without including any
+`tool` block.)
+
+### Tool-based executables
+
+But perhaps you want your executable to have multiple "tools", similar to other
+familiar executables like git or kubectl. You can include the same `tool`
+blocks, and even nested tools, in your config. Here's an example:
 
     #!/usr/bin/env ruby
+    # frozen_string_literal: true
+
     require "toys-core"
+
     cli = Toys::CLI.new
-    cli.add_config_path(File.join(__dir__, "tools.rb"))
-    exit(cli.run(ARGV))
 
-Save the file and make it executable:
+    #### Change the config block as follows ...
+    cli.add_config_block do
+      # Things outside any tool block still apply to the root
+      desc "My first executable with several tools"
 
-    chmod +x mycmd
+      # We'll put the greet function here
+      tool "greet" do
+        desc "My first tool!"
+        flag :whom, default: "world"
+        def run
+          puts "Hello, #{whom}!"
+        end
+      end
 
-Now you can run your command. Try these, to get a feel for how it behaves by
-default:
+      # Try writing a second tool here. You could use the "new-repo"
+      # example from the Toys tutorial.
+    end
+
+    exit(cli.run(*ARGV))
+
+Now you can run `greet` as a tool:
 
     ./mycmd greet
-    ./mycmd greet --whom=Ruby
-    ./mycmd greet --help
+
+The "root" functionality once again shows global help, including a list of the
+available tools.
+
     ./mycmd
-    ./mycmd foo
 
-### Next Steps
+Notice that the description set at the "root" of the config block (outside the
+tool blocks) shows up here.     
 
-A basic command line binary based on Toys-Core consists of just the binary
-itself, and a Toys File (or directory) defining the commands to run. All the
-features of Toys, described in the
-[Toys User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md),
-are at your disposal for writing tools for your binary. Or, if you want your
-binary to have a single function rather than support a set of tools, you can
-just write a toplevel tool in your Toys File.
+### Configuring the CLI
 
-You'll notice that Toys-Core provides a number of features "out of the box",
-such as online help, verbose and quiet flags, and default descriptions. These
-features are controlled by Toys *Middleware*, which are classes that customize
-the base behavior of Toys-Core. Toys-Core defaults to a certain set of
-middleware, but you can customize and change them for your own binary.
+So far, our executable behaves very similarly to Toys itself. Help screens are
+shown by default, flags for help and verbosity are provided automatically, and
+any exceptions are displayed to the terminal.
 
-Finally, you may want to distribute your binary in a gem. Just make sure you
-include the Toys File or Directory in the gem, and that your binary configures
-`Toys::CLI` with the correct config path. The Toys File does not need to be in
-the require path (i.e. in the `lib` directory), and indeed it is probably best
-for it not to be, to prevent users of your gem from requiring it accidentally.
+These and many more aspects of the behavior of our executable can be customized
+by passing options to the `Toys::CLI` constructor. Here's an example that
+modifies error handling and delimiter parsing.
 
-See the
-[Toys-Core User's Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md)
-for thorough documentation on writing a command line binary using Toys-Core.
+    #!/usr/bin/env ruby
+    # frozen_string_literal: true
+
+    require "toys-core"
+
+    #### Pass some additional options to the CLI constructor ...
+    cli = Toys::CLI.new(
+      extra_delimiters: ":",
+      error_handler: ->(e) { puts "Dude, an error happened..." }
+    )
+
+    #### Change the config block as follows ...
+    cli.add_config_block do
+      tool "example" do
+        tool "greet" do
+          def run
+            puts "Hello, world!"
+          end
+        end
+        tool "error" do
+          def run
+            raise "Whoops!"
+          end
+        end
+      end
+    end
+
+    exit(cli.run(*ARGV))
+
+Try these runs. Do they behave as you expected?
+
+    ./mycmd example greet
+    ./mycmd example:greet
+    ./mycmd example.greet
+    ./mycmd example error
+
+The next example modifies the *middleware stack* to effect other kinds of
+behavior change.
+
+    #!/usr/bin/env ruby
+    # frozen_string_literal: true
+
+    require "toys-core"
+
+    #### Change the CLI construction again ...
+    middlewares = [
+      [:set_default_descriptions, default_tool_desc: "Hey look, a tool!"],
+      [:show_help, help_flags: true]
+    ]
+    cli = Toys::CLI.new middleware_stack: middlewares
+
+    #### Use this config block ...
+    cli.add_config_block do
+      tool "greet" do
+        def run
+          puts "Hello, world!"
+        end
+      end
+    end
+
+    exit(cli.run(*ARGV))
+
+We've now modified the default description applied to tools that don't provide
+their own description. See the effect with:
+
+    ./mycmd greet --help
+
+We've also omitted some of the default middleware, including the one that
+displays a tool's help screen if it has no `run` method. Since we haven't
+defined a toplevel `run` method in this last example, invoking the root tool
+now causes an error:
+
+    ./mycmd
+
+It is even possible to write your own middleware. In general, while the
+`Toys::CLI` constructor provides defaults that should work for many use cases,
+you can also customize it heavily to suit the needs of your executable.
+
+### Packaging as a gem
+
+So far we've created simple one-file executables that you could distribute by
+itself. However, the `toys-core` gem is a dependency, and your users will need
+to have it installed. You could alleviate this by wrapping your executable in a
+gem that can declare `toys-core` as a dependency explicitly.
+
+The [examples directory](https://github.com/dazuma/toys/tree/master/toys-core/examples)
+includes a few simple examples that you can use as a starting point.
+
+To experiment with the examples, clone the Toys repo from GitHub:
+
+    git clone https://github.com/dazuma/toys.git
+    cd toys
+
+Navigate to the simple-gem example:
+
+    cd toys-core/examples/simple-gem
+
+This example wraps the simple "greet" executable that we
+[covered earlier](#Add_some_functionality) in a gem. You can see the
+[executable file](https://github.com/dazuma/toys/tree/master/toys-core/examples/simple-gem/bin/toys-core-simple-example)
+in the bin directory.
+
+Try it out by building and installing the gem. From the `examples/simple-gem`
+directory, run:
+
+    toys install
+
+Once the gem has successfully installed, you can run the executable, which
+Rubygems should have added to your path.
+
+    toys-core-simple-example --whom=Toys
+
+Clean up by uninstalling the gem:
+
+    gem uninstall toys-core-simple-example
+
+If the implementation of your executable is more complex, you might want to
+break it up into multiple files. The multi-file gem example demonstrates this.
+
+    cd ../multi-file-gem
+
+This executable's implementation resides in its
+[lib directory](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/lib),
+a technique that may be familiar to writers of command line executables. More
+interestingly, the tools themselves are no longer defined in a block passed to
+the CLI object, but have been moved into a separate
+["tools" directory](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/tools).
+This directory has the same structure and supports the same features that are
+available when writing complex sets of tools in a `.toys` directory. You then
+configure the CLI object to look in this directory for its tools definitions,
+as you can see in
+[the code](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/lib/toys-core-multi-gem-example.rb).
+
+Try it out now. From the `examples/multi-file-gem` directory, run:
+
+    toys install
+
+Once the gem has successfully installed, you can run the executable, which
+Rubygems should have added to your path.
+
+    toys-core-multi-file-example greet
+
+Clean up by uninstalling the gem:
+
+    gem uninstall toys-core-multi-file-example
+
+### Learning more
+
+This introduction should be enough to get you started. However, Toys-Core is a
+deep framework with many more features. Learn about how to write tools using
+the Toys DSL, including validating and interpreting command line arguments,
+using templates and mixins, controlling subprocesses, and producing nice styled
+output, in the
+[Toys User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+Learn more about how to customize and package your own executable, including
+handling errors, controlling log output, and providing your own mixins,
+templates, and middleware, in the
+[Toys-Core User Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md).
 
 ## License
 

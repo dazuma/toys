@@ -63,6 +63,8 @@ Naming/FileName:
   Exclude:
     - "test/lookup-cases/**/*"
     - "lib/toys-core.rb"
+    - "examples/multi-file-gem/**/*.rb"
+    - "examples/*/*.gemspec"
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
