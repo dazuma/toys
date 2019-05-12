@@ -51,19 +51,16 @@ tool "install" do
   include :exec, exit_on_nonzero_status: true
   include :terminal
 
-  def handle_gem(gem_name, version)
-    puts("**** Installing #{gem_name} #{version} from local build...", :bold, :cyan)
+  def handle_gem(gem_name)
+    puts("**** Installing #{gem_name} from local build...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      subcli = cli.child.add_config_path(".toys.rb")
-      exit_on_nonzero_status(subcli.run("build"))
-      exec(["gem", "install", "pkg/#{gem_name}-#{version}.gem"])
+      exec_tool(["install", "-y"], cli: cli.child.add_config_path(".toys.rb"))
     end
   end
 
   def run
-    version = capture(["./toys-dev", "system", "version"], chdir: __dir__).strip
-    handle_gem("toys-core", version)
-    handle_gem("toys", version)
+    handle_gem("toys-core")
+    handle_gem("toys")
   end
 end
 

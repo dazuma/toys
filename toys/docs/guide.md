@@ -2076,6 +2076,9 @@ gems themselves.
     # The normal "build" tool that just builds a gem into the pkg directory.
     expand :gem_build
 
+    # An "install" tool that builds the gem and installs it locally.
+    expand :gem_build, name: "install", install_gem: true
+
     # A full gem "release" tool that builds the gem, and pushes it to rubygems.
     # This assumes your local rubygems configuration is set up with the proper
     # credentials.
