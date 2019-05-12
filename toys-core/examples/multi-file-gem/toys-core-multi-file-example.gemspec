@@ -12,7 +12,7 @@ require "toys-core"
   spec.description =
     "An example command line gem created using toys-core. For more" \
     " information on toys-core, see https://github.com/dazuma/toys"
-  spec.license = "BSD-3-Clause"
+  spec.license = "MIT"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("*.md") + ::Dir.glob("bin/*") +

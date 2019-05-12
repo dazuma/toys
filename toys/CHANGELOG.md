@@ -2,6 +2,7 @@
 
 ### 0.8.0 / Unreleased
 
+* CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
