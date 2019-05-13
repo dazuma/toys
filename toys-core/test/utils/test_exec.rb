@@ -36,6 +36,7 @@ describe Toys::Utils::Exec do
     it "detects zero exit codes" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", "exit 0"])
+        assert_nil(result.exception)
         assert_equal(0, result.exit_code)
         assert_equal(true, result.success?)
         assert_equal(false, result.error?)
@@ -45,21 +46,22 @@ describe Toys::Utils::Exec do
     it "detects nonzero exit codes" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", "exit 3"])
+        assert_nil(result.exception)
         assert_equal(3, result.exit_code)
         assert_equal(false, result.success?)
         assert_equal(true, result.error?)
       end
     end
 
-    # TODO: Fix this.
-    # it "detects ENOENT" do
-    #   ::Timeout.timeout(1) do
-    #     result = exec.exec(["hohohohohohoho"])
-    #     assert_equal(3, result.exit_code)
-    #     assert_equal(false, result.success?)
-    #     assert_equal(true, result.error?)
-    #   end
-    # end
+    it "detects ENOENT" do
+      ::Timeout.timeout(1) do
+        result = exec.exec(["hohohohohohoho"])
+        assert_instance_of(::Errno::ENOENT, result.exception)
+        assert_equal(127, result.exit_code)
+        assert_equal(false, result.success?)
+        assert_equal(true, result.error?)
+      end
+    end
 
     it "gets the name" do
       ::Timeout.timeout(1) do

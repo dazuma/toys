@@ -407,10 +407,16 @@ module Toys
           @out = controller_streams[:out]
           @err = controller_streams[:err]
           @captures = captures
-          @pid = pid
+          @pid = @exception = @wait_thread = nil
+          case pid
+          when ::Integer
+            @pid = pid
+            @wait_thread = ::Process.detach(pid)
+          when ::Exception
+            @exception = pid
+          end
           @join_threads = join_threads
           @result_callback = result_callback
-          @wait_thread = ::Process.detach(pid)
           @result = nil
         end
 
@@ -445,10 +451,19 @@ module Toys
         attr_reader :err
 
         ##
-        # Returns the process ID.
-        # @return [Integer]
+        # Returns the process ID, or `nil` if a process couldn't be started.
+        # Exactly one of `exception` and `pid` will be non-nil.
+        # @return [Integer,nil]
         #
         attr_reader :pid
+
+        ##
+        # Returns the exception raised if a process couldn't be started, or
+        # `nil` if the process was successfully started.
+        # Exactly one of `exception` and `pid` will be non-nil.
+        # @return [Exception,nil]
+        #
+        attr_reader :exception
 
         ##
         # Captures the remaining data in the given stream.
@@ -580,7 +595,7 @@ module Toys
         # @param [Integer,String] sig The signal to send.
         #
         def kill(sig)
-          ::Process.kill(sig, pid)
+          ::Process.kill(sig, pid) if pid
         end
         alias signal kill
 
@@ -590,7 +605,7 @@ module Toys
         # @return [Boolean]
         #
         def executing?
-          @wait_thread.status ? true : false
+          @wait_thread&.status ? true : false
         end
 
         ##
@@ -602,14 +617,12 @@ module Toys
         #     if a timeout occurred.
         #
         def result(timeout: nil)
-          return nil unless @wait_thread.join(timeout)
+          return nil if @wait_thread && !@wait_thread.join(timeout)
           @result ||= begin
             close_streams
             @join_threads.each(&:join)
-            status = @wait_thread.value
-            result = Result.new(name, @captures[:out], @captures[:err], status)
-            @result_callback&.call(result)
-            result
+            Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
+                  .tap { |result| @result_callback&.call(result) }
           end
         end
 
@@ -653,11 +666,12 @@ module Toys
       #
       class Result
         ## @private
-        def initialize(name, out, err, status)
+        def initialize(name, out, err, status, exception)
           @name = name
           @captured_out = out
           @captured_err = err
           @status = status
+          @exception = exception
         end
 
         ##
@@ -681,17 +695,29 @@ module Toys
         attr_reader :captured_err
 
         ##
-        # Returns the status code object.
-        # @return [Process::Status]
+        # Returns the status code object, or `nil` if the process could not
+        # be started.
+        # Exactly one of `exception` and `status` will be non-nil.
+        # @return [Process::Status,nil]
         #
         attr_reader :status
 
         ##
+        # Returns the exception raised if a process couldn't be started, or
+        # `nil` if the process was successfully started.
+        # Exactly one of `exception` and `status` will be non-nil.
+        # @return [Exception]
+        #
+        attr_reader :exception
+
+        ##
         # Returns the numeric status code.
+        # This will be a nonzero integer if the process failed to start. That
+        # is, `exit_code` will never be `nil`, even if `status` is `nil`.
         # @return [Integer]
         #
         def exit_code
-          status.exitstatus
+          status ? status.exitstatus : 127
         end
 
         ##
@@ -735,10 +761,7 @@ module Toys
           setup_out_stream(:out)
           setup_out_stream(:err)
           log_command
-          pid = @fork_func ? start_fork : start_process
-          @child_streams.each(&:close)
-          controller = Controller.new(@config_opts[:name], @controller_streams, @captures, pid,
-                                      @join_threads, @config_opts[:result_callback])
+          controller = start_with_controller
           return controller if @config_opts[:background]
           begin
             @block&.call(controller)
@@ -757,6 +780,18 @@ module Toys
             cmd_str ||= @spawn_cmd.size == 1 ? @spawn_cmd.first : @spawn_cmd.inspect if @spawn_cmd
             logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str) if cmd_str
           end
+        end
+
+        def start_with_controller
+          pid =
+            begin
+              @fork_func ? start_fork : start_process
+            rescue ::StandardError => e
+              e
+            end
+          @child_streams.each(&:close)
+          Controller.new(@config_opts[:name], @controller_streams, @captures, pid,
+                         @join_threads, @config_opts[:result_callback])
         end
 
         def start_process

@@ -292,9 +292,11 @@ describe Toys::StandardMixins::Exec do
 
   describe "exit_on_nonzero_status method" do
     let(:ok_process_status) { FakeProcessStatus.new(0) }
-    let(:ok_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, nil, ok_process_status) }
+    let(:ok_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, nil, ok_process_status, nil) }
     let(:error_process_status) { FakeProcessStatus.new(2) }
-    let(:error_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, nil, error_process_status) }
+    let(:error_exec_result) {
+      Toys::Utils::Exec::Result.new(nil, nil, nil, error_process_status, nil)
+    }
 
     it "handles ok result object" do
       result = ok_exec_result

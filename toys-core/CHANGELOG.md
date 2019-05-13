@@ -9,6 +9,7 @@
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
 * CHANGED: Lifted ModuleLookup, Terminal, and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.
+* CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 
