@@ -55,21 +55,21 @@ tool "ci" do
               " entrypoint for CI systems like Travis. Any failure will" \
               " result in a nonzero result code."
 
-  include :exec
+  include :exec, result_callback: :result_callback
   include :terminal
 
-  def run_stage(name, tool)
-    if exec_tool(tool).success?
-      puts("** #{name} passed\n\n", :green, :bold)
+  def result_callback(result)
+    if result.success?
+      puts("** #{result.name} passed\n\n", :green, :bold)
     else
-      puts("** CI terminated: #{name} failed!", :red, :bold)
+      puts("** CI terminated: #{result.name} failed!", :red, :bold)
       exit(1)
     end
   end
 
   def run
-    run_stage("Tests", ["test"])
-    run_stage("Style checker", ["rubocop"])
-    run_stage("Docs generation", ["yardoc", "--no-output"])
+    exec_tool(["test"], name: "Tests")
+    exec_tool(["rubocop"], name: "Style checker")
+    exec_tool(["yardoc", "--no-output"], name: "Docs generation")
   end
 end

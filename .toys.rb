@@ -65,15 +65,23 @@ tool "ci" do
               " entrypoint for CI systems like Travis. Any failure will" \
               " result in a nonzero result code."
 
-  include :exec, exit_on_nonzero_status: true
+  include :exec, result_callback: :result_callback
   include :terminal
+
+  def result_callback(result)
+    if result.success?
+      puts("**** #{result.name} GEM OK.", :bold, :cyan)
+    else
+      puts("**** #{result.name} GEM FAILED!", :red, :bold)
+      exit(1)
+    end
+  end
 
   def handle_gem(gem_name)
     puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      exec_tool(["ci"], cli: cli.child.add_config_path(".toys.rb"))
+      exec_tool(["ci"], name: gem_name.upcase, cli: cli.child.add_config_path(".toys.rb"))
     end
-    puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
   end
 
   def run

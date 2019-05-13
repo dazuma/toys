@@ -40,9 +40,11 @@ module Toys
     #
     # A variety of options can be used to control subprocesses. These include:
     #
+    # *  **:name** (Object) An optional object that can be used to identify
+    #    this subprocess. It is available in the controller and result objects.
     # *  **:env** (Hash) Environment variables to pass to the subprocess
     # *  **:logger** (Logger) Logger to use for logging the actual command.
-    #    If not present, the command is not logged.
+    #     If not present, the command is not logged.
     # *  **:log_level** (Integer,false) Level for logging the actual command.
     #    Defaults to Logger::INFO if not present. You may also pass `false` to
     #    disable logging of the command.
@@ -50,6 +52,8 @@ module Toys
     #    Defaults to the `inspect` representation of the command.
     # *  **:background** (Boolean) Runs the process in the background,
     #    returning a controller object instead of a result object.
+    # *  **:result_callback** (Proc) Called and passed the result object when
+    #    a subprocess exits.
     # *  **:in** Connects the input stream of the subprocess. See the section
     #    on stream handling.
     # *  **:out** Connects the standard output stream of the subprocess. See
@@ -293,6 +297,9 @@ module Toys
       # Execute the given string in a shell. Returns the exit code.
       # Cannot be run in the background.
       #
+      # If a block is provided, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it.
+      #
       # @param [String] cmd The shell command to execute.
       # @param [Hash] opts The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
@@ -324,8 +331,9 @@ module Toys
           logger
           log_cmd
           log_level
-          nonzero_status_handler
+          name
           out
+          result_callback
         ].freeze
 
         ##
@@ -393,17 +401,24 @@ module Toys
       #
       class Controller
         ## @private
-        def initialize(controller_streams, captures, pid, join_threads, nonzero_status_handler)
+        def initialize(name, controller_streams, captures, pid, join_threads, result_callback)
+          @name = name
           @in = controller_streams[:in]
           @out = controller_streams[:out]
           @err = controller_streams[:err]
           @captures = captures
           @pid = pid
           @join_threads = join_threads
-          @nonzero_status_handler = nonzero_status_handler
+          @result_callback = result_callback
           @wait_thread = ::Process.detach(pid)
           @result = nil
         end
+
+        ##
+        # Return the subcommand's name.
+        # @return [Object]
+        #
+        attr_reader :name
 
         ##
         # Return the subcommand's standard input stream (which can be written
@@ -592,10 +607,9 @@ module Toys
             close_streams
             @join_threads.each(&:join)
             status = @wait_thread.value
-            if @nonzero_status_handler && status.exitstatus != 0
-              @nonzero_status_handler.call(status)
-            end
-            Result.new(@captures[:out], @captures[:err], status)
+            result = Result.new(name, @captures[:out], @captures[:err], status)
+            @result_callback&.call(result)
+            result
           end
         end
 
@@ -639,11 +653,18 @@ module Toys
       #
       class Result
         ## @private
-        def initialize(out, err, status)
+        def initialize(name, out, err, status)
+          @name = name
           @captured_out = out
           @captured_err = err
           @status = status
         end
+
+        ##
+        # Return the subcommand's name.
+        # @return [Object]
+        #
+        attr_reader :name
 
         ##
         # Returns the captured output string, if the command was configured
@@ -716,8 +737,8 @@ module Toys
           log_command
           pid = @fork_func ? start_fork : start_process
           @child_streams.each(&:close)
-          controller = Controller.new(@controller_streams, @captures, pid, @join_threads,
-                                      @config_opts[:nonzero_status_handler])
+          controller = Controller.new(@config_opts[:name], @controller_streams, @captures, pid,
+                                      @join_threads, @config_opts[:result_callback])
           return controller if @config_opts[:background]
           begin
             @block&.call(controller)

@@ -7,8 +7,10 @@
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: `:gem_build` template includes an `:install_gem` options.
+* ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
 * FIXED: Prevented toys-core from being ousted from the load path if a toys file invoked bundler setup.
+* FIXED: When reporting errors in toys files, the line number was off by 2.
 
 ### 0.7.0 / 2019-01-23
 

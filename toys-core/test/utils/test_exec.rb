@@ -32,7 +32,7 @@ describe Toys::Utils::Exec do
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
 
-  describe "exit codes" do
+  describe "result object" do
     it "detects zero exit codes" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", "exit 0"])
@@ -48,6 +48,49 @@ describe Toys::Utils::Exec do
         assert_equal(3, result.exit_code)
         assert_equal(false, result.success?)
         assert_equal(true, result.error?)
+      end
+    end
+
+    # TODO: Fix this.
+    # it "detects ENOENT" do
+    #   ::Timeout.timeout(1) do
+    #     result = exec.exec(["hohohohohohoho"])
+    #     assert_equal(3, result.exit_code)
+    #     assert_equal(false, result.success?)
+    #     assert_equal(true, result.error?)
+    #   end
+    # end
+
+    it "gets the name" do
+      ::Timeout.timeout(1) do
+        result = exec.exec(["echo", "hi"], out: :capture, name: "my-echo")
+        assert_equal("my-echo", result.name)
+      end
+    end
+  end
+
+  describe "result callback" do
+    it "is called on zero exit codes" do
+      ::Timeout.timeout(1) do
+        was_called = false
+        callback = proc do |result|
+          assert(result.success?)
+          was_called = true
+        end
+        exec.exec(["echo", "hi"], out: :capture, result_callback: callback)
+        assert_equal(true, was_called)
+      end
+    end
+
+    it "is called on nonzero exit codes" do
+      ::Timeout.timeout(1) do
+        was_called = false
+        callback = proc do |result|
+          assert(result.error?)
+          was_called = true
+        end
+        exec.ruby(["-e", "exit 3"], result_callback: callback)
+        assert_equal(true, was_called)
       end
     end
   end
@@ -398,6 +441,15 @@ describe Toys::Utils::Exec do
   end
 
   describe "controller" do
+    it "gets the name" do
+      ::Timeout.timeout(1) do
+        result = exec.exec(["echo", "hi"], out: :capture, name: "my-echo") do |c|
+          assert_equal("my-echo", c.name)
+        end
+        assert_equal("my-echo", result.name)
+      end
+    end
+
     it "reads and writes streams" do
       ::Timeout.timeout(1) do
         result = exec.ruby(["-e", 'STDOUT.puts "1"; STDOUT.flush;' \

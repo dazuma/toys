@@ -46,15 +46,39 @@ module Toys
     # by `Process#spawn`, and some options supported by {Toys::Utils::Exec}
     # itself.
     #
-    # In addition, this mixin supports one more option,
-    # `exit_on_nonzero_status`. When set to true, if any subprocess returns a
-    # nonzero result code, the tool will immediately exit with that same code,
-    # similar to `set -e` in a bash script.
+    # You can set default configuration by passing options to the `include`
+    # directive. For example, to log commands at the debug level for all
+    # subprocesses spawned by this tool:
     #
-    # You can set initial configuration by passing options to the `include`
-    # directive. For example:
+    #     include :exec, log_level: Logger::DEBUG
     #
-    #     include :exec, exit_on_nonzero_status: true
+    # Two special options are also recognized by the mixin.
+    #
+    # *  A **:result_callback** proc may take a second argument. If it does,
+    #    the tool object is passed as the second argument. This is useful if a
+    #    `:result_callback` is applied to the entire tool by passing it to the
+    #    `include` directive. In that case, the tool object is not otherwise in
+    #    scope, so you cannot access it otherwise. For example, here is how to
+    #    log the exit code for every subcommand:
+    #
+    #        callback = proc do |result, tool|
+    #          tool.logger.info "Exit code: #{result.exit_code}"
+    #        end
+    #        include :exec, result_callback: callback
+    #
+    #    You may also pass a symbol as the `:result_callback`. The method with
+    #    that name is then called as the callback. The method must take one
+    #    argument, the result object.
+    #
+    # *  If **:exit_on_nonzero_status** is set to true, a nonzero exit code
+    #    returned by the subprocess will also cause the tool to exit
+    #    immediately with that same code.
+    #
+    #    This is particularly useful as an option to the `include` directive,
+    #    where it causes any subprocess failure to abort the tool, similar to
+    #    setting `set -e` in a bash script.
+    #
+    #        include :exec, exit_on_nonzero_status: true
     #
     module Exec
       include Mixin
@@ -309,13 +333,23 @@ module Toys
 
       ## @private
       def self._setup_exec_opts(opts, tool)
-        return opts unless opts.key?(:exit_on_nonzero_status)
-        nonzero_status_handler =
-          if opts[:exit_on_nonzero_status]
-            proc { |s| tool.exit(s.exitstatus) }
-          end
-        opts = opts.merge(nonzero_status_handler: nonzero_status_handler)
-        opts.delete(:exit_on_nonzero_status)
+        if opts.key?(:exit_on_nonzero_status)
+          result_callback =
+            if opts[:exit_on_nonzero_status]
+              proc { |r| tool.exit(r.exit_code) if r.error? }
+            end
+          opts = opts.merge(result_callback: result_callback)
+          opts.delete(:exit_on_nonzero_status)
+        elsif opts.key?(:result_callback)
+          orig_callback = opts[:result_callback]
+          result_callback =
+            if orig_callback.is_a?(::Symbol)
+              tool.method(orig_callback)
+            elsif orig_callback.respond_to?(:call)
+              proc { |r| orig_callback.call(r, tool) }
+            end
+          opts = opts.merge(result_callback: result_callback)
+        end
         opts
       end
     end

@@ -47,7 +47,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
       ::Toys::DSL::Tool.prepare(tool_class, remaining_words, source) do
         ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
           # rubocop:disable Security/Eval
-          eval(str, __binding, path, 0)
+          eval(str, __binding, path, -2)
           # rubocop:enable Security/Eval
         end
       end

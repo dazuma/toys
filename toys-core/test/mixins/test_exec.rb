@@ -194,11 +194,107 @@ describe Toys::StandardMixins::Exec do
     refute_equal(0, cli.run("foo"))
   end
 
+  it "handles a proc as a result callback" do
+    cli.add_config_block do
+      tool "foo" do
+        include :exec
+        def run
+          configure_exec(
+            result_callback: proc do |r|
+              exit(r.exit_code)
+            end
+          )
+          exec(["false"])
+          exit(0)
+        end
+      end
+    end
+    refute_equal(0, cli.run("foo"))
+  end
+
+  it "handles a method as a result callback" do
+    cli.add_config_block do
+      tool "foo" do
+        include :exec
+
+        def callback(result)
+          exit(result.exit_code)
+        end
+
+        def run
+          configure_exec(result_callback: :callback)
+          exec(["false"])
+          exit(0)
+        end
+      end
+    end
+    refute_equal(0, cli.run("foo"))
+  end
+
+  describe "include options" do
+    it "supports a stream option" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, out: :capture
+          def run
+            result = exec(["echo", "hello"])
+            exit(result.captured_out == "hello\n" ? 1 : 2)
+          end
+        end
+      end
+      assert_equal(1, cli.run("foo"))
+    end
+
+    it "supports exit_on_nonzero_status" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          def run
+            exec(["false"])
+          end
+        end
+      end
+      refute_equal(0, cli.run("foo"))
+    end
+
+    it "supports a proc as a result_callback" do
+      cli.add_config_block do
+        tool "foo" do
+          callback = proc do |result, tool|
+            tool.exit(result.exit_code)
+          end
+          include :exec, result_callback: callback
+          def run
+            exec(["false"])
+          end
+        end
+      end
+      refute_equal(0, cli.run("foo"))
+    end
+
+    it "supports a method name as a result_callback" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, result_callback: :callback
+
+          def run
+            exec(["false"])
+          end
+
+          def callback(result)
+            exit(result.exit_code)
+          end
+        end
+      end
+      refute_equal(0, cli.run("foo"))
+    end
+  end
+
   describe "exit_on_nonzero_status method" do
     let(:ok_process_status) { FakeProcessStatus.new(0) }
-    let(:ok_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, ok_process_status) }
+    let(:ok_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, nil, ok_process_status) }
     let(:error_process_status) { FakeProcessStatus.new(2) }
-    let(:error_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, error_process_status) }
+    let(:error_exec_result) { Toys::Utils::Exec::Result.new(nil, nil, nil, error_process_status) }
 
     it "handles ok result object" do
       result = ok_exec_result
