@@ -21,6 +21,8 @@
 # IN THE SOFTWARE.
 ;
 
+require "shellwords"
+
 module Toys
   module Utils
     ##
@@ -47,28 +49,69 @@ module Toys
       end
 
       ##
-      # Print out completions, assuming the correct bash environment
+      # Print out completions, assuming the correct bash environment.
       #
       def run
-        words, last = analyze_line
-        exit(1) unless words.shift
-        compute_completions(words, last).each do |completion|
-          puts completion
-        end
+        line = ENV["COMP_LINE"].to_s
+        point = ENV["COMP_POINT"].to_i
+        completions = compute(line, point)
+        exit(1) unless completions
+        completions.each { |completion| puts completion }
+      end
+
+      ##
+      # Internal completion computation. Entrypoint for testing.
+      #
+      # @param [String] line The command line
+      # @param [Integer] point The index where the cursor is located
+      # @return [Array<String>,nil] completions, or nil for error.
+      #
+      def compute(line, point = 0)
+        point = line.length if point.zero?
+        line = line[0, point]
+        words = split(line)
+        last_type, last = words.pop
+        return nil unless words.shift
+        words.map! { |_type, word| word }
+        compute_completions(words, last, last_type)
       end
 
       private
 
-      def analyze_line
-        line = ENV["COMP_LINE"].to_s
-        point = (ENV["COMP_POINT"] || line.length).to_i
-        line = line[0, point].lstrip
-        words = line.split(" ", -1)
-        last = words.pop.to_s
-        [words, last]
+      # rubocop: disable all
+      def split(line)
+        words = []
+        field = String.new
+        field_type = nil
+        regex = /\G\s*(?>([^\s\\\'\"]+)|'([^\']*)(?:'|\z)|"((?:[^\"\\]|\\.)*)(?:"|\z)|(\\.?)|(\S))(\s|\z)?/m
+        line.scan(regex) do |word, sq, dq, esc, garbage, sep|
+          raise ArgumentError, "Didn't expect garbage: #{line.inspect}" if garbage
+          field << (word || sq || (dq && dq.gsub(/\\([$`"\\\n])/, '\\1')) || esc.gsub(/\\(.)/, '\\1'))
+          field_type = field_type ? :multi : sq ? :single : dq ? :double : :bare
+          if sep
+            words << [field_type, field]
+            field_type = nil
+            field = sep.empty? ? nil : String.new
+          end
+        end
+        words << [field_type || :bare, field] if field
+        words
+      end
+      # rubocop:enable all
+
+      def format_str(candidate, type)
+        type = :bare if candidate.include?("'") && type == :single
+        case type
+        when :single
+          "'#{candidate}'"
+        when :double
+          '"' + candidate.gsub(/[$`"\\\n]/, '\\\\\\1') + '"'
+        else
+          Shellwords.escape(candidate)
+        end
       end
 
-      def compute_completions(words, last)
+      def compute_completions(words, last, last_type)
         tool, args = @loader.lookup(words)
         candidates = []
         if @complete_subtools && args.empty?
@@ -77,7 +120,9 @@ module Toys
         if @complete_flags && (last.empty? || last.start_with?("-"))
           candidates.concat(tool.used_flags)
         end
-        candidates.find_all { |candidate| candidate.start_with?(last) }
+        candidates
+          .find_all { |candidate| candidate.start_with?(last) }
+          .map { |candidate| format_str(candidate, last_type) }
       end
     end
   end

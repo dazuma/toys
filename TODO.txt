@@ -1,6 +1,6 @@
 # TODO items
 
-This is a dumping ground of ideas and future directions for Toys.
+This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
@@ -8,7 +8,6 @@ This is a dumping ground of ideas and future directions for Toys.
 
 * toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
-* toys system clean: Clean old installations of toys
 * Range acceptors. May be difficult unless we can limit the types.
 * Line length limit for Terminal
 * Something to generate output formats
@@ -18,3 +17,7 @@ This is a dumping ground of ideas and future directions for Toys.
 * Additional ways to find terminal size
 * Convenience methods for creating pipes/splits/joins in exec
 * Allow flag parameters and args to customize shell completion
+
+## Other ideas we probably won't do
+
+* toys system clean: Clean old installations of toys. Probably not a good idea because other versions may be in bundles.
