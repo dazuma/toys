@@ -127,7 +127,7 @@ module Toys
       # @private
       #
       def initialize(key, flags, used_flags, report_collisions, accept, handler,
-                     default, display_name, group)
+                     default, completion, display_name, group)
         @group = group
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
@@ -136,6 +136,7 @@ module Toys
         @desc = WrappableString.make(desc)
         @long_desc = WrappableString.make_array(long_desc)
         @default = default
+        @completion = completion
         needs_val = (!accept.nil? && accept != ::TrueClass && accept != ::FalseClass) ||
                     (!default.nil? && default != true && default != false)
         create_default_flag_if_needed(needs_val)
@@ -191,6 +192,12 @@ module Toys
       # @return [Proc]
       #
       attr_reader :handler
+
+      ##
+      # Returns the proc that determines shell completions for the value.
+      # @return [Toys::Definition::Completion]
+      #
+      attr_reader :completion
 
       ##
       # The type of flag. Possible values are `:boolean` for a simple boolean

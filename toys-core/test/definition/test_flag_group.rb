@@ -25,11 +25,11 @@ require "helper"
 
 describe Toys::Definition::FlagGroup do
   def add_flags(group)
-    flag = Toys::Definition::Flag.new(:flag1, [], [], true, nil, nil, nil, nil, group)
+    flag = Toys::Definition::Flag.new(:flag1, [], [], true, nil, nil, nil, nil, nil, group)
     group << flag
-    flag = Toys::Definition::Flag.new(:flag2, [], [], true, nil, nil, nil, nil, group)
+    flag = Toys::Definition::Flag.new(:flag2, [], [], true, nil, nil, nil, nil, nil, group)
     group << flag
-    flag = Toys::Definition::Flag.new(:flag3, [], [], true, nil, nil, nil, nil, group)
+    flag = Toys::Definition::Flag.new(:flag3, [], [], true, nil, nil, nil, nil, nil, group)
     group << flag
   end
 

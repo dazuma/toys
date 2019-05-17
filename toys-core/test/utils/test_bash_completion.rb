@@ -35,7 +35,12 @@ describe Toys::Utils::BashCompletion do
     cli = Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: [])
     cli.add_config_block do
       tool "one" do
-        flag :hello
+        flag :hello, completion: ["neighbor", "kitty"]
+        flag :world, "--world VALUE", completion: ["building", "news"]
+        flag :ruby, "--ruby [VALUE]", completion: ["gems", "tuesday"]
+        required_arg :foo, completion: ["lish", "sball"]
+        optional_arg :bar, completion: ["n", "k"]
+        remaining_args :baz, completion: ["aar", "ooka"]
       end
       tool "two" do
       end
@@ -74,9 +79,54 @@ describe Toys::Utils::BashCompletion do
     assert_equal(["four"], result)
   end
 
-  it "completes hello flag" do
+  it "completes flag names and first arg" do
+    result = completion.compute("toys one ")
+    assert_equal(["--hello", "--ruby", "--world", "lish", "sball"], result)
+  end
+
+  it "completes flag names only" do
     result = completion.compute("toys one --")
-    assert_equal(["--hello"], result)
+    assert_equal(["--hello", "--ruby", "--world"], result)
+  end
+
+  it "completes flag names and second arg" do
+    result = completion.compute("toys one x ")
+    assert_equal(["--hello", "--ruby", "--world", "k", "n"], result)
+  end
+
+  it "completes flag names and remaining arg" do
+    result = completion.compute("toys one x y z ")
+    assert_equal(["--hello", "--ruby", "--world", "aar", "ooka"], result)
+  end
+
+  it "completes after flag with no argument" do
+    result = completion.compute("toys one --hello ")
+    assert_equal(["--hello", "--ruby", "--world", "lish", "sball"], result)
+  end
+
+  it "completes empty string after flag with required argument" do
+    result = completion.compute("toys one --world ")
+    assert_equal(["building", "news"], result)
+  end
+
+  it "completes empty string after flag with optional argument" do
+    result = completion.compute("toys one --ruby ")
+    assert_equal(["--hello", "--ruby", "--world", "gems", "tuesday"], result)
+  end
+
+  it "completes apparent flag after flag with optional argument" do
+    result = completion.compute("toys one --ruby -")
+    assert_equal(["--hello", "--ruby", "--world"], result)
+  end
+
+  it "completes after flag with its argument" do
+    result = completion.compute("toys one --ruby together ")
+    assert_equal(["--hello", "--ruby", "--world", "lish", "sball"], result)
+  end
+
+  it "completes after flag ender" do
+    result = completion.compute("toys one -- ")
+    assert_equal(["lish", "sball"], result)
   end
 
   it "recognizes closed single quotes" do

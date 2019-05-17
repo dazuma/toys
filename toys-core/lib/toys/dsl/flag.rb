@@ -32,12 +32,13 @@ module Toys
     #
     class Flag
       ## @private
-      def initialize(flags, accept, default, handler, report_collisions,
+      def initialize(flags, accept, default, handler, completion, report_collisions,
                      group, desc, long_desc, display_name)
         @flags = flags
         @accept = accept
         @default = default
         @handler = handler
+        @completion = completion
         @report_collisions = report_collisions
         @group = group
         @desc = desc
@@ -91,6 +92,18 @@ module Toys
       #
       def handler(handler = nil, &block)
         @handler = handler || block
+        self
+      end
+
+      ##
+      # Set the shell completion strategy.
+      # See {Toys::Definition::Completion.create} for recognized formats.
+      #
+      # @param [Object] value
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def completion(value = nil, &block)
+        @completion = value || block
         self
       end
 
@@ -158,7 +171,7 @@ module Toys
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @accept, default: @default, handler: @handler,
-                      report_collisions: @report_collisions, group: @group,
+                      completion: @completion, report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end
     end

@@ -566,6 +566,8 @@ module Toys
       #     `:push` handler expects the previous value to be an array and
       #     pushes the given value onto it; it should be combined with setting
       #     `default: []` and is intended for "multi-valued" flags.
+      # @param [Object] completion A specifier for shell tab completion. See
+      #     {Toys::Definition::Completion.create} for recognized formats.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as disabled. Default is
       #     true.
@@ -583,7 +585,7 @@ module Toys
       #     text and error messages.
       #
       def add_flag(key, flags = [],
-                   accept: nil, default: nil, handler: nil,
+                   accept: nil, default: nil, handler: nil, completion: nil,
                    report_collisions: true, group: nil,
                    desc: nil, long_desc: nil, display_name: nil)
         unless group.is_a?(Definition::FlagGroup)
@@ -593,8 +595,9 @@ module Toys
         end
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        flag_def = Definition::Flag.new(key, flags, @used_flags, report_collisions,
-                                        accept, handler, default, display_name, group)
+        completion = Definition::Completion.create(completion)
+        flag_def = Definition::Flag.new(key, flags, @used_flags, report_collisions, accept,
+                                        handler, default, completion, display_name, group)
         flag_def.desc = desc if desc
         flag_def.long_desc = long_desc if long_desc
         if flag_def.active?
@@ -634,6 +637,8 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
+      # @param [Object] completion A specifier for shell tab completion. See
+      #     {Toys::Definition::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -644,10 +649,13 @@ module Toys
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       #
-      def add_required_arg(key, accept: nil, display_name: nil, desc: nil, long_desc: nil)
+      def add_required_arg(key, accept: nil, completion: nil, display_name: nil,
+                           desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        arg_def = Definition::Arg.new(key, :required, accept, nil, desc, long_desc, display_name)
+        completion = Definition::Completion.create(completion)
+        arg_def = Definition::Arg.new(key, :required, accept, nil, completion,
+                                      desc, long_desc, display_name)
         @required_arg_definitions << arg_def
         self
       end
@@ -667,6 +675,8 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
+      # @param [Object] completion A specifier for shell tab completion. See
+      #     {Toys::Definition::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -677,11 +687,12 @@ module Toys
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       #
-      def add_optional_arg(key, default: nil, accept: nil, display_name: nil,
-                           desc: nil, long_desc: nil)
+      def add_optional_arg(key, default: nil, accept: nil, completion: nil,
+                           display_name: nil, desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        arg_def = Definition::Arg.new(key, :optional, accept, default,
+        completion = Definition::Completion.create(completion)
+        arg_def = Definition::Arg.new(key, :optional, accept, default, completion,
                                       desc, long_desc, display_name)
         @optional_arg_definitions << arg_def
         @default_data[key] = default
@@ -702,6 +713,8 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
+      # @param [Object] completion A specifier for shell tab completion. See
+      #     {Toys::Definition::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -712,11 +725,12 @@ module Toys
       #     {Toys::Definition::Tool#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       #
-      def set_remaining_args(key, default: [], accept: nil, display_name: nil,
-                             desc: nil, long_desc: nil)
+      def set_remaining_args(key, default: [], accept: nil, completion: nil,
+                             display_name: nil, desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        arg_def = Definition::Arg.new(key, :remaining, accept, default,
+        completion = Definition::Completion.create(completion)
+        arg_def = Definition::Arg.new(key, :remaining, accept, default, completion,
                                       desc, long_desc, display_name)
         @remaining_args_definition = arg_def
         @default_data[key] = default

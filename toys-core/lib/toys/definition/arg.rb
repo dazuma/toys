@@ -33,11 +33,12 @@ module Toys
       # Create an Arg definition
       # @private
       #
-      def initialize(key, type, accept, default, desc, long_desc, display_name = nil)
+      def initialize(key, type, accept, default, completion, desc, long_desc, display_name)
         @key = key
         @type = type
         @accept = accept
         @default = default
+        @completion = completion
         @desc = WrappableString.make(desc)
         @long_desc = WrappableString.make_array(long_desc)
         @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
@@ -66,6 +67,12 @@ module Toys
       # @return [Object]
       #
       attr_reader :default
+
+      ##
+      # Returns the proc that determines shell completions for the value.
+      # @return [Toys::Definition::Completion]
+      #
+      attr_reader :completion
 
       ##
       # Returns the short description string.

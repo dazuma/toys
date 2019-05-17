@@ -66,6 +66,8 @@ module Toys
       #     and the previous value, and it should return the new value that
       #     should be set. The default handler simply replaces the previous
       #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
+      # @param [Object] completion A specifier for shell tab completion. See
+      #     {Toys::Definition::Completion.create} for recognized formats.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
@@ -84,11 +86,11 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flag(key, *flags,
-               accept: nil, default: nil, handler: nil,
+               accept: nil, default: nil, handler: nil, completion: nil,
                report_collisions: true,
                desc: nil, long_desc: nil, display_name: nil,
                &block)
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler, report_collisions,
+        flag_dsl = DSL::Flag.new(flags, accept, default, handler, completion, report_collisions,
                                  @flag_group, desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(@tool_definition, key)
