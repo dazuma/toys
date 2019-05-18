@@ -264,23 +264,25 @@ module Toys
             ::File.split(substring)
           end
         dir = ::File.expand_path(prefix, @cwd)
+        return [] unless ::File.directory?(dir)
         prefix = nil if [".", ""].include?(prefix)
-        children = glob_in(name, dir).find_all { |child| child != "." && child != ".." }.sort
-        if children.empty?
-          children = ::Dir.children(dir).find_all { |child| child.start_with?(name) }.sort
+        omits = [".", ".."]
+        children = glob_in(name, dir).find_all do |child|
+          !omits.include?(child)
         end
-        generate_candidates(children, prefix, dir)
+        if children.empty?
+          children = ::Dir.entries(dir).find_all do |child|
+            child.start_with?(name) && !omits.include?(child)
+          end
+        end
+        generate_candidates(children.sort, prefix, dir)
       end
 
       private
 
       def glob_in(name, base_dir)
         if ::RUBY_VERSION < "2.5"
-          if ::File.directory?(base_dir)
-            ::Dir.chdir(base_dir) { ::Dir.glob(name) }
-          else
-            []
-          end
+          ::Dir.chdir(base_dir) { ::Dir.glob(name) }
         else
           ::Dir.glob(name, base: base_dir)
         end
