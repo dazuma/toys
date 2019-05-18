@@ -265,15 +265,26 @@ module Toys
           end
         dir = ::File.expand_path(prefix, @cwd)
         prefix = nil if [".", ""].include?(prefix)
-        children =
-          ::Dir.glob(name, base: dir).sort.find_all { |child| child != "." && child != ".." }
+        children = glob_in(name, dir).find_all { |child| child != "." && child != ".." }.sort
         if children.empty?
-          children = ::Dir.children(dir).sort.find_all { |child| child.start_with?(name) }
+          children = ::Dir.children(dir).find_all { |child| child.start_with?(name) }.sort
         end
         generate_candidates(children, prefix, dir)
       end
 
       private
+
+      def glob_in(name, base_dir)
+        if ::RUBY_VERSION < "2.5"
+          if ::File.directory?(base_dir)
+            ::Dir.chdir(base_dir) { ::Dir.glob(name) }
+          else
+            []
+          end
+        else
+          ::Dir.glob(name, base: base_dir)
+        end
+      end
 
       def generate_candidates(children, prefix, dir)
         children.flat_map do |child|
