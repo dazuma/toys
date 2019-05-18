@@ -108,7 +108,9 @@ module Toys
           flag :exclude, "-e", "--exclude PATTERN",
                desc: "Exclude /regexp/ or string from run."
 
-          remaining_args :tests, desc: "Paths to the tests to run (defaults to all tests)"
+          remaining_args :tests,
+                         completion: :file_system,
+                         desc: "Paths to the tests to run (defaults to all tests)"
 
           to_run do
             gem "minitest", *Array(template.gem_version)

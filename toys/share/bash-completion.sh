@@ -1,6 +1,3 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
-
 # Copyright 2019 Daniel Azuma
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,13 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-;
 
-::ENV["TOYS_BASH_COMPLETION"] = "true"
-
-$LOAD_PATH.unshift(::File.absolute_path(::File.join(::File.dirname(__dir__), "lib")))
-require "toys"
-require "toys/utils/bash_completion"
-
-cli = ::Toys::StandardCLI.create
-::Toys::Utils::BashCompletion.new(cli.loader).run
+if [[ $# -eq 0 ]]; then
+  set -- "toys"
+fi
+for arg in "$@"; do
+  complete -C "toys system bash-completion run" -o nospace "$arg"
+done

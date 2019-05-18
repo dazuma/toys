@@ -146,7 +146,9 @@ module Toys
                desc: "Run examples with the specified tag, or exclude" \
                      " examples by adding ~ before the tag."
 
-          remaining_args :files, desc: "Paths to the specs to run (defaults to all specs)"
+          remaining_args :files,
+                         completion: :file_system,
+                         desc: "Paths to the specs to run (defaults to all specs)"
 
           to_run do
             gem "rspec", *Array(template.gem_version)

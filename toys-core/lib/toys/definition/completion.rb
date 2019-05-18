@@ -26,7 +26,7 @@ module Toys
     ##
     # A Completion is a callable Proc that determines candidates for shell tab
     # completion. You pass a string (the current string fragment) and it
-    # returns an array of strings.
+    # returns an array of candidate strings.
     #
     # Generally completions do not have to subclass Completion. They merely
     # need to duck-type Proc by implementing the `call` method.
@@ -65,10 +65,6 @@ module Toys
       # *   `nil`: Returns the empty completion.
       # *   `:file_system`: Returns a completion that searches the current
       #     directory for file and directory names.
-      # *   `:files_only`: Returns a completion that searches the current
-      #     directory for file names (but not directories).
-      # *   `:directories_only`: Returns a completion that searches the current
-      #     directory for directory names (but not files).
       # *   An **Array** of strings. Returns a completion that uses those
       #     values as candidates.
       # *   A **Proc**. Returns the proc.
@@ -81,23 +77,20 @@ module Toys
         case spec
         when nil, :empty
           EMPTY
-        when ::Array
-          values(*spec)
         when ::Proc
           spec
+        when ::Array
+          ValuesCompletion.new(spec)
         when :file_system
-          file_system
-        when :files_only
-          files_only
-        when :directories_only
-          directories_only
+          FileSystemCompletion.new
         else
           raise ::ArgumentError, "Unknown completion spec: #{spec.inspect}"
         end
       end
 
       ##
-      # Returns a new completion object using the given strings as candidates.
+      # Convenience method. Returns a new completion object using the given
+      # strings as candidates.
       #
       # @param [Array<String>] values
       # @return [Proc]
@@ -107,8 +100,8 @@ module Toys
       end
 
       ##
-      # Returns a new completion object searching the current directory for
-      # files and directories.
+      # Convenience method. Returns a new completion object searching the
+      # current directory for files and directories.
       #
       # @param [String] cwd Working directory (defaults to the current dir).
       # @return [Proc]
@@ -118,25 +111,98 @@ module Toys
       end
 
       ##
-      # Returns a new completion object searching the current directory for
-      # files (but not directories).
+      # Convenience method. Returns a whole candidate for the given string.
       #
-      # @param [String] cwd Working directory (defaults to the current dir).
-      # @return [Proc]
+      # @param [String] str The completion candidate string.
+      # @return [Toys::Definition::Completion::Candidate]
       #
-      def self.files_only(cwd: nil)
-        FileSystemCompletion.new(cwd: cwd, omit_directories: true)
+      def self.candidate(str)
+        Candidate.new(str)
       end
 
       ##
-      # Returns a new completion object searching the current directory for
-      # directories (but not files).
+      # Convenience method. Returns whole candidates for the given strings.
       #
-      # @param [String] cwd Working directory (defaults to the current dir).
-      # @return [Proc]
+      # @param [Array<String>] strs The completion candidate strings.
+      # @return [Array<Toys::Definition::Completion::Candidate>]
       #
-      def self.directories_only(cwd: nil)
-        FileSystemCompletion.new(cwd: cwd, omit_files: true)
+      def self.candidates(strs)
+        strs.map { |s| Candidate.new(s) }
+      end
+
+      ##
+      # Convenience method. Returns a partial candidate for the given string.
+      #
+      # @param [String] str The completion candidate.
+      # @return [Toys::Definition::Completion::Candidate]
+      #
+      def self.partial(str)
+        Candidate.new(str, true)
+      end
+
+      ##
+      # Convenience method. Returns partial candidates for the given strings.
+      #
+      # @param [Array<String>] strs The completion candidate strings.
+      # @return [Array<Toys::Definition::Completion::Candidate>]
+      #
+      def self.partials(strs)
+        strs.map { |s| Candidate.new(s, true) }
+      end
+
+      ##
+      # A candidate string.
+      #
+      class Candidate
+        include ::Comparable
+
+        ##
+        # Create a new candidate
+        # @param [String] string The candidate string
+        # @param [Boolean] partial Whether the candidate is partial.
+        #
+        def initialize(string, partial = false)
+          @string = string.to_s
+          @partial = partial ? true : false
+        end
+
+        ##
+        # Get the candidate string.
+        # @return [String]
+        #
+        attr_reader :string
+        alias to_s string
+
+        ##
+        # Determine whether the candidate is partial.
+        # @return [Boolean]
+        #
+        def partial?
+          @partial
+        end
+
+        ##
+        # Determine whether the candidate is whole.
+        # @return [Boolean]
+        #
+        def whole?
+          !@partial
+        end
+
+        ## @private
+        def eql?(other)
+          other.is_a?(Candidate) && other.string.eql?(string) && other.partial? == @partial
+        end
+
+        ## @private
+        def <=>(other)
+          to_s <=> other.to_s
+        end
+
+        ## @private
+        def hash
+          to_s.hash
+        end
       end
     end
 
@@ -184,20 +250,38 @@ module Toys
       # @return [Array<String>] an array of completion candidates.
       #
       def call(substring)
-        if substring.empty? || substring.end_with?("/")
-          dir = ::File.expand_path(substring, @cwd)
-          name = ""
-        else
-          dir, name = ::File.split(substring)
-          dir = ::File.expand_path(dir, @cwd)
-        end
+        prefix, name =
+          if substring.empty? || substring.end_with?("/")
+            [substring, ""]
+          else
+            ::File.split(substring)
+          end
+        dir = ::File.expand_path(prefix, @cwd)
+        prefix = nil if [".", ""].include?(prefix)
         children = ::Dir.glob(name, base: dir).find_all { |child| child != "." && child != ".." }
         if children.empty?
           children = ::Dir.children(dir).sort.find_all { |child| child.start_with?(name) }
         end
-        children.find_all do |child|
+        generate_candidates(children, prefix, dir)
+      end
+
+      private
+
+      def generate_candidates(children, prefix, dir)
+        children.flat_map do |child|
           path = ::File.join(dir, child)
-          @include_files && File.file?(path) || @include_directories && File.directory?(path)
+          str = prefix ? ::File.join(prefix, child) : child
+          if ::File.file?(path)
+            @include_files ? [Completion.candidate(str)] : []
+          elsif ::File.directory?(path)
+            if @include_directories
+              [Completion.partial("#{str}/")]
+            else
+              []
+            end
+          else
+            []
+          end
         end
       end
     end
@@ -213,7 +297,7 @@ module Toys
       # @param [Array<String>] values
       #
       def initialize(values)
-        @values = values.flatten.map(&:to_s).sort
+        @values = Completion.candidates(values.flatten).sort
       end
 
       ##
@@ -229,7 +313,7 @@ module Toys
       # @return [Array<String>] an array of completion candidates.
       #
       def call(substring)
-        @values.find_all { |val| val.start_with?(substring) }
+        @values.find_all { |val| val.string.start_with?(substring) }
       end
     end
   end

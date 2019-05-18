@@ -54,28 +54,45 @@ module Toys
         @complete_flags = complete_flags
         @complete_args = complete_args
         @complete_flag_values = complete_flag_values
+        @in_completion = ::ENV.key?("COMP_LINE") && ::ENV.key?("COMP_POINT")
+        @line = ::ENV["COMP_LINE"].to_s
+        @point = ::ENV["COMP_POINT"].to_i
       end
 
       ##
-      # Print out completions, assuming the correct bash environment.
+      # Determines whether this is being called in a completion context.
+      # @return [Boolean]
+      #
+      def in_completion?
+        @in_completion
+      end
+
+      ##
+      # Perform bash completion and write output to stdout. Returns a process
+      # status code.
+      #
+      # @return [Integer]
       #
       def run
-        line = ENV["COMP_LINE"].to_s
-        point = ENV["COMP_POINT"].to_i
-        completions = compute(line, point)
-        exit(1) unless completions
-        completions.each { |completion| puts completion }
+        return -1 unless @in_completion
+        completions = compute(@line, @point)
+        if completions
+          completions.each { |completion| puts completion }
+          0
+        else
+          1
+        end
       end
 
       ##
-      # Internal completion computation. Entrypoint for testing.
+      # Compute completion candidates given a line and cursor location.
       #
       # @param [String] line The command line
       # @param [Integer] point The index where the cursor is located
       # @return [Array<String>,nil] completions, or nil for error.
       #
-      def compute(line, point = 0)
-        point = line.length if point.zero?
+      def compute(line, point = -1)
+        point = line.length if point.negative?
         line = line[0, point]
         words = split(line)
         last_type, last = words.pop
@@ -107,25 +124,29 @@ module Toys
       end
       # rubocop:enable all
 
-      def format_str(candidate, type)
-        type = :bare if candidate.include?("'") && type == :single
+      def format_candidate(candidate, type)
+        type = :bare if candidate.string.include?("'") && type == :single
         case type
         when :single
-          "'#{candidate}'"
+          candidate.partial? ? "'#{candidate}" : "'#{candidate}' "
         when :double
-          '"' + candidate.gsub(/[$`"\\\n]/, '\\\\\\1') + '"'
+          str = candidate.string.gsub(/[$`"\\\n]/, '\\\\\\1')
+          candidate.partial? ? "\"#{str}" : "\"#{str}\" "
         else
-          Shellwords.escape(candidate)
+          str = Shellwords.escape(candidate.string)
+          candidate.partial? ? str : "#{str} "
         end
       end
 
-      def filter_candidates(candidates, current)
-        candidates.find_all { |candidate| candidate.start_with?(current) }
+      def make_candidates(strings, current)
+        strings.flat_map do |str|
+          str.start_with?(current) ? [Definition::Completion.candidate(str)] : []
+        end
       end
 
       def subtool_candidates(words, current)
         return [] unless @complete_subtools
-        filter_candidates(@loader.list_subtools(words).map(&:simple_name), current)
+        make_candidates(@loader.list_subtools(words).map(&:simple_name), current)
       end
 
       def flag_value_candidates(flag, current)
@@ -140,7 +161,7 @@ module Toys
 
       def flag_candidates(tool, current)
         return [] unless @complete_flags
-        filter_candidates(tool.used_flags, current)
+        make_candidates(tool.used_flags, current)
       end
 
       def compute_completions(words, last, last_type)
@@ -162,7 +183,7 @@ module Toys
             candidates += flag_candidates(tool, current)
           end
         end
-        candidates.sort.map { |candidate| format_str(candidate, last_type) }
+        candidates.sort.map { |candidate| format_candidate(candidate, last_type) }
       end
 
       ## @private

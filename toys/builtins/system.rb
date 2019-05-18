@@ -1,5 +1,25 @@
 # frozen_string_literal: true
 
+# Copyright 2019 Daniel Azuma
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
 desc "A set of system commands for Toys"
 
 long_desc "Contains tools that inspect, configure, and update Toys itself."
@@ -61,43 +81,87 @@ tool "update" do
 end
 
 tool "bash-completion" do
-  desc "Set up tab completion in the current bash shell"
+  desc "Bash tab completion for Toys"
 
-  long_desc "Sets up tab completion in the current bash shell.",
-            "",
-            "To use, include the following line in a bash script or init file:",
-            "$(toys system bash-completion [BINARY_NAME])"
+  long_desc \
+    "Tools that manage tab completion for Toys in the bash shell.",
+    "",
+    "To install tab completion for Toys, execute the following line in a bash shell, or" \
+      " include it in an init file such as your .bashrc:",
+    ["  $(toys system bash-completion install)"],
+    "",
+    "To remove tab completion, execute:",
+    ["  $(toys system bash-completion remove)"],
+    "",
+    "It is also possible to install completions for different binary names if you have" \
+      " aliases for Toys. See the help for the \"install\" and \"remove\" tools for details.",
+    "",
+    "The \"run\" tool is the actual completion command invoked by bash via `complete -C`." \
+      " You shouldn't need to invoke it directly. See the bash manual for details."
 
-  flag :install, "--install FILENAME",
-       desc: "Instead of setting up tab completion, install the setup script into the given file."
+  tool "run" do
+    desc "Tab completion command (executed by bash)"
 
-  remaining_args :binary_names,
-                 default: [::Toys::StandardCLI::BINARY_NAME],
-                 desc: "Names of binaries for which to set up tab completion" \
-                       " (default: #{::Toys::StandardCLI::BINARY_NAME})"
+    disable_argument_parsing
 
-  include :terminal
-
-  def run
-    if self[:install]
-      do_install(self[:install], binary_names)
-    else
-      puts "complete -C bash-completion-toys #{binary_names.join(' ')}"
+    def run
+      require "toys/utils/bash_completion"
+      bash_completion = ::Toys::Utils::BashCompletion.new(loader)
+      unless bash_completion.in_completion?
+        logger.error("This tool must be invoked as a bash completion command.")
+        exit(-1)
+      end
+      exit(bash_completion.run)
     end
   end
 
-  def do_install(file_path, binary_names)
-    if ::File.file?(file_path)
-      cur_contents = ::File.read(file_path)
-      if cur_contents =~ /\n# Install bash tab completion for toys\n\$\(/
-        puts("Bash tab completion for toys is already present in #{file_path}", :yellow, :bold)
-        exit(1)
-      end
+  tool "install" do
+    desc "Install bash tab completion"
+
+    long_desc \
+      "Outputs a command to set up Toys tab completion in the current bash shell.",
+      "",
+      "To use, execute the following line in a bash shell, or include it in an init file" \
+        " such as your .bashrc:",
+      ["  $(toys system bash-completion install)"],
+      "",
+      "This will associate the toys tab completion logic with the `toys` binary by default." \
+        " If you have other names or aliases for the toys binary, pass them as arguments. e.g.",
+      ["  $(toys system bash-completion install my-toys-alias another-alias)"]
+
+    remaining_args :binary_names,
+                   default: [::Toys::StandardCLI::BINARY_NAME],
+                   desc: "Names of binaries for which to set up tab completion" \
+                         " (default: #{::Toys::StandardCLI::BINARY_NAME})"
+
+    def run
+      require "shellwords"
+      path = ::File.join(::File.dirname(__dir__), "share", "bash-completion.sh")
+      puts Shellwords.join(["source", path] + binary_names)
     end
-    ::File.open(file_path, "a") do |file|
-      file.puts("\n# Install bash tab completion for toys")
-      file.puts("$(toys system bash-completion #{binary_names.join(' ')})")
+  end
+
+  tool "remove" do
+    desc "Remove bash tab completion"
+
+    long_desc \
+      "Outputs a command to remove Toys tab completion from the current bash shell.",
+      "",
+      "To use, execute the following line in a bash shell:",
+      ["  $(toys system bash-completion remove)"],
+      "",
+      "If you have other names or aliases for the toys binary, pass them as arguments. e.g.",
+      ["  $(toys system bash-completion remove my-toys-alias another-alias)"]
+
+    remaining_args :binary_names,
+                   default: [::Toys::StandardCLI::BINARY_NAME],
+                   desc: "Names of binaries for which to set up tab completion" \
+                         " (default: #{::Toys::StandardCLI::BINARY_NAME})"
+
+    def run
+      require "shellwords"
+      path = ::File.join(::File.dirname(__dir__), "share", "bash-completion-remove.sh")
+      puts Shellwords.join(["source", path] + binary_names)
     end
-    puts("Installed bash tab completion for toys into #{file_path}", :green, :bold)
   end
 end
