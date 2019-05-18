@@ -38,13 +38,13 @@ Let's run one of them:
 
     toys system version
 
-The "system version" tool displays the current version of the toys gem.
+The `system version` tool displays the current version of the toys gem.
 
 Toys also provides optional tab completion for bash. To install it, add the
-following lines to your bash configuration file (e.g. `.bashrc` or `.profile`).
+following line to your bash configuration file (e.g. `.bashrc` or `.profile`).
 
     # Install tab completion for toys
-    $(toys system bash-completion)
+    $(toys system bash-completion install)
 
 ### Write your first tool
 

@@ -26,13 +26,18 @@ module Toys
     ##
     # A Completion is a callable Proc that determines candidates for shell tab
     # completion. You pass a string (the current string fragment) and it
-    # returns an array of candidate strings.
+    # returns an array of {Toys::Definition::Completion::Candidate} objects.
     #
-    # Generally completions do not have to subclass Completion. They merely
-    # need to duck-type Proc by implementing the `call` method.
+    # Each candidate has a string for the completion, as well as a flag
+    # indicating whether it is a *partial* completion (i.e. a prefix that
+    # could be added to) or a *whole* completion word. Generally, tab
+    # completion systems should add a trailing space after a whole completion
+    # but not after a partial completion.
     #
-    # The Completion base class is "empty" and returns no completions. You can
-    # also use the instance {Toys::Definition::Completion::EMPTY}.
+    # Generally completions do *not* have to subclass the
+    # {Toys::Definition::Completion} base class. They merely need to duck-type
+    # `Proc` by implementing the `call` method. (The base class implementation
+    # is an "empty" completion that returns no candidates.)
     #
     # Probably the most useful method here is the class method
     # {Toys::Definition::Completion.create} which takes a variety of
@@ -44,7 +49,8 @@ module Toys
       # This default implementation returns an empty list.
       #
       # @param [String] substring the current substring.
-      # @return [Array<String>] an array of completion candidates.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
       #
       def call(substring) # rubocop:disable Lint/UnusedMethodArgument
         []
@@ -247,7 +253,8 @@ module Toys
       # Returns candidates given the current substring.
       #
       # @param [String] substring the current substring.
-      # @return [Array<String>] an array of completion candidates.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
       #
       def call(substring)
         prefix, name =
@@ -258,7 +265,8 @@ module Toys
           end
         dir = ::File.expand_path(prefix, @cwd)
         prefix = nil if [".", ""].include?(prefix)
-        children = ::Dir.glob(name, base: dir).find_all { |child| child != "." && child != ".." }
+        children =
+          ::Dir.glob(name, base: dir).sort.find_all { |child| child != "." && child != ".." }
         if children.empty?
           children = ::Dir.children(dir).sort.find_all { |child| child.start_with?(name) }
         end
@@ -310,7 +318,8 @@ module Toys
       # Returns candidates given the current substring.
       #
       # @param [String] substring the current substring.
-      # @return [Array<String>] an array of completion candidates.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
       #
       def call(substring)
         @values.find_all { |val| val.string.start_with?(substring) }
