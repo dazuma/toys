@@ -24,6 +24,10 @@
 require "helper"
 
 describe Toys::Definition::Completion do
+  def context(str)
+    Toys::Definition::Completion::Context.new(str)
+  end
+
   describe ".create" do
     it "recognizes nil" do
       completion = Toys::Definition::Completion.create(nil)
@@ -59,7 +63,7 @@ describe Toys::Definition::Completion do
   describe "EMPTY" do
     it "returns nothing" do
       completion = Toys::Definition::Completion::EMPTY
-      assert_equal([], completion.call(""))
+      assert_equal([], completion.call(context("")))
     end
   end
 end
@@ -67,60 +71,63 @@ end
 describe Toys::Definition::FileSystemCompletion do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "data") }
   let(:completion) { Toys::Definition::FileSystemCompletion.new(cwd: data_dir) }
+  def context(str)
+    Toys::Definition::Completion::Context.new(str)
+  end
 
   it "returns objects when passed an empty string" do
-    candidates = completion.call("")
+    candidates = completion.call(context(""))
     expected = [
       Toys::Definition::Completion.candidate(".dotfile"),
-      Toys::Definition::Completion.partial("indirectory/"),
+      Toys::Definition::Completion.partial_candidate("indirectory/"),
       Toys::Definition::Completion.candidate("input.txt")
     ]
     assert_equal(expected, candidates)
   end
 
   it "returns objects when passed a prefix" do
-    candidates = completion.call("in")
+    candidates = completion.call(context("in"))
     expected = [
-      Toys::Definition::Completion.partial("indirectory/"),
+      Toys::Definition::Completion.partial_candidate("indirectory/"),
       Toys::Definition::Completion.candidate("input.txt")
     ]
     assert_equal(expected, candidates)
   end
 
   it "returns nothing when passed an unfulfilled prefix" do
-    candidates = completion.call("out")
+    candidates = completion.call(context("out"))
     assert_equal([], candidates)
   end
 
   it "returns objects when passed a glob that begins with a star" do
-    candidates = completion.call("*.txt")
+    candidates = completion.call(context("*.txt"))
     expected = Toys::Definition::Completion.candidates(["input.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns dotfiles when passed a glob that begins with a dot" do
-    candidates = completion.call(".*")
+    candidates = completion.call(context(".*"))
     expected = Toys::Definition::Completion.candidates([".dotfile"])
     assert_equal(expected, candidates)
   end
 
   it "returns non dotfiles when passed a star" do
-    candidates = completion.call("*")
+    candidates = completion.call(context("*"))
     expected = [
-      Toys::Definition::Completion.partial("indirectory/"),
+      Toys::Definition::Completion.partial_candidate("indirectory/"),
       Toys::Definition::Completion.candidate("input.txt")
     ]
     assert_equal(expected, candidates)
   end
 
   it "returns a directory given the entire name" do
-    candidates = completion.call("indirectory")
-    expected = Toys::Definition::Completion.partials(["indirectory/"])
+    candidates = completion.call(context("indirectory"))
+    expected = Toys::Definition::Completion.partial_candidates(["indirectory/"])
     assert_equal(expected, candidates)
   end
 
   it "returns contents of a directory when ending with a slash" do
-    candidates = completion.call("indirectory/")
+    candidates = completion.call(context("indirectory/"))
     expected = Toys::Definition::Completion.candidates(
       ["indirectory/.anotherdot", "indirectory/content.txt"]
     )
@@ -128,49 +135,52 @@ describe Toys::Definition::FileSystemCompletion do
   end
 
   it "returns glob in a directory" do
-    candidates = completion.call("indirectory/c*")
+    candidates = completion.call(context("indirectory/c*"))
     expected = Toys::Definition::Completion.candidates(["indirectory/content.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns prefix in a directory" do
-    candidates = completion.call("indirectory/.")
+    candidates = completion.call(context("indirectory/."))
     expected = Toys::Definition::Completion.candidates(["indirectory/.anotherdot"])
     assert_equal(expected, candidates)
   end
 
   it "returns files only" do
     completion = Toys::Definition::FileSystemCompletion.new(cwd: data_dir, omit_directories: true)
-    candidates = completion.call("in")
+    candidates = completion.call(context("in"))
     expected = Toys::Definition::Completion.candidates(["input.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns directories only" do
     completion = Toys::Definition::FileSystemCompletion.new(cwd: data_dir, omit_files: true)
-    candidates = completion.call("in")
-    expected = Toys::Definition::Completion.partials(["indirectory/"])
+    candidates = completion.call(context("in"))
+    expected = Toys::Definition::Completion.partial_candidates(["indirectory/"])
     assert_equal(expected, candidates)
   end
 end
 
 describe Toys::Definition::ValuesCompletion do
   let(:completion) { Toys::Definition::ValuesCompletion.new(["one", :two, ["three"]]) }
+  def context(str)
+    Toys::Definition::Completion::Context.new(str)
+  end
 
   it "returns all values when given an empty string" do
-    candidates = completion.call("")
+    candidates = completion.call(context(""))
     expected = Toys::Definition::Completion.candidates(["one", "three", "two"])
     assert_equal(expected, candidates)
   end
 
   it "returns values when given a prefix" do
-    candidates = completion.call("t")
+    candidates = completion.call(context("t"))
     expected = Toys::Definition::Completion.candidates(["three", "two"])
     assert_equal(expected, candidates)
   end
 
   it "returns nothing when given an unfulfilled prefix" do
-    candidates = completion.call("w")
+    candidates = completion.call(context("w"))
     assert_equal([], candidates)
   end
 end

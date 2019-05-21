@@ -40,12 +40,20 @@ long_desc \
   "You may change the delimiter using the --delim flag. For example:",
   ["    toys do --delim=/ -- rails build --staging / deploy --migrate"]
 
-flag :delim, "-d", "--delim=VALUE",
-     default: ",",
-     desc: "Set the delimiter",
-     long_desc: "Sets the delimiter that separates tool invocations. The default value is \",\"."
+flag :delim do
+  flags "-d", "--delim=VALUE"
+  default ","
+  desc "Set the delimiter"
+  long_desc "Sets the delimiter that separates tool invocations. The default value is \",\"."
+end
 
-remaining_args :args, desc: "A series of tools to run, separated by the delimiter"
+remaining_args :args do
+  completion do |context|
+    words = context.previous.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
+    context.completion_engine.compute(words, context.string, quote_type: context.quote_type)
+  end
+  desc "A series of tools to run, separated by the delimiter"
+end
 
 def run
   args

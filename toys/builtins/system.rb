@@ -105,13 +105,12 @@ tool "bash-completion" do
     disable_argument_parsing
 
     def run
-      require "toys/utils/bash_completion"
-      bash_completion = ::Toys::Utils::BashCompletion.new(loader)
-      unless bash_completion.in_completion?
+      require "toys/utils/completion_engine"
+      result = ::Toys::Utils::CompletionEngine.new(loader).run_bash
+      if result.negative?
         logger.error("This tool must be invoked as a bash completion command.")
-        exit(-1)
       end
-      exit(bash_completion.run)
+      exit(result)
     end
   end
 

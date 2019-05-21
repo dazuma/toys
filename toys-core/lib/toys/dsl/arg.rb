@@ -71,7 +71,7 @@ module Toys
       # @param [Object] value
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def completion(value, &block)
+      def completion(value = nil, &block)
         @completion = value || block
         self
       end

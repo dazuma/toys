@@ -26,13 +26,8 @@ module Toys
     ##
     # A Completion is a callable Proc that determines candidates for shell tab
     # completion. You pass a string (the current string fragment) and it
-    # returns an array of {Toys::Definition::Completion::Candidate} objects.
-    #
-    # Each candidate has a string for the completion, as well as a flag
-    # indicating whether it is a *partial* completion (i.e. a prefix that
-    # could be added to) or a *whole* completion word. Generally, tab
-    # completion systems should add a trailing space after a whole completion
-    # but not after a partial completion.
+    # returns an array of candidates for completing the fragment, represented
+    # by {Toys::Definition::Completion::Candidate} objects.
     #
     # Generally completions do *not* have to subclass the
     # {Toys::Definition::Completion} base class. They merely need to duck-type
@@ -45,14 +40,15 @@ module Toys
     #
     class Completion
       ##
-      # Returns candidates given the current substring.
+      # Returns candidates for the current completion.
       # This default implementation returns an empty list.
       #
-      # @param [String] substring the current substring.
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
       # @return [Array<Toys::Definition::Completion::Candidate>] an array of
       #     completion candidates.
       #
-      def call(substring) # rubocop:disable Lint/UnusedMethodArgument
+      def call(context) # rubocop:disable Lint/UnusedMethodArgument
         []
       end
 
@@ -142,7 +138,7 @@ module Toys
       # @param [String] str The completion candidate.
       # @return [Toys::Definition::Completion::Candidate]
       #
-      def self.partial(str)
+      def self.partial_candidate(str)
         Candidate.new(str, true)
       end
 
@@ -152,12 +148,68 @@ module Toys
       # @param [Array<String>] strs The completion candidate strings.
       # @return [Array<Toys::Definition::Completion::Candidate>]
       #
-      def self.partials(strs)
+      def self.partial_candidates(strs)
         strs.map { |s| Candidate.new(s, true) }
       end
 
       ##
-      # A candidate string.
+      # The context in which to determine completion candidates.
+      #
+      class Context
+        ##
+        # Create completion context
+        #
+        # @param [String] string The string fragment
+        # @param [:single,:double,nil] quote_type Quoting used for the string
+        # @param [String,Array<String>,nil] previous Previous string(s)
+        # @param [Toys::Utils::CompletionEngine] completion_engine The
+        #     completion engine currently running
+        #
+        def initialize(string, quote_type: nil, previous: nil, completion_engine: nil)
+          @string = string
+          @quote_type = quote_type
+          @previous = previous
+          @completion_engine = completion_engine
+        end
+
+        ##
+        # The current string fragment to complete
+        # @return [String]
+        #
+        attr_reader :string
+        alias to_s string
+
+        ##
+        # The quoting used for the string fragment.
+        # @return [:single,:double,nil]
+        #
+        attr_reader :quote_type
+
+        ##
+        # Relevant previous strings. For a flag, this is a single string
+        # indicating the flag name (for example, "-v", "--flag", or "--flag=").
+        # For a remaining args, this is an array of the previous args.
+        # Otherwise, nil.
+        #
+        # @return [String,Array<String>,nil]
+        #
+        attr_reader :previous
+
+        ##
+        # The completion engine currently running.
+        # @return [Toys::Utils::CompletionEngine]
+        #
+        attr_reader :completion_engine
+      end
+
+      ##
+      # A candidate for completing a string fragment.
+      #
+      # A candidate includes a string representing the potential completed
+      # word, as well as a flag indicating whether it is a *partial* completion
+      # (i.e. a prefix that could still be added to) or a *final* word.
+      # Generally, tab completion systems should add a trailing space after a
+      # final completion but not after a partial completion.
       #
       class Candidate
         include ::Comparable
@@ -180,7 +232,7 @@ module Toys
         alias to_s string
 
         ##
-        # Determine whether the candidate is partial.
+        # Determine whether the candidate is partial completion.
         # @return [Boolean]
         #
         def partial?
@@ -188,10 +240,10 @@ module Toys
         end
 
         ##
-        # Determine whether the candidate is whole.
+        # Determine whether the candidate is a final completion.
         # @return [Boolean]
         #
-        def whole?
+        def final?
           !@partial
         end
 
@@ -250,13 +302,15 @@ module Toys
       attr_reader :cwd
 
       ##
-      # Returns candidates given the current substring.
+      # Returns candidates for the current completion.
       #
-      # @param [String] substring the current substring.
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
       # @return [Array<Toys::Definition::Completion::Candidate>] an array of
       #     completion candidates.
       #
-      def call(substring)
+      def call(context)
+        substring = context.string
         prefix, name =
           if substring.empty? || substring.end_with?("/")
             [substring, ""]
@@ -296,7 +350,7 @@ module Toys
             @include_files ? [Completion.candidate(str)] : []
           elsif ::File.directory?(path)
             if @include_directories
-              [Completion.partial("#{str}/")]
+              [Completion.partial_candidate("#{str}/")]
             else
               []
             end
@@ -328,13 +382,15 @@ module Toys
       attr_reader :values
 
       ##
-      # Returns candidates given the current substring.
+      # Returns candidates for the current completion.
       #
-      # @param [String] substring the current substring.
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
       # @return [Array<Toys::Definition::Completion::Candidate>] an array of
       #     completion candidates.
       #
-      def call(substring)
+      def call(context)
+        substring = context.string
         @values.find_all { |val| val.string.start_with?(substring) }
       end
     end
