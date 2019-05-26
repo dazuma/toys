@@ -24,42 +24,77 @@
 require "helper"
 
 describe Toys::Definition::Acceptor do
-  describe "without converter" do
-    let(:acceptor) { Toys::Definition::Acceptor.new("hello") }
+  let(:input_string) { "Arya Stark" }
+  let(:acceptor) { Toys::Definition::Acceptor.new("hello") }
+
+  it "accepts any string" do
+    assert_equal(input_string, acceptor.match(input_string))
+  end
+
+  it "does no conversion" do
+    assert_equal(input_string, acceptor.convert(input_string, input_string))
+  end
+end
+
+describe Toys::Definition::SimpleAcceptor do
+  let(:input_string) { "Arya Stark" }
+  let(:upcase_string) { input_string.upcase }
+
+  describe "with no function" do
+    let(:acceptor) { Toys::Definition::SimpleAcceptor.new("hello") }
 
     it "accepts any string" do
-      assert_equal("Arya Stark", acceptor.match("Arya Stark"))
+      assert_equal([input_string, input_string], acceptor.match(input_string))
     end
 
     it "does no conversion" do
-      assert_equal("Arya Stark", acceptor.convert("Arya Stark"))
+      assert_equal(input_string, acceptor.convert(input_string, input_string))
     end
   end
 
-  describe "with proc converter" do
-    let(:converter) { :upcase.to_proc }
-    let(:acceptor) { Toys::Definition::Acceptor.new("hello", converter) }
-
-    it "accepts any string" do
-      assert_equal("Arya Stark", acceptor.match("Arya Stark"))
-    end
-
-    it "converts" do
-      assert_equal("ARYA STARK", acceptor.convert("Arya Stark"))
-    end
-  end
-
-  describe "with block converter" do
+  describe "with proc function" do
     let(:acceptor) {
-      Toys::Definition::Acceptor.new("hello", &:upcase)
+      Toys::Definition::SimpleAcceptor.new("hello", :upcase.to_proc)
     }
 
     it "accepts any string" do
-      assert_equal("Arya Stark", acceptor.match("Arya Stark"))
+      assert_equal([input_string, upcase_string], acceptor.match(input_string))
     end
 
     it "converts" do
-      assert_equal("ARYA STARK", acceptor.convert("Arya Stark"))
+      assert_equal(upcase_string, acceptor.convert(input_string, upcase_string))
+    end
+  end
+
+  describe "with block function" do
+    let(:acceptor) {
+      Toys::Definition::SimpleAcceptor.new("hello", &:upcase)
+    }
+
+    it "accepts any string" do
+      assert_equal([input_string, upcase_string], acceptor.match(input_string))
+    end
+
+    it "converts" do
+      assert_equal(upcase_string, acceptor.convert(input_string, upcase_string))
+    end
+  end
+
+  describe "with failable function" do
+    let(:acceptor) {
+      Toys::Definition::SimpleAcceptor.new("hello") { |s| Integer(s) }
+    }
+
+    it "recognizes exceptions" do
+      acceptor = Toys::Definition::SimpleAcceptor.new("hello") { |s| Integer(s) }
+      assert_nil(acceptor.match(input_string))
+    end
+
+    it "recognizes reject sentinel" do
+      acceptor = Toys::Definition::SimpleAcceptor.new("hello") do |_s|
+        Toys::Definition::SimpleAcceptor::REJECT
+      end
+      assert_nil(acceptor.match(input_string))
     end
   end
 end

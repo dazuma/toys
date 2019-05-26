@@ -100,7 +100,7 @@ module Toys
 
       def add_config_path_if_missing(error, path)
         if error.config_path.nil? && error.config_line.nil?
-          l = error.cause.backtrace_locations.find { |b| b.absolute_path == path }
+          l = (error.cause.backtrace_locations || []).find { |b| b.absolute_path == path }
           if l
             error.config_path = path
             error.config_line = l.lineno

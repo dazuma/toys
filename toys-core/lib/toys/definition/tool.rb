@@ -305,18 +305,27 @@ module Toys
       end
 
       ##
-      # Returns a list of all custom acceptors used by this tool.
-      # @return [Array<Toys::Definition::Acceptor>]
+      # Resolve the given flag given the flag string.
       #
-      def custom_acceptors
-        result = []
-        flag_definitions.each do |f|
-          result << f.accept if f.accept.is_a?(Acceptor)
+      # Returns a two-element array. The first is a result code, and the
+      # second is either a {Toys::Definition::Flag} or `nil`. Possible result
+      # codes are:
+      # *   `:not_found` indicating no such flag was found. The second element
+      #     is always `nil`.
+      # *   `:found` indicating that a unique flag was found. The second
+      #     element is the flag definition.
+      # *   `:found_negative` indicating that a unique flag was found and that
+      #     the passed string is the negative form (i.e. `--no-*`). The second
+      #     element is the flag definition.
+      # *   `:ambiguous` indicating that more than one matching flag was found.
+      #     the second element is `nil`.
+      #
+      def resolve_flag(str)
+        result = FlagResolution.new(str)
+        flag_definitions.each do |flag_def|
+          result.merge!(flag_def.resolve(str))
         end
-        arg_definitions.each do |a|
-          result << a.accept if a.accept.is_a?(Acceptor)
-        end
-        result.uniq
+        result
       end
 
       ##
@@ -339,8 +348,8 @@ module Toys
         accept = @acceptors.fetch(name) do |k|
           if @parent
             @parent.resolve_acceptor(k)
-          elsif OPTPARSER_ACCEPTORS.include?(k)
-            k
+          else
+            Acceptor.resolve_default(k)
           end
         end
         if accept.nil?
@@ -444,6 +453,10 @@ module Toys
       # @param [Toys::Definition::Acceptor] acceptor The acceptor to add.
       #
       def add_acceptor(acceptor)
+        unless acceptor.name.is_a?(::String)
+          raise ToolDefinitionError,
+                "Acceptor name #{acceptor.name.inspect} must be a string."
+        end
         if @acceptors.key?(acceptor.name)
           raise ToolDefinitionError,
                 "An acceptor named #{acceptor.name.inspect} has already been" \

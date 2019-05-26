@@ -21,13 +21,11 @@
 # IN THE SOFTWARE.
 ;
 
-require "optparse"
-
 module Toys
   ##
   # An internal class that orchestrates execution of a tool.
   #
-  # Generaly, you should not need to use this class directly. Instead, run a
+  # Generally, you should not need to use this class directly. Instead, run a
   # tool using {Toys::CLI#run}.
   #
   class Runner
@@ -52,8 +50,7 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(args, verbosity: 0)
-      data = create_data(args, verbosity)
-      parse_args(args, data) unless @tool_definition.argument_parsing_disabled?
+      data = parse_data(args, verbosity)
       tool = @tool_definition.tool_class.new(@cli, data)
       @tool_definition.run_initializers(tool)
 
@@ -68,91 +65,23 @@ module Toys
 
     private
 
-    def create_data(args, base_verbosity)
-      data = @tool_definition.default_data.dup
+    def parse_data(args, verbosity)
+      arg_parser = ArgParser.new(@tool_definition)
+      data = arg_parser.data
       data[Tool::Keys::TOOL_DEFINITION] = @tool_definition
       data[Tool::Keys::TOOL_SOURCE] = @tool_definition.source_info
       data[Tool::Keys::TOOL_NAME] = @tool_definition.full_name
-      data[Tool::Keys::VERBOSITY] = base_verbosity
+      data[Tool::Keys::VERBOSITY] = verbosity
       data[Tool::Keys::ARGS] = args
       data[Tool::Keys::USAGE_ERROR] = nil
+      unless @tool_definition.argument_parsing_disabled?
+        arg_parser.parse(args)
+        arg_parser.finish
+        unless arg_parser.errors.empty?
+          data[Tool::Keys::USAGE_ERROR] = arg_parser.errors.join(" ")
+        end
+      end
       data
-    end
-
-    def parse_args(args, data)
-      optparse, seen = create_option_parser(data)
-      remaining = optparse.parse(args)
-      validate_flags(args, seen)
-      remaining = parse_required_args(remaining, args, data)
-      remaining = parse_optional_args(remaining, data)
-      parse_remaining_args(remaining, args, data)
-    rescue ::OptionParser::ParseError => e
-      data[Tool::Keys::USAGE_ERROR] = e.message
-    end
-
-    def create_option_parser(data)
-      seen = []
-      optparse = ::OptionParser.new
-      # The following clears out the Officious (hidden default flags).
-      optparse.remove
-      optparse.remove
-      optparse.new
-      optparse.new
-      @tool_definition.flag_definitions.each do |flag|
-        optparse.on(*flag.optparser_info) do |val|
-          seen << flag.key
-          data[flag.key] = flag.handler.call(val, data[flag.key])
-        end
-      end
-      @tool_definition.custom_acceptors do |accept|
-        optparse.accept(accept)
-      end
-      [optparse, seen]
-    end
-
-    def validate_flags(args, seen)
-      @tool_definition.flag_groups.each do |group|
-        error = group.validation_error(seen)
-        raise create_parse_error(args, error) if error
-      end
-    end
-
-    def parse_required_args(remaining, args, data)
-      @tool_definition.required_arg_definitions.each do |arg_info|
-        if remaining.empty?
-          reason = "No value given for required argument #{arg_info.display_name}"
-          raise create_parse_error(args, reason)
-        end
-        data[arg_info.key] = arg_info.process_value(remaining.shift)
-      end
-      remaining
-    end
-
-    def parse_optional_args(remaining, data)
-      @tool_definition.optional_arg_definitions.each do |arg_info|
-        break if remaining.empty?
-        data[arg_info.key] = arg_info.process_value(remaining.shift)
-      end
-      remaining
-    end
-
-    def parse_remaining_args(remaining, args, data)
-      return if remaining.empty?
-      unless @tool_definition.remaining_args_definition
-        if @tool_definition.runnable?
-          raise create_parse_error(remaining, "Extra arguments provided")
-        else
-          raise create_parse_error(@tool_definition.full_name + args, "Tool not found")
-        end
-      end
-      data[@tool_definition.remaining_args_definition.key] =
-        remaining.map { |arg| @tool_definition.remaining_args_definition.process_value(arg) }
-    end
-
-    def create_parse_error(path, reason)
-      ::OptionParser::ParseError.new(*path).tap do |e|
-        e.reason = reason
-      end
     end
 
     def perform_execution(tool)

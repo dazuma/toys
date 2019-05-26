@@ -54,6 +54,7 @@ module Toys
   module Utils; end
 end
 
+require "toys/arg_parser"
 require "toys/cli"
 require "toys/core_version"
 require "toys/definition/acceptor"

@@ -70,9 +70,13 @@ module Toys
       #
       ACCEPTABLE_NAMES = {
         nil => "string",
+        ::Object => "string",
+        ::NilClass => "string",
         ::String => "nonempty string",
         ::TrueClass => "boolean",
         ::FalseClass => "boolean",
+        ::Array => "string array",
+        ::Regexp => "regular expression",
         ::OptionParser::DecimalInteger => "decimal integer",
         ::OptionParser::OctalInteger => "octal integer",
         ::OptionParser::DecimalNumeric => "decimal numeric"
@@ -255,11 +259,11 @@ module Toys
       ##
       # Return a reasonable name for an acceptor
       #
-      # @param [Object] accept An acceptor to name
+      # @param [Toys::Definition::Acceptor] accept An acceptor to name
       # @return [String]
       #
       def acceptable_name(accept)
-        ACCEPTABLE_NAMES[accept] || accept.to_s.downcase
+        ACCEPTABLE_NAMES[accept&.name] || accept.to_s.downcase
       end
 
       private

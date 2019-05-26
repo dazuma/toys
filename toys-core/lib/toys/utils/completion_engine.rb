@@ -116,17 +116,16 @@ module Toys
       #
       def compute(previous_words, fragment, quote_type: nil)
         tool, args = @loader.lookup(previous_words)
-        candidates = []
-        if args.empty? && !fragment.start_with?("-")
-          context = Definition::Completion::Context.new(
-            fragment, quote_type: quote_type, completion_engine: self
-          )
-          candidates += subtool_candidates(previous_words, context)
-        end
-        optparser_machine = OptparserMachine.new(tool, candidates.empty?)
-        args.each { |arg| optparser_machine.handle_arg(arg) }
-        sources, current = optparser_machine.final_sources(fragment)
-        candidates += sources_candidates(sources, current, quote_type, tool)
+        candidates = subtool_candidates(previous_words, args, fragment, quote_type)
+        args_allowed = candidates.empty?
+        arg_parser = ArgParser.new(tool).parse(args)
+        context = Definition::Completion::Context.new(
+          fragment, quote_type: quote_type, arg_parser: arg_parser, completion_engine: self
+        )
+        candidates += plain_flag_candidates(context)
+        candidates += valued_flag_candidates(arg_parser, fragment, quote_type)
+        candidates += flag_value_candidates(context)
+        candidates += arg_candidates(context) if args_allowed
         candidates.sort.uniq
       end
 
@@ -170,143 +169,64 @@ module Toys
       end
 
       def make_candidates(strings, context)
-        start_str = context.string
+        start_str = context.fragment
         strings.flat_map do |str|
           str.start_with?(start_str) ? [Definition::Completion.candidate(str)] : []
         end
       end
 
-      def subtool_candidates(words, context)
-        return [] unless @complete_subtools
-        make_candidates(@loader.list_subtools(words).map(&:simple_name), context)
+      def subtool_candidates(previous_words, args, fragment, quote_type)
+        return [] if !@complete_subtools || !args.empty? || fragment.start_with?("-")
+        context = Definition::Completion::Context.new(
+          fragment, quote_type: quote_type, completion_engine: self
+        )
+        subtool_names = @loader.list_subtools(previous_words).map(&:simple_name)
+        make_candidates(subtool_names, context)
       end
 
-      def sources_candidates(sources, current, quote_type, tool)
-        sources.flat_map do |source, previous|
-          context = Definition::Completion::Context.new(
-            current, quote_type: quote_type, previous: previous, completion_engine: self
-          )
-          case source
-          when Definition::Flag
-            flag_value_candidates(source, context)
-          when Definition::Arg
-            arg_candidates(source, context)
-          when :flag_name
-            flag_candidates(tool, context)
-          else
-            []
-          end
-        end
-      end
-
-      def flag_value_candidates(flag, context)
-        return [] unless @complete_flag_values
-        flag.completion.call(context)
-      end
-
-      def arg_candidates(arg, context)
-        return [] unless @complete_args
-        arg.completion.call(context)
-      end
-
-      def flag_candidates(tool, context)
+      def plain_flag_candidates(context)
         return [] unless @complete_flags
-        make_candidates(tool.used_flags, context)
+        arg_parser = context.arg_parser
+        return [] unless arg_parser.flags_allowed?
+        return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
+        flag_def = arg_parser.active_flag_def
+        return [] if flag_def && flag_def.value_type == :required
+        make_candidates(arg_parser.tool_definition.used_flags, context)
       end
 
-      ## @private
-      class OptparserMachine
-        def initialize(tool, args_allowed)
-          @flag_def = nil
-          @flags_allowed = true
-          @args_allowed = args_allowed
-          @tool = tool
-          @arg_defs = tool.arg_definitions
-          @arg_def_index = 0
-          @previous_flag_name = nil
-          @previous_remaining = []
-        end
+      def valued_flag_candidates(arg_parser, fragment, quote_type)
+        return [] if !@complete_flag_values || !arg_parser.flags_allowed?
+        flag_def = arg_parser.active_flag_def
+        return [] if flag_def && flag_def.value_type == :required
+        return [] unless fragment =~ /\A(--\w[\?\w-]*)=(.*)\z/
+        flag_str = $1
+        fragment = $2
+        flag_def = tool.resolve_flag(flag_str).unique_flag
+        return [] unless flag_def
+        context = Definition::Completion::Context.new(
+          fragment, quote_type: quote_type, arg_parser: arg_parser, completion_engine: self
+        )
+        flag_def.completion.call(context)
+      end
 
-        def handle_arg(arg)
-          return if check_flag_value(arg)
-          return if check_double_dash(arg)
-          return if check_plain_flag(arg)
-          check_positional_arg(arg)
-        end
+      def flag_value_candidates(context)
+        return [] unless @complete_flag_values
+        arg_parser = context.arg_parser
+        flag_def = arg_parser.active_flag_def
+        return [] unless flag_def
+        return [] if @complete_flags && arg_parser.flags_allowed? &&
+                     flag_def.value_type == :optional && context.fragment.start_with?("-")
+        flag_def.completion.call(context)
+      end
 
-        def check_flag_value(arg)
-          return false unless @flag_def
-          value_type = @flag_def.value_type
-          @flag_def = nil
-          @previous_flag_name = nil
-          value_type == :required || !arg.start_with?("-")
-        end
-
-        def check_double_dash(arg)
-          return false unless arg == "--"
-          @flags_allowed = false
-          true
-        end
-
-        def check_plain_flag(arg)
-          return false if !@flags_allowed || arg !~ /^-(-\w[\?\w-]*|[\?\w])$/
-          flag_def = @tool.flag_definitions.find { |f| f.effective_flags.include?(arg) }
-          if flag_def.flag_type == :value
-            @flag_def = flag_def
-            @previous_flag_name = arg
-          end
-          true
-        end
-
-        def check_positional_arg(arg)
-          return false if @flags_allowed && arg =~ /^-(-\w[\?\w-]*=.*|[\?\w].+)$/
-          return false if @arg_def_index >= @arg_defs.size
-          if @arg_defs[@arg_def_index].type == :remaining
-            @previous_remaining << arg
-          else
-            @arg_def_index += 1
-          end
-          true
-        end
-
-        def add_flag_value_sources(sources, last)
-          if @flag_def.value_type == :optional && (last.empty? || last.start_with?("-"))
-            sources << [:flag_name, nil]
-          end
-          if @flag_def.value_type == :required || last.empty? || !last.start_with?("-")
-            sources << [@flag_def, @previous_flag_name]
-          end
-        end
-
-        def add_flag_set_sources(sources, flag_str, flag_previous)
-          flag_def = @tool.flag_definitions.find { |f| f.effective_flags.include?(flag_str) }
-          sources << [flag_def, flag_previous] if flag_def
-        end
-
-        def add_other_sources(sources, last)
-          if @flags_allowed && (last.empty? || last.start_with?("-"))
-            sources << [:flag_name, nil]
-          end
-          if @args_allowed && (!@flags_allowed || !last.start_with?("-"))
-            arg = @arg_defs[@arg_def_index]
-            sources << [arg, arg.type == :remaining ? @previous_remaining : nil] if arg
-          end
-        end
-
-        def final_sources(last)
-          sources = []
-          if @flag_def
-            add_flag_value_sources(sources, last)
-          elsif @flags_allowed && last =~ /^(-[\?\w])(.+)|(--\w[\?\w-]*)=(.*)$/
-            last = $2 || $4
-            flag_str = $1 || $3
-            flag_previous = $1 || "#{$3}="
-            add_flag_set_sources(sources, flag_str, flag_previous)
-          else
-            add_other_sources(sources, last)
-          end
-          [sources, last]
-        end
+      def arg_candidates(context)
+        return [] unless @complete_args
+        arg_parser = context.arg_parser
+        return [] if arg_parser.active_flag_def
+        return [] if arg_parser.flags_allowed? && context.fragment.start_with?("-")
+        arg_def = arg_parser.next_arg_def
+        return [] unless arg_def
+        arg_def.completion.call(context)
       end
     end
   end

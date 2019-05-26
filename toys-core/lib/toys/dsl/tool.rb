@@ -62,58 +62,62 @@ module Toys
 
       ##
       # Create an acceptor that can be passed into a flag or arg. An acceptor
-      # validates and/or converts a string parameter to a Ruby object. This
-      # acceptor may, for the current tool, be referenced by the name you provide
-      # when you create a flag or arg.
+      # validates the string parameter passed to the flag or arg, and
+      # optionally converts it to a different object before storing it in your
+      # tool's data.
       #
-      # An acceptor contains a validator, which parses and validates the string
-      # syntax of an argument, and a converter, which takes the validation
-      # results and returns a final value for the context data.
+      # When you create an acceptor, you provide a string name. The acceptor
+      # can, from the current tool or its subtools, be referenced by that name.
       #
-      # The validator may be either a regular expression or a list of valid
-      # inputs.
+      # Acceptors can be defined in one of three ways.
       #
-      # If the validator is a regular expression, it is matched against the
-      # argument string and succeeds only if the expression covers the *entire*
-      # string. The elements of the MatchData (i.e. the string matched, plus any
-      # captures) are then passed into the conversion function.
+      # *   You can provide a **regular expression**. This acceptor validates
+      #     only if the regex matches the *entire string parameter*.
       #
-      # If the validator is an array, the *string form* of the array elements
-      # (i.e. the results of calling to_s on each element) are considered the
-      # valid values for the argument. This is useful for enums, for example.
-      # In this case, the input is converted to the original array element, and
-      # any converter function you provide is ignored.
+      #     You can also provide an optional conversion function as a block. If
+      #     provided, function must take a variable number of arguments, the
+      #     first being the matched string and the remainder being the captures
+      #     from the regular expression. It should return the converted object
+      #     that will be stored in the context data. If you do not provide a
+      #     block, the original string will be used.
       #
-      # If you provide no validator, then no validation takes place and all
-      # argument strings are considered valid. The string itself is passed on to
-      # the converter.
+      # *   You can provide an **array** of possible values. The acceptor
+      #     validates if the string parameter matches the *string form* of one
+      #     of the array elements (i.e. the results of calling `to_s` on the
+      #     array elements.)
       #
-      # The converter should be a proc that takes as its arguments the results
-      # of validation. For example, if you use a regular expression validator,
-      # the converter should take a series of strings arguments, the first of
-      # which is the full input string, and the rest of which are captures.
-      # If you provide no converter, no conversion is done and the input string
-      # is considered the final value. You may also provide the converter as a
-      # block.
+      #     An array acceptor automatically converts the string parameter to
+      #     the actual array element that it matchd. For example, if the symbol
+      #     `:foo` is in the array, it will match the string `"foo"`, and then
+      #     store the symbol `:foo` in the tool data.
+      #
+      # *   You can provide a **function** by passing it as a proc or a block.
+      #     This function performs *both* validation and conversion. It should
+      #     take the string parameter as its argument, and it must either
+      #     return the object that should be stored in the tool data, or raise
+      #     an exception (descended from `StandardError`) to indicate that the
+      #     string parameter is invalid.
       #
       # @param [String] name The acceptor name.
-      # @param [Regexp,Array,nil] validator The validator.
-      # @param [Proc,nil] converter The validator.
+      # @param [Regexp,Array,Proc,nil] arg The acceptor specification.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def acceptor(name, validator = nil, converter = nil, &block)
+      def acceptor(name, arg = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
         return self if cur_tool.nil?
+        name = name.to_s
         accept =
-          case validator
+          case arg
           when ::Regexp
-            Definition::PatternAcceptor.new(name, validator, converter, &block)
+            Definition::PatternAcceptor.new(name, arg, &block)
           when ::Array
-            Definition::EnumAcceptor.new(name, validator)
+            Definition::EnumAcceptor.new(name, arg)
+          when ::Proc
+            Definition::SimpleAcceptor.new(name, arg)
           when nil
-            Definition::Acceptor.new(name, converter, &block)
+            Definition::SimpleAcceptor.new(name, &block)
           else
-            raise ToolDefinitionError, "Illegal validator: #{validator.inspect}"
+            raise ToolDefinitionError, "Illegal acceptor: #{arg.inspect}"
           end
         cur_tool.add_acceptor(accept)
         self

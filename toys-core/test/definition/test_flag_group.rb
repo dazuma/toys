@@ -49,7 +49,7 @@ describe Toys::Definition::FlagGroup do
     it "fails to validate with a flag missing" do
       group = Toys::Definition::FlagGroup::Required.new(nil, nil, nil)
       add_flags(group)
-      assert_equal('Flag "--flag2" is required', group.validation_error([:flag1, :flag3]))
+      assert_equal('Flag "--flag2" is required.', group.validation_error([:flag1, :flag3]))
     end
   end
 
@@ -89,14 +89,14 @@ describe Toys::Definition::FlagGroup do
     it "fails to validate with no flags set" do
       group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
-      assert_equal('Exactly one out of group "Flags" is required', group.validation_error([]))
+      assert_equal('Exactly one out of group "Flags" is required.', group.validation_error([]))
     end
 
     it "fails to validate with two flags set" do
       group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal('Exactly one out of group "Flags" is required, but both' \
-                   ' "--flag1" and "--flag3" were set',
+                   ' "--flag1" and "--flag3" were set.',
                    group.validation_error([:flag1, :flag3]))
     end
   end
@@ -124,7 +124,7 @@ describe Toys::Definition::FlagGroup do
       group = Toys::Definition::FlagGroup::AtMostOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal('At most one out of group "Flags" is required, but both' \
-                   ' "--flag1" and "--flag3" were set',
+                   ' "--flag1" and "--flag3" were set.',
                    group.validation_error([:flag1, :flag3]))
     end
   end
@@ -145,7 +145,7 @@ describe Toys::Definition::FlagGroup do
     it "fails to validate with no flags set" do
       group = Toys::Definition::FlagGroup::AtLeastOne.new(nil, nil, nil)
       add_flags(group)
-      assert_equal('At least one out of group "Flags" is required', group.validation_error([]))
+      assert_equal('At least one out of group "Flags" is required.', group.validation_error([]))
     end
 
     it "validates with two flags set" do

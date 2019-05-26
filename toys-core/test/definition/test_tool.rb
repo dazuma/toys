@@ -61,6 +61,17 @@ describe Toys::Definition::Tool do
     Toys::WrappableString.new(str)
   end
 
+  describe "definition state" do
+    it "begins without definition" do
+      assert_equal(false, tool.includes_definition?)
+    end
+
+    it "is set when flags are present" do
+      tool.add_flag(:a, ["-a", "--aa"], desc: "hi there")
+      assert_equal(true, tool.includes_definition?)
+    end
+  end
+
   describe "name field" do
     it "works for a root tool" do
       assert_nil(root_tool.simple_name)
@@ -210,25 +221,27 @@ describe Toys::Definition::Tool do
       it "adds a default flag without an acceptor" do
         tool.add_flag(:abc)
         flag = tool.flag_definitions.first
-        assert_equal(["--abc"], flag.optparser_info)
+        assert_equal(["--abc"], flag.canonical_syntax_strings)
+        assert_nil(flag.accept)
       end
 
       it "adds a default flag with an acceptor" do
         tool.add_flag(:abc, accept: String)
         flag = tool.flag_definitions.first
-        assert_equal(["--abc VALUE", String], flag.optparser_info)
+        assert_equal(["--abc VALUE"], flag.canonical_syntax_strings)
+        assert_equal(String, flag.accept.name)
       end
 
       it "adds a default flag with a nonboolean default" do
         tool.add_flag(:abc, default: "hi")
         flag = tool.flag_definitions.first
-        assert_equal(["--abc VALUE"], flag.optparser_info)
+        assert_equal(["--abc VALUE"], flag.canonical_syntax_strings)
       end
 
       it "adds a default flag with a boolean default" do
         tool.add_flag(:abc, default: true)
         flag = tool.flag_definitions.first
-        assert_equal(["--abc"], flag.optparser_info)
+        assert_equal(["--abc"], flag.canonical_syntax_strings)
       end
     end
 
@@ -343,55 +356,56 @@ describe Toys::Definition::Tool do
       it "fills required value from single with empty delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE"])
         flag = tool.flag_definitions.first
-        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.optparser_info)
+        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.canonical_syntax_strings)
       end
 
       it "fills required value from single with space delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "-c VALUE"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a VALUE", "--bb VALUE", "-c VALUE"], flag.optparser_info)
+        assert_equal(["-a VALUE", "--bb VALUE", "-c VALUE"], flag.canonical_syntax_strings)
       end
 
       it "fills required value from double with space delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "--cc VALUE"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a VALUE", "--bb VALUE", "--cc VALUE"], flag.optparser_info)
+        assert_equal(["-a VALUE", "--bb VALUE", "--cc VALUE"], flag.canonical_syntax_strings)
       end
 
       it "fills required value from double with equals delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "--cc=VALUE"])
         flag = tool.flag_definitions.first
-        assert_equal(["-aVALUE", "--bb=VALUE", "--cc=VALUE"], flag.optparser_info)
+        assert_equal(["-aVALUE", "--bb=VALUE", "--cc=VALUE"], flag.canonical_syntax_strings)
       end
 
       it "fills optional value from single with empty delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "-c[VALUE]"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "-c[VALUE]"], flag.optparser_info)
+        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "-c[VALUE]"], flag.canonical_syntax_strings)
       end
 
       it "fills optional value from single with space delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "-c [VALUE]"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a [VALUE]", "--bb [VALUE]", "-c [VALUE]"], flag.optparser_info)
+        assert_equal(["-a [VALUE]", "--bb [VALUE]", "-c [VALUE]"], flag.canonical_syntax_strings)
       end
 
       it "fills optional value from double with space delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "--cc [VALUE]"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a [VALUE]", "--bb [VALUE]", "--cc [VALUE]"], flag.optparser_info)
+        assert_equal(["-a [VALUE]", "--bb [VALUE]", "--cc [VALUE]"], flag.canonical_syntax_strings)
       end
 
       it "fills optional value from double with equals delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "--cc=[VALUE]"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "--cc=[VALUE]"], flag.optparser_info)
+        assert_equal(["-a[VALUE]", "--bb=[VALUE]", "--cc=[VALUE]"], flag.canonical_syntax_strings)
       end
 
       it "handles an acceptor" do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE"], accept: Integer)
         flag = tool.flag_definitions.first
-        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE", Integer], flag.optparser_info)
+        assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.canonical_syntax_strings)
+        assert_equal(Integer, flag.accept.name)
       end
 
       it "gets value label from first double flag" do
@@ -475,7 +489,7 @@ describe Toys::Definition::Tool do
     let(:acceptor) { Toys::Definition::Acceptor.new(acceptor_name) }
 
     it "resolves well-known acceptors" do
-      assert_equal(Integer, tool.resolve_acceptor(Integer))
+      assert_equal(Integer, tool.resolve_acceptor(Integer).name)
     end
 
     it "resolves the nil acceptor" do

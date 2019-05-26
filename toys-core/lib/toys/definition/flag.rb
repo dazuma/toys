@@ -34,23 +34,23 @@ module Toys
       def initialize(str)
         case str
         when /^(-([\?\w]))$/
-          setup(str, [$1], $1, $2, "-", nil, nil, nil, nil)
+          setup(str, $1, nil, $1, $2, "-", nil, nil, nil, nil)
         when /^(-([\?\w]))( ?)\[(\w+)\]$/
-          setup(str, [$1], $1, $2, "-", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, "-", :value, :optional, $3, $4)
         when /^(-([\?\w]))\[( )(\w+)\]$/
-          setup(str, [$1], $1, $2, "-", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, "-", :value, :optional, $3, $4)
         when /^(-([\?\w]))( ?)(\w+)$/
-          setup(str, [$1], $1, $2, "-", :value, :required, $3, $4)
+          setup(str, $1, nil, $1, $2, "-", :value, :required, $3, $4)
         when /^--\[no-\](\w[\?\w-]*)$/
-          setup(str, ["--#{$1}", "--no-#{$1}"], str, $1, "--", :boolean, nil, nil, nil)
+          setup(str, "--#{$1}", "--no-#{$1}", str, $1, "--", :boolean, nil, nil, nil)
         when /^(--(\w[\?\w-]*))$/
-          setup(str, [$1], $1, $2, "--", nil, nil, nil, nil)
+          setup(str, $1, nil, $1, $2, "--", nil, nil, nil, nil)
         when /^(--(\w[\?\w-]*))([= ])\[(\w+)\]$/
-          setup(str, [$1], $1, $2, "--", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, "--", :value, :optional, $3, $4)
         when /^(--(\w[\?\w-]*))\[([= ])(\w+)\]$/
-          setup(str, [$1], $1, $2, "--", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, "--", :value, :optional, $3, $4)
         when /^(--(\w[\?\w-]*))([= ])(\w+)$/
-          setup(str, [$1], $1, $2, "--", :value, :required, $3, $4)
+          setup(str, $1, nil, $1, $2, "--", :value, :required, $3, $4)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
@@ -58,6 +58,8 @@ module Toys
 
       attr_reader :original_str
       attr_reader :flags
+      attr_reader :positive_flag
+      attr_reader :negative_flag
       attr_reader :str_without_value
       attr_reader :sort_str
       attr_reader :flag_style
@@ -84,10 +86,13 @@ module Toys
 
       private
 
-      def setup(original_str, flags, str_without_value, sort_str, flag_style, flag_type,
-                value_type, value_delim, value_label)
+      def setup(original_str, positive_flag, negative_flag, str_without_value, sort_str,
+                flag_style, flag_type, value_type, value_delim, value_label)
         @original_str = original_str
-        @flags = flags
+        @positive_flag = positive_flag
+        @negative_flag = negative_flag
+        @flags = [positive_flag]
+        @flags << negative_flag if negative_flag
         @str_without_value = str_without_value
         @sort_str = sort_str
         @flag_style = flag_style
@@ -137,7 +142,7 @@ module Toys
         @long_desc = WrappableString.make_array(long_desc)
         @default = default
         @completion = completion
-        needs_val = (!accept.nil? && accept != ::TrueClass && accept != ::FalseClass) ||
+        needs_val = (!accept.nil? && accept.name != ::TrueClass && accept.name != ::FalseClass) ||
                     (!default.nil? && default != true && default != false)
         create_default_flag_if_needed(needs_val)
         remove_used_flags(used_flags, report_collisions)
@@ -256,7 +261,7 @@ module Toys
       end
 
       ##
-      # Returns the list of effective flags used.
+      # Returns the list of all effective flags used.
       # @return [Array<String>]
       #
       def effective_flags
@@ -264,11 +269,35 @@ module Toys
       end
 
       ##
-      # Returns a list suitable for passing to OptionParser.
+      # Look up the flag by string. Returns an object that indicates whether
+      # the given string matched this flag, whether the match was unique, and
+      # other pertinent information.
+      #
+      # @param [String] str Flag string to look up
+      # @return [Toys::Definition::FlagResolution] Information about the match.
+      #
+      def resolve(str)
+        resolution = FlagResolution.new(str)
+        flag_syntax.each do |fs|
+          if fs.positive_flag == str
+            resolution.add!(self, fs, false, true)
+          elsif fs.negative_flag == str
+            resolution.add!(self, fs, true, true)
+          elsif fs.positive_flag.start_with?(str)
+            resolution.add!(self, fs, false, false)
+          elsif fs.negative_flag.to_s.start_with?(str)
+            resolution.add!(self, fs, true, false)
+          end
+        end
+        resolution
+      end
+
+      ##
+      # Returns a list of canonical flag syntax strings.
       # @return [Array]
       #
-      def optparser_info
-        @optparser_info ||= flag_syntax.map(&:canonical_str) + Array(accept)
+      def canonical_syntax_strings
+        @canonical_syntax_strings ||= flag_syntax.map(&:canonical_str)
       end
 
       ##
@@ -390,6 +419,109 @@ module Toys
           double_flag_syntax.first&.sort_str ||
           single_flag_syntax.first&.sort_str ||
           ""
+      end
+    end
+
+    ##
+    # The result of looking up a flag by name.
+    #
+    class FlagResolution
+      ## @private
+      def initialize(str)
+        @string = str
+        @flags = []
+        @found_exact = false
+      end
+
+      ##
+      # The flag string that was looked up
+      # @return [String]
+      #
+      attr_reader :string
+
+      ##
+      # Whether an exact match of the string was found
+      # @return [Boolean]
+      #
+      attr_reader :found_exact
+      alias found_exact? found_exact
+
+      ##
+      # The number of matches that were found.
+      # @return [Integer]
+      #
+      def count
+        @flags.size
+      end
+
+      ##
+      # Whether a single unique match was found.
+      # @return [Boolean]
+      #
+      def found_unique?
+        @flags.size == 1
+      end
+
+      ##
+      # Whether no matches were found.
+      # @return [Boolean]
+      #
+      def not_found?
+        @flags.empty?
+      end
+
+      ##
+      # Whether multiple matches were found (i.e. ambiguous input).
+      # @return [Boolean]
+      #
+      def found_multiple?
+        @flags.size > 1
+      end
+
+      ##
+      # Return the unique {Toys::Definition::Flag}, or `nil` if not found or
+      # not unique.
+      # @return [Toys::Definition::Flag,nil]
+      #
+      def unique_flag
+        found_unique? ? @flags.first[0] : nil
+      end
+
+      ##
+      # Return the unique {Toys::Definition::FlagSyntax}, or `nil` if not found
+      # or not unique.
+      # @return [Toys::Definition::FlagSyntax,nil]
+      #
+      def unique_flag_syntax
+        found_unique? ? @flags.first[1] : nil
+      end
+
+      ##
+      # Return whether the unique match was a hit on the negative (`--no-*`)
+      # case, or `nil` if not found or not unique.
+      # @return [Boolean,nil]
+      #
+      def unique_flag_negative?
+        found_unique? ? @flags.first[2] : nil
+      end
+
+      ## @private
+      def add!(flag, flag_syntax, negative, exact)
+        @flags = [] if exact && !found_exact?
+        if exact || !found_exact?
+          @flags << [flag, flag_syntax, negative]
+          @found_exact = exact
+        end
+        self
+      end
+
+      ## @private
+      def merge!(other)
+        raise "String mismatch" unless string == other.string
+        other.instance_variable_get(:@flags).each do |flag, flag_syntax, negative|
+          add!(flag, flag_syntax, negative, other.found_exact?)
+        end
+        self
       end
     end
   end

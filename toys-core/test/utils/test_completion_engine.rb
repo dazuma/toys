@@ -43,7 +43,7 @@ describe Toys::Utils::CompletionEngine do
     cli.add_config_block do
       tool "one" do
         flag :hello, completion: ["neighbor", "kitty"]
-        flag :world, "--world VALUE", completion: ["building", "news"]
+        flag :world, "--world VALUE", "-wVALUE", completion: ["building", "news"]
         flag :ruby, "--ruby [VALUE]", completion: ["gems", "tuesday"]
         required_arg :foo, completion: ["lish", "sball"]
         optional_arg :bar, completion: ["n", "k"]
@@ -64,7 +64,10 @@ describe Toys::Utils::CompletionEngine do
     cli
   }
   let(:loader) { cli.loader }
-  let(:completion) { Toys::Utils::CompletionEngine.new(loader) }
+  let(:completion) {
+    @context = nil
+    Toys::Utils::CompletionEngine.new(loader)
+  }
 
   it "detects failure to find binary name" do
     result = completion.run_bash_internal("toys")
@@ -93,7 +96,7 @@ describe Toys::Utils::CompletionEngine do
 
   it "completes flag names and first arg" do
     result = completion.run_bash_internal("toys one ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "lish ", "sball "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
   end
 
   it "completes flag names only" do
@@ -103,17 +106,17 @@ describe Toys::Utils::CompletionEngine do
 
   it "completes flag names and second arg" do
     result = completion.run_bash_internal("toys one x ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "k ", "n "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "k ", "n "], result)
   end
 
   it "completes flag names and remaining arg" do
     result = completion.run_bash_internal("toys one x y z ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "aar ", "ooka "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "aar ", "ooka "], result)
   end
 
   it "completes after flag with no argument" do
     result = completion.run_bash_internal("toys one --hello ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "lish ", "sball "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
   end
 
   it "completes empty string after flag with required argument" do
@@ -123,17 +126,17 @@ describe Toys::Utils::CompletionEngine do
 
   it "completes empty string after flag with optional argument" do
     result = completion.run_bash_internal("toys one --ruby ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "gems ", "tuesday "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "gems ", "tuesday "], result)
   end
 
   it "completes apparent flag after flag with optional argument" do
     result = completion.run_bash_internal("toys one --ruby -")
-    assert_equal(["--hello ", "--ruby ", "--world "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w "], result)
   end
 
   it "completes after flag with its argument" do
     result = completion.run_bash_internal("toys one --ruby together ")
-    assert_equal(["--hello ", "--ruby ", "--world ", "lish ", "sball "], result)
+    assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
   end
 
   it "completes after flag ender" do
@@ -161,45 +164,38 @@ describe Toys::Utils::CompletionEngine do
     assert_equal(['"three" ', '"two" '], result)
   end
 
-  it "constructs context for no previous" do
+  it "constructs context for no active flag" do
     completion.run_bash_internal("toys three four --hello 123")
-    assert_equal("123", @context.string)
-    assert_nil(@context.previous)
+    assert_equal("123", @context.fragment)
+    assert_nil(@context.arg_parser.active_flag_def)
   end
 
   it "constructs context for long flag with value" do
     completion.run_bash_internal("toys three four --world 123")
-    assert_equal("123", @context.string)
-    assert_equal("--world", @context.previous)
-  end
-
-  it "constructs context for long flag with equals value" do
-    completion.run_bash_internal("toys three four --world=123")
-    assert_equal("123", @context.string)
-    assert_equal("--world=", @context.previous)
+    assert_equal("123", @context.fragment)
+    assert_equal(:world, @context.arg_parser.active_flag_def.key)
   end
 
   it "constructs context for single character flag with value" do
     completion.run_bash_internal("toys three four -w 123")
-    assert_equal("123", @context.string)
-    assert_equal("-w", @context.previous)
+    assert_equal("123", @context.fragment)
+    assert_equal(:world, @context.arg_parser.active_flag_def.key)
   end
 
-  it "constructs context for single character flag with attached value" do
+  it "does not complete single character flag with attached value" do
     completion.run_bash_internal("toys three four -w123")
-    assert_equal("123", @context.string)
-    assert_equal("-w", @context.previous)
+    assert_nil(@context)
   end
 
   it "constructs context for empty remaining args" do
     completion.run_bash_internal("toys three four foo bar ")
-    assert_equal("", @context.string)
-    assert_equal([], @context.previous)
+    assert_equal("", @context.fragment)
+    assert_equal([], @context.arg_parser.data[:baz])
   end
 
   it "constructs context for several remaining args" do
     completion.run_bash_internal("toys three four foo bar baz1 baz2 ")
-    assert_equal("", @context.string)
-    assert_equal(["baz1", "baz2"], @context.previous)
+    assert_equal("", @context.fragment)
+    assert_equal(["baz1", "baz2"], @context.arg_parser.data[:baz])
   end
 end

@@ -99,7 +99,7 @@ module Toys
         def validation_error(seen)
           flag_definitions.each do |flag|
             unless seen.include?(flag.key)
-              return "Flag \"#{flag.display_name}\" is required"
+              return "Flag \"#{flag.display_name}\" is required."
             end
           end
           nil
@@ -133,13 +133,13 @@ module Toys
             if seen.include?(flag.key)
               if set_flag
                 return "Exactly one out of group \"#{desc}\" is required, but both" \
-                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set"
+                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set."
               else
                 set_flag = flag
               end
             end
           end
-          return "Exactly one out of group \"#{desc}\" is required" unless set_flag
+          return "Exactly one out of group \"#{desc}\" is required." unless set_flag
           nil
         end
 
@@ -160,7 +160,7 @@ module Toys
             if seen.include?(flag.key)
               if set_flag
                 return "At most one out of group \"#{desc}\" is required, but both" \
-                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set"
+                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set."
               else
                 set_flag = flag
               end
@@ -184,7 +184,7 @@ module Toys
           flag_definitions.each do |flag|
             return nil if seen.include?(flag.key)
           end
-          "At least one out of group \"#{desc}\" is required"
+          "At least one out of group \"#{desc}\" is required."
         end
 
         ## @private

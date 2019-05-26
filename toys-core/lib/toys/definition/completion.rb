@@ -159,16 +159,16 @@ module Toys
         ##
         # Create completion context
         #
-        # @param [String] string The string fragment
+        # @param [String] fragment The string fragment
         # @param [:single,:double,nil] quote_type Quoting used for the string
-        # @param [String,Array<String>,nil] previous Previous string(s)
+        # @param [Toys::ArgParser] arg_parser Current ArgParser
         # @param [Toys::Utils::CompletionEngine] completion_engine The
         #     completion engine currently running
         #
-        def initialize(string, quote_type: nil, previous: nil, completion_engine: nil)
-          @string = string
+        def initialize(fragment, quote_type: nil, arg_parser: nil, completion_engine: nil)
+          @fragment = fragment
           @quote_type = quote_type
-          @previous = previous
+          @arg_parser = arg_parser
           @completion_engine = completion_engine
         end
 
@@ -176,8 +176,7 @@ module Toys
         # The current string fragment to complete
         # @return [String]
         #
-        attr_reader :string
-        alias to_s string
+        attr_reader :fragment
 
         ##
         # The quoting used for the string fragment.
@@ -186,14 +185,12 @@ module Toys
         attr_reader :quote_type
 
         ##
-        # Relevant previous strings. For a flag, this is a single string
-        # indicating the flag name (for example, "-v", "--flag", or "--flag=").
-        # For a remaining args, this is an array of the previous args.
-        # Otherwise, nil.
+        # Current ArgParser indicating the status of argument parsing up to
+        # this point, or `nil` if argument parsing has not started.
         #
-        # @return [String,Array<String>,nil]
+        # @return [Toys::ArgParser,nil]
         #
-        attr_reader :previous
+        attr_reader :arg_parser
 
         ##
         # The completion engine currently running.
@@ -310,7 +307,7 @@ module Toys
       #     completion candidates.
       #
       def call(context)
-        substring = context.string
+        substring = context.fragment
         prefix, name =
           if substring.empty? || substring.end_with?("/")
             [substring, ""]
@@ -390,8 +387,8 @@ module Toys
       #     completion candidates.
       #
       def call(context)
-        substring = context.string
-        @values.find_all { |val| val.string.start_with?(substring) }
+        fragment = context.fragment
+        @values.find_all { |val| val.string.start_with?(fragment) }
       end
     end
   end

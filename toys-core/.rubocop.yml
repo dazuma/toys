@@ -40,6 +40,8 @@ Style/IfUnlessModifier:
   Enabled: false
 Style/MixinGrouping:
   Enabled: false
+Style/Next:
+  Enabled: false
 Style/PerlBackrefs:
   Enabled: false
 Style/Semicolon:
@@ -47,6 +49,8 @@ Style/Semicolon:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/SymbolArray:
+  Enabled: false
+Style/WhileUntilModifier:
   Enabled: false
 Style/WordArray:
   Enabled: false

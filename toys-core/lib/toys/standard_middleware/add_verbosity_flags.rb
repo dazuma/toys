@@ -83,6 +83,9 @@ module Toys
 
       private
 
+      INCREMENT_HANDLER = ->(_val, cur) { cur + 1 }
+      DECREMENT_HANDLER = ->(_val, cur) { cur - 1 }
+
       def add_verbose_flags(tool_definition)
         verbose_flags = resolve_flags_spec(@verbose_flags, tool_definition,
                                            DEFAULT_VERBOSE_FLAGS)
@@ -90,7 +93,7 @@ module Toys
           tool_definition.add_flag(
             Tool::Keys::VERBOSITY, verbose_flags,
             report_collisions: false,
-            handler: ->(_val, cur) { cur + 1 },
+            handler: INCREMENT_HANDLER,
             desc: "Increase verbosity",
             long_desc: "Increase verbosity, causing additional logging levels to display.",
             group: StandardMiddleware::COMMON_FLAG_GROUP
@@ -104,7 +107,7 @@ module Toys
           tool_definition.add_flag(
             Tool::Keys::VERBOSITY, quiet_flags,
             report_collisions: false,
-            handler: ->(_val, cur) { cur - 1 },
+            handler: DECREMENT_HANDLER,
             desc: "Decrease verbosity",
             long_desc: "Decrease verbosity, causing fewer logging levels to display.",
             group: StandardMiddleware::COMMON_FLAG_GROUP
