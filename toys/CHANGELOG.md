@@ -3,14 +3,17 @@
 ### 0.8.0 / Unreleased
 
 * CHANGED: Relicensed under the MIT License.
-* ADDED: Tab completion for bash.
+* ADDED: Tab completion for bash. Args and flags can also provide completion information.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: `:gem_build` template includes an `:install_gem` options.
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
+* CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
+* CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
 * FIXED: Prevented toys-core from being ousted from the load path if a toys file invoked bundler setup.
+* FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 
 ### 0.7.0 / 2019-01-23

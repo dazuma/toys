@@ -29,11 +29,8 @@ module Toys
     class Alias
       ##
       # Create a new alias.
-      #
-      # @param [Array<String>] full_name The name of the alias.
-      # @param [String,Array<String>] target The name of the target. May either
-      #     be a local reference (a single string) or a global reference (an
-      #     array of strings)
+      # Should be created only from the DSL via the Loader.
+      # @private
       #
       def initialize(loader, full_name, target, priority)
         @target_name =

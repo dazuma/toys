@@ -128,22 +128,25 @@ module Toys
       DEFAULT_HANDLER = SET_HANDLER
 
       ##
-      # Create a Flag definition
+      # Create a Flag definition.
+      # Should be created only from {Toys::Definition::Tool#add_flag}.
       # @private
       #
-      def initialize(key, flags, used_flags, report_collisions, accept, handler,
+      def initialize(key, flags, used_flags, report_collisions, acceptor, handler,
                      default, completion, display_name, group)
         @group = group
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
-        @accept = accept
+        @acceptor = acceptor
         @handler = resolve_handler(handler)
         @desc = WrappableString.make(desc)
         @long_desc = WrappableString.make_array(long_desc)
         @default = default
         @completion = completion
-        needs_val = (!accept.nil? && accept.name != ::TrueClass && accept.name != ::FalseClass) ||
-                    (!default.nil? && default != true && default != false)
+        needs_val =
+          @flag_syntax.empty? &&
+          ((!acceptor.nil? && acceptor.name != ::TrueClass && acceptor.name != ::FalseClass) ||
+           (!default.nil? && default != true && default != false))
         create_default_flag_if_needed(needs_val)
         remove_used_flags(used_flags, report_collisions)
         canonicalize(needs_val)
@@ -170,9 +173,9 @@ module Toys
 
       ##
       # Returns the acceptor, which may be `nil`.
-      # @return [Object]
+      # @return [Tool::Definition::Acceptor]
       #
-      attr_reader :accept
+      attr_reader :acceptor
 
       ##
       # Returns the default value, which may be `nil`.

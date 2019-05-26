@@ -89,7 +89,7 @@ module Toys
       # @return [String,Array,nil]
       #
       def match(str)
-        str
+        [str]
       end
 
       ##
@@ -197,7 +197,7 @@ module Toys
       # Overrides {Toys::Definition::Acceptor#match} to use the given regex.
       #
       def match(str)
-        str.nil? ? nil : @regex.match(str)
+        str.nil? ? [nil] : @regex.match(str)
       end
 
       ##
@@ -238,7 +238,7 @@ module Toys
       # Overrides {Toys::Definition::Acceptor#match} to find the value.
       #
       def match(str)
-        @values.find { |s, _e| s == str }
+        str.nil? ? [nil, nil] : @values.find { |s, _e| s == str }
       end
 
       ##
@@ -272,15 +272,15 @@ module Toys
 
         def standard_defaults
           @standard_defaults ||= {
-            ::Object => new(::Object),
-            ::NilClass => new(::NilClass),
+            ::Object => build_object(::Object, true),
+            ::NilClass => build_object(::NilClass, nil),
             ::String => build_string,
             ::Integer => build_integer,
             ::Float => build_float,
             ::Rational => build_rational,
             ::Numeric => build_numeric,
-            ::TrueClass => build_boolean(::TrueClass),
-            ::FalseClass => build_boolean(::FalseClass),
+            ::TrueClass => build_boolean(::TrueClass, true),
+            ::FalseClass => build_boolean(::FalseClass, false),
             ::Array => build_array,
             ::Regexp => build_regexp
           }
@@ -294,29 +294,33 @@ module Toys
           }
         end
 
+        def build_object(name, default)
+          SimpleAcceptor.new(name) { |s| s.nil? ? default : s }
+        end
+
         def build_string
           PatternAcceptor.new(::String, /.+/m)
         end
 
         def build_integer
-          SimpleAcceptor.new(::Integer) { |s| Integer(s) }
+          SimpleAcceptor.new(::Integer) { |s| s.nil? ? nil : Integer(s) }
         end
 
         def build_float
-          SimpleAcceptor.new(::Float) { |s| Float(s) }
+          SimpleAcceptor.new(::Float) { |s| s.nil? ? nil : Float(s) }
         end
 
         def build_rational
-          SimpleAcceptor.new(::Rational) { |s| Rational(s) }
+          SimpleAcceptor.new(::Rational) { |s| s.nil? ? nil : Rational(s) }
         end
 
         def build_numeric
           SimpleAcceptor.new(::Numeric) do |s|
             if s.nil?
-              SimpleAcceptor::REJECT
+              nil
             elsif s.include?("/")
               Rational(s)
-            elsif s.include?(".")
+            elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
               Float(s)
             else
               Integer(s)
@@ -324,64 +328,69 @@ module Toys
           end
         end
 
-        def build_boolean(name)
+        TRUE_STRINGS = ["+", "true", "yes"].freeze
+        FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
+
+        def build_boolean(name, default)
           SimpleAcceptor.new(name) do |s|
-            if s
+            if s.nil?
+              default
+            else
               s = s.downcase
-              if s == "+" || "true".start_with?(s) || "yes".start_with?(s)
+              if s.empty?
+                SimpleAcceptor::REJECT
+              elsif TRUE_STRINGS.any? { |t| t.start_with?(s) }
                 true
-              elsif s == "-" || "false".start_with?(s) || "no".start_with?(s)
+              elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
                 false
               else
                 SimpleAcceptor::REJECT
               end
-            else
-              SimpleAcceptor::REJECT
             end
           end
         end
 
         def build_array
           SimpleAcceptor.new(::Array) do |s|
-            if s
-              s.split(",").collect { |elem| elem unless elem.empty? }
+            if s.nil?
+              nil
             else
-              SimpleAcceptor::REJECT
+              s.split(",").collect { |elem| elem unless elem.empty? }
             end
           end
         end
 
         def build_regexp
           SimpleAcceptor.new(::Regexp) do |s|
-            if s
+            if s.nil?
+              nil
+            else
               flags = 0
-              if s =~ %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]+)?\z}
+              if s =~ %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}
                 s = $1
-                opts = $2
+                opts = $2 || ""
                 flags |= ::Regexp::IGNORECASE if opts.include?("i")
                 flags |= ::Regexp::MULTILINE if opts.include?("m")
                 flags |= ::Regexp::EXTENDED if opts.include?("x")
               end
-              Regexp.new(s, flags)
-            else
-              SimpleAcceptor::REJECT
+              ::Regexp.new(s, flags)
             end
           end
         end
 
         def build_decimal_integer
-          SimpleAcceptor.new(::OptionParser::DecimalInteger) { |s| Integer(s, 10) }
+          SimpleAcceptor.new(::OptionParser::DecimalInteger) { |s| s.nil? ? nil : Integer(s, 10) }
         end
 
         def build_octal_integer
-          SimpleAcceptor.new(::OptionParser::OctalInteger) { |s| Integer(s, 8) }
+          SimpleAcceptor.new(::OptionParser::OctalInteger) { |s| s.nil? ? nil : Integer(s, 8) }
         end
 
         def build_decimal_numeric
           SimpleAcceptor.new(::OptionParser::DecimalNumeric) do |s|
             if s.nil?
-              SimpleAcceptor::REJECT
-            elsif s.include?(".")
+              nil
+            elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
               Float(s)
             else
               Integer(s, 10)

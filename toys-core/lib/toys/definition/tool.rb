@@ -21,7 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "optparse"
 require "set"
 
 module Toys
@@ -35,30 +34,8 @@ module Toys
     #
     class Tool
       ##
-      # Built-in acceptors (i.e. those recognized by OptionParser).
-      # You can reference these acceptors directly. Otherwise, you have to add
-      # one explicitly to the tool using {Tool#add_acceptor}.
-      #
-      OPTPARSER_ACCEPTORS = ::Set.new(
-        [
-          ::Object,
-          ::NilClass,
-          ::String,
-          ::Integer,
-          ::Float,
-          ::Numeric,
-          ::TrueClass,
-          ::FalseClass,
-          ::Array,
-          ::Regexp,
-          ::OptionParser::DecimalInteger,
-          ::OptionParser::OctalInteger,
-          ::OptionParser::DecimalNumeric
-        ]
-      ).freeze
-
-      ##
       # Create a new tool.
+      # Should be created only from the DSL via the Loader.
       # @private
       #
       def initialize(loader, parent, full_name, priority, middleware_stack)
@@ -305,20 +282,13 @@ module Toys
       end
 
       ##
-      # Resolve the given flag given the flag string.
+      # Resolve the given flag given the flag string. Returns an object that
+      # describes the resolution result, including whether the resolution
+      # matched a unique flag, the specific FlagSyntax that was matched, and
+      # additional information.
       #
-      # Returns a two-element array. The first is a result code, and the
-      # second is either a {Toys::Definition::Flag} or `nil`. Possible result
-      # codes are:
-      # *   `:not_found` indicating no such flag was found. The second element
-      #     is always `nil`.
-      # *   `:found` indicating that a unique flag was found. The second
-      #     element is the flag definition.
-      # *   `:found_negative` indicating that a unique flag was found and that
-      #     the passed string is the negative form (i.e. `--no-*`). The second
-      #     element is the flag definition.
-      # *   `:ambiguous` indicating that more than one matching flag was found.
-      #     the second element is `nil`.
+      # @param [String] str Flag string
+      # @return [Toys::Definition::FlagResolution]
       #
       def resolve_flag(str)
         result = FlagResolution.new(str)
@@ -340,7 +310,7 @@ module Toys
       # recognized.
       #
       # @param [Object] accept An acceptor input.
-      # @return [Object] The resolved acceptor.
+      # @return [Tool::Definition::Acceptor] The resolved acceptor.
       #
       def resolve_acceptor(accept)
         return accept if accept.nil? || accept.is_a?(Acceptor)

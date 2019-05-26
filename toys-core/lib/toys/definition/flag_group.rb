@@ -29,6 +29,7 @@ module Toys
     class FlagGroup
       ##
       # Create a flag group.
+      # Should be created only from methods of {Toys::Definition::Tool}.
       # @private
       #
       def initialize(name, desc, long_desc)

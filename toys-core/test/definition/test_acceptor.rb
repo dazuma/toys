@@ -22,17 +22,22 @@
 ;
 
 require "helper"
+require "optparse"
 
 describe Toys::Definition::Acceptor do
   let(:input_string) { "Arya Stark" }
   let(:acceptor) { Toys::Definition::Acceptor.new("hello") }
 
   it "accepts any string" do
-    assert_equal(input_string, acceptor.match(input_string))
+    assert_equal([input_string], acceptor.match(input_string))
   end
 
   it "does no conversion" do
-    assert_equal(input_string, acceptor.convert(input_string, input_string))
+    assert_equal(input_string, acceptor.convert(input_string, "No one"))
+  end
+
+  it "accepts nil" do
+    assert_equal([nil], acceptor.match(nil))
   end
 end
 
@@ -113,6 +118,14 @@ describe Toys::Definition::PatternAcceptor do
   it "does not accept unmatching strings" do
     assert_nil(acceptor.match("Jon Snow"))
   end
+
+  it "accepts nil" do
+    assert_equal([nil], acceptor.match(nil))
+  end
+
+  it "converts nil" do
+    assert_nil(acceptor.convert(nil))
+  end
 end
 
 describe Toys::Definition::EnumAcceptor do
@@ -130,5 +143,461 @@ describe Toys::Definition::EnumAcceptor do
 
   it "converts to the enum value" do
     assert_equal(:Arya, acceptor.convert("Arya", :Arya))
+  end
+
+  it "accepts nil" do
+    assert_equal([nil, nil], acceptor.match(nil))
+  end
+
+  it "converts nil" do
+    assert_nil(acceptor.convert(nil, nil))
+  end
+end
+
+describe "standard acceptor" do
+  def assert_accept(acceptor, value, converted)
+    match = acceptor.match(value)
+    refute_nil(match, "Expected match to succeed")
+    actual = acceptor.convert(*match)
+    if converted.nil?
+      assert_nil(actual)
+    else
+      assert_equal(converted, actual)
+      assert_equal(converted.class, actual.class)
+    end
+  end
+
+  def refute_accept(acceptor, value)
+    match = acceptor.match(value)
+    assert_nil(match, "Expected match to fail")
+  end
+
+  describe "Object" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Object) }
+
+    it "accepts nonempty string" do
+      assert_accept(acceptor, "hi", "hi")
+    end
+
+    it "accepts empty string" do
+      assert_accept(acceptor, "", "")
+    end
+
+    it "converts nil to true" do
+      assert_accept(acceptor, nil, true)
+    end
+  end
+
+  describe "NilClass" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(NilClass) }
+
+    it "accepts nonempty string" do
+      assert_accept(acceptor, "hi", "hi")
+    end
+
+    it "accepts empty string" do
+      assert_accept(acceptor, "", "")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "String" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(String) }
+
+    it "accepts nonempty string" do
+      assert_accept(acceptor, "hi", "hi")
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "Integer" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Integer) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 123)
+    end
+
+    it "accepts negative integer string" do
+      assert_accept(acceptor, "-123", -123)
+    end
+
+    it "accepts octal string" do
+      assert_accept(acceptor, "-0123", -83)
+    end
+
+    it "accepts hex string" do
+      assert_accept(acceptor, "-0xabc", -2748)
+    end
+
+    it "accepts binary string" do
+      assert_accept(acceptor, "-0b101", -5)
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept noninteger string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "Float" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Float) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 123.0)
+    end
+
+    it "accepts fractional string" do
+      assert_accept(acceptor, "123.456", 123.456)
+    end
+
+    it "accepts negative fractional string" do
+      assert_accept(acceptor, "-123.456", -123.456)
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept nonnumeric string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "Rational" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Rational) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", Rational(123, 1))
+    end
+
+    it "accepts floating point string" do
+      assert_accept(acceptor, "123.456", Rational(15_432, 125))
+    end
+
+    it "accepts negative string" do
+      assert_accept(acceptor, "-123.0", Rational(-123, 1))
+    end
+
+    it "accepts fractional string" do
+      assert_accept(acceptor, "-123/2", Rational(-123, 2))
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept nonnumeric string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "Numeric" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Numeric) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 123)
+    end
+
+    it "accepts floating point string" do
+      assert_accept(acceptor, "123.456", 123.456)
+    end
+
+    it "accepts scientific notation string" do
+      assert_accept(acceptor, "2e-2", 0.02)
+    end
+
+    it "accepts hex string that looks like scientific notation" do
+      assert_accept(acceptor, "0x2e2", 738)
+    end
+
+    it "accepts negative string" do
+      assert_accept(acceptor, "-123.0", -123.0)
+    end
+
+    it "accepts fractional string" do
+      assert_accept(acceptor, "-123/2", Rational(-123, 2))
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept nonnumeric string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "TrueClass" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(TrueClass) }
+
+    it "accepts +" do
+      assert_accept(acceptor, "+", true)
+    end
+
+    it "accepts -" do
+      assert_accept(acceptor, "-", false)
+    end
+
+    it "accepts t" do
+      assert_accept(acceptor, "t", true)
+    end
+
+    it "accepts tr" do
+      assert_accept(acceptor, "tr", true)
+    end
+
+    it "accepts true" do
+      assert_accept(acceptor, "true", true)
+    end
+
+    it "accepts yes" do
+      assert_accept(acceptor, "yes", true)
+    end
+
+    it "accepts false" do
+      assert_accept(acceptor, "false", false)
+    end
+
+    it "accepts no" do
+      assert_accept(acceptor, "no", false)
+    end
+
+    it "accepts nil" do
+      assert_accept(acceptor, "nil", false)
+    end
+
+    it "accepts n" do
+      assert_accept(acceptor, "n", false)
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept yessir" do
+      refute_accept(acceptor, "yessir")
+    end
+
+    it "converts nil to true" do
+      assert_accept(acceptor, nil, true)
+    end
+  end
+
+  describe "FalseClass" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(FalseClass) }
+
+    it "accepts +" do
+      assert_accept(acceptor, "+", true)
+    end
+
+    it "accepts -" do
+      assert_accept(acceptor, "-", false)
+    end
+
+    it "converts nil to false" do
+      assert_accept(acceptor, nil, false)
+    end
+  end
+
+  describe "Array" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Array) }
+
+    it "accepts empty string and converts to empty array" do
+      assert_accept(acceptor, "", [])
+    end
+
+    it "accepts single element" do
+      assert_accept(acceptor, "hi", ["hi"])
+    end
+
+    it "accepts multiple elements" do
+      assert_accept(acceptor, "hi,ho,he", ["hi", "ho", "he"])
+    end
+
+    it "strips empty trailing elements" do
+      assert_accept(acceptor, "hi,ho,", ["hi", "ho"])
+    end
+
+    it "converts empty leading and internal elements to nil" do
+      assert_accept(acceptor, ",hi,,ho,he", [nil, "hi", nil, "ho", "he"])
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "Regexp" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Regexp) }
+
+    it "accepts a bare regex" do
+      assert_accept(acceptor, "hi", /hi/)
+    end
+
+    it "accepts a regex surrounded by slashes" do
+      assert_accept(acceptor, "/hi/", /hi/)
+    end
+
+    it "accepts a bare regex including special characters" do
+      assert_accept(acceptor, "^\\n(hi)*\\z", /^\n(hi)*\z/)
+    end
+
+    it "accepts a slashed regex including special characters" do
+      assert_accept(acceptor, "/^\\n(hi)*\\z/", /^\n(hi)*\z/)
+    end
+
+    it "accepts a regex with m flag" do
+      assert_accept(acceptor, "/hi/m", /hi/m)
+    end
+
+    it "accepts a regex ignoring o flag" do
+      assert_accept(acceptor, "/hi/io", /hi/i)
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "DecimalInteger" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::DecimalInteger) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 123)
+    end
+
+    it "accepts negative integer string" do
+      assert_accept(acceptor, "-123", -123)
+    end
+
+    it "accepts octal string but interprets as decimal" do
+      assert_accept(acceptor, "-0123", -123)
+    end
+
+    it "rejects hex string" do
+      refute_accept(acceptor, "0xabc")
+    end
+
+    it "rejects binary string" do
+      refute_accept(acceptor, "-0b101")
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept noninteger string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "OctalInteger" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::OctalInteger) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 83)
+    end
+
+    it "accepts negative integer string" do
+      assert_accept(acceptor, "-123", -83)
+    end
+
+    it "accepts octal string format" do
+      assert_accept(acceptor, "-0123", -83)
+    end
+
+    it "rejects hex string" do
+      refute_accept(acceptor, "0xabc")
+    end
+
+    it "rejects binary string" do
+      refute_accept(acceptor, "-0b101")
+    end
+
+    it "rejects digits 8 and 9" do
+      refute_accept(acceptor, "8")
+      refute_accept(acceptor, "9")
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept noninteger string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
+  end
+
+  describe "DecimalNumeric" do
+    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::DecimalNumeric) }
+
+    it "accepts integer string" do
+      assert_accept(acceptor, "123", 123)
+    end
+
+    it "accepts floating point string" do
+      assert_accept(acceptor, "123.456", 123.456)
+    end
+
+    it "accepts scientific notation string" do
+      assert_accept(acceptor, "2e-2", 0.02)
+    end
+
+    it "rejects hex string that looks like scientific notation" do
+      refute_accept(acceptor, "0x2e2")
+    end
+
+    it "accepts negative string" do
+      assert_accept(acceptor, "-123.0", -123.0)
+    end
+
+    it "does not accept empty string" do
+      refute_accept(acceptor, "")
+    end
+
+    it "does not accept nonnumeric string" do
+      refute_accept(acceptor, "hi")
+    end
+
+    it "converts nil to nil" do
+      assert_accept(acceptor, nil, nil)
+    end
   end
 end

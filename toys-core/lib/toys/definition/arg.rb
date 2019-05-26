@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "optparse"
-
 module Toys
   module Definition
     ##
@@ -30,13 +28,14 @@ module Toys
     #
     class Arg
       ##
-      # Create an Arg definition
+      # Create an Arg definition.
+      # Should be created only from methods of {Toys::Definition::Tool}.
       # @private
       #
-      def initialize(key, type, accept, default, completion, desc, long_desc, display_name)
+      def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
         @key = key
         @type = type
-        @accept = accept
+        @acceptor = acceptor
         @default = default
         @completion = completion
         @desc = WrappableString.make(desc)
@@ -58,9 +57,9 @@ module Toys
 
       ##
       # Returns the acceptor, which may be `nil`.
-      # @return [Object]
+      # @return [Tool::Definition::Acceptor]
       #
-      attr_accessor :accept
+      attr_accessor :acceptor
 
       ##
       # Returns the default value, which may be `nil`.
@@ -91,23 +90,6 @@ module Toys
       # @return [String]
       #
       attr_accessor :display_name
-
-      ##
-      # Process the given value through the acceptor.
-      # May raise an exception if the acceptor rejected the input.
-      #
-      # @param [String] input Input value
-      # @return [Object] Accepted value
-      #
-      def process_value(input)
-        return input unless accept
-        result = input
-        optparse = ::OptionParser.new
-        optparse.accept(accept) if accept.is_a?(Acceptor)
-        optparse.on("--abc VALUE", accept) { |v| result = v }
-        optparse.parse(["--abc", input])
-        result
-      end
 
       ##
       # Set the short description string.

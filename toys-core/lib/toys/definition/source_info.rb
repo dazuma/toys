@@ -97,7 +97,7 @@ module Toys
       #
       # @param [String] path The relative path to find
       # @param [nil,:file,:directory] type Type of file system object to find,
-      #     or nil to return any type.
+      #     or nil (the default) to return any type.
       # @return [String,nil] Absolute path of the result, or nil if not found.
       #
       def find_data(path, type: nil)

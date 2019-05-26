@@ -517,7 +517,7 @@ describe Toys::DSL::Tool do
   describe "flag directive" do
     it "recognizes keyword arguments" do
       loader.add_block do
-        flag(:foo, "--bar",
+        flag(:foo, "--bar VALUE",
              accept: Integer, default: -1,
              handler: proc { |s| s.to_i - 1 },
              desc: "short description",
@@ -528,7 +528,7 @@ describe Toys::DSL::Tool do
       flag = tool.flag_definitions[0]
       assert_equal(:foo, flag.key)
       assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
-      assert_equal(Integer, flag.accept.name)
+      assert_equal(Integer, flag.acceptor.name)
       assert_equal(-1, flag.default)
       assert_equal("short description", flag.desc.to_s)
       assert_equal("in two lines", flag.long_desc[1].to_s)
@@ -540,7 +540,7 @@ describe Toys::DSL::Tool do
     it "recognizes block configuration" do
       loader.add_block do
         flag(:foo) do
-          flags "--bar"
+          flags "--bar VALUE"
           accept Integer
           default(-1)
           handler do |s|
@@ -555,7 +555,7 @@ describe Toys::DSL::Tool do
       flag = tool.flag_definitions[0]
       assert_equal(:foo, flag.key)
       assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
-      assert_equal(Integer, flag.accept.name)
+      assert_equal(Integer, flag.acceptor.name)
       assert_equal(-1, flag.default)
       assert_equal("short description", flag.desc.to_s)
       assert_equal("in two lines", flag.long_desc[1].to_s)
@@ -790,7 +790,7 @@ describe Toys::DSL::Tool do
       arg = tool.required_arg_definitions[0]
       assert_equal(:foo, arg.key)
       assert_equal(:required, arg.type)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
@@ -810,7 +810,7 @@ describe Toys::DSL::Tool do
       arg = tool.required_arg_definitions[0]
       assert_equal(:foo, arg.key)
       assert_equal(:required, arg.type)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
@@ -868,7 +868,7 @@ describe Toys::DSL::Tool do
       assert_equal(:foo, arg.key)
       assert_equal(:optional, arg.type)
       assert_equal(-1, arg.default)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
@@ -890,7 +890,7 @@ describe Toys::DSL::Tool do
       assert_equal(:foo, arg.key)
       assert_equal(:optional, arg.type)
       assert_equal(-1, arg.default)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
@@ -948,7 +948,7 @@ describe Toys::DSL::Tool do
       assert_equal(:foo, arg.key)
       assert_equal(:remaining, arg.type)
       assert_equal([-1], arg.default)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)
@@ -970,7 +970,7 @@ describe Toys::DSL::Tool do
       assert_equal(:foo, arg.key)
       assert_equal(:remaining, arg.type)
       assert_equal([-1], arg.default)
-      assert_equal(Integer, arg.accept.name)
+      assert_equal(Integer, arg.acceptor.name)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("in two lines", arg.long_desc[1].to_s)
       assert_equal("FOOOO", arg.display_name)

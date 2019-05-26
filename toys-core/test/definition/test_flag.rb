@@ -29,6 +29,8 @@ describe Toys::Definition::FlagSyntax do
       fs = Toys::Definition::FlagSyntax.new("-a")
       assert_equal("-a", fs.original_str)
       assert_equal(["-a"], fs.flags)
+      assert_equal("-a", fs.positive_flag)
+      assert_nil(fs.negative_flag)
       assert_equal("-a", fs.str_without_value)
       assert_equal("-", fs.flag_style)
       assert_nil(fs.flag_type)
@@ -211,6 +213,8 @@ describe Toys::Definition::FlagSyntax do
       fs = Toys::Definition::FlagSyntax.new("--[no-]abc")
       assert_equal("--[no-]abc", fs.original_str)
       assert_equal(["--abc", "--no-abc"], fs.flags)
+      assert_equal("--abc", fs.positive_flag)
+      assert_equal("--no-abc", fs.negative_flag)
       assert_equal("--[no-]abc", fs.str_without_value)
       assert_equal("--", fs.flag_style)
       assert_equal(:boolean, fs.flag_type)
@@ -282,11 +286,12 @@ describe Toys::Definition::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_equal("hello", flag.default)
-    assert_nil(flag.accept)
+    assert_nil(flag.acceptor)
   end
 
   it "defaults to a value switch with an integer acceptor" do
-    flag = Toys::Definition::Flag.new(:abc, [], [], true, Integer, nil, nil, nil, nil, nil)
+    acceptor = Toys::Definition::Acceptor.resolve_default(Integer)
+    flag = Toys::Definition::Flag.new(:abc, [], [], true, acceptor, nil, nil, nil, nil, nil)
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
     assert_equal(:value, flag.flag_syntax.first.flag_type)
@@ -298,7 +303,7 @@ describe Toys::Definition::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_nil(flag.default)
-    assert_equal(Integer, flag.accept)
+    assert_equal(acceptor, flag.acceptor)
   end
 
   it "chooses the first long flag's value label and delim as canonical" do
@@ -414,5 +419,99 @@ describe Toys::Definition::Flag do
     flag = Toys::Definition::Flag.new(:abc, [], [], true, nil, :push, [], nil, nil, nil)
     assert_equal(Toys::Definition::Flag::PUSH_HANDLER, flag.handler)
     assert_equal([1, 2], flag.handler.call(2, [1]))
+  end
+
+  describe "#resolve" do
+    def create_flag(*flags)
+      Toys::Definition::Flag.new(:abc, flags, [], true, nil, nil, nil, nil, nil, nil)
+    end
+
+    it "finds a simple flag" do
+      flag = create_flag("-a")
+      resolution = flag.resolve("-a")
+      assert_equal("-a", resolution.string)
+      assert_equal(true, resolution.found_exact?)
+      assert_equal(1, resolution.count)
+      assert_equal(true, resolution.found_unique?)
+      assert_equal(false, resolution.not_found?)
+      assert_equal(false, resolution.found_multiple?)
+      assert_equal(flag, resolution.unique_flag)
+      assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+      assert_equal(false, resolution.unique_flag_negative?)
+    end
+
+    it "reports not found" do
+      flag = create_flag("-a")
+      resolution = flag.resolve("-b")
+      assert_equal("-b", resolution.string)
+      assert_equal(false, resolution.found_exact?)
+      assert_equal(0, resolution.count)
+      assert_equal(false, resolution.found_unique?)
+      assert_equal(true, resolution.not_found?)
+      assert_equal(false, resolution.found_multiple?)
+      assert_nil(resolution.unique_flag)
+      assert_nil(resolution.unique_flag_syntax)
+      assert_nil(resolution.unique_flag_negative?)
+    end
+
+    it "reports ambiguous resolution" do
+      flag = create_flag("--abc", "--abd")
+      resolution = flag.resolve("--ab")
+      assert_equal("--ab", resolution.string)
+      assert_equal(false, resolution.found_exact?)
+      assert_equal(2, resolution.count)
+      assert_equal(false, resolution.found_unique?)
+      assert_equal(false, resolution.not_found?)
+      assert_equal(true, resolution.found_multiple?)
+      assert_nil(resolution.unique_flag)
+      assert_nil(resolution.unique_flag_syntax)
+      assert_nil(resolution.unique_flag_negative?)
+    end
+
+    it "finds a substring" do
+      flag = create_flag("--abc")
+      resolution = flag.resolve("--ab")
+      assert_equal("--ab", resolution.string)
+      assert_equal(false, resolution.found_exact?)
+      assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+    end
+
+    it "does not treat single hyphen flags as substrings" do
+      flag = create_flag("--abc")
+      resolution = flag.resolve("-a")
+      assert_equal(true, resolution.not_found?)
+    end
+
+    it "prefers exact matches over substrings when the exact match appears first" do
+      flag = create_flag("--ab", "--abc")
+      resolution = flag.resolve("--ab")
+      assert_equal(true, resolution.found_exact?)
+      assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+    end
+
+    it "prefers exact matches over substrings when the exact match appears last" do
+      flag = create_flag("--abc", "--ab")
+      resolution = flag.resolve("--ab")
+      assert_equal(true, resolution.found_exact?)
+      assert_equal(flag.flag_syntax.last, resolution.unique_flag_syntax)
+    end
+
+    it "detects the negative case" do
+      flag = create_flag("--[no-]abc")
+      resolution = flag.resolve("--no-abc")
+      assert_equal("--no-abc", resolution.string)
+      assert_equal(true, resolution.found_exact?)
+      assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+      assert_equal(true, resolution.unique_flag_negative?)
+    end
+
+    it "detects the negative case in a substring" do
+      flag = create_flag("--[no-]abc")
+      resolution = flag.resolve("--no-a")
+      assert_equal("--no-a", resolution.string)
+      assert_equal(false, resolution.found_exact?)
+      assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+      assert_equal(true, resolution.unique_flag_negative?)
+    end
   end
 end

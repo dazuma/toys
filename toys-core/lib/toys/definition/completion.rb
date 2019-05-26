@@ -25,11 +25,12 @@ module Toys
   module Definition
     ##
     # A Completion is a callable Proc that determines candidates for shell tab
-    # completion. You pass a string (the current string fragment) and it
+    # completion. You pass a {Toys::Definition::Completion::Context} object
+    # (which includes the current string fragment and other information) and it
     # returns an array of candidates for completing the fragment, represented
     # by {Toys::Definition::Completion::Candidate} objects.
     #
-    # Generally completions do *not* have to subclass the
+    # Generally completions do *not* need to subclass the
     # {Toys::Definition::Completion} base class. They merely need to duck-type
     # `Proc` by implementing the `call` method. (The base class implementation
     # is an "empty" completion that returns no candidates.)
@@ -69,7 +70,7 @@ module Toys
       #     directory for file and directory names.
       # *   An **Array** of strings. Returns a completion that uses those
       #     values as candidates.
-      # *   A **Proc**. Returns the proc.
+      # *   A **Proc**. Returns the proc itself.
       #
       # @param [Object] spec The completion spec. See above for recognized
       #     values.
@@ -186,14 +187,14 @@ module Toys
 
         ##
         # Current ArgParser indicating the status of argument parsing up to
-        # this point, or `nil` if argument parsing has not started.
+        # this point, or `nil` if we are not completing an argument.
         #
         # @return [Toys::ArgParser,nil]
         #
         attr_reader :arg_parser
 
         ##
-        # The completion engine currently running.
+        # The completion engine currently running, or `nil` if not available.
         # @return [Toys::Utils::CompletionEngine]
         #
         attr_reader :completion_engine
@@ -204,7 +205,7 @@ module Toys
       #
       # A candidate includes a string representing the potential completed
       # word, as well as a flag indicating whether it is a *partial* completion
-      # (i.e. a prefix that could still be added to) or a *final* word.
+      # (i.e. a prefix that could still be added to) versus a *final* word.
       # Generally, tab completion systems should add a trailing space after a
       # final completion but not after a partial completion.
       #
@@ -214,7 +215,8 @@ module Toys
         ##
         # Create a new candidate
         # @param [String] string The candidate string
-        # @param [Boolean] partial Whether the candidate is partial.
+        # @param [Boolean] partial Whether the candidate is partial. Defaults
+        #     to `false`.
         #
         def initialize(string, partial = false)
           @string = string.to_s
@@ -232,17 +234,17 @@ module Toys
         # Determine whether the candidate is partial completion.
         # @return [Boolean]
         #
-        def partial?
-          @partial
-        end
+        attr_reader :partial
+        alias partial? partial
 
         ##
         # Determine whether the candidate is a final completion.
         # @return [Boolean]
         #
-        def final?
-          !@partial
+        def final
+          !partial
         end
+        alias final? final
 
         ## @private
         def eql?(other)

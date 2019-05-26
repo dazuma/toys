@@ -146,25 +146,9 @@ module Toys
     # additional arguments may be parsed.
     #
     def finish
-      if @active_flag_def && @active_flag_def.value_type == :required
-        @errors << "Flag \"#{@active_flag_arg}\" is missing a value."
-      end
-      arg_def = @arg_defs[@arg_def_index]
-      if arg_def && arg_def.type == :required
-        @errors << "Required argument \"#{arg_def.display_name}\" is missing."
-      end
-      unless @extra_args.empty?
-        @errors <<
-          if @tool_definition.runnable?
-            "Extra arguments: #{@extra_args.inspect}."
-          else
-            "Tool not found: #{(@tool_definition.full_name + parsed_args).inspect}."
-          end
-      end
-      @tool_definition.flag_groups.each do |group|
-        error = group.validation_error(@seen_flag_keys)
-        @errors << error if error
-      end
+      finish_active_flag
+      finish_arg_defs
+      finish_flag_groups
       @finished = true
       self
     end
@@ -177,7 +161,7 @@ module Toys
     def check_flag_value(arg)
       return false unless @active_flag_def
       result = @active_flag_def.value_type == :required || !arg.start_with?("-")
-      add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.accept,
+      add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
                result ? arg : nil, "flag", @active_flag_arg)
       @seen_flag_keys << @active_flag_def.key
       @active_flag_def = nil
@@ -221,10 +205,10 @@ module Toys
           @active_flag_def = flag_def
           @active_flag_arg = name
         else
-          add_data(flag_def.key, flag_def.handler, flag_def.accept, nil, "flag", name)
+          add_data(flag_def.key, flag_def.handler, flag_def.acceptor, nil, "flag", name)
         end
       else
-        add_data(flag_def.key, flag_def.handler, flag_def.accept, following, "flag", name)
+        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, following, "flag", name)
         following = ""
       end
       following
@@ -236,7 +220,7 @@ module Toys
       return unless flag_def
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :value
-        add_data(flag_def.key, flag_def.handler, flag_def.accept, value, "flag", name)
+        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, value, "flag", name)
       else
         add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?,
                  "flag", name)
@@ -252,7 +236,7 @@ module Toys
       end
       @arg_def_index += 1 unless arg_def.type == :remaining
       handler = arg_def.type == :remaining ? REMAINING_HANDLER : ARG_HANDLER
-      add_data(arg_def.key, handler, arg_def.accept, arg, "arg", arg_def.display_name)
+      add_data(arg_def.key, handler, arg_def.acceptor, arg, "arg", arg_def.display_name)
     end
 
     def find_flag(name)
@@ -277,6 +261,39 @@ module Toys
         value = handler.call(value, @data[key])
       end
       @data[key] = value
+    end
+
+    def finish_active_flag
+      if @active_flag_def
+        if @active_flag_def.value_type == :required
+          @errors << "Flag \"#{@active_flag_arg}\" is missing a value."
+        else
+          add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
+                   nil, "flag", @active_flag_arg)
+        end
+      end
+    end
+
+    def finish_arg_defs
+      arg_def = @arg_defs[@arg_def_index]
+      if arg_def && arg_def.type == :required
+        @errors << "Required argument \"#{arg_def.display_name}\" is missing."
+      end
+      unless @extra_args.empty?
+        @errors <<
+          if @tool_definition.runnable? || !@seen_flag_keys.empty?
+            "Extra arguments: #{@extra_args.inspect}."
+          else
+            "Tool not found: #{(@tool_definition.full_name + parsed_args).inspect}."
+          end
+      end
+    end
+
+    def finish_flag_groups
+      @tool_definition.flag_groups.each do |group|
+        error = group.validation_error(@seen_flag_keys)
+        @errors << error if error
+      end
     end
   end
 end

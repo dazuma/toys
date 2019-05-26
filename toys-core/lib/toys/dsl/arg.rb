@@ -33,8 +33,8 @@ module Toys
     #
     class Arg
       ## @private
-      def initialize(accept, default, completion, display_name, desc, long_desc)
-        @accept = accept
+      def initialize(acceptor, default, completion, display_name, desc, long_desc)
+        @acceptor = acceptor
         @default = default
         @completion = completion
         @display_name = display_name
@@ -45,11 +45,11 @@ module Toys
       ##
       # Set the OptionParser acceptor.
       #
-      # @param [Object] accept
+      # @param [Object] acceptor
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def accept(accept)
-        @accept = accept
+      def accept(acceptor)
+        @acceptor = acceptor
         self
       end
 
@@ -115,21 +115,21 @@ module Toys
       ## @private
       def _add_required_to(tool, key)
         tool.add_required_arg(key,
-                              accept: @accept, completion: @completion,
+                              accept: @acceptor, completion: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _add_optional_to(tool, key)
         tool.add_optional_arg(key,
-                              accept: @accept, default: @default, completion: @completion,
+                              accept: @acceptor, default: @default, completion: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _set_remaining_on(tool, key)
         tool.set_remaining_args(key,
-                                accept: @accept, default: @default, completion: @completion,
+                                accept: @acceptor, default: @default, completion: @completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
     end

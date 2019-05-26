@@ -3,14 +3,22 @@
 ### 0.8.0 / Unreleased
 
 * CHANGED: Relicensed under the MIT License.
-* ADDED: Tab completion for bash.
-* ADDED: Tools can provide an interrupt handler.
+* ADDED: Tab completion for bash. Args and flags can also provide completion information.
+* ADDED: Tools can provide an interrupt handler. Added appropriate APIs to Toys::Definition::Tool.
+* ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
+* CHANGED: Implemented custom ArgParser and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
+* CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
+* CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
+* CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
 * CHANGED: Lifted ModuleLookup, Terminal, and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.
-* CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
+* CHANGED: Acceptor base class no longer takes a conversion proc.
+* CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.
+* CHANGED: Removed Tool#custom_acceptors.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
+* FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 
 ### 0.7.0 / 2019-01-23

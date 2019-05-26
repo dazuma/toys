@@ -22,6 +22,7 @@
 ;
 
 require "helper"
+require "optparse"
 
 module MyMixin
   def mixin1
@@ -167,7 +168,7 @@ describe Toys::Definition::Tool do
         assert_equal(:a, flag.key)
         assert_equal(1, flag.flag_syntax.size)
         assert_equal(["-a"], flag.flag_syntax.first.flags)
-        assert_nil(flag.accept)
+        assert_nil(flag.acceptor)
         assert_equal("", flag.desc.to_s)
         assert_equal([], flag.long_desc)
         assert_equal(1, flag.handler.call(1, 2))
@@ -197,21 +198,27 @@ describe Toys::Definition::Tool do
 
     describe "forcing values" do
       it "adds a value label by default when an acceptor is present" do
-        tool.add_flag(:a, ["-a", "--bb"], accept: Integer)
+        tool.add_flag(:a, accept: Integer)
         flag = tool.flag_definitions.first
         assert_equal("VALUE", flag.value_label)
         assert_equal(" ", flag.value_delim)
       end
 
       it "adds a value label by default when a nonboolean default is present" do
-        tool.add_flag(:a, ["-a", "--bb"], default: "hi")
+        tool.add_flag(:a, default: "hi")
         flag = tool.flag_definitions.first
         assert_equal("VALUE", flag.value_label)
         assert_equal(" ", flag.value_delim)
       end
 
       it "does not add a value label by default when a boolean default is present" do
-        tool.add_flag(:a, ["-a", "--bb"], default: true)
+        tool.add_flag(:a, default: true)
+        flag = tool.flag_definitions.first
+        assert_nil(flag.value_label)
+      end
+
+      it "does not add a value label by default when explicit flags are present" do
+        tool.add_flag(:a, ["-a", "--bb"], default: "hi")
         flag = tool.flag_definitions.first
         assert_nil(flag.value_label)
       end
@@ -222,14 +229,14 @@ describe Toys::Definition::Tool do
         tool.add_flag(:abc)
         flag = tool.flag_definitions.first
         assert_equal(["--abc"], flag.canonical_syntax_strings)
-        assert_nil(flag.accept)
+        assert_nil(flag.acceptor)
       end
 
       it "adds a default flag with an acceptor" do
         tool.add_flag(:abc, accept: String)
         flag = tool.flag_definitions.first
         assert_equal(["--abc VALUE"], flag.canonical_syntax_strings)
-        assert_equal(String, flag.accept.name)
+        assert_equal(String, flag.acceptor.name)
       end
 
       it "adds a default flag with a nonboolean default" do
@@ -352,7 +359,7 @@ describe Toys::Definition::Tool do
       end
     end
 
-    describe "optparser canonicalization" do
+    describe "canonicalization" do
       it "fills required value from single with empty delimiter" do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE"])
         flag = tool.flag_definitions.first
@@ -405,7 +412,7 @@ describe Toys::Definition::Tool do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE"], accept: Integer)
         flag = tool.flag_definitions.first
         assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.canonical_syntax_strings)
-        assert_equal(Integer, flag.accept.name)
+        assert_equal(Integer, flag.acceptor.name)
       end
 
       it "gets value label from first double flag" do
@@ -420,6 +427,67 @@ describe Toys::Definition::Tool do
         flag = tool.flag_definitions.first
         assert_equal("VALUE", flag.value_label)
         assert_equal("", flag.value_delim)
+      end
+    end
+
+    describe "flag resolution" do
+      it "finds a single flag" do
+        tool.add_flag(:a, ["-a"])
+        flag = tool.flag_definitions.first
+        resolution = tool.resolve_flag("-a")
+        assert_equal("-a", resolution.string)
+        assert_equal(true, resolution.found_exact?)
+        assert_equal(1, resolution.count)
+        assert_equal(true, resolution.found_unique?)
+        assert_equal(false, resolution.not_found?)
+        assert_equal(false, resolution.found_multiple?)
+        assert_equal(flag, resolution.unique_flag)
+        assert_equal(flag.flag_syntax.first, resolution.unique_flag_syntax)
+        assert_equal(false, resolution.unique_flag_negative?)
+      end
+
+      it "reports not found when no flags are present" do
+        resolution = tool.resolve_flag("-b")
+        assert_equal("-b", resolution.string)
+        assert_equal(false, resolution.found_exact?)
+        assert_equal(0, resolution.count)
+        assert_equal(false, resolution.found_unique?)
+        assert_equal(true, resolution.not_found?)
+        assert_equal(false, resolution.found_multiple?)
+        assert_nil(resolution.unique_flag)
+        assert_nil(resolution.unique_flag_syntax)
+        assert_nil(resolution.unique_flag_negative?)
+      end
+
+      it "reports ambiguous resolution across multiple flags" do
+        tool.add_flag(:abc)
+        tool.add_flag(:abd)
+        resolution = tool.resolve_flag("--ab")
+        assert_equal("--ab", resolution.string)
+        assert_equal(false, resolution.found_exact?)
+        assert_equal(2, resolution.count)
+        assert_equal(false, resolution.found_unique?)
+        assert_equal(false, resolution.not_found?)
+        assert_equal(true, resolution.found_multiple?)
+        assert_nil(resolution.unique_flag)
+        assert_nil(resolution.unique_flag_syntax)
+        assert_nil(resolution.unique_flag_negative?)
+      end
+
+      it "prefers exact matches over substrings when the exact match appears first" do
+        tool.add_flag(:ab)
+        tool.add_flag(:abc)
+        resolution = tool.resolve_flag("--ab")
+        assert_equal(true, resolution.found_exact?)
+        assert_equal(tool.flag_definitions.first, resolution.unique_flag)
+      end
+
+      it "prefers exact matches over substrings when the exact match appears last" do
+        tool.add_flag(:abc)
+        tool.add_flag(:ab)
+        resolution = tool.resolve_flag("--ab")
+        assert_equal(true, resolution.found_exact?)
+        assert_equal(tool.flag_definitions.last, resolution.unique_flag)
       end
     end
   end
@@ -492,6 +560,11 @@ describe Toys::Definition::Tool do
       assert_equal(Integer, tool.resolve_acceptor(Integer).name)
     end
 
+    it "resolves optparse defined acceptors" do
+      assert_equal(OptionParser::DecimalInteger,
+                   tool.resolve_acceptor(OptionParser::DecimalInteger).name)
+    end
+
     it "resolves the nil acceptor" do
       assert_nil(tool.resolve_acceptor(nil))
     end
@@ -515,7 +588,7 @@ describe Toys::Definition::Tool do
     it "can be referenced in a flag" do
       tool.add_acceptor(acceptor)
       tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
-      assert_equal(acceptor, tool.flag_definitions.first.accept)
+      assert_equal(acceptor, tool.flag_definitions.first.acceptor)
     end
   end
 

@@ -76,10 +76,7 @@ module Toys
         ::TrueClass => "boolean",
         ::FalseClass => "boolean",
         ::Array => "string array",
-        ::Regexp => "regular expression",
-        ::OptionParser::DecimalInteger => "decimal integer",
-        ::OptionParser::OctalInteger => "octal integer",
-        ::OptionParser::DecimalNumeric => "decimal numeric"
+        ::Regexp => "regular expression"
       }.freeze
 
       ##
@@ -194,7 +191,7 @@ module Toys
       #
       def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
         name = flag.key.to_s.tr("_", "-").gsub(/[^\w-]/, "").downcase.inspect
-        acceptable = flag.flag_type == :value ? acceptable_name(flag.accept) : "boolean flag"
+        acceptable = flag.flag_type == :value ? acceptable_name(flag.acceptor) : "boolean flag"
         default_clause = flag.default ? " (default is #{flag.default.inspect})" : ""
         "Sets the #{name} option as type #{acceptable}#{default_clause}."
       end
@@ -228,7 +225,7 @@ module Toys
       #     for info on the format.
       #
       def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
-        acceptable = acceptable_name(arg.accept)
+        acceptable = acceptable_name(arg.acceptor)
         default_clause = arg.default ? " (default is #{arg.default.inspect})" : ""
         case arg.type
         when :required
@@ -263,7 +260,18 @@ module Toys
       # @return [String]
       #
       def acceptable_name(accept)
-        ACCEPTABLE_NAMES[accept&.name] || accept.to_s.downcase
+        name = ACCEPTABLE_NAMES[accept&.name]
+        if name.nil? && defined?(::OptionParser)
+          name =
+            if accept == ::OptionParser::DecimalInteger
+              "decimal integer"
+            elsif accept == ::OptionParser::OctalInteger
+              "octal integer"
+            elsif accept == ::OptionParser::DecimalNumeric
+              "decimal numeric"
+            end
+        end
+        name || accept.to_s.downcase
       end
 
       private

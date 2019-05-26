@@ -24,16 +24,17 @@
 require "helper"
 
 describe Toys::Definition::Arg do
+  let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Integer) }
   let(:arg) {
     Toys::Definition::Arg.new(
-      "hello-there!", :required, Integer, -1, nil, "description", ["long", "description"], nil
+      "hello-there!", :required, acceptor, -1, nil, "description", ["long", "description"], nil
     )
   }
 
   it "passes through attributes" do
     assert_equal("hello-there!", arg.key)
     assert_equal(:required, arg.type)
-    assert_equal(Integer, arg.accept)
+    assert_equal(acceptor, arg.acceptor)
     assert_equal(-1, arg.default)
   end
 
@@ -45,12 +46,5 @@ describe Toys::Definition::Arg do
 
   it "computes display name" do
     assert_equal("HELLO_THERE", arg.display_name)
-  end
-
-  it "processes the value through the acceptor" do
-    assert_equal(32, arg.process_value("32"))
-    assert_raises(::OptionParser::InvalidArgument) do
-      arg.process_value("blah")
-    end
   end
 end

@@ -32,10 +32,10 @@ module Toys
     #
     class Flag
       ## @private
-      def initialize(flags, accept, default, handler, completion, report_collisions,
+      def initialize(flags, acceptor, default, handler, completion, report_collisions,
                      group, desc, long_desc, display_name)
         @flags = flags
-        @accept = accept
+        @acceptor = acceptor
         @default = default
         @handler = handler
         @completion = completion
@@ -61,11 +61,11 @@ module Toys
       ##
       # Set the OptionParser acceptor.
       #
-      # @param [Object] accept
+      # @param [Object] acceptor
       # @return [Toys::DSL::Flag] self, for chaining.
       #
-      def accept(accept)
-        @accept = accept
+      def accept(acceptor)
+        @acceptor = acceptor
         self
       end
 
@@ -170,7 +170,7 @@ module Toys
       ## @private
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
-                      accept: @accept, default: @default, handler: @handler,
+                      accept: @acceptor, default: @default, handler: @handler,
                       completion: @completion, report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end
