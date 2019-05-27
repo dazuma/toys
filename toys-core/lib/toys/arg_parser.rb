@@ -161,7 +161,7 @@ module Toys
     def duplicate_hash(orig)
       copy = {}
       orig.each do |k, v|
-        copy[k] = v.clone
+        copy[k] = v.nil? ? v : v.clone
       end
       copy
     end
