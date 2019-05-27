@@ -135,10 +135,8 @@ module Toys
             seen_names << flag.display_name if seen.include?(flag.key)
           end
           if seen_names.size > 1
-            [
-              "Exactly one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
-                " were provided: #{seen_names.inspect}."
-            ]
+            ["Exactly one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+             " were provided: #{seen_names.inspect}."]
           elsif seen_names.empty?
             ["Exactly one flag out of group \"#{desc}\" is required, but none were provided."]
           else
@@ -163,10 +161,8 @@ module Toys
             seen_names << flag.display_name if seen.include?(flag.key)
           end
           if seen_names.size > 1
-            [
-              "At most one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
-                " were provided: #{seen_names.inspect}."
-            ]
+            ["At most one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+             " were provided: #{seen_names.inspect}."]
           else
             []
           end

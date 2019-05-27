@@ -196,7 +196,7 @@ module Toys
     # @param [Array<String>] words The name of the parent tool
     # @return [Boolean]
     #
-    def has_subtools?(words)
+    def has_subtools?(words) # rubocop:disable Naming/PredicateName
       load_for_prefix(words)
       len = words.length
       @tool_data.each do |n, td|

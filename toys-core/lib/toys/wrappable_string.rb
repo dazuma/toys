@@ -92,7 +92,7 @@ module Toys
       line = ""
       line_len = 0
       fragments.each do |frag|
-        frag_len = Terminal.remove_style_escapes(frag).size
+        frag_len = frag.gsub(/\e\[\d+(;\d+)*m/, "").size
         if line_len.zero?
           line = frag
           line_len = frag_len

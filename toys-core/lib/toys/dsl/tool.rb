@@ -899,7 +899,7 @@ module Toys
       #
       # @param [String] dir Context directory
       #
-      def set_context_directory(dir)
+      def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
         cur_tool = DSL::Tool.current_tool(self, false)
         return if cur_tool.nil?
         cur_tool.custom_context_directory = dir

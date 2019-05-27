@@ -175,7 +175,7 @@ module Toys
         [
           :set_default_descriptions,
           default_root_desc: DEFAULT_ROOT_DESC,
-          default_root_long_desc: DEFAULT_ROOT_LONG_DESC
+          default_root_long_desc: DEFAULT_ROOT_LONG_DESC,
         ],
         [
           :show_help,
@@ -188,15 +188,15 @@ module Toys
           default_recursive: true,
           allow_root_args: true,
           show_source_path: true,
-          use_less: true
+          use_less: true,
         ],
         [
           :show_root_version,
           version_string: ::Toys::VERSION,
-          version_flag_desc: DEFAULT_VERSION_FLAG_DESC
+          version_flag_desc: DEFAULT_VERSION_FLAG_DESC,
         ],
         [
-          :handle_usage_errors
+          :handle_usage_errors,
         ],
         [
           :show_help,
@@ -205,11 +205,11 @@ module Toys
           search_flags: true,
           default_recursive: true,
           show_source_path: true,
-          use_less: true
+          use_less: true,
         ],
         [
-          :add_verbosity_flags
-        ]
+          :add_verbosity_flags,
+        ],
       ]
     end
 

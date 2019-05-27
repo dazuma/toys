@@ -61,7 +61,7 @@ module Toys
           " https://www.rubydoc.info/gems/toys-core for more info.",
         "To replace this message, set the description and long description" \
           " of the root tool, or configure the SetDefaultDescriptions" \
-          " middleware."
+          " middleware.",
       ].freeze
 
       ##
@@ -76,7 +76,7 @@ module Toys
         ::TrueClass => "boolean",
         ::FalseClass => "boolean",
         ::Array => "string array",
-        ::Regexp => "regular expression"
+        ::Regexp => "regular expression",
       }.freeze
 
       ##

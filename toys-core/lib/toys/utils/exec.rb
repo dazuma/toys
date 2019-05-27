@@ -321,32 +321,32 @@ module Toys
         # Option keys that belong to exec configuration
         # @private
         #
-        CONFIG_KEYS = %i[
-          argv0
-          background
-          cli
-          env
-          err
-          in
-          logger
-          log_cmd
-          log_level
-          name
-          out
-          result_callback
+        CONFIG_KEYS = [
+          :argv0,
+          :background,
+          :cli,
+          :env,
+          :err,
+          :in,
+          :logger,
+          :log_cmd,
+          :log_level,
+          :name,
+          :out,
+          :result_callback,
         ].freeze
 
         ##
         # Option keys that belong to spawn configuration
         # @private
         #
-        SPAWN_KEYS = %i[
-          chdir
-          close_others
-          new_pgroup
-          pgroup
-          umask
-          unsetenv_others
+        SPAWN_KEYS = [
+          :chdir,
+          :close_others,
+          :new_pgroup,
+          :pgroup,
+          :umask,
+          :unsetenv_others,
         ].freeze
 
         def initialize(parent = nil)

@@ -23,20 +23,20 @@
 
 require "helper"
 
-describe Toys::Terminal do
+describe Toys::Utils::Terminal do
   let(:input) { ::StringIO.new }
   let(:output) { ::StringIO.new }
-  let(:terminal) { Toys::Terminal.new(input: input, output: output, styled: true) }
+  let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output, styled: true) }
 
   describe "remove_style_escapes" do
     it "removes clear code" do
-      str = Toys::Terminal.remove_style_escapes(Toys::Terminal::CLEAR_CODE)
+      str = Toys::Utils::Terminal.remove_style_escapes(Toys::Utils::Terminal::CLEAR_CODE)
       assert_equal("", str)
     end
 
     it "removes multiple sequences" do
       str = "\e[12;34mhi\e[9m"
-      str = Toys::Terminal.remove_style_escapes(str)
+      str = Toys::Utils::Terminal.remove_style_escapes(str)
       assert_equal("hi", str)
     end
   end
@@ -82,7 +82,7 @@ describe Toys::Terminal do
   end
 
   describe "unstyled output" do
-    let(:terminal) { Toys::Terminal.new(input: input, output: output, styled: false) }
+    let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output, styled: false) }
 
     it "does not include styles" do
       terminal.write("hello", :bold)
@@ -108,14 +108,14 @@ describe Toys::Terminal do
   describe "ask" do
     it "Displays a prompt and gets a result" do
       input = StringIO.new "hello\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal("hello", terminal.ask("What? "))
       assert_equal("What? ", output.string)
     end
 
     it "Displays a prompt with default and gets a default result" do
       input = StringIO.new "\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal("hi", terminal.ask("What?  ", default: "hi"))
       assert_equal("What? [hi]  ", output.string)
     end
@@ -124,35 +124,35 @@ describe Toys::Terminal do
   describe "confirm" do
     it "Displays a default prompt" do
       input = StringIO.new "y\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal(true, terminal.confirm)
       assert_equal("Proceed? (y/n) ", output.string)
     end
 
     it "Displays a custom prompt" do
       input = StringIO.new "n\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal(false, terminal.confirm("ok? "))
       assert_equal("ok? (y/n) ", output.string)
     end
 
     it "Displays a prompt with default of yes" do
       input = StringIO.new "\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal(true, terminal.confirm("ok? ", default: true))
       assert_equal("ok? (Y/n) ", output.string)
     end
 
     it "Displays a prompt with default of no" do
       input = StringIO.new "\n"
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal(false, terminal.confirm("ok? ", default: false))
       assert_equal("ok? (y/N) ", output.string)
     end
 
     it "Handles input EOF" do
       input = StringIO.new
-      terminal = Toys::Terminal.new(input: input, output: output)
+      terminal = Toys::Utils::Terminal.new(input: input, output: output)
       assert_equal(true, terminal.confirm(default: true))
       assert_equal("Proceed? (Y/n) ", output.string)
     end

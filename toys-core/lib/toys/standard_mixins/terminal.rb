@@ -37,7 +37,7 @@ module Toys
     #
     # A Terminal object will then be available by calling the {#terminal}
     # method. For information on using this object, see the documentation for
-    # {Toys::Terminal}. Some of the most useful methods are also mixed
+    # {Toys::Utils::Terminal}. Some of the most useful methods are also mixed
     # into the tool and can be called directly.
     #
     # You can configure the Terminal object by passing options to the `include`
@@ -45,7 +45,7 @@ module Toys
     #
     #     include :terminal, styled: true
     #
-    # The arguments will be passed on to {Toys::Terminal#initialize}.
+    # The arguments will be passed on to {Toys::Utils::Terminal#initialize}.
     #
     module Terminal
       include Mixin
@@ -57,19 +57,20 @@ module Toys
       KEY = ::Object.new.freeze
 
       to_initialize do |opts = {}|
-        self[KEY] = ::Toys::Terminal.new(opts)
+        require "toys/utils/terminal"
+        self[KEY] = Utils::Terminal.new(opts)
       end
 
       ##
       # Returns a tool-wide terminal instance
-      # @return [Toys::Terminal]
+      # @return [Toys::Utils::Terminal]
       #
       def terminal
         self[KEY]
       end
 
       ##
-      # @see Toys::Terminal#puts
+      # @see Toys::Utils::Terminal#puts
       #
       def puts(str = "", *styles)
         terminal.puts(str, *styles)
@@ -77,28 +78,28 @@ module Toys
       alias say puts
 
       ##
-      # @see Toys::Terminal#write
+      # @see Toys::Utils::Terminal#write
       #
       def write(str = "", *styles)
         terminal.write(str, *styles)
       end
 
       ##
-      # @see Toys::Terminal#ask
+      # @see Toys::Utils::Terminal#ask
       #
       def ask(prompt, *styles, default: nil, trailing_text: :default)
         terminal.ask(prompt, *styles, default: default, trailing_text: trailing_text)
       end
 
       ##
-      # @see Toys::Terminal#confirm
+      # @see Toys::Utils::Terminal#confirm
       #
       def confirm(prompt = "Proceed?", *styles, default: nil)
         terminal.confirm(prompt, *styles, default: default)
       end
 
       ##
-      # @see Toys::Terminal#spinner
+      # @see Toys::Utils::Terminal#spinner
       #
       def spinner(leading_text: "", final_text: "",
                   frame_length: nil, frames: nil, style: nil, &block)

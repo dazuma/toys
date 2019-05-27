@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "toys/utils/exec"
-
 module Toys
   module Utils
     ##
@@ -80,7 +78,9 @@ module Toys
                      output: $stderr,
                      suppress_confirm: false,
                      default_confirm: true)
-        @terminal = Terminal.new(input: input, output: output)
+        require "toys/utils/terminal"
+        require "toys/utils/exec"
+        @terminal = Utils::Terminal.new(input: input, output: output)
         @exec = Utils::Exec.new
         @suppress_confirm = suppress_confirm ? true : false
         @default_confirm = default_confirm ? true : false

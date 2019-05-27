@@ -21,15 +21,6 @@ Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
   Max: 10
-Naming/PredicateName:
-  Enabled: false
-Naming/AccessorMethodName:
-  Exclude:
-    - "lib/toys/dsl/tool.rb"
-Style/BracesAroundHashParameters:
-  Enabled: false
-Style/FormatStringToken:
-  Enabled: false
 Style/GlobalVars:
   Exclude:
     - "test/lookup-cases/preloads/**/*.rb"
@@ -37,8 +28,6 @@ Style/GlobalVars:
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
-  Enabled: false
-Style/MixinGrouping:
   Enabled: false
 Style/Next:
   Enabled: false
@@ -49,11 +38,15 @@ Style/Semicolon:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/SymbolArray:
-  Enabled: false
+  EnforcedStyle: brackets
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
 Style/WhileUntilModifier:
   Enabled: false
 Style/WordArray:
-  Enabled: false
+  EnforcedStyle: brackets
 
 # Disable certain checks for tests
 Metrics/BlockLength:

@@ -43,8 +43,9 @@ module Toys
       #     a tty. Default is `nil`.
       #
       def initialize(exit_code: -1, stream: $stderr, styled_output: nil)
+        require "toys/utils/terminal"
         @exit_code = exit_code
-        @terminal = Terminal.new(output: stream, styled: styled_output)
+        @terminal = Utils::Terminal.new(output: stream, styled: styled_output)
       end
 
       ##

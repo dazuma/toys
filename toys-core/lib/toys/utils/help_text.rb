@@ -305,6 +305,7 @@ module Toys
       class HelpStringAssembler
         def initialize(tool, binary_name, subtools, search_term, show_source_path,
                        indent, indent2, wrap_width, styled)
+          require "toys/utils/terminal"
           @tool = tool
           @binary_name = binary_name
           @subtools = subtools
@@ -313,7 +314,7 @@ module Toys
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
-          @lines = Terminal.new(output: ::StringIO.new, styled: styled)
+          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
           assemble
         end
 
@@ -592,6 +593,7 @@ module Toys
       ## @private
       class ListStringAssembler
         def initialize(tool, subtools, recursive, search_term, indent, wrap_width, styled)
+          require "toys/utils/terminal"
           @tool = tool
           @subtools = subtools
           @recursive = recursive
@@ -606,7 +608,7 @@ module Toys
         private
 
         def assemble(styled)
-          @lines = Terminal.new(output: ::StringIO.new, styled: styled)
+          @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
           add_header
           add_list
           @result = @lines.output.string

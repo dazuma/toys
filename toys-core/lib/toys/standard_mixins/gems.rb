@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "toys/utils/gems"
-
 module Toys
   module StandardMixins
     ##
@@ -50,10 +48,13 @@ module Toys
       include Mixin
 
       to_include do |opts = {}|
-        @__gems = Utils::Gems.new(opts)
+        @__gems_opts = opts
 
         def self.gems
-          @__gems
+          require "toys/utils/gems"
+          # rubocop:disable Naming/MemoizedInstanceVariableName
+          @__gems ||= Utils::Gems.new(@__gems_opts)
+          # rubocop:enable Naming/MemoizedInstanceVariableName
         end
 
         def self.gem(name, *requirements)

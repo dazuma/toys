@@ -3,7 +3,7 @@
 ### 0.8.0 / Unreleased
 
 * CHANGED: Relicensed under the MIT License.
-* ADDED: Tab completion for bash. Args and flags can also provide completion information.
+* ADDED: Tab completion for bash. Added APIs for args and flags to provide completion information.
 * ADDED: Tools can provide an interrupt handler. Added appropriate APIs to Toys::Definition::Tool.
 * ADDED: Tools can enforce that flags must be given before positional args.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
@@ -14,7 +14,7 @@
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
-* CHANGED: Lifted ModuleLookup, Terminal, and WrappableString out of the Utils module.
+* CHANGED: Lifted ModuleLookup and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.
 * CHANGED: Acceptor base class no longer takes a conversion proc.
 * CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.

@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "toys/utils/exec"
-
 module Toys
   module StandardMixins
     ##
@@ -90,6 +88,7 @@ module Toys
       KEY = ::Object.new.freeze
 
       to_initialize do |opts = {}|
+        require "toys/utils/exec"
         tool = self
         opts = Exec._setup_exec_opts(opts, tool)
         tool[KEY] = Utils::Exec.new(opts) do |k|

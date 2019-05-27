@@ -266,7 +266,8 @@ module Toys
       private
 
       def terminal
-        @terminal ||= Terminal.new(output: @stream, styled: @styled_output)
+        require "toys/utils/terminal"
+        @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
       end
 
       def should_show_help(tool)

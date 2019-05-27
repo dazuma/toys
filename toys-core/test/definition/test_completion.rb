@@ -80,7 +80,7 @@ describe Toys::Definition::FileSystemCompletion do
     expected = [
       Toys::Definition::Completion.candidate(".dotfile"),
       Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt")
+      Toys::Definition::Completion.candidate("input.txt"),
     ]
     assert_equal(expected, candidates)
   end
@@ -89,7 +89,7 @@ describe Toys::Definition::FileSystemCompletion do
     candidates = completion.call(context("in"))
     expected = [
       Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt")
+      Toys::Definition::Completion.candidate("input.txt"),
     ]
     assert_equal(expected, candidates)
   end
@@ -115,7 +115,7 @@ describe Toys::Definition::FileSystemCompletion do
     candidates = completion.call(context("*"))
     expected = [
       Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt")
+      Toys::Definition::Completion.candidate("input.txt"),
     ]
     assert_equal(expected, candidates)
   end

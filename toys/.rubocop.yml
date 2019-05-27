@@ -23,15 +23,9 @@ Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
   Max: 10
-Style/BracesAroundHashParameters:
-  Enabled: false
-Style/FormatStringToken:
-  Enabled: false
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
-  Enabled: false
-Style/MixinGrouping:
   Enabled: false
 Style/PerlBackrefs:
   Enabled: false
@@ -40,9 +34,13 @@ Style/Semicolon:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/SymbolArray:
-  Enabled: false
+  EnforcedStyle: brackets
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
 Style/WordArray:
-  Enabled: false
+  EnforcedStyle: brackets
 
 # Disable certain checks for templates, builtins and tests
 Metrics/BlockLength:

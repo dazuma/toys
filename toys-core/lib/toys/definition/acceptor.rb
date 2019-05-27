@@ -282,7 +282,7 @@ module Toys
             ::TrueClass => build_boolean(::TrueClass, true),
             ::FalseClass => build_boolean(::FalseClass, false),
             ::Array => build_array,
-            ::Regexp => build_regexp
+            ::Regexp => build_regexp,
           }
         end
 
@@ -290,7 +290,7 @@ module Toys
           @optparse_defaults ||= {
             ::OptionParser::DecimalInteger => build_decimal_integer,
             ::OptionParser::OctalInteger => build_octal_integer,
-            ::OptionParser::DecimalNumeric => build_decimal_numeric
+            ::OptionParser::DecimalNumeric => build_decimal_numeric,
           }
         end
 

@@ -22,6 +22,7 @@
 ;
 
 require "helper"
+require "toys/utils/gems"
 require "toys/standard_mixins/gems"
 
 describe Toys::StandardMixins::Gems do

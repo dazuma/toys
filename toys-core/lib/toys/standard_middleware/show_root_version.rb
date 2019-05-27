@@ -64,7 +64,7 @@ module Toys
         @version_string = version_string
         @version_flags = version_flags
         @version_flag_desc = version_flag_desc
-        @terminal = Terminal.new(output: stream)
+        @output = stream
       end
 
       ##
@@ -83,7 +83,7 @@ module Toys
       #
       def run(tool)
         if tool[SHOW_VERSION_KEY]
-          @terminal.puts(@version_string)
+          @output.puts(@version_string)
         else
           yield
         end

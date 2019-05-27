@@ -291,7 +291,8 @@ module Toys
       # @param [IO] output Where to write errors. Default is `$stderr`.
       #
       def initialize(output = $stderr)
-        @terminal = Terminal.new(output: output)
+        require "toys/utils/terminal"
+        @terminal = Utils::Terminal.new(output: output)
       end
 
       ##
@@ -330,7 +331,7 @@ module Toys
       def context_string(error)
         lines = [
           error.banner || "Unexpected error!",
-          "    #{error.cause.class}: #{error.cause.message}"
+          "    #{error.cause.class}: #{error.cause.message}",
         ]
         if error.config_path
           lines << "    in config file: #{error.config_path}:#{error.config_line}"
@@ -367,7 +368,7 @@ module Toys
           [:show_help, help_flags: true],
           [:handle_usage_errors],
           [:show_help, fallback_execution: true],
-          [:add_verbosity_flags]
+          [:add_verbosity_flags],
         ]
       end
 
@@ -407,8 +408,9 @@ module Toys
       # @return [Logger]
       #
       def default_logger(stream = $stderr)
+        require "toys/utils/terminal"
         logger = ::Logger.new(stream)
-        terminal = Terminal.new(output: stream)
+        terminal = Utils::Terminal.new(output: stream)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg
@@ -429,7 +431,7 @@ module Toys
 
       def format_log(terminal, time, severity, msg)
         timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-        header = format("[%s %5s]", timestr, severity)
+        header = format("[%<time>s %<sev>5s]", time: timestr, sev: severity)
         styled_header =
           case severity
           when "FATAL"

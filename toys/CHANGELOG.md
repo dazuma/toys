@@ -3,7 +3,7 @@
 ### 0.8.0 / Unreleased
 
 * CHANGED: Relicensed under the MIT License.
-* ADDED: Tab completion for bash. Args and flags can also provide completion information.
+* ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
