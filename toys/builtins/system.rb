@@ -129,14 +129,14 @@ tool "bash-completion" do
       ["  $(toys system bash-completion install my-toys-alias another-alias)"]
 
     remaining_args :binary_names,
-                   default: [::Toys::StandardCLI::BINARY_NAME],
                    desc: "Names of binaries for which to set up tab completion" \
                          " (default: #{::Toys::StandardCLI::BINARY_NAME})"
 
     def run
       require "shellwords"
       path = ::File.join(::File.dirname(__dir__), "share", "bash-completion.sh")
-      puts Shellwords.join(["source", path] + binary_names)
+      binaries = binary_names.empty? ? [::Toys::StandardCLI::BINARY_NAME] : binary_names
+      puts Shellwords.join(["source", path] + binaries)
     end
   end
 
@@ -153,14 +153,14 @@ tool "bash-completion" do
       ["  $(toys system bash-completion remove my-toys-alias another-alias)"]
 
     remaining_args :binary_names,
-                   default: [::Toys::StandardCLI::BINARY_NAME],
                    desc: "Names of binaries for which to set up tab completion" \
                          " (default: #{::Toys::StandardCLI::BINARY_NAME})"
 
     def run
       require "shellwords"
       path = ::File.join(::File.dirname(__dir__), "share", "bash-completion-remove.sh")
-      puts Shellwords.join(["source", path] + binary_names)
+      binaries = binary_names.empty? ? [::Toys::StandardCLI::BINARY_NAME] : binary_names
+      puts Shellwords.join(["source", path] + binaries)
     end
   end
 end

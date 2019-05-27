@@ -199,8 +199,10 @@ module Toys
     def has_subtools?(words)
       load_for_prefix(words)
       len = words.length
-      @tool_data.each_key do |n|
-        return true if !n.empty? && n.length > len && n.slice(0, len) == words
+      @tool_data.each do |n, td|
+        if !n.empty? && n.length > len && n.slice(0, len) == words && !td.definitions.empty?
+          return true
+        end
       end
       false
     end

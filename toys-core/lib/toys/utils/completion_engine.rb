@@ -129,6 +129,33 @@ module Toys
         candidates.sort.uniq
       end
 
+      ##
+      # Create and return a copy of this CompletionEngine with the given
+      # modifications to the settings.
+      #
+      # @param [Boolean,nil] complete_subtools Modified value for the
+      #     `:complete_subtools` option, or `nil` to keep the current value.
+      # @param [Boolean,nil] complete_flags Modified value for the
+      #     `:complete_flags` option, or `nil` to keep the current value.
+      # @param [Boolean,nil] complete_args Modified value for the
+      #     `:complete_args` option, or `nil` to keep the current value.
+      # @param [Boolean,nil] complete_flag_values Modified value for the
+      #     `:complete_flag_values` option, or `nil` to keep the current value.
+      # @return [Toys::Utils::CompletionEngine]
+      #
+      def with(complete_subtools: nil, complete_flags: nil, complete_args: nil,
+               complete_flag_values: nil)
+        complete_subtools = @complete_subtools if complete_subtools.nil?
+        complete_flags = @complete_flags if complete_flags.nil?
+        complete_args = @complete_args if complete_args.nil?
+        complete_flag_values = @complete_flag_values if complete_flag_values.nil?
+        CompletionEngine.new(
+          @loader,
+          complete_subtools: complete_subtools, complete_flags: complete_flags,
+          complete_args: complete_args, complete_flag_values: complete_flag_values
+        )
+      end
+
       private
 
       # rubocop: disable all

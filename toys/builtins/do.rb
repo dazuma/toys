@@ -47,7 +47,8 @@ end
 remaining_args :args do
   completion do |context|
     words = context.arg_parser.data[:args].inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
-    context.completion_engine.compute(words, context.fragment, quote_type: context.quote_type)
+    completion_engine = context.completion_engine.with(complete_flags: !words.empty?)
+    completion_engine.compute(words, context.fragment, quote_type: context.quote_type)
   end
   desc "A series of tools to run, separated by the delimiter"
 end

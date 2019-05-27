@@ -46,7 +46,7 @@ module Toys
       @arg_defs = tool_definition.arg_definitions
       @arg_def_index = 0
       @flags_allowed = true
-      @data = tool_definition.default_data.dup
+      @data = duplicate_hash(tool_definition.default_data)
       @finished = false
     end
 
@@ -157,6 +157,14 @@ module Toys
 
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val, _prev) { val }
+
+    def duplicate_hash(orig)
+      copy = {}
+      orig.each do |k, v|
+        copy[k] = v.clone
+      end
+      copy
+    end
 
     def check_flag_value(arg)
       return false unless @active_flag_def
