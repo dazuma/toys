@@ -22,6 +22,7 @@
 ;
 
 require "helper"
+require "toys/utils/terminal"
 
 describe Toys::Utils::Terminal do
   let(:input) { ::StringIO.new }
