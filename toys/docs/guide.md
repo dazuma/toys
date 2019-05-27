@@ -149,6 +149,17 @@ You can combine short flags. This does the same as the previous example.
 
     toys system -rv
 
+Long flags can be abbreviated, as long as the abbreviation is not ambiguous.
+For example, there is only one flag (`--recursive`) beginning with the string
+`--rec`, so you can use the shortened form.
+
+    toys --rec
+
+However, there are two flags (`--version` and `--verbose`) beginning with
+`--ver`, so it cannot be used as an abbreviation. This will cause an error:
+
+    toys --ver
+
 Pass a value using a long flag. The root tool supports the `--search` flag to
 search for tools that have the given keyword.
 
@@ -287,7 +298,7 @@ unfortunately means paying some upfront latency as the Ruby interpreter starts
 up. So you can expect a slight pause when evaluating tab completion for Toys,
 at least in comparison with most other tab completions. (Additionally, while
 Toys does support JRuby, installing tab completion for Toys on JRuby is not
-recommended.)
+recommended because of JRuby's startup latency.)
 
 ## Defining tools
 
@@ -555,7 +566,7 @@ completions and the other that supports file paths.
 
 Completions are somewhat related to acceptors, and it is a common pattern to
 set both in concert. But they perform distinct functions. Acceptors affect
-option parsing whereas completions affect tab completion in the shell.
+argument parsing, whereas completions affect tab completion in the shell.
 
 ### Flags
 
@@ -589,8 +600,8 @@ name of the option. Hence, the following two definitions are equivalent:
     flag :shout
     flag :shout, "--shout"
 
-Note that automatic flag names will convert underscores to hyphens. So the
-following two definitions are also equivalent:
+Inferred flags will convert underscores to hyphens. So the following two
+definitions are also equivalent:
 
     flag :call_out
     flag :call_out, "--call-out
@@ -625,6 +636,80 @@ example:
 
 Raises an error because one flag's value is optional while the other is
 required. (Again, this is consistent with OptionParser's behavior.)
+
+#### Handling optional values
+
+There are some subtleties in how OptionParser treats flags with optional
+values, and for the most part, Toys follows OptionParser's lead. It is thus
+important to understand the behavior if you use optional values.
+
+First, if a flag has an optional value that is not provided on the command
+line, then the "value" is automatically set to `nil`. Consider this example:
+
+    tool "flags-demo" do
+      flag :output, "--output [DIRECTORY]", default: "."
+      def run
+        puts "output is #{output.inspect}"
+      end
+    end
+
+If a user executes this without passing the `--output` flag, the default will
+be printed as we expect.
+
+    $ toys flags-demo
+    output is "."
+
+If a user executes this and provides a value for `--output`, it will show up:
+
+    $ toys flags-demo --output /etc
+    output is "/etc"
+
+However, if a user provides `--output` but omits the value, it displays `nil`:
+
+    $ toys flags-demo --output
+    output is nil
+
+Second, if the following argument looks like a flag (i.e. it begins with a
+hyphen), it is not treated as an optional value. In this example, the argument
+`--verbose` is not treated as the value of `--output` but as a separate flag.
+(If `--output` had a *required* value, then `--verbose` would have been treated
+as the value.)
+
+    $ toys flags-demo --output --verbose
+    output is nil
+
+Finally, there is an important difference between the syntax
+`"--output [DIRECTORY]"` and `"--output=[DIRECTORY]"`. In the former case, the
+following argument (as long as it doesn't look like a flag) will be treated as
+the value. In the latter case, however, the following argument is *never*
+treated as the value. In that latter case, you *must* use the equals sign
+syntax to provide a value.
+
+To illustrate:
+
+    tool "flags-demo-space" do
+      flag :output, "--output [DIRECTORY]", default: "."
+      set_remaining_args :remaining
+      def run
+        puts "output is #{output.inspect}"
+      end
+    end
+    tool "flags-demo-equals" do
+      flag :output, "--output=[DIRECTORY]", default: "."
+      set_remaining_args :remaining
+      def run
+        puts "output is #{output.inspect}"
+      end
+    end
+
+    $ toys flags-demo-space --output=/etc
+    output is "/etc"
+    $ toys flags-demo-space --output /etc
+    output is "/etc"
+    $ toys flags-demo-equals --output=/etc
+    output is "/etc"
+    $ toys flags-demo-equals --output /etc
+    output is nil
 
 #### Flag acceptors
 
@@ -774,7 +859,7 @@ completions and the other that supports file paths.
 
 Completions are somewhat related to acceptors, and it is a common pattern to
 set both in concert. But they perform distinct functions. Acceptors affect
-option parsing whereas completions affect tab completion in the shell.
+option parsing, whereas completions affect tab completion in the shell.
 
 #### Flag groups
 
@@ -1194,9 +1279,8 @@ resources available to your tool.
 
 ### Built-in context
 
-The options set by your tool's flags and command line arguments are only a
-subset of the data you can access. A variety of other data and objects are
-also accessible using the
+In addition to the options set by your tool's flags and command line arguments,
+a variety of other data and objects are also accessible using the
 [Toys::Tool#get method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
 For example, you can get the full name of the tool being executed like this:
 
@@ -1513,7 +1597,8 @@ at the file level.
     end
 
 (Note it is still possible to attach constants to a tool or mixin by defining
-them with `self::`. However, this isn't very common practice in Ruby.)
+them with `self::`. However, this is uncommon Ruby practice and is mildly
+discouraged.)
 
 Because of this, it is highly recommended that you define constants only at the
 top level of a Toys file, so it doesn't "look" like it is scoped to something
@@ -1757,8 +1842,8 @@ first before loading any of the tools in the `test` subdirectory. Thus, any
 additional classes needed by `test unit` can be defined in these files.
 
 Either a single `.preload.rb` file or a `.preload` directory, or both, may be
-used. If both are present, the `.preload.rb` file is loaded first before the
-`.preload` directory contents.
+used. If both are present in the same directory, the `.preload.rb` file is
+loaded first before the `.preload` directory contents.
 
 ## Using third-party gems
 
@@ -1921,9 +2006,9 @@ A variety of other useful gems can also be found in
 Toys was designed to organize scripts that may be "scoped" to a project or
 directory. Rake is also commonly used for this purpose: you can write a
 "Rakefile" that defines rake tasks scoped to a directory. In many cases, Toys
-can be used as a replacement for Rake. Indeed, the Toys repository itself does
-not include a Rakefile for running tests, builds, and so forth, but instead
-contains a `.toys.rb` file for that purpose.
+can be used as a replacement for Rake. Indeed, the Toys repository itself
+contains a `.toys.rb` file instead of a Rakefile, for running tests, builds,
+and so forth.
 
 This section will explore the differences between Toys and Rake, and describe
 how to use Toys for some of the things traditionally done with Rake.
@@ -1944,8 +2029,8 @@ Ruby, however, does not have an external compiler, and certainly not one that
 requires separate invocation for each source file as does the C compiler. So
 although Rake does support file dependencies, they are much less commonly used
 than in their Makefile cousins. Instead, in practice, most Rake tasks are not
-connected to a dependency at all; they are simply standalone tasks, what would
-be called "phony" targets in Makefile parlance. Such tasks are more imperative
+connected to a dependency at all; they are simply standalone scripts, what
+would be called "phony" targets in a Makefile. Such tasks are more imperative
 than declarative.
 
 The Toys approach to build tools simply embraces the fact that our build
@@ -2370,11 +2455,11 @@ will handle interrupts as follows:
     Toys will pass it the `Interrupt` exception object.
 3.  The `interrupt` method is then responsible for tool execution from that
     point. It may terminate execution by returning or calling `exit`, or it may
-    restart or resume processing. It may also propagate the interrupt up and
-    invoke the normal Toys interrupt handling by re-raising the same interrupt
-    object.
+    restart or resume processing (perhaps by calling the `run` method again).
+    It may also invoke the normal Toys interrupt handling by re-raising _the
+    same_ interrupt exception object.
 4.  If another interrupt takes place during the execution of the `interrupt`
-    method, Toys will terminate it by raising a second `Interrupt` exception
+    method, Toys will terminate it by raising a _second_ `Interrupt` exception
     (calling any `ensure` blocks). Then, `interrupt` will be called _again_ and
     passed the new exception. Any additional interrupts will be handled
     similarly.
@@ -2700,7 +2785,7 @@ You can also remove the completion logic from the current shell:
 
     $(toys system bash-completion remove)
 
-At this time, only bash is supported.
+At this time, bash is the only supported shell.
 
 ## Writing your own CLI using Toys
 
@@ -2713,11 +2798,11 @@ write your own command line binary based on the Toys system, just require the
 **toys-core** gem and configure your binary the way you want.
 
 Toys-Core is modular and lets you customize much of the behavior of a command
-line binary. For example:
+line binary, simply by setting options or adding plugins. For example:
 
 *   Toys itself automatically adds a number of flags, such as `--verbose` and
-    `--help`, to each tool. Toys-Core lets you customize what flags are
-    automatically added for your own command line binary.
+    `--help`, to each tool. Toys-Core lets you customize what flags (if any)
+    are automatically added for your own command line binary.
 *   Toys itself provides a default way to run tools that have no `run` method.
     It assumes such tools are namespaces, and displays the online help screen.
     Toys-Core lets you provide an alternate default run method for your own
@@ -2731,8 +2816,9 @@ line binary. For example:
     disable user-provided Toys files altogether for your own command line
     binary. Indeed, most command line binaries do not need user-customizable
     tools, and can ship with only built-in tools.
-*   Toys itself has a particular way of displaying online help and displaying
-    errors. Toys-Core lets your own command line binary customize these.
+*   Toys itself has a particular way of displaying online help and reporting
+    errors. Toys-Core lets your own command line binary customize these and
+    many other features.
 
 For more information, see the
 [Toys-Core documentation](https://www.rubydoc.info/gems/toys-core/).

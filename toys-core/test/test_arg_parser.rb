@@ -148,7 +148,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["--aa"])
         arg_parser.parse(["--aa=hi"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, "Flag \"--aa\" should not take an argument.")
+        assert_includes(arg_parser.errors, 'Flag "--aa" should not take an argument.')
       end
     end
 
@@ -238,7 +238,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: Integer)
         arg_parser.parse(["--aa", "a1234"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, "Unacceptable value for flag \"--aa\".")
+        assert_includes(arg_parser.errors, 'Unacceptable value for flag "--aa".')
       end
 
       it "converts a value using a custom acceptor" do
@@ -255,7 +255,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum")
         arg_parser.parse(["--aa", "1234"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, "Unacceptable value for flag \"--aa\".")
+        assert_includes(arg_parser.errors, 'Unacceptable value for flag "--aa".')
       end
 
       it "creates a default flag name" do
@@ -286,14 +286,14 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, "Flag \"--aa\" is missing a value.")
+        assert_includes(arg_parser.errors, 'Flag "--aa" is missing a value.')
       end
 
       it "errors if no value is given with space delimiter" do
         tool.add_flag(:a, ["-a", "--aa VALUE"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, "Flag \"--aa\" is missing a value.")
+        assert_includes(arg_parser.errors, 'Flag "--aa" is missing a value.')
       end
     end
 
@@ -462,7 +462,7 @@ describe Toys::ArgParser do
     it "errors on an unknown flag" do
       arg_parser.parse(["-a"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, "Flag \"-a\" is not recognized.")
+      assert_includes(arg_parser.errors, 'Flag "-a" is not recognized.')
     end
 
     it "errors on ambiguous flag" do
@@ -470,7 +470,7 @@ describe Toys::ArgParser do
       tool.add_flag(:abd)
       arg_parser.parse(["--ab"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, "Flag prefix \"--ab\" is ambiguous.")
+      assert_includes(arg_parser.errors, 'Flag prefix "--ab" is ambiguous.')
     end
 
     it "stops flag parsing after --" do
@@ -482,22 +482,118 @@ describe Toys::ArgParser do
     end
   end
 
-  describe "flag groups" do
-    it "supports flags in a group" do
-      tool.add_flag_group(type: :required, name: :mygroup)
-      tool.add_flag(:a, ["-a"], group: :mygroup)
-      arg_parser.parse(["-a"])
-      arg_parser.finish
-      assert_equal({a: true}, arg_parser.data)
-      assert_empty(arg_parser.errors)
+  describe "flag group" do
+    describe "of type required" do
+      before do
+        tool.add_flag_group(type: :required, name: :mygroup, desc: "My Group")
+        tool.add_flag(:a, group: :mygroup)
+        tool.add_flag(:b, group: :mygroup)
+      end
+
+      it "succeeds when all flags are provided" do
+        arg_parser.parse(["--a", "--b"])
+        arg_parser.finish
+        assert_equal({a: true, b: true}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "errors when flags are missing" do
+        arg_parser.parse([])
+        arg_parser.finish
+        assert_includes(arg_parser.errors, 'Flag "--a" is required.')
+        assert_includes(arg_parser.errors, 'Flag "--b" is required.')
+      end
     end
 
-    it "errors when a required flag is not provided" do
-      tool.add_flag_group(type: :required, name: :mygroup)
-      tool.add_flag(:a, ["-a"], group: :mygroup)
-      arg_parser.parse([])
-      arg_parser.finish
-      assert_includes(arg_parser.errors, "Flag \"-a\" is required.")
+    describe "of type exactly_one" do
+      before do
+        tool.add_flag_group(type: :exactly_one, name: :mygroup, desc: "My Group")
+        tool.add_flag(:a, group: :mygroup)
+        tool.add_flag(:b, group: :mygroup)
+      end
+
+      it "succeeds when one flag is provided" do
+        arg_parser.parse(["--b"])
+        arg_parser.finish
+        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "errors when no flag is provided" do
+        arg_parser.parse([])
+        arg_parser.finish
+        assert_includes(arg_parser.errors,
+                        'Exactly one flag out of group "My Group" is required, but' \
+                        " none were provided.")
+      end
+
+      it "errors when mulitple flags are provided" do
+        arg_parser.parse(["--a", "--b"])
+        arg_parser.finish
+        assert_includes(arg_parser.errors,
+                        'Exactly one flag out of group "My Group" is required, but' \
+                        ' 2 were provided: ["--a", "--b"].')
+      end
+    end
+
+    describe "of type at_most_one" do
+      before do
+        tool.add_flag_group(type: :at_most_one, name: :mygroup, desc: "My Group")
+        tool.add_flag(:a, group: :mygroup)
+        tool.add_flag(:b, group: :mygroup)
+      end
+
+      it "succeeds when one flag is provided" do
+        arg_parser.parse(["--b"])
+        arg_parser.finish
+        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "succeeds when no flag is provided" do
+        arg_parser.parse([])
+        arg_parser.finish
+        assert_equal({a: nil, b: nil}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "errors when mulitple flags are provided" do
+        arg_parser.parse(["--a", "--b"])
+        arg_parser.finish
+        assert_includes(arg_parser.errors,
+                        'At most one flag out of group "My Group" is required, but' \
+                        ' 2 were provided: ["--a", "--b"].')
+      end
+    end
+
+    describe "of type at_least_one" do
+      before do
+        tool.add_flag_group(type: :at_least_one, name: :mygroup, desc: "My Group")
+        tool.add_flag(:a, group: :mygroup)
+        tool.add_flag(:b, group: :mygroup)
+      end
+
+      it "succeeds when one flag is provided" do
+        arg_parser.parse(["--b"])
+        arg_parser.finish
+        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "errors when no flag is provided" do
+        arg_parser.parse([])
+        arg_parser.finish
+        assert_includes(arg_parser.errors,
+                        'At least one flag out of group "My Group" is required, but' \
+                        " none were provided.")
+      end
+
+      it "succeeds when mulitple flags are provided" do
+        arg_parser.parse(["--a", "--b"])
+        arg_parser.finish
+        assert_equal({a: true, b: true}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
     end
   end
 
@@ -530,7 +626,7 @@ describe Toys::ArgParser do
       tool.add_required_arg(:b)
       arg_parser.parse(["foo"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, "Required argument \"B\" is missing.")
+      assert_includes(arg_parser.errors, 'Required argument "B" is missing.')
     end
 
     it "errors on runnable tool if there are too many arguments" do
@@ -539,7 +635,7 @@ describe Toys::ArgParser do
       tool.runnable = proc {}
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, "Extra arguments: [\"baz\"].")
+      assert_includes(arg_parser.errors, 'Extra arguments: ["baz"].')
     end
 
     it "errors non-runnable tool if there are too many arguments" do
@@ -573,7 +669,7 @@ describe Toys::ArgParser do
       tool.add_optional_arg(:a, accept: "myenum")
       arg_parser.parse(["1234"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, "Unacceptable value for arg \"A\".")
+      assert_includes(arg_parser.errors, 'Unacceptable value for arg "A".')
     end
   end
 end

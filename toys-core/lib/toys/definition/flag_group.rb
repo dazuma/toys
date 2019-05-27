@@ -88,8 +88,8 @@ module Toys
       end
 
       ## @private
-      def validation_error(_seen)
-        nil
+      def validation_errors(_seen)
+        []
       end
 
       ##
@@ -97,13 +97,14 @@ module Toys
       #
       class Required < FlagGroup
         ## @private
-        def validation_error(seen)
+        def validation_errors(seen)
+          results = []
           flag_definitions.each do |flag|
             unless seen.include?(flag.key)
-              return "Flag \"#{flag.display_name}\" is required."
+              results << "Flag \"#{flag.display_name}\" is required."
             end
           end
-          nil
+          results
         end
 
         ## @private
@@ -128,20 +129,21 @@ module Toys
       #
       class ExactlyOne < FlagGroup
         ## @private
-        def validation_error(seen)
-          set_flag = nil
+        def validation_errors(seen)
+          seen_names = []
           flag_definitions.each do |flag|
-            if seen.include?(flag.key)
-              if set_flag
-                return "Exactly one out of group \"#{desc}\" is required, but both" \
-                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set."
-              else
-                set_flag = flag
-              end
-            end
+            seen_names << flag.display_name if seen.include?(flag.key)
           end
-          return "Exactly one out of group \"#{desc}\" is required." unless set_flag
-          nil
+          if seen_names.size > 1
+            [
+              "Exactly one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+                " were provided: #{seen_names.inspect}."
+            ]
+          elsif seen_names.empty?
+            ["Exactly one flag out of group \"#{desc}\" is required, but none were provided."]
+          else
+            []
+          end
         end
 
         ## @private
@@ -155,19 +157,19 @@ module Toys
       #
       class AtMostOne < FlagGroup
         ## @private
-        def validation_error(seen)
-          set_flag = nil
+        def validation_errors(seen)
+          seen_names = []
           flag_definitions.each do |flag|
-            if seen.include?(flag.key)
-              if set_flag
-                return "At most one out of group \"#{desc}\" is required, but both" \
-                  " \"#{set_flag.display_name}\" and \"#{flag.display_name}\" were set."
-              else
-                set_flag = flag
-              end
-            end
+            seen_names << flag.display_name if seen.include?(flag.key)
           end
-          nil
+          if seen_names.size > 1
+            [
+              "At most one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+                " were provided: #{seen_names.inspect}."
+            ]
+          else
+            []
+          end
         end
 
         ## @private
@@ -181,11 +183,11 @@ module Toys
       #
       class AtLeastOne < FlagGroup
         ## @private
-        def validation_error(seen)
+        def validation_errors(seen)
           flag_definitions.each do |flag|
-            return nil if seen.include?(flag.key)
+            return [] if seen.include?(flag.key)
           end
-          "At least one out of group \"#{desc}\" is required."
+          ["At least one flag out of group \"#{desc}\" is required, but none were provided."]
         end
 
         ## @private

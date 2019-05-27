@@ -54,7 +54,7 @@ module Toys
       # @return [Toys::DSL::Flag] self, for chaining.
       #
       def flags(*flags)
-        @flags += flags
+        @flags += flags.flatten
         self
       end
 

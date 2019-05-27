@@ -78,7 +78,7 @@ module Toys
         arg_parser.parse(args)
         arg_parser.finish
         unless arg_parser.errors.empty?
-          data[Tool::Keys::USAGE_ERROR] = arg_parser.errors.join(" ")
+          data[Tool::Keys::USAGE_ERROR] = arg_parser.errors.join("\n")
         end
       end
       data

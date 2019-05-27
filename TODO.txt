@@ -4,6 +4,8 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
+* Tools can enforce flags before args
+
 ## Investigations/wishlist
 
 * toys system new: Create toys files and gems
@@ -16,7 +18,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 * Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size
 * Convenience methods for creating pipes/splits/joins in exec
-* Allow flag parameters and args to customize shell completion
+* Flags can supply the default for when an optional value is omitted (currently nil is passed to the acceptor, which matches OptionParser behavior).
 
 ## Other ideas we probably won't do
 

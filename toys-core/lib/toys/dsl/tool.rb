@@ -550,8 +550,8 @@ module Toys
                &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler, completion, report_collisions,
-                                 group, desc, long_desc, display_name)
+        flag_dsl = DSL::Flag.new(flags.flatten, accept, default, handler, completion,
+                                 report_collisions, group, desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)

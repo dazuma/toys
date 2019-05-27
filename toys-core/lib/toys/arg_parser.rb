@@ -291,8 +291,7 @@ module Toys
 
     def finish_flag_groups
       @tool_definition.flag_groups.each do |group|
-        error = group.validation_error(@seen_flag_keys)
-        @errors << error if error
+        @errors += Array(group.validation_errors(@seen_flag_keys))
       end
     end
   end

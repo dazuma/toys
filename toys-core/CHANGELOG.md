@@ -18,6 +18,7 @@
 * CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.
 * CHANGED: Removed Tool#custom_acceptors.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
+* IMPROVED: Error messages for flag groups are more complete.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 
