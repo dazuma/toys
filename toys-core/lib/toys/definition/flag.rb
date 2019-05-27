@@ -359,8 +359,14 @@ module Toys
         return unless @flag_syntax.empty?
         canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
         unless canonical_flag.empty?
-          flag = needs_val ? "--#{canonical_flag} VALUE" : "--#{canonical_flag}"
-          @flag_syntax << FlagSyntax.new(flag)
+          flag_str =
+            if canonical_flag.length == 1
+              "-#{canonical_flag}"
+            else
+              "--#{canonical_flag}"
+            end
+          flag_str = "#{flag_str} VALUE" if needs_val
+          @flag_syntax << FlagSyntax.new(flag_str)
         end
       end
 

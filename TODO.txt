@@ -4,8 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Tools can enforce flags before args
-
 ## Investigations/wishlist
 
 * Flags can supply the default for when an optional value is omitted (currently nil is passed to the acceptor, which matches OptionParser behavior).

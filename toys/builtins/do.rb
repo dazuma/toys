@@ -30,15 +30,12 @@ long_desc \
   "",
   "Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool. You could run them" \
     " in order like this:",
-  ["    toys do rails build , deploy"],
-  "",
-  "However, if you want to pass flags to the tools to run, you need to preface the arguments" \
-    " with \"--\" in order to prevent \"do\" from trying to use them as its own flags. That" \
-    " might look something like this:",
-  ["    toys do -- rails build --staging , deploy --migrate"],
+  ["    toys do rails build --staging , deploy"],
   "",
   "You may change the delimiter using the --delim flag. For example:",
-  ["    toys do --delim=/ -- rails build --staging / deploy --migrate"]
+  ["    toys do --delim=/ rails build --staging / deploy --migrate"],
+  "The --delim flag must appear first before the tools to run. Any flags that appear later in" \
+    " the command line will be passed to the tools themselves."
 
 flag :delim do
   flags "-d", "--delim=VALUE"
@@ -50,10 +47,12 @@ end
 remaining_args :args do
   completion do |context|
     words = context.arg_parser.data[:args].inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
-    context.completion_engine.compute(words, context.string, quote_type: context.quote_type)
+    context.completion_engine.compute(words, context.fragment, quote_type: context.quote_type)
   end
   desc "A series of tools to run, separated by the delimiter"
 end
+
+enforce_flags_before_args
 
 def run
   args

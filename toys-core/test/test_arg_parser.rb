@@ -74,9 +74,9 @@ describe Toys::ArgParser do
     tool.add_flag(:a)
     tool.add_flag(:b)
     tool.set_remaining_args(:c)
-    arg_parser.parse(["--a", "hello", "--b"])
+    arg_parser.parse(["-a", "hello", "-b"])
     arg_parser.finish
-    assert_equal({a: true, b: nil, c: ["hello", "--b"]}, arg_parser.data)
+    assert_equal({a: true, b: nil, c: ["hello", "-b"]}, arg_parser.data)
     assert_empty(arg_parser.errors)
   end
 
@@ -502,7 +502,7 @@ describe Toys::ArgParser do
       end
 
       it "succeeds when all flags are provided" do
-        arg_parser.parse(["--a", "--b"])
+        arg_parser.parse(["-a", "-b"])
         arg_parser.finish
         assert_equal({a: true, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
@@ -511,8 +511,8 @@ describe Toys::ArgParser do
       it "errors when flags are missing" do
         arg_parser.parse([])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Flag "--a" is required.')
-        assert_includes(arg_parser.errors, 'Flag "--b" is required.')
+        assert_includes(arg_parser.errors, 'Flag "-a" is required.')
+        assert_includes(arg_parser.errors, 'Flag "-b" is required.')
       end
     end
 
@@ -524,7 +524,7 @@ describe Toys::ArgParser do
       end
 
       it "succeeds when one flag is provided" do
-        arg_parser.parse(["--b"])
+        arg_parser.parse(["-b"])
         arg_parser.finish
         assert_equal({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
@@ -539,11 +539,11 @@ describe Toys::ArgParser do
       end
 
       it "errors when mulitple flags are provided" do
-        arg_parser.parse(["--a", "--b"])
+        arg_parser.parse(["-a", "-b"])
         arg_parser.finish
         assert_includes(arg_parser.errors,
                         'Exactly one flag out of group "My Group" is required, but' \
-                        ' 2 were provided: ["--a", "--b"].')
+                        ' 2 were provided: ["-a", "-b"].')
       end
     end
 
@@ -555,7 +555,7 @@ describe Toys::ArgParser do
       end
 
       it "succeeds when one flag is provided" do
-        arg_parser.parse(["--b"])
+        arg_parser.parse(["-b"])
         arg_parser.finish
         assert_equal({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
@@ -569,11 +569,11 @@ describe Toys::ArgParser do
       end
 
       it "errors when mulitple flags are provided" do
-        arg_parser.parse(["--a", "--b"])
+        arg_parser.parse(["-a", "-b"])
         arg_parser.finish
         assert_includes(arg_parser.errors,
                         'At most one flag out of group "My Group" is required, but' \
-                        ' 2 were provided: ["--a", "--b"].')
+                        ' 2 were provided: ["-a", "-b"].')
       end
     end
 
@@ -585,7 +585,7 @@ describe Toys::ArgParser do
       end
 
       it "succeeds when one flag is provided" do
-        arg_parser.parse(["--b"])
+        arg_parser.parse(["-b"])
         arg_parser.finish
         assert_equal({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
@@ -600,7 +600,7 @@ describe Toys::ArgParser do
       end
 
       it "succeeds when mulitple flags are provided" do
-        arg_parser.parse(["--a", "--b"])
+        arg_parser.parse(["-a", "-b"])
         arg_parser.finish
         assert_equal({a: true, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)

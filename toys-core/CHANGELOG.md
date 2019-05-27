@@ -11,6 +11,7 @@
 * ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
 * CHANGED: Implemented custom ArgParser and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
+* CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
 * CHANGED: Lifted ModuleLookup, Terminal, and WrappableString out of the Utils module.
