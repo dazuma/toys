@@ -30,7 +30,7 @@ long_desc \
   "",
   "Example: Suppose you have a \"rails build\" tool and a \"deploy\" tool. You could run them" \
     " in order like this:",
-  ["    toys do rails build --staging , deploy"],
+  ["    toys do rails build --staging , deploy --migrate"],
   "",
   "You may change the delimiter using the --delim flag. For example:",
   ["    toys do --delim=/ rails build --staging / deploy --migrate"],
@@ -44,11 +44,12 @@ flag :delim do
   long_desc "Sets the delimiter that separates tool invocations. The default value is \",\"."
 end
 
-remaining_args :args do
+remaining_args :commands do
   completion do |context|
-    words = context.arg_parser.data[:args].inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
-    completion_engine = context.completion_engine.with(complete_flags: !words.empty?)
-    completion_engine.compute(words, context.fragment, quote_type: context.quote_type)
+    commands = context.arg_parser.data[:commands]
+    last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
+    completion_engine = context.completion_engine.with(complete_flags: !last_command.empty?)
+    completion_engine.compute(last_command, context.fragment, quote_type: context.quote_type)
   end
   desc "A series of tools to run, separated by the delimiter"
 end
@@ -56,7 +57,7 @@ end
 enforce_flags_before_args
 
 def run
-  args
+  commands
     .chunk { |arg| arg == delim ? :_separator : true }
     .each do |_, action|
       code = cli.run(action)

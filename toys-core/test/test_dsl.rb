@@ -1121,6 +1121,27 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "enforce_flags_before_args directive" do
+    it "modifies the setting on the tool" do
+      loader.add_block do
+        enforce_flags_before_args
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.flags_before_args_enforced?)
+    end
+
+    it "cannot be invoked if argument parsing is disabled" do
+      test = self
+      loader.add_block do
+        disable_argument_parsing
+        test.assert_raises(Toys::ToolDefinitionError) do
+          enforce_flags_before_args
+        end
+      end
+      loader.lookup([])
+    end
+  end
+
   describe "disable_flag directive" do
     it "adds a flag to the used list" do
       loader.add_block do

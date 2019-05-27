@@ -480,7 +480,7 @@ module Toys
       end
 
       ##
-      # Disable argument parsing for this tool
+      # Disable argument parsing for this tool.
       #
       def disable_argument_parsing
         check_definition_state
@@ -495,15 +495,17 @@ module Toys
 
       ##
       # Enforce that flags must come before args for this tool.
+      # You may disable enforcement by passoing `false` for the state.
+      # @param [Boolean] state
       #
-      def enforce_flags_before_args
+      def enforce_flags_before_args(state = true)
         check_definition_state
         if argument_parsing_disabled?
           raise ToolDefinitionError,
                 "Cannot enforce flags before args for tool #{display_name.inspect}" \
-                " because arguments parsing is disabled."
+                " because parsing is disabled."
         end
-        @enforce_flags_before_args = true
+        @enforce_flags_before_args = state
         self
       end
 

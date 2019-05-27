@@ -748,10 +748,14 @@ module Toys
       # That is, as soon as the first positional arg appears in the command
       # line arguments, flag parsing is disabled as if `--` had appeared.
       #
+      # Issuing this directive by itself turns on enforcement. You may turn it
+      # off by passsing `false` as the parameter.
+      #
+      # @param [Boolean] state
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def enforce_flags_before_args
-        DSL::Tool.current_tool(self, true)&.enforce_flags_before_args
+      def enforce_flags_before_args(state = true)
+        DSL::Tool.current_tool(self, true)&.enforce_flags_before_args(state)
         self
       end
 

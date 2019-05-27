@@ -240,24 +240,23 @@ tools to run and what arguments to pass to them. If, for example, you had a
 The three arguments `build`, `,`, and `test` are positional arguments to the
 `do` tool. (The `do` tool uses `,` to delimit the tools that it should run.)
 
-Here is a more complex example illustrating the interaction between flags and
-positional arguments. Suppose we want to use `do` to display the help screens
-for the root tool and the system tool in sequence. That is, we want to run
-`toys --help` and `toys system --help` in sequence. We might start by trying:
+Most tools allow flags and positional arguments to be interspersed. A flag will
+be recognized even if it appears after some of the positional arguments.
 
-            |FLAG| |-ARGS-| |FLAG|
-    toys do --help , system --help
+However, this approach would not work for the `do` tool because its common case
+is to pass flags down to the steps it runs. (That is, `do` wants most arguments
+to be treated as positional even if they look like flags.) So `do` stops
+recognizing flags once it encounters its first positional argument. That is,
+you could do this:
 
-However, this simply displays the help for the `do` tool itself, because the
-first `--help` is interpreted as a flag for `do`. What we actually want is for
-`do` to treat it as a positional argument specifying the first tool to run. So
-Let's force `do` to treat all its arguments as positional, by starting with
-`--` like so:
+            |------------ARGS-----------|
+    toys do build --staging , test --help
 
-               |--------ARGS--------|
-    toys do -- --help , system --help
+Each tool can choose which behavior it will support, whether or not to enforce
+[flags before positional args](#Enforcing_flags_before_args).
 
-Now `toys do` behaves as we intended.
+You can also, of course, stop recognizing flags on the command line by passing
+`--` as an argument.
 
 ### Tab completion
 
@@ -2411,6 +2410,38 @@ completely disable decreasing the verbosity, disable both `-q` and `--quiet`.
 
     # Completely disables decreasing verbosity
     disable_flag "-q", "--quiet"
+
+### Enforcing flags before args
+
+By default, tools allow flags and positional arguments to be interspersed when
+command line arguments are parsed. This matches the behavior of most common
+command line binaries.
+
+However, some tools prefer to follow the convention that all flags must appear
+first, followed by positional arguments. In such a tool, once a non-flag
+argument appears on the command line, all remaining arguments are treated as
+positional, even if they look like a flag and start with a hyphen.
+
+You may configure a tool to follow this alternate parsing strategy using the
+`enforce_flags_before_args` directive.
+
+The built-in tool `toys do` is an example of a tool that does this. It
+recognizes its own flags (such as `--help` and `--delim`) but once positional
+arguments start appearing, it wants further flags to be treated as positional
+so it can pass them down to the different steps it is executing. Here is a
+simplified excerpt from the implementation that tool:
+
+    tool "do" do
+      flag :delim, default: ","
+      remaining_args :commands  # the commands to execute
+      enforce_flags_before_args
+      def run
+        # Now commands includes both the commands to run and
+        # the "flags" to pass to them.
+        commands.each do
+          # ...
+      end
+    end
 
 ### Disabling argument parsing
 
