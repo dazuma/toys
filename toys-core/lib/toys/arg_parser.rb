@@ -158,12 +158,25 @@ module Toys
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val, _prev) { val }
 
-    def duplicate_hash(orig)
-      copy = {}
-      orig.each do |k, v|
-        copy[k] = v.nil? ? v : v.clone
+    if ::RUBY_VERSION < "2.4"
+      def duplicate_hash(orig)
+        copy = {}
+        orig.each do |k, v|
+          copy[k] =
+            begin
+              v.clone
+            rescue ::TypeError
+              v
+            end
+        end
+        copy
       end
-      copy
+    else
+      def duplicate_hash(orig)
+        copy = {}
+        orig.each { |k, v| copy[k] = v.clone }
+        copy
+      end
     end
 
     def check_flag_value(arg)
