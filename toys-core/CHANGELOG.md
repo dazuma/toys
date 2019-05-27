@@ -5,9 +5,10 @@
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Args and flags can also provide completion information.
 * ADDED: Tools can provide an interrupt handler. Added appropriate APIs to Toys::Definition::Tool.
-* ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
+* ADDED: Tools can enforce that flags must be given before positional args.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
+* ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
 * CHANGED: Implemented custom ArgParser and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.

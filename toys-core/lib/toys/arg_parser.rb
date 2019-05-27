@@ -229,6 +229,9 @@ module Toys
     end
 
     def handle_positional(arg)
+      if @tool_definition.flags_before_args_enforced?
+        @flags_allowed = false
+      end
       arg_def = next_arg_def
       unless arg_def
         @extra_args << arg

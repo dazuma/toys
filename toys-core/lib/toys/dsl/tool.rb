@@ -744,6 +744,18 @@ module Toys
       end
 
       ##
+      # Enforce that all flags must be provided before any positional args.
+      # That is, as soon as the first positional arg appears in the command
+      # line arguments, flag parsing is disabled as if `--` had appeared.
+      #
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def enforce_flags_before_args
+        DSL::Tool.current_tool(self, true)&.enforce_flags_before_args
+        self
+      end
+
+      ##
       # Disable argument parsing for this tool. Arguments will not be parsed
       # and the options will not be populated. Instead, tools can retrieve the
       # full unparsed argument list by calling {Toys::Tool#args}.

@@ -80,6 +80,7 @@ module Toys
         @remaining_args_definition = nil
 
         @disable_argument_parsing = false
+        @enforce_flags_before_args = false
         @includes_modules = false
         @custom_context_directory = nil
       end
@@ -243,7 +244,7 @@ module Toys
       def includes_arguments?
         !default_data.empty? || !flag_definitions.empty? ||
           !required_arg_definitions.empty? || !optional_arg_definitions.empty? ||
-          !remaining_args_definition.nil?
+          !remaining_args_definition.nil? || flags_before_args_enforced?
       end
 
       ##
@@ -269,6 +270,14 @@ module Toys
       #
       def argument_parsing_disabled?
         @disable_argument_parsing
+      end
+
+      ##
+      # Returns true if this tool enforces flags before args.
+      # @return [Boolean]
+      #
+      def flags_before_args_enforced?
+        @enforce_flags_before_args
       end
 
       ##
@@ -481,6 +490,20 @@ module Toys
                 " because arguments have already been defined."
         end
         @disable_argument_parsing = true
+        self
+      end
+
+      ##
+      # Enforce that flags must come before args for this tool.
+      #
+      def enforce_flags_before_args
+        check_definition_state
+        if argument_parsing_disabled?
+          raise ToolDefinitionError,
+                "Cannot enforce flags before args for tool #{display_name.inspect}" \
+                " because arguments parsing is disabled."
+        end
+        @enforce_flags_before_args = true
         self
       end
 

@@ -69,6 +69,17 @@ describe Toys::ArgParser do
     assert_equal(["hello", "world", "-a", "--bb=yoyo", "ruby"], arg_parser.parsed_args)
   end
 
+  it "honors enforce_flags_before_args" do
+    tool.enforce_flags_before_args
+    tool.add_flag(:a)
+    tool.add_flag(:b)
+    tool.set_remaining_args(:c)
+    arg_parser.parse(["--a", "hello", "--b"])
+    arg_parser.finish
+    assert_equal({a: true, b: nil, c: ["hello", "--b"]}, arg_parser.data)
+    assert_empty(arg_parser.errors)
+  end
+
   describe "flag parsing" do
     describe "boolean flag" do
       it "defaults to nil" do
