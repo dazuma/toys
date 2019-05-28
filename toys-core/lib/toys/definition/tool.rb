@@ -83,6 +83,8 @@ module Toys
         @enforce_flags_before_args = false
         @includes_modules = false
         @custom_context_directory = nil
+
+        @completion = Definition::StandardToolCompletion.new
       end
 
       ##
@@ -178,6 +180,8 @@ module Toys
       # @return [String,nil]
       #
       attr_reader :custom_context_directory
+
+      attr_reader :completion
 
       ##
       # Returns the local name of this tool.
@@ -574,8 +578,16 @@ module Toys
       #     `:push` handler expects the previous value to be an array and
       #     pushes the given value onto it; it should be combined with setting
       #     `default: []` and is intended for "multi-valued" flags.
-      # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      # @param [Object] flag_completion A specifier for shell tab completion.
+      #     for flag names associated with this flag. By default, a
+      #     {Toys::Definition::StandardFlagCompletion} is used, which provides
+      #     the flag's names as completion candidates. To customize completion,
+      #     set this to a hash of options to pass to the constructor for
+      #     {Toys::Definition::StandardFlagCompletion}, or pass any other spec
+      #     recognized by {Toys::Definition::Completion.create}.
+      # @param [Object] value_completion A specifier for shell tab completion.
+      #     for flag values associated with this flag. Pass any spec
+      #     recognized by {Toys::Definition::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as disabled. Default is
       #     true.
@@ -593,7 +605,8 @@ module Toys
       #     text and error messages.
       #
       def add_flag(key, flags = [],
-                   accept: nil, default: nil, handler: nil, completion: nil,
+                   accept: nil, default: nil, handler: nil,
+                   flag_completion: nil, value_completion: nil,
                    report_collisions: true, group: nil,
                    desc: nil, long_desc: nil, display_name: nil)
         unless group.is_a?(Definition::FlagGroup)
@@ -603,9 +616,9 @@ module Toys
         end
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        completion = Definition::Completion.create(completion)
         flag_def = Definition::Flag.new(key, flags, @used_flags, report_collisions, accept,
-                                        handler, default, completion, display_name, group)
+                                        handler, default, flag_completion, value_completion,
+                                        display_name, group)
         flag_def.desc = desc if desc
         flag_def.long_desc = long_desc if long_desc
         if flag_def.active?
@@ -783,6 +796,18 @@ module Toys
       def custom_context_directory=(dir)
         check_definition_state
         @custom_context_directory = dir
+      end
+
+      def completion=(spec)
+        @completion =
+          case spec
+          when nil
+            StandardToolCompletion.new
+          when ::Hash
+            StandardToolCompletion.new(spec)
+          else
+            Completion.create(spec)
+          end
       end
 
       ##

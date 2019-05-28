@@ -521,8 +521,16 @@ module Toys
       #     `:push` handler expects the previous value to be an array and
       #     pushes the given value onto it; it should be combined with setting
       #     `default: []` and is intended for "multi-valued" flags.
-      # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      # @param [Object] flag_completion A specifier for shell tab completion.
+      #     for flag names associated with this flag. By default, a
+      #     {Toys::Definition::StandardFlagCompletion} is used, which provides
+      #     the flag's names as completion candidates. To customize completion,
+      #     set this to a hash of options to pass to the constructor for
+      #     {Toys::Definition::StandardFlagCompletion}, or pass any other spec
+      #     recognized by {Toys::Definition::Completion.create}.
+      # @param [Object] value_completion A specifier for shell tab completion.
+      #     for flag values associated with this flag. Pass any spec
+      #     recognized by {Toys::Definition::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
@@ -544,14 +552,17 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flag(key, *flags,
-               accept: nil, default: nil, handler: nil, completion: nil,
+               accept: nil, default: nil, handler: nil,
+               flag_completion: nil, value_completion: nil,
                report_collisions: true, group: nil,
                desc: nil, long_desc: nil, display_name: nil,
                &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        flag_dsl = DSL::Flag.new(flags.flatten, accept, default, handler, completion,
-                                 report_collisions, group, desc, long_desc, display_name)
+        flag_dsl = DSL::Flag.new(
+          flags.flatten, accept, default, handler, flag_completion, value_completion,
+          report_collisions, group, desc, long_desc, display_name
+        )
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)

@@ -90,7 +90,7 @@ describe "toys" do
         end
       end
 
-      describe "run" do
+      describe "eval" do
         it "completes toys " do
           completions = Toys::TestHelper.capture_completion("toys ")
           assert_includes(completions, "system ")

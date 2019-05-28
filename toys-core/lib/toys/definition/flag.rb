@@ -132,17 +132,18 @@ module Toys
       # Should be created only from {Toys::Definition::Tool#add_flag}.
       # @private
       #
-      def initialize(key, flags, used_flags, report_collisions, acceptor, handler,
-                     default, completion, display_name, group)
+      def initialize(key, flags, used_flags, report_collisions, acceptor, handler, default,
+                     flag_completion, value_completion, display_name, group)
         @group = group
         @key = key
         @flag_syntax = flags.map { |s| FlagSyntax.new(s) }
         @acceptor = acceptor
         @handler = resolve_handler(handler)
-        @desc = WrappableString.make(desc)
-        @long_desc = WrappableString.make_array(long_desc)
+        @desc = WrappableString.make("")
+        @long_desc = WrappableString.make_array([])
         @default = default
-        @completion = completion
+        @flag_completion = resolve_flag_completion(flag_completion)
+        @value_completion = Completion.create(value_completion)
         needs_val =
           @flag_syntax.empty? &&
           ((!acceptor.nil? && acceptor.name != ::TrueClass && acceptor.name != ::FalseClass) ||
@@ -202,10 +203,16 @@ module Toys
       attr_reader :handler
 
       ##
+      # Returns the proc that determines shell completions for the flag.
+      # @return [Toys::Definition::Completion]
+      #
+      attr_reader :flag_completion
+
+      ##
       # Returns the proc that determines shell completions for the value.
       # @return [Toys::Definition::Completion]
       #
-      attr_reader :completion
+      attr_reader :value_completion
 
       ##
       # The type of flag. Possible values are `:boolean` for a simple boolean
@@ -268,7 +275,7 @@ module Toys
       # @return [Array<String>]
       #
       def effective_flags
-        @effective_flags ||= flag_syntax.map(&:flags).flatten
+        @effective_flags ||= flag_syntax.flat_map(&:flags)
       end
 
       ##
@@ -352,6 +359,17 @@ module Toys
           PUSH_HANDLER
         else
           raise ToolDefinitionError, "Unknown handler: #{handler.inspect}"
+        end
+      end
+
+      def resolve_flag_completion(spec)
+        case spec
+        when nil
+          StandardFlagCompletion.new(self)
+        when ::Hash
+          StandardFlagCompletion.new(self, spec)
+        else
+          Completion.create(spec)
         end
       end
 

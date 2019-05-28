@@ -25,7 +25,7 @@ require "helper"
 
 describe Toys::Definition::Completion do
   def context(str)
-    Toys::Definition::Completion::Context.new(str)
+    Toys::Definition::Completion::Context.new(nil, [], str, {})
   end
 
   describe ".create" do
@@ -72,7 +72,7 @@ describe Toys::Definition::FileSystemCompletion do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "data") }
   let(:completion) { Toys::Definition::FileSystemCompletion.new(cwd: data_dir) }
   def context(str)
-    Toys::Definition::Completion::Context.new(str)
+    Toys::Definition::Completion::Context.new(nil, [], str, {})
   end
 
   it "returns objects when passed an empty string" do
@@ -164,7 +164,7 @@ end
 describe Toys::Definition::ValuesCompletion do
   let(:completion) { Toys::Definition::ValuesCompletion.new(["one", :two, ["three"]]) }
   def context(str)
-    Toys::Definition::Completion::Context.new(str)
+    Toys::Definition::Completion::Context.new(nil, [], str, {})
   end
 
   it "returns all values when given an empty string" do

@@ -80,14 +80,18 @@ module Toys
         case spec
         when nil, :empty
           EMPTY
-        when ::Proc
+        when ::Proc, Completion
           spec
         when ::Array
           ValuesCompletion.new(spec)
         when :file_system
           FileSystemCompletion.new
         else
-          raise ::ArgumentError, "Unknown completion spec: #{spec.inspect}"
+          if spec.respond_to?(:call)
+            spec
+          else
+            raise ::ArgumentError, "Unknown completion spec: #{spec.inspect}"
+          end
         end
       end
 
@@ -160,44 +164,80 @@ module Toys
         ##
         # Create completion context
         #
-        # @param [String] fragment The string fragment
-        # @param [:single,:double,nil] quote_type Quoting used for the string
-        # @param [Toys::ArgParser] arg_parser Current ArgParser
-        # @param [Toys::Utils::CompletionEngine] completion_engine The
-        #     completion engine currently running
+        # @param [Toys::Loader] loader The loader used to obtain tool defs
+        # @param [Array<String>] previous_words Array of complete strings that
+        #     appeared prior to the fragment to complete.
+        # @param [String] fragment The string fragment to complete
+        # @param [Hash] params Miscellaneous context data
         #
-        def initialize(fragment, quote_type: nil, arg_parser: nil, completion_engine: nil)
+        def initialize(loader, previous_words, fragment, params = {})
+          @loader = loader
+          @previous_words = previous_words
           @fragment = fragment
-          @quote_type = quote_type
-          @arg_parser = arg_parser
-          @completion_engine = completion_engine
+          @params = params
+          @tool_definition = nil
+          @args = nil
+          @arg_parser = nil
         end
+
+        ##
+        # The loader.
+        # @return [Toys::Loader]
+        #
+        attr_reader :loader
+
+        ##
+        # All previous words.
+        # @return [Array<String>]
+        #
+        attr_reader :previous_words
 
         ##
         # The current string fragment to complete
         # @return [String]
         #
-        attr_reader :fragment
+        attr_accessor :fragment
 
         ##
-        # The quoting used for the string fragment.
-        # @return [:single,:double,nil]
+        # Context parameters.
+        # @return [Hash]
         #
-        attr_reader :quote_type
+        attr_reader :params
+
+        ##
+        # The tool being invoked, which should control the completion.
+        # @return [Toys::Definition::Tool]
+        #
+        def tool_definition
+          lookup_tool
+          @tool_definition
+        end
+
+        ##
+        # An array of complete arguments passed to the tool, prior to the
+        # fragment to complete.
+        # @return [Array<String>]
+        #
+        def args
+          lookup_tool
+          @args
+        end
 
         ##
         # Current ArgParser indicating the status of argument parsing up to
-        # this point, or `nil` if we are not completing an argument.
+        # this point.
         #
-        # @return [Toys::ArgParser,nil]
+        # @return [Toys::ArgParser]
         #
-        attr_reader :arg_parser
+        def arg_parser
+          @arg_parser ||= ArgParser.new(tool_definition).parse(args)
+        end
 
-        ##
-        # The completion engine currently running, or `nil` if not available.
-        # @return [Toys::Utils::CompletionEngine]
-        #
-        attr_reader :completion_engine
+        private
+
+        def lookup_tool
+          @tool_definition, @args = @loader.lookup(@previous_words) unless @tool_definition
+        end
       end
 
       ##
@@ -391,6 +431,190 @@ module Toys
       def call(context)
         fragment = context.fragment
         @values.find_all { |val| val.string.start_with?(fragment) }
+      end
+    end
+
+    ##
+    # A StandardFlagCompletion is a Completion that returns all possible flags
+    # associated with a {Toys::Definition::Flag}.
+    #
+    class StandardFlagCompletion < Completion
+      ##
+      # Create a StandardFlagCompletion given configuration options.
+      #
+      # @param [Toys::Definition::Flag] flag The flag definition.
+      # @param [Boolean] include_short Whether to include short flags.
+      # @param [Boolean] include_long Whether to include long flags.
+      # @param [Boolean] include_negative Whether to include `--no-*` forms.
+      #
+      def initialize(flag, include_short: true, include_long: true, include_negative: true)
+        @flag = flag
+        @include_short = include_short
+        @include_long = include_long
+        @include_negative = include_negative
+      end
+
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
+      #
+      def call(context)
+        results =
+          if @include_short && @include_long && @include_negative
+            @flag.effective_flags
+          else
+            collect_results
+          end
+        fragment = context.fragment
+        Completion.candidates(results.find_all { |val| val.start_with?(fragment) })
+      end
+
+      private
+
+      def collect_results
+        results = []
+        if @include_short
+          results += @flag.single_flag_syntax.map(&:positive_flag)
+        end
+        if @include_long
+          results +=
+            if @include_negative
+              @flag.double_flag_syntax.flat_map(&:flags)
+            else
+              @flag.double_flag_syntax.map(&:positive_flag)
+            end
+        end
+        results
+      end
+    end
+
+    ##
+    # A StandardToolCompletion is a Completion that implements the standard
+    # algorithm for a tool as a whole.
+    #
+    class StandardToolCompletion < Completion
+      ##
+      # Create a StandardToolCompletion given configuration options.
+      #
+      # @param [Boolean] complete_subtools Whether to complete subtool names
+      # @param [Boolean] include_hidden_subtools Whether to include hidden
+      #     subtools (i.e. those beginning with an underscore)
+      # @param [Boolean] complete_args Whether to complete positional args
+      # @param [Boolean] complete_flags Whether to complete flag names
+      # @param [Boolean] complete_flag_values Whether to complete flag values
+      #
+      def initialize(complete_subtools: true, include_hidden_subtools: false,
+                     complete_args: true, complete_flags: true, complete_flag_values: true)
+        @complete_subtools = complete_subtools
+        @include_hidden_subtools = include_hidden_subtools
+        @complete_flags = complete_flags
+        @complete_args = complete_args
+        @complete_flag_values = complete_flag_values
+      end
+
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
+      #
+      def call(context)
+        candidates = valued_flag_candidates(context)
+        return candidates if candidates
+        candidates = subtool_or_arg_candidates(context)
+        candidates += plain_flag_candidates(context)
+        candidates += flag_value_candidates(context)
+        candidates
+      end
+
+      private
+
+      def valued_flag_candidates(context)
+        return unless @complete_flag_values
+        arg_parser = context.arg_parser
+        return unless arg_parser.flags_allowed?
+        active_flag_def = arg_parser.active_flag_def
+        return if active_flag_def && active_flag_def.value_type == :required
+        match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment)
+        return unless match
+
+        flag_def = context.tool_definition.resolve_flag(match[1]).unique_flag
+        return [] unless flag_def
+        context.fragment = match[2]
+        flag_def.value_completion.call(context)
+      end
+
+      def subtool_or_arg_candidates(context)
+        return [] if context.arg_parser.active_flag_def
+        return [] if context.arg_parser.flags_allowed? && context.fragment.start_with?("-")
+        subtool_candidates(context) || arg_candidates(context)
+      end
+
+      def subtool_candidates(context)
+        return if !@complete_subtools || !context.args.empty?
+        subtools = context.loader.list_subtools(context.tool_definition.full_name,
+                                                include_hidden: @include_hidden_subtools)
+        return if subtools.empty?
+        fragment = context.fragment
+        candidates = []
+        subtools.each do |subtool|
+          name = subtool.simple_name
+          candidates << Definition::Completion.candidate(name) if name.start_with?(fragment)
+        end
+        candidates
+      end
+
+      def arg_candidates(context)
+        return unless @complete_args
+        arg_def = context.arg_parser.next_arg_def
+        return [] unless arg_def
+        arg_def.completion.call(context)
+      end
+
+      def plain_flag_candidates(context)
+        return [] if !@complete_flags || context.params[:disable_flags]
+        arg_parser = context.arg_parser
+        return [] unless arg_parser.flags_allowed?
+        flag_def = arg_parser.active_flag_def
+        return [] if flag_def && flag_def.value_type == :required
+        return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
+        context.tool_definition.flag_definitions.flat_map do |flag|
+          flag.flag_completion.call(context)
+        end
+      end
+
+      def flag_value_candidates(context)
+        return unless @complete_flag_values
+        arg_parser = context.arg_parser
+        flag_def = arg_parser.active_flag_def
+        return [] unless flag_def
+        return [] if @complete_flags && arg_parser.flags_allowed? &&
+                     flag_def.value_type == :optional && context.fragment.start_with?("-")
+        flag_def.value_completion.call(context)
+      end
+    end
+
+    ##
+    # A StandardCliCompletion is a Completion that implements the standard
+    # algorithm for a CLI.
+    #
+    class StandardCliCompletion < Completion
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param [Toys::Definition::Completion::Context] context the current
+      #     completion context including the string fragment.
+      # @return [Array<Toys::Definition::Completion::Candidate>] an array of
+      #     completion candidates.
+      #
+      def call(context)
+        context.tool_definition.completion.call(context)
       end
     end
   end

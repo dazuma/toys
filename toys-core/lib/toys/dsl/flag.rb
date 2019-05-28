@@ -32,13 +32,14 @@ module Toys
     #
     class Flag
       ## @private
-      def initialize(flags, acceptor, default, handler, completion, report_collisions,
-                     group, desc, long_desc, display_name)
+      def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
+                     report_collisions, group, desc, long_desc, display_name)
         @flags = flags
         @acceptor = acceptor
         @default = default
         @handler = handler
-        @completion = completion
+        @flag_completion = flag_completion
+        @value_completion = value_completion
         @report_collisions = report_collisions
         @group = group
         @desc = desc
@@ -96,14 +97,28 @@ module Toys
       end
 
       ##
-      # Set the shell completion strategy.
-      # See {Toys::Definition::Completion.create} for recognized formats.
+      # Set the shell completion strategy for flag names.
+      # This may be set to a hash of options to pass to the constructor for
+      # {Toys::Definition::StandardFlagCompletion}. Otherwise, see
+      # {Toys::Definition::Completion.create} for other recognized formats.
       #
-      # @param [Object] value
+      # @param [Object] spec
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def completion(value = nil, &block)
-        @completion = value || block
+      def flag_completion(spec = nil, &block)
+        @flag_completion = spec || block
+        self
+      end
+
+      ##
+      # Set the shell completion strategy for flag values.
+      # See {Toys::Definition::Completion.create} for recognized formats.
+      #
+      # @param [Object] spec
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def value_completion(spec = nil, &block)
+        @value_completion = spec || block
         self
       end
 
@@ -171,7 +186,8 @@ module Toys
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @acceptor, default: @default, handler: @handler,
-                      completion: @completion, report_collisions: @report_collisions, group: @group,
+                      flag_completion: @flag_completion, value_completion: @value_completion,
+                      report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end
     end

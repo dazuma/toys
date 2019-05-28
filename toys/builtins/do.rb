@@ -48,8 +48,11 @@ remaining_args :commands do
   completion do |context|
     commands = context.arg_parser.data[:commands]
     last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
-    completion_engine = context.completion_engine.with(complete_flags: !last_command.empty?)
-    completion_engine.compute(last_command, context.fragment, quote_type: context.quote_type)
+    new_params = {disable_flags: commands.empty?}
+    new_context = Toys::Definition::Completion::Context.new(
+      context.loader, last_command, context.fragment, context.params.merge(new_params)
+    )
+    new_context.tool_definition.completion.call(new_context)
   end
   desc "A series of tools to run, separated by the delimiter"
 end

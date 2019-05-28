@@ -2,6 +2,17 @@
 
 ### 0.8.0 / Unreleased
 
+This is a major update with significant new features and a bunch of fixes. It does include a few minor backward-incompatible changes. All features planned for beta are now implemented.
+
+Highlights:
+
+* Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.
+* Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values. 
+* Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
+* A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a host of fixes, especially around acceptors and optional flag values.
+
+Details:
+
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: Tools can provide an interrupt handler.
@@ -9,7 +20,7 @@
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: The `:gem_build` template includes an `:install_gem` option.
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
-* CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
+* CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.

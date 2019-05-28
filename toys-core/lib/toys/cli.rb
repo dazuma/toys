@@ -92,7 +92,7 @@ module Toys
       config_dir_name: nil, config_file_name: nil, index_file_name: nil,
       preload_file_name: nil, preload_directory_name: nil, data_directory_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
-      logger: nil, base_level: nil, error_handler: nil
+      logger: nil, base_level: nil, error_handler: nil, completion: nil
     )
       @logger = logger || self.class.default_logger
       @base_level = base_level || @logger.level
@@ -109,13 +109,14 @@ module Toys
       @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
       @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
-        index_file_name: index_file_name, extra_delimiters: @extra_delimiters,
+        index_file_name: @index_file_name, extra_delimiters: @extra_delimiters,
         preload_directory_name: @preload_directory_name, preload_file_name: @preload_file_name,
         data_directory_name: @data_directory_name,
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
       @error_handler = error_handler || DefaultErrorHandler.new
+      self.completion = completion
     end
 
     ##
@@ -142,6 +143,18 @@ module Toys
     # @return [Integer]
     #
     attr_reader :base_level
+
+    attr_reader :completion
+
+    def completion=(spec)
+      @completion =
+        case spec
+        when nil, ::Hash
+          Definition::StandardCliCompletion.new
+        else
+          Definition::Completion.create(spec)
+        end
+    end
 
     ##
     # Add a configuration file or directory to the loader.
@@ -275,7 +288,8 @@ module Toys
                     template_lookup: @template_lookup,
                     logger: @logger,
                     base_level: @base_level,
-                    error_handler: @error_handler)
+                    error_handler: @error_handler,
+                    completion: @completion)
       yield cli if block_given?
       cli
     end

@@ -48,7 +48,7 @@ module Toys
     #
     def self.capture_completion(line)
       executor = Toys::Utils::Exec.new
-      str = executor.capture([TOYS_BINARY, "system", "bash-completion", "run"],
+      str = executor.capture([TOYS_BINARY, "system", "bash-completion", "eval"],
                              env: {"COMP_LINE" => line, "COMP_POINT" => "-1"})
       str.split("\n")
     end

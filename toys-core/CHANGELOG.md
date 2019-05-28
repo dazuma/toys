@@ -2,6 +2,8 @@
 
 ### 0.8.0 / Unreleased
 
+This is a major update with significant new features and a bunch of fixes. It does include a few minor backward-incompatible changes. All features planned for beta are now implemented.
+
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Added APIs for args and flags to provide completion information.
 * ADDED: Tools can provide an interrupt handler. Added appropriate APIs to Toys::Definition::Tool.
@@ -9,7 +11,7 @@
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
 * ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
 * ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
-* CHANGED: Implemented custom ArgParser and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where it is clearly a bug.
+* CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.

@@ -96,17 +96,17 @@ tool "bash-completion" do
     "It is also possible to install completions for different binary names if you have" \
       " aliases for Toys. See the help for the \"install\" and \"remove\" tools for details.",
     "",
-    "The \"run\" tool is the actual completion command invoked by bash via `complete -C`." \
+    "The \"eval\" tool is the actual completion command invoked by bash via `complete -C`." \
       " You shouldn't need to invoke it directly. See the bash manual for details."
 
-  tool "run" do
+  tool "eval" do
     desc "Tab completion command (executed by bash)"
 
     disable_argument_parsing
 
     def run
-      require "toys/utils/completion_engine"
-      result = ::Toys::Utils::CompletionEngine.new(loader).run_bash
+      require "toys/utils/bash_completion"
+      result = ::Toys::Utils::BashCompletion.new(cli).run
       if result.negative?
         logger.error("This tool must be invoked as a bash completion command.")
       end
