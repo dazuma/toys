@@ -102,7 +102,7 @@ module Toys
       paths = Array(paths)
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
       paths.each do |path|
-        source = Definition::SourceInfo.create_path_root(path)
+        source = SourceInfo.create_path_root(path)
         @worklist << [source, [], priority]
       end
       self
@@ -121,7 +121,7 @@ module Toys
     def add_block(high_priority: false, name: nil, &block)
       name ||= "(Code block #{block.object_id})"
       priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      source = Definition::SourceInfo.create_proc_root(block, name)
+      source = SourceInfo.create_proc_root(block, name)
       @worklist << [source, [], priority]
       self
     end

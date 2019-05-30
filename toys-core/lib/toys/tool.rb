@@ -71,7 +71,7 @@ module Toys
       TOOL_DEFINITION = ::Object.new.freeze
 
       ##
-      # Context key for the `Toys::Definition::SourceInfo` describing the
+      # Context key for the `Toys::SourceInfo` describing the
       # source of this tool.
       # @return [Object]
       #
@@ -160,7 +160,7 @@ module Toys
 
     ##
     # Return the source of the tool being executed.
-    # @return [Toys::Definition::SourceInfo]
+    # @return [Toys::SourceInfo]
     #
     def tool_source
       @__data[Keys::TOOL_SOURCE]

@@ -2545,7 +2545,7 @@ directive in a Toys file. Or, at tool execution time, call
 [Toys::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:find_data)
 (which is a convenience method for getting the tool source object using the
 `TOOL_SOURCE` key, and calling
-[Toys::Definition::SourceInfo#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDefinition%2FSourceInfo:find_data)
+[Toys::SourceInfo#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FSourceInfo:find_data)
 on it). In either case, `find_data` locates a matching file (or directory)
 among the data files, and returns the full path to that file system object. You
 may then read the file or perform any other operation on it.

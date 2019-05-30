@@ -18,6 +18,7 @@ This is a major update with significant new features and a bunch of fixes. It do
 * CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
 * CHANGED: Lifted ModuleLookup and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.
+* CHANGED: Lifted all classes out of the Definition module.
 * CHANGED: Acceptor base class no longer takes a conversion proc.
 * CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.
 * CHANGED: Removed Tool#custom_acceptors.

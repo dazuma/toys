@@ -874,7 +874,7 @@ module Toys
       ##
       # Return the current source info object.
       #
-      # @return [Toys::Definition::SourceInfo] Source info.
+      # @return [Toys::SourceInfo] Source info.
       #
       def source_info
         @__source.last

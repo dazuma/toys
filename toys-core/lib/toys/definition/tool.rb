@@ -170,7 +170,7 @@ module Toys
       ##
       # Returns info on the source of this tool, or nil if the source is not
       # defined.
-      # @return [Toys::Definition::SourceInfo,nil]
+      # @return [Toys::SourceInfo,nil]
       #
       attr_reader :source_info
 
@@ -376,7 +376,7 @@ module Toys
       # A tool may be defined from at most one path. If a different path is
       # already set, raises {Toys::ToolDefinitionError}
       #
-      # @param [Toys::Definition::SourceInfo] source Source info
+      # @param [Toys::SourceInfo] source Source info
       #
       def lock_source(source)
         if source_info && source_info.source != source.source
