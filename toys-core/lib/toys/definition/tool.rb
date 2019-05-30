@@ -312,8 +312,8 @@ module Toys
       end
 
       ##
-      # Resolve the given acceptor. You may pass in a
-      # {Toys::Definition::Acceptor}, an acceptor name, a well-known acceptor
+      # Resolve the given acceptor. You may pass in an object that inherits
+      # from {Toys::Acceptor::Base}, an acceptor name, a well-known acceptor
       # understood by OptionParser, or `nil`.
       #
       # Returns either `nil` or an acceptor that is usable by OptionParser.
@@ -323,10 +323,10 @@ module Toys
       # recognized.
       #
       # @param [Object] accept An acceptor input.
-      # @return [Tool::Definition::Acceptor] The resolved acceptor.
+      # @return [Tool::Acceptor::Base] The resolved acceptor.
       #
       def resolve_acceptor(accept)
-        return accept if accept.nil? || accept.is_a?(Acceptor)
+        return accept if accept.nil? || accept.is_a?(Acceptor::Base)
         name = accept
         accept = @acceptors.fetch(name) do |k|
           if @parent
@@ -433,7 +433,7 @@ module Toys
       # Add an acceptor to the tool. This acceptor may be refereneced by name
       # when adding a flag or an arg.
       #
-      # @param [Toys::Definition::Acceptor] acceptor The acceptor to add.
+      # @param [Toys::Acceptor::Base] acceptor The acceptor to add.
       #
       def add_acceptor(acceptor)
         unless acceptor.name.is_a?(::String)

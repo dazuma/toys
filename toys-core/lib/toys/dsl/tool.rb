@@ -109,13 +109,13 @@ module Toys
         accept =
           case arg
           when ::Regexp
-            Definition::PatternAcceptor.new(name, arg, &block)
+            Acceptor::Pattern.new(name, arg, &block)
           when ::Array
-            Definition::EnumAcceptor.new(name, arg)
+            Acceptor::Enum.new(name, arg)
           when ::Proc
-            Definition::SimpleAcceptor.new(name, arg)
+            Acceptor::Simple.new(name, arg)
           when nil
-            Definition::SimpleAcceptor.new(name, &block)
+            Acceptor::Simple.new(name, &block)
           else
             raise ToolDefinitionError, "Illegal acceptor: #{arg.inspect}"
           end

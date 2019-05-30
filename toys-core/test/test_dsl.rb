@@ -203,7 +203,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       acc = tool.resolve_acceptor("acc1")
-      assert_kind_of(Toys::Definition::PatternAcceptor, acc)
+      assert_kind_of(Toys::Acceptor::Pattern, acc)
       assert_equal(3, acc.convert(*acc.match("3")))
     end
 
@@ -213,7 +213,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       acc = tool.resolve_acceptor("acc1")
-      assert_kind_of(Toys::Definition::EnumAcceptor, acc)
+      assert_kind_of(Toys::Acceptor::Enum, acc)
       assert_equal(3, acc.convert(*acc.match("3")))
     end
 
@@ -223,7 +223,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       acc = tool.resolve_acceptor("acc1")
-      assert_kind_of(Toys::Definition::Acceptor, acc)
+      assert_kind_of(Toys::Acceptor::Simple, acc)
       assert_equal("HELLO", acc.convert(*acc.match("hello")))
     end
 
@@ -235,7 +235,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["foo"])
       acc = tool.resolve_acceptor("acc1")
-      assert_kind_of(Toys::Definition::Acceptor, acc)
+      assert_kind_of(Toys::Acceptor::Simple, acc)
     end
 
     it "works even when the hosting tool is not active" do
@@ -256,7 +256,7 @@ describe Toys::DSL::Tool do
       assert_equal("the one", host_tool.desc.to_s)
       foo_tool, _remaining = loader.lookup(["host", "foo"])
       acc = foo_tool.resolve_acceptor("acc1")
-      assert_kind_of(Toys::Definition::Acceptor, acc)
+      assert_kind_of(Toys::Acceptor::Simple, acc)
     end
   end
 

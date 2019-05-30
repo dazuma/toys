@@ -22,29 +22,39 @@
 ;
 
 module Toys
-  module Definition
+  ##
+  # An Acceptor validates and converts arguments. It is designed to be
+  # compatible with the OptionParser accept mechanism.
+  #
+  # First, an acceptor validates an argument via the {#match} method. This
+  # method should determine whether the argument is valid, and return
+  # information that will help with conversion of the argument.
+  #
+  # Second, an acceptor converts the argument from the input string to its
+  # final form via the {#convert} method.
+  #
+  # Finally, an acceptor has a name that may appear in help text for flags
+  # and arguments that use it.
+  #
+  module Acceptor
     ##
-    # An Acceptor validates and converts arguments. It is designed to be
-    # compatible with the OptionParser accept mechanism.
+    # A sentinel that may be returned from a function-based acceptor to
+    # indicate invalid input.
+    # @return [Object]
     #
-    # First, an acceptor validates an argument via the {#match} method. This
-    # method should determine whether the argument is valid, and return
-    # information that will help with conversion of the argument.
+    REJECT = ::Object.new.freeze
+
+    ##
+    # A base class for acceptors.
     #
-    # Second, an acceptor converts the argument from the input string to its
-    # final form via the {#convert} method.
+    # The base acceptor does not do any validation (i.e. it accepts all
+    # arguments) or conversion (i.e. it returns the original string).
+    # You may subclass this object and override the {#match} and {#convert}
+    # methods to change this behavior.
     #
-    # Finally, an acceptor has a name that may appear in help text for flags
-    # and arguments that use it.
-    #
-    class Acceptor
+    class Base
       ##
       # Create a base acceptor.
-      #
-      # The base acceptor does not do any validation (i.e. it accepts all
-      # arguments) or conversion (i.e. it returns the original string).
-      # You may subclass this object and override the {#match} and {#convert}
-      # methods to change this behavior.
       #
       # @param [String] name A visible name for the acceptor, shown in help.
       #
@@ -115,17 +125,10 @@ module Toys
     # An acceptor that uses a simple function to validate and convert input.
     # The function must take the input string as its argument, and either
     # return the converted object to indicate success, or raise an exception or
-    # return the sentinel {Toys::Definition::SimpleAcceptor::REJECT} to
+    # return the sentinel {Toys::Acceptor::REJECT} to
     # indicate invalid input.
     #
-    class SimpleAcceptor < Acceptor
-      ##
-      # A sentinel that may be returned from the function to indicate invalid
-      # input.
-      # @return [Object]
-      #
-      REJECT = ::Object.new.freeze
-
+    class Simple < Base
       ##
       # Create a simple acceptor.
       #
@@ -134,7 +137,7 @@ module Toys
       # argument the input string. If the string is valid, the function must
       # return the value to store in the tool's data. If the string is invalid,
       # the function may either raise an exception (which must descend from
-      # `StandardError`) or return {Toys::Definition::SimpleAcceptor::REJECT}.
+      # `StandardError`) or return {Toys::Acceptor::REJECT}.
       #
       # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Proc] function The acceptor function
@@ -145,7 +148,7 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#match} to use the given function.
+      # Overrides {Toys::Acceptor::Base#match} to use the given function.
       #
       def match(str)
         result = @function.call(str) rescue REJECT # rubocop:disable Style/RescueModifier
@@ -153,7 +156,7 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#convert} to use the given
+      # Overrides {Toys::Acceptor::Base#convert} to use the given
       # function's result.
       #
       def convert(_str, result)
@@ -166,7 +169,7 @@ module Toys
     # custom conversion function that can be passed to the constructor as a
     # proc or a block.
     #
-    class PatternAcceptor < Acceptor
+    class Pattern < Base
       ##
       # Create a pattern acceptor.
       #
@@ -194,14 +197,14 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#match} to use the given regex.
+      # Overrides {Toys::Acceptor::Base#match} to use the given regex.
       #
       def match(str)
         str.nil? ? [nil] : @regex.match(str)
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#convert} to use the given
+      # Overrides {Toys::Acceptor::Base#convert} to use the given
       # converter.
       #
       def convert(str, *extra)
@@ -222,7 +225,7 @@ module Toys
     # converter will yield the integer `3`. If an argument of "three" is
     # passed in, the match will fail.
     #
-    class EnumAcceptor < Acceptor
+    class Enum < Base
       ##
       # Create an acceptor.
       #
@@ -235,14 +238,14 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#match} to find the value.
+      # Overrides {Toys::Acceptor::Base#match} to find the value.
       #
       def match(str)
         str.nil? ? [nil, nil] : @values.find { |s, _e| s == str }
       end
 
       ##
-      # Overrides {Toys::Definition::Acceptor#convert} to return the actual
+      # Overrides {Toys::Acceptor::Base#convert} to return the actual
       # enum element.
       #
       def convert(_str, elem)
@@ -250,151 +253,149 @@ module Toys
       end
     end
 
-    class Acceptor # rubocop:disable Style/Documentation
-      class << self
-        ##
-        # Resolve a standard acceptor name recognized by OptionParser.
-        #
-        # @param [Object] name Name of the acceptor. Recognizes names of
-        #     the OptionParser-provided acceptors, such as `String`, `Integer`,
-        #     `Array`, `OptionParser::DecimalInteger`, etc.
-        # @return [Toys::Definition::Acceptor] an acceptor
-        #
-        def resolve_default(name)
-          result = standard_defaults[name]
-          if result.nil? && defined?(::OptionParser)
-            result = optparse_defaults[name]
+    class << self
+      ##
+      # Resolve a standard acceptor name recognized by OptionParser.
+      #
+      # @param [Object] name Name of the acceptor. Recognizes names of
+      #     the OptionParser-provided acceptors, such as `String`, `Integer`,
+      #     `Array`, `OptionParser::DecimalInteger`, etc.
+      # @return [Toys::Acceptor::Base] an acceptor
+      #
+      def resolve_default(name)
+        result = standard_defaults[name]
+        if result.nil? && defined?(::OptionParser)
+          result = optparse_defaults[name]
+        end
+        result
+      end
+
+      private
+
+      def standard_defaults
+        @standard_defaults ||= {
+          ::Object => build_object(::Object, true),
+          ::NilClass => build_object(::NilClass, nil),
+          ::String => build_string,
+          ::Integer => build_integer,
+          ::Float => build_float,
+          ::Rational => build_rational,
+          ::Numeric => build_numeric,
+          ::TrueClass => build_boolean(::TrueClass, true),
+          ::FalseClass => build_boolean(::FalseClass, false),
+          ::Array => build_array,
+          ::Regexp => build_regexp,
+        }
+      end
+
+      def optparse_defaults
+        @optparse_defaults ||= {
+          ::OptionParser::DecimalInteger => build_decimal_integer,
+          ::OptionParser::OctalInteger => build_octal_integer,
+          ::OptionParser::DecimalNumeric => build_decimal_numeric,
+        }
+      end
+
+      def build_object(name, default)
+        Simple.new(name) { |s| s.nil? ? default : s }
+      end
+
+      def build_string
+        Pattern.new(::String, /.+/m)
+      end
+
+      def build_integer
+        Simple.new(::Integer) { |s| s.nil? ? nil : Integer(s) }
+      end
+
+      def build_float
+        Simple.new(::Float) { |s| s.nil? ? nil : Float(s) }
+      end
+
+      def build_rational
+        Simple.new(::Rational) { |s| s.nil? ? nil : Rational(s) }
+      end
+
+      def build_numeric
+        Simple.new(::Numeric) do |s|
+          if s.nil?
+            nil
+          elsif s.include?("/")
+            Rational(s)
+          elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
+            Float(s)
+          else
+            Integer(s)
           end
-          result
         end
+      end
 
-        private
+      TRUE_STRINGS = ["+", "true", "yes"].freeze
+      FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
 
-        def standard_defaults
-          @standard_defaults ||= {
-            ::Object => build_object(::Object, true),
-            ::NilClass => build_object(::NilClass, nil),
-            ::String => build_string,
-            ::Integer => build_integer,
-            ::Float => build_float,
-            ::Rational => build_rational,
-            ::Numeric => build_numeric,
-            ::TrueClass => build_boolean(::TrueClass, true),
-            ::FalseClass => build_boolean(::FalseClass, false),
-            ::Array => build_array,
-            ::Regexp => build_regexp,
-          }
-        end
-
-        def optparse_defaults
-          @optparse_defaults ||= {
-            ::OptionParser::DecimalInteger => build_decimal_integer,
-            ::OptionParser::OctalInteger => build_octal_integer,
-            ::OptionParser::DecimalNumeric => build_decimal_numeric,
-          }
-        end
-
-        def build_object(name, default)
-          SimpleAcceptor.new(name) { |s| s.nil? ? default : s }
-        end
-
-        def build_string
-          PatternAcceptor.new(::String, /.+/m)
-        end
-
-        def build_integer
-          SimpleAcceptor.new(::Integer) { |s| s.nil? ? nil : Integer(s) }
-        end
-
-        def build_float
-          SimpleAcceptor.new(::Float) { |s| s.nil? ? nil : Float(s) }
-        end
-
-        def build_rational
-          SimpleAcceptor.new(::Rational) { |s| s.nil? ? nil : Rational(s) }
-        end
-
-        def build_numeric
-          SimpleAcceptor.new(::Numeric) do |s|
-            if s.nil?
-              nil
-            elsif s.include?("/")
-              Rational(s)
-            elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
-              Float(s)
+      def build_boolean(name, default)
+        Simple.new(name) do |s|
+          if s.nil?
+            default
+          else
+            s = s.downcase
+            if s.empty?
+              REJECT
+            elsif TRUE_STRINGS.any? { |t| t.start_with?(s) }
+              true
+            elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
+              false
             else
-              Integer(s)
+              REJECT
             end
           end
         end
+      end
 
-        TRUE_STRINGS = ["+", "true", "yes"].freeze
-        FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
-
-        def build_boolean(name, default)
-          SimpleAcceptor.new(name) do |s|
-            if s.nil?
-              default
-            else
-              s = s.downcase
-              if s.empty?
-                SimpleAcceptor::REJECT
-              elsif TRUE_STRINGS.any? { |t| t.start_with?(s) }
-                true
-              elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
-                false
-              else
-                SimpleAcceptor::REJECT
-              end
-            end
+      def build_array
+        Simple.new(::Array) do |s|
+          if s.nil?
+            nil
+          else
+            s.split(",").collect { |elem| elem unless elem.empty? }
           end
         end
+      end
 
-        def build_array
-          SimpleAcceptor.new(::Array) do |s|
-            if s.nil?
-              nil
-            else
-              s.split(",").collect { |elem| elem unless elem.empty? }
+      def build_regexp
+        Simple.new(::Regexp) do |s|
+          if s.nil?
+            nil
+          else
+            flags = 0
+            if s =~ %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}
+              s = $1
+              opts = $2 || ""
+              flags |= ::Regexp::IGNORECASE if opts.include?("i")
+              flags |= ::Regexp::MULTILINE if opts.include?("m")
+              flags |= ::Regexp::EXTENDED if opts.include?("x")
             end
+            ::Regexp.new(s, flags)
           end
         end
+      end
 
-        def build_regexp
-          SimpleAcceptor.new(::Regexp) do |s|
-            if s.nil?
-              nil
-            else
-              flags = 0
-              if s =~ %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}
-                s = $1
-                opts = $2 || ""
-                flags |= ::Regexp::IGNORECASE if opts.include?("i")
-                flags |= ::Regexp::MULTILINE if opts.include?("m")
-                flags |= ::Regexp::EXTENDED if opts.include?("x")
-              end
-              ::Regexp.new(s, flags)
-            end
-          end
-        end
+      def build_decimal_integer
+        Simple.new(::OptionParser::DecimalInteger) { |s| s.nil? ? nil : Integer(s, 10) }
+      end
 
-        def build_decimal_integer
-          SimpleAcceptor.new(::OptionParser::DecimalInteger) { |s| s.nil? ? nil : Integer(s, 10) }
-        end
+      def build_octal_integer
+        Simple.new(::OptionParser::OctalInteger) { |s| s.nil? ? nil : Integer(s, 8) }
+      end
 
-        def build_octal_integer
-          SimpleAcceptor.new(::OptionParser::OctalInteger) { |s| s.nil? ? nil : Integer(s, 8) }
-        end
-
-        def build_decimal_numeric
-          SimpleAcceptor.new(::OptionParser::DecimalNumeric) do |s|
-            if s.nil?
-              nil
-            elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
-              Float(s)
-            else
-              Integer(s, 10)
-            end
+      def build_decimal_numeric
+        Simple.new(::OptionParser::DecimalNumeric) do |s|
+          if s.nil?
+            nil
+          elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
+            Float(s)
+          else
+            Integer(s, 10)
           end
         end
       end

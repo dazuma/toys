@@ -554,7 +554,7 @@ describe Toys::Definition::Tool do
 
   describe "acceptor" do
     let(:acceptor_name) { "acc1" }
-    let(:acceptor) { Toys::Definition::Acceptor.new(acceptor_name) }
+    let(:acceptor) { Toys::Acceptor::Base.new(acceptor_name) }
 
     it "resolves well-known acceptors" do
       assert_equal(Integer, tool.resolve_acceptor(Integer).name)

@@ -24,7 +24,7 @@
 require "helper"
 
 describe Toys::Definition::Arg do
-  let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Integer) }
+  let(:acceptor) { Toys::Acceptor.resolve_default(Integer) }
   let(:arg) {
     Toys::Definition::Arg.new(
       "hello-there!", :required, acceptor, -1, nil, "description", ["long", "description"], nil

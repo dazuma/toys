@@ -57,7 +57,7 @@ module Toys
 
       ##
       # Returns the acceptor, which may be `nil`.
-      # @return [Tool::Definition::Acceptor]
+      # @return [Tool::Acceptor::Base,nil]
       #
       attr_accessor :acceptor
 

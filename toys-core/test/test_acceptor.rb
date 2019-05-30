@@ -24,9 +24,9 @@
 require "helper"
 require "optparse"
 
-describe Toys::Definition::Acceptor do
+describe Toys::Acceptor::Base do
   let(:input_string) { "Arya Stark" }
-  let(:acceptor) { Toys::Definition::Acceptor.new("hello") }
+  let(:acceptor) { Toys::Acceptor::Base.new("hello") }
 
   it "accepts any string" do
     assert_equal([input_string], acceptor.match(input_string))
@@ -41,12 +41,12 @@ describe Toys::Definition::Acceptor do
   end
 end
 
-describe Toys::Definition::SimpleAcceptor do
+describe Toys::Acceptor::Simple do
   let(:input_string) { "Arya Stark" }
   let(:upcase_string) { input_string.upcase }
 
   describe "with no function" do
-    let(:acceptor) { Toys::Definition::SimpleAcceptor.new("hello") }
+    let(:acceptor) { Toys::Acceptor::Simple.new("hello") }
 
     it "accepts any string" do
       assert_equal([input_string, input_string], acceptor.match(input_string))
@@ -59,7 +59,7 @@ describe Toys::Definition::SimpleAcceptor do
 
   describe "with proc function" do
     let(:acceptor) {
-      Toys::Definition::SimpleAcceptor.new("hello", :upcase.to_proc)
+      Toys::Acceptor::Simple.new("hello", :upcase.to_proc)
     }
 
     it "accepts any string" do
@@ -73,7 +73,7 @@ describe Toys::Definition::SimpleAcceptor do
 
   describe "with block function" do
     let(:acceptor) {
-      Toys::Definition::SimpleAcceptor.new("hello", &:upcase)
+      Toys::Acceptor::Simple.new("hello", &:upcase)
     }
 
     it "accepts any string" do
@@ -87,25 +87,25 @@ describe Toys::Definition::SimpleAcceptor do
 
   describe "with failable function" do
     let(:acceptor) {
-      Toys::Definition::SimpleAcceptor.new("hello") { |s| Integer(s) }
+      Toys::Acceptor::Simple.new("hello") { |s| Integer(s) }
     }
 
     it "recognizes exceptions" do
-      acceptor = Toys::Definition::SimpleAcceptor.new("hello") { |s| Integer(s) }
+      acceptor = Toys::Acceptor::Simple.new("hello") { |s| Integer(s) }
       assert_nil(acceptor.match(input_string))
     end
 
     it "recognizes reject sentinel" do
-      acceptor = Toys::Definition::SimpleAcceptor.new("hello") do |_s|
-        Toys::Definition::SimpleAcceptor::REJECT
+      acceptor = Toys::Acceptor::Simple.new("hello") do |_s|
+        Toys::Acceptor::Simple::REJECT
       end
       assert_nil(acceptor.match(input_string))
     end
   end
 end
 
-describe Toys::Definition::PatternAcceptor do
-  let(:acceptor) { Toys::Definition::PatternAcceptor.new("hello", /^[A-Z][a-z]+\sStark$/) }
+describe Toys::Acceptor::Pattern do
+  let(:acceptor) { Toys::Acceptor::Pattern.new("hello", /^[A-Z][a-z]+\sStark$/) }
 
   it "accepts matching strings" do
     assert_equal(["Arya Stark"], acceptor.match("Arya Stark").to_a)
@@ -128,9 +128,9 @@ describe Toys::Definition::PatternAcceptor do
   end
 end
 
-describe Toys::Definition::EnumAcceptor do
+describe Toys::Acceptor::Enum do
   let(:acceptor) {
-    Toys::Definition::EnumAcceptor.new("hello", [:Robb, :Sansa, :Arya, :Bran, :Rickon])
+    Toys::Acceptor::Enum.new("hello", [:Robb, :Sansa, :Arya, :Bran, :Rickon])
   }
 
   it "accepts matching strings" do
@@ -173,7 +173,7 @@ describe "standard acceptor" do
   end
 
   describe "Object" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Object) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Object) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -189,7 +189,7 @@ describe "standard acceptor" do
   end
 
   describe "NilClass" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(NilClass) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(NilClass) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -205,7 +205,7 @@ describe "standard acceptor" do
   end
 
   describe "String" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(String) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(String) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -221,7 +221,7 @@ describe "standard acceptor" do
   end
 
   describe "Integer" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Integer) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Integer) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -257,7 +257,7 @@ describe "standard acceptor" do
   end
 
   describe "Float" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Float) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Float) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123.0)
@@ -285,7 +285,7 @@ describe "standard acceptor" do
   end
 
   describe "Rational" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Rational) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Rational) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", Rational(123, 1))
@@ -317,7 +317,7 @@ describe "standard acceptor" do
   end
 
   describe "Numeric" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Numeric) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Numeric) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -357,7 +357,7 @@ describe "standard acceptor" do
   end
 
   describe "TrueClass" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(TrueClass) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(TrueClass) }
 
     it "accepts +" do
       assert_accept(acceptor, "+", true)
@@ -413,7 +413,7 @@ describe "standard acceptor" do
   end
 
   describe "FalseClass" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(FalseClass) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(FalseClass) }
 
     it "accepts +" do
       assert_accept(acceptor, "+", true)
@@ -429,7 +429,7 @@ describe "standard acceptor" do
   end
 
   describe "Array" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Array) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Array) }
 
     it "accepts empty string and converts to empty array" do
       assert_accept(acceptor, "", [])
@@ -457,7 +457,7 @@ describe "standard acceptor" do
   end
 
   describe "Regexp" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(Regexp) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(Regexp) }
 
     it "accepts a bare regex" do
       assert_accept(acceptor, "hi", /hi/)
@@ -489,7 +489,7 @@ describe "standard acceptor" do
   end
 
   describe "DecimalInteger" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::DecimalInteger) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(OptionParser::DecimalInteger) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -525,7 +525,7 @@ describe "standard acceptor" do
   end
 
   describe "OctalInteger" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::OctalInteger) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(OptionParser::OctalInteger) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 83)
@@ -566,7 +566,7 @@ describe "standard acceptor" do
   end
 
   describe "DecimalNumeric" do
-    let(:acceptor) { Toys::Definition::Acceptor.resolve_default(OptionParser::DecimalNumeric) }
+    let(:acceptor) { Toys::Acceptor.resolve_default(OptionParser::DecimalNumeric) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)

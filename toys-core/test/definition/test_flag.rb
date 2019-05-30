@@ -298,7 +298,7 @@ describe Toys::Definition::Flag do
   end
 
   it "defaults to a value switch with an integer acceptor" do
-    acceptor = Toys::Definition::Acceptor.resolve_default(Integer)
+    acceptor = Toys::Acceptor.resolve_default(Integer)
     flag = Toys::Definition::Flag.new(:abc, [], [], true, acceptor, nil, nil, nil, nil, nil, nil)
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)

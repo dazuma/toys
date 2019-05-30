@@ -256,22 +256,23 @@ module Toys
       ##
       # Return a reasonable name for an acceptor
       #
-      # @param [Toys::Definition::Acceptor] accept An acceptor to name
+      # @param [Toys::Acceptor::Base,nil] accept An acceptor to name
       # @return [String]
       #
       def acceptable_name(accept)
-        name = ACCEPTABLE_NAMES[accept&.name]
-        if name.nil? && defined?(::OptionParser)
-          name =
-            if accept == ::OptionParser::DecimalInteger
+        name = accept&.name
+        str = ACCEPTABLE_NAMES[name]
+        if str.nil? && defined?(::OptionParser)
+          str =
+            if name == ::OptionParser::DecimalInteger
               "decimal integer"
-            elsif accept == ::OptionParser::OctalInteger
+            elsif name == ::OptionParser::OctalInteger
               "octal integer"
-            elsif accept == ::OptionParser::DecimalNumeric
+            elsif name == ::OptionParser::DecimalNumeric
               "decimal numeric"
             end
         end
-        name || accept.to_s.downcase
+        str || name.to_s.downcase
       end
 
       private
