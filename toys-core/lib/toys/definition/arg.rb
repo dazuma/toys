@@ -29,7 +29,7 @@ module Toys
     class Arg
       ##
       # Create an Arg definition.
-      # Should be created only from methods of {Toys::Definition::Tool}.
+      # Should be created only from methods of {Toys::ToolDefinition}.
       # @private
       #
       def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)

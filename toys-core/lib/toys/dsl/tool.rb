@@ -336,11 +336,11 @@ module Toys
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       #     Default is `:optional`.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description for the group. See {Toys::ToolDefinition#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
@@ -378,11 +378,11 @@ module Toys
       #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description for the group. See {Toys::ToolDefinition#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
@@ -407,11 +407,11 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description for the group. See {Toys::ToolDefinition#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
@@ -436,11 +436,11 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description for the group. See {Toys::ToolDefinition#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
@@ -465,11 +465,11 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::Definition::Tool#desc=} for a
+      #     description for the group. See {Toys::ToolDefinition#desc=} for a
       #     description of  allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::Definition::Tool#long_desc=} for a description of allowed
+      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
       #     formats. Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.

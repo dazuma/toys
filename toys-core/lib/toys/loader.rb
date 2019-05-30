@@ -138,7 +138,7 @@ module Toys
     # that are not part of the tool name and should be passed as tool args.
     #
     # @param [Array<String>] args Command line arguments
-    # @return [Array(Toys::Definition::Tool,Array<String>)]
+    # @return [Array(Toys::ToolDefinition,Array<String>)]
     #
     def lookup(args)
       orig_prefix, args = find_orig_prefix(args)
@@ -169,7 +169,7 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param [Boolean] include_hidden If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::Definition::Tool,Toys::Definition::Alias>]
+    # @return [Array<Toys::ToolDefinition,Toys::Definition::Alias>]
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -216,7 +216,7 @@ module Toys
     #
     # @param [Array<String>] words The name of the tool.
     # @param [Integer] priority The priority of the request.
-    # @return [Toys::Definition::Tool,Toys::Definition::Alias,nil] The tool or
+    # @return [Toys::ToolDefinition,Toys::Definition::Alias,nil] The tool or
     #     alias, or `nil` if the given priority is insufficient.
     #
     # @private
@@ -283,7 +283,7 @@ module Toys
       end
       tool_data.definitions[priority] ||= begin
         middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
-        Definition::Tool.new(self, parent, words, priority, middlewares)
+        ToolDefinition.new(self, parent, words, priority, middlewares)
       end
     end
 
@@ -374,7 +374,7 @@ module Toys
       case result
       when Definition::Alias
         resolve_alias(result, looked_up)
-      when Definition::Tool
+      when ToolDefinition
         result
       else
         tool_data.top_definition
@@ -422,7 +422,7 @@ module Toys
       @tool_data.each do |n, td|
         next if n.length < len || n.slice(0, len) != words
         tool = td.active_definition || td.top_definition
-        tool.finish_definition(self) if tool.is_a?(Definition::Tool)
+        tool.finish_definition(self) if tool.is_a?(ToolDefinition)
       end
     end
 

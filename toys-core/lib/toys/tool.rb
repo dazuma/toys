@@ -34,7 +34,7 @@ module Toys
   # Keys that are neither strings nor symbols are by convention used for other
   # context information, including:
   #
-  # *   Common information such as the {Toys::Definition::Tool} object being
+  # *   Common information such as the {Toys::ToolDefinition} object being
   #     executed, the arguments originally passed to it, or the usage error
   #     string. These well-known keys can be accessed via constants in the
   #     {Toys::Tool::Keys} module.
@@ -65,7 +65,7 @@ module Toys
       VERBOSITY = ::Object.new.freeze
 
       ##
-      # Context key for the `Toys::Definition::Tool` object being executed.
+      # Context key for the `Toys::ToolDefinition` object being executed.
       # @return [Object]
       #
       TOOL_DEFINITION = ::Object.new.freeze
@@ -152,7 +152,7 @@ module Toys
 
     ##
     # Return the tool being executed.
-    # @return [Toys::Definition::Tool]
+    # @return [Toys::ToolDefinition]
     #
     def tool_definition
       @__data[Keys::TOOL_DEFINITION]
