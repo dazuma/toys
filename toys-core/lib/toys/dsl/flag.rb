@@ -99,8 +99,8 @@ module Toys
       ##
       # Set the shell completion strategy for flag names.
       # This may be set to a hash of options to pass to the constructor for
-      # {Toys::Definition::StandardFlagCompletion}. Otherwise, see
-      # {Toys::Definition::Completion.create} for other recognized formats.
+      # {Toys::Definition::Flag::StandardCompletion}. Otherwise, see
+      # {Toys::Completion.create} for other recognized formats.
       #
       # @param [Object] spec
       # @return [Toys::DSL::Tool] self, for chaining.
@@ -112,7 +112,7 @@ module Toys
 
       ##
       # Set the shell completion strategy for flag values.
-      # See {Toys::Definition::Completion.create} for recognized formats.
+      # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] spec
       # @return [Toys::DSL::Tool] self, for chaining.

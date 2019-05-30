@@ -85,7 +85,7 @@ module Toys
         return nil unless words.shift
         words.map! { |_type, word| word }
         params = {quote_type: quote_type}
-        context = Definition::Completion::Context.new(@cli.loader, words, last, params)
+        context = Completion::Context.new(@cli.loader, words, last, params)
         candidates = @cli.completion.call(context)
         candidates.uniq.sort.map { |candidate| format_candidate(candidate, quote_type) }
       end
@@ -115,7 +115,7 @@ module Toys
 
       def format_candidate(candidate, quote_type)
         str = candidate.to_s
-        partial = candidate.is_a?(Definition::Completion::Candidate) ? candidate.partial? : false
+        partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
         quote_type = nil if candidate.string.include?("'") && quote_type == :single
         case quote_type
         when :single

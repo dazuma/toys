@@ -66,7 +66,7 @@ module Toys
 
       ##
       # Set the shell completion strategy.
-      # See {Toys::Definition::Completion.create} for recognized formats.
+      # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] value
       # @return [Toys::DSL::Tool] self, for chaining.

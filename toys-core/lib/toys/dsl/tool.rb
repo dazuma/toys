@@ -523,14 +523,14 @@ module Toys
       #     `default: []` and is intended for "multi-valued" flags.
       # @param [Object] flag_completion A specifier for shell tab completion.
       #     for flag names associated with this flag. By default, a
-      #     {Toys::Definition::StandardFlagCompletion} is used, which provides
+      #     {Toys::Definition::Flag::StandardCompletion} is used, which provides
       #     the flag's names as completion candidates. To customize completion,
       #     set this to a hash of options to pass to the constructor for
-      #     {Toys::Definition::StandardFlagCompletion}, or pass any other spec
-      #     recognized by {Toys::Definition::Completion.create}.
+      #     {Toys::Definition::Flag::StandardCompletion}, or pass any other spec
+      #     recognized by {Toys::Completion.create}.
       # @param [Object] value_completion A specifier for shell tab completion.
       #     for flag values associated with this flag. Pass any spec
-      #     recognized by {Toys::Definition::Completion.create}.
+      #     recognized by {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
@@ -590,7 +590,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -644,7 +644,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -697,7 +697,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short

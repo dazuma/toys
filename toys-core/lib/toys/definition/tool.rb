@@ -84,7 +84,7 @@ module Toys
         @includes_modules = false
         @custom_context_directory = nil
 
-        @completion = Definition::StandardToolCompletion.new
+        @completion = StandardCompletion.new
       end
 
       ##
@@ -580,14 +580,14 @@ module Toys
       #     `default: []` and is intended for "multi-valued" flags.
       # @param [Object] flag_completion A specifier for shell tab completion.
       #     for flag names associated with this flag. By default, a
-      #     {Toys::Definition::StandardFlagCompletion} is used, which provides
+      #     {Toys::Definition::Flag::StandardCompletion} is used, which provides
       #     the flag's names as completion candidates. To customize completion,
       #     set this to a hash of options to pass to the constructor for
-      #     {Toys::Definition::StandardFlagCompletion}, or pass any other spec
-      #     recognized by {Toys::Definition::Completion.create}.
+      #     {Toys::Definition::Flag::StandardCompletion}, or pass any other spec
+      #     recognized by {Toys::Completion.create}.
       # @param [Object] value_completion A specifier for shell tab completion.
       #     for flag values associated with this flag. Pass any spec
-      #     recognized by {Toys::Definition::Completion.create}.
+      #     recognized by {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as disabled. Default is
       #     true.
@@ -659,7 +659,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -674,7 +674,7 @@ module Toys
                            desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        completion = Definition::Completion.create(completion)
+        completion = Completion.create(completion)
         arg_def = Definition::Arg.new(key, :required, accept, nil, completion,
                                       desc, long_desc, display_name)
         @required_arg_definitions << arg_def
@@ -697,7 +697,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -712,7 +712,7 @@ module Toys
                            display_name: nil, desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        completion = Definition::Completion.create(completion)
+        completion = Completion.create(completion)
         arg_def = Definition::Arg.new(key, :optional, accept, default, completion,
                                       desc, long_desc, display_name)
         @optional_arg_definitions << arg_def
@@ -735,7 +735,7 @@ module Toys
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
       # @param [Object] completion A specifier for shell tab completion. See
-      #     {Toys::Definition::Completion.create} for recognized formats.
+      #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -750,7 +750,7 @@ module Toys
                              display_name: nil, desc: nil, long_desc: nil)
         check_definition_state(is_arg: true)
         accept = resolve_acceptor(accept)
-        completion = Definition::Completion.create(completion)
+        completion = Completion.create(completion)
         arg_def = Definition::Arg.new(key, :remaining, accept, default, completion,
                                       desc, long_desc, display_name)
         @remaining_args_definition = arg_def
@@ -802,9 +802,9 @@ module Toys
         @completion =
           case spec
           when nil
-            StandardToolCompletion.new
+            StandardCompletion.new
           when ::Hash
-            StandardToolCompletion.new(spec)
+            StandardCompletion.new(spec)
           else
             Completion.create(spec)
           end
@@ -896,6 +896,112 @@ module Toys
 
       def make_config_proc(middleware, loader, next_config)
         proc { middleware.config(self, loader, &next_config) }
+      end
+
+      ##
+      # A Completion that implements the standard algorithm for a tool.
+      #
+      class StandardCompletion < Completion::Base
+        ##
+        # Create a completion given configuration options.
+        #
+        # @param [Boolean] complete_subtools Whether to complete subtool names
+        # @param [Boolean] include_hidden_subtools Whether to include hidden
+        #     subtools (i.e. those beginning with an underscore)
+        # @param [Boolean] complete_args Whether to complete positional args
+        # @param [Boolean] complete_flags Whether to complete flag names
+        # @param [Boolean] complete_flag_values Whether to complete flag values
+        #
+        def initialize(complete_subtools: true, include_hidden_subtools: false,
+                       complete_args: true, complete_flags: true, complete_flag_values: true)
+          @complete_subtools = complete_subtools
+          @include_hidden_subtools = include_hidden_subtools
+          @complete_flags = complete_flags
+          @complete_args = complete_args
+          @complete_flag_values = complete_flag_values
+        end
+
+        ##
+        # Returns candidates for the current completion.
+        #
+        # @param [Toys::Completion::Context] context the current completion
+        #     context including the string fragment.
+        # @return [Array<Toys::Completion::Candidate>] an array of candidates
+        #
+        def call(context)
+          candidates = valued_flag_candidates(context)
+          return candidates if candidates
+          candidates = subtool_or_arg_candidates(context)
+          candidates += plain_flag_candidates(context)
+          candidates += flag_value_candidates(context)
+          candidates
+        end
+
+        private
+
+        def valued_flag_candidates(context)
+          return unless @complete_flag_values
+          arg_parser = context.arg_parser
+          return unless arg_parser.flags_allowed?
+          active_flag_def = arg_parser.active_flag_def
+          return if active_flag_def && active_flag_def.value_type == :required
+          match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment)
+          return unless match
+
+          flag_def = context.tool_definition.resolve_flag(match[1]).unique_flag
+          return [] unless flag_def
+          context.fragment = match[2]
+          flag_def.value_completion.call(context)
+        end
+
+        def subtool_or_arg_candidates(context)
+          return [] if context.arg_parser.active_flag_def
+          return [] if context.arg_parser.flags_allowed? && context.fragment.start_with?("-")
+          subtool_candidates(context) || arg_candidates(context)
+        end
+
+        def subtool_candidates(context)
+          return if !@complete_subtools || !context.args.empty?
+          subtools = context.loader.list_subtools(context.tool_definition.full_name,
+                                                  include_hidden: @include_hidden_subtools)
+          return if subtools.empty?
+          fragment = context.fragment
+          candidates = []
+          subtools.each do |subtool|
+            name = subtool.simple_name
+            candidates << Completion::Candidate.new(name) if name.start_with?(fragment)
+          end
+          candidates
+        end
+
+        def arg_candidates(context)
+          return unless @complete_args
+          arg_def = context.arg_parser.next_arg_def
+          return [] unless arg_def
+          arg_def.completion.call(context)
+        end
+
+        def plain_flag_candidates(context)
+          return [] if !@complete_flags || context.params[:disable_flags]
+          arg_parser = context.arg_parser
+          return [] unless arg_parser.flags_allowed?
+          flag_def = arg_parser.active_flag_def
+          return [] if flag_def && flag_def.value_type == :required
+          return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
+          context.tool_definition.flag_definitions.flat_map do |flag|
+            flag.flag_completion.call(context)
+          end
+        end
+
+        def flag_value_candidates(context)
+          return unless @complete_flag_values
+          arg_parser = context.arg_parser
+          flag_def = arg_parser.active_flag_def
+          return [] unless flag_def
+          return [] if @complete_flags && arg_parser.flags_allowed? &&
+                       flag_def.value_type == :optional && context.fragment.start_with?("-")
+          flag_def.value_completion.call(context)
+        end
       end
     end
   end

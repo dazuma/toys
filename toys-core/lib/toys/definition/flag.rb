@@ -204,13 +204,13 @@ module Toys
 
       ##
       # Returns the proc that determines shell completions for the flag.
-      # @return [Toys::Definition::Completion]
+      # @return [Proc,Toys::Completion::Base]
       #
       attr_reader :flag_completion
 
       ##
       # Returns the proc that determines shell completions for the value.
-      # @return [Toys::Definition::Completion]
+      # @return [Proc,Toys::Completion::Base]
       #
       attr_reader :value_completion
 
@@ -365,9 +365,9 @@ module Toys
       def resolve_flag_completion(spec)
         case spec
         when nil
-          StandardFlagCompletion.new(self)
+          StandardCompletion.new(self)
         when ::Hash
-          StandardFlagCompletion.new(self, spec)
+          StandardCompletion.new(self, spec)
         else
           Completion.create(spec)
         end
@@ -446,6 +446,64 @@ module Toys
           double_flag_syntax.first&.sort_str ||
           single_flag_syntax.first&.sort_str ||
           ""
+      end
+
+      ##
+      # A Completion that returns all possible flags associated with a
+      # {Toys::Definition::Flag}.
+      #
+      class StandardCompletion < Completion::Base
+        ##
+        # Create a completion given configuration options.
+        #
+        # @param [Toys::Definition::Flag] flag The flag definition.
+        # @param [Boolean] include_short Whether to include short flags.
+        # @param [Boolean] include_long Whether to include long flags.
+        # @param [Boolean] include_negative Whether to include `--no-*` forms.
+        #
+        def initialize(flag, include_short: true, include_long: true, include_negative: true)
+          @flag = flag
+          @include_short = include_short
+          @include_long = include_long
+          @include_negative = include_negative
+        end
+
+        ##
+        # Returns candidates for the current completion.
+        #
+        # @param [Toys::Completion::Context] context the current completion
+        #     context including the string fragment.
+        # @return [Array<Toys::Completion::Candidate>] an array of candidates
+        #
+        def call(context)
+          results =
+            if @include_short && @include_long && @include_negative
+              @flag.effective_flags
+            else
+              collect_results
+            end
+          fragment = context.fragment
+          results.find_all { |val| val.start_with?(fragment) }
+                 .map { |str| Completion::Candidate.new(str) }
+        end
+
+        private
+
+        def collect_results
+          results = []
+          if @include_short
+            results += @flag.single_flag_syntax.map(&:positive_flag)
+          end
+          if @include_long
+            results +=
+              if @include_negative
+                @flag.double_flag_syntax.flat_map(&:flags)
+              else
+                @flag.double_flag_syntax.map(&:positive_flag)
+              end
+          end
+          results
+        end
       end
     end
 

@@ -69,7 +69,7 @@ module Toys
 
       ##
       # Returns the proc that determines shell completions for the value.
-      # @return [Toys::Definition::Completion]
+      # @return [Proc,Toys::Completion::Base]
       #
       attr_reader :completion
 

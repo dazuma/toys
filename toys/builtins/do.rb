@@ -49,7 +49,7 @@ remaining_args :commands do
     commands = context.arg_parser.data[:commands]
     last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
     new_params = {disable_flags: commands.empty?}
-    new_context = Toys::Definition::Completion::Context.new(
+    new_context = Toys::Completion::Context.new(
       context.loader, last_command, context.fragment, context.params.merge(new_params)
     )
     new_context.tool_definition.completion.call(new_context)

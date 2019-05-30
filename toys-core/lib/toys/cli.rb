@@ -22,6 +22,7 @@
 ;
 
 require "logger"
+require "toys/completion"
 
 module Toys
   ##
@@ -150,9 +151,9 @@ module Toys
       @completion =
         case spec
         when nil, ::Hash
-          Definition::StandardCliCompletion.new
+          StandardCompletion.new
         else
-          Definition::Completion.create(spec)
+          Completion.create(spec)
         end
     end
 
@@ -357,6 +358,22 @@ module Toys
           end
         end
         lines.join("\n")
+      end
+    end
+
+    ##
+    # A Completion that implements the standard algorithm for a CLI.
+    #
+    class StandardCompletion < Completion::Base
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param [Toys::Completion::Context] context the current completion
+      #     context including the string fragment.
+      # @return [Array<Toys::Completion::Candidate>] an array of candidates
+      #
+      def call(context)
+        context.tool_definition.completion.call(context)
       end
     end
 

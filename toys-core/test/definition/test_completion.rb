@@ -23,64 +23,64 @@
 
 require "helper"
 
-describe Toys::Definition::Completion do
+describe Toys::Completion do
   def context(str)
-    Toys::Definition::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(nil, [], str, {})
   end
 
   describe ".create" do
     it "recognizes nil" do
-      completion = Toys::Definition::Completion.create(nil)
-      assert_equal(Toys::Definition::Completion::EMPTY, completion)
+      completion = Toys::Completion.create(nil)
+      assert_equal(Toys::Completion::EMPTY, completion)
     end
 
     it "recognizes :empty" do
-      completion = Toys::Definition::Completion.create(:empty)
-      assert_equal(Toys::Definition::Completion::EMPTY, completion)
+      completion = Toys::Completion.create(:empty)
+      assert_equal(Toys::Completion::EMPTY, completion)
     end
 
     it "recognizes :file_system" do
-      completion = Toys::Definition::Completion.create(:file_system)
-      assert_instance_of(Toys::Definition::FileSystemCompletion, completion)
+      completion = Toys::Completion.create(:file_system)
+      assert_instance_of(Toys::Completion::FileSystem, completion)
       assert(completion.include_files)
       assert(completion.include_directories)
     end
 
     it "recognizes an array" do
-      completion = Toys::Definition::Completion.create(["one", :two, ["three"]])
-      assert_instance_of(Toys::Definition::ValuesCompletion, completion)
-      expected = Toys::Definition::Completion.candidates(["one", "three", "two"])
+      completion = Toys::Completion.create(["one", :two, ["three"]])
+      assert_instance_of(Toys::Completion::Values, completion)
+      expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
       assert_equal(expected, completion.values)
     end
 
     it "recognizes a proc" do
       my_proc = proc { |s| [s] }
-      completion = Toys::Definition::Completion.create(my_proc)
+      completion = Toys::Completion.create(my_proc)
       assert_equal(my_proc, completion)
     end
   end
 
   describe "EMPTY" do
     it "returns nothing" do
-      completion = Toys::Definition::Completion::EMPTY
+      completion = Toys::Completion::EMPTY
       assert_equal([], completion.call(context("")))
     end
   end
 end
 
-describe Toys::Definition::FileSystemCompletion do
+describe Toys::Completion::FileSystem do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "data") }
-  let(:completion) { Toys::Definition::FileSystemCompletion.new(cwd: data_dir) }
+  let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
   def context(str)
-    Toys::Definition::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(nil, [], str, {})
   end
 
   it "returns objects when passed an empty string" do
     candidates = completion.call(context(""))
     expected = [
-      Toys::Definition::Completion.candidate(".dotfile"),
-      Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt"),
+      Toys::Completion::Candidate.new(".dotfile"),
+      Toys::Completion::Candidate.new("indirectory/", partial: true),
+      Toys::Completion::Candidate.new("input.txt"),
     ]
     assert_equal(expected, candidates)
   end
@@ -88,8 +88,8 @@ describe Toys::Definition::FileSystemCompletion do
   it "returns objects when passed a prefix" do
     candidates = completion.call(context("in"))
     expected = [
-      Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt"),
+      Toys::Completion::Candidate.new("indirectory/", partial: true),
+      Toys::Completion::Candidate.new("input.txt"),
     ]
     assert_equal(expected, candidates)
   end
@@ -101,34 +101,34 @@ describe Toys::Definition::FileSystemCompletion do
 
   it "returns objects when passed a glob that begins with a star" do
     candidates = completion.call(context("*.txt"))
-    expected = Toys::Definition::Completion.candidates(["input.txt"])
+    expected = Toys::Completion::Candidate.new_multi(["input.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns dotfiles when passed a glob that begins with a dot" do
     candidates = completion.call(context(".*"))
-    expected = Toys::Definition::Completion.candidates([".dotfile"])
+    expected = Toys::Completion::Candidate.new_multi([".dotfile"])
     assert_equal(expected, candidates)
   end
 
   it "returns non dotfiles when passed a star" do
     candidates = completion.call(context("*"))
     expected = [
-      Toys::Definition::Completion.partial_candidate("indirectory/"),
-      Toys::Definition::Completion.candidate("input.txt"),
+      Toys::Completion::Candidate.new("indirectory/", partial: true),
+      Toys::Completion::Candidate.new("input.txt"),
     ]
     assert_equal(expected, candidates)
   end
 
   it "returns a directory given the entire name" do
     candidates = completion.call(context("indirectory"))
-    expected = Toys::Definition::Completion.partial_candidates(["indirectory/"])
+    expected = Toys::Completion::Candidate.new_multi(["indirectory/"], partial: true)
     assert_equal(expected, candidates)
   end
 
   it "returns contents of a directory when ending with a slash" do
     candidates = completion.call(context("indirectory/"))
-    expected = Toys::Definition::Completion.candidates(
+    expected = Toys::Completion::Candidate.new_multi(
       ["indirectory/.anotherdot", "indirectory/content.txt"]
     )
     assert_equal(expected, candidates)
@@ -136,46 +136,46 @@ describe Toys::Definition::FileSystemCompletion do
 
   it "returns glob in a directory" do
     candidates = completion.call(context("indirectory/c*"))
-    expected = Toys::Definition::Completion.candidates(["indirectory/content.txt"])
+    expected = Toys::Completion::Candidate.new_multi(["indirectory/content.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns prefix in a directory" do
     candidates = completion.call(context("indirectory/."))
-    expected = Toys::Definition::Completion.candidates(["indirectory/.anotherdot"])
+    expected = Toys::Completion::Candidate.new_multi(["indirectory/.anotherdot"])
     assert_equal(expected, candidates)
   end
 
   it "returns files only" do
-    completion = Toys::Definition::FileSystemCompletion.new(cwd: data_dir, omit_directories: true)
+    completion = Toys::Completion::FileSystem.new(cwd: data_dir, omit_directories: true)
     candidates = completion.call(context("in"))
-    expected = Toys::Definition::Completion.candidates(["input.txt"])
+    expected = Toys::Completion::Candidate.new_multi(["input.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns directories only" do
-    completion = Toys::Definition::FileSystemCompletion.new(cwd: data_dir, omit_files: true)
+    completion = Toys::Completion::FileSystem.new(cwd: data_dir, omit_files: true)
     candidates = completion.call(context("in"))
-    expected = Toys::Definition::Completion.partial_candidates(["indirectory/"])
+    expected = Toys::Completion::Candidate.new_multi(["indirectory/"], partial: true)
     assert_equal(expected, candidates)
   end
 end
 
-describe Toys::Definition::ValuesCompletion do
-  let(:completion) { Toys::Definition::ValuesCompletion.new(["one", :two, ["three"]]) }
+describe Toys::Completion::Values do
+  let(:completion) { Toys::Completion::Values.new(["one", :two, ["three"]]) }
   def context(str)
-    Toys::Definition::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(nil, [], str, {})
   end
 
   it "returns all values when given an empty string" do
     candidates = completion.call(context(""))
-    expected = Toys::Definition::Completion.candidates(["one", "three", "two"])
+    expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
     assert_equal(expected, candidates)
   end
 
   it "returns values when given a prefix" do
     candidates = completion.call(context("t"))
-    expected = Toys::Definition::Completion.candidates(["three", "two"])
+    expected = Toys::Completion::Candidate.new_multi(["three", "two"])
     assert_equal(expected, candidates)
   end
 
