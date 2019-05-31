@@ -244,20 +244,24 @@ module Toys
       ##
       # Display help text if requested.
       #
-      def run(tool) # rubocop:disable Metrics/AbcSize
-        if tool[SHOW_USAGE_KEY]
-          terminal.puts(get_help_text(tool).usage_string(wrap_width: terminal.width))
-        elsif tool[SHOW_LIST_KEY]
-          terminal.puts(get_help_text(tool).list_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
-                                                        search: tool[SEARCH_STRING_KEY],
-                                                        include_hidden: tool[SHOW_ALL_SUBTOOLS_KEY],
-                                                        wrap_width: terminal.width))
-        elsif should_show_help(tool)
-          output_help(get_help_text(tool).help_string(recursive: tool[RECURSIVE_SUBTOOLS_KEY],
-                                                      search: tool[SEARCH_STRING_KEY],
-                                                      include_hidden: tool[SHOW_ALL_SUBTOOLS_KEY],
-                                                      show_source_path: @show_source_path,
-                                                      wrap_width: terminal.width))
+      def run(context) # rubocop:disable Metrics/AbcSize
+        if context[SHOW_USAGE_KEY]
+          terminal.puts(get_help_text(context).usage_string(wrap_width: terminal.width))
+        elsif context[SHOW_LIST_KEY]
+          terminal.puts(
+            get_help_text(context).list_string(
+              recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
+              include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
+            )
+          )
+        elsif should_show_help(context)
+          output_help(
+            get_help_text(context).help_string(
+              recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
+              include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
+              wrap_width: terminal.width
+            )
+          )
         else
           yield
         end
@@ -270,9 +274,9 @@ module Toys
         @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
       end
 
-      def should_show_help(tool)
-        @fallback_execution && !tool[Tool::Keys::TOOL_DEFINITION].runnable? ||
-          tool[SHOW_HELP_KEY]
+      def should_show_help(context)
+        @fallback_execution && !context[Context::Key::TOOL_DEFINITION].runnable? ||
+          context[SHOW_HELP_KEY]
       end
 
       def output_help(str)
@@ -295,13 +299,13 @@ module Toys
         @less_path
       end
 
-      def get_help_text(tool)
+      def get_help_text(context)
         require "toys/utils/help_text"
-        tool_name = tool[TOOL_NAME_KEY]
-        return Utils::HelpText.from_tool(tool) if tool_name.nil? || tool_name.empty?
-        loader = tool[Tool::Keys::LOADER]
+        tool_name = context[TOOL_NAME_KEY]
+        return Utils::HelpText.from_context(context) if tool_name.nil? || tool_name.empty?
+        loader = context[Context::Key::LOADER]
         tool_definition, rest = loader.lookup(tool_name)
-        help_text = Utils::HelpText.new(tool_definition, loader, tool[Tool::Keys::BINARY_NAME])
+        help_text = Utils::HelpText.new(tool_definition, loader, context[Context::Key::BINARY_NAME])
         report_usage_error(tool_name, help_text) unless rest.empty?
         help_text
       end

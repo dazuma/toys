@@ -47,20 +47,20 @@ module Toys
       DEFAULT_INDENT = 4
 
       ##
-      # Create a usage helper given an executable tool.
+      # Create a usage helper given an execution context.
       #
-      # @param [Toys::Tool] tool The current tool.
+      # @param [Toys::Context] context The current context.
       # @return [Toys::Utils::HelpText]
       #
-      def self.from_tool(tool)
-        new(tool[Tool::Keys::TOOL_DEFINITION], tool[Tool::Keys::LOADER],
-            tool[Tool::Keys::BINARY_NAME])
+      def self.from_context(context)
+        new(context[Context::Key::TOOL_DEFINITION], context[Context::Key::LOADER],
+            context[Context::Key::BINARY_NAME])
       end
 
       ##
       # Create a usage helper.
       #
-      # @param [Toys::Tool] tool The tool for which to generate documentation.
+      # @param [Toys::ToolDefintion] tool The tool to document.
       # @param [Toys::Loader] loader A loader that can provide subcommands.
       # @param [String] binary_name The name of the binary. e.g. `"toys"`.
       #

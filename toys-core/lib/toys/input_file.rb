@@ -35,7 +35,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   def self.evaluate(tool_class, remaining_words, source)
     namespace = ::Module.new
     namespace.module_eval do
-      include ::Toys::Tool::Keys
+      include ::Toys::Context::Key
       @tool_class = tool_class
     end
     path = source.source_path

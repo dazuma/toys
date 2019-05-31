@@ -95,7 +95,7 @@ module Toys
     def self.included(mod)
       return if mod.respond_to?(:to_expand)
       mod.extend(ClassMethods)
-      mod.include(Tool::Keys)
+      mod.include(Context::Key)
     end
 
     ##

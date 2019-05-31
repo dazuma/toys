@@ -28,7 +28,7 @@ module Toys
   # A mixin is a collection of methods that are available to be called from a
   # tool implementation (i.e. its run method). The mixin is added to the tool
   # class, so it has access to the same methods that can be called by the tool,
-  # such as {Toys::Tool#option}.
+  # such as {Toys::Context#option}.
   #
   # ## Usage
   #
@@ -39,11 +39,11 @@ module Toys
   # provide a `to_initialize` block and/or a `to_include` block.
   #
   # The `to_initialize` block is called when the tool itself is instantiated.
-  # It has access to tool methods such as {Toys::Tool#option}, and can perform
-  # setup for the tool execution itself, often involving initializing some
-  # persistent state and storing it in the tool using {Toys::Tool#set}. The
-  # `to_initialize` block is passed any extra arguments that were provided to
-  # the `include` directive.
+  # It has access to tool methods such as {Toys::Context#option}, and can
+  # perform setup for the tool execution itself, often involving initializing
+  # some persistent state and storing it in the tool using {Toys::Context#set}.
+  # The `to_initialize` block is passed any extra arguments that were provided
+  # to the `include` directive.
   #
   # The `to_include` block is called in the context of your tool class when
   # your mixin is included. It is also passed any extra arguments that were

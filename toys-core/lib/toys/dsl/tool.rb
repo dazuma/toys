@@ -496,7 +496,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # Attributes of the flag may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
@@ -577,7 +577,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
@@ -628,7 +628,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
@@ -681,7 +681,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
@@ -732,7 +732,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
@@ -773,7 +773,7 @@ module Toys
       ##
       # Disable argument parsing for this tool. Arguments will not be parsed
       # and the options will not be populated. Instead, tools can retrieve the
-      # full unparsed argument list by calling {Toys::Tool#args}.
+      # full unparsed argument list by calling {Toys::Context#args}.
       #
       # This directive is mutually exclusive with any of the directives that
       # declare arguments or flags.
@@ -919,7 +919,7 @@ module Toys
 
       ## @private
       def self.new_class(words, priority, loader)
-        tool_class = ::Class.new(::Toys::Tool)
+        tool_class = ::Class.new(::Toys::Context)
         tool_class.extend(DSL::Tool)
         tool_class.instance_variable_set(:@__words, words)
         tool_class.instance_variable_set(:@__priority, priority)

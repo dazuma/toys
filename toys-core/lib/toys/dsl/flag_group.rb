@@ -45,7 +45,7 @@ module Toys
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Tool#get}.
+      # tool can retrieve the value by calling {Toys::Context#get}.
       #
       # Attributes of the flag may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can

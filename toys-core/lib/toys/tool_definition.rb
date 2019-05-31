@@ -180,6 +180,10 @@ module Toys
     #
     attr_reader :custom_context_directory
 
+    ##
+    # Returns the completion strategy for this tool.
+    # @return [Toys::Completion::Base,Proc]
+    #
     attr_reader :completion
 
     ##
@@ -891,12 +895,6 @@ module Toys
       self
     end
 
-    private
-
-    def make_config_proc(middleware, loader, next_config)
-      proc { middleware.config(self, loader, &next_config) }
-    end
-
     ##
     # A Completion that implements the standard algorithm for a tool.
     #
@@ -1001,6 +999,12 @@ module Toys
                      flag_def.value_type == :optional && context.fragment.start_with?("-")
         flag_def.value_completion.call(context)
       end
+    end
+
+    private
+
+    def make_config_proc(middleware, loader, next_config)
+      proc { middleware.config(self, loader, &next_config) }
     end
   end
 end

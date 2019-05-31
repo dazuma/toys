@@ -28,7 +28,7 @@ module Toys
     #
     # This middleware adds `-v`, `--verbose`, `-q`, and `--quiet` flags, if
     # not already defined by the tool. These flags affect the setting of
-    # {Toys::Tool::Keys::VERBOSITY}, and, thus, the logger level.
+    # {Toys::Context::Key::VERBOSITY}, and, thus, the logger level.
     #
     class AddVerbosityFlags
       include Middleware
@@ -91,7 +91,7 @@ module Toys
                                            DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
           tool_definition.add_flag(
-            Tool::Keys::VERBOSITY, verbose_flags,
+            Context::Key::VERBOSITY, verbose_flags,
             report_collisions: false,
             handler: INCREMENT_HANDLER,
             desc: "Increase verbosity",
@@ -105,7 +105,7 @@ module Toys
         quiet_flags = resolve_flags_spec(@quiet_flags, tool_definition, DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
           tool_definition.add_flag(
-            Tool::Keys::VERBOSITY, quiet_flags,
+            Context::Key::VERBOSITY, quiet_flags,
             report_collisions: false,
             handler: DECREMENT_HANDLER,
             desc: "Decrease verbosity",

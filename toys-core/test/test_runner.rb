@@ -92,12 +92,12 @@ describe Toys::Runner do
       tool.add_optional_arg(:arg2)
       tool.add_flag(:sw1, ["-a"])
       tool.runnable = proc do
-        test.assert_equal(0, get(Toys::Tool::Keys::VERBOSITY))
-        test.assert_equal(test.tool, get(Toys::Tool::Keys::TOOL_DEFINITION))
-        test.assert_equal(test.tool.full_name, get(Toys::Tool::Keys::TOOL_NAME))
-        test.assert_instance_of(Logger, get(Toys::Tool::Keys::LOGGER))
-        test.assert_equal("toys", get(Toys::Tool::Keys::BINARY_NAME))
-        test.assert_equal(["hello", "-a"], get(Toys::Tool::Keys::ARGS))
+        test.assert_equal(0, get(Toys::Context::Key::VERBOSITY))
+        test.assert_equal(test.tool, get(Toys::Context::Key::TOOL_DEFINITION))
+        test.assert_equal(test.tool.full_name, get(Toys::Context::Key::TOOL_NAME))
+        test.assert_instance_of(Logger, get(Toys::Context::Key::LOGGER))
+        test.assert_equal("toys", get(Toys::Context::Key::BINARY_NAME))
+        test.assert_equal(["hello", "-a"], get(Toys::Context::Key::ARGS))
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run(["hello", "-a"]))
     end

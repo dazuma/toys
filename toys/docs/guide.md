@@ -393,7 +393,7 @@ If the option name is a valid method name, Toys will provide a method that you
 can use to retrieve the value. In the above example, we retrieve the value for
 the option `:whom` by calling the method `whom`. If the option name cannot be
 made into a method, you can retrieve the value by calling
-[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get).
+[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get).
 
 An argument may also be **required**, which means it must be provided on the
 command line; otherwise the tool will report a usage error. You may declare a
@@ -584,7 +584,7 @@ As with arguments, Toys will provide a method that you can call to retrieve the
 option value set by a flag. In this case, a method called `shout` will be
 available, and will return either true or false. If the option name cannot be
 made into a method, you can retrieve the value by calling
-[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get).
+[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get).
 
 #### Flag types
 
@@ -777,14 +777,14 @@ defaulting to 0. The `--verbose` flag may appear any number of times, and
 *each* appearance increases the verbosity. Its implementation is internal to
 Toys, but looks something like this:
 
-    flag Toys::Tool::Keys::VERBOSITY, "-v", "--verbose",
+    flag Toys::Context::Key::VERBOSITY, "-v", "--verbose",
          default: 0,
          handler: proc { |_val, prev| prev + 1 }
 
 Similarly, the "--quiet" flag, which decreases the verbosity, is implemented
 like this:
 
-    flag Toys::Tool::Keys::VERBOSITY, "-q", "--quiet",
+    flag Toys::Context::Key::VERBOSITY, "-q", "--quiet",
          default: 0,
          handler: proc { |_val, prev| prev - 1 }
 
@@ -969,7 +969,7 @@ value. In the above example, `whom` and `shout` are such methods.
 
 If you create a flag or argument whose option name is not a symbol _or_ is not
 a valid method name, you can still get the value by calling the
-[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
+[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
 method. For example:
 
     tool "greet" do
@@ -988,7 +988,7 @@ method. For example:
 If a tool's `run` method finishes normally, Toys will exit with a result code
 of 0, indicating success. You may exit immediately and/or provide a nonzero
 result by calling the
-[Toys::Tool#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:exit)
+[Toys::Context#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:exit)
 method:
 
     def run
@@ -1267,12 +1267,12 @@ This section describes the context and resources available to your tool when it
 is running; that is, what you can call from your tool's `run` method.
 
 Each tool is defined as a class that subclasses
-[Toys::Tool](https://www.rubydoc.info/gems/toys-core/Toys/Tool). The base class
-defines a number of methods, and provides access to a variety of data and
+[Toys::Context](https://www.rubydoc.info/gems/toys-core/Toys/Context). The base
+class defines a number of methods, and provides access to a variety of data and
 objects relevant to your tool. We have already seen earlier how to use the
-[Toys::Tool#get](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
+[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
 method to retrieve option values, and how to use the
-[Toys::Tool#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:exit)
+[Toys::Context#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:exit)
 method to exit immediately and return an exit code. Now we will cover other
 resources available to your tool.
 
@@ -1280,7 +1280,7 @@ resources available to your tool.
 
 In addition to the options set by your tool's flags and command line arguments,
 a variety of other data and objects are also accessible using the
-[Toys::Tool#get method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:get)
+[Toys::Context#get method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
 For example, you can get the full name of the tool being executed like this:
 
     def run
@@ -1290,7 +1290,7 @@ For example, you can get the full name of the tool being executed like this:
 The `TOOL_NAME` constant above is a well-known key that corresponds to the full
 name (as an array of strings) of the running tool. A variety of well-known keys
 are defined in the
-[Toys::Tool::Keys module](https://www.rubydoc.info/gems/toys-core/Toys/Tool/Keys).
+[Toys::Context::Key module](https://www.rubydoc.info/gems/toys-core/Toys/Context/Key).
 They include information about the current execution, such as the tool name and
 the original command line arguments passed to it (before they were parsed).
 They also include some internal Toys objects, which can be used to do things
@@ -1298,7 +1298,7 @@ like write to the logger or look up and call other tools.
 
 Most of the important context also can be accessed from convenience methods.
 For example, the `TOOL_NAME` is also available from the
-[Toys::Tool#tool_name method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:tool_name):
+[Toys::Context#tool_name method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:tool_name):
 
     def run
       puts "Current tool is #{tool_name}"
@@ -1312,7 +1312,7 @@ access from built-in context.
 Toys provides a Logger (a simple instance of the Ruby standard library logger
 that writes to standard error) for your tool to use to report status
 information. You can access this logger via the `LOGGER` context key, or the
-[Toys::Tool#logger method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:logger).
+[Toys::Context#logger method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:logger).
 For example:
 
     def run
@@ -1322,7 +1322,7 @@ For example:
 The current logger level is controlled by the verbosity. Verbosity is an
 integer context value that you can retrieve using the `VERBOSITY` context key
 or the
-[Toys::Tool#verbosity method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:verbosity).
+[Toys::Context#verbosity method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:verbosity).
 The verbosity is set to 0 by default. This corresponds to a logger level of
 `WARN`. That is, warnings, errors, and fatals are displayed, while infos and
 debugs are not. However, [as we saw earlier](#Standard_flags), most tools
@@ -1337,7 +1337,7 @@ easily provide command line based control of the output verbosity.
 
 A common operation a tool might want to do is "call" another tool. This can be
 done via the CLI object, which you can retrieve using the `CLI` key or the
-[Toys::Tool#cli method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:cli).
+[Toys::Context#cli method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:cli).
 These return the current instance of
 [Toys::CLI](https://www.rubydoc.info/gems/toys-core/Toys/CLI) which is the
 "main" interface to Toys. In particular, it provides the
@@ -1360,7 +1360,7 @@ capture or manipulate that tool's input or output stream.
 
 ### Helper methods and mixins
 
-The methods of [Toys::Tool](https://www.rubydoc.info/gems/toys-core/Toys/Tool)
+The methods of [Toys::Context](https://www.rubydoc.info/gems/toys-core/Toys/Context)
 are not the only methods available for your tool to call. We
 [saw earlier](#Tool_execution_basics) that a tool can define additional methods
 that you can use as helpers.
@@ -2456,7 +2456,7 @@ To disable argument parsing, use the `disable_argument_parsing` directive. This
 directive disables parsing and validation of flags and positional arguments.
 (Thus, it is incompatible with specifying any flags or arguments for the tool.)
 Instead, you can retrieve the raw arguments using the
-[Toys::Tool#args method](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:args).
+[Toys::Context#args method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:args).
 
 Here is an example that wraps calls to git:
 
@@ -2542,7 +2542,7 @@ You may then "find" a data file by providing the relative path to the file from
 the `.data` directory. When defining a tool, use the
 [Toys::DSL::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:find_data)
 directive in a Toys file. Or, at tool execution time, call
-[Toys::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FTool:find_data)
+[Toys::Context#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:find_data)
 (which is a convenience method for getting the tool source object using the
 `TOOL_SOURCE` key, and calling
 [Toys::SourceInfo#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FSourceInfo:find_data)

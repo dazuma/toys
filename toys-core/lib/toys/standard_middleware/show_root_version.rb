@@ -81,8 +81,8 @@ module Toys
       ##
       # This middleware displays the version.
       #
-      def run(tool)
-        if tool[SHOW_VERSION_KEY]
+      def run(context)
+        if context[SHOW_VERSION_KEY]
           @output.puts(@version_string)
         else
           yield

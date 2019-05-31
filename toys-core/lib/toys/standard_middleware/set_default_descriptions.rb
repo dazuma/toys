@@ -159,13 +159,13 @@ module Toys
       # By default, it uses the parameters given to the middleware object.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool] tool The tool to document
+      # @param [Toys::ToolDefinition] tool The tool to document
       # @param [Hash] data Additional data that might be useful. Currently,
       #     the {Toys::Loader} is passed with key `:loader`. Future versions
       #     of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
       #     default long description, or `nil` not to set a default. See
-      #     {Toys::Tool#long_desc=} for info on the format.
+      #     {Toys::ToolDefinition#long_desc=} for info on the format.
       #
       def generate_tool_long_desc(tool, data)
         if tool.root?
@@ -181,13 +181,13 @@ module Toys
       # This method implements the logic for generating a flag description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool::FlagDefinition] flag The flag to document
+      # @param [Toys::Flag] flag The flag to document
       # @param [Hash] data Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString,nil] The default
-      #     description, or `nil` not to set a default. See {Toys::Tool#desc=}
-      #     for info on the format.
+      #     description, or `nil` not to set a default. See
+      #     {Toys::ToolDefinition#desc=} for info on the format.
       #
       def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
         name = flag.key.to_s.tr("_", "-").gsub(/[^\w-]/, "").downcase.inspect
@@ -200,13 +200,13 @@ module Toys
       # This method implements logic for generating a flag long description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool::FlagDefinition] flag The flag to document
+      # @param [Toys::Flag] flag The flag to document
       # @param [Hash] data Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
       #     default long description, or `nil` not to set a default. See
-      #     {Toys::Tool#long_desc=} for info on the format.
+      #     {Toys::ToolDefinition#long_desc=} for info on the format.
       #
       def generate_flag_long_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
         nil
@@ -216,13 +216,13 @@ module Toys
       # This method implements the logic for generating an arg description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool::ArgDefinition] arg The arg to document
+      # @param [Toys::PositionalArg] arg The arg to document
       # @param [Hash] data Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString,nil] The default
-      #     description, or `nil` not to set a default. See {Toys::Tool#desc=}
-      #     for info on the format.
+      #     description, or `nil` not to set a default. See
+      #     {Toys::ToolDefinition#desc=} for info on the format.
       #
       def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
         acceptable = acceptable_name(arg.acceptor)
@@ -241,13 +241,13 @@ module Toys
       # This method implements logic for generating an arg long description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool::ArgDefinition] arg The arg to document
+      # @param [Toys::PositionalArg] arg The arg to document
       # @param [Hash] data Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
       #     default long description, or `nil` not to set a default. See
-      #     {Toys::Tool#long_desc=} for info on the format.
+      #     {Toys::ToolDefinition#long_desc=} for info on the format.
       #
       def generate_arg_long_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
         nil

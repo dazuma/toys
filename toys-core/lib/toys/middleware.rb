@@ -78,14 +78,14 @@ module Toys
     #
     # Like a tool's `run` method, this method's return value is unused. If
     # you want to output from a tool, write to stdout or stderr. If you want
-    # to set the exit status code, call {Toys::Tool#exit} on the tool object.
+    # to set the exit status code, call {Toys::Context#exit} on the context.
     #
     # This basic implementation does nothing and simply yields to the next
     # middleware.
     #
-    # @param [Toys::Tool] tool The tool execution instance.
+    # @param [Toys::Context] context The tool execution context.
     #
-    def run(tool) # rubocop:disable Lint/UnusedMethodArgument
+    def run(context) # rubocop:disable Lint/UnusedMethodArgument
       yield
     end
   end

@@ -55,7 +55,7 @@ module Toys
       @tool_definition.run_initializers(tool)
 
       original_level = @cli.logger.level
-      @cli.logger.level = @cli.base_level - data[Tool::Keys::VERBOSITY]
+      @cli.logger.level = @cli.base_level - data[Context::Key::VERBOSITY]
       begin
         perform_execution(tool)
       ensure
@@ -68,17 +68,17 @@ module Toys
     def parse_data(args, verbosity)
       arg_parser = ArgParser.new(@tool_definition)
       data = arg_parser.data
-      data[Tool::Keys::TOOL_DEFINITION] = @tool_definition
-      data[Tool::Keys::TOOL_SOURCE] = @tool_definition.source_info
-      data[Tool::Keys::TOOL_NAME] = @tool_definition.full_name
-      data[Tool::Keys::VERBOSITY] = verbosity
-      data[Tool::Keys::ARGS] = args
-      data[Tool::Keys::USAGE_ERROR] = nil
+      data[Context::Key::TOOL_DEFINITION] = @tool_definition
+      data[Context::Key::TOOL_SOURCE] = @tool_definition.source_info
+      data[Context::Key::TOOL_NAME] = @tool_definition.full_name
+      data[Context::Key::VERBOSITY] = verbosity
+      data[Context::Key::ARGS] = args
+      data[Context::Key::USAGE_ERROR] = nil
       unless @tool_definition.argument_parsing_disabled?
         arg_parser.parse(args)
         arg_parser.finish
         unless arg_parser.errors.empty?
-          data[Tool::Keys::USAGE_ERROR] = arg_parser.errors.join("\n")
+          data[Context::Key::USAGE_ERROR] = arg_parser.errors.join("\n")
         end
       end
       data

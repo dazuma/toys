@@ -89,14 +89,14 @@ module Toys
 
       to_initialize do |opts = {}|
         require "toys/utils/exec"
-        tool = self
-        opts = Exec._setup_exec_opts(opts, tool)
-        tool[KEY] = Utils::Exec.new(opts) do |k|
+        context = self
+        opts = Exec._setup_exec_opts(opts, context)
+        context[KEY] = Utils::Exec.new(opts) do |k|
           case k
           when :logger
-            tool[Tool::Keys::LOGGER]
+            context[Context::Key::LOGGER]
           when :cli
-            tool[Tool::Keys::CLI]
+            context[Context::Key::CLI]
           end
         end
       end
@@ -320,7 +320,7 @@ module Toys
       def exit_on_nonzero_status(status)
         status = status.exit_code if status.respond_to?(:exit_code)
         status = status.exitstatus if status.respond_to?(:exitstatus)
-        Tool.exit(status) unless status.zero?
+        Context.exit(status) unless status.zero?
         0
       end
 
@@ -331,11 +331,11 @@ module Toys
       end
 
       ## @private
-      def self._setup_exec_opts(opts, tool)
+      def self._setup_exec_opts(opts, context)
         if opts.key?(:exit_on_nonzero_status)
           result_callback =
             if opts[:exit_on_nonzero_status]
-              proc { |r| tool.exit(r.exit_code) if r.error? }
+              proc { |r| context.exit(r.exit_code) if r.error? }
             end
           opts = opts.merge(result_callback: result_callback)
           opts.delete(:exit_on_nonzero_status)
@@ -343,9 +343,9 @@ module Toys
           orig_callback = opts[:result_callback]
           result_callback =
             if orig_callback.is_a?(::Symbol)
-              tool.method(orig_callback)
+              context.method(orig_callback)
             elsif orig_callback.respond_to?(:call)
-              proc { |r| orig_callback.call(r, tool) }
+              proc { |r| orig_callback.call(r, context) }
             end
           opts = opts.merge(result_callback: result_callback)
         end

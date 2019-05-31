@@ -37,20 +37,20 @@ module Toys
   # *   Common information such as the {Toys::ToolDefinition} object being
   #     executed, the arguments originally passed to it, or the usage error
   #     string. These well-known keys can be accessed via constants in the
-  #     {Toys::Tool::Keys} module.
+  #     {Toys::Context::Key} module.
   # *   Common settings such as the verbosity level, and whether to exit
   #     immediately if a subprocess exits with a nonzero result. These keys are
-  #     also present as {Toys::Context} constants.
+  #     also present as {Toys::Context::Key} constants.
   # *   Private information used internally by middleware and mixins.
   #
   # This class provides convenience accessors for common keys and settings, and
   # you can retrieve argument-set keys using the {#options} hash.
   #
-  class Tool
+  class Context
     ##
     # Well-known context keys.
     #
-    module Keys
+    module Key
       ##
       # Context key for the currently running CLI.
       # @return [Object]
@@ -128,10 +128,10 @@ module Toys
     #
     def initialize(cli, data)
       @__data = data
-      @__data[Keys::CLI] = cli
-      @__data[Keys::LOADER] = cli.loader
-      @__data[Keys::BINARY_NAME] = cli.binary_name
-      @__data[Keys::LOGGER] = cli.logger
+      @__data[Key::CLI] = cli
+      @__data[Key::LOADER] = cli.loader
+      @__data[Key::BINARY_NAME] = cli.binary_name
+      @__data[Key::LOGGER] = cli.logger
     end
 
     ##
@@ -139,7 +139,7 @@ module Toys
     # @return [Toys::CLI]
     #
     def cli
-      @__data[Keys::CLI]
+      @__data[Key::CLI]
     end
 
     ##
@@ -147,7 +147,7 @@ module Toys
     # @return [Integer]
     #
     def verbosity
-      @__data[Keys::VERBOSITY]
+      @__data[Key::VERBOSITY]
     end
 
     ##
@@ -155,7 +155,7 @@ module Toys
     # @return [Toys::ToolDefinition]
     #
     def tool_definition
-      @__data[Keys::TOOL_DEFINITION]
+      @__data[Key::TOOL_DEFINITION]
     end
 
     ##
@@ -163,7 +163,7 @@ module Toys
     # @return [Toys::SourceInfo]
     #
     def tool_source
-      @__data[Keys::TOOL_SOURCE]
+      @__data[Key::TOOL_SOURCE]
     end
 
     ##
@@ -171,7 +171,7 @@ module Toys
     # @return [Array[String]]
     #
     def tool_name
-      @__data[Keys::TOOL_NAME]
+      @__data[Key::TOOL_NAME]
     end
 
     ##
@@ -180,7 +180,7 @@ module Toys
     # @return [Array[String]]
     #
     def args
-      @__data[Keys::ARGS]
+      @__data[Key::ARGS]
     end
 
     ##
@@ -189,7 +189,7 @@ module Toys
     # @return [String,nil]
     #
     def usage_error
-      @__data[Keys::USAGE_ERROR]
+      @__data[Key::USAGE_ERROR]
     end
 
     ##
@@ -197,7 +197,7 @@ module Toys
     # @return [Logger]
     #
     def logger
-      @__data[Keys::LOGGER]
+      @__data[Key::LOGGER]
     end
 
     ##
@@ -205,7 +205,7 @@ module Toys
     # @return [Toys::Loader]
     #
     def loader
-      @__data[Keys::LOADER]
+      @__data[Key::LOADER]
     end
 
     ##
@@ -213,7 +213,7 @@ module Toys
     # @return [String]
     #
     def binary_name
-      @__data[Keys::BINARY_NAME]
+      @__data[Key::BINARY_NAME]
     end
 
     ##
@@ -275,7 +275,7 @@ module Toys
     # @return [String,nil] Absolute path of the result, or nil if not found.
     #
     def find_data(path, type: nil)
-      @__data[Keys::TOOL_SOURCE].find_data(path, type: type)
+      @__data[Key::TOOL_SOURCE].find_data(path, type: type)
     end
 
     ##
@@ -288,7 +288,7 @@ module Toys
     # @return [String,nil] Context directory
     #
     def context_directory
-      @__data[Keys::TOOL_DEFINITION].context_directory
+      @__data[Key::TOOL_DEFINITION].context_directory
     end
 
     ##
