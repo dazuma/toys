@@ -138,7 +138,7 @@ module Toys
     # that are not part of the tool name and should be passed as tool args.
     #
     # @param [Array<String>] args Command line arguments
-    # @return [Array(Toys::ToolDefinition,Array<String>)]
+    # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
       orig_prefix, args = find_orig_prefix(args)
@@ -169,7 +169,7 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param [Boolean] include_hidden If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::ToolDefinition,Toys::AliasDefinition>]
+    # @return [Array<Toys::Tool,Toys::Alias>]
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -216,7 +216,7 @@ module Toys
     #
     # @param [Array<String>] words The name of the tool.
     # @param [Integer] priority The priority of the request.
-    # @return [Toys::ToolDefinition,Toys::AliasDefinition,nil] The tool or
+    # @return [Toys::Tool,Toys::Alias,nil] The tool or
     #     alias, or `nil` if the given priority is insufficient.
     #
     # @private
@@ -236,7 +236,7 @@ module Toys
     # @param [Array<String>] target The alias target name
     # @param [Integer] priority The priority of the request
     #
-    # @return [Toys::AliasDefinition] The alias created
+    # @return [Toys::Alias] The alias created
     #
     # @private
     #
@@ -246,7 +246,7 @@ module Toys
         raise ToolDefinitionError,
               "Cannot make #{words.inspect} an alias because it is already defined"
       end
-      alias_def = AliasDefinition.new(self, words, target, priority)
+      alias_def = Alias.new(self, words, target, priority)
       tool_data.definitions[priority] = alias_def
       activate_tool_definition(words, priority)
       alias_def
@@ -273,7 +273,7 @@ module Toys
     #
     def get_tool_definition(words, priority)
       parent = words.empty? ? nil : get_tool_definition(words.slice(0..-2), priority)
-      if parent.is_a?(AliasDefinition)
+      if parent.is_a?(Alias)
         raise ToolDefinitionError,
               "Cannot create children of #{parent.display_name.inspect} because it is an alias"
       end
@@ -283,7 +283,7 @@ module Toys
       end
       tool_data.definitions[priority] ||= begin
         middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
-        ToolDefinition.new(self, parent, words, priority, middlewares)
+        Tool.new(self, parent, words, priority, middlewares)
       end
     end
 
@@ -372,9 +372,9 @@ module Toys
       tool_data = get_tool_data(words)
       result = tool_data.active_definition
       case result
-      when AliasDefinition
+      when Alias
         resolve_alias(result, looked_up)
-      when ToolDefinition
+      when Tool
         result
       else
         tool_data.top_definition
@@ -422,7 +422,7 @@ module Toys
       @tool_data.each do |n, td|
         next if n.length < len || n.slice(0, len) != words
         tool = td.active_definition || td.top_definition
-        tool.finish_definition(self) if tool.is_a?(ToolDefinition)
+        tool.finish_definition(self) if tool.is_a?(Tool)
       end
     end
 
@@ -532,7 +532,7 @@ module Toys
 
     def tool_hidden?(tool, next_tool)
       return true if tool.full_name.any? { |n| n.start_with?("_") }
-      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a?(AliasDefinition)
+      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a?(Alias)
       !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 

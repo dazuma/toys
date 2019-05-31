@@ -2,7 +2,7 @@
 
 ### 0.8.0 / Unreleased
 
-This is a major update with significant new features and a bunch of fixes. It does include a few minor backward-incompatible changes. All features planned for beta are now implemented.
+This is a major update with significant new features and a bunch of fixes. It also includes a significant amount of internal reorganization and cleanup, some of which resulted in backward incompatible changes. All features planned for beta are now implemented.
 
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Added APIs for args and flags to provide completion information.

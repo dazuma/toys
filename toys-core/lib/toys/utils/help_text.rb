@@ -258,7 +258,7 @@ module Toys
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
             desc =
-              if subtool.is_a?(AliasDefinition)
+              if subtool.is_a?(Alias)
                 ["(Alias of #{subtool.display_target})"]
               else
                 wrap_desc(subtool.desc)
@@ -524,7 +524,7 @@ module Toys
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
             desc =
-              if subtool.is_a?(AliasDefinition)
+              if subtool.is_a?(Alias)
                 "(Alias of #{subtool.display_target})"
               else
                 subtool.desc
@@ -634,7 +634,7 @@ module Toys
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
             desc =
-              if subtool.is_a?(AliasDefinition)
+              if subtool.is_a?(Alias)
                 "(Alias of #{subtool.display_target})"
               else
                 subtool.desc

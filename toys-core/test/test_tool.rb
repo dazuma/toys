@@ -36,7 +36,7 @@ module MyTemplate
   end
 end
 
-describe Toys::ToolDefinition do
+describe Toys::Tool do
   let(:logger) {
     Logger.new(StringIO.new).tap do |lgr|
       lgr.level = Logger::WARN

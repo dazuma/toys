@@ -32,8 +32,7 @@ module Toys
     ##
     # Create an argument parser for a particular tool.
     #
-    # @param [Toys::ToolDefinition] tool_definition The tool defining the
-    #     argument format.
+    # @param [Toys::Tool] tool_definition The tool defining the argument format.
     #
     def initialize(tool_definition)
       @tool_definition = tool_definition
@@ -52,7 +51,7 @@ module Toys
 
     ##
     # The tool definition governing this parser.
-    # @return [Toys::ToolDefinition]
+    # @return [Toys::Tool]
     #
     attr_reader :tool_definition
 

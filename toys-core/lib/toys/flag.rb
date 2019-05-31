@@ -47,7 +47,7 @@ module Toys
 
     ##
     # Create a Flag definition.
-    # Should be created only from {Toys::ToolDefinition#add_flag}.
+    # Should be created only from {Toys::Tool#add_flag}.
     # @private
     #
     def initialize(key, flags, used_flags, report_collisions, acceptor, handler, default,

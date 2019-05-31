@@ -25,13 +25,13 @@ require "set"
 
 module Toys
   ##
-  # A ToolDefinition describes a single command that can be invoked using Toys.
+  # A Tool describes a single command that can be invoked using Toys.
   # It has a name, a series of one or more words that you use to identify
   # the tool on the command line. It also has a set of formal flags and
   # command line arguments supported, and a block that gets run when the
   # tool is executed.
   #
-  class ToolDefinition
+  class Tool
     ##
     # Create a new tool.
     # Should be created only from the DSL via the Loader.
@@ -523,12 +523,11 @@ module Toys
     #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
     #     Default is `:optional`.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
-    #     description for the group. See {Toys::ToolDefinition#desc=} for a
-    #     description of  allowed formats. Defaults to `"Flags"`.
+    #     description for the group. See {Toys::Tool#desc=} for a description
+    #     of allowed formats. Defaults to `"Flags"`.
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
-    #     Long description for the flag group. See
-    #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-    #     formats. Defaults to the empty array.
+    #     Long description for the flag group. See {Toys::Tool#long_desc=} for
+    #     a description of allowed formats. Defaults to the empty array.
     # @param [String,Symbol,nil] name The name of the group, or nil for no
     #     name.
     # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -598,12 +597,11 @@ module Toys
     #     this flag. You may provide a group name, a FlagGroup object, or
     #     `nil` which denotes the default group.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
-    #     description for the flag. See {Toys::ToolDefinition#desc=} for a
-    #     description of  allowed formats. Defaults to the empty string.
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
-    #     Long description for the flag. See
-    #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-    #     formats. Defaults to the empty array.
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     # @param [String] display_name A display name for this flag, used in help
     #     text and error messages.
     #
@@ -666,12 +664,11 @@ module Toys
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
-    #     description for the arg. See {Toys::ToolDefinition#desc=} for a
-    #     description of  allowed formats. Defaults to the empty string.
+    #     description for the arg. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
-    #     Long description for the arg. See
-    #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-    #     formats. Defaults to the empty array.
+    #     Long description for the arg. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def add_required_arg(key, accept: nil, completion: nil, display_name: nil,
                          desc: nil, long_desc: nil)
@@ -704,12 +701,11 @@ module Toys
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
-    #     description for the arg. See {Toys::ToolDefinition#desc=} for a
-    #     description of  allowed formats. Defaults to the empty string.
+    #     description for the arg. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
-    #     Long description for the arg. See
-    #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-    #     formats. Defaults to the empty array.
+    #     Long description for the arg. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def add_optional_arg(key, default: nil, accept: nil, completion: nil,
                          display_name: nil, desc: nil, long_desc: nil)
@@ -742,12 +738,11 @@ module Toys
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
-    #     description for the arg. See {Toys::ToolDefinition#desc=} for a
-    #     description of  allowed formats. Defaults to the empty string.
+    #     description for the arg. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
-    #     Long description for the arg. See
-    #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-    #     formats. Defaults to the empty array.
+    #     Long description for the arg. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
     #
     def set_remaining_args(key, default: [], accept: nil, completion: nil,
                            display_name: nil, desc: nil, long_desc: nil)

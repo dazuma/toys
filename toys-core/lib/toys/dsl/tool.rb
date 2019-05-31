@@ -336,12 +336,12 @@ module Toys
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       #     Default is `:optional`.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::ToolDefinition#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::Tool#desc=} for a description
+      #     of allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
+      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -378,12 +378,12 @@ module Toys
       #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::ToolDefinition#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::Tool#desc=} for a description
+      #     of allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
+      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -407,12 +407,12 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::ToolDefinition#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::Tool#desc=} for a description
+      #     of allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
+      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -436,12 +436,12 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::ToolDefinition#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::Tool#desc=} for a description
+      #     of allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
+      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -465,12 +465,12 @@ module Toys
       # group must be provided on the command line.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
-      #     description for the group. See {Toys::ToolDefinition#desc=} for a
-      #     description of  allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::Tool#desc=} for a description
+      #     of allowed formats. Defaults to `"Flags"`.
       # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
       #     Long description for the flag group. See
-      #     {Toys::ToolDefinition#long_desc=} for a description of allowed
-      #     formats. Defaults to the empty array.
+      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     Defaults to the empty array.
       # @param [String,Symbol,nil] name The name of the group, or nil for no
       #     name.
       # @param [Boolean] report_collisions If `true`, raise an exception if a
@@ -944,7 +944,7 @@ module Toys
             else
               loader.get_tool_definition(words, priority)
             end
-          if cur_tool.is_a?(AliasDefinition)
+          if cur_tool.is_a?(Alias)
             raise ToolDefinitionError,
                   "Cannot configure #{words.join(' ').inspect} because it is an alias"
           end

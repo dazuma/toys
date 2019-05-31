@@ -34,7 +34,7 @@ module Toys
     #
     # @param [Toys::CLI] cli The CLI that is running the tool. This will
     #     provide needed context information.
-    # @param [Toys::ToolDefinition] tool_definition The tool to run.
+    # @param [Toys::Tool] tool_definition The tool to run.
     #
     def initialize(cli, tool_definition)
       @cli = cli

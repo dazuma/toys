@@ -34,7 +34,7 @@ module Toys
     class Base
       ##
       # Create a flag group.
-      # Should be created only from methods of {Toys::ToolDefinition}.
+      # Should be created only from methods of {Toys::Tool}.
       # @private
       #
       def initialize(name, desc, long_desc)

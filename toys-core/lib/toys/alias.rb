@@ -25,7 +25,7 @@ module Toys
   ##
   # An alias is a name that refers to another name.
   #
-  class AliasDefinition
+  class Alias
     ##
     # Create a new alias.
     # Should be created only from the DSL via the Loader.

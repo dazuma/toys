@@ -28,7 +28,7 @@ module Toys
   class PositionalArg
     ##
     # Create an Arg definition.
-    # Should be created only from methods of {Toys::ToolDefinition}.
+    # Should be created only from methods of {Toys::Tool}.
     # @private
     #
     def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
