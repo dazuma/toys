@@ -208,8 +208,8 @@ module Toys
 
         def tool_synopsis
           synopsis = [@binary_name] + @tool.full_name
-          synopsis << "[FLAGS...]" unless @tool.flag_definitions.empty?
-          @tool.arg_definitions.each do |arg_info|
+          synopsis << "[FLAGS...]" unless @tool.flags.empty?
+          @tool.positional_args.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
           synopsis.join(" ")
@@ -224,7 +224,7 @@ module Toys
             next if group.empty?
             @lines << ""
             @lines << group.desc.to_s + ":"
-            group.flag_definitions.each do |flag|
+            group.flags.each do |flag|
               add_flag(flag)
             end
           end
@@ -241,7 +241,7 @@ module Toys
         end
 
         def add_positional_arguments_section
-          args_to_display = @tool.arg_definitions
+          args_to_display = @tool.positional_args
           return if args_to_display.empty?
           @lines << ""
           @lines << "Positional arguments:"
@@ -385,21 +385,21 @@ module Toys
               add_ordinary_group_to_synopsis(flag_group, synopsis)
             end
           end
-          @tool.arg_definitions.each do |arg_info|
+          @tool.positional_args.each do |arg_info|
             synopsis << arg_name(arg_info)
           end
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
         def add_ordinary_group_to_synopsis(flag_group, synopsis)
-          flag_group.flag_definitions.each do |flag_def|
-            synopsis << "[#{flag_spec_string(flag_def, true)}]"
+          flag_group.flags.each do |flag|
+            synopsis << "[#{flag_spec_string(flag, true)}]"
           end
         end
 
         def add_required_group_to_synopsis(flag_group, synopsis)
-          flag_group.flag_definitions.each do |flag_def|
-            synopsis << "(#{flag_spec_string(flag_def, true)})"
+          flag_group.flags.each do |flag|
+            synopsis << "(#{flag_spec_string(flag, true)})"
           end
         end
 
@@ -407,13 +407,13 @@ module Toys
           return if flag_group.empty?
           synopsis << "("
           first = true
-          flag_group.flag_definitions.each do |flag_def|
+          flag_group.flags.each do |flag|
             if first
               first = false
             else
               synopsis << "|"
             end
-            synopsis << flag_spec_string(flag_def, true)
+            synopsis << flag_spec_string(flag, true)
           end
           synopsis << ")"
         end
@@ -422,13 +422,13 @@ module Toys
           return if flag_group.empty?
           synopsis << "["
           first = true
-          flag_group.flag_definitions.each do |flag_def|
+          flag_group.flags.each do |flag|
             if first
               first = false
             else
               synopsis << "|"
             end
-            synopsis << flag_spec_string(flag_def, true)
+            synopsis << flag_spec_string(flag, true)
           end
           synopsis << "]"
         end
@@ -436,8 +436,8 @@ module Toys
         def add_at_least_one_group_to_synopsis(flag_group, synopsis)
           return if flag_group.empty?
           synopsis << "("
-          flag_group.flag_definitions.each do |flag_def|
-            synopsis << "[#{flag_spec_string(flag_def, true)}]"
+          flag_group.flags.each do |flag|
+            synopsis << "[#{flag_spec_string(flag, true)}]"
           end
           synopsis << ")"
         end
@@ -480,7 +480,7 @@ module Toys
               end
               precede_with_blank = true
             end
-            group.flag_definitions.each do |flag|
+            group.flags.each do |flag|
               add_indented_section(flag_spec_string(flag), flag, precede_with_blank)
               precede_with_blank = true
             end
@@ -501,7 +501,7 @@ module Toys
         end
 
         def add_positional_arguments_section
-          args_to_display = @tool.arg_definitions
+          args_to_display = @tool.positional_args
           return if args_to_display.empty?
           @lines << ""
           @lines << bold("POSITIONAL ARGUMENTS")

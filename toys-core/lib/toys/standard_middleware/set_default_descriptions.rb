@@ -119,10 +119,10 @@ module Toys
       #
       def config(tool, loader)
         data = {tool: tool, loader: loader}
-        tool.flag_definitions.each do |flag|
+        tool.flags.each do |flag|
           config_desc(flag, generate_flag_desc(flag, data), generate_flag_long_desc(flag, data))
         end
-        tool.arg_definitions.each do |arg|
+        tool.positional_args.each do |arg|
           config_desc(arg, generate_arg_desc(arg, data), generate_arg_long_desc(arg, data))
         end
         config_desc(tool, generate_tool_desc(tool, data), generate_tool_long_desc(tool, data))

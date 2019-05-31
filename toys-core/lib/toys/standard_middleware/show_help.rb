@@ -399,7 +399,7 @@ module Toys
       end
 
       def add_root_args(tool_definition)
-        if @allow_root_args && tool_definition.root? && tool_definition.arg_definitions.empty?
+        if @allow_root_args && tool_definition.root? && tool_definition.positional_args.empty?
           tool_definition.set_remaining_args(TOOL_NAME_KEY,
                                              display_name: "TOOL_NAME",
                                              desc: "The tool for which to display help")

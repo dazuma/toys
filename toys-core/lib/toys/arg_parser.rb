@@ -43,7 +43,7 @@ module Toys
       @parsed_args = []
       @active_flag_def = nil
       @active_flag_arg = nil
-      @arg_defs = tool_definition.arg_definitions
+      @arg_defs = tool_definition.positional_args
       @arg_def_index = 0
       @flags_allowed = true
       @data = duplicate_hash(tool_definition.default_data)

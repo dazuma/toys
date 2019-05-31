@@ -524,8 +524,8 @@ describe Toys::DSL::Tool do
              long_desc: ["long description", "in two lines"])
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.flag_definitions.size)
-      flag = tool.flag_definitions[0]
+      assert_equal(1, tool.flags.size)
+      flag = tool.flags[0]
       assert_equal(:foo, flag.key)
       assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
       assert_equal(Integer, flag.acceptor.name)
@@ -551,8 +551,8 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.flag_definitions.size)
-      flag = tool.flag_definitions[0]
+      assert_equal(1, tool.flags.size)
+      flag = tool.flags[0]
       assert_equal(:foo, flag.key)
       assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
       assert_equal(Integer, flag.acceptor.name)
@@ -629,10 +629,10 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
-      assert_equal(1, my_group.flag_definitions.size)
-      assert_equal(:inside_group, my_group.flag_definitions.first.key)
-      assert_equal(1, default_group.flag_definitions.size)
-      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+      assert_equal(1, my_group.flags.size)
+      assert_equal(:inside_group, my_group.flags.first.key)
+      assert_equal(1, default_group.flags.size)
+      assert_equal(:outside_group, default_group.flags.first.key)
     end
   end
 
@@ -664,10 +664,10 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
-      assert_equal(1, my_group.flag_definitions.size)
-      assert_equal(:inside_group, my_group.flag_definitions.first.key)
-      assert_equal(1, default_group.flag_definitions.size)
-      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+      assert_equal(1, my_group.flags.size)
+      assert_equal(:inside_group, my_group.flags.first.key)
+      assert_equal(1, default_group.flags.size)
+      assert_equal(:outside_group, default_group.flags.first.key)
     end
   end
 
@@ -699,10 +699,10 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
-      assert_equal(1, my_group.flag_definitions.size)
-      assert_equal(:inside_group, my_group.flag_definitions.first.key)
-      assert_equal(1, default_group.flag_definitions.size)
-      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+      assert_equal(1, my_group.flags.size)
+      assert_equal(:inside_group, my_group.flags.first.key)
+      assert_equal(1, default_group.flags.size)
+      assert_equal(:outside_group, default_group.flags.first.key)
     end
   end
 
@@ -734,10 +734,10 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
-      assert_equal(1, my_group.flag_definitions.size)
-      assert_equal(:inside_group, my_group.flag_definitions.first.key)
-      assert_equal(1, default_group.flag_definitions.size)
-      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+      assert_equal(1, my_group.flags.size)
+      assert_equal(:inside_group, my_group.flags.first.key)
+      assert_equal(1, default_group.flags.size)
+      assert_equal(:outside_group, default_group.flags.first.key)
     end
   end
 
@@ -769,10 +769,10 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
-      assert_equal(1, my_group.flag_definitions.size)
-      assert_equal(:inside_group, my_group.flag_definitions.first.key)
-      assert_equal(1, default_group.flag_definitions.size)
-      assert_equal(:outside_group, default_group.flag_definitions.first.key)
+      assert_equal(1, my_group.flags.size)
+      assert_equal(:inside_group, my_group.flags.first.key)
+      assert_equal(1, default_group.flags.size)
+      assert_equal(:outside_group, default_group.flags.first.key)
     end
   end
 
@@ -786,8 +786,8 @@ describe Toys::DSL::Tool do
                  long_desc: ["long description", "in two lines"])
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.required_arg_definitions.size)
-      arg = tool.required_arg_definitions[0]
+      assert_equal(1, tool.required_args.size)
+      arg = tool.required_args[0]
       assert_equal(:foo, arg.key)
       assert_equal(:required, arg.type)
       assert_equal(Integer, arg.acceptor.name)
@@ -806,8 +806,8 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.required_arg_definitions.size)
-      arg = tool.required_arg_definitions[0]
+      assert_equal(1, tool.required_args.size)
+      arg = tool.required_args[0]
       assert_equal(:foo, arg.key)
       assert_equal(:required, arg.type)
       assert_equal(Integer, arg.acceptor.name)
@@ -863,8 +863,8 @@ describe Toys::DSL::Tool do
                  long_desc: ["long description", "in two lines"])
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.optional_arg_definitions.size)
-      arg = tool.optional_arg_definitions[0]
+      assert_equal(1, tool.optional_args.size)
+      arg = tool.optional_args[0]
       assert_equal(:foo, arg.key)
       assert_equal(:optional, arg.type)
       assert_equal(-1, arg.default)
@@ -885,8 +885,8 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.optional_arg_definitions.size)
-      arg = tool.optional_arg_definitions[0]
+      assert_equal(1, tool.optional_args.size)
+      arg = tool.optional_args[0]
       assert_equal(:foo, arg.key)
       assert_equal(:optional, arg.type)
       assert_equal(-1, arg.default)
@@ -943,8 +943,8 @@ describe Toys::DSL::Tool do
                   long_desc: ["long description", "in two lines"])
       end
       tool, _remaining = loader.lookup([])
-      refute_nil(tool.remaining_args_definition)
-      arg = tool.remaining_args_definition
+      refute_nil(tool.remaining_arg)
+      arg = tool.remaining_arg
       assert_equal(:foo, arg.key)
       assert_equal(:remaining, arg.type)
       assert_equal([-1], arg.default)
@@ -965,8 +965,8 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      refute_nil(tool.remaining_args_definition)
-      arg = tool.remaining_args_definition
+      refute_nil(tool.remaining_arg)
+      arg = tool.remaining_arg
       assert_equal(:foo, arg.key)
       assert_equal(:remaining, arg.type)
       assert_equal([-1], arg.default)
@@ -1158,8 +1158,8 @@ describe Toys::DSL::Tool do
         flag :bar, "--bb", "--baa", report_collisions: false
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(1, tool.flag_definitions.size)
-      flag = tool.flag_definitions[0]
+      assert_equal(1, tool.flags.size)
+      flag = tool.flags[0]
       assert_equal(1, flag.flag_syntax.size)
       assert_equal("--baa", flag.flag_syntax[0].canonical_str)
     end
@@ -1177,8 +1177,8 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(2, tool.flag_definitions.size)
-      flag = tool.flag_definitions[1]
+      assert_equal(2, tool.flags.size)
+      flag = tool.flags[1]
       assert_equal(2, flag.flag_syntax.size)
     end
   end

@@ -104,10 +104,10 @@ describe "rake template" do
       expand :rake, rakefile_path: rakefile_path
     end
     tool, _remaining = loader.lookup(["foo"])
-    assert_equal(2, tool.optional_arg_definitions.size)
-    assert(tool.flag_definitions.empty?)
-    assert_equal(:one_two, tool.optional_arg_definitions[0].key)
-    assert_equal(:three, tool.optional_arg_definitions[1].key)
+    assert_equal(2, tool.optional_args.size)
+    assert(tool.flags.empty?)
+    assert_equal(:one_two, tool.optional_args[0].key)
+    assert_equal(:three, tool.optional_args[1].key)
     assert_output("executing foo\n\"hello\"\nnil\n") do
       cli.run("foo", "hello")
     end
@@ -119,10 +119,10 @@ describe "rake template" do
       expand :rake, rakefile_path: rakefile_path, use_flags: true
     end
     tool, _remaining = loader.lookup(["foo"])
-    assert_equal(2, tool.flag_definitions.size)
-    assert(tool.optional_arg_definitions.empty?)
-    assert_equal(:one_two, tool.flag_definitions[0].key)
-    assert_equal(:three, tool.flag_definitions[1].key)
+    assert_equal(2, tool.flags.size)
+    assert(tool.optional_args.empty?)
+    assert_equal(:one_two, tool.flags[0].key)
+    assert_equal(:three, tool.flags[1].key)
     assert_output("executing foo\n\"hi\"\n\"there\"\n") do
       cli.run("foo", "--one_two=hi", "--three", "there")
     end

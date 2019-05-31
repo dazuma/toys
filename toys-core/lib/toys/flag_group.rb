@@ -41,7 +41,7 @@ module Toys
         @name = name
         @desc = WrappableString.make(desc || default_desc)
         @long_desc = WrappableString.make_array(long_desc || default_long_desc)
-        @flag_definitions = []
+        @flags = []
       end
 
       ##
@@ -67,19 +67,19 @@ module Toys
       # Do not modify the returned array.
       # @return [Array<Toys::Flag>]
       #
-      attr_reader :flag_definitions
+      attr_reader :flags
 
       ##
       # Returns true if this group is empty
       # @return [Boolean]
       #
       def empty?
-        flag_definitions.empty?
+        flags.empty?
       end
 
       ## @private
       def <<(flag)
-        flag_definitions << flag
+        flags << flag
       end
 
       ## @private
@@ -105,7 +105,7 @@ module Toys
       ## @private
       def validation_errors(seen)
         results = []
-        flag_definitions.each do |flag|
+        flags.each do |flag|
           unless seen.include?(flag.key)
             results << "Flag \"#{flag.display_name}\" is required."
           end
@@ -137,7 +137,7 @@ module Toys
       ## @private
       def validation_errors(seen)
         seen_names = []
-        flag_definitions.each do |flag|
+        flags.each do |flag|
           seen_names << flag.display_name if seen.include?(flag.key)
         end
         if seen_names.size > 1
@@ -163,7 +163,7 @@ module Toys
       ## @private
       def validation_errors(seen)
         seen_names = []
-        flag_definitions.each do |flag|
+        flags.each do |flag|
           seen_names << flag.display_name if seen.include?(flag.key)
         end
         if seen_names.size > 1
@@ -186,7 +186,7 @@ module Toys
     class AtLeastOne < Base
       ## @private
       def validation_errors(seen)
-        flag_definitions.each do |flag|
+        flags.each do |flag|
           return [] if seen.include?(flag.key)
         end
         ["At least one flag out of group \"#{desc}\" is required, but none were provided."]

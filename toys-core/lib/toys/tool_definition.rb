@@ -73,10 +73,10 @@ module Toys
       @flag_groups = [default_flag_group]
       @flag_group_names = {nil => default_flag_group}
 
-      @flag_definitions = []
-      @required_arg_definitions = []
-      @optional_arg_definitions = []
-      @remaining_args_definition = nil
+      @flags = []
+      @required_args = []
+      @optional_args = []
+      @remaining_arg = nil
 
       @disable_argument_parsing = false
       @enforce_flags_before_args = false
@@ -127,26 +127,26 @@ module Toys
     # Return a list of all defined flags.
     # @return [Array<Toys::Flag>]
     #
-    attr_reader :flag_definitions
+    attr_reader :flags
 
     ##
     # Return a list of all defined required positional arguments.
     # @return [Array<Toys::PositionalArg>]
     #
-    attr_reader :required_arg_definitions
+    attr_reader :required_args
 
     ##
     # Return a list of all defined optional positional arguments.
     # @return [Array<Toys::PositionalArg>]
     #
-    attr_reader :optional_arg_definitions
+    attr_reader :optional_args
 
     ##
     # Return the remaining arguments specification, or `nil` if remaining
     # arguments are currently not supported by this tool.
     # @return [Toys::PositionalArg,nil]
     #
-    attr_reader :remaining_args_definition
+    attr_reader :remaining_arg
 
     ##
     # Return a list of flags that have been used in the flag definitions.
@@ -245,9 +245,9 @@ module Toys
     # @return [Boolean]
     #
     def includes_arguments?
-      !default_data.empty? || !flag_definitions.empty? ||
-        !required_arg_definitions.empty? || !optional_arg_definitions.empty? ||
-        !remaining_args_definition.nil? || flags_before_args_enforced?
+      !default_data.empty? || !flags.empty? ||
+        !required_args.empty? || !optional_args.empty? ||
+        !remaining_arg.nil? || flags_before_args_enforced?
     end
 
     ##
@@ -287,9 +287,9 @@ module Toys
     # Returns all arg definitions in order: required, optional, remaining.
     # @return [Array<Toys::PositionalArg>]
     #
-    def arg_definitions
-      result = required_arg_definitions + optional_arg_definitions
-      result << remaining_args_definition if remaining_args_definition
+    def positional_args
+      result = required_args + optional_args
+      result << remaining_arg if remaining_arg
       result
     end
 
@@ -304,7 +304,7 @@ module Toys
     #
     def resolve_flag(str)
       result = Flag::Resolution.new(str)
-      flag_definitions.each do |flag_def|
+      flags.each do |flag_def|
         result.merge!(flag_def.resolve(str))
       end
       result
@@ -621,7 +621,7 @@ module Toys
       flag_def.desc = desc if desc
       flag_def.long_desc = long_desc if long_desc
       if flag_def.active?
-        @flag_definitions << flag_def
+        @flags << flag_def
         group << flag_def
       end
       @default_data[key] = default
@@ -676,7 +676,7 @@ module Toys
       completion = Completion.create(completion)
       arg_def = PositionalArg.new(key, :required, accept, nil, completion,
                                   desc, long_desc, display_name)
-      @required_arg_definitions << arg_def
+      @required_args << arg_def
       self
     end
 
@@ -714,7 +714,7 @@ module Toys
       completion = Completion.create(completion)
       arg_def = PositionalArg.new(key, :optional, accept, default, completion,
                                   desc, long_desc, display_name)
-      @optional_arg_definitions << arg_def
+      @optional_args << arg_def
       @default_data[key] = default
       self
     end
@@ -752,7 +752,7 @@ module Toys
       completion = Completion.create(completion)
       arg_def = PositionalArg.new(key, :remaining, accept, default, completion,
                                   desc, long_desc, display_name)
-      @remaining_args_definition = arg_def
+      @remaining_arg = arg_def
       @default_data[key] = default
       self
     end
@@ -856,7 +856,7 @@ module Toys
           config_proc.call
         end
         flag_groups.each do |flag_group|
-          flag_group.flag_definitions.sort_by!(&:sort_str)
+          flag_group.flags.sort_by!(&:sort_str)
         end
         @definition_finished = true
       end
@@ -987,7 +987,7 @@ module Toys
         flag_def = arg_parser.active_flag_def
         return [] if flag_def && flag_def.value_type == :required
         return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
-        context.tool_definition.flag_definitions.flat_map do |flag|
+        context.tool_definition.flags.flat_map do |flag|
           flag.flag_completion.call(context)
         end
       end

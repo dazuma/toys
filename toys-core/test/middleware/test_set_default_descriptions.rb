@@ -80,7 +80,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type boolean flag.", flag.desc.to_s)
     end
 
@@ -93,7 +93,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type boolean flag (default is true).",
                    flag.desc.to_s)
     end
@@ -107,7 +107,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type string.", flag.desc.to_s)
     end
 
@@ -120,7 +120,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type string (default is \"hello\").",
                    flag.desc.to_s)
     end
@@ -134,7 +134,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type integer.", flag.desc.to_s)
     end
 
@@ -147,7 +147,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      flag = tool.flag_definitions.first
+      flag = tool.flags.first
       assert_equal("Sets the \"bar\" option as type integer (default is 3).",
                    flag.desc.to_s)
     end
@@ -163,7 +163,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.required_arg_definitions.first
+      arg = tool.required_args.first
       assert_equal("Required string argument.", arg.desc.to_s)
     end
 
@@ -176,7 +176,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.required_arg_definitions.first
+      arg = tool.required_args.first
       assert_equal("Required integer argument.", arg.desc.to_s)
     end
   end
@@ -191,7 +191,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.optional_arg_definitions.first
+      arg = tool.optional_args.first
       assert_equal("Optional string argument.", arg.desc.to_s)
     end
 
@@ -204,7 +204,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.optional_arg_definitions.first
+      arg = tool.optional_args.first
       assert_equal("Optional string argument (default is \"hello\").", arg.desc.to_s)
     end
 
@@ -217,7 +217,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.optional_arg_definitions.first
+      arg = tool.optional_args.first
       assert_equal("Optional integer argument.", arg.desc.to_s)
     end
 
@@ -230,7 +230,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.optional_arg_definitions.first
+      arg = tool.optional_args.first
       assert_equal("Optional integer argument (default is 3).", arg.desc.to_s)
     end
   end
@@ -245,7 +245,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.remaining_args_definition
+      arg = tool.remaining_arg
       assert_equal("Remaining arguments are type string (default is []).", arg.desc.to_s)
     end
 
@@ -258,7 +258,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.remaining_args_definition
+      arg = tool.remaining_arg
       assert_equal("Remaining arguments are type string (default is [\"hello\"]).", arg.desc.to_s)
     end
 
@@ -271,7 +271,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.remaining_args_definition
+      arg = tool.remaining_arg
       assert_equal("Remaining arguments are type integer (default is []).", arg.desc.to_s)
     end
 
@@ -284,7 +284,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
-      arg = tool.remaining_args_definition
+      arg = tool.remaining_arg
       assert_equal("Remaining arguments are type integer (default is [3, 4, 5]).", arg.desc.to_s)
     end
   end

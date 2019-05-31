@@ -5,6 +5,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 ## Immediate tasks
 
 * Have .create methods on classes with terrible constructors
+* Consider folding Runner into CLI, renaming Tool to Run (or Context?), and ToolDefinition to Tool.
 
 ## Investigations/wishlist
 
