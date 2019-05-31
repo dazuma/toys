@@ -169,7 +169,7 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param [Boolean] include_hidden If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::ToolDefinition,Toys::Definition::Alias>]
+    # @return [Array<Toys::ToolDefinition,Toys::AliasDefinition>]
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -216,7 +216,7 @@ module Toys
     #
     # @param [Array<String>] words The name of the tool.
     # @param [Integer] priority The priority of the request.
-    # @return [Toys::ToolDefinition,Toys::Definition::Alias,nil] The tool or
+    # @return [Toys::ToolDefinition,Toys::AliasDefinition,nil] The tool or
     #     alias, or `nil` if the given priority is insufficient.
     #
     # @private
@@ -236,7 +236,7 @@ module Toys
     # @param [Array<String>] target The alias target name
     # @param [Integer] priority The priority of the request
     #
-    # @return [Toys::Definition::Alias] The alias created
+    # @return [Toys::AliasDefinition] The alias created
     #
     # @private
     #
@@ -246,7 +246,7 @@ module Toys
         raise ToolDefinitionError,
               "Cannot make #{words.inspect} an alias because it is already defined"
       end
-      alias_def = Definition::Alias.new(self, words, target, priority)
+      alias_def = AliasDefinition.new(self, words, target, priority)
       tool_data.definitions[priority] = alias_def
       activate_tool_definition(words, priority)
       alias_def
@@ -273,7 +273,7 @@ module Toys
     #
     def get_tool_definition(words, priority)
       parent = words.empty? ? nil : get_tool_definition(words.slice(0..-2), priority)
-      if parent.is_a?(Definition::Alias)
+      if parent.is_a?(AliasDefinition)
         raise ToolDefinitionError,
               "Cannot create children of #{parent.display_name.inspect} because it is an alias"
       end
@@ -372,7 +372,7 @@ module Toys
       tool_data = get_tool_data(words)
       result = tool_data.active_definition
       case result
-      when Definition::Alias
+      when AliasDefinition
         resolve_alias(result, looked_up)
       when ToolDefinition
         result
@@ -532,7 +532,7 @@ module Toys
 
     def tool_hidden?(tool, next_tool)
       return true if tool.full_name.any? { |n| n.start_with?("_") }
-      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a? Definition::Alias
+      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a?(AliasDefinition)
       !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 

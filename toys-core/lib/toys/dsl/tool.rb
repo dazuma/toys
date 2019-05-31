@@ -944,7 +944,7 @@ module Toys
             else
               loader.get_tool_definition(words, priority)
             end
-          if cur_tool.is_a?(Definition::Alias)
+          if cur_tool.is_a?(AliasDefinition)
             raise ToolDefinitionError,
                   "Cannot configure #{words.join(' ').inspect} because it is an alias"
           end
