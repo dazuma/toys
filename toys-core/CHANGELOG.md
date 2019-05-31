@@ -15,10 +15,13 @@ This is a major update with significant new features and a bunch of fixes. It do
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
-* CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
 * CHANGED: Lifted ModuleLookup and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.
 * CHANGED: Lifted all classes out of the Definition module.
+* CHANGED: FlagSyntax is now Flag::Syntax, and FlagResolution is now Flag::Resolution.
+* CHANGED: FlagGroup::Base is now the base class instead of FlagGroup itself.
+* CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
+* CHANGED: Renamed Flag#single_flag_syntax to short_flag_syntax, and Flag#double_flag_syntax to long_flag_syntax
 * CHANGED: Acceptor base class no longer takes a conversion proc.
 * CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.
 * CHANGED: Removed Tool#custom_acceptors.

@@ -173,19 +173,19 @@ module Toys
     attr_reader :sort_str
 
     ##
-    # Returns an array of Flag::Syntax including only single-dash flags
+    # Returns an array of Flag::Syntax including only short (single dash) flags
     # @return [Array<Flag::Syntax>]
     #
-    def single_flag_syntax
-      @single_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == "-" }
+    def short_flag_syntax
+      @short_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == :short }
     end
 
     ##
-    # Returns an array of Flag::Syntax including only double-dash flags
+    # Returns an array of Flag::Syntax including only long (double-dash) flags
     # @return [Array<Flag::Syntax>]
     #
-    def double_flag_syntax
-      @double_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == "--" }
+    def long_flag_syntax
+      @long_flag_syntax ||= flag_syntax.find_all { |ss| ss.flag_style == :long }
     end
 
     ##
@@ -325,10 +325,10 @@ module Toys
       @value_type = nil
       @value_label = needs_val ? "VALUE" : nil
       @value_delim = " "
-      single_flag_syntax.reverse_each do |flag|
+      short_flag_syntax.reverse_each do |flag|
         analyze_flag_syntax(flag)
       end
-      double_flag_syntax.reverse_each do |flag|
+      long_flag_syntax.reverse_each do |flag|
         analyze_flag_syntax(flag)
       end
       @flag_type ||= :boolean
@@ -357,12 +357,12 @@ module Toys
     def summarize(name)
       @display_name =
         name ||
-        double_flag_syntax.first&.canonical_str ||
-        single_flag_syntax.first&.canonical_str ||
+        long_flag_syntax.first&.canonical_str ||
+        short_flag_syntax.first&.canonical_str ||
         key.to_s
       @sort_str =
-        double_flag_syntax.first&.sort_str ||
-        single_flag_syntax.first&.sort_str ||
+        long_flag_syntax.first&.sort_str ||
+        short_flag_syntax.first&.sort_str ||
         ""
     end
 
@@ -377,23 +377,23 @@ module Toys
       def initialize(str)
         case str
         when /^(-([\?\w]))$/
-          setup(str, $1, nil, $1, $2, "-", nil, nil, nil, nil)
+          setup(str, $1, nil, $1, $2, :short, nil, nil, nil, nil)
         when /^(-([\?\w]))( ?)\[(\w+)\]$/
-          setup(str, $1, nil, $1, $2, "-", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
         when /^(-([\?\w]))\[( )(\w+)\]$/
-          setup(str, $1, nil, $1, $2, "-", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
         when /^(-([\?\w]))( ?)(\w+)$/
-          setup(str, $1, nil, $1, $2, "-", :value, :required, $3, $4)
+          setup(str, $1, nil, $1, $2, :short, :value, :required, $3, $4)
         when /^--\[no-\](\w[\?\w-]*)$/
-          setup(str, "--#{$1}", "--no-#{$1}", str, $1, "--", :boolean, nil, nil, nil)
+          setup(str, "--#{$1}", "--no-#{$1}", str, $1, :long, :boolean, nil, nil, nil)
         when /^(--(\w[\?\w-]*))$/
-          setup(str, $1, nil, $1, $2, "--", nil, nil, nil, nil)
+          setup(str, $1, nil, $1, $2, :long, nil, nil, nil, nil)
         when /^(--(\w[\?\w-]*))([= ])\[(\w+)\]$/
-          setup(str, $1, nil, $1, $2, "--", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
         when /^(--(\w[\?\w-]*))\[([= ])(\w+)\]$/
-          setup(str, $1, nil, $1, $2, "--", :value, :optional, $3, $4)
+          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
         when /^(--(\w[\?\w-]*))([= ])(\w+)$/
-          setup(str, $1, nil, $1, $2, "--", :value, :required, $3, $4)
+          setup(str, $1, nil, $1, $2, :long, :value, :required, $3, $4)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
@@ -419,8 +419,8 @@ module Toys
         @flag_type = canonical_flag_type
         return unless canonical_flag_type == :value
         @value_type = canonical_value_type
-        canonical_value_delim = "" if canonical_value_delim == "=" && flag_style == "-"
-        canonical_value_delim = "=" if canonical_value_delim == "" && flag_style == "--"
+        canonical_value_delim = "" if canonical_value_delim == "=" && flag_style == :short
+        canonical_value_delim = "=" if canonical_value_delim == "" && flag_style == :long
         @value_delim = canonical_value_delim
         @value_label = canonical_value_label
         label = @value_type == :optional ? "[#{@value_label}]" : @value_label
@@ -594,14 +594,14 @@ module Toys
       def collect_results
         results = []
         if @include_short
-          results += @flag.single_flag_syntax.map(&:positive_flag)
+          results += @flag.short_flag_syntax.map(&:positive_flag)
         end
         if @include_long
           results +=
             if @include_negative
-              @flag.double_flag_syntax.flat_map(&:flags)
+              @flag.long_flag_syntax.flat_map(&:flags)
             else
-              @flag.double_flag_syntax.map(&:positive_flag)
+              @flag.long_flag_syntax.map(&:positive_flag)
             end
         end
         results

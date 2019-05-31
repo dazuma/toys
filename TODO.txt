@@ -4,10 +4,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* FlagSyntax fields should have symbol rather than string values (e.g. :long and :short instead of "--" and "-")
-* FlagSyntax.single_flag_syntax should be short_flag_syntax, and same for double -> long.
 * Have .create methods on classes with terrible constructors
-* Get rid of the Definition namespace
 
 ## Investigations/wishlist
 

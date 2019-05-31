@@ -231,12 +231,12 @@ module Toys
         end
 
         def add_flag(flag)
-          flags = flag.single_flag_syntax + flag.double_flag_syntax
+          flags = flag.short_flag_syntax + flag.long_flag_syntax
           last_index = flags.size - 1
           flags_str = flags.each_with_index.map do |fs, i|
             i == last_index ? fs.canonical_str : fs.str_without_value
           end.join(", ")
-          flags_str = "    #{flags_str}" if flag.single_flag_syntax.empty?
+          flags_str = "    #{flags_str}" if flag.short_flag_syntax.empty?
           add_right_column_desc(flags_str, wrap_desc(flag.desc))
         end
 

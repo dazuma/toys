@@ -256,15 +256,15 @@ describe Toys::ToolDefinition do
       it "finds single and double flags with values" do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a", "-cVALUE"], flag.single_flag_syntax.map(&:original_str))
-        assert_equal(["--bb", "--dd=VAL"], flag.double_flag_syntax.map(&:original_str))
+        assert_equal(["-a", "-cVALUE"], flag.short_flag_syntax.map(&:original_str))
+        assert_equal(["--bb", "--dd=VAL"], flag.long_flag_syntax.map(&:original_str))
       end
 
       it "finds single and double flags with booleans" do
         tool.add_flag(:a, ["-a", "--bb", "--[no-]ee"])
         flag = tool.flag_definitions.first
-        assert_equal(["-a"], flag.single_flag_syntax.map(&:original_str))
-        assert_equal(["--bb", "--[no-]ee"], flag.double_flag_syntax.map(&:original_str))
+        assert_equal(["-a"], flag.short_flag_syntax.map(&:original_str))
+        assert_equal(["--bb", "--[no-]ee"], flag.long_flag_syntax.map(&:original_str))
       end
     end
 
