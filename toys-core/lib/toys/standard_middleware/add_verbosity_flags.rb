@@ -72,25 +72,24 @@ module Toys
       ##
       # Configure the tool flags.
       #
-      def config(tool_definition, _loader)
-        unless tool_definition.argument_parsing_disabled?
-          StandardMiddleware.append_common_flag_group(tool_definition)
-          add_verbose_flags(tool_definition)
-          add_quiet_flags(tool_definition)
+      def config(tool, _loader)
+        unless tool.argument_parsing_disabled?
+          StandardMiddleware.append_common_flag_group(tool)
+          add_verbose_flags(tool)
+          add_quiet_flags(tool)
         end
         yield
       end
 
       private
 
-      INCREMENT_HANDLER = ->(_val, cur) { cur + 1 }
-      DECREMENT_HANDLER = ->(_val, cur) { cur - 1 }
+      INCREMENT_HANDLER = ->(_val, cur) { cur.to_i + 1 }
+      DECREMENT_HANDLER = ->(_val, cur) { cur.to_i - 1 }
 
-      def add_verbose_flags(tool_definition)
-        verbose_flags = resolve_flags_spec(@verbose_flags, tool_definition,
-                                           DEFAULT_VERBOSE_FLAGS)
+      def add_verbose_flags(tool)
+        verbose_flags = resolve_flags_spec(@verbose_flags, tool, DEFAULT_VERBOSE_FLAGS)
         unless verbose_flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             Context::Key::VERBOSITY, verbose_flags,
             report_collisions: false,
             handler: INCREMENT_HANDLER,
@@ -101,10 +100,10 @@ module Toys
         end
       end
 
-      def add_quiet_flags(tool_definition)
-        quiet_flags = resolve_flags_spec(@quiet_flags, tool_definition, DEFAULT_QUIET_FLAGS)
+      def add_quiet_flags(tool)
+        quiet_flags = resolve_flags_spec(@quiet_flags, tool, DEFAULT_QUIET_FLAGS)
         unless quiet_flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             Context::Key::VERBOSITY, quiet_flags,
             report_collisions: false,
             handler: DECREMENT_HANDLER,

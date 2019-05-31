@@ -222,20 +222,20 @@ module Toys
       ##
       # Configure flags and default data.
       #
-      def config(tool_definition, loader)
-        unless tool_definition.argument_parsing_disabled?
-          StandardMiddleware.append_common_flag_group(tool_definition)
-          has_subtools = loader.has_subtools?(tool_definition.full_name)
-          help_flags = add_help_flags(tool_definition)
-          usage_flags = add_usage_flags(tool_definition)
-          list_flags = has_subtools ? add_list_flags(tool_definition) : []
+      def config(tool, loader)
+        unless tool.argument_parsing_disabled?
+          StandardMiddleware.append_common_flag_group(tool)
+          has_subtools = loader.has_subtools?(tool.full_name)
+          help_flags = add_help_flags(tool)
+          usage_flags = add_usage_flags(tool)
+          list_flags = has_subtools ? add_list_flags(tool) : []
           if (!help_flags.empty? || !list_flags.empty? || @fallback_execution) && has_subtools
-            add_recursive_flags(tool_definition)
-            add_search_flags(tool_definition)
-            add_show_all_subtools_flags(tool_definition)
+            add_recursive_flags(tool)
+            add_search_flags(tool)
+            add_show_all_subtools_flags(tool)
           end
           if !help_flags.empty? || !usage_flags.empty? || !list_flags.empty?
-            add_root_args(tool_definition)
+            add_root_args(tool)
           end
         end
         yield
@@ -275,7 +275,7 @@ module Toys
       end
 
       def should_show_help(context)
-        @fallback_execution && !context[Context::Key::TOOL_DEFINITION].runnable? ||
+        @fallback_execution && !context[Context::Key::TOOL].runnable? ||
           context[SHOW_HELP_KEY]
       end
 
@@ -304,8 +304,8 @@ module Toys
         tool_name = context[TOOL_NAME_KEY]
         return Utils::HelpText.from_context(context) if tool_name.nil? || tool_name.empty?
         loader = context[Context::Key::LOADER]
-        tool_definition, rest = loader.lookup(tool_name)
-        help_text = Utils::HelpText.new(tool_definition, loader, context[Context::Key::BINARY_NAME])
+        tool, rest = loader.lookup(tool_name)
+        help_text = Utils::HelpText.new(tool, loader, context[Context::Key::BINARY_NAME])
         report_usage_error(tool_name, help_text) unless rest.empty?
         help_text
       end
@@ -317,10 +317,10 @@ module Toys
         Tool.exit(1)
       end
 
-      def add_help_flags(tool_definition)
-        flags = resolve_flags_spec(@help_flags, tool_definition, DEFAULT_HELP_FLAGS)
+      def add_help_flags(tool)
+        flags = resolve_flags_spec(@help_flags, tool, DEFAULT_HELP_FLAGS)
         unless flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             SHOW_HELP_KEY, flags,
             report_collisions: false,
             desc: "Display help for this tool",
@@ -330,10 +330,10 @@ module Toys
         flags
       end
 
-      def add_usage_flags(tool_definition)
-        flags = resolve_flags_spec(@usage_flags, tool_definition, DEFAULT_USAGE_FLAGS)
+      def add_usage_flags(tool)
+        flags = resolve_flags_spec(@usage_flags, tool, DEFAULT_USAGE_FLAGS)
         unless flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             SHOW_USAGE_KEY, flags,
             report_collisions: false,
             desc: "Display a brief usage string for this tool",
@@ -343,10 +343,10 @@ module Toys
         flags
       end
 
-      def add_list_flags(tool_definition)
-        flags = resolve_flags_spec(@list_flags, tool_definition, DEFAULT_LIST_FLAGS)
+      def add_list_flags(tool)
+        flags = resolve_flags_spec(@list_flags, tool, DEFAULT_LIST_FLAGS)
         unless flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             SHOW_LIST_KEY, flags,
             report_collisions: false,
             desc: "List the subtools under this tool",
@@ -356,12 +356,12 @@ module Toys
         flags
       end
 
-      def add_recursive_flags(tool_definition)
-        flags = resolve_flags_spec(@recursive_flags, tool_definition, DEFAULT_RECURSIVE_FLAGS)
+      def add_recursive_flags(tool)
+        flags = resolve_flags_spec(@recursive_flags, tool, DEFAULT_RECURSIVE_FLAGS)
         if flags.empty?
-          tool_definition.default_data[RECURSIVE_SUBTOOLS_KEY] = @default_recursive
+          tool.default_data[RECURSIVE_SUBTOOLS_KEY] = @default_recursive
         else
-          tool_definition.add_flag(
+          tool.add_flag(
             RECURSIVE_SUBTOOLS_KEY, flags,
             report_collisions: false, default: @default_recursive,
             desc: "List all subtools recursively when displaying help" \
@@ -372,10 +372,10 @@ module Toys
         flags
       end
 
-      def add_search_flags(tool_definition)
-        flags = resolve_flags_spec(@search_flags, tool_definition, DEFAULT_SEARCH_FLAGS)
+      def add_search_flags(tool)
+        flags = resolve_flags_spec(@search_flags, tool, DEFAULT_SEARCH_FLAGS)
         unless flags.empty?
-          tool_definition.add_flag(
+          tool.add_flag(
             SEARCH_STRING_KEY, flags,
             report_collisions: false,
             desc: "Search subtools for the given regular expression when displaying help",
@@ -385,13 +385,12 @@ module Toys
         flags
       end
 
-      def add_show_all_subtools_flags(tool_definition)
-        flags = resolve_flags_spec(@show_all_subtools_flags, tool_definition,
-                                   DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS)
+      def add_show_all_subtools_flags(tool)
+        flags = resolve_flags_spec(@show_all_subtools_flags, tool, DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS)
         if flags.empty?
-          tool_definition.default_data[SHOW_ALL_SUBTOOLS_KEY] = @default_show_all_subtools
+          tool.default_data[SHOW_ALL_SUBTOOLS_KEY] = @default_show_all_subtools
         else
-          tool_definition.add_flag(
+          tool.add_flag(
             SHOW_ALL_SUBTOOLS_KEY, flags,
             report_collisions: false, default: @default_show_all_subtools,
             desc: "List all subtools including hidden subtools and namespaces" \
@@ -402,16 +401,16 @@ module Toys
         flags
       end
 
-      def add_root_args(tool_definition)
-        if @allow_root_args && tool_definition.root? && tool_definition.positional_args.empty?
-          tool_definition.set_remaining_args(TOOL_NAME_KEY,
-                                             display_name: "TOOL_NAME",
-                                             desc: "The tool for which to display help")
+      def add_root_args(tool)
+        if @allow_root_args && tool.root? && tool.positional_args.empty?
+          tool.set_remaining_args(TOOL_NAME_KEY,
+                                  display_name: "TOOL_NAME",
+                                  desc: "The tool for which to display help")
         end
       end
 
-      def resolve_flags_spec(flags, tool_definition, defaults)
-        flags = flags.call(tool_definition) if flags.respond_to?(:call)
+      def resolve_flags_spec(flags, tool, defaults)
+        flags = flags.call(tool) if flags.respond_to?(:call)
         case flags
         when true, :default
           Array(defaults)

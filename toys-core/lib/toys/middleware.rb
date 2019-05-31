@@ -57,10 +57,10 @@ module Toys
     # This basic implementation does nothing and simply yields to the next
     # middleware.
     #
-    # @param [Toys::Tool] tool_definition The tool definition to modify.
+    # @param [Toys::Tool] tool The tool definition to modify.
     # @param [Toys::Loader] loader The loader that loaded this tool.
     #
-    def config(tool_definition, loader) # rubocop:disable Lint/UnusedMethodArgument
+    def config(tool, loader) # rubocop:disable Lint/UnusedMethodArgument
       yield
     end
 

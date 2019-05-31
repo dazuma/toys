@@ -32,20 +32,22 @@ module Toys
     ##
     # Create an argument parser for a particular tool.
     #
-    # @param [Toys::Tool] tool_definition The tool defining the argument format.
+    # @param [Toys::CLI] cli The CLI in effect.
+    # @param [Toys::Tool] tool The tool defining the argument format.
+    # @param [Integer] verbosity The initial verbosity level (default is 0).
     #
-    def initialize(tool_definition)
-      @tool_definition = tool_definition
+    def initialize(cli, tool, verbosity: 0)
+      @data = initial_data(cli, tool, verbosity)
+      @tool = tool
       @seen_flag_keys = []
       @errors = []
       @extra_args = []
       @parsed_args = []
       @active_flag_def = nil
       @active_flag_arg = nil
-      @arg_defs = tool_definition.positional_args
+      @arg_defs = tool.positional_args
       @arg_def_index = 0
       @flags_allowed = true
-      @data = duplicate_hash(tool_definition.default_data)
       @finished = false
     end
 
@@ -53,7 +55,7 @@ module Toys
     # The tool definition governing this parser.
     # @return [Toys::Tool]
     #
-    attr_reader :tool_definition
+    attr_reader :tool
 
     ##
     # All command line arguments that have been parsed.
@@ -123,9 +125,9 @@ module Toys
     def add(arg)
       raise "Parser has finished" if @finished
       @parsed_args << arg
-      check_flag_value(arg) ||
-        check_flag(arg) ||
-        handle_positional(arg)
+      unless @tool.argument_parsing_disabled?
+        check_flag_value(arg) || check_flag(arg) || handle_positional(arg)
+      end
       self
     end
 
@@ -139,7 +141,8 @@ module Toys
     # *   One or more extra arguments were provided.
     # *   Restrictions defined in one or more flag groups were not fulfilled.
     #
-    # Any errors are added to the errors array.
+    # Any errors are added to the errors array. It also fills in final values
+    # for `Context::Key::USAGE_ERROR` and `Context::Key::ARGS`.
     #
     # After this method is called, this object is locked down, and no
     # additional arguments may be parsed.
@@ -148,6 +151,7 @@ module Toys
       finish_active_flag
       finish_arg_defs
       finish_flag_groups
+      finish_special_data
       @finished = true
       self
     end
@@ -157,24 +161,38 @@ module Toys
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val, _prev) { val }
 
+    def initial_data(cli, tool, verbosity)
+      data = {
+        Context::Key::ARGS => nil,
+        Context::Key::BINARY_NAME => cli.binary_name,
+        Context::Key::CLI => cli,
+        Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
+        Context::Key::LOADER => cli.loader,
+        Context::Key::LOGGER => cli.logger,
+        Context::Key::TOOL => tool,
+        Context::Key::TOOL_SOURCE => tool.source_info,
+        Context::Key::TOOL_NAME => tool.full_name,
+        Context::Key::USAGE_ERROR => nil,
+      }
+      merge_default_data(data, tool.default_data)
+      data[Context::Key::VERBOSITY] ||= verbosity
+      data
+    end
+
     if ::RUBY_VERSION < "2.4"
-      def duplicate_hash(orig)
-        copy = {}
+      def merge_default_data(data, orig)
         orig.each do |k, v|
-          copy[k] =
+          data[k] =
             begin
               v.clone
             rescue ::TypeError
               v
             end
         end
-        copy
       end
     else
-      def duplicate_hash(orig)
-        copy = {}
-        orig.each { |k, v| copy[k] = v.clone }
-        copy
+      def merge_default_data(data, orig)
+        orig.each { |k, v| data[k] = v.clone }
       end
     end
 
@@ -249,7 +267,7 @@ module Toys
     end
 
     def handle_positional(arg)
-      if @tool_definition.flags_before_args_enforced?
+      if @tool.flags_before_args_enforced?
         @flags_allowed = false
       end
       arg_def = next_arg_def
@@ -263,7 +281,7 @@ module Toys
     end
 
     def find_flag(name)
-      flag_result = @tool_definition.resolve_flag(name)
+      flag_result = @tool.resolve_flag(name)
       unless flag_result.found_unique?
         @errors << "Flag \"#{name}\" is not recognized." if flag_result.not_found?
         @errors << "Flag prefix \"#{name}\" is ambiguous." if flag_result.found_multiple?
@@ -304,18 +322,25 @@ module Toys
       end
       unless @extra_args.empty?
         @errors <<
-          if @tool_definition.runnable? || !@seen_flag_keys.empty?
+          if @tool.runnable? || !@seen_flag_keys.empty?
             "Extra arguments: #{@extra_args.inspect}."
           else
-            "Tool not found: #{(@tool_definition.full_name + parsed_args).inspect}."
+            "Tool not found: #{(@tool.full_name + parsed_args).inspect}."
           end
       end
     end
 
     def finish_flag_groups
-      @tool_definition.flag_groups.each do |group|
+      @tool.flag_groups.each do |group|
         @errors += Array(group.validation_errors(@seen_flag_keys))
       end
+    end
+
+    def finish_special_data
+      unless @errors.empty?
+        @data[Context::Key::USAGE_ERROR] = @errors.join("\n")
+      end
+      @data[Context::Key::ARGS] = @parsed_args
     end
   end
 end

@@ -52,37 +52,29 @@ module Toys
     #
     module Key
       ##
+      # Context key for the argument list passed to the current tool. Value is
+      # an array of strings.
+      # @return [Object]
+      #
+      ARGS = ::Object.new.freeze
+
+      ##
+      # Context key for the name of the toys binary. Value is a string.
+      # @return [Object]
+      #
+      BINARY_NAME = ::Object.new.freeze
+
+      ##
       # Context key for the currently running CLI.
       # @return [Object]
       #
       CLI = ::Object.new.freeze
 
       ##
-      # Context key for the verbosity value. Verbosity is an integer defaulting
-      # to 0, with higher values meaning more verbose and lower meaning quieter.
+      # Context key for the context directory.
       # @return [Object]
       #
-      VERBOSITY = ::Object.new.freeze
-
-      ##
-      # Context key for the `Toys::Tool` object being executed.
-      # @return [Object]
-      #
-      TOOL_DEFINITION = ::Object.new.freeze
-
-      ##
-      # Context key for the `Toys::SourceInfo` describing the
-      # source of this tool.
-      # @return [Object]
-      #
-      TOOL_SOURCE = ::Object.new.freeze
-
-      ##
-      # Context key for the full name of the tool being executed. Value is an
-      # array of strings.
-      # @return [Object]
-      #
-      TOOL_NAME = ::Object.new.freeze
+      CONTEXT_DIRECTORY = ::Object.new.freeze
 
       ##
       # Context key for the active `Toys::Loader` object.
@@ -97,17 +89,24 @@ module Toys
       LOGGER = ::Object.new.freeze
 
       ##
-      # Context key for the name of the toys binary. Value is a string.
+      # Context key for the `Toys::Tool` object being executed.
       # @return [Object]
       #
-      BINARY_NAME = ::Object.new.freeze
+      TOOL = ::Object.new.freeze
 
       ##
-      # Context key for the argument list passed to the current tool. Value is
-      # an array of strings.
+      # Context key for the full name of the tool being executed. Value is an
+      # array of strings.
       # @return [Object]
       #
-      ARGS = ::Object.new.freeze
+      TOOL_NAME = ::Object.new.freeze
+
+      ##
+      # Context key for the `Toys::SourceInfo` describing the
+      # source of this tool.
+      # @return [Object]
+      #
+      TOOL_SOURCE = ::Object.new.freeze
 
       ##
       # Context key for the usage error raised. Value is a string if there was
@@ -115,6 +114,13 @@ module Toys
       # @return [Object]
       #
       USAGE_ERROR = ::Object.new.freeze
+
+      ##
+      # Context key for the verbosity value. Verbosity is an integer defaulting
+      # to 0, with higher values meaning more verbose and lower meaning quieter.
+      # @return [Object]
+      #
+      VERBOSITY = ::Object.new.freeze
     end
 
     ##
@@ -123,55 +129,10 @@ module Toys
     # for execution.
     # @private
     #
-    # @param [Toys::CLI] cli
     # @param [Hash] data
     #
-    def initialize(cli, data)
+    def initialize(data)
       @__data = data
-      @__data[Key::CLI] = cli
-      @__data[Key::LOADER] = cli.loader
-      @__data[Key::BINARY_NAME] = cli.binary_name
-      @__data[Key::LOGGER] = cli.logger
-    end
-
-    ##
-    # Return the currently running CLI.
-    # @return [Toys::CLI]
-    #
-    def cli
-      @__data[Key::CLI]
-    end
-
-    ##
-    # Return the current verbosity setting as an integer.
-    # @return [Integer]
-    #
-    def verbosity
-      @__data[Key::VERBOSITY]
-    end
-
-    ##
-    # Return the tool being executed.
-    # @return [Toys::Tool]
-    #
-    def tool_definition
-      @__data[Key::TOOL_DEFINITION]
-    end
-
-    ##
-    # Return the source of the tool being executed.
-    # @return [Toys::SourceInfo]
-    #
-    def tool_source
-      @__data[Key::TOOL_SOURCE]
-    end
-
-    ##
-    # Return the name of the tool being executed, as an array of strings.
-    # @return [Array[String]]
-    #
-    def tool_name
-      @__data[Key::TOOL_NAME]
     end
 
     ##
@@ -184,20 +145,32 @@ module Toys
     end
 
     ##
-    # Return any usage error detected during argument parsing, or `nil` if
-    # no error was detected.
-    # @return [String,nil]
+    # Return the name of the binary that was executed.
+    # @return [String]
     #
-    def usage_error
-      @__data[Key::USAGE_ERROR]
+    def binary_name
+      @__data[Key::BINARY_NAME]
     end
 
     ##
-    # Return the logger for this execution.
-    # @return [Logger]
+    # Return the currently running CLI.
+    # @return [Toys::CLI]
     #
-    def logger
-      @__data[Key::LOGGER]
+    def cli
+      @__data[Key::CLI]
+    end
+
+    ##
+    # Return the context directory for this tool. Generally, this defaults
+    # to the directory containing the toys config directory structure being
+    # read, but it may be changed by setting a different context directory
+    # for the tool.
+    # May return nil if there is no context.
+    #
+    # @return [String,nil] Context directory
+    #
+    def context_directory
+      @__data[Key::CONTEXT_DIRECTORY]
     end
 
     ##
@@ -209,11 +182,52 @@ module Toys
     end
 
     ##
-    # Return the name of the binary that was executed.
-    # @return [String]
+    # Return the logger for this execution.
+    # @return [Logger]
     #
-    def binary_name
-      @__data[Key::BINARY_NAME]
+    def logger
+      @__data[Key::LOGGER]
+    end
+
+    ##
+    # Return the tool being executed.
+    # @return [Toys::Tool]
+    #
+    def tool
+      @__data[Key::TOOL]
+    end
+
+    ##
+    # Return the name of the tool being executed, as an array of strings.
+    # @return [Array[String]]
+    #
+    def tool_name
+      @__data[Key::TOOL_NAME]
+    end
+
+    ##
+    # Return the source of the tool being executed.
+    # @return [Toys::SourceInfo]
+    #
+    def tool_source
+      @__data[Key::TOOL_SOURCE]
+    end
+
+    ##
+    # Return any usage error detected during argument parsing, or `nil` if
+    # no error was detected.
+    # @return [String,nil]
+    #
+    def usage_error
+      @__data[Key::USAGE_ERROR]
+    end
+
+    ##
+    # Return the current verbosity setting as an integer.
+    # @return [Integer]
+    #
+    def verbosity
+      @__data[Key::VERBOSITY]
     end
 
     ##
@@ -226,6 +240,7 @@ module Toys
       @__data[key]
     end
     alias get []
+    alias __get []
 
     ##
     # Set an option or other piece of context data by key.
@@ -276,19 +291,6 @@ module Toys
     #
     def find_data(path, type: nil)
       @__data[Key::TOOL_SOURCE].find_data(path, type: type)
-    end
-
-    ##
-    # Return the context directory for this tool. Generally, this defaults
-    # to the directory containing the toys config directory structure being
-    # read, but it may be changed by setting a different context directory
-    # for the tool.
-    # May return nil if there is no context.
-    #
-    # @return [String,nil] Context directory
-    #
-    def context_directory
-      @__data[Key::TOOL_DEFINITION].context_directory
     end
 
     ##

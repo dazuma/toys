@@ -50,9 +50,9 @@ remaining_args :commands do
     last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
     new_params = {disable_flags: commands.empty?}
     new_context = Toys::Completion::Context.new(
-      context.loader, last_command, context.fragment, context.params.merge(new_params)
+      context.cli, last_command, context.fragment, context.params.merge(new_params)
     )
-    new_context.tool_definition.completion.call(new_context)
+    new_context.tool.completion.call(new_context)
   end
   desc "A series of tools to run, separated by the delimiter"
 end

@@ -35,63 +35,63 @@ describe Toys::Utils::HelpText do
 
   let(:single_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0).runnable = runnable
     loader
   }
   let(:namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0)
-    loader.activate_tool_definition(subtool_one_name, 0).runnable = runnable
-    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
-    loader.activate_tool_definition(hidden_subtool_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0)
+    loader.activate_tool(subtool_one_name, 0).runnable = runnable
+    loader.activate_tool(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool(hidden_subtool_name, 0).runnable = runnable
     loader
   }
   let(:runnable_namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0).runnable = runnable
-    loader.activate_tool_definition(subtool_one_name, 0).runnable = runnable
-    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0).runnable = runnable
+    loader.activate_tool(subtool_one_name, 0).runnable = runnable
+    loader.activate_tool(subtool_two_name, 0).runnable = runnable
     loader
   }
   let(:recursive_namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0)
-    loader.activate_tool_definition(subtool_one_name, 0)
-    loader.activate_tool_definition(subtool_one_name + ["a"], 0).runnable = runnable
-    loader.activate_tool_definition(subtool_one_name + ["b"], 0).runnable = runnable
-    loader.activate_tool_definition(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0)
+    loader.activate_tool(subtool_one_name, 0)
+    loader.activate_tool(subtool_one_name + ["a"], 0).runnable = runnable
+    loader.activate_tool(subtool_one_name + ["b"], 0).runnable = runnable
+    loader.activate_tool(subtool_two_name, 0).runnable = runnable
     loader
   }
   let(:long_namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool_definition(tool_name, 0)
-    loader.activate_tool_definition(tool_name + [long_tool_name], 0).runnable = runnable
+    loader.activate_tool(tool_name, 0)
+    loader.activate_tool(tool_name + [long_tool_name], 0).runnable = runnable
     loader
   }
 
   let(:normal_tool) do
-    single_loader.get_tool_definition(tool_name, 0)
+    single_loader.get_tool(tool_name, 0)
   end
   let(:runnable_namespace_tool) do
-    runnable_namespace_loader.get_tool_definition(tool_name, 0)
+    runnable_namespace_loader.get_tool(tool_name, 0)
   end
   let(:namespace_tool) do
-    namespace_loader.get_tool_definition(tool_name, 0)
+    namespace_loader.get_tool(tool_name, 0)
   end
   let(:subtool_one) do
-    namespace_loader.get_tool_definition(subtool_one_name, 0)
+    namespace_loader.get_tool(subtool_one_name, 0)
   end
   let(:subtool_two) do
-    namespace_loader.get_tool_definition(subtool_two_name, 0)
+    namespace_loader.get_tool(subtool_two_name, 0)
   end
   let(:recursive_namespace_tool) do
-    recursive_namespace_loader.get_tool_definition(tool_name, 0)
+    recursive_namespace_loader.get_tool(tool_name, 0)
   end
   let(:long_namespace_tool) do
-    long_namespace_loader.get_tool_definition(tool_name, 0)
+    long_namespace_loader.get_tool(tool_name, 0)
   end
   let(:subtool_long) do
-    long_namespace_loader.get_tool_definition(tool_name + [long_tool_name], 0)
+    long_namespace_loader.get_tool(tool_name + [long_tool_name], 0)
   end
 
   describe "help text" do

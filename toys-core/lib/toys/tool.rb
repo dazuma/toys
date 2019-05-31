@@ -796,6 +796,16 @@ module Toys
       @custom_context_directory = dir
     end
 
+    ##
+    # Set the completion strategy for this Tool. By default, a
+    # {Toys::Tool::StandardCompletion} is used, providing a standard algorithm
+    # that finds appropriate completions from flags, positional arguments, and
+    # subtools. To customize completion, set this either to a hash of options
+    # to pass to the {Toys::Tool::StandardCompletion} constructor, or any other
+    # spec recognized by {Toys::Completion.create}.
+    #
+    # @param [Object] spec
+    #
     def completion=(spec)
       @completion =
         case spec
@@ -831,7 +841,7 @@ module Toys
     end
 
     ##
-    # Mark this tool as having at least one module included
+    # Mark this tool as having at least one module included.
     # @private
     #
     def mark_includes_modules
@@ -863,13 +873,12 @@ module Toys
     end
 
     ##
-    # Run all initializers against a tool. Should be called from the Runner
-    # only.
+    # Run all initializers against a context. Called from the Runner.
     # @private
     #
-    def run_initializers(tool)
+    def run_initializers(context)
       @initializers.each do |func, args|
-        tool.instance_exec(*args, &func)
+        context.instance_exec(*args, &func)
       end
     end
 
@@ -940,7 +949,7 @@ module Toys
         match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment)
         return unless match
 
-        flag_def = context.tool_definition.resolve_flag(match[1]).unique_flag
+        flag_def = context.tool.resolve_flag(match[1]).unique_flag
         return [] unless flag_def
         context.fragment = match[2]
         flag_def.value_completion.call(context)
@@ -954,8 +963,8 @@ module Toys
 
       def subtool_candidates(context)
         return if !@complete_subtools || !context.args.empty?
-        subtools = context.loader.list_subtools(context.tool_definition.full_name,
-                                                include_hidden: @include_hidden_subtools)
+        subtools = context.cli.loader.list_subtools(context.tool.full_name,
+                                                    include_hidden: @include_hidden_subtools)
         return if subtools.empty?
         fragment = context.fragment
         candidates = []
@@ -980,7 +989,7 @@ module Toys
         flag_def = arg_parser.active_flag_def
         return [] if flag_def && flag_def.value_type == :required
         return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
-        context.tool_definition.flags.flat_map do |flag|
+        context.tool.flags.flat_map do |flag|
           flag.flag_completion.call(context)
         end
       end

@@ -31,9 +31,9 @@ module Toys
     #
     class FlagGroup
       ## @private
-      def initialize(tool_dsl, tool_definition, flag_group)
+      def initialize(tool_dsl, tool, flag_group)
         @tool_dsl = tool_dsl
-        @tool_definition = tool_definition
+        @tool = tool
         @flag_group = flag_group
       end
 
@@ -103,7 +103,7 @@ module Toys
                                  value_completion, report_collisions, @flag_group,
                                  desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
-        flag_dsl._add_to(@tool_definition, key)
+        flag_dsl._add_to(@tool, key)
         DSL::Tool.maybe_add_getter(@tool_dsl, key)
         self
       end

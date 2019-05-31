@@ -14,6 +14,7 @@ This is a major update with significant new features and a bunch of fixes. It al
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
+* CHANGED: Renamed context base class from Toys::Tool to Toys::Context. Also renamed the tool_definition method to tool, along with the corresponding key name.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * CHANGED: Lifted ModuleLookup and WrappableString out of the Utils module.
 * CHANGED: The remaining files under "toys/utils" must now be required explicitly.

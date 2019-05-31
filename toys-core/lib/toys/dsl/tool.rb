@@ -189,7 +189,7 @@ module Toys
           subtool_words += [word]
           next_remaining = Loader.next_remaining_words(next_remaining, word)
         end
-        subtool = @__loader.get_tool_definition(subtool_words, @__priority)
+        subtool = @__loader.get_tool(subtool_words, @__priority)
         if subtool.includes_definition?
           case if_defined
           when :ignore
@@ -940,9 +940,9 @@ module Toys
           priority = tool_class.instance_variable_get(:@__priority)
           cur_tool =
             if activate
-              loader.activate_tool_definition(words, priority)
+              loader.activate_tool(words, priority)
             else
-              loader.get_tool_definition(words, priority)
+              loader.get_tool(words, priority)
             end
           if cur_tool.is_a?(Alias)
             raise ToolDefinitionError,

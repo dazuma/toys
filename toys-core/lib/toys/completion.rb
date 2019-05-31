@@ -40,27 +40,27 @@ module Toys
       ##
       # Create completion context
       #
-      # @param [Toys::Loader] loader The loader used to obtain tool defs
+      # @param [Toys::CLI] cli The CLI being run.
       # @param [Array<String>] previous_words Array of complete strings that
       #     appeared prior to the fragment to complete.
       # @param [String] fragment The string fragment to complete
       # @param [Hash] params Miscellaneous context data
       #
-      def initialize(loader, previous_words, fragment, params = {})
-        @loader = loader
+      def initialize(cli, previous_words, fragment, params = {})
+        @cli = cli
         @previous_words = previous_words
         @fragment = fragment
         @params = params
-        @tool_definition = nil
+        @tool = nil
         @args = nil
         @arg_parser = nil
       end
 
       ##
-      # The loader.
-      # @return [Toys::Loader]
+      # The CLI being run.
+      # @return [Toys::CLI]
       #
-      attr_reader :loader
+      attr_reader :cli
 
       ##
       # All previous words.
@@ -84,9 +84,9 @@ module Toys
       # The tool being invoked, which should control the completion.
       # @return [Toys::Tool]
       #
-      def tool_definition
+      def tool
         lookup_tool
-        @tool_definition
+        @tool
       end
 
       ##
@@ -106,13 +106,14 @@ module Toys
       # @return [Toys::ArgParser]
       #
       def arg_parser
-        @arg_parser ||= ArgParser.new(tool_definition).parse(args)
+        lookup_tool
+        @arg_parser ||= ArgParser.new(@cli, @tool).parse(@args)
       end
 
       private
 
       def lookup_tool
-        @tool_definition, @args = @loader.lookup(@previous_words) unless @tool_definition
+        @tool, @args = @cli.loader.lookup(@previous_words) unless @tool
       end
     end
 

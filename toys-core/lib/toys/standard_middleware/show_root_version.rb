@@ -70,10 +70,10 @@ module Toys
       ##
       # Adds the version flag if requested.
       #
-      def config(tool_definition, _loader)
-        if @version_string && tool_definition.root?
-          tool_definition.add_flag(SHOW_VERSION_KEY, @version_flags,
-                                   report_collisions: false, desc: @version_flag_desc)
+      def config(tool, _loader)
+        if @version_string && tool.root?
+          tool.add_flag(SHOW_VERSION_KEY, @version_flags,
+                        report_collisions: false, desc: @version_flag_desc)
         end
         yield
       end

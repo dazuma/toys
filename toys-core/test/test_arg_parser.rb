@@ -31,14 +31,25 @@ describe Toys::ArgParser do
   }
   let(:loader) { cli.loader }
   let(:tool_name) { "foo" }
-  let(:root_tool) { loader.activate_tool_definition([], 0) }
-  let(:tool) { loader.activate_tool_definition([tool_name], 0) }
-  let(:arg_parser) { Toys::ArgParser.new(tool) }
+  let(:root_tool) { loader.activate_tool([], 0) }
+  let(:tool) { loader.activate_tool([tool_name], 0) }
+  let(:arg_parser) { Toys::ArgParser.new(cli, tool) }
+
+  def assert_data_includes(expected, data)
+    expected.each do |k, v|
+      assert_equal(true, data.key?(k), "data does not include key #{k.inspect}")
+      if v.nil?
+        assert_nil(data[k], "data for key #{k.inspect} was #{data[k].inspect}, expected nil")
+      else
+        assert_equal(v, data[k],
+                     "data for key #{k.inspect} was #{data[k].inspect}, expected #{v.inspect}")
+      end
+    end
+  end
 
   it "allows empty arguments when none are specified" do
     arg_parser.parse([])
     arg_parser.finish
-    assert_equal({}, arg_parser.data)
     assert_empty(arg_parser.errors)
   end
 
@@ -57,7 +68,7 @@ describe Toys::ArgParser do
     tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hello")
     tool.add_optional_arg(:b, default: "world")
     tool.default_data[:c] = "today"
-    assert_equal({a: "hello", b: "world", c: "today"}, arg_parser.data)
+    assert_data_includes({a: "hello", b: "world", c: "today"}, arg_parser.data)
   end
 
   it "collects parsed args" do
@@ -76,7 +87,7 @@ describe Toys::ArgParser do
     tool.set_remaining_args(:c)
     arg_parser.parse(["-a", "hello", "-b"])
     arg_parser.finish
-    assert_equal({a: true, b: nil, c: ["hello", "-b"]}, arg_parser.data)
+    assert_data_includes({a: true, b: nil, c: ["hello", "-b"]}, arg_parser.data)
     assert_empty(arg_parser.errors)
   end
 
@@ -86,7 +97,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa"])
         arg_parser.parse([])
         arg_parser.finish
-        assert_equal({a: nil}, arg_parser.data)
+        assert_data_includes({a: nil}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -94,7 +105,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_equal({a: true}, arg_parser.data)
+        assert_data_includes({a: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -102,7 +113,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["--[no-]aa"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_equal({a: true}, arg_parser.data)
+        assert_data_includes({a: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -110,7 +121,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["--[no-]aa"])
         arg_parser.parse(["--no-aa"])
         arg_parser.finish
-        assert_equal({a: false}, arg_parser.data)
+        assert_data_includes({a: false}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -118,7 +129,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--abcde"])
         arg_parser.parse(["--ab"])
         arg_parser.finish
-        assert_equal({a: true}, arg_parser.data)
+        assert_data_includes({a: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -126,7 +137,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa"])
         arg_parser.parse(["--aa", "-a"])
         arg_parser.finish
-        assert_equal({a: true}, arg_parser.data)
+        assert_data_includes({a: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -134,7 +145,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa"], default: 0, handler: ->(_v, c) { c + 1 })
         arg_parser.parse(["--aa", "-a", "-a"])
         arg_parser.finish
-        assert_equal({a: 3}, arg_parser.data)
+        assert_data_includes({a: 3}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -143,7 +154,7 @@ describe Toys::ArgParser do
         tool.add_flag(:b, ["-b"], default: 0, handler: ->(_v, c) { c + 1 })
         arg_parser.parse(["-babba"])
         arg_parser.finish
-        assert_equal({a: 2, b: 3}, arg_parser.data)
+        assert_data_includes({a: 2, b: 3}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -151,7 +162,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a_bc)
         arg_parser.parse(["--a-bc"])
         arg_parser.finish
-        assert_equal({a_bc: true}, arg_parser.data)
+        assert_data_includes({a_bc: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -168,7 +179,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse([])
         arg_parser.finish
-        assert_equal({a: nil}, arg_parser.data)
+        assert_data_includes({a: nil}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -176,7 +187,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hehe")
         arg_parser.parse([])
         arg_parser.finish
-        assert_equal({a: "hehe"}, arg_parser.data)
+        assert_data_includes({a: "hehe"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -184,7 +195,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa", "hoho"])
         arg_parser.finish
-        assert_equal({a: "hoho"}, arg_parser.data)
+        assert_data_includes({a: "hoho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -192,7 +203,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa=hoho"])
         arg_parser.finish
-        assert_equal({a: "hoho"}, arg_parser.data)
+        assert_data_includes({a: "hoho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -200,7 +211,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["-a", "hoho"])
         arg_parser.finish
-        assert_equal({a: "hoho"}, arg_parser.data)
+        assert_data_includes({a: "hoho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -208,7 +219,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["-ahoho"])
         arg_parser.finish
-        assert_equal({a: "hoho"}, arg_parser.data)
+        assert_data_includes({a: "hoho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -216,7 +227,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa", "hoho", "-a", "hehe"])
         arg_parser.finish
-        assert_equal({a: "hehe"}, arg_parser.data)
+        assert_data_includes({a: "hehe"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -225,7 +236,7 @@ describe Toys::ArgParser do
         tool.add_flag(:b, ["-b"], default: 0, handler: ->(_v, c) { c + 1 })
         arg_parser.parse(["-bbaba"])
         arg_parser.finish
-        assert_equal({a: "ba", b: 2}, arg_parser.data)
+        assert_data_includes({a: "ba", b: 2}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -233,7 +244,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa", "--aa"])
         arg_parser.finish
-        assert_equal({a: "--aa"}, arg_parser.data)
+        assert_data_includes({a: "--aa"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -241,7 +252,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: Integer)
         arg_parser.parse(["--aa", "1234"])
         arg_parser.finish
-        assert_equal({a: 1234}, arg_parser.data)
+        assert_data_includes({a: 1234}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -257,7 +268,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum")
         arg_parser.parse(["--aa", "bar"])
         arg_parser.finish
-        assert_equal({a: :bar}, arg_parser.data)
+        assert_data_includes({a: :bar}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -273,7 +284,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a_bc, accept: String)
         arg_parser.parse(["--a-bc", "hoho"])
         arg_parser.finish
-        assert_equal({a_bc: "hoho"}, arg_parser.data)
+        assert_data_includes({a_bc: "hoho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -281,7 +292,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hi", handler: ->(v, c) { "#{c}#{v}" })
         arg_parser.parse(["--aa", "ho"])
         arg_parser.finish
-        assert_equal({a: "hiho"}, arg_parser.data)
+        assert_data_includes({a: "hiho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -289,7 +300,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], handler: :push)
         arg_parser.parse(["--aa", "hi", "-a", "ho"])
         arg_parser.finish
-        assert_equal({a: ["hi", "ho"]}, arg_parser.data)
+        assert_data_includes({a: ["hi", "ho"]}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -314,7 +325,7 @@ describe Toys::ArgParser do
         tool.set_remaining_args(:r)
         arg_parser.parse([])
         arg_parser.finish
-        assert_equal({a: "def", r: []}, arg_parser.data)
+        assert_data_includes({a: "def", r: []}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -327,21 +338,21 @@ describe Toys::ArgParser do
         it "recognizes setting with =" do
           arg_parser.parse(["--aa=hoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when the value is in a separate arg" do
           arg_parser.parse(["--aa", "hoho"])
           arg_parser.finish
-          assert_equal({a: nil, r: ["hoho"]}, arg_parser.data)
+          assert_data_includes({a: nil, r: ["hoho"]}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when no more args are available" do
           arg_parser.parse(["--aa"])
           arg_parser.finish
-          assert_equal({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: nil, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -355,28 +366,28 @@ describe Toys::ArgParser do
         it "recognizes setting with =" do
           arg_parser.parse(["--aa=hoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "recognizes a value in a separate arg" do
           arg_parser.parse(["--aa", "hoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil if the next separate arg looks like a flag" do
           arg_parser.parse(["--aa", "--"])
           arg_parser.finish
-          assert_equal({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: nil, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when no more args are available" do
           arg_parser.parse(["--aa"])
           arg_parser.finish
-          assert_equal({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: nil, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -390,7 +401,7 @@ describe Toys::ArgParser do
         it "recognizes setting with attached value" do
           arg_parser.parse(["-ahoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
@@ -398,14 +409,14 @@ describe Toys::ArgParser do
           tool.add_flag(:h, ["-h"])
           arg_parser.parse(["-ahoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: [], h: nil}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: [], h: nil}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when the value is in a separate arg" do
           arg_parser.parse(["-a", "hoho"])
           arg_parser.finish
-          assert_equal({a: nil, r: ["hoho"]}, arg_parser.data)
+          assert_data_includes({a: nil, r: ["hoho"]}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
@@ -413,14 +424,14 @@ describe Toys::ArgParser do
           tool.add_flag(:h, ["-h"])
           arg_parser.parse(["-ha", "hoho"])
           arg_parser.finish
-          assert_equal({a: nil, r: ["hoho"], h: true}, arg_parser.data)
+          assert_data_includes({a: nil, r: ["hoho"], h: true}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when no more args are available" do
           arg_parser.parse(["-a"])
           arg_parser.finish
-          assert_equal({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: nil, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -434,7 +445,7 @@ describe Toys::ArgParser do
         it "recognizes setting with attached value" do
           arg_parser.parse(["-ahoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
@@ -442,14 +453,14 @@ describe Toys::ArgParser do
           tool.add_flag(:h, ["-h"])
           arg_parser.parse(["-ahoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: [], h: nil}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: [], h: nil}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "recognizes a value in a separate arg" do
           arg_parser.parse(["-a", "hoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: []}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
@@ -457,14 +468,14 @@ describe Toys::ArgParser do
           tool.add_flag(:h, ["-h"])
           arg_parser.parse(["-ha", "hoho"])
           arg_parser.finish
-          assert_equal({a: "hoho", r: [], h: true}, arg_parser.data)
+          assert_data_includes({a: "hoho", r: [], h: true}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
         it "goes to nil when no more args are available" do
           arg_parser.parse(["-a"])
           arg_parser.finish
-          assert_equal({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: nil, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -489,7 +500,7 @@ describe Toys::ArgParser do
       tool.set_remaining_args(:b)
       arg_parser.parse(["--", "--aa", "hoho"])
       arg_parser.finish
-      assert_equal({a: nil, b: ["--aa", "hoho"]}, arg_parser.data)
+      assert_data_includes({a: nil, b: ["--aa", "hoho"]}, arg_parser.data)
     end
   end
 
@@ -504,7 +515,7 @@ describe Toys::ArgParser do
       it "succeeds when all flags are provided" do
         arg_parser.parse(["-a", "-b"])
         arg_parser.finish
-        assert_equal({a: true, b: true}, arg_parser.data)
+        assert_data_includes({a: true, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -526,7 +537,7 @@ describe Toys::ArgParser do
       it "succeeds when one flag is provided" do
         arg_parser.parse(["-b"])
         arg_parser.finish
-        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_data_includes({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -557,14 +568,14 @@ describe Toys::ArgParser do
       it "succeeds when one flag is provided" do
         arg_parser.parse(["-b"])
         arg_parser.finish
-        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_data_includes({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
       it "succeeds when no flag is provided" do
         arg_parser.parse([])
         arg_parser.finish
-        assert_equal({a: nil, b: nil}, arg_parser.data)
+        assert_data_includes({a: nil, b: nil}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -587,7 +598,7 @@ describe Toys::ArgParser do
       it "succeeds when one flag is provided" do
         arg_parser.parse(["-b"])
         arg_parser.finish
-        assert_equal({a: nil, b: true}, arg_parser.data)
+        assert_data_includes({a: nil, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -602,7 +613,7 @@ describe Toys::ArgParser do
       it "succeeds when mulitple flags are provided" do
         arg_parser.parse(["-a", "-b"])
         arg_parser.finish
-        assert_equal({a: true, b: true}, arg_parser.data)
+        assert_data_includes({a: true, b: true}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
     end
@@ -617,7 +628,7 @@ describe Toys::ArgParser do
       tool.set_remaining_args(:d)
       arg_parser.parse(["foo", "bar", "baz", "hello", "world"])
       arg_parser.finish
-      assert_equal({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, arg_parser.data)
+      assert_data_includes({a: "foo", b: "bar", c: "baz", d: ["hello", "world"]}, arg_parser.data)
       assert_empty(arg_parser.errors)
     end
 
@@ -628,7 +639,7 @@ describe Toys::ArgParser do
       tool.set_remaining_args(:d)
       arg_parser.parse(["foo", "bar"])
       arg_parser.finish
-      assert_equal({a: "foo", b: "bar", c: nil, d: []}, arg_parser.data)
+      assert_data_includes({a: "foo", b: "bar", c: nil, d: []}, arg_parser.data)
       assert_empty(arg_parser.errors)
     end
 
@@ -662,7 +673,7 @@ describe Toys::ArgParser do
       tool.add_required_arg(:a)
       arg_parser.parse(["foo"])
       arg_parser.finish
-      assert_equal({a: "foo", b: "hello"}, arg_parser.data)
+      assert_data_includes({a: "foo", b: "hello"}, arg_parser.data)
       assert_empty(arg_parser.errors)
     end
 
@@ -671,7 +682,7 @@ describe Toys::ArgParser do
       tool.add_optional_arg(:a, accept: "myenum")
       arg_parser.parse(["bar"])
       arg_parser.finish
-      assert_equal({a: :bar}, arg_parser.data)
+      assert_data_includes({a: :bar}, arg_parser.data)
       assert_empty(arg_parser.errors)
     end
 

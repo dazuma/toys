@@ -145,8 +145,22 @@ module Toys
     #
     attr_reader :base_level
 
+    ##
+    # Returns the overall completion strategy for this CLI.
+    # @return [Toys::Completion::Base,Proc]
+    #
     attr_reader :completion
 
+    ##
+    # Set the completion strategy for the CLI overall. By default, a
+    # {Toys::CLI::StandardCompletion} is used, providing a standard algorithm
+    # that finds the appropriate tool and uses its completion setting. To
+    # customize completion, set this either to a hash of options to pass to the
+    # {Toys::Tool::StandardCompletion} constructor, or any other spec
+    # recognized by {Toys::Completion.create}.
+    #
+    # @param [Object] spec
+    #
     def completion=(spec)
       @completion =
         case spec
@@ -252,14 +266,14 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(*args, verbosity: 0)
-      tool_definition, remaining = ContextualError.capture("Error finding tool definition") do
+      tool, remaining = ContextualError.capture("Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
       ContextualError.capture_path(
-        "Error during tool execution!", tool_definition.source_info&.source_path,
-        tool_name: tool_definition.full_name, tool_args: remaining
+        "Error during tool execution!", tool.source_info&.source_path,
+        tool_name: tool.full_name, tool_args: remaining
       ) do
-        Runner.new(self, tool_definition).run(remaining, verbosity: verbosity)
+        Runner.new(self, tool).run(remaining, verbosity: verbosity)
       end
     rescue ContextualError, ::Interrupt => e
       @error_handler.call(e).to_i
@@ -373,7 +387,7 @@ module Toys
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
       def call(context)
-        context.tool_definition.completion.call(context)
+        context.tool.completion.call(context)
       end
     end
 

@@ -34,11 +34,11 @@ module Toys
     #
     # @param [Toys::CLI] cli The CLI that is running the tool. This will
     #     provide needed context information.
-    # @param [Toys::Tool] tool_definition The tool to run.
+    # @param [Toys::Tool] tool The tool to run.
     #
-    def initialize(cli, tool_definition)
+    def initialize(cli, tool)
       @cli = cli
-      @tool_definition = tool_definition
+      @tool = tool
     end
 
     ##
@@ -50,14 +50,15 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run(args, verbosity: 0)
-      data = parse_data(args, verbosity)
-      tool = @tool_definition.tool_class.new(@cli, data)
-      @tool_definition.run_initializers(tool)
+      arg_parser = ArgParser.new(@cli, @tool, verbosity: verbosity)
+      arg_parser.parse(args).finish
+      context = @tool.tool_class.new(arg_parser.data)
+      @tool.run_initializers(context)
 
       original_level = @cli.logger.level
-      @cli.logger.level = @cli.base_level - data[Context::Key::VERBOSITY]
+      @cli.logger.level = @cli.base_level - context[Context::Key::VERBOSITY]
       begin
-        perform_execution(tool)
+        perform_execution(context)
       ensure
         @cli.logger.level = original_level
       end
@@ -65,41 +66,22 @@ module Toys
 
     private
 
-    def parse_data(args, verbosity)
-      arg_parser = ArgParser.new(@tool_definition)
-      data = arg_parser.data
-      data[Context::Key::TOOL_DEFINITION] = @tool_definition
-      data[Context::Key::TOOL_SOURCE] = @tool_definition.source_info
-      data[Context::Key::TOOL_NAME] = @tool_definition.full_name
-      data[Context::Key::VERBOSITY] = verbosity
-      data[Context::Key::ARGS] = args
-      data[Context::Key::USAGE_ERROR] = nil
-      unless @tool_definition.argument_parsing_disabled?
-        arg_parser.parse(args)
-        arg_parser.finish
-        unless arg_parser.errors.empty?
-          data[Context::Key::USAGE_ERROR] = arg_parser.errors.join("\n")
-        end
-      end
-      data
-    end
-
-    def perform_execution(tool)
+    def perform_execution(context)
       executor = proc do
-        unless @tool_definition.runnable?
-          @cli.logger.fatal("No implementation for tool #{@tool_definition.display_name.inspect}")
-          tool.exit(-1)
+        unless @tool.runnable?
+          @cli.logger.fatal("No implementation for tool #{@tool.display_name.inspect}")
+          context.exit(-1)
         end
-        interruptable = @tool_definition.interruptable?
+        interruptable = @tool.interruptable?
         begin
-          tool.run
+          context.run
         rescue ::Interrupt => e
           raise e unless interruptable
-          handle_interrupt(tool, e)
+          handle_interrupt(context, e)
         end
       end
-      @tool_definition.middleware_stack.reverse_each do |middleware|
-        executor = make_executor(middleware, tool, executor)
+      @tool.middleware_stack.reverse_each do |middleware|
+        executor = make_executor(middleware, context, executor)
       end
       catch(:result) do
         executor.call
@@ -107,19 +89,19 @@ module Toys
       end
     end
 
-    def handle_interrupt(tool, exception)
-      if tool.method(:interrupt).arity.zero?
-        tool.interrupt
+    def handle_interrupt(context, exception)
+      if context.method(:interrupt).arity.zero?
+        context.interrupt
       else
-        tool.interrupt(exception)
+        context.interrupt(exception)
       end
     rescue ::Interrupt => e
       raise e if e.equal?(exception)
-      handle_interrupt(tool, e)
+      handle_interrupt(context, e)
     end
 
-    def make_executor(middleware, tool, next_executor)
-      proc { middleware.run(tool, &next_executor) }
+    def make_executor(middleware, context, next_executor)
+      proc { middleware.run(context, &next_executor) }
     end
   end
 end

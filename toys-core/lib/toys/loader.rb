@@ -87,7 +87,7 @@ module Toys
       @tool_data = {}
       @max_priority = @min_priority = 0
       @extra_delimiters = process_extra_delimiters(extra_delimiters)
-      get_tool_definition([], -999_999)
+      get_tool([], -999_999)
     end
 
     ##
@@ -147,10 +147,10 @@ module Toys
         load_for_prefix(cur_prefix)
         prefix = orig_prefix
         loop do
-          tool_definition = get_active_tool(prefix, [])
-          if tool_definition
-            finish_definitions_in_tree(tool_definition.full_name)
-            return [tool_definition, args.slice(prefix.length..-1)]
+          tool = get_active_tool(prefix, [])
+          if tool
+            finish_definitions_in_tree(tool.full_name)
+            return [tool, args.slice(prefix.length..-1)]
           end
           break if prefix.empty? || prefix.length <= cur_prefix.length
           prefix = prefix.slice(0..-2)
@@ -221,12 +221,12 @@ module Toys
     #
     # @private
     #
-    def activate_tool_definition(words, priority)
+    def activate_tool(words, priority)
       tool_data = get_tool_data(words)
       return tool_data.active_definition if tool_data.active_priority == priority
       return nil if tool_data.active_priority && tool_data.active_priority > priority
       tool_data.active_priority = priority
-      get_tool_definition(words, priority)
+      get_tool(words, priority)
     end
 
     ##
@@ -248,7 +248,7 @@ module Toys
       end
       alias_def = Alias.new(self, words, target, priority)
       tool_data.definitions[priority] = alias_def
-      activate_tool_definition(words, priority)
+      activate_tool(words, priority)
       alias_def
     end
 
@@ -271,8 +271,8 @@ module Toys
     #
     # @private
     #
-    def get_tool_definition(words, priority)
-      parent = words.empty? ? nil : get_tool_definition(words.slice(0..-2), priority)
+    def get_tool(words, priority)
+      parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       if parent.is_a?(Alias)
         raise ToolDefinitionError,
               "Cannot create children of #{parent.display_name.inspect} because it is an alias"
@@ -441,7 +441,7 @@ module Toys
 
     def load_proc(source, words, remaining_words, priority)
       if remaining_words
-        tool_class = get_tool_definition(words, priority).tool_class
+        tool_class = get_tool(words, priority).tool_class
         DSL::Tool.prepare(tool_class, remaining_words, source) do
           ContextualError.capture("Error while loading Toys config!") do
             tool_class.class_eval(&source.source_proc)
@@ -462,7 +462,7 @@ module Toys
 
     def load_relevant_path(source, words, remaining_words, priority)
       if source.source_type == :file
-        tool_class = get_tool_definition(words, priority).tool_class
+        tool_class = get_tool(words, priority).tool_class
         InputFile.evaluate(tool_class, remaining_words, source)
       else
         do_preload(source.source_path)

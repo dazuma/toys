@@ -39,10 +39,10 @@ describe Toys::Runner do
   let(:tool_name) { "foo" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
-  let(:root_tool) { loader.activate_tool_definition([], 0) }
-  let(:tool) { loader.activate_tool_definition([tool_name], 0) }
-  let(:subtool) { loader.activate_tool_definition([tool_name, subtool_name], 0) }
-  let(:subtool2) { loader.activate_tool_definition([tool_name, subtool2_name], 0) }
+  let(:root_tool) { loader.activate_tool([], 0) }
+  let(:tool) { loader.activate_tool([tool_name], 0) }
+  let(:subtool) { loader.activate_tool([tool_name, subtool_name], 0) }
+  let(:subtool2) { loader.activate_tool([tool_name, subtool2_name], 0) }
 
   describe "argument parsing" do
     it "can be disabled" do
@@ -76,7 +76,7 @@ describe Toys::Runner do
       tool.add_flag(:sw1, ["-a"])
       tool.runnable = proc do
         test.assert_equal(0, verbosity)
-        test.assert_equal(test.tool, tool_definition)
+        test.assert_equal(test.tool, tool)
         test.assert_equal(test.tool.full_name, tool_name)
         test.assert_instance_of(Logger, logger)
         test.assert_equal("toys", binary_name)
@@ -93,7 +93,7 @@ describe Toys::Runner do
       tool.add_flag(:sw1, ["-a"])
       tool.runnable = proc do
         test.assert_equal(0, get(Toys::Context::Key::VERBOSITY))
-        test.assert_equal(test.tool, get(Toys::Context::Key::TOOL_DEFINITION))
+        test.assert_equal(test.tool, get(Toys::Context::Key::TOOL))
         test.assert_equal(test.tool.full_name, get(Toys::Context::Key::TOOL_NAME))
         test.assert_instance_of(Logger, get(Toys::Context::Key::LOGGER))
         test.assert_equal("toys", get(Toys::Context::Key::BINARY_NAME))

@@ -52,12 +52,12 @@ describe Toys::Tool do
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
   let(:alias_name) { "alz" }
-  let(:root_tool) { loader.activate_tool_definition([], 0) }
-  let(:tool) { loader.activate_tool_definition([tool_name], 0) }
-  let(:subtool) { loader.activate_tool_definition([tool_name, subtool_name], 0) }
-  let(:subtool2) { loader.activate_tool_definition([tool_name, subtool2_name], 0) }
-  let(:full_tool) { full_loader.activate_tool_definition([full_tool_name], 0) }
-  let(:alias_tool) { loader.activate_tool_definition([tool_name, alias_name], 0) }
+  let(:root_tool) { loader.activate_tool([], 0) }
+  let(:tool) { loader.activate_tool([tool_name], 0) }
+  let(:subtool) { loader.activate_tool([tool_name, subtool_name], 0) }
+  let(:subtool2) { loader.activate_tool([tool_name, subtool2_name], 0) }
+  let(:full_tool) { full_loader.activate_tool([full_tool_name], 0) }
+  let(:alias_tool) { loader.activate_tool([tool_name, alias_name], 0) }
   def wrappable(str)
     Toys::WrappableString.new(str)
   end

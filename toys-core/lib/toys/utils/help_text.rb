@@ -53,7 +53,7 @@ module Toys
       # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
-        new(context[Context::Key::TOOL_DEFINITION], context[Context::Key::LOADER],
+        new(context[Context::Key::TOOL], context[Context::Key::LOADER],
             context[Context::Key::BINARY_NAME])
       end
 

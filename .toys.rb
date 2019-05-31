@@ -154,3 +154,9 @@ tool "release" do
     end
   end
 end
+
+tool "foo" do
+  def run
+    puts get(TOOL_NAME)
+  end
+end

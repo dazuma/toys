@@ -85,7 +85,7 @@ module Toys
         return nil unless words.shift
         words.map! { |_type, word| word }
         params = {quote_type: quote_type}
-        context = Completion::Context.new(@cli.loader, words, last, params)
+        context = Completion::Context.new(@cli, words, last, params)
         candidates = @cli.completion.call(context)
         candidates.uniq.sort.map { |candidate| format_candidate(candidate, quote_type) }
       end
