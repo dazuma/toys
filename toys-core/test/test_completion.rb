@@ -69,7 +69,7 @@ describe Toys::Completion do
 end
 
 describe Toys::Completion::FileSystem do
-  let(:data_dir) { ::File.join(::File.dirname(__dir__), "data") }
+  let(:data_dir) { ::File.join(__dir__, "data") }
   let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
   def context(str)
     Toys::Completion::Context.new(nil, [], str, {})

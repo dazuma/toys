@@ -615,7 +615,7 @@ describe Toys::DSL::Tool do
       assert_equal(:my_group, group.name)
       assert_equal("short description", group.desc.to_s)
       assert_equal("in two lines", group.long_desc[1].to_s)
-      assert_equal(Toys::Definition::FlagGroup::Required, group.class)
+      assert_equal(Toys::FlagGroup::Required, group.class)
     end
 
     it "provides a block that defines flags" do
@@ -650,7 +650,7 @@ describe Toys::DSL::Tool do
       assert_equal(:my_group, group.name)
       assert_equal("short description", group.desc.to_s)
       assert_equal("in two lines", group.long_desc[1].to_s)
-      assert_equal(Toys::Definition::FlagGroup::Required, group.class)
+      assert_equal(Toys::FlagGroup::Required, group.class)
     end
 
     it "provides a block that defines flags" do
@@ -685,7 +685,7 @@ describe Toys::DSL::Tool do
       assert_equal(:my_group, group.name)
       assert_equal("short description", group.desc.to_s)
       assert_equal("in two lines", group.long_desc[1].to_s)
-      assert_equal(Toys::Definition::FlagGroup::AtMostOne, group.class)
+      assert_equal(Toys::FlagGroup::AtMostOne, group.class)
     end
 
     it "provides a block that defines flags" do
@@ -720,7 +720,7 @@ describe Toys::DSL::Tool do
       assert_equal(:my_group, group.name)
       assert_equal("short description", group.desc.to_s)
       assert_equal("in two lines", group.long_desc[1].to_s)
-      assert_equal(Toys::Definition::FlagGroup::AtLeastOne, group.class)
+      assert_equal(Toys::FlagGroup::AtLeastOne, group.class)
     end
 
     it "provides a block that defines flags" do
@@ -755,7 +755,7 @@ describe Toys::DSL::Tool do
       assert_equal(:my_group, group.name)
       assert_equal("short description", group.desc.to_s)
       assert_equal("in two lines", group.long_desc[1].to_s)
-      assert_equal(Toys::Definition::FlagGroup::ExactlyOne, group.class)
+      assert_equal(Toys::FlagGroup::ExactlyOne, group.class)
     end
 
     it "provides a block that defines flags" do

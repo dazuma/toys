@@ -23,31 +23,31 @@
 
 require "helper"
 
-describe Toys::Definition::FlagGroup do
+describe Toys::FlagGroup do
   def add_flags(group)
-    flag = Toys::Definition::Flag.new(:flag1, [], [], true, nil, nil, nil, nil, nil, nil, group)
+    flag = Toys::Flag.new(:flag1, [], [], true, nil, nil, nil, nil, nil, nil, group)
     group << flag
-    flag = Toys::Definition::Flag.new(:flag2, [], [], true, nil, nil, nil, nil, nil, nil, group)
+    flag = Toys::Flag.new(:flag2, [], [], true, nil, nil, nil, nil, nil, nil, group)
     group << flag
-    flag = Toys::Definition::Flag.new(:flag3, [], [], true, nil, nil, nil, nil, nil, nil, group)
+    flag = Toys::Flag.new(:flag3, [], [], true, nil, nil, nil, nil, nil, nil, group)
     group << flag
   end
 
   describe "Required" do
     it "sets the default descriptions" do
-      group = Toys::Definition::FlagGroup::Required.new(nil, nil, nil)
+      group = Toys::FlagGroup::Required.new(nil, nil, nil)
       assert_equal("Required Flags", group.desc.to_s)
       assert_equal("These flags are required.", group.long_desc.first.to_s)
     end
 
     it "validates with all flags set" do
-      group = Toys::Definition::FlagGroup::Required.new(nil, nil, nil)
+      group = Toys::FlagGroup::Required.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag1, :flag2, :flag3]))
     end
 
     it "fails to validate with a flag missing" do
-      group = Toys::Definition::FlagGroup::Required.new(nil, nil, nil)
+      group = Toys::FlagGroup::Required.new(nil, nil, nil)
       add_flags(group)
       assert_equal(['Flag "--flag2" is required.'], group.validation_errors([:flag1, :flag3]))
     end
@@ -55,19 +55,19 @@ describe Toys::Definition::FlagGroup do
 
   describe "Optional" do
     it "sets the default descriptions" do
-      group = Toys::Definition::FlagGroup::Optional.new(nil, nil, nil)
+      group = Toys::FlagGroup::Optional.new(nil, nil, nil)
       assert_equal("Flags", group.desc.to_s)
       assert(group.long_desc.empty?)
     end
 
     it "validates with all flags set" do
-      group = Toys::Definition::FlagGroup::Optional.new(nil, nil, nil)
+      group = Toys::FlagGroup::Optional.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag1, :flag2, :flag3]))
     end
 
     it "Validates with no flags set" do
-      group = Toys::Definition::FlagGroup::Optional.new(nil, nil, nil)
+      group = Toys::FlagGroup::Optional.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([]))
     end
@@ -75,26 +75,26 @@ describe Toys::Definition::FlagGroup do
 
   describe "ExactlyOne" do
     it "sets the default descriptions" do
-      group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       assert_equal("Flags", group.desc.to_s)
       assert_equal("Exactly one of these flags must be set.", group.long_desc.first.to_s)
     end
 
     it "validates with one flag set" do
-      group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag2]))
     end
 
     it "fails to validate with no flags set" do
-      group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal(['Exactly one flag out of group "Flags" is required, but none were provided.'],
                    group.validation_errors([]))
     end
 
     it "fails to validate with two flags set" do
-      group = Toys::Definition::FlagGroup::ExactlyOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal(['Exactly one flag out of group "Flags" is required, but 2 were provided:' \
                     ' ["--flag1", "--flag3"].'],
@@ -104,25 +104,25 @@ describe Toys::Definition::FlagGroup do
 
   describe "AtMostOne" do
     it "sets the default descriptions" do
-      group = Toys::Definition::FlagGroup::AtMostOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
       assert_equal("Flags", group.desc.to_s)
       assert_equal("At most one of these flags must be set.", group.long_desc.first.to_s)
     end
 
     it "validates with one flag set" do
-      group = Toys::Definition::FlagGroup::AtMostOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag2]))
     end
 
     it "validates with no flags set" do
-      group = Toys::Definition::FlagGroup::AtMostOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([]))
     end
 
     it "fails to validate with two flags set" do
-      group = Toys::Definition::FlagGroup::AtMostOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal(['At most one flag out of group "Flags" is required, but 2 were provided:' \
                     ' ["--flag1", "--flag3"].'],
@@ -132,26 +132,26 @@ describe Toys::Definition::FlagGroup do
 
   describe "AtLeastOne" do
     it "sets the default descriptions" do
-      group = Toys::Definition::FlagGroup::AtLeastOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
       assert_equal("Flags", group.desc.to_s)
       assert_equal("At least one of these flags must be set.", group.long_desc.first.to_s)
     end
 
     it "validates with one flag set" do
-      group = Toys::Definition::FlagGroup::AtLeastOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag2]))
     end
 
     it "fails to validate with no flags set" do
-      group = Toys::Definition::FlagGroup::AtLeastOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
       add_flags(group)
       assert_equal(['At least one flag out of group "Flags" is required, but none were provided.'],
                    group.validation_errors([]))
     end
 
     it "validates with two flags set" do
-      group = Toys::Definition::FlagGroup::AtLeastOne.new(nil, nil, nil)
+      group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
       add_flags(group)
       assert_empty(group.validation_errors([:flag1, :flag3]))
     end

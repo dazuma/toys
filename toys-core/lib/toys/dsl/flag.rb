@@ -99,7 +99,7 @@ module Toys
       ##
       # Set the shell completion strategy for flag names.
       # This may be set to a hash of options to pass to the constructor for
-      # {Toys::Definition::Flag::StandardCompletion}. Otherwise, see
+      # {Toys::Flag::StandardCompletion}. Otherwise, see
       # {Toys::Completion.create} for other recognized formats.
       #
       # @param [Object] spec
@@ -163,7 +163,7 @@ module Toys
       # Set the group. A group may be set by name or group object. Setting
       # `nil` selects the default group.
       #
-      # @param [String,Symbol,Toys::Definition::FlagGroup,nil] group
+      # @param [String,Symbol,Toys::FlagGroup,nil] group
       # @return [Toys::DSL::Flag] self, for chaining.
       #
       def group(group)

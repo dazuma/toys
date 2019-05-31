@@ -69,7 +69,7 @@ module Toys
       @used_flags = []
       @initializers = []
 
-      default_flag_group = Definition::FlagGroup.new(nil, nil, nil)
+      default_flag_group = FlagGroup::Base.new(nil, nil, nil)
       @flag_groups = [default_flag_group]
       @flag_group_names = {nil => default_flag_group}
 
@@ -119,32 +119,32 @@ module Toys
 
     ##
     # Return a list of all defined flag groups, in order.
-    # @return [Array<Toys::Definition::FlagGroup>]
+    # @return [Array<Toys::FlagGroup>]
     #
     attr_reader :flag_groups
 
     ##
     # Return a list of all defined flags.
-    # @return [Array<Toys::Definition::Flag>]
+    # @return [Array<Toys::Flag>]
     #
     attr_reader :flag_definitions
 
     ##
     # Return a list of all defined required positional arguments.
-    # @return [Array<Toys::Definition::Arg>]
+    # @return [Array<Toys::PositionalArg>]
     #
     attr_reader :required_arg_definitions
 
     ##
     # Return a list of all defined optional positional arguments.
-    # @return [Array<Toys::Definition::Arg>]
+    # @return [Array<Toys::PositionalArg>]
     #
     attr_reader :optional_arg_definitions
 
     ##
     # Return the remaining arguments specification, or `nil` if remaining
     # arguments are currently not supported by this tool.
-    # @return [Toys::Definition::Arg,nil]
+    # @return [Toys::PositionalArg,nil]
     #
     attr_reader :remaining_args_definition
 
@@ -285,7 +285,7 @@ module Toys
 
     ##
     # Returns all arg definitions in order: required, optional, remaining.
-    # @return [Array<Toys::Definition::Arg>]
+    # @return [Array<Toys::PositionalArg>]
     #
     def arg_definitions
       result = required_arg_definitions + optional_arg_definitions
@@ -296,14 +296,14 @@ module Toys
     ##
     # Resolve the given flag given the flag string. Returns an object that
     # describes the resolution result, including whether the resolution
-    # matched a unique flag, the specific FlagSyntax that was matched, and
+    # matched a unique flag, the specific flag syntax that was matched, and
     # additional information.
     #
     # @param [String] str Flag string
-    # @return [Toys::Definition::FlagResolution]
+    # @return [Toys::Flag::Resolution]
     #
     def resolve_flag(str)
-      result = Definition::FlagResolution.new(str)
+      result = Flag::Resolution.new(str)
       flag_definitions.each do |flag_def|
         result.merge!(flag_def.resolve(str))
       end
@@ -541,7 +541,7 @@ module Toys
       end
       unless type.is_a?(::Class)
         type = ModuleLookup.to_module_name(type)
-        type = Definition::FlagGroup.const_get(type)
+        type = FlagGroup.const_get(type)
       end
       group = type.new(name, desc, long_desc)
       @flag_group_names[name] = group unless name.nil?
@@ -579,18 +579,18 @@ module Toys
     #     `default: []` and is intended for "multi-valued" flags.
     # @param [Object] flag_completion A specifier for shell tab completion.
     #     for flag names associated with this flag. By default, a
-    #     {Toys::Definition::Flag::StandardCompletion} is used, which provides
-    #     the flag's names as completion candidates. To customize completion,
-    #     set this to a hash of options to pass to the constructor for
-    #     {Toys::Definition::Flag::StandardCompletion}, or pass any other spec
-    #     recognized by {Toys::Completion.create}.
+    #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+    #     names as completion candidates. To customize completion, set this to
+    #     a hash of options to pass to the constructor for
+    #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
+    #     by {Toys::Completion.create}.
     # @param [Object] value_completion A specifier for shell tab completion.
     #     for flag values associated with this flag. Pass any spec
     #     recognized by {Toys::Completion.create}.
     # @param [Boolean] report_collisions Raise an exception if a flag is
     #     requested that is already in use or marked as disabled. Default is
     #     true.
-    # @param [Toys::Definition::FlagGroup,String,Symbol,nil] group Group for
+    # @param [Toys::FlagGroup,String,Symbol,nil] group Group for
     #     this flag. You may provide a group name, a FlagGroup object, or
     #     `nil` which denotes the default group.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -608,16 +608,16 @@ module Toys
                  flag_completion: nil, value_completion: nil,
                  report_collisions: true, group: nil,
                  desc: nil, long_desc: nil, display_name: nil)
-      unless group.is_a?(Definition::FlagGroup)
+      unless group.is_a?(FlagGroup::Base)
         group_name = group
         group = @flag_group_names[group_name]
         raise ToolDefinitionError, "No such flag group: #{group_name.inspect}" if group.nil?
       end
       check_definition_state(is_arg: true)
       accept = resolve_acceptor(accept)
-      flag_def = Definition::Flag.new(key, flags, @used_flags, report_collisions, accept,
-                                      handler, default, flag_completion, value_completion,
-                                      display_name, group)
+      flag_def = Flag.new(key, flags, @used_flags, report_collisions, accept,
+                          handler, default, flag_completion, value_completion,
+                          display_name, group)
       flag_def.desc = desc if desc
       flag_def.long_desc = long_desc if long_desc
       if flag_def.active?
@@ -674,8 +674,8 @@ module Toys
       check_definition_state(is_arg: true)
       accept = resolve_acceptor(accept)
       completion = Completion.create(completion)
-      arg_def = Definition::Arg.new(key, :required, accept, nil, completion,
-                                    desc, long_desc, display_name)
+      arg_def = PositionalArg.new(key, :required, accept, nil, completion,
+                                  desc, long_desc, display_name)
       @required_arg_definitions << arg_def
       self
     end
@@ -712,8 +712,8 @@ module Toys
       check_definition_state(is_arg: true)
       accept = resolve_acceptor(accept)
       completion = Completion.create(completion)
-      arg_def = Definition::Arg.new(key, :optional, accept, default, completion,
-                                    desc, long_desc, display_name)
+      arg_def = PositionalArg.new(key, :optional, accept, default, completion,
+                                  desc, long_desc, display_name)
       @optional_arg_definitions << arg_def
       @default_data[key] = default
       self
@@ -750,8 +750,8 @@ module Toys
       check_definition_state(is_arg: true)
       accept = resolve_acceptor(accept)
       completion = Completion.create(completion)
-      arg_def = Definition::Arg.new(key, :remaining, accept, default, completion,
-                                    desc, long_desc, display_name)
+      arg_def = PositionalArg.new(key, :remaining, accept, default, completion,
+                                  desc, long_desc, display_name)
       @remaining_args_definition = arg_def
       @default_data[key] = default
       self

@@ -29,11 +29,6 @@
 #
 module Toys
   ##
-  # Namespace for object definition classes.
-  #
-  module Definition; end
-
-  ##
   # Namespace for DSL classes. These classes provide the directives that can be
   # used in configuration files. Most are defined in {Toys::DSL::Tool}.
   #
@@ -57,9 +52,6 @@ end
 require "toys/arg_parser"
 require "toys/cli"
 require "toys/core_version"
-require "toys/definition/arg"
-require "toys/definition/flag"
-require "toys/definition/flag_group"
 require "toys/dsl/arg"
 require "toys/dsl/flag"
 require "toys/dsl/flag_group"
@@ -68,11 +60,14 @@ require "toys/acceptor"
 require "toys/alias_definition"
 require "toys/completion"
 require "toys/errors"
+require "toys/flag"
+require "toys/flag_group"
 require "toys/input_file"
 require "toys/loader"
 require "toys/middleware"
 require "toys/mixin"
 require "toys/module_lookup"
+require "toys/positional_arg"
 require "toys/runner"
 require "toys/source_info"
 require "toys/standard_middleware"

@@ -373,13 +373,13 @@ module Toys
           synopsis = [full_binary_name]
           @tool.flag_groups.each do |flag_group|
             case flag_group
-            when Definition::FlagGroup::Required
+            when FlagGroup::Required
               add_required_group_to_synopsis(flag_group, synopsis)
-            when Definition::FlagGroup::ExactlyOne
+            when FlagGroup::ExactlyOne
               add_exactly_one_group_to_synopsis(flag_group, synopsis)
-            when Definition::FlagGroup::AtMostOne
+            when FlagGroup::AtMostOne
               add_at_most_one_group_to_synopsis(flag_group, synopsis)
-            when Definition::FlagGroup::AtLeastOne
+            when FlagGroup::AtLeastOne
               add_at_least_one_group_to_synopsis(flag_group, synopsis)
             else
               add_ordinary_group_to_synopsis(flag_group, synopsis)

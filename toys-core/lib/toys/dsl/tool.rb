@@ -523,20 +523,20 @@ module Toys
       #     `default: []` and is intended for "multi-valued" flags.
       # @param [Object] flag_completion A specifier for shell tab completion.
       #     for flag names associated with this flag. By default, a
-      #     {Toys::Definition::Flag::StandardCompletion} is used, which provides
-      #     the flag's names as completion candidates. To customize completion,
-      #     set this to a hash of options to pass to the constructor for
-      #     {Toys::Definition::Flag::StandardCompletion}, or pass any other spec
-      #     recognized by {Toys::Completion.create}.
+      #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+      #     names as completion candidates. To customize completion, set this
+      #     to a hash of options to pass to the constructor for
+      #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
+      #     by {Toys::Completion.create}.
       # @param [Object] value_completion A specifier for shell tab completion.
       #     for flag values associated with this flag. Pass any spec
       #     recognized by {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
-      # @param [Toys::Definition::FlagGroup,String,Symbol,nil] group Group for
-      #     this flag. You may provide a group name, a FlagGroup object, or
-      #     `nil` which denotes the default group.
+      # @param [Toys::FlagGroup,String,Symbol,nil] group Group for this flag.
+      #     You may provide a group name, a FlagGroup object, or `nil` which
+      #     denotes the default group.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.

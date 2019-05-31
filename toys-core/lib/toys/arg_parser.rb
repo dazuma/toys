@@ -77,7 +77,7 @@ module Toys
     ##
     # The current flag definition whose value is still pending, or `nil` if
     # there is no pending flag.
-    # @return [Toys::Definition::Flag,nil]
+    # @return [Toys::Flag,nil]
     #
     attr_reader :active_flag_def
 
@@ -98,7 +98,7 @@ module Toys
     ##
     # The argument definition that will be applied to the next argument, or
     # `nil` if all arguments have been filled.
-    # @return [Toys::Definition::Arg,nil]
+    # @return [Toys::PositionalArg,nil]
     #
     def next_arg_def
       @arg_defs[@arg_def_index]
