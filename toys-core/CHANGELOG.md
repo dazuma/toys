@@ -4,32 +4,73 @@
 
 This is a major update with significant new features and a bunch of fixes. It also includes a significant amount of internal reorganization and cleanup, some of which resulted in backward incompatible changes. All features planned for beta are now implemented.
 
+Major changes and features:
+
 * CHANGED: Relicensed under the MIT License.
-* ADDED: Tab completion for bash. Added APIs for args and flags to provide completion information.
-* ADDED: Tools can provide an interrupt handler. Added appropriate APIs to Toys::Definition::Tool.
+* ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
+* ADDED: Tools can provide an interrupt handler. Added appropriate APIs and a DSL method.
 * ADDED: Tools can enforce that flags must be given before positional args.
-* ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
-* ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
-* ADDED: FlagResolution class providing results from looking up flag strings via Flag#resolve and Tool#resolve_flag.
+
+Other notable changes:
+
+* ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
+* ADDED: The Exec util and mixin support specifying a callback for process results.
+* ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
-* CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
-* CHANGED: Renamed context base class from Toys::Tool to Toys::Context. Also renamed the tool_definition method to tool, along with the corresponding key name.
+* CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default and/or acceptor.
+* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
-* CHANGED: Lifted ModuleLookup and WrappableString out of the Utils module.
-* CHANGED: The remaining files under "toys/utils" must now be required explicitly.
-* CHANGED: Lifted all classes out of the Definition module.
-* CHANGED: FlagSyntax is now Flag::Syntax, and FlagResolution is now Flag::Resolution.
-* CHANGED: FlagGroup::Base is now the base class instead of FlagGroup itself.
-* CHANGED: Removed Flag#optparser_info and replaced with Flag#canonical_syntax_strings.
-* CHANGED: Renamed Flag#single_flag_syntax to short_flag_syntax, and Flag#double_flag_syntax to long_flag_syntax
-* CHANGED: Acceptor base class no longer takes a conversion proc.
-* CHANGED: Flag#accept and Arg#accept renamed to #acceptor, which now always returns an Acceptor object. Similarly, Tool#resolve_acceptor always returns an Acceptor.
-* CHANGED: Removed Tool#custom_acceptors.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
 * IMPROVED: Error messages for flag groups are more complete.
+* IMPROVED: All context data, including well-known data, is available to be modified by flags and args.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
+
+Changes to internal interfaces:
+
+* General changes:
+    * CHANGED: Renamed `Toys::Tool` to `Toys::Context`, and the `Keys` submodule to `Key`.
+    * CHANGED: Moved the `ModuleLookup` and `WrappableString` out of the `Utils` module to be located directly under `Toys`. Other modules remain under `Utils`.  The remaining files under "toys/utils" must now be required explicitly. This directory is now specifically for modules that are not part of the "core" interface.
+    * CHANGED: All the classes under `Toys::Definition` are now located directly under `Toys`. For example, `Toys::Definition::Tool` is now `Toys::Tool`.
+    * CHANGED: Generally removed the term "definition" from interfaces. For example, an accessor method called `tool_definition` is now just called `tool`.
+* Changes related to the tool classes:
+    * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.
+    * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.
+    * CHANGED: Removed `Tool#custom_acceptors` method.
+    * CHANGED: `Tool#resolve_acceptor` now always returns an acceptor object (even for well-known acceptors such as `Integer`).
+    * ADDED: Added `resolve_flag` method to look up flags by syntax.
+    * ADDED: Accessor for interrupt handler.
+    * ADDED: `enforce_flags_before_args` setting and `flags_before_args_enforced?` query.
+    * ADDED: Completion accessor, and options to the various flag and positional arg methods to set their completion strategies.
+    * ADDED: Added `Tool::StandardCompletion` class.
+* Changes related to the flag classes:
+    * CHANGED: Moved `Toys::Definition::Flag` to `Toys::Flag`
+    * CHANGED: `FlagSyntax` is now `Flag::Syntax`.
+    * CHANGED: `Flag::Syntax#flag_style` now has values `:short` and `:long` instead of `"-"` and `"--"`.
+    * CHANGED: `Flag#single_flag_syntax` renamed to `Flag#short_flag_syntax`, and `Flag#double_flag_syntax` renamed to `Flag#long_flag_syntax`.
+    * CHANGED: Renamed `Flag#accept` to `Flag#acceptor` which now always returns an acceptor object (even for well-known acceptors such as `Integer`).
+    * CHANGED: Removed `Flag#optparser_info` and replaced with `Flag#canonical_syntax_strings`.
+    * ADDED: `Flag#create` class method providing a sane construction interface.
+    * ADDED: `Flag#resolve` method to look up flag syntax.
+    * ADDED: `Flag#completion` field.
+    * ADDED: Added `Flag::Resolution` and `Flag::StandardCompletion` classes.
+* Changes related to the positional arg classes:
+    * CHANGED: Moved `Toys::Definition::Arg` to `Toys::PositionalArg`.
+    * CHANGED: Renamed `Arg#accept` to `PositionalArg#acceptor` which now always returns an acceptor object (even for well-known acceptors such as `Integer`).
+    * ADDED: `PositionalArg#create` class method providing a sane construction interface.
+    * ADDED: `PositionalArg#completion` field
+* Changes related to the flag group classes:
+    * CHANGED: Moved `Toys::Definition::FlagGroup` to `Toys::FlagGroup`
+    * CHANGED: The base class is now `FlagGroup::Base` instead of `FlagGroup` itself.
+    * ADDED: `FlagGroup#create` class method providing a sane construction interface.
+* Changes related to acceptors:
+    * CHANGED: Moved `Toys::Definition::Acceptor` to `Toys::Acceptor`
+    * CHANGED: The base ciass is now `Acceptor::Base` instead of `Acceptor` itself.
+    * CHANGED: Subclasses are now submodules under `Acceptor`. For example, moved `Toys::Definition::PatternAcceptor` to `Toys::Acceptor::Pattern`.
+    * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
+    * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
+    * ADDED: Class methods `Acceptor.resolve` and `Acceptor.resolve_well_known`.
 
 ### 0.7.0 / 2019-01-23
 

@@ -314,7 +314,7 @@ module Toys
         terminal.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
         terminal.puts
         terminal.puts help_text.usage_string(wrap_width: terminal.width)
-        Tool.exit(1)
+        Context.exit(1)
       end
 
       def add_help_flags(tool)

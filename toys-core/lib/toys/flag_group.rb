@@ -27,6 +27,44 @@ module Toys
   #
   module FlagGroup
     ##
+    # Create a flag group object of the given type.
+    #
+    # The type should be one of the following symbols:
+    # *   `:optional` All flags in the group are optional
+    # *   `:required` All flags in the group are required
+    # *   `:exactly_one` Exactly one flag in the group must be provided
+    # *   `:at_least_one` At least one flag in the group must be provided
+    # *   `:at_most_one` At most one flag in the group must be provided
+    #
+    # @param [Symbol] type The type of group. Default is `:optional`.
+    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    #     description for the group. See {Toys::Tool#desc=} for a description
+    #     of allowed formats. Defaults to `"Flags"`.
+    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    #     Long description for the flag group. See {Toys::Tool#long_desc=} for
+    #     a description of allowed formats. Defaults to the empty array.
+    # @param [String,Symbol,nil] name The name of the group, or nil for no
+    #     name.
+    # @return [Toys::FlagGroup::Base] A flag group of the correct subclass.
+    #
+    def self.create(type: nil, name: nil, desc: nil, long_desc: nil)
+      type ||= Optional
+      unless type.is_a?(::Class)
+        class_name = ModuleLookup.to_module_name(type)
+        type =
+          begin
+            FlagGroup.const_get(class_name)
+          rescue ::NameError
+            raise ToolDefinitionError, "Unknown flag group type: #{type}"
+          end
+      end
+      unless type.ancestors.include?(Base)
+        raise ToolDefinitionError, "Unknown flag group type: #{type}"
+      end
+      type.new(name, desc, long_desc)
+    end
+
+    ##
     # The base class of a FlagGroup, implementing everything except validation.
     # The base class effectively behaves as an Optional group. However, you
     # should use {Toys::FlagGroup::Optional} to represent such a group.
@@ -34,7 +72,8 @@ module Toys
     class Base
       ##
       # Create a flag group.
-      # Should be created only from methods of {Toys::Tool}.
+      # This argument list is subject to change. Use {Toys::FlagGroup.create}
+      # instead for a more stable interface.
       # @private
       #
       def initialize(name, desc, long_desc)

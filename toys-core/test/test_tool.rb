@@ -168,7 +168,7 @@ describe Toys::Tool do
         assert_equal(:a, flag.key)
         assert_equal(1, flag.flag_syntax.size)
         assert_equal(["-a"], flag.flag_syntax.first.flags)
-        assert_nil(flag.acceptor)
+        assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
         assert_equal("", flag.desc.to_s)
         assert_equal([], flag.long_desc)
         assert_equal(1, flag.handler.call(1, 2))
@@ -229,7 +229,7 @@ describe Toys::Tool do
         tool.add_flag(:abc)
         flag = tool.flags.first
         assert_equal(["--abc"], flag.canonical_syntax_strings)
-        assert_nil(flag.acceptor)
+        assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
       end
 
       it "adds a default flag with an acceptor" do

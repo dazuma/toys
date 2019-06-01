@@ -53,14 +53,15 @@ module Toys
     # Two special options are also recognized by the mixin.
     #
     # *  A **:result_callback** proc may take a second argument. If it does,
-    #    the tool object is passed as the second argument. This is useful if a
-    #    `:result_callback` is applied to the entire tool by passing it to the
-    #    `include` directive. In that case, the tool object is not otherwise in
-    #    scope, so you cannot access it otherwise. For example, here is how to
-    #    log the exit code for every subcommand:
+    #    the context object is passed as the second argument. This is useful if
+    #    a `:result_callback` is applied to the entire tool by passing it to
+    #    the `include` directive. In that case, `self` is not set to the
+    #    context object as it normally would be in a tool's `run` method, so
+    #    you cannot access it otherwise. For example, here is how to log the
+    #    exit code for every subcommand:
     #
-    #        callback = proc do |result, tool|
-    #          tool.logger.info "Exit code: #{result.exit_code}"
+    #        callback = proc do |result, context|
+    #          context.logger.info "Exit code: #{result.exit_code}"
     #        end
     #        include :exec, result_callback: callback
     #

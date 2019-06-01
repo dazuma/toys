@@ -122,6 +122,12 @@ module Toys
     end
 
     ##
+    # The default acceptor.
+    # @return [Toys::Acceptor::Base]
+    #
+    DEFAULT = Base.new(::NilClass)
+
+    ##
     # An acceptor that uses a simple function to validate and convert input.
     # The function must take the input string as its argument, and either
     # return the converted object to indicate success, or raise an exception or
@@ -257,25 +263,41 @@ module Toys
       ##
       # Resolve a standard acceptor name recognized by OptionParser.
       #
-      # @param [Object] name Name of the acceptor. Recognizes names of
-      #     the OptionParser-provided acceptors, such as `String`, `Integer`,
-      #     `Array`, `OptionParser::DecimalInteger`, etc.
-      # @return [Toys::Acceptor::Base] an acceptor
+      # @param [Object] spec A well-known acceptor specification, such as
+      #     `String`, `Integer`, `Array`, `OptionParser::DecimalInteger`, etc.
+      # @return [Toys::Acceptor::Base,nil] The corresponding Acceptor object,
+      #     or nil if not found.
       #
-      def resolve_default(name)
-        result = standard_defaults[name]
+      def resolve_well_known(spec)
+        result = standard_well_knowns[spec]
         if result.nil? && defined?(::OptionParser)
-          result = optparse_defaults[name]
+          result = optparse_well_knowns[spec]
         end
         result
       end
 
+      ##
+      # Resolve an acceptor object from the given spec, which may be an
+      # acceptor object, a well-known acceptor, or nil for the default.
+      #
+      # @param [Object] spec
+      # @return [Toys::Acceptor::Base] The acceptor object
+      # @raise [Toys::ToolDefinitionError] if the input could not be resolved.
+      #
+      def resolve(spec)
+        return spec if spec.is_a?(Base)
+        return DEFAULT if spec.nil?
+        well_known = resolve_well_known(spec)
+        return well_known if well_known
+        raise ToolDefinitionError, "Unknown acceptor: #{spec.inspect}"
+      end
+
       private
 
-      def standard_defaults
-        @standard_defaults ||= {
-          ::Object => build_object(::Object, true),
-          ::NilClass => build_object(::NilClass, nil),
+      def standard_well_knowns
+        @standard_well_knowns ||= {
+          ::Object => build_object,
+          ::NilClass => DEFAULT,
           ::String => build_string,
           ::Integer => build_integer,
           ::Float => build_float,
@@ -288,16 +310,16 @@ module Toys
         }
       end
 
-      def optparse_defaults
-        @optparse_defaults ||= {
+      def optparse_well_knowns
+        @optparse_well_knowns ||= {
           ::OptionParser::DecimalInteger => build_decimal_integer,
           ::OptionParser::OctalInteger => build_octal_integer,
           ::OptionParser::DecimalNumeric => build_decimal_numeric,
         }
       end
 
-      def build_object(name, default)
-        Simple.new(name) { |s| s.nil? ? default : s }
+      def build_object
+        Simple.new(::Object) { |s| s.nil? ? true : s }
       end
 
       def build_string

@@ -266,7 +266,7 @@ end
 
 describe Toys::Flag do
   it "defaults to a boolean switch with a long name" do
-    flag = Toys::Flag.new(:abc, [], [], true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc)
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("--abc", flag.flag_syntax.first.canonical_str)
     assert_equal(:boolean, flag.flag_syntax.first.flag_type)
@@ -274,7 +274,7 @@ describe Toys::Flag do
   end
 
   it "defaults to a boolean switch with a short name" do
-    flag = Toys::Flag.new(:a, [], [], true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:a)
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("-a", flag.flag_syntax.first.canonical_str)
     assert_equal(:boolean, flag.flag_syntax.first.flag_type)
@@ -282,7 +282,7 @@ describe Toys::Flag do
   end
 
   it "defaults to a value switch with a string default" do
-    flag = Toys::Flag.new(:abc, [], [], true, nil, nil, "hello", nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, default: "hello")
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
     assert_equal(:value, flag.flag_syntax.first.flag_type)
@@ -294,12 +294,11 @@ describe Toys::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_equal("hello", flag.default)
-    assert_nil(flag.acceptor)
+    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
   end
 
   it "defaults to a value switch with an integer acceptor" do
-    acceptor = Toys::Acceptor.resolve_default(Integer)
-    flag = Toys::Flag.new(:abc, [], [], true, acceptor, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, accept: Integer)
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
     assert_equal(:value, flag.flag_syntax.first.flag_type)
@@ -311,11 +310,11 @@ describe Toys::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_nil(flag.default)
-    assert_equal(acceptor, flag.acceptor)
+    assert_equal(Toys::Acceptor.resolve_well_known(Integer), flag.acceptor)
   end
 
   it "defaults to a value switch with a short name" do
-    flag = Toys::Flag.new(:a, [], [], true, nil, nil, "hello", nil, nil, nil, nil)
+    flag = Toys::Flag.create(:a, default: "hello")
     assert_equal(1, flag.flag_syntax.size)
     assert_equal("-a VALUE", flag.flag_syntax.first.canonical_str)
     assert_equal(:value, flag.flag_syntax.first.flag_type)
@@ -327,12 +326,11 @@ describe Toys::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_equal("hello", flag.default)
-    assert_nil(flag.acceptor)
+    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
   end
 
   it "chooses the first long flag's value label and delim as canonical" do
-    flag = Toys::Flag.new(:abc, ["--bb=VAL", "--aa LAV", "-aFOO"], [],
-                          true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, ["--bb=VAL", "--aa LAV", "-aFOO"])
     assert_equal(3, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:required, flag.value_type)
@@ -343,8 +341,7 @@ describe Toys::Flag do
   end
 
   it "chooses the first short flag's value label and delim as canonical" do
-    flag = Toys::Flag.new(:abc, ["-aFOO", "-b BAR"], [],
-                          true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, ["-aFOO", "-b BAR"])
     assert_equal(2, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:required, flag.value_type)
@@ -355,8 +352,7 @@ describe Toys::Flag do
   end
 
   it "canonicalizes to required value flags" do
-    flag = Toys::Flag.new(:abc, ["--aa VAL", "--bb", "-a"], [],
-                          true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, ["--aa VAL", "--bb", "-a"])
     assert_equal(3, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:required, flag.value_type)
@@ -369,8 +365,7 @@ describe Toys::Flag do
   end
 
   it "canonicalizes to optional value flags" do
-    flag = Toys::Flag.new(:abc, ["--aa", "--cc [VAL]", "--bb", "-a"], [],
-                          true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, ["--aa", "--cc [VAL]", "--bb", "-a"])
     assert_equal(4, flag.flag_syntax.size)
     assert_equal(:value, flag.flag_type)
     assert_equal(:optional, flag.value_type)
@@ -383,8 +378,7 @@ describe Toys::Flag do
   end
 
   it "canonicalizes to boolean flags" do
-    flag = Toys::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], [],
-                          true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, ["--[no-]aa", "--bb", "-a"])
     assert_equal(3, flag.flag_syntax.size)
     assert_equal(:boolean, flag.flag_type)
     assert_equal(:boolean, flag.flag_syntax[1].flag_type)
@@ -394,60 +388,55 @@ describe Toys::Flag do
   end
 
   it "honors provided display name" do
-    flag = Toys::Flag.new(:abc, ["--aa VAL", "--bb", "-a"], [],
-                          true, nil, nil, nil, nil, nil, "aa flag", nil)
+    flag = Toys::Flag.create(:abc, ["--aa VAL", "--bb", "-a"], display_name: "aa flag")
     assert_equal("aa flag", flag.display_name)
   end
 
   it "prevents value and boolean collisions" do
     assert_raises(Toys::ToolDefinitionError) do
-      Toys::Flag.new(:abc, ["--[no-]aa", "--bb=VAL"], [],
-                     true, nil, nil, nil, nil, nil, nil, nil)
+      Toys::Flag.create(:abc, ["--[no-]aa", "--bb=VAL"])
     end
   end
 
   it "prevents required and optional collisions" do
     assert_raises(Toys::ToolDefinitionError) do
-      Toys::Flag.new(:abc, ["--aa=VAL", "--bb=[VAL]"], [],
-                     true, nil, nil, nil, nil, nil, nil, nil)
+      Toys::Flag.create(:abc, ["--aa=VAL", "--bb=[VAL]"])
     end
   end
 
   it "updates used flags" do
     used_flags = []
-    Toys::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], used_flags,
-                   true, nil, nil, nil, nil, nil, nil, nil)
+    Toys::Flag.create(:abc, ["--[no-]aa", "--bb", "-a"], used_flags: used_flags)
     assert_equal(["--aa", "--no-aa", "--bb", "-a"], used_flags)
   end
 
   it "reports collisions with used flags" do
     assert_raises(Toys::ToolDefinitionError) do
-      Toys::Flag.new(:abc, ["--[no-]aa", "--bb", "-a"], ["--aa"],
-                     true, nil, nil, nil, nil, nil, nil, nil)
+      Toys::Flag.create(:abc, ["--[no-]aa", "--bb", "-a"], used_flags: ["--aa"])
     end
   end
 
   it "defaults to the set handler" do
-    flag = Toys::Flag.new(:abc, [], [], true, nil, nil, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc)
     assert_equal(Toys::Flag::SET_HANDLER, flag.handler)
     assert_equal(1, flag.handler.call(1, 2))
   end
 
   it "recognizes the set handler" do
-    flag = Toys::Flag.new(:abc, [], [], true, nil, :set, nil, nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, handler: :set)
     assert_equal(Toys::Flag::SET_HANDLER, flag.handler)
     assert_equal(1, flag.handler.call(1, 2))
   end
 
   it "recognizes the push handler" do
-    flag = Toys::Flag.new(:abc, [], [], true, nil, :push, [], nil, nil, nil, nil)
+    flag = Toys::Flag.create(:abc, handler: :push)
     assert_equal(Toys::Flag::PUSH_HANDLER, flag.handler)
     assert_equal([1, 2], flag.handler.call(2, [1]))
   end
 
   describe "#resolve" do
     def create_flag(*flags)
-      Toys::Flag.new(:abc, flags, [], true, nil, nil, nil, nil, nil, nil, nil)
+      Toys::Flag.create(:abc, flags)
     end
 
     it "finds a simple flag" do

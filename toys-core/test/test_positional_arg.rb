@@ -24,7 +24,7 @@
 require "helper"
 
 describe Toys::PositionalArg do
-  let(:acceptor) { Toys::Acceptor.resolve_default(Integer) }
+  let(:acceptor) { Toys::Acceptor.resolve_well_known(Integer) }
   let(:arg) {
     Toys::PositionalArg.new(
       "hello-there!", :required, acceptor, -1, nil, "description", ["long", "description"], nil

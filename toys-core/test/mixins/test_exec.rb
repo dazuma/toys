@@ -260,8 +260,8 @@ describe Toys::StandardMixins::Exec do
     it "supports a proc as a result_callback" do
       cli.add_config_block do
         tool "foo" do
-          callback = proc do |result, tool|
-            tool.exit(result.exit_code)
+          callback = proc do |result, context|
+            context.exit(result.exit_code)
           end
           include :exec, result_callback: callback
           def run

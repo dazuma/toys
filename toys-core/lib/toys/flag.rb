@@ -47,29 +47,81 @@ module Toys
 
     ##
     # Create a Flag definition.
-    # Should be created only from {Toys::Tool#add_flag}.
+    # This argument list is subject to change. Use {Toys::Flag.create} instead
+    # for a more stable interface.
     # @private
     #
     def initialize(key, flags, used_flags, report_collisions, acceptor, handler, default,
-                   flag_completion, value_completion, display_name, group)
+                   flag_completion, value_completion, desc, long_desc, display_name, group)
       @group = group
       @key = key
-      @flag_syntax = flags.map { |s| Syntax.new(s) }
-      @acceptor = acceptor
+      @flag_syntax = Array(flags).map { |s| Syntax.new(s) }
+      @acceptor = Acceptor.resolve(acceptor)
       @handler = resolve_handler(handler)
-      @desc = WrappableString.make("")
-      @long_desc = WrappableString.make_array([])
+      @desc = WrappableString.make(desc)
+      @long_desc = WrappableString.make_array(long_desc)
       @default = default
       @flag_completion = resolve_flag_completion(flag_completion)
       @value_completion = Completion.create(value_completion)
-      needs_val =
-        @flag_syntax.empty? &&
-        ((!acceptor.nil? && acceptor.name != ::TrueClass && acceptor.name != ::FalseClass) ||
-          (!default.nil? && default != true && default != false))
-      create_default_flag_if_needed(needs_val)
+      create_default_flag if @flag_syntax.empty?
       remove_used_flags(used_flags, report_collisions)
-      canonicalize(needs_val)
+      canonicalize
       summarize(display_name)
+    end
+
+    ##
+    # Create a flag definition.
+    #
+    # @param [String,Symbol] key The key to use to retrieve the value from
+    #     the execution context.
+    # @param [Array<String>] flags The flags in OptionParser format. If empty,
+    #     a flag will be inferred from the key.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide an Acceptor object or one of the default
+    #     acceptors defined by OptionParser. Optional. If not specified,
+    #     accepts any value as a string.
+    # @param [Object] default The default value. This is the value that will
+    #     be set in the context if this flag is not provided on the command
+    #     line. Defaults to `nil`.
+    # @param [Proc,nil,:set,:push] handler An optional handler for
+    #     setting/updating the value. A handler is a proc taking two
+    #     arguments, the given value and the previous value, returning the
+    #     new value that should be set. You may also specify a predefined
+    #     named handler. The `:set` handler (the default) replaces the
+    #     previous value (effectively `-> (val, _prev) { val }`). The
+    #     `:push` handler expects the previous value to be an array and
+    #     pushes the given value onto it; it should be combined with setting
+    #     `default: []` and is intended for "multi-valued" flags.
+    # @param [Object] flag_completion A specifier for shell tab completion.
+    #     for flag names associated with this flag. By default, a
+    #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+    #     names as completion candidates. To customize completion, set this to
+    #     a hash of options to pass to the constructor for
+    #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
+    #     by {Toys::Completion.create}.
+    # @param [Object] value_completion A specifier for shell tab completion.
+    #     for flag values associated with this flag. Pass any spec
+    #     recognized by {Toys::Completion.create}.
+    # @param [Boolean] report_collisions Raise an exception if a flag is
+    #     requested that is already in use or marked as disabled. Default is
+    #     true.
+    # @param [Toys::FlagGroup] group Group containing this flag.
+    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    #     description for the flag. See {Toys::Tool#desc=} for a description of
+    #     allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
+    #     description of allowed formats. Defaults to the empty array.
+    # @param [String] display_name A display name for this flag, used in help
+    #     text and error messages.
+    # @param [Array<String>] used_flags An array of flags already in use.
+    #
+    def self.create(key, flags = [],
+                    used_flags: nil, report_collisions: true, accept: nil, handler: nil,
+                    default: nil, flag_completion: nil, value_completion: nil, display_name: nil,
+                    desc: nil, long_desc: nil, group: nil)
+      new(key, flags, used_flags, report_collisions, accept, handler, default, flag_completion,
+          value_completion, desc, long_desc, display_name, group)
     end
 
     ##
@@ -91,8 +143,8 @@ module Toys
     attr_reader :flag_syntax
 
     ##
-    # Returns the acceptor, which may be `nil`.
-    # @return [Tool::Acceptor::Base,nil]
+    # Returns the effective acceptor.
+    # @return [Tool::Acceptor::Base]
     #
     attr_reader :acceptor
 
@@ -291,8 +343,7 @@ module Toys
       end
     end
 
-    def create_default_flag_if_needed(needs_val)
-      return unless @flag_syntax.empty?
+    def create_default_flag
       canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
       unless canonical_flag.empty?
         flag_str =
@@ -301,15 +352,18 @@ module Toys
           else
             "--#{canonical_flag}"
           end
+        needs_val = ![::NilClass, ::TrueClass, ::FalseClass].include?(@acceptor.name) ||
+                    ![nil, true, false].include?(@default)
         flag_str = "#{flag_str} VALUE" if needs_val
         @flag_syntax << Syntax.new(flag_str)
       end
     end
 
     def remove_used_flags(used_flags, report_collisions)
+      return if !used_flags && !report_collisions
       @flag_syntax.select! do |fs|
         fs.flags.all? do |f|
-          collision = used_flags.include?(f)
+          collision = used_flags&.include?(f)
           if collision && report_collisions
             raise ToolDefinitionError,
                   "Cannot use flag #{f.inspect} because it is already assigned or reserved."
@@ -317,13 +371,13 @@ module Toys
           !collision
         end
       end
-      used_flags.concat(effective_flags.uniq)
+      used_flags&.concat(effective_flags.uniq)
     end
 
-    def canonicalize(needs_val)
-      @flag_type = needs_val ? :value : nil
+    def canonicalize
+      @flag_type = nil
       @value_type = nil
-      @value_label = needs_val ? "VALUE" : nil
+      @value_label = nil
       @value_delim = " "
       short_flag_syntax.reverse_each do |flag|
         analyze_flag_syntax(flag)

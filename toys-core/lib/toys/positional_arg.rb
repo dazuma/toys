@@ -27,8 +27,9 @@ module Toys
   #
   class PositionalArg
     ##
-    # Create an Arg definition.
-    # Should be created only from methods of {Toys::Tool}.
+    # Create a PositionalArg definition.
+    # This argument list is subject to change. Use {Toys::PositionalArg.create}
+    # instead for a more stable interface.
     # @private
     #
     def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
@@ -40,6 +41,37 @@ module Toys
       @desc = WrappableString.make(desc)
       @long_desc = WrappableString.make_array(long_desc)
       @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
+    end
+
+    ##
+    # Create a PositionalArg definition.
+    #
+    # @param [String,Symbol] key The key to use to retrieve the value from
+    #     the execution context.
+    # @param [Symbol] type The type of arg. Valid values are `:required`,
+    #     `:optional`, and `:remaining`.
+    # @param [Object] accept An acceptor that validates and/or converts the
+    #     value. You may provide either the name of an acceptor you have
+    #     defined, or one of the default acceptors provided by OptionParser.
+    #     Optional. If not specified, accepts any value as a string.
+    # @param [Object] completion A specifier for shell tab completion. See
+    #     {Toys::Completion.create} for recognized formats.
+    # @param [String] display_name A name to use for display (in help text and
+    #     error reports). Defaults to the key in upper case.
+    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    #     description for the flag. See {Toys::DSL::Tool#desc} for a
+    #     description of the allowed formats. Defaults to the empty string.
+    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
+    #     a description of the allowed formats. (But note that this param
+    #     takes an Array of description lines, rather than a series of
+    #     arguments.) Defaults to the empty array.
+    # @return [Toys::PositionalArg]
+    #
+    def self.create(key, type,
+                    accept: nil, default: nil, completion: nil, desc: nil,
+                    long_desc: nil, display_name: nil)
+      new(key, type, accept, default, completion, desc, long_desc, display_name)
     end
 
     ##
@@ -55,8 +87,8 @@ module Toys
     attr_reader :type
 
     ##
-    # Returns the acceptor, which may be `nil`.
-    # @return [Tool::Acceptor::Base,nil]
+    # Returns the effective acceptor.
+    # @return [Tool::Acceptor::Base]
     #
     attr_accessor :acceptor
 

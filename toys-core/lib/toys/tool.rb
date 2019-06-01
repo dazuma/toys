@@ -335,7 +335,7 @@ module Toys
         if @parent
           @parent.resolve_acceptor(k)
         else
-          Acceptor.resolve_default(k)
+          Acceptor.resolve_well_known(k)
         end
       end
       if accept.nil?
@@ -519,9 +519,14 @@ module Toys
     ##
     # Add a flag group to the group list.
     #
-    # @param [Symbol] type The type of group. Allowed values: `:required`,
-    #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
-    #     Default is `:optional`.
+    # The type should be one of the following symbols:
+    # *   `:optional` All flags in the group are optional
+    # *   `:required` All flags in the group are required
+    # *   `:exactly_one` Exactly one flag in the group must be provided
+    # *   `:at_least_one` At least one flag in the group must be provided
+    # *   `:at_most_one` At most one flag in the group must be provided
+    #
+    # @param [Symbol] type The type of group. Default is `:optional`.
     # @param [String,Array<String>,Toys::WrappableString] desc Short
     #     description for the group. See {Toys::Tool#desc=} for a description
     #     of allowed formats. Defaults to `"Flags"`.
@@ -542,11 +547,7 @@ module Toys
         return self unless report_collisions
         raise ToolDefinitionError, "Flag group #{name} already exists"
       end
-      unless type.is_a?(::Class)
-        type = ModuleLookup.to_module_name(type)
-        type = FlagGroup.const_get(type)
-      end
-      group = type.new(name, desc, long_desc)
+      group = FlagGroup.create(type: type, name: name, desc: desc, long_desc: long_desc)
       @flag_group_names[name] = group unless name.nil?
       if prepend
         @flag_groups.unshift(group)
@@ -563,7 +564,8 @@ module Toys
     #
     # @param [String,Symbol] key The key to use to retrieve the value from
     #     the execution context.
-    # @param [Array<String>] flags The flags in OptionParser format.
+    # @param [Array<String>] flags The flags in OptionParser format. If empty,
+    #     a flag will be inferred from the key.
     # @param [Object] accept An acceptor that validates and/or converts the
     #     value. You may provide either the name of an acceptor you have
     #     defined, or one of the default acceptors provided by OptionParser.
@@ -619,9 +621,7 @@ module Toys
       accept = resolve_acceptor(accept)
       flag_def = Flag.new(key, flags, @used_flags, report_collisions, accept,
                           handler, default, flag_completion, value_completion,
-                          display_name, group)
-      flag_def.desc = desc if desc
-      flag_def.long_desc = long_desc if long_desc
+                          desc, long_desc, display_name, group)
       if flag_def.active?
         @flags << flag_def
         group << flag_def
