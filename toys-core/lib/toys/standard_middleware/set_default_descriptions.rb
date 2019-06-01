@@ -65,21 +65,6 @@ module Toys
       ].freeze
 
       ##
-      # A mapping of names for acceptable types
-      # @return [Hash]
-      #
-      ACCEPTABLE_NAMES = {
-        nil => "string",
-        ::Object => "string",
-        ::NilClass => "string",
-        ::String => "nonempty string",
-        ::TrueClass => "boolean",
-        ::FalseClass => "boolean",
-        ::Array => "string array",
-        ::Regexp => "regular expression",
-      }.freeze
-
-      ##
       # Create a SetDefaultDescriptions middleware given default descriptions.
       #
       # @param [String,nil] default_tool_desc The default short description for
@@ -191,7 +176,7 @@ module Toys
       #
       def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
         name = flag.key.to_s.tr("_", "-").gsub(/[^\w-]/, "").downcase.inspect
-        acceptable = flag.flag_type == :value ? acceptable_name(flag.acceptor) : "boolean flag"
+        acceptable = flag.flag_type == :value ? flag.acceptor.type_desc : "boolean flag"
         default_clause = flag.default ? " (default is #{flag.default.inspect})" : ""
         "Sets the #{name} option as type #{acceptable}#{default_clause}."
       end
@@ -225,7 +210,7 @@ module Toys
       #     for info on the format.
       #
       def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
-        acceptable = acceptable_name(arg.acceptor)
+        acceptable = arg.acceptor.type_desc
         default_clause = arg.default ? " (default is #{arg.default.inspect})" : ""
         case arg.type
         when :required
@@ -251,28 +236,6 @@ module Toys
       #
       def generate_arg_long_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
         nil
-      end
-
-      ##
-      # Return a reasonable name for an acceptor
-      #
-      # @param [Toys::Acceptor::Base,nil] accept An acceptor to name
-      # @return [String]
-      #
-      def acceptable_name(accept)
-        name = accept&.name
-        str = ACCEPTABLE_NAMES[name]
-        if str.nil? && defined?(::OptionParser)
-          str =
-            if name == ::OptionParser::DecimalInteger
-              "decimal integer"
-            elsif name == ::OptionParser::OctalInteger
-              "octal integer"
-            elsif name == ::OptionParser::DecimalNumeric
-              "decimal numeric"
-            end
-        end
-        str || name.to_s.downcase
       end
 
       private

@@ -5,7 +5,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 ## Immediate tasks
 
 * Should we be able to add tool-scoped completions?
-* Acceptor name is used as both key and display name. (bad)
 * Write toys-core user guide
 
 ## Investigations/wishlist

@@ -35,7 +35,7 @@ module Toys
     def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
       @key = key
       @type = type
-      @acceptor = acceptor
+      @acceptor = Acceptor.resolve(acceptor)
       @default = default
       @completion = completion
       @desc = WrappableString.make(desc)

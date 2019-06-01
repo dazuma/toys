@@ -236,7 +236,7 @@ describe Toys::Tool do
         tool.add_flag(:abc, accept: String)
         flag = tool.flags.first
         assert_equal(["--abc VALUE"], flag.canonical_syntax_strings)
-        assert_equal(String, flag.acceptor.name)
+        assert_equal(String, flag.acceptor.well_known_spec)
       end
 
       it "adds a default flag with a nonboolean default" do
@@ -412,7 +412,7 @@ describe Toys::Tool do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE"], accept: Integer)
         flag = tool.flags.first
         assert_equal(["-aVALUE", "--bb=VALUE", "-cVALUE"], flag.canonical_syntax_strings)
-        assert_equal(Integer, flag.acceptor.name)
+        assert_equal(Integer, flag.acceptor.well_known_spec)
       end
 
       it "gets value label from first double flag" do
@@ -554,23 +554,23 @@ describe Toys::Tool do
 
   describe "acceptor" do
     let(:acceptor_name) { "acc1" }
-    let(:acceptor) { Toys::Acceptor::Base.new(acceptor_name) }
+    let(:acceptor) { Toys::Acceptor::Base.new }
 
     it "resolves well-known acceptors" do
-      assert_equal(Integer, tool.resolve_acceptor(Integer).name)
+      assert_equal(Integer, tool.resolve_acceptor(Integer).well_known_spec)
     end
 
     it "resolves optparse defined acceptors" do
       assert_equal(OptionParser::DecimalInteger,
-                   tool.resolve_acceptor(OptionParser::DecimalInteger).name)
+                   tool.resolve_acceptor(OptionParser::DecimalInteger).well_known_spec)
     end
 
     it "resolves the nil acceptor" do
-      assert_nil(tool.resolve_acceptor(nil))
+      assert_equal(Toys::Acceptor::DEFAULT, tool.resolve_acceptor(nil))
     end
 
     it "can be added and resolved" do
-      tool.add_acceptor(acceptor)
+      tool.add_acceptor(acceptor_name, acceptor)
       assert_equal(acceptor, tool.resolve_acceptor(acceptor_name))
     end
 
@@ -581,12 +581,12 @@ describe Toys::Tool do
     end
 
     it "can be resolved in a subtool" do
-      tool.add_acceptor(acceptor)
+      tool.add_acceptor(acceptor_name, acceptor)
       assert_equal(acceptor, subtool.resolve_acceptor(acceptor_name))
     end
 
     it "can be referenced in a flag" do
-      tool.add_acceptor(acceptor)
+      tool.add_acceptor(acceptor_name, acceptor)
       tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
       assert_equal(acceptor, tool.flags.first.acceptor)
     end

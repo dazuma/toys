@@ -319,7 +319,7 @@ module Toys
     # from {Toys::Acceptor::Base}, an acceptor name, a well-known acceptor
     # understood by OptionParser, or `nil`.
     #
-    # Returns either `nil` or an acceptor that is usable by OptionParser.
+    # Returns an acceptor that is usable by OptionParser.
     #
     # If an acceptor name is given, it may be resolved by this tool or any of
     # its ancestors. Raises {Toys::ToolDefinitionError} if the name is not
@@ -329,7 +329,8 @@ module Toys
     # @return [Tool::Acceptor::Base] The resolved acceptor.
     #
     def resolve_acceptor(accept)
-      return accept if accept.nil? || accept.is_a?(Acceptor::Base)
+      return Acceptor::DEFAULT if accept.nil?
+      return accept if accept.is_a?(Acceptor::Base)
       name = accept
       accept = @acceptors.fetch(name) do |k|
         if @parent
@@ -436,19 +437,20 @@ module Toys
     # Add an acceptor to the tool. This acceptor may be refereneced by name
     # when adding a flag or an arg.
     #
+    # @param [String] name The name of the acceptor.
     # @param [Toys::Acceptor::Base] acceptor The acceptor to add.
     #
-    def add_acceptor(acceptor)
-      unless acceptor.name.is_a?(::String)
+    def add_acceptor(name, acceptor)
+      unless name.is_a?(::String)
         raise ToolDefinitionError,
-              "Acceptor name #{acceptor.name.inspect} must be a string."
+              "Acceptor name #{name.inspect} must be a string."
       end
-      if @acceptors.key?(acceptor.name)
+      if @acceptors.key?(name)
         raise ToolDefinitionError,
-              "An acceptor named #{acceptor.name.inspect} has already been" \
-              " defined in tool #{display_name.inspect}."
+              "An acceptor named #{name.inspect} has already been defined in tool" \
+              " #{display_name.inspect}."
       end
-      @acceptors[acceptor.name] = acceptor
+      @acceptors[name] = acceptor
       self
     end
 

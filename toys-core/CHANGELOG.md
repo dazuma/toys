@@ -14,6 +14,7 @@ Major changes and features:
 Other notable changes:
 
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
+* ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
@@ -37,6 +38,7 @@ Changes to internal interfaces:
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.
     * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.
+    * CHANGED: `Tool#add_acceptor` takes the name as a separate argument, for consistency with `add_mixin` and `add_template`.
     * CHANGED: Removed `Tool#custom_acceptors` method.
     * CHANGED: `Tool#resolve_acceptor` now always returns an acceptor object (even for well-known acceptors such as `Integer`).
     * ADDED: Added `resolve_flag` method to look up flags by syntax.
@@ -68,6 +70,7 @@ Changes to internal interfaces:
     * CHANGED: Moved `Toys::Definition::Acceptor` to `Toys::Acceptor`
     * CHANGED: The base ciass is now `Acceptor::Base` instead of `Acceptor` itself.
     * CHANGED: Subclasses are now submodules under `Acceptor`. For example, moved `Toys::Definition::PatternAcceptor` to `Toys::Acceptor::Pattern`.
+    * CHANGED: Replaced `name` field with separate `type_desc` and `well_known_spec` fields.
     * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
     * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
     * ADDED: Class methods `Acceptor.resolve` and `Acceptor.resolve_well_known`.

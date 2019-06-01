@@ -26,7 +26,7 @@ require "optparse"
 
 describe Toys::Acceptor::Base do
   let(:input_string) { "Arya Stark" }
-  let(:acceptor) { Toys::Acceptor::Base.new("hello") }
+  let(:acceptor) { Toys::Acceptor::Base.new }
 
   it "accepts any string" do
     assert_equal([input_string], acceptor.match(input_string))
@@ -39,6 +39,10 @@ describe Toys::Acceptor::Base do
   it "accepts nil" do
     assert_equal([nil], acceptor.match(nil))
   end
+
+  it "defaults type desc to DEFAULT_TYPE_DESC" do
+    assert_equal(Toys::Acceptor::DEFAULT_TYPE_DESC, acceptor.type_desc)
+  end
 end
 
 describe Toys::Acceptor::Simple do
@@ -46,7 +50,7 @@ describe Toys::Acceptor::Simple do
   let(:upcase_string) { input_string.upcase }
 
   describe "with no function" do
-    let(:acceptor) { Toys::Acceptor::Simple.new("hello") }
+    let(:acceptor) { Toys::Acceptor::Simple.new }
 
     it "accepts any string" do
       assert_equal([input_string, input_string], acceptor.match(input_string))
@@ -59,7 +63,7 @@ describe Toys::Acceptor::Simple do
 
   describe "with proc function" do
     let(:acceptor) {
-      Toys::Acceptor::Simple.new("hello", :upcase.to_proc)
+      Toys::Acceptor::Simple.new(:upcase.to_proc)
     }
 
     it "accepts any string" do
@@ -73,7 +77,7 @@ describe Toys::Acceptor::Simple do
 
   describe "with block function" do
     let(:acceptor) {
-      Toys::Acceptor::Simple.new("hello", &:upcase)
+      Toys::Acceptor::Simple.new(&:upcase)
     }
 
     it "accepts any string" do
@@ -86,26 +90,20 @@ describe Toys::Acceptor::Simple do
   end
 
   describe "with failable function" do
-    let(:acceptor) {
-      Toys::Acceptor::Simple.new("hello") { |s| Integer(s) }
-    }
-
     it "recognizes exceptions" do
-      acceptor = Toys::Acceptor::Simple.new("hello") { |s| Integer(s) }
+      acceptor = Toys::Acceptor::Simple.new { |s| Integer(s) }
       assert_nil(acceptor.match(input_string))
     end
 
     it "recognizes reject sentinel" do
-      acceptor = Toys::Acceptor::Simple.new("hello") do |_s|
-        Toys::Acceptor::Simple::REJECT
-      end
+      acceptor = Toys::Acceptor::Simple.new { |_s| Toys::Acceptor::Simple::REJECT }
       assert_nil(acceptor.match(input_string))
     end
   end
 end
 
 describe Toys::Acceptor::Pattern do
-  let(:acceptor) { Toys::Acceptor::Pattern.new("hello", /^[A-Z][a-z]+\sStark$/) }
+  let(:acceptor) { Toys::Acceptor::Pattern.new(/^[A-Z][a-z]+\sStark$/) }
 
   it "accepts matching strings" do
     assert_equal(["Arya Stark"], acceptor.match("Arya Stark").to_a)
@@ -130,7 +128,7 @@ end
 
 describe Toys::Acceptor::Enum do
   let(:acceptor) {
-    Toys::Acceptor::Enum.new("hello", [:Robb, :Sansa, :Arya, :Bran, :Rickon])
+    Toys::Acceptor::Enum.new([:Robb, :Sansa, :Arya, :Bran, :Rickon])
   }
 
   it "accepts matching strings" do
@@ -186,6 +184,10 @@ describe "standard acceptor" do
     it "converts nil to true" do
       assert_accept(acceptor, nil, true)
     end
+
+    it "has the correct type desc" do
+      assert_equal("string", acceptor.type_desc)
+    end
   end
 
   describe "NilClass" do
@@ -202,6 +204,10 @@ describe "standard acceptor" do
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
     end
+
+    it "has the correct type desc" do
+      assert_equal("string", acceptor.type_desc)
+    end
   end
 
   describe "String" do
@@ -217,6 +223,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("nonempty string", acceptor.type_desc)
     end
   end
 
@@ -254,6 +264,10 @@ describe "standard acceptor" do
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
     end
+
+    it "has the correct type desc" do
+      assert_equal("integer", acceptor.type_desc)
+    end
   end
 
   describe "Float" do
@@ -281,6 +295,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("floating point number", acceptor.type_desc)
     end
   end
 
@@ -313,6 +331,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("rational number", acceptor.type_desc)
     end
   end
 
@@ -353,6 +375,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("number", acceptor.type_desc)
     end
   end
 
@@ -410,6 +436,10 @@ describe "standard acceptor" do
     it "converts nil to true" do
       assert_accept(acceptor, nil, true)
     end
+
+    it "has the correct type desc" do
+      assert_equal("boolean", acceptor.type_desc)
+    end
   end
 
   describe "FalseClass" do
@@ -425,6 +455,10 @@ describe "standard acceptor" do
 
     it "converts nil to false" do
       assert_accept(acceptor, nil, false)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("boolean", acceptor.type_desc)
     end
   end
 
@@ -453,6 +487,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("string array", acceptor.type_desc)
     end
   end
 
@@ -485,6 +523,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("regular expression", acceptor.type_desc)
     end
   end
 
@@ -521,6 +563,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("decimal integer", acceptor.type_desc)
     end
   end
 
@@ -563,6 +609,10 @@ describe "standard acceptor" do
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
     end
+
+    it "has the correct type desc" do
+      assert_equal("octal integer", acceptor.type_desc)
+    end
   end
 
   describe "DecimalNumeric" do
@@ -598,6 +648,10 @@ describe "standard acceptor" do
 
     it "converts nil to nil" do
       assert_accept(acceptor, nil, nil)
+    end
+
+    it "has the correct type desc" do
+      assert_equal("decimal number", acceptor.type_desc)
     end
   end
 end

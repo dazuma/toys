@@ -100,26 +100,29 @@ module Toys
       #
       # @param [String] name The acceptor name.
       # @param [Regexp,Array,Proc,nil] arg The acceptor specification.
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to the acceptor name.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def acceptor(name, arg = nil, &block)
+      def acceptor(name, arg = nil, type_desc: nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
         return self if cur_tool.nil?
         name = name.to_s
+        type_desc ||= name
         accept =
           case arg
           when ::Regexp
-            Acceptor::Pattern.new(name, arg, &block)
+            Acceptor::Pattern.new(arg, type_desc: type_desc, &block)
           when ::Array
-            Acceptor::Enum.new(name, arg)
+            Acceptor::Enum.new(arg, type_desc: type_desc)
           when ::Proc
-            Acceptor::Simple.new(name, arg)
+            Acceptor::Simple.new(arg, type_desc: type_desc)
           when nil
-            Acceptor::Simple.new(name, &block)
+            Acceptor::Simple.new(type_desc: type_desc, &block)
           else
             raise ToolDefinitionError, "Illegal acceptor: #{arg.inspect}"
           end
-        cur_tool.add_acceptor(accept)
+        cur_tool.add_acceptor(name, accept)
         self
       end
 

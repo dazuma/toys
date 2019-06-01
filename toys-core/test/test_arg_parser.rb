@@ -264,7 +264,7 @@ describe Toys::ArgParser do
       end
 
       it "converts a value using a custom acceptor" do
-        tool.add_acceptor(Toys::Acceptor::Enum.new("myenum", [:foo, :bar]))
+        tool.add_acceptor("myenum", Toys::Acceptor::Enum.new([:foo, :bar]))
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum")
         arg_parser.parse(["--aa", "bar"])
         arg_parser.finish
@@ -273,7 +273,7 @@ describe Toys::ArgParser do
       end
 
       it "handles match failure using a custom acceptor" do
-        tool.add_acceptor(Toys::Acceptor::Enum.new("myenum", [:foo, :bar]))
+        tool.add_acceptor("myenum", Toys::Acceptor::Enum.new([:foo, :bar]))
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum")
         arg_parser.parse(["--aa", "1234"])
         arg_parser.finish
@@ -678,7 +678,7 @@ describe Toys::ArgParser do
     end
 
     it "converts a value using a custom acceptor" do
-      tool.add_acceptor(Toys::Acceptor::Enum.new("myenum", [:foo, :bar]))
+      tool.add_acceptor("myenum", Toys::Acceptor::Enum.new([:foo, :bar]))
       tool.add_optional_arg(:a, accept: "myenum")
       arg_parser.parse(["bar"])
       arg_parser.finish
@@ -687,7 +687,7 @@ describe Toys::ArgParser do
     end
 
     it "handles match failure using a custom acceptor" do
-      tool.add_acceptor(Toys::Acceptor::Enum.new("myenum", [:foo, :bar]))
+      tool.add_acceptor("myenum", Toys::Acceptor::Enum.new([:foo, :bar]))
       tool.add_optional_arg(:a, accept: "myenum")
       arg_parser.parse(["1234"])
       arg_parser.finish

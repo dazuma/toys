@@ -2487,8 +2487,9 @@ will handle interrupts as follows:
 3.  The `interrupt` method is then responsible for tool execution from that
     point. It may terminate execution by returning or calling `exit`, or it may
     restart or resume processing (perhaps by calling the `run` method again).
-    It may also invoke the normal Toys interrupt handling by re-raising _the
-    same_ interrupt exception object.
+    Or it may invoke the normal Toys interrupt handling (i.e. terminating
+    execution, displaying the message `INTERRUPTED`) by re-raising _the same_
+    interrupt exception object.
 4.  If another interrupt takes place during the execution of the `interrupt`
     method, Toys will terminate it by raising a _second_ `Interrupt` exception
     (calling any `ensure` blocks). Then, `interrupt` will be called _again_ and

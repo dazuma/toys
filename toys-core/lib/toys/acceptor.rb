@@ -45,6 +45,12 @@ module Toys
     REJECT = ::Object.new.freeze
 
     ##
+    # The default type description.
+    # @return [String]
+    #
+    DEFAULT_TYPE_DESC = "string"
+
+    ##
     # A base class for acceptors.
     #
     # The base acceptor does not do any validation (i.e. it accepts all
@@ -56,24 +62,34 @@ module Toys
       ##
       # Create a base acceptor.
       #
-      # @param [String] name A visible name for the acceptor, shown in help.
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
+      # @param [Object] well_known_spec The well-known acceptor spec associated
+      #     with this acceptor, or `nil` for none.
       #
-      def initialize(name)
-        @name = name
+      def initialize(type_desc: nil, well_known_spec: nil)
+        @type_desc = type_desc || DEFAULT_TYPE_DESC
+        @well_known_spec = well_known_spec
       end
 
       ##
-      # Name of the acceptor
+      # Type description string, shown in help.
       # @return [String]
       #
-      attr_reader :name
+      attr_reader :type_desc
 
       ##
-      # Name of the acceptor
+      # The well-known acceptor spec associated with this acceptor, if any.
+      # @return [Object,nil]
+      #
+      attr_reader :well_known_spec
+
+      ##
+      # Type description string, shown in help.
       # @return [String]
       #
       def to_s
-        name.to_s
+        type_desc.to_s
       end
 
       ##
@@ -125,7 +141,7 @@ module Toys
     # The default acceptor.
     # @return [Toys::Acceptor::Base]
     #
-    DEFAULT = Base.new(::NilClass)
+    DEFAULT = Base.new(type_desc: "string", well_known_spec: ::NilClass)
 
     ##
     # An acceptor that uses a simple function to validate and convert input.
@@ -145,11 +161,14 @@ module Toys
       # the function may either raise an exception (which must descend from
       # `StandardError`) or return {Toys::Acceptor::REJECT}.
       #
-      # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Proc] function The acceptor function
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
+      # @param [Object] well_known_spec The well-known acceptor spec associated
+      #     with this acceptor, or `nil` for none.
       #
-      def initialize(name, function = nil, &block)
-        super(name)
+      def initialize(function = nil, type_desc: nil, well_known_spec: nil, &block)
+        super(type_desc: type_desc, well_known_spec: well_known_spec)
         @function = function || block || proc { |s| s }
       end
 
@@ -190,14 +209,17 @@ module Toys
       # If no converter is provided, no conversion is done and the input string
       # is returned.
       #
-      # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Regexp] regex Regular expression defining value values.
       # @param [Proc] converter A converter function. May also be given as a
       #     block. Note that the converter will be passed all elements of
       #     the `MatchData`.
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
+      # @param [Object] well_known_spec The well-known acceptor spec associated
+      #     with this acceptor, or `nil` for none.
       #
-      def initialize(name, regex, converter = nil, &block)
-        super(name)
+      def initialize(regex, converter = nil, type_desc: nil, well_known_spec: nil, &block)
+        super(type_desc: type_desc, well_known_spec: well_known_spec)
         @regex = regex
         @converter = converter || block
       end
@@ -235,11 +257,14 @@ module Toys
       ##
       # Create an acceptor.
       #
-      # @param [String] name A visible name for the acceptor, shown in help.
       # @param [Array] values Valid values.
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
+      # @param [Object] well_known_spec The well-known acceptor spec associated
+      #     with this acceptor, or `nil` for none.
       #
-      def initialize(name, values)
-        super(name)
+      def initialize(values, type_desc: nil, well_known_spec: nil)
+        super(type_desc: type_desc, well_known_spec: well_known_spec)
         @values = Array(values).map { |v| [v.to_s, v] }
       end
 
@@ -319,27 +344,35 @@ module Toys
       end
 
       def build_object
-        Simple.new(::Object) { |s| s.nil? ? true : s }
+        Simple.new(type_desc: "string", well_known_spec: ::Object) do |s|
+          s.nil? ? true : s
+        end
       end
 
       def build_string
-        Pattern.new(::String, /.+/m)
+        Pattern.new(/.+/m, type_desc: "nonempty string", well_known_spec: ::String)
       end
 
       def build_integer
-        Simple.new(::Integer) { |s| s.nil? ? nil : Integer(s) }
+        Simple.new(type_desc: "integer", well_known_spec: ::Integer) do |s|
+          s.nil? ? nil : Integer(s)
+        end
       end
 
       def build_float
-        Simple.new(::Float) { |s| s.nil? ? nil : Float(s) }
+        Simple.new(type_desc: "floating point number", well_known_spec: ::Float) do |s|
+          s.nil? ? nil : Float(s)
+        end
       end
 
       def build_rational
-        Simple.new(::Rational) { |s| s.nil? ? nil : Rational(s) }
+        Simple.new(type_desc: "rational number", well_known_spec: ::Rational) do |s|
+          s.nil? ? nil : Rational(s)
+        end
       end
 
       def build_numeric
-        Simple.new(::Numeric) do |s|
+        Simple.new(type_desc: "number", well_known_spec: ::Numeric) do |s|
           if s.nil?
             nil
           elsif s.include?("/")
@@ -355,8 +388,8 @@ module Toys
       TRUE_STRINGS = ["+", "true", "yes"].freeze
       FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
 
-      def build_boolean(name, default)
-        Simple.new(name) do |s|
+      def build_boolean(spec, default)
+        Simple.new(type_desc: "boolean", well_known_spec: spec) do |s|
           if s.nil?
             default
           else
@@ -375,7 +408,7 @@ module Toys
       end
 
       def build_array
-        Simple.new(::Array) do |s|
+        Simple.new(type_desc: "string array", well_known_spec: ::Array) do |s|
           if s.nil?
             nil
           else
@@ -385,7 +418,7 @@ module Toys
       end
 
       def build_regexp
-        Simple.new(::Regexp) do |s|
+        Simple.new(type_desc: "regular expression", well_known_spec: ::Regexp) do |s|
           if s.nil?
             nil
           else
@@ -403,15 +436,22 @@ module Toys
       end
 
       def build_decimal_integer
-        Simple.new(::OptionParser::DecimalInteger) { |s| s.nil? ? nil : Integer(s, 10) }
+        Simple.new(type_desc: "decimal integer",
+                   well_known_spec: ::OptionParser::DecimalInteger) do |s|
+          s.nil? ? nil : Integer(s, 10)
+        end
       end
 
       def build_octal_integer
-        Simple.new(::OptionParser::OctalInteger) { |s| s.nil? ? nil : Integer(s, 8) }
+        Simple.new(type_desc: "octal integer",
+                   well_known_spec: ::OptionParser::OctalInteger) do |s|
+          s.nil? ? nil : Integer(s, 8)
+        end
       end
 
       def build_decimal_numeric
-        Simple.new(::OptionParser::DecimalNumeric) do |s|
+        Simple.new(type_desc: "decimal number",
+                   well_known_spec: ::OptionParser::DecimalNumeric) do |s|
           if s.nil?
             nil
           elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
