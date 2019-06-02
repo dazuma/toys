@@ -7,7 +7,7 @@ This is a major update with significant new features and a bunch of fixes. It do
 Highlights:
 
 * Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.
-* Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values. 
+* Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values.
 * Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
 * A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a host of fixes, especially around acceptors and optional flag values.
 
@@ -17,18 +17,25 @@ Details:
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
-* ADDED: Flag handlers can accept the symbolic names `:set` and `:push`.
+
+* ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `:gem_build` template includes an `:install_gem` option.
-* ADDED: Exec util and mixin provide `:result_callback` and `:name` options.
+* ADDED: The `acceptor` directive takes an optional `type_desc` argument.
+* ADDED: The Exec util and mixin support specifying a callback for process results.
+* ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
-* CHANGED: Flags are no longer automatically considered to have a value if they have a default or acceptor but also have explicit flag syntax that does not include a value.
 * CHANGED: Flags create a short form flag by default if the name has one character.
+* CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default and/or acceptor.
+* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
 * IMPROVED: Error messages for flag groups are more complete.
+* IMPROVED: All context data, including well-known data, is available to be modified by flags and args.
 * FIXED: Prevented toys-core from being ousted from the load path if a toys file invoked bundler setup.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
+
+Additionally, a significant amount of internal reorganization and cleanup happened in the toys-core gem. See the changelog for toys-core for more details.
 
 ### 0.7.0 / 2019-01-23
 

@@ -584,9 +584,55 @@ describe Toys::Tool do
       assert_equal(acceptor, subtool.flags.first.acceptor)
     end
 
+    it "can be added based on a spec" do
+      tool.add_acceptor(acceptor_name, [:one, :two])
+      tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+      assert_instance_of(Toys::Acceptor::Enum, tool.flags.first.acceptor)
+    end
+
     it "raises if name not found" do
       assert_raises(Toys::ToolDefinitionError) do
         tool.add_flag(:a, ["-a VAL"], accept: "acc2")
+      end
+    end
+  end
+
+  describe "completion" do
+    let(:completion_name) { "comp1" }
+    let(:completion) { Toys::Completion::Base.new }
+
+    it "resolves the default completion" do
+      tool.add_flag(:a, ["-a VAL"])
+      assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
+    end
+
+    it "can be referenced by name in a flag" do
+      tool.add_completion(completion_name, completion)
+      tool.add_flag(:a, ["-a VAL"], value_completion: completion)
+      assert_equal(completion, tool.flags.first.value_completion)
+    end
+
+    it "can be referenced by name in a positional arg" do
+      tool.add_completion(completion_name, completion)
+      tool.add_required_arg(:a, completion: completion)
+      assert_equal(completion, tool.positional_args.first.completion)
+    end
+
+    it "can be referenced by name from a subtool" do
+      tool.add_completion(completion_name, completion)
+      subtool.add_flag(:a, ["-a VAL"], value_completion: completion)
+      assert_equal(completion, subtool.flags.first.value_completion)
+    end
+
+    it "can be added based on a spec" do
+      tool.add_completion(completion_name, ["one", "two"])
+      tool.add_flag(:a, ["-a VAL"], value_completion: completion_name)
+      assert_instance_of(Toys::Completion::Enum, tool.flags.first.value_completion)
+    end
+
+    it "raises if name not found" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_flag(:a, ["-a VAL"], value_completion: "comp2")
       end
     end
   end

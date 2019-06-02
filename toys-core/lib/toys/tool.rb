@@ -425,71 +425,83 @@ module Toys
     end
 
     ##
-    # Add an acceptor to the tool. This acceptor may be refereneced by name
-    # when adding a flag or an arg.
+    # Add a named acceptor to the tool. This acceptor may be refereneced by
+    # name when adding a flag or an arg. See {Toys::Acceptor.create} for
+    # detailed information on how to specify an acceptor.
     #
     # @param [String] name The name of the acceptor.
-    # @param [Toys::Acceptor::Base] acceptor The acceptor to add.
+    # @param [Toys::Acceptor::Base,Object] acceptor The acceptor to add. You
+    #     can provide either an acceptor object, or a spec understood by
+    #     {Toys::Acceptor.create}.
+    # @param [String] type_desc Type description string, shown in help.
+    #     Defaults to the acceptor name.
     #
-    def add_acceptor(name, acceptor)
+    def add_acceptor(name, acceptor = nil, type_desc: nil, &block)
       name = name.to_s
       if @acceptors.key?(name)
         raise ToolDefinitionError,
               "An acceptor named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @acceptors[name] = acceptor
+      @acceptors[name] = Toys::Acceptor.create(acceptor, type_desc: type_desc, &block)
       self
     end
 
     ##
     # Add a named mixin module to this tool.
+    # You may provide a mixin module or a block that configures one.
     #
     # @param [String] name The name of the mixin.
     # @param [Module] mixin_module The mixin module.
     #
-    def add_mixin(name, mixin_module)
+    def add_mixin(name, mixin_module = nil, &block)
       name = name.to_s
       if @mixins.key?(name)
         raise ToolDefinitionError,
               "A mixin named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @mixins[name] = mixin_module
+      @mixins[name] = mixin_module || Mixin.create(&block)
       self
     end
 
     ##
-    # Add a named completion proc to this tool.
+    # Add a named completion proc to this tool. The completion may be
+    # referenced by name when adding a flag or an arg. See
+    # {Toys::Completion.create} for detailed information on how to specify a
+    # completion.
     #
     # @param [String] name The name of the completion.
-    # @param [Proc,Tool::Completion::Base] completion The completion.
+    # @param [Proc,Tool::Completion::Base,Object] completion The completion to
+    #     add. You can provide either a completion object, or a spec understood
+    #     by {Toys::Completion.create}.
     #
-    def add_completion(name, completion)
+    def add_completion(name, completion = nil, &block)
       name = name.to_s
       if @completions.key?(name)
         raise ToolDefinitionError,
               "A completion named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @completions[name] = completion
+      @completions[name] = Toys::Completion.create(completion || block)
       self
     end
 
     ##
     # Add a named template class to this tool.
+    # You may provide a template class or a block that configures one.
     #
     # @param [String] name The name of the template.
     # @param [Class] template_class The template class.
     #
-    def add_template(name, template_class)
+    def add_template(name, template_class = nil, &block)
       name = name.to_s
       if @templates.key?(name)
         raise ToolDefinitionError,
               "A template named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @templates[name] = template_class
+      @templates[name] = template_class || Template.create(&block)
       self
     end
 

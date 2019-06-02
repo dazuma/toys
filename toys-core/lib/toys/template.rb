@@ -91,6 +91,19 @@ module Toys
   # And it will create a tool called "templated-greeting".
   #
   module Template
+    ##
+    # Create a template class with the given block.
+    #
+    # @return [Class]
+    #
+    def self.create(&block)
+      template_class = ::Class.new do
+        include ::Toys::Template
+      end
+      template_class.class_eval(&block) if block
+      template_class
+    end
+
     ## @private
     def self.included(mod)
       return if mod.respond_to?(:to_expand)

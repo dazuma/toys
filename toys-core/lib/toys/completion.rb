@@ -307,7 +307,7 @@ module Toys
     ##
     # A Completion whose candidates come from a static list of strings.
     #
-    class Values < Base
+    class Enum < Base
       ##
       # Create a completion from a list of values.
       #
@@ -365,14 +365,14 @@ module Toys
       when ::Proc, Base
         spec
       when ::Array
-        Values.new(spec)
+        Enum.new(spec)
       when :file_system
         FileSystem.new
       else
         if spec.respond_to?(:call)
           spec
         else
-          raise ::ArgumentError, "Unknown completion spec: #{spec.inspect}"
+          raise ToolDefinitionError, "Illegal completion spec: #{spec.inspect}"
         end
       end
     end

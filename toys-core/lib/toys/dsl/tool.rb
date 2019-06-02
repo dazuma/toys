@@ -99,18 +99,14 @@ module Toys
       #     string parameter is invalid.
       #
       # @param [String] name The acceptor name.
-      # @param [Object] arg The acceptor specification.
+      # @param [Object] spec The acceptor specification.
       # @param [String] type_desc Type description string, shown in help.
       #     Defaults to the acceptor name.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def acceptor(name, arg = nil, type_desc: nil, &block)
+      def acceptor(name, spec = nil, type_desc: nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        return self if cur_tool.nil?
-        name = name.to_s
-        type_desc ||= name
-        accept = Acceptor.create(arg, type_desc: type_desc, &block)
-        cur_tool.add_acceptor(name, accept)
+        cur_tool&.add_acceptor(name, spec, type_desc: type_desc || name.to_s, &block)
         self
       end
 
@@ -125,13 +121,7 @@ module Toys
       #
       def mixin(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        if cur_tool
-          mixin_mod = ::Module.new do
-            include ::Toys::Mixin
-          end
-          mixin_mod.module_eval(&block)
-          cur_tool.add_mixin(name, mixin_mod)
-        end
+        cur_tool&.add_mixin(name, &block)
         self
       end
 
@@ -150,13 +140,7 @@ module Toys
       #
       def template(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        if cur_tool
-          template_class = ::Class.new do
-            include ::Toys::Template
-          end
-          template_class.class_eval(&block)
-          cur_tool.add_template(name, template_class)
-        end
+        cur_tool&.add_template(name, &block)
         self
       end
 
@@ -170,10 +154,7 @@ module Toys
       #
       def completion(name, spec = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        if cur_tool
-          completion = Completion.create(spec || block)
-          cur_tool.add_completion(name, completion)
-        end
+        cur_tool&.add_completion(name, spec || block)
         self
       end
 

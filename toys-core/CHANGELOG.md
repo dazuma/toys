@@ -47,6 +47,7 @@ Changes to internal interfaces:
     * ADDED: `enforce_flags_before_args` setting and `flags_before_args_enforced?` query.
     * ADDED: Completion accessor, and options to the various flag and positional arg methods to set their completion strategies.
     * ADDED: Added `Tool::StandardCompletion` class.
+    * IMPROVED: `add_mixin`, `add_template`, and `add_acceptor` support all the specs understood by their create methods.
 * Changes related to the flag classes:
     * CHANGED: Moved `Toys::Definition::Flag` to `Toys::Flag`
     * CHANGED: `FlagSyntax` is now `Flag::Syntax`.

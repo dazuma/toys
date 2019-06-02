@@ -34,6 +34,12 @@ describe Toys::Completion do
       assert_equal(Toys::Completion::EMPTY, completion)
     end
 
+    it "passes through an existing completion" do
+      completion = Toys::Completion.create(["one", :two, ["three"]])
+      completion2 = Toys::Completion.create(completion)
+      assert_equal(completion, completion2)
+    end
+
     it "recognizes :empty" do
       completion = Toys::Completion.create(:empty)
       assert_equal(Toys::Completion::EMPTY, completion)
@@ -48,7 +54,7 @@ describe Toys::Completion do
 
     it "recognizes an array" do
       completion = Toys::Completion.create(["one", :two, ["three"]])
-      assert_instance_of(Toys::Completion::Values, completion)
+      assert_instance_of(Toys::Completion::Enum, completion)
       expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
       assert_equal(expected, completion.values)
     end
@@ -57,6 +63,12 @@ describe Toys::Completion do
       my_proc = proc { |s| [s] }
       completion = Toys::Completion.create(my_proc)
       assert_equal(my_proc, completion)
+    end
+
+    it "errors on unrecognized spec" do
+      assert_raises(Toys::ToolDefinitionError) do
+        Toys::Completion.create(:hiho)
+      end
     end
   end
 
@@ -161,8 +173,8 @@ describe Toys::Completion::FileSystem do
   end
 end
 
-describe Toys::Completion::Values do
-  let(:completion) { Toys::Completion::Values.new(["one", :two, ["three"]]) }
+describe Toys::Completion::Enum do
+  let(:completion) { Toys::Completion::Enum.new(["one", :two, ["three"]]) }
   def context(str)
     Toys::Completion::Context.new(nil, [], str, {})
   end

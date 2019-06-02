@@ -368,7 +368,7 @@ module Toys
         when nil
           block ? Simple.new(type_desc: type_desc, &block) : DEFAULT
         else
-          raise ToolDefinitionError, "Illegal acceptor: #{spec.inspect}"
+          raise ToolDefinitionError, "Illegal acceptor spec: #{spec.inspect}"
         end
       end
 

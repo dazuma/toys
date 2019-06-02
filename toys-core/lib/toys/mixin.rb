@@ -92,6 +92,19 @@ module Toys
   #     end
   #
   module Mixin
+    ##
+    # Create a mixin module with the given block.
+    #
+    # @return [Class]
+    #
+    def self.create(&block)
+      mixin_mod = ::Module.new do
+        include ::Toys::Mixin
+      end
+      mixin_mod.module_eval(&block) if block
+      mixin_mod
+    end
+
     ## @private
     def self.included(mod)
       return if mod.respond_to?(:to_initialize)
