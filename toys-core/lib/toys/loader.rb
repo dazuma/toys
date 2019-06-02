@@ -31,10 +31,12 @@ module Toys
   class Loader
     ## @private
     ToolData = ::Struct.new(:definitions, :top_priority, :active_priority) do
+      ## @private
       def top_definition
         top_priority ? definitions[top_priority] : nil
       end
 
+      ## @private
       def active_definition
         active_priority ? definitions[active_priority] : nil
       end

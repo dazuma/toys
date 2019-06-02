@@ -50,6 +50,7 @@ module Toys
       to_include do |opts = {}|
         @__gems_opts = opts
 
+        ## @private
         def self.gems
           require "toys/utils/gems"
           # rubocop:disable Naming/MemoizedInstanceVariableName
@@ -57,6 +58,7 @@ module Toys
           # rubocop:enable Naming/MemoizedInstanceVariableName
         end
 
+        ## @private
         def self.gem(name, *requirements)
           gems.activate(name, *requirements)
         end

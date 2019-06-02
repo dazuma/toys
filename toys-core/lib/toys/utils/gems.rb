@@ -46,6 +46,12 @@ module Toys
       # Need to add a gem to the bundle.
       #
       class GemfileUpdateNeededError < ActivationFailedError
+        ##
+        # Create a GemfileUpdateNeededError.
+        #
+        # @param [String] requirements_text Gems and versions missing.
+        # @param [String] gemfile_path Path to the offending Gemfile.
+        #
         def initialize(requirements_text, gemfile_path)
           super("Required gem not available in the bundle: #{requirements_text}.\n" \
                 "Please update your Gemfile #{gemfile_path.inspect}.")

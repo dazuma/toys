@@ -441,6 +441,7 @@ module Toys
 
       TRUE_STRINGS = ["+", "true", "yes"].freeze
       FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
+      private_constant :TRUE_STRINGS, :FALSE_STRINGS
 
       def build_boolean(spec, default)
         Simple.new(type_desc: "boolean", well_known_spec: spec) do |s|

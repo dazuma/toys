@@ -9,6 +9,16 @@ Metrics/AbcSize:
   Exclude:
     - "builtins/**/*"
   Max: 25
+Metrics/BlockLength:
+  Exclude:
+    - "lib/toys/templates/*"
+    - "test/**/*"
+    - "builtins/**/*"
+    - "*.gemspec"
+Metrics/BlockNesting:
+  Exclude:
+    - "lib/toys/templates/*"
+    - "test/**/*"
 Metrics/ClassLength:
   Max: 250
 Metrics/CyclomaticComplexity:
@@ -23,6 +33,24 @@ Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
   Max: 10
+Style/BlockDelimiters:
+  Exclude:
+    - "test/**/*"
+Style/Copyright:
+  Enabled: true
+  Exclude:
+    - "test/rake-dirs/**/*"
+    - "test/rspec-cases/**/*"
+  Notice: 'Copyright \d{4} Daniel Azuma'
+Style/Documentation:
+  Exclude:
+    - "test/**/*"
+Style/DocumentationMethod:
+  Enabled: true
+  Exclude:
+    - ".toys.rb"
+    - "builtins/**/*"
+    - "test/**/*"
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
@@ -41,21 +69,3 @@ Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
 Style/WordArray:
   EnforcedStyle: brackets
-
-# Disable certain checks for templates, builtins and tests
-Metrics/BlockLength:
-  Exclude:
-    - "lib/toys/templates/*"
-    - "test/**/*"
-    - "builtins/**/*"
-    - "*.gemspec"
-Metrics/BlockNesting:
-  Exclude:
-    - "lib/toys/templates/*"
-    - "test/**/*"
-Style/BlockDelimiters:
-  Exclude:
-    - "test/**/*"
-Style/Documentation:
-  Exclude:
-    - "test/**/*"

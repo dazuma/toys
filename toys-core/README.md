@@ -197,7 +197,8 @@ Try these runs. Do they behave as you expected?
     ./mycmd example error
 
 The next example modifies the *middleware stack* to effect other kinds of
-behavior change.
+behavior change. Toys middleware are objects that alter the behavior of all
+tools in your executable.
 
     #!/usr/bin/env ruby
     # frozen_string_literal: true
@@ -227,10 +228,14 @@ their own description. See the effect with:
 
     ./mycmd greet --help
 
-We've also omitted some of the default middleware, including the one that
-displays a tool's help screen if it has no `run` method. Since we haven't
-defined a toplevel `run` method in this last example, invoking the root tool
-now causes an error:
+We've also omitted some of the default middleware, including the one that adds
+the `--verbose` and `--quiet` flags to all your tools. Notice those flags are
+no longer present.
+
+We've also omitted the middleware that provides default execution behavior
+(i.e. displaying the help screen) when there is no `run` method. Now, since we
+haven't defined a toplevel `run` method in this last example, invoking the root
+tool will cause an error:
 
     ./mycmd
 

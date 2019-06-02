@@ -26,7 +26,7 @@
 # include this.
 ::Kernel.exec(::File.join(::File.dirname(__dir__), "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
-expand :clean, paths: ["pkg", "doc", ".yardoc"]
+expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp"]
 
 expand :minitest, libs: ["lib", "test"]
 
@@ -55,10 +55,10 @@ tool "ci" do
               " entrypoint for CI systems like Travis. Any failure will" \
               " result in a nonzero result code."
 
-  include :exec, result_callback: :result_callback
+  include :exec, result_callback: :handle_result
   include :terminal
 
-  def result_callback(result)
+  def handle_result(result)
     if result.success?
       puts("** #{result.name} passed\n\n", :green, :bold)
     else

@@ -7,6 +7,13 @@ Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 Metrics/AbcSize:
   Max: 25
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "*.gemspec"
+Metrics/BlockNesting:
+  Exclude:
+    - "test/**/*"
 Metrics/ClassLength:
   Max: 400
 Metrics/CyclomaticComplexity:
@@ -21,6 +28,30 @@ Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
   Max: 10
+Naming/FileName:
+  Exclude:
+    - "test/lookup-cases/**/*"
+    - "lib/toys-core.rb"
+    - "examples/multi-file-gem/**/*.rb"
+    - "examples/*/*.gemspec"
+Style/BlockDelimiters:
+  Exclude:
+    - "test/**/*"
+Style/Copyright:
+  Enabled: true
+  Exclude:
+    - "test/lookup-cases/**/*"
+    - "examples/**/*"
+  Notice: 'Copyright \d{4} Daniel Azuma'
+Style/Documentation:
+  Exclude:
+    - "test/**/*"
+Style/DocumentationMethod:
+  Enabled: true
+  Exclude:
+    - ".toys.rb"
+    - "examples/**/*"
+    - "test/**/*"
 Style/GlobalVars:
   Exclude:
     - "test/lookup-cases/preloads/**/*.rb"
@@ -47,24 +78,3 @@ Style/WhileUntilModifier:
   Enabled: false
 Style/WordArray:
   EnforcedStyle: brackets
-
-# Disable certain checks for tests
-Metrics/BlockLength:
-  Exclude:
-    - "test/**/*"
-    - "*.gemspec"
-Metrics/BlockNesting:
-  Exclude:
-    - "test/**/*"
-Naming/FileName:
-  Exclude:
-    - "test/lookup-cases/**/*"
-    - "lib/toys-core.rb"
-    - "examples/multi-file-gem/**/*.rb"
-    - "examples/*/*.gemspec"
-Style/BlockDelimiters:
-  Exclude:
-    - "test/**/*"
-Style/Documentation:
-  Exclude:
-    - "test/**/*"

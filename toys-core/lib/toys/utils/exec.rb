@@ -349,6 +349,7 @@ module Toys
           :unsetenv_others,
         ].freeze
 
+        ## @private
         def initialize(parent = nil)
           if parent
             @config_opts = ::Hash.new { |_h, k| parent.config_opts[k] }
@@ -362,6 +363,7 @@ module Toys
           end
         end
 
+        ## @private
         def add(config)
           config.each do |k, v|
             if CONFIG_KEYS.include?(k)
@@ -375,6 +377,7 @@ module Toys
           self
         end
 
+        ## @private
         def delete(*keys)
           keys.each do |k|
             if CONFIG_KEYS.include?(k)
@@ -388,7 +391,10 @@ module Toys
           self
         end
 
+        ## @private
         attr_reader :config_opts
+
+        ## @private
         attr_reader :spawn_opts
       end
 
