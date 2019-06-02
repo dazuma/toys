@@ -51,9 +51,8 @@ module Toys
     # @param [Symbol] type The type of arg. Valid values are `:required`,
     #     `:optional`, and `:remaining`.
     # @param [Object] accept An acceptor that validates and/or converts the
-    #     value. You may provide either the name of an acceptor you have
-    #     defined, or one of the default acceptors provided by OptionParser.
-    #     Optional. If not specified, accepts any value as a string.
+    #     value. See {Toys::Acceptor.create} for recognized formats. Optional.
+    #     If not specified, defaults to {Toys::Acceptor::DEFAULT}.
     # @param [Object] complete A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
     # @param [String] display_name A name to use for display (in help text and

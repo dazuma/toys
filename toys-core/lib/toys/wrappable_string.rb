@@ -62,10 +62,10 @@ module Toys
     # Returns the string without any wrapping
     # @return [String]
     #
-    def to_s
+    def string
       @fragments.join(" ")
     end
-    alias string to_s
+    alias to_s string
 
     ## @private
     def ==(other)
@@ -121,6 +121,7 @@ module Toys
     #
     def self.wrap_lines(strs, width, width2 = nil)
       result = Array(strs).map do |s|
+        s = make(s)
         lines = s.empty? ? [""] : s.wrap(width, width2)
         width = width2 if width2
         lines

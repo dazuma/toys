@@ -77,9 +77,8 @@ module Toys
     # @param [Array<String>] flags The flags in OptionParser format. If empty,
     #     a flag will be inferred from the key.
     # @param [Object] accept An acceptor that validates and/or converts the
-    #     value. You may provide an Acceptor object or one of the default
-    #     acceptors defined by OptionParser. Optional. If not specified,
-    #     accepts any value as a string.
+    #     value. See {Toys::Acceptor.create} for recognized formats. Optional.
+    #     If not specified, defaults to {Toys::Acceptor::DEFAULT}.
     # @param [Object] default The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.

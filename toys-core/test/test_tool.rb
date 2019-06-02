@@ -252,15 +252,15 @@ describe Toys::Tool do
       end
     end
 
-    describe "single vs double" do
-      it "finds single and double flags with values" do
+    describe "syntax styles" do
+      it "finds short and long flags with values" do
         tool.add_flag(:a, ["-a", "--bb", "-cVALUE", "--dd=VAL"])
         flag = tool.flags.first
         assert_equal(["-a", "-cVALUE"], flag.short_flag_syntax.map(&:original_str))
         assert_equal(["--bb", "--dd=VAL"], flag.long_flag_syntax.map(&:original_str))
       end
 
-      it "finds single and double flags with booleans" do
+      it "finds short and long flags with booleans" do
         tool.add_flag(:a, ["-a", "--bb", "--[no-]ee"])
         flag = tool.flags.first
         assert_equal(["-a"], flag.short_flag_syntax.map(&:original_str))
@@ -556,43 +556,69 @@ describe Toys::Tool do
     let(:acceptor_name) { "acc1" }
     let(:acceptor) { Toys::Acceptor::Base.new }
 
-    it "resolves the default acceptor" do
-      tool.add_flag(:a, ["-a VAL"])
-      assert_equal(Toys::Acceptor::DEFAULT, tool.flags.first.acceptor)
+    describe "lookup" do
+      it "finds an acceptor by name" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        assert_same(acceptor, tool.lookup_acceptor(acceptor_name))
+      end
+
+      it "returns nil on an unknown name" do
+        assert_nil(tool.lookup_acceptor("acc2"))
+      end
+
+      it "does not do full resolution" do
+        assert_nil(tool.lookup_acceptor(Integer))
+      end
+
+      it "finds an acceptor from a subtool" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        assert_same(acceptor, subtool.lookup_acceptor(acceptor_name))
+      end
     end
 
-    it "resolves well-known acceptors" do
-      tool.add_flag(:a, ["-a VAL"], accept: Integer)
-      assert_equal(Integer, tool.flags.first.acceptor.well_known_spec)
+    describe "resolve" do
+      # TODO
     end
 
-    it "can be referenced by name in a flag" do
-      tool.add_acceptor(acceptor_name, acceptor)
-      tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
-      assert_equal(acceptor, tool.flags.first.acceptor)
-    end
+    describe "usage in flags and args" do
+      it "resolves the default acceptor" do
+        tool.add_flag(:a, ["-a VAL"])
+        assert_equal(Toys::Acceptor::DEFAULT, tool.flags.first.acceptor)
+      end
 
-    it "can be referenced by name in a positional arg" do
-      tool.add_acceptor(acceptor_name, acceptor)
-      tool.add_required_arg(:a, accept: acceptor_name)
-      assert_equal(acceptor, tool.positional_args.first.acceptor)
-    end
+      it "resolves well-known acceptors" do
+        tool.add_flag(:a, ["-a VAL"], accept: Integer)
+        assert_equal(Integer, tool.flags.first.acceptor.well_known_spec)
+      end
 
-    it "can be referenced by name from a subtool" do
-      tool.add_acceptor(acceptor_name, acceptor)
-      subtool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
-      assert_equal(acceptor, subtool.flags.first.acceptor)
-    end
+      it "can be referenced by name in a flag" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+        assert_same(acceptor, tool.flags.first.acceptor)
+      end
 
-    it "can be added based on a spec" do
-      tool.add_acceptor(acceptor_name, [:one, :two])
-      tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
-      assert_instance_of(Toys::Acceptor::Enum, tool.flags.first.acceptor)
-    end
+      it "can be referenced by name in a positional arg" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        tool.add_required_arg(:a, accept: acceptor_name)
+        assert_same(acceptor, tool.positional_args.first.acceptor)
+      end
 
-    it "raises if name not found" do
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_flag(:a, ["-a VAL"], accept: "acc2")
+      it "can be referenced by name from a subtool" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        subtool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+        assert_same(acceptor, subtool.flags.first.acceptor)
+      end
+
+      it "can be added based on a spec" do
+        tool.add_acceptor(acceptor_name, [:one, :two])
+        tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+        assert_instance_of(Toys::Acceptor::Enum, tool.flags.first.acceptor)
+      end
+
+      it "raises if name not found" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["-a VAL"], accept: "acc2")
+        end
       end
     end
   end
@@ -601,38 +627,60 @@ describe Toys::Tool do
     let(:completion_name) { "comp1" }
     let(:completion) { Toys::Completion::Base.new }
 
-    it "resolves the default completion" do
-      tool.add_flag(:a, ["-a VAL"])
-      assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
+    describe "lookup" do
+      it "finds a completion by name" do
+        tool.add_completion(completion_name, completion)
+        assert_same(completion, tool.lookup_completion(completion_name))
+      end
+
+      it "returns nil on an unknown name" do
+        assert_nil(tool.lookup_completion("comp2"))
+      end
+
+      it "does not do full resolution" do
+        assert_nil(tool.lookup_completion(["one", "two"]))
+      end
+
+      it "finds an acceptor from a subtool" do
+        tool.add_completion(completion_name, completion)
+        assert_same(completion, subtool.lookup_completion(completion_name))
+      end
     end
 
-    it "can be referenced by name in a flag" do
-      tool.add_completion(completion_name, completion)
-      tool.add_flag(:a, ["-a VAL"], complete_values: completion)
-      assert_equal(completion, tool.flags.first.value_completion)
-    end
+    describe "usage in flags and args" do
+      it "resolves the default completion" do
+        tool.add_flag(:a, ["-a VAL"])
+        assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
+      end
 
-    it "can be referenced by name in a positional arg" do
-      tool.add_completion(completion_name, completion)
-      tool.add_required_arg(:a, complete: completion)
-      assert_equal(completion, tool.positional_args.first.completion)
-    end
+      it "can be referenced by name in a flag" do
+        tool.add_completion(completion_name, completion)
+        tool.add_flag(:a, ["-a VAL"], complete_values: completion)
+        assert_same(completion, tool.flags.first.value_completion)
+      end
 
-    it "can be referenced by name from a subtool" do
-      tool.add_completion(completion_name, completion)
-      subtool.add_flag(:a, ["-a VAL"], complete_values: completion)
-      assert_equal(completion, subtool.flags.first.value_completion)
-    end
+      it "can be referenced by name in a positional arg" do
+        tool.add_completion(completion_name, completion)
+        tool.add_required_arg(:a, complete: completion)
+        assert_same(completion, tool.positional_args.first.completion)
+      end
 
-    it "can be added based on a spec" do
-      tool.add_completion(completion_name, ["one", "two"])
-      tool.add_flag(:a, ["-a VAL"], complete_values: completion_name)
-      assert_instance_of(Toys::Completion::Enum, tool.flags.first.value_completion)
-    end
+      it "can be referenced by name from a subtool" do
+        tool.add_completion(completion_name, completion)
+        subtool.add_flag(:a, ["-a VAL"], complete_values: completion)
+        assert_same(completion, subtool.flags.first.value_completion)
+      end
 
-    it "raises if name not found" do
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.add_flag(:a, ["-a VAL"], complete_values: "comp2")
+      it "can be added based on a spec" do
+        tool.add_completion(completion_name, ["one", "two"])
+        tool.add_flag(:a, ["-a VAL"], complete_values: completion_name)
+        assert_instance_of(Toys::Completion::Enum, tool.flags.first.value_completion)
+      end
+
+      it "raises if name not found" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.add_flag(:a, ["-a VAL"], complete_values: "comp2")
+        end
       end
     end
   end
@@ -699,6 +747,8 @@ describe Toys::Tool do
       end
       assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
+
+    # TODO: pass block to add_mixin
   end
 
   describe "template class" do
@@ -715,6 +765,8 @@ describe Toys::Tool do
       tool.add_template("mytemplate", MyTemplate)
       assert_equal(MyTemplate, subtool.lookup_template("mytemplate"))
     end
+
+    # TODO: pass block to add_template
   end
 
   describe "finish_definition" do

@@ -196,6 +196,48 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "completion directive" do
+    it "creates an enum completion" do
+      loader.add_block do
+        completion("comp1", ["one", "two", "three"])
+      end
+      tool, _remaining = loader.lookup([])
+      comp = tool.lookup_completion("comp1")
+      assert_kind_of(Toys::Completion::Enum, comp)
+    end
+
+    it "creates a file system completion" do
+      loader.add_block do
+        completion("comp1", :file_system)
+      end
+      tool, _remaining = loader.lookup([])
+      comp = tool.lookup_completion("comp1")
+      assert_kind_of(Toys::Completion::FileSystem, comp)
+    end
+
+    it "creates a completion from a block" do
+      loader.add_block do
+        completion("comp1") do
+          ["one", "two", "three"]
+        end
+      end
+      tool, _remaining = loader.lookup([])
+      comp = tool.lookup_completion("comp1")
+      assert_equal(["one", "two", "three"], comp.call(:context))
+    end
+
+    it "can be looked up in a subtool" do
+      loader.add_block do
+        completion("comp1", :file_system)
+        tool "foo" do
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      comp = tool.lookup_completion("comp1")
+      assert_kind_of(Toys::Completion::FileSystem, comp)
+    end
+  end
+
   describe "acceptor directive" do
     it "creates a pattern acceptor" do
       loader.add_block do

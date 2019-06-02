@@ -26,6 +26,11 @@ require "toys/utils/terminal"
 
 describe Toys::WrappableString do
   describe "wrap string" do
+    it "handles nil" do
+      result = Toys::WrappableString.new(nil).wrap(10)
+      assert_equal([], result)
+    end
+
     it "handles empty string" do
       result = Toys::WrappableString.new("").wrap(10)
       assert_equal([], result)
@@ -94,6 +99,66 @@ describe Toys::WrappableString do
     it "preserves spaces in fragments" do
       result = Toys::WrappableString.new([" ab cd\n", "\nef gh ", "ij   kl"]).wrap(15)
       assert_equal([" ab cd\n \nef gh ", "ij   kl"], result)
+    end
+  end
+
+  describe "make" do
+    it "handles a WrappableString" do
+      ws = Toys::WrappableString.new("hello")
+      result = Toys::WrappableString.make(ws)
+      assert_same(ws, result)
+    end
+
+    it "handles a string" do
+      expected = Toys::WrappableString.new("hello")
+      result = Toys::WrappableString.make("hello")
+      assert_equal(expected, result)
+    end
+  end
+
+  describe "make_array" do
+    it "handles nil" do
+      result = Toys::WrappableString.make_array(nil)
+      assert_equal([], result)
+    end
+
+    it "handles a string" do
+      expected = [Toys::WrappableString.new("hello")]
+      result = Toys::WrappableString.make_array("hello")
+      assert_equal(expected, result)
+    end
+
+    it "handles a string array" do
+      expected = [Toys::WrappableString.new("hello"), Toys::WrappableString.new("world")]
+      result = Toys::WrappableString.make_array(["hello", "world"])
+      assert_equal(expected, result)
+    end
+  end
+
+  describe "wrap_lines" do
+    it "handles an empty array" do
+      result = Toys::WrappableString.wrap_lines(nil, 10, 5)
+      assert_equal([], result)
+    end
+
+    it "handles a single string wrapped through multiple lines" do
+      result = Toys::WrappableString.wrap_lines("hello one two three", 10, 5)
+      assert_equal(["hello one", "two", "three"], result)
+    end
+
+    it "handles multiple strings wrapped through multiple lines" do
+      result = Toys::WrappableString.wrap_lines(["hello", "one two three"], 10, 5)
+      assert_equal(["hello", "one", "two", "three"], result)
+    end
+
+    it "handles an infinite line" do
+      result = Toys::WrappableString.wrap_lines("hello one two three", nil)
+      assert_equal(["hello one two three"], result)
+    end
+
+    it "handles subsequent lines the same as the first" do
+      result = Toys::WrappableString.wrap_lines(["hello", "one two three"], 10)
+      assert_equal(["hello", "one two", "three"], result)
     end
   end
 end
