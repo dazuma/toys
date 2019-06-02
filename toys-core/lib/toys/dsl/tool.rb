@@ -570,7 +570,7 @@ module Toys
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
-      # use directives in {Toys::DSL::Arg} within the block.
+      # use directives in {Toys::DSL::PositionalArg} within the block.
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
@@ -590,8 +590,8 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
-      #     this argument in a block.
+      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
+      #     configure this argument in a block.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def required_arg(key,
@@ -600,7 +600,7 @@ module Toys
                        &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, nil, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, nil, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)
@@ -621,7 +621,7 @@ module Toys
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
-      # use directives in {Toys::DSL::Arg} within the block.
+      # use directives in {Toys::DSL::PositionalArg} within the block.
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
@@ -644,8 +644,8 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
-      #     this argument in a block.
+      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
+      #     configure this argument in a block.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def optional_arg(key,
@@ -654,7 +654,7 @@ module Toys
                        &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, default, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)
@@ -674,7 +674,7 @@ module Toys
       #
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
-      # use directives in {Toys::DSL::Arg} within the block.
+      # use directives in {Toys::DSL::PositionalArg} within the block.
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
@@ -697,8 +697,8 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::Arg] An object that lets you configure
-      #     this argument in a block.
+      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
+      #     configure this argument in a block.
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def remaining_args(key,
@@ -707,7 +707,7 @@ module Toys
                          &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, default, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)

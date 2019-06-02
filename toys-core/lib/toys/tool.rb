@@ -357,6 +357,20 @@ module Toys
     end
 
     ##
+    # Perform a full resolution of an acceptor specification with respect to
+    # this tool. Recognizes acceptor names, and any specification understood by
+    # {Toys::Acceptor.create}
+    #
+    # @param [Toys::Acceptor::Base,Object] spec The acceptor spec, either an
+    #     acceptor object, or a spec understood by {Toys::Acceptor.create}.
+    # @param [String] type_desc Type description string, shown in help.
+    # @return [Toys::Acceptor::Base]
+    #
+    def resolve_acceptor(spec = nil, type_desc: nil, &block)
+      Acceptor.create(resolve_acceptor_name(spec), type_desc: type_desc, &block)
+    end
+
+    ##
     # Include the given mixin in the tool class.
     #
     # @param [String,Symbol,Module] name The mixin name or module

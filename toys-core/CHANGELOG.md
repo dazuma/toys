@@ -15,6 +15,7 @@ Other notable changes:
 
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
+* ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
@@ -35,6 +36,7 @@ Changes to internal interfaces:
     * CHANGED: Moved the `ModuleLookup` and `WrappableString` out of the `Utils` module to be located directly under `Toys`. Other modules remain under `Utils`.  The remaining files under "toys/utils" must now be required explicitly. This directory is now specifically for modules that are not part of the "core" interface.
     * CHANGED: All the classes under `Toys::Definition` are now located directly under `Toys`. For example, `Toys::Definition::Tool` is now `Toys::Tool`.
     * CHANGED: Generally removed the term "definition" from interfaces. For example, an accessor method called `tool_definition` is now just called `tool`.
+    * CHANGED: Renamed `Toys::DSL::Arg` to `Toys::DSL::PositionalArg`
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.
     * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.

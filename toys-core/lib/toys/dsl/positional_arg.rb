@@ -31,10 +31,12 @@ module Toys
     # {Toys::DSL::Tool#required_arg}, {Toys::DSL::Tool#optional_arg}, or
     # {Toys::DSL::Tool#remaining_args}.
     #
-    class Arg
+    class PositionalArg
       ## @private
       def initialize(acceptor, default, completion, display_name, desc, long_desc)
-        @acceptor = acceptor
+        @acceptor_spec = acceptor
+        @acceptor_type_desc = nil
+        @acceptor_block = nil
         @default = default
         @completion = completion
         @display_name = display_name
@@ -43,13 +45,16 @@ module Toys
       end
 
       ##
-      # Set the OptionParser acceptor.
+      # Set the acceptor for this argument's values.
+      # See {Toys::Acceptor.create} for recognized formats.
       #
-      # @param [Object] acceptor
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @param [Object] spec The spec.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
-      def accept(acceptor)
-        @acceptor = acceptor
+      def accept(spec = nil, type_desc: nil, &block)
+        @acceptor_spec = spec
+        @acceptor_type_desc = type_desc
+        @acceptor_block = block
         self
       end
 
@@ -57,7 +62,7 @@ module Toys
       # Set the default value.
       #
       # @param [Object] default
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
       def default(default)
         @default = default
@@ -69,7 +74,7 @@ module Toys
       # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] value
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
       def complete(value = nil, &block)
         @completion = value || block
@@ -80,7 +85,7 @@ module Toys
       # Set the name of this arg as it appears in help screens.
       #
       # @param [String] display_name
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
       def display_name(display_name)
         @display_name = display_name
@@ -92,7 +97,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
       def desc(desc)
         @desc = desc
@@ -105,7 +110,7 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::WrappableString...] long_desc
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [Toys::DSL::PositionalArg] self, for chaining.
       #
       def long_desc(*long_desc)
         @long_desc += long_desc
@@ -114,22 +119,28 @@ module Toys
 
       ## @private
       def _add_required_to(tool, key)
+        acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
+                                         &@acceptor_block)
         tool.add_required_arg(key,
-                              accept: @acceptor, complete: @completion,
+                              accept: acceptor, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _add_optional_to(tool, key)
+        acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
+                                         &@acceptor_block)
         tool.add_optional_arg(key,
-                              accept: @acceptor, default: @default, complete: @completion,
+                              accept: acceptor, default: @default, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _set_remaining_on(tool, key)
+        acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
+                                         &@acceptor_block)
         tool.set_remaining_args(key,
-                                accept: @acceptor, default: @default, complete: @completion,
+                                accept: acceptor, default: @default, complete: @completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
     end

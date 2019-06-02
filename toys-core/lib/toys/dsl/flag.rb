@@ -35,7 +35,9 @@ module Toys
       def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
                      report_collisions, group, desc, long_desc, display_name)
         @flags = flags
-        @acceptor = acceptor
+        @acceptor_spec = acceptor
+        @acceptor_type_desc = nil
+        @acceptor_block = nil
         @default = default
         @handler = handler
         @flag_completion = flag_completion
@@ -66,8 +68,10 @@ module Toys
       # @param [Object] spec The spec.
       # @return [Toys::DSL::Flag] self, for chaining.
       #
-      def accept(spec)
-        @acceptor = spec
+      def accept(spec = nil, type_desc: nil, &block)
+        @acceptor_spec = spec
+        @acceptor_type_desc = type_desc
+        @acceptor_block = block
         self
       end
 
@@ -185,8 +189,10 @@ module Toys
 
       ## @private
       def _add_to(tool, key)
+        acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
+                                         &@acceptor_block)
         tool.add_flag(key, @flags,
-                      accept: @acceptor, default: @default, handler: @handler,
+                      accept: acceptor, default: @default, handler: @handler,
                       complete_flags: @flag_completion, complete_values: @value_completion,
                       report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)

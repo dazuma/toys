@@ -21,6 +21,7 @@ Details:
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `:gem_build` template includes an `:install_gem` option.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
+* ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.

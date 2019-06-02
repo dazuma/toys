@@ -511,7 +511,7 @@ way, Toys provides an alternate syntax for defining arguments using a block.
     end
 
 For detailed info on configuring an argument using a block, see the
-[Toys::DSL::Arg class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/Arg).
+[Toys::DSL::PositionalArg class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/PositionalArg).
 
 #### Argument acceptors
 
