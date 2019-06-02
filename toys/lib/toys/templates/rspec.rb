@@ -147,7 +147,7 @@ module Toys
                      " examples by adding ~ before the tag."
 
           remaining_args :files,
-                         completion: :file_system,
+                         complete: :file_system,
                          desc: "Paths to the specs to run (defaults to all specs)"
 
           to_run do

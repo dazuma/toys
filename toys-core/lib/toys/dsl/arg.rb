@@ -71,7 +71,7 @@ module Toys
       # @param [Object] value
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def completion(value = nil, &block)
+      def complete(value = nil, &block)
         @completion = value || block
         self
       end
@@ -115,21 +115,21 @@ module Toys
       ## @private
       def _add_required_to(tool, key)
         tool.add_required_arg(key,
-                              accept: @acceptor, completion: @completion,
+                              accept: @acceptor, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _add_optional_to(tool, key)
         tool.add_optional_arg(key,
-                              accept: @acceptor, default: @default, completion: @completion,
+                              accept: @acceptor, default: @default, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _set_remaining_on(tool, key)
         tool.set_remaining_args(key,
-                                accept: @acceptor, default: @default, completion: @completion,
+                                accept: @acceptor, default: @default, complete: @completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
     end

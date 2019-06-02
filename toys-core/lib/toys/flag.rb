@@ -92,16 +92,16 @@ module Toys
     #     `:push` handler expects the previous value to be an array and
     #     pushes the given value onto it; it should be combined with setting
     #     `default: []` and is intended for "multi-valued" flags.
-    # @param [Object] flag_completion A specifier for shell tab completion.
-    #     for flag names associated with this flag. By default, a
+    # @param [Object] complete_flags A specifier for shell tab completion for
+    #     flag names associated with this flag. By default, a
     #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
     #     names as completion candidates. To customize completion, set this to
     #     a hash of options to pass to the constructor for
     #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
     #     by {Toys::Completion.create}.
-    # @param [Object] value_completion A specifier for shell tab completion.
-    #     for flag values associated with this flag. Pass any spec
-    #     recognized by {Toys::Completion.create}.
+    # @param [Object] complete_values A specifier for shell tab completion for
+    #     flag values associated with this flag. Pass any spec recognized by
+    #     {Toys::Completion.create}.
     # @param [Boolean] report_collisions Raise an exception if a flag is
     #     requested that is already in use or marked as disabled. Default is
     #     true.
@@ -118,10 +118,10 @@ module Toys
     #
     def self.create(key, flags = [],
                     used_flags: nil, report_collisions: true, accept: nil, handler: nil,
-                    default: nil, flag_completion: nil, value_completion: nil, display_name: nil,
+                    default: nil, complete_flags: nil, complete_values: nil, display_name: nil,
                     desc: nil, long_desc: nil, group: nil)
-      new(key, flags, used_flags, report_collisions, accept, handler, default, flag_completion,
-          value_completion, desc, long_desc, display_name, group)
+      new(key, flags, used_flags, report_collisions, accept, handler, default, complete_flags,
+          complete_values, desc, long_desc, display_name, group)
     end
 
     ##

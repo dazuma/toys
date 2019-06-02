@@ -42,22 +42,22 @@ describe Toys::Utils::BashCompletion do
     cli = Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: [])
     cli.add_config_block do
       tool "one" do
-        flag :hello, value_completion: ["neighbor", "kitty"]
-        flag :world, "--world VALUE", "-wVALUE", value_completion: ["building", "news"]
-        flag :ruby, "--ruby [VALUE]", value_completion: ["gems", "tuesday"]
-        required_arg :foo, completion: ["lish", "sball"]
-        optional_arg :bar, completion: ["n", "k"]
-        remaining_args :baz, completion: ["aar", "ooka"]
+        flag :hello, complete_values: ["neighbor", "kitty"]
+        flag :world, "--world VALUE", "-wVALUE", complete_values: ["building", "news"]
+        flag :ruby, "--ruby [VALUE]", complete_values: ["gems", "tuesday"]
+        required_arg :foo, complete: ["lish", "sball"]
+        optional_arg :bar, complete: ["n", "k"]
+        remaining_args :baz, complete: ["aar", "ooka"]
       end
       tool "two" do
       end
       tool "three" do
         tool "four" do
-          flag :hello, value_completion: tester.context_capture
-          flag :world, "--world VALUE", "-wVALUE", value_completion: tester.context_capture
-          required_arg :foo, completion: tester.context_capture
-          optional_arg :bar, completion: tester.context_capture
-          remaining_args :baz, completion: tester.context_capture
+          flag :hello, complete_values: tester.context_capture
+          flag :world, "--world VALUE", "-wVALUE", complete_values: tester.context_capture
+          required_arg :foo, complete: tester.context_capture
+          optional_arg :bar, complete: tester.context_capture
+          remaining_args :baz, complete: tester.context_capture
         end
       end
     end

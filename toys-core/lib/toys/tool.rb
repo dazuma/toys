@@ -601,14 +601,14 @@ module Toys
     #     `:push` handler expects the previous value to be an array and
     #     pushes the given value onto it; it should be combined with setting
     #     `default: []` and is intended for "multi-valued" flags.
-    # @param [Object] flag_completion A specifier for shell tab completion.
+    # @param [Object] complete_flags A specifier for shell tab completion
     #     for flag names associated with this flag. By default, a
     #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
     #     names as completion candidates. To customize completion, set this to
     #     a hash of options to pass to the constructor for
     #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
     #     by {Toys::Completion.create}.
-    # @param [Object] value_completion A specifier for shell tab completion.
+    # @param [Object] complete_values A specifier for shell tab completion
     #     for flag values associated with this flag. Pass any spec
     #     recognized by {Toys::Completion.create}.
     # @param [Boolean] report_collisions Raise an exception if a flag is
@@ -627,10 +627,9 @@ module Toys
     #     text and error messages.
     #
     def add_flag(key, flags = [],
-                 accept: nil, default: nil, handler: nil,
-                 flag_completion: nil, value_completion: nil,
-                 report_collisions: true, group: nil,
-                 desc: nil, long_desc: nil, display_name: nil)
+                 accept: nil, default: nil, handler: nil, complete_flags: nil,
+                 complete_values: nil, report_collisions: true, group: nil, desc: nil,
+                 long_desc: nil, display_name: nil)
       unless group.is_a?(FlagGroup::Base)
         group_name = group
         group = @flag_group_names[group_name]
@@ -638,11 +637,10 @@ module Toys
       end
       check_definition_state(is_arg: true)
       accept = resolve_acceptor_name(accept)
-      flag_completion = resolve_completion_name(flag_completion)
-      value_completion = resolve_completion_name(value_completion)
-      flag_def = Flag.new(key, flags, @used_flags, report_collisions, accept,
-                          handler, default, flag_completion, value_completion,
-                          desc, long_desc, display_name, group)
+      complete_flags = resolve_completion_name(complete_flags)
+      complete_values = resolve_completion_name(complete_values)
+      flag_def = Flag.new(key, flags, @used_flags, report_collisions, accept, handler, default,
+                          complete_flags, complete_values, desc, long_desc, display_name, group)
       if flag_def.active?
         @flags << flag_def
         group << flag_def
@@ -680,7 +678,7 @@ module Toys
     #     value. You may provide either the name of an acceptor you have
     #     defined, or one of the default acceptors provided by OptionParser.
     #     Optional. If not specified, accepts any value as a string.
-    # @param [Object] completion A specifier for shell tab completion. See
+    # @param [Object] complete A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
@@ -691,12 +689,12 @@ module Toys
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
     #
-    def add_required_arg(key, accept: nil, completion: nil, display_name: nil,
+    def add_required_arg(key, accept: nil, complete: nil, display_name: nil,
                          desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
       accept = resolve_acceptor_name(accept)
-      completion = resolve_completion_name(completion)
-      arg_def = PositionalArg.new(key, :required, accept, nil, completion,
+      complete = resolve_completion_name(complete)
+      arg_def = PositionalArg.new(key, :required, accept, nil, complete,
                                   desc, long_desc, display_name)
       @required_args << arg_def
       self
@@ -717,7 +715,7 @@ module Toys
     #     value. You may provide either the name of an acceptor you have
     #     defined, or one of the default acceptors provided by OptionParser.
     #     Optional. If not specified, accepts any value as a string.
-    # @param [Object] completion A specifier for shell tab completion. See
+    # @param [Object] complete A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
@@ -728,12 +726,12 @@ module Toys
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
     #
-    def add_optional_arg(key, default: nil, accept: nil, completion: nil,
+    def add_optional_arg(key, default: nil, accept: nil, complete: nil,
                          display_name: nil, desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
       accept = resolve_acceptor_name(accept)
-      completion = resolve_completion_name(completion)
-      arg_def = PositionalArg.new(key, :optional, accept, default, completion,
+      complete = resolve_completion_name(complete)
+      arg_def = PositionalArg.new(key, :optional, accept, default, complete,
                                   desc, long_desc, display_name)
       @optional_args << arg_def
       @default_data[key] = default
@@ -754,7 +752,7 @@ module Toys
     #     value. You may provide either the name of an acceptor you have
     #     defined, or one of the default acceptors provided by OptionParser.
     #     Optional. If not specified, accepts any value as a string.
-    # @param [Object] completion A specifier for shell tab completion. See
+    # @param [Object] complete A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
@@ -765,12 +763,12 @@ module Toys
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
     #
-    def set_remaining_args(key, default: [], accept: nil, completion: nil,
+    def set_remaining_args(key, default: [], accept: nil, complete: nil,
                            display_name: nil, desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
       accept = resolve_acceptor_name(accept)
-      completion = resolve_completion_name(completion)
-      arg_def = PositionalArg.new(key, :remaining, accept, default, completion,
+      complete = resolve_completion_name(complete)
+      arg_def = PositionalArg.new(key, :remaining, accept, default, complete,
                                   desc, long_desc, display_name)
       @remaining_arg = arg_def
       @default_data[key] = default

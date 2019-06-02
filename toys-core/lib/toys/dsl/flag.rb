@@ -60,13 +60,14 @@ module Toys
       end
 
       ##
-      # Set the OptionParser acceptor.
+      # Set the acceptor for this flag's values.
+      # See {Toys::Acceptor.create} for recognized formats.
       #
-      # @param [Object] acceptor
+      # @param [Object] spec The spec.
       # @return [Toys::DSL::Flag] self, for chaining.
       #
-      def accept(acceptor)
-        @acceptor = acceptor
+      def accept(spec)
+        @acceptor = spec
         self
       end
 
@@ -105,7 +106,7 @@ module Toys
       # @param [Object] spec
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def flag_completion(spec = nil, &block)
+      def complete_flags(spec = nil, &block)
         @flag_completion = spec || block
         self
       end
@@ -117,7 +118,7 @@ module Toys
       # @param [Object] spec
       # @return [Toys::DSL::Tool] self, for chaining.
       #
-      def value_completion(spec = nil, &block)
+      def complete_values(spec = nil, &block)
         @value_completion = spec || block
         self
       end
@@ -186,7 +187,7 @@ module Toys
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @acceptor, default: @default, handler: @handler,
-                      flag_completion: @flag_completion, value_completion: @value_completion,
+                      complete_flags: @flag_completion, complete_values: @value_completion,
                       report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end

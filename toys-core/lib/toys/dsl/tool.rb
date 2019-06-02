@@ -510,14 +510,14 @@ module Toys
       #     `:push` handler expects the previous value to be an array and
       #     pushes the given value onto it; it should be combined with setting
       #     `default: []` and is intended for "multi-valued" flags.
-      # @param [Object] flag_completion A specifier for shell tab completion.
+      # @param [Object] complete_flags A specifier for shell tab completion
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
       #     to a hash of options to pass to the constructor for
       #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
       #     by {Toys::Completion.create}.
-      # @param [Object] value_completion A specifier for shell tab completion.
+      # @param [Object] complete_values A specifier for shell tab completion
       #     for flag values associated with this flag. Pass any spec
       #     recognized by {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
@@ -542,14 +542,14 @@ module Toys
       #
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil,
-               flag_completion: nil, value_completion: nil,
+               complete_flags: nil, complete_values: nil,
                report_collisions: true, group: nil,
                desc: nil, long_desc: nil, display_name: nil,
                &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(
-          flags.flatten, accept, default, handler, flag_completion, value_completion,
+          flags.flatten, accept, default, handler, complete_flags, complete_values,
           report_collisions, group, desc, long_desc, display_name
         )
         flag_dsl.instance_exec(flag_dsl, &block) if block
@@ -578,7 +578,7 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] completion A specifier for shell tab completion. See
+      # @param [Object] complete A specifier for shell tab completion. See
       #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
@@ -595,12 +595,12 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def required_arg(key,
-                       accept: nil, completion: nil, display_name: nil,
+                       accept: nil, complete: nil, display_name: nil,
                        desc: nil, long_desc: nil,
                        &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, nil, completion, display_name, desc, long_desc)
+        arg_dsl = DSL::Arg.new(accept, nil, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)
@@ -632,7 +632,7 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] completion A specifier for shell tab completion. See
+      # @param [Object] complete A specifier for shell tab completion. See
       #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
@@ -649,12 +649,12 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def optional_arg(key,
-                       default: nil, accept: nil, completion: nil, display_name: nil,
+                       default: nil, accept: nil, complete: nil, display_name: nil,
                        desc: nil, long_desc: nil,
                        &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, default, completion, display_name, desc, long_desc)
+        arg_dsl = DSL::Arg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)
@@ -685,7 +685,7 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] completion A specifier for shell tab completion. See
+      # @param [Object] complete A specifier for shell tab completion. See
       #     {Toys::Completion.create} for recognized formats.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
@@ -702,12 +702,12 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def remaining_args(key,
-                         default: [], accept: nil, completion: nil, display_name: nil,
+                         default: [], accept: nil, complete: nil, display_name: nil,
                          desc: nil, long_desc: nil,
                          &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::Arg.new(accept, default, completion, display_name, desc, long_desc)
+        arg_dsl = DSL::Arg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
         DSL::Tool.maybe_add_getter(self, key)

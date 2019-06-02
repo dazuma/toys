@@ -109,7 +109,7 @@ module Toys
                desc: "Exclude /regexp/ or string from run."
 
           remaining_args :tests,
-                         completion: :file_system,
+                         complete: :file_system,
                          desc: "Paths to the tests to run (defaults to all tests)"
 
           to_run do

@@ -45,7 +45,7 @@ flag :delim do
 end
 
 remaining_args :commands do
-  completion do |context|
+  complete do |context|
     commands = context.arg_parser.data[:commands]
     last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
     new_params = {disable_flags: commands.empty?}

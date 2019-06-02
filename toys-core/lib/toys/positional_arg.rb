@@ -54,7 +54,7 @@ module Toys
     #     value. You may provide either the name of an acceptor you have
     #     defined, or one of the default acceptors provided by OptionParser.
     #     Optional. If not specified, accepts any value as a string.
-    # @param [Object] completion A specifier for shell tab completion. See
+    # @param [Object] complete A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
     # @param [String] display_name A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
@@ -69,9 +69,9 @@ module Toys
     # @return [Toys::PositionalArg]
     #
     def self.create(key, type,
-                    accept: nil, default: nil, completion: nil, desc: nil,
+                    accept: nil, default: nil, complete: nil, desc: nil,
                     long_desc: nil, display_name: nil)
-      new(key, type, accept, default, completion, desc, long_desc, display_name)
+      new(key, type, accept, default, complete, desc, long_desc, display_name)
     end
 
     ##

@@ -66,14 +66,14 @@ module Toys
       #     and the previous value, and it should return the new value that
       #     should be set. The default handler simply replaces the previous
       #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
-      # @param [Object] flag_completion A specifier for shell tab completion.
+      # @param [Object] complete_flags A specifier for shell tab completion
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
       #     to a hash of options to pass to the constructor for
       #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
       #     by {Toys::Completion.create}.
-      # @param [Object] value_completion A specifier for shell tab completion.
+      # @param [Object] complete_values A specifier for shell tab completion
       #     for flag values associated with this flag. Pass any spec
       #     recognized by {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
@@ -94,14 +94,11 @@ module Toys
       # @return [Toys::DSL::Tool] self, for chaining.
       #
       def flag(key, *flags,
-               accept: nil, default: nil, handler: nil,
-               flag_completion: nil, value_completion: nil,
-               report_collisions: true,
-               desc: nil, long_desc: nil, display_name: nil,
+               accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil,
+               report_collisions: true, desc: nil, long_desc: nil, display_name: nil,
                &block)
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler, flag_completion,
-                                 value_completion, report_collisions, @flag_group,
-                                 desc, long_desc, display_name)
+        flag_dsl = DSL::Flag.new(flags, accept, default, handler, complete_flags, complete_values,
+                                 report_collisions, @flag_group, desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(@tool, key)
         DSL::Tool.maybe_add_getter(@tool_dsl, key)

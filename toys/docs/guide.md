@@ -560,8 +560,8 @@ completion:
 The following are two example arguments, one that supports a static set of
 completions and the other that supports file paths.
 
-    required_arg :language, completion: ["ruby", "elixir", "rust"]
-    required_arg :path, completion: :file_system
+    required_arg :language, complete: ["ruby", "elixir", "rust"]
+    required_arg :path, complete: :file_system
 
 Completions are somewhat related to acceptors, and it is a common pattern to
 set both in concert. But they perform distinct functions. Acceptors affect
@@ -853,8 +853,8 @@ completion:
 The following are two example flags, one that supports a static set of
 completions and the other that supports file paths.
 
-    flag :language, "--lang=VAL", completion: ["ruby", "elixir", "rust"]
-    flag :path, "--path=VAL", completion: :file_system
+    flag :language, "--lang=VAL", complete_values: ["ruby", "elixir", "rust"]
+    flag :path, "--path=VAL", complete_values: :file_system
 
 Completions are somewhat related to acceptors, and it is a common pattern to
 set both in concert. But they perform distinct functions. Acceptors affect

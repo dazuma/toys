@@ -346,8 +346,7 @@ module Toys
       #     acceptor {Toys::Acceptor::DEFAULT}. Any type description you
       #     provide is ignored.
       #
-      # @param [Object] spec The completion spec. See above for recognized
-      #     values.
+      # @param [Object] spec The spec. See above for recognized values.
       # @param [String] type_desc The type description for interpolating into
       #     help text. Ignored if the spec indicates the default acceptor or a
       #     well-known acceptor.
