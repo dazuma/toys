@@ -192,7 +192,7 @@ module Toys
     ##
     # A base class that returns no completions.
     #
-    # Generally completions do *not* need to subclass this base class. They
+    # Completions *may* but do not need to subclass this base class. They
     # merely need to duck-type `Proc` by implementing the `call` method.
     #
     class Base
@@ -343,8 +343,7 @@ module Toys
     EMPTY = Base.new
 
     ##
-    # A method that takes a variety of completion specs and returns a
-    # suitable completion Proc.
+    # Create a completion Proc from a variety of specification formats.
     #
     # Recognized specs include:
     #
@@ -357,7 +356,7 @@ module Toys
     #
     # @param [Object] spec The completion spec. See above for recognized
     #     values.
-    # @return [Proc]
+    # @return [Toys::Completion::Base,Proc]
     #
     def self.create(spec)
       case spec

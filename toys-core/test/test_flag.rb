@@ -310,7 +310,7 @@ describe Toys::Flag do
     assert_equal(" ", flag.value_delim)
     assert_equal("VALUE", flag.value_label)
     assert_nil(flag.default)
-    assert_equal(Toys::Acceptor.resolve_well_known(Integer), flag.acceptor)
+    assert_equal(Toys::Acceptor.lookup_well_known(Integer), flag.acceptor)
   end
 
   it "defaults to a value switch with a short name" do

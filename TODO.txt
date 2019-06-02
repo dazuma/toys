@@ -4,7 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Should we be able to add tool-scoped completions?
 * Write toys-core user guide
 
 ## Investigations/wishlist

@@ -286,14 +286,14 @@ module Toys
 
     class << self
       ##
-      # Resolve a standard acceptor name recognized by OptionParser.
+      # Lookup a standard acceptor name recognized by OptionParser.
       #
       # @param [Object] spec A well-known acceptor specification, such as
       #     `String`, `Integer`, `Array`, `OptionParser::DecimalInteger`, etc.
       # @return [Toys::Acceptor::Base,nil] The corresponding Acceptor object,
       #     or nil if not found.
       #
-      def resolve_well_known(spec)
+      def lookup_well_known(spec)
         result = standard_well_knowns[spec]
         if result.nil? && defined?(::OptionParser)
           result = optparse_well_knowns[spec]
@@ -302,19 +302,74 @@ module Toys
       end
 
       ##
-      # Resolve an acceptor object from the given spec, which may be an
-      # acceptor object, a well-known acceptor, or nil for the default.
+      # Create an acceptor from a variety of specification formats. The
+      # acceptor is constructed from the given specification object and/or the
+      # given block. Additionally, some acceptors can take an optional type
+      # description string used to describe the type of data in online help.
       #
-      # @param [Object] spec
-      # @return [Toys::Acceptor::Base] The acceptor object
-      # @raise [Toys::ToolDefinitionError] if the input could not be resolved.
+      # Recognized specs include:
       #
-      def resolve(spec)
-        return spec if spec.is_a?(Base)
-        return DEFAULT if spec.nil?
-        well_known = resolve_well_known(spec)
+      # *   Any well-known acceptor recognized by OptionParser, such as
+      #     `Integer`, `Array`, or `OptionParser::DecimalInteger`. Any block
+      #     and type description you provide are ignored.
+      #
+      # *   Any **regular expression**. The returned acceptor validates only if
+      #     the regex matches the *entire string parameter*.
+      #
+      #     You can also provide an optional conversion function as a block. If
+      #     provided, the block must take a variable number of arguments, the
+      #     first being the matched string and the remainder being the captures
+      #     from the regular expression. It should return the converted object
+      #     that will be stored in the context data. If you do not provide a
+      #     block, no conversion takes place, and the original string is used.
+      #
+      # *   An **array** of possible values. The acceptor validates if the
+      #     string parameter matches the *string form* of one of the array
+      #     elements (i.e. the results of calling `to_s` on the element.)
+      #
+      #     An array acceptor automatically converts the string parameter to
+      #     the actual array element that it matched. For example, if the
+      #     symbol `:foo` is in the array, it will match the string `"foo"`,
+      #     and then store the symbol `:foo` in the tool data. You may not
+      #     further customize the conversion function; any block is ignored.
+      #
+      # *   A **function** as a Proc (where the block is ignored) or a block
+      #     (if the spec is nil). This function performs *both* validation and
+      #     conversion. It should take the string parameter as its argument,
+      #     and it must either return the object that should be stored in the
+      #     tool data, or raise an exception (descended from `StandardError`)
+      #     to indicate that the string parameter is invalid. You may also
+      #     return the sentinel value {Toys::Acceptor::REJECT} to indicate that
+      #     the string is invalid.
+      #
+      # *   The value `nil` with no block, to indicate the default pass-through
+      #     acceptor {Toys::Acceptor::DEFAULT}. Any type description you
+      #     provide is ignored.
+      #
+      # @param [Object] spec The completion spec. See above for recognized
+      #     values.
+      # @param [String] type_desc The type description for interpolating into
+      #     help text. Ignored if the spec indicates the default acceptor or a
+      #     well-known acceptor.
+      # @return [Toys::Acceptor::Base,Proc]
+      #
+      def create(spec = nil, type_desc: nil, &block)
+        well_known = lookup_well_known(spec)
         return well_known if well_known
-        raise ToolDefinitionError, "Unknown acceptor: #{spec.inspect}"
+        case spec
+        when Base
+          spec
+        when ::Regexp
+          Pattern.new(spec, type_desc: type_desc, &block)
+        when ::Array
+          Enum.new(spec, type_desc: type_desc)
+        when ::Proc
+          Simple.new(spec, type_desc: type_desc)
+        when nil
+          block ? Simple.new(type_desc: type_desc, &block) : DEFAULT
+        else
+          raise ToolDefinitionError, "Illegal acceptor: #{spec.inspect}"
+        end
       end
 
       private

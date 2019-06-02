@@ -556,39 +556,38 @@ describe Toys::Tool do
     let(:acceptor_name) { "acc1" }
     let(:acceptor) { Toys::Acceptor::Base.new }
 
+    it "resolves the default acceptor" do
+      tool.add_flag(:a, ["-a VAL"])
+      assert_equal(Toys::Acceptor::DEFAULT, tool.flags.first.acceptor)
+    end
+
     it "resolves well-known acceptors" do
-      assert_equal(Integer, tool.resolve_acceptor(Integer).well_known_spec)
+      tool.add_flag(:a, ["-a VAL"], accept: Integer)
+      assert_equal(Integer, tool.flags.first.acceptor.well_known_spec)
     end
 
-    it "resolves optparse defined acceptors" do
-      assert_equal(OptionParser::DecimalInteger,
-                   tool.resolve_acceptor(OptionParser::DecimalInteger).well_known_spec)
-    end
-
-    it "resolves the nil acceptor" do
-      assert_equal(Toys::Acceptor::DEFAULT, tool.resolve_acceptor(nil))
-    end
-
-    it "can be added and resolved" do
-      tool.add_acceptor(acceptor_name, acceptor)
-      assert_equal(acceptor, tool.resolve_acceptor(acceptor_name))
-    end
-
-    it "raises if not found" do
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.resolve_acceptor("acc2")
-      end
-    end
-
-    it "can be resolved in a subtool" do
-      tool.add_acceptor(acceptor_name, acceptor)
-      assert_equal(acceptor, subtool.resolve_acceptor(acceptor_name))
-    end
-
-    it "can be referenced in a flag" do
+    it "can be referenced by name in a flag" do
       tool.add_acceptor(acceptor_name, acceptor)
       tool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
       assert_equal(acceptor, tool.flags.first.acceptor)
+    end
+
+    it "can be referenced by name in a positional arg" do
+      tool.add_acceptor(acceptor_name, acceptor)
+      tool.add_required_arg(:a, accept: acceptor_name)
+      assert_equal(acceptor, tool.positional_args.first.acceptor)
+    end
+
+    it "can be referenced by name from a subtool" do
+      tool.add_acceptor(acceptor_name, acceptor)
+      subtool.add_flag(:a, ["-a VAL"], accept: acceptor_name)
+      assert_equal(acceptor, subtool.flags.first.acceptor)
+    end
+
+    it "raises if name not found" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.add_flag(:a, ["-a VAL"], accept: "acc2")
+      end
     end
   end
 
@@ -632,17 +631,17 @@ describe Toys::Tool do
     end
 
     it "defaults to nil if not set" do
-      assert_nil(tool.resolve_mixin("mymixin"))
+      assert_nil(tool.lookup_mixin("mymixin"))
     end
 
     it "can be set and retrieved" do
       tool.add_mixin("mymixin", MyMixin)
-      assert_equal(MyMixin, tool.resolve_mixin("mymixin"))
+      assert_equal(MyMixin, tool.lookup_mixin("mymixin"))
     end
 
     it "can be retrieved from a subtool" do
       tool.add_mixin("mymixin", MyMixin)
-      assert_equal(MyMixin, subtool.resolve_mixin("mymixin"))
+      assert_equal(MyMixin, subtool.lookup_mixin("mymixin"))
     end
 
     it "mixes into the executable tool" do
@@ -658,17 +657,17 @@ describe Toys::Tool do
 
   describe "template class" do
     it "defaults to nil if not set" do
-      assert_nil(tool.resolve_template("mytemplate"))
+      assert_nil(tool.lookup_template("mytemplate"))
     end
 
     it "can be set and retrieved" do
-      tool.add_mixin("mytemplate", MyTemplate)
-      assert_equal(MyTemplate, tool.resolve_mixin("mytemplate"))
+      tool.add_template("mytemplate", MyTemplate)
+      assert_equal(MyTemplate, tool.lookup_template("mytemplate"))
     end
 
     it "can be retrieved from a subtool" do
-      tool.add_mixin("mytemplate", MyTemplate)
-      assert_equal(MyTemplate, subtool.resolve_mixin("mytemplate"))
+      tool.add_template("mytemplate", MyTemplate)
+      assert_equal(MyTemplate, subtool.lookup_template("mytemplate"))
     end
   end
 

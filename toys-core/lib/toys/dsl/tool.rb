@@ -99,7 +99,7 @@ module Toys
       #     string parameter is invalid.
       #
       # @param [String] name The acceptor name.
-      # @param [Regexp,Array,Proc,nil] arg The acceptor specification.
+      # @param [Object] arg The acceptor specification.
       # @param [String] type_desc Type description string, shown in help.
       #     Defaults to the acceptor name.
       # @return [Toys::DSL::Tool] self, for chaining.
@@ -109,19 +109,7 @@ module Toys
         return self if cur_tool.nil?
         name = name.to_s
         type_desc ||= name
-        accept =
-          case arg
-          when ::Regexp
-            Acceptor::Pattern.new(arg, type_desc: type_desc, &block)
-          when ::Array
-            Acceptor::Enum.new(arg, type_desc: type_desc)
-          when ::Proc
-            Acceptor::Simple.new(arg, type_desc: type_desc)
-          when nil
-            Acceptor::Simple.new(type_desc: type_desc, &block)
-          else
-            raise ToolDefinitionError, "Illegal acceptor: #{arg.inspect}"
-          end
+        accept = Acceptor.create(arg, type_desc: type_desc, &block)
         cur_tool.add_acceptor(name, accept)
         self
       end
@@ -168,6 +156,23 @@ module Toys
           end
           template_class.class_eval(&block)
           cur_tool.add_template(name, template_class)
+        end
+        self
+      end
+
+      ##
+      # Create a named completion procedure that may be used by name by any
+      # flag or positional arg in this tool or any subtool.
+      #
+      # @param [String] name Name of the completion
+      # @param [Object] spec Completion specification.
+      # @return [Toys::DSL::Tool] self, for chaining.
+      #
+      def completion(name, spec = nil, &block)
+        cur_tool = DSL::Tool.current_tool(self, false)
+        if cur_tool
+          completion = Completion.create(spec || block)
+          cur_tool.add_completion(name, completion)
         end
         self
       end
@@ -248,7 +253,7 @@ module Toys
         cur_tool = DSL::Tool.current_tool(self, false)
         name = template_class.to_s
         if template_class.is_a?(::String)
-          template_class = cur_tool.resolve_template(template_class)
+          template_class = cur_tool.lookup_template(template_class)
         elsif template_class.is_a?(::Symbol)
           template_class = @__loader.resolve_standard_template(name)
         end
@@ -984,7 +989,7 @@ module Toys
       def self.resolve_mixin(mod, cur_tool, loader)
         name = mod.to_s
         if mod.is_a?(::String)
-          mod = cur_tool.resolve_mixin(mod)
+          mod = cur_tool.lookup_mixin(mod)
         elsif mod.is_a?(::Symbol)
           mod = loader.resolve_standard_mixin(name)
         end

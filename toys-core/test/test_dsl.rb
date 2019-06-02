@@ -202,7 +202,7 @@ describe Toys::DSL::Tool do
         acceptor("acc1", /^\d$/, &:to_i)
       end
       tool, _remaining = loader.lookup([])
-      acc = tool.resolve_acceptor("acc1")
+      acc = tool.lookup_acceptor("acc1")
       assert_kind_of(Toys::Acceptor::Pattern, acc)
       assert_equal(3, acc.convert(*acc.match("3")))
     end
@@ -212,7 +212,7 @@ describe Toys::DSL::Tool do
         acceptor("acc1", [1, 2, 3])
       end
       tool, _remaining = loader.lookup([])
-      acc = tool.resolve_acceptor("acc1")
+      acc = tool.lookup_acceptor("acc1")
       assert_kind_of(Toys::Acceptor::Enum, acc)
       assert_equal(3, acc.convert(*acc.match("3")))
     end
@@ -222,7 +222,7 @@ describe Toys::DSL::Tool do
         acceptor("acc1", &:upcase)
       end
       tool, _remaining = loader.lookup([])
-      acc = tool.resolve_acceptor("acc1")
+      acc = tool.lookup_acceptor("acc1")
       assert_kind_of(Toys::Acceptor::Simple, acc)
       assert_equal("HELLO", acc.convert(*acc.match("hello")))
     end
@@ -234,7 +234,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      acc = tool.resolve_acceptor("acc1")
+      acc = tool.lookup_acceptor("acc1")
       assert_kind_of(Toys::Acceptor::Simple, acc)
     end
 
@@ -255,7 +255,7 @@ describe Toys::DSL::Tool do
       host_tool, _remaining = loader.lookup(["host"])
       assert_equal("the one", host_tool.desc.to_s)
       foo_tool, _remaining = loader.lookup(["host", "foo"])
-      acc = foo_tool.resolve_acceptor("acc1")
+      acc = foo_tool.lookup_acceptor("acc1")
       assert_kind_of(Toys::Acceptor::Simple, acc)
     end
   end
@@ -319,7 +319,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup([])
-      mixin = tool.resolve_mixin("mixin1")
+      mixin = tool.lookup_mixin("mixin1")
       assert_equal([Toys::Mixin], mixin.included_modules)
       assert_equal(true, mixin.public_method_defined?(:foo))
       assert_equal(2, cli.run([]))
@@ -347,7 +347,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo", "bar"])
-      mixin = tool.resolve_mixin("mixin1")
+      mixin = tool.lookup_mixin("mixin1")
       assert_equal([Toys::Mixin], mixin.included_modules)
       assert_equal(2, cli.run(["foo", "bar"]))
     end
@@ -368,7 +368,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["bar"])
-      assert_nil(tool.resolve_mixin("mixin1"))
+      assert_nil(tool.lookup_mixin("mixin1"))
     end
 
     it "works even when the hosting tool is not active" do

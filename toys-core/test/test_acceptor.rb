@@ -171,7 +171,7 @@ describe "standard acceptor" do
   end
 
   describe "Object" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Object) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Object) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -191,7 +191,7 @@ describe "standard acceptor" do
   end
 
   describe "NilClass" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(NilClass) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(NilClass) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -211,7 +211,7 @@ describe "standard acceptor" do
   end
 
   describe "String" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(String) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(String) }
 
     it "accepts nonempty string" do
       assert_accept(acceptor, "hi", "hi")
@@ -231,7 +231,7 @@ describe "standard acceptor" do
   end
 
   describe "Integer" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Integer) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Integer) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -271,7 +271,7 @@ describe "standard acceptor" do
   end
 
   describe "Float" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Float) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Float) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123.0)
@@ -303,7 +303,7 @@ describe "standard acceptor" do
   end
 
   describe "Rational" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Rational) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Rational) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", Rational(123, 1))
@@ -339,7 +339,7 @@ describe "standard acceptor" do
   end
 
   describe "Numeric" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Numeric) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Numeric) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -383,7 +383,7 @@ describe "standard acceptor" do
   end
 
   describe "TrueClass" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(TrueClass) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(TrueClass) }
 
     it "accepts +" do
       assert_accept(acceptor, "+", true)
@@ -443,7 +443,7 @@ describe "standard acceptor" do
   end
 
   describe "FalseClass" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(FalseClass) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(FalseClass) }
 
     it "accepts +" do
       assert_accept(acceptor, "+", true)
@@ -463,7 +463,7 @@ describe "standard acceptor" do
   end
 
   describe "Array" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Array) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Array) }
 
     it "accepts empty string and converts to empty array" do
       assert_accept(acceptor, "", [])
@@ -495,7 +495,7 @@ describe "standard acceptor" do
   end
 
   describe "Regexp" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(Regexp) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(Regexp) }
 
     it "accepts a bare regex" do
       assert_accept(acceptor, "hi", /hi/)
@@ -531,7 +531,7 @@ describe "standard acceptor" do
   end
 
   describe "DecimalInteger" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(OptionParser::DecimalInteger) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(OptionParser::DecimalInteger) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)
@@ -571,7 +571,7 @@ describe "standard acceptor" do
   end
 
   describe "OctalInteger" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(OptionParser::OctalInteger) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(OptionParser::OctalInteger) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 83)
@@ -616,7 +616,7 @@ describe "standard acceptor" do
   end
 
   describe "DecimalNumeric" do
-    let(:acceptor) { Toys::Acceptor.resolve_well_known(OptionParser::DecimalNumeric) }
+    let(:acceptor) { Toys::Acceptor.lookup_well_known(OptionParser::DecimalNumeric) }
 
     it "accepts integer string" do
       assert_accept(acceptor, "123", 123)

@@ -56,7 +56,7 @@ module Toys
       @group = group
       @key = key
       @flag_syntax = Array(flags).map { |s| Syntax.new(s) }
-      @acceptor = Acceptor.resolve(acceptor)
+      @acceptor = Acceptor.create(acceptor)
       @handler = resolve_handler(handler)
       @desc = WrappableString.make(desc)
       @long_desc = WrappableString.make_array(long_desc)

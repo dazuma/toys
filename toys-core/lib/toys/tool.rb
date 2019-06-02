@@ -46,6 +46,7 @@ module Toys
       @acceptors = {}
       @mixins = {}
       @templates = {}
+      @completions = {}
 
       reset_definition(loader)
     end
@@ -315,34 +316,13 @@ module Toys
     end
 
     ##
-    # Resolve the given acceptor. You may pass in an object that inherits
-    # from {Toys::Acceptor::Base}, an acceptor name, a well-known acceptor
-    # understood by OptionParser, or `nil`.
+    # Get the named acceptor from this tool or its ancestors.
     #
-    # Returns an acceptor that is usable by OptionParser.
+    # @param [String] name The acceptor name
+    # @return [Tool::Acceptor::Base,nil] The acceptor, or `nil` if not found.
     #
-    # If an acceptor name is given, it may be resolved by this tool or any of
-    # its ancestors. Raises {Toys::ToolDefinitionError} if the name is not
-    # recognized.
-    #
-    # @param [Object] accept An acceptor input.
-    # @return [Tool::Acceptor::Base] The resolved acceptor.
-    #
-    def resolve_acceptor(accept)
-      return Acceptor::DEFAULT if accept.nil?
-      return accept if accept.is_a?(Acceptor::Base)
-      name = accept
-      accept = @acceptors.fetch(name) do |k|
-        if @parent
-          @parent.resolve_acceptor(k)
-        else
-          Acceptor.resolve_well_known(k)
-        end
-      end
-      if accept.nil?
-        raise ToolDefinitionError, "Unknown acceptor: #{name.inspect}"
-      end
-      accept
+    def lookup_acceptor(name)
+      @acceptors.fetch(name.to_s) { |k| @parent ? @parent.lookup_acceptor(k) : nil }
     end
 
     ##
@@ -351,8 +331,8 @@ module Toys
     # @param [String] name The template name
     # @return [Class,nil] The template class, or `nil` if not found.
     #
-    def resolve_template(name)
-      @templates.fetch(name.to_s) { |k| @parent ? @parent.resolve_template(k) : nil }
+    def lookup_template(name)
+      @templates.fetch(name.to_s) { |k| @parent ? @parent.lookup_template(k) : nil }
     end
 
     ##
@@ -361,8 +341,19 @@ module Toys
     # @param [String] name The mixin name
     # @return [Module,nil] The mixin module, or `nil` if not found.
     #
-    def resolve_mixin(name)
-      @mixins.fetch(name.to_s) { |k| @parent ? @parent.resolve_mixin(k) : nil }
+    def lookup_mixin(name)
+      @mixins.fetch(name.to_s) { |k| @parent ? @parent.lookup_mixin(k) : nil }
+    end
+
+    ##
+    # Get the named completion from this tool or its ancestors.
+    #
+    # @param [String] name The completion name
+    # @return [Tool::Completion::Base,Proc,nil] The completion proc, or `nil`
+    #     if not found.
+    #
+    def lookup_completion(name)
+      @completions.fetch(name.to_s) { |k| @parent ? @parent.lookup_completion(k) : nil }
     end
 
     ##
@@ -441,10 +432,7 @@ module Toys
     # @param [Toys::Acceptor::Base] acceptor The acceptor to add.
     #
     def add_acceptor(name, acceptor)
-      unless name.is_a?(::String)
-        raise ToolDefinitionError,
-              "Acceptor name #{name.inspect} must be a string."
-      end
+      name = name.to_s
       if @acceptors.key?(name)
         raise ToolDefinitionError,
               "An acceptor named #{name.inspect} has already been defined in tool" \
@@ -468,6 +456,23 @@ module Toys
               " #{display_name.inspect}."
       end
       @mixins[name] = mixin_module
+      self
+    end
+
+    ##
+    # Add a named completion proc to this tool.
+    #
+    # @param [String] name The name of the completion.
+    # @param [Proc,Tool::Completion::Base] completion The completion.
+    #
+    def add_completion(name, completion)
+      name = name.to_s
+      if @completions.key?(name)
+        raise ToolDefinitionError,
+              "A completion named #{name.inspect} has already been defined in tool" \
+              " #{display_name.inspect}."
+      end
+      @completions[name] = completion
       self
     end
 
@@ -620,7 +625,9 @@ module Toys
         raise ToolDefinitionError, "No such flag group: #{group_name.inspect}" if group.nil?
       end
       check_definition_state(is_arg: true)
-      accept = resolve_acceptor(accept)
+      accept = resolve_acceptor_name(accept)
+      flag_completion = resolve_completion_name(flag_completion)
+      value_completion = resolve_completion_name(value_completion)
       flag_def = Flag.new(key, flags, @used_flags, report_collisions, accept,
                           handler, default, flag_completion, value_completion,
                           desc, long_desc, display_name, group)
@@ -675,8 +682,8 @@ module Toys
     def add_required_arg(key, accept: nil, completion: nil, display_name: nil,
                          desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
-      accept = resolve_acceptor(accept)
-      completion = Completion.create(completion)
+      accept = resolve_acceptor_name(accept)
+      completion = resolve_completion_name(completion)
       arg_def = PositionalArg.new(key, :required, accept, nil, completion,
                                   desc, long_desc, display_name)
       @required_args << arg_def
@@ -712,8 +719,8 @@ module Toys
     def add_optional_arg(key, default: nil, accept: nil, completion: nil,
                          display_name: nil, desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
-      accept = resolve_acceptor(accept)
-      completion = Completion.create(completion)
+      accept = resolve_acceptor_name(accept)
+      completion = resolve_completion_name(completion)
       arg_def = PositionalArg.new(key, :optional, accept, default, completion,
                                   desc, long_desc, display_name)
       @optional_args << arg_def
@@ -749,8 +756,8 @@ module Toys
     def set_remaining_args(key, default: [], accept: nil, completion: nil,
                            display_name: nil, desc: nil, long_desc: nil)
       check_definition_state(is_arg: true)
-      accept = resolve_acceptor(accept)
-      completion = Completion.create(completion)
+      accept = resolve_acceptor_name(accept)
+      completion = resolve_completion_name(completion)
       arg_def = PositionalArg.new(key, :remaining, accept, default, completion,
                                   desc, long_desc, display_name)
       @remaining_arg = arg_def
@@ -1011,6 +1018,20 @@ module Toys
 
     def make_config_proc(middleware, loader, next_config)
       proc { middleware.config(self, loader, &next_config) }
+    end
+
+    def resolve_acceptor_name(name)
+      return name unless name.is_a?(::String)
+      accept = lookup_acceptor(name)
+      raise ToolDefinitionError, "Unknown acceptor: #{name.inspect}" if accept.nil?
+      accept
+    end
+
+    def resolve_completion_name(name)
+      return name unless name.is_a?(::String)
+      completion = lookup_completion(name)
+      raise ToolDefinitionError, "Unknown completion: #{name.inspect}" if completion.nil?
+      completion
     end
   end
 end

@@ -40,7 +40,8 @@ Changes to internal interfaces:
     * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.
     * CHANGED: `Tool#add_acceptor` takes the name as a separate argument, for consistency with `add_mixin` and `add_template`.
     * CHANGED: Removed `Tool#custom_acceptors` method.
-    * CHANGED: `Tool#resolve_acceptor` now always returns an acceptor object (even for well-known acceptors such as `Integer`).
+    * CHANGED: Removed `Tool#resolve_acceptor` and replaced with `lookup_acceptor` which only looks up names.
+    * CHANGED: Renamed `Tool#resolve_mixin` to `lookup_mixin` and `Tool#resolve_template` to `lookup_template`.
     * ADDED: Added `resolve_flag` method to look up flags by syntax.
     * ADDED: Accessor for interrupt handler.
     * ADDED: `enforce_flags_before_args` setting and `flags_before_args_enforced?` query.
@@ -73,7 +74,7 @@ Changes to internal interfaces:
     * CHANGED: Replaced `name` field with separate `type_desc` and `well_known_spec` fields.
     * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
     * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
-    * ADDED: Class methods `Acceptor.resolve` and `Acceptor.resolve_well_known`.
+    * ADDED: Class methods `Acceptor.create` and `Acceptor.lookup_well_known`.
 
 ### 0.7.0 / 2019-01-23
 

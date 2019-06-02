@@ -35,9 +35,9 @@ module Toys
     def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
       @key = key
       @type = type
-      @acceptor = Acceptor.resolve(acceptor)
+      @acceptor = Acceptor.create(acceptor)
       @default = default
-      @completion = completion
+      @completion = Completion.create(completion)
       @desc = WrappableString.make(desc)
       @long_desc = WrappableString.make_array(long_desc)
       @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
