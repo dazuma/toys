@@ -70,6 +70,6 @@ tool "ci" do
   def run
     exec_tool(["test"], name: "Tests")
     exec_tool(["rubocop"], name: "Style checker")
-    exec_tool(["yardoc", "--no-output"], name: "Docs generation")
+    exec_tool(["yardoc"], name: "Docs generation")
   end
 end

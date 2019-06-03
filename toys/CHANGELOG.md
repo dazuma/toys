@@ -17,7 +17,6 @@ Details:
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
-
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `:gem_build` template includes an `:install_gem` option.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
@@ -26,7 +25,7 @@ Details:
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags create a short form flag by default if the name has one character.
-* CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default and/or acceptor.
+* CHANGED: Flags with explicit value-less syntax are no longer given a value even if they specify a default and/or acceptor.
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.

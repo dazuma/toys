@@ -276,8 +276,8 @@ toys-core, see (its documentation)[https://www.rubydoc.info/gems/toys-core].
 
 ## Why Toys?
 
-I wrote Toys because I was accumulating dozens of ad hoc Ruby scripts that I
-had written to automate various tasks in my workflow, everything from
+I originally wrote Toys because I was accumulating dozens of _ad hoc_ Ruby
+scripts I had written to automate various tasks in my workflow, everything from
 refreshing credentials, to displaying git history in my favorite format, to
 running builds and tests of complex multi-component projects. It was becoming
 difficult to remember which scripts did what, and what arguments each required,

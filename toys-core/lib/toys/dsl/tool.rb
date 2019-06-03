@@ -488,7 +488,8 @@ module Toys
       #         flag :debug, "-D", desc: "Enable debugger"
       #         flag :warnings, "-W[VAL]", desc: "Enable warnings"
       #       end
-      #       ...
+      #       # ...
+      #     end
       #
       # @param [Symbol] type The type of group. Allowed values: `:required`,
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
@@ -537,7 +538,8 @@ module Toys
       #         flag :username, "--username=VAL", desc: "Set username (required)"
       #         flag :password, "--password=VAL", desc: "Set password (required)"
       #       end
-      #       ...
+      #       # ...
+      #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
@@ -573,13 +575,14 @@ module Toys
       # The following example creates a group of flags in which either one or
       # none may be set, but not more than one.
       #
-      #     def "provision-server" do
+      #     tool "provision-server" do
       #       at_most_one do
       #         flag :restore_from_backup, "--restore-from-backup=VAL"
       #         flag :restore_from_image, "--restore-from-image=VAL"
       #         flag :clone_existing, "--clone-existing=VAL"
       #       end
-      #       ...
+      #       # ...
+      #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
@@ -616,13 +619,14 @@ module Toys
       # The following example creates a group of flags in which one or more
       # may be set.
       #
-      #     def "run-tests" do
+      #     tool "run-tests" do
       #       at_least_one do
       #         flag :unit, desc: "Run unit tests"
       #         flag :integration, desc: "Run integration tests"
       #         flag :performance, desc: "Run performance tests"
       #       end
-      #       ...
+      #       # ...
+      #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
@@ -659,13 +663,14 @@ module Toys
       # The following example creates a group of flags in which exactly one
       # must be set.
       #
-      #     def "deploy" do
+      #     tool "deploy" do
       #       exactly_one do
       #         flag :server, "--server=IP_ADDR", desc: "Deploy to server"
       #         flag :vm, "--vm=ID", desc: "Deploy to a VM"
       #         flag :container, "--container=ID", desc: "Deploy to a container"
       #       end
-      #       ...
+      #       # ...
+      #     end
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
