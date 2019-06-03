@@ -35,6 +35,21 @@ module Toys
   module DSL; end
 
   ##
+  # Namespace for standard middleware classes.
+  #
+  module StandardMiddleware
+    ## @private
+    COMMON_FLAG_GROUP = :__common
+
+    ## @private
+    def self.append_common_flag_group(tool)
+      tool.add_flag_group(type: :optional, name: COMMON_FLAG_GROUP,
+                          desc: "Common Flags", report_collisions: false)
+      COMMON_FLAG_GROUP
+    end
+  end
+
+  ##
   # Namespace for standard mixin classes.
   #
   module StandardMixins; end
@@ -71,7 +86,6 @@ require "toys/module_lookup"
 require "toys/positional_arg"
 require "toys/runner"
 require "toys/source_info"
-require "toys/standard_middleware"
 require "toys/template"
 require "toys/tool"
 require "toys/wrappable_string"

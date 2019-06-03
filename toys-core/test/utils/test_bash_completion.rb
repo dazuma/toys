@@ -42,7 +42,7 @@ describe Toys::Utils::BashCompletion do
     cli = Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: [])
     cli.add_config_block do
       tool "one" do
-        flag :hello, complete_values: ["neighbor", "kitty"]
+        flag :hello
         flag :world, "--world VALUE", "-wVALUE", complete_values: ["building", "news"]
         flag :ruby, "--ruby [VALUE]", complete_values: ["gems", "tuesday"]
         required_arg :foo, complete: ["lish", "sball"]
@@ -53,7 +53,7 @@ describe Toys::Utils::BashCompletion do
       end
       tool "three" do
         tool "four" do
-          flag :hello, complete_values: tester.context_capture
+          flag :hello
           flag :world, "--world VALUE", "-wVALUE", complete_values: tester.context_capture
           required_arg :foo, complete: tester.context_capture
           optional_arg :bar, complete: tester.context_capture

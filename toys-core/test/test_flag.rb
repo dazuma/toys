@@ -295,6 +295,7 @@ describe Toys::Flag do
     assert_equal("VALUE", flag.value_label)
     assert_equal("hello", flag.default)
     assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
   end
 
   it "defaults to a value switch with an integer acceptor" do
@@ -311,6 +312,24 @@ describe Toys::Flag do
     assert_equal("VALUE", flag.value_label)
     assert_nil(flag.default)
     assert_equal(Toys::Acceptor.lookup_well_known(Integer), flag.acceptor)
+    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
+  end
+
+  it "defaults to a value switch with a value completion" do
+    flag = Toys::Flag.create(:abc, complete_values: ["hello"])
+    assert_equal(1, flag.flag_syntax.size)
+    assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
+    assert_equal(:value, flag.flag_syntax.first.flag_type)
+    assert_equal(:required, flag.flag_syntax.first.value_type)
+    assert_equal(" ", flag.flag_syntax.first.value_delim)
+    assert_equal("VALUE", flag.flag_syntax.first.value_label)
+    assert_equal(:value, flag.flag_type)
+    assert_equal(:required, flag.value_type)
+    assert_equal(" ", flag.value_delim)
+    assert_equal("VALUE", flag.value_label)
+    assert_nil(flag.default)
+    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+    assert_instance_of(Toys::Completion::Enum, flag.value_completion)
   end
 
   it "defaults to a value switch with a short name" do
@@ -327,6 +346,7 @@ describe Toys::Flag do
     assert_equal("VALUE", flag.value_label)
     assert_equal("hello", flag.default)
     assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
   end
 
   it "chooses the first long flag's value label and delim as canonical" do

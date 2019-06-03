@@ -351,7 +351,8 @@ module Toys
           else
             "--#{canonical_flag}"
           end
-        needs_val = ![::NilClass, ::TrueClass, ::FalseClass].include?(@acceptor.well_known_spec) ||
+        needs_val = @value_completion != Completion::EMPTY ||
+                    ![::NilClass, ::TrueClass, ::FalseClass].include?(@acceptor.well_known_spec) ||
                     ![nil, true, false].include?(@default)
         flag_str = "#{flag_str} VALUE" if needs_val
         @flag_syntax << Syntax.new(flag_str)

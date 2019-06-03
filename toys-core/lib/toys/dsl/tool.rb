@@ -61,13 +61,12 @@ module Toys
       end
 
       ##
-      # Create an acceptor that can be passed into a flag or arg. An acceptor
-      # validates the string parameter passed to the flag or arg, and
-      # optionally converts it to a different object before storing it in your
-      # tool's data.
+      # Create a named acceptor that can be referenced by name from any flag or
+      # positional argument in this tool or its subtools.
       #
-      # When you create an acceptor, you provide a string name. The acceptor
-      # can, from the current tool or its subtools, be referenced by that name.
+      # An acceptor validates the string parameter passed to a flag or
+      # positional argument. It also optionally converts the string to a
+      # different object before storing it in your tool's data.
       #
       # Acceptors can be defined in one of three ways.
       #
@@ -98,6 +97,20 @@ module Toys
       #     an exception (descended from `StandardError`) to indicate that the
       #     string parameter is invalid.
       #
+      # ## Example
+      #
+      # The following example creates an acceptor named "hex" that is defined
+      # via a regular expression. It then uses it to validate values passed to
+      # a flag.
+      #
+      #     tool "example" do
+      #       acceptor "hex", /[0-9a-fA-F]+/, type_desc: "hex numbers"
+      #       flag :number, accept: "hex"
+      #       def run
+      #         puts "number was #{number}"
+      #       end
+      #     end
+      #
       # @param [String] name The acceptor name.
       # @param [Object] spec The acceptor specification.
       # @param [String] type_desc Type description string, shown in help.
@@ -111,42 +124,136 @@ module Toys
       end
 
       ##
-      # Create a named mixin module.
-      # This module may be included by name in this tool or any subtool.
+      # Create a named mixin module that can be included by name from this tool
+      # or its subtools.
       #
-      # You should pass a block and define methods in that block.
+      # A mixin is a module that defines methods that can be called from a
+      # tool. It is commonly used to provide "utility" methods, implementing
+      # common functionality and allowing tools to share code.
+      #
+      # Normally you provide a block and define the mixin's methods in that
+      # block. Alternatively, you can create a module separately and pass it
+      # directly to this directive.
+      #
+      # ## Example
+      #
+      # The following example creates a named mixin and uses it in a tool.
+      #
+      #     mixin "error-reporter" do
+      #       def error message
+      #         logger.error "An error occurred: #{message}"
+      #         exit 1
+      #       end
+      #     end
+      #
+      #     tool "build" do
+      #       include "error-reporter"
+      #       def run
+      #         puts "Building..."
+      #         error "Build failed!"
+      #       end
+      #     end
       #
       # @param [String] name Name of the mixin
+      # @param [Module] mixin_module Module to use as the mixin. Optional.
+      #     Either pass a module here, _or_ provide a block and define the
+      #     mixin within the block.
       # @return [self]
       #
-      def mixin(name, &block)
+      def mixin(name, mixin_module = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_mixin(name, &block)
+        cur_tool&.add_mixin(name, mixin_module, &block)
         self
       end
 
       ##
-      # Create a named template class.
-      # This template may be expanded by name in this tool or any subtool.
+      # Create a named template that can be expanded by name from this tool
+      # or its subtools.
       #
-      # You should pass a block and define the template in that block. You do
-      # not need to include `Toys::Template` in the block. Otherwise, see
-      # {Toys::Template} for information on defining a template. In general,
-      # the block should define an initialize method, and call `to_expand` to
-      # define how to expand the template.
+      # A template is an object that generates DSL directives. You can use it
+      # to build "prefabricated" tools, and then instantiate them in your Toys
+      # files. Generally, a template is a class with an associated `to_expand`
+      # procedure. The class defines parameters for the template expansion,
+      # and `to_expand` includes DSL directives that should be run based on
+      # those parameters.
+      #
+      # Normally, you provide a block and define the template class in that
+      # block. Most templates will define an `initialize` method that takes any
+      # arguments passed into the template expansion. The template must also
+      # provide a `to_expand` block showing how to use the template object to
+      # produce DSL directives.
+      #
+      # Alternately, you can create a template class separately and pass it
+      # directly. See {Toys::Template} for details on creating a template
+      # class.
+      #
+      # ## Example
+      #
+      # The following example creates and uses a simple template.
+      #
+      #     template "hello-generator" do
+      #       def initialize(name, message)
+      #         @name = name
+      #         @message = message
+      #       end
+      #       attr_reader :name, :message
+      #       to_expand do |template|
+      #         tool template.name do
+      #           to_run do
+      #             puts template.message
+      #           end
+      #         end
+      #       end
+      #     end
+      #
+      #     expand "hello-generator", "mytool", "mytool is running!"
       #
       # @param [String] name Name of the template
+      # @param [Class] template_class Module to use as the mixin. Optional.
+      #     Either pass a module here, _or_ provide a block and define the
+      #     mixin within the block.
       # @return [self]
       #
-      def template(name, &block)
+      def template(name, template_class = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_template(name, &block)
+        cur_tool&.add_template(name, template_class, &block)
         self
       end
 
       ##
       # Create a named completion procedure that may be used by name by any
       # flag or positional arg in this tool or any subtool.
+      #
+      # A completion controls tab completion for the value of a flag or
+      # positional argument. In general, it is a Ruby `Proc` that takes a
+      # context object (of type {Toys::Completion::Context}) and returns an
+      # array of completion candidate strings.
+      #
+      # Completions can be specified in one of three ways.
+      #
+      # *   A Proc object itself, either passed directly to this directive or
+      #     provided as a block.
+      # *   A static array of strings, indicating the completion candidates
+      #     independent of context.
+      # *   The symbol `:file_system` which indicates that paths in the file
+      #     system should serve as completion candidates.
+      #
+      # ## Example
+      #
+      # The following example defines a completion that uses only the immediate
+      # files in the current directory as candidates. (This is different from
+      # the `:file_system` completion which will descend into subdirectories
+      # similar to how bash completes most of its file system commands.)
+      #
+      #     completion "local-files" do |_context|
+      #       `/bin/ls`.split("\n")
+      #     end
+      #     tool "example" do
+      #       flag :file, complete_values: "local-files"
+      #       def run
+      #         puts "selected file #{file}"
+      #       end
+      #     end
       #
       # @param [String] name Name of the completion
       # @param [Object] spec Completion specification.
@@ -160,6 +267,23 @@ module Toys
 
       ##
       # Create a subtool. You must provide a block defining the subtool.
+      #
+      # ## Example
+      #
+      # The following example defines a tool and two subtools within it.
+      #
+      #     tool "build" do
+      #       tool "staging" do
+      #         def run
+      #           puts "Building staging"
+      #         end
+      #       end
+      #       tool "staging" do
+      #         def run
+      #           puts "Building staging"
+      #         end
+      #       end
+      #     end
       #
       # @param [String,Array<String>] words The name of the subtool
       # @param [:combine,:reset,:ignore] if_defined What to do if a definition
@@ -198,6 +322,21 @@ module Toys
       ##
       # Create an alias in the current namespace.
       #
+      # An alias is an alternate name for a tool. The referenced tool must be
+      # in the same namespace.
+      #
+      # ## Example
+      #
+      # This example defines a tool and an alias pointing to it. Both the tool
+      # name `test` and the alias `t` will then refer to the same tool.
+      #
+      #     tool "test" do
+      #       def run
+      #         puts "Running tests..."
+      #       end
+      #     end
+      #     alias_tool "t", "test"
+      #
       # @param [String] word The name of the alias
       # @param [String] target The target of the alias
       # @return [self]
@@ -225,6 +364,27 @@ module Toys
       # The template may be specified as a class or a well-known template name.
       # You may also provide arguments to pass to the template.
       #
+      # ## Example
+      #
+      # The following example creates and uses a simple template.
+      #
+      #     template "hello-generator" do
+      #       def initialize(name, message)
+      #         @name = name
+      #         @message = message
+      #       end
+      #       attr_reader :name, :message
+      #       to_expand do |template|
+      #         tool template.name do
+      #           to_run do
+      #             puts template.message
+      #           end
+      #         end
+      #       end
+      #     end
+      #
+      #     expand "hello-generator", "mytool", "mytool is running!"
+      #
       # @param [Class,String,Symbol] template_class The template, either as a
       #     class or a well-known name.
       # @param [Object...] args Template arguments
@@ -248,8 +408,8 @@ module Toys
       end
 
       ##
-      # Set the short description for the current tool. The short description is
-      # displayed with the tool in a subtool list. You may also use the
+      # Set the short description for the current tool. The short description
+      # is displayed with the tool in a subtool list. You may also use the
       # equivalent method `short_desc`.
       #
       # The description is a {Toys::WrappableString}, which may be word-wrapped
@@ -261,11 +421,14 @@ module Toys
       #     newlines, and multiple consecutive whitespace will be turned into a
       #     single space), and it will be word-wrapped on whitespace.
       # *   If you pass an Array of Strings, each string will be considered a
-      #     literal word that cannot be broken, and wrapping will be done across
-      #     the strings in the array. In this case, whitespace is not compacted.
+      #     literal word that cannot be broken, and wrapping will be done
+      #     across the strings in the array. In this case, whitespace is not
+      #     compacted.
       #
-      # For example, if you pass in a sentence as a simple string, it may be
-      # word wrapped when displayed:
+      # ## Examples
+      #
+      # If you pass in a sentence as a simple string, it may be word wrapped
+      # when displayed:
       #
       #     desc "This sentence may be wrapped."
       #
@@ -290,16 +453,17 @@ module Toys
       #
       # A long description is a series of descriptions, which are generally
       # displayed in a series of lines/paragraphs. Each individual description
-      # uses the form described in the {Toys::DSL::Tool#desc} documentation, and
-      # may be word-wrapped when displayed. To insert a blank line, include an
-      # empty string as one of the descriptions.
+      # uses the form described in the {Toys::DSL::Tool#desc} documentation,
+      # and may be word-wrapped when displayed. To insert a blank line, include
+      # an empty string as one of the descriptions.
       #
-      # Example:
+      # ## Example
       #
-      #     long_desc "This is an initial paragraph that might be word wrapped.",
+      #     long_desc "This initial paragraph might get word wrapped.",
       #               "This next paragraph is followed by a blank line.",
       #               "",
-      #               ["This line will not be wrapped."]
+      #               ["This line will not be wrapped."],
+      #               ["    This indent is preserved."]
       #
       # @param [Toys::WrappableString,String,Array<String>...] strs
       # @return [self]
@@ -314,12 +478,17 @@ module Toys
       # belong to the group. The flags in the group are listed together in
       # help screens.
       #
-      # Example:
+      # ## Example
       #
-      #     flag_group desc: "Debug Flags" do
-      #       flag :debug, "-D", desc: "Enable debugger"
-      #       flag :warnings, "-W[VAL]", desc: "Enable warnings"
-      #     end
+      # The following example creates a flag group in which all flags are
+      # optional.
+      #
+      #     tool "execute" do
+      #       flag_group desc: "Debug Flags" do
+      #         flag :debug, "-D", desc: "Enable debugger"
+      #         flag :warnings, "-W[VAL]", desc: "Enable warnings"
+      #       end
+      #       ...
       #
       # @param [Symbol] type The type of group. Allowed values: `:required`,
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
@@ -359,12 +528,16 @@ module Toys
       # defined in the block belong to the group. All flags in this group are
       # required.
       #
-      # Example:
+      # ## Example
       #
-      #     all_required do
-      #       flag :username, "--username=VAL", desc: "Set the username (required)"
-      #       flag :password, "--password=VAL", desc: "Set the password (required)"
-      #     end
+      # The following example creates a group of required flags.
+      #
+      #     tool "login" do
+      #       all_required do
+      #         flag :username, "--username=VAL", desc: "Set username (required)"
+      #         flag :password, "--password=VAL", desc: "Set password (required)"
+      #       end
+      #       ...
       #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
@@ -395,6 +568,19 @@ module Toys
       # defined in the block belong to the group. At most one flag in this
       # group must be provided on the command line.
       #
+      # ## Example
+      #
+      # The following example creates a group of flags in which either one or
+      # none may be set, but not more than one.
+      #
+      #     def "provision-server" do
+      #       at_most_one do
+      #         flag :restore_from_backup, "--restore-from-backup=VAL"
+      #         flag :restore_from_image, "--restore-from-image=VAL"
+      #         flag :clone_existing, "--clone-existing=VAL"
+      #       end
+      #       ...
+      #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
@@ -413,17 +599,31 @@ module Toys
       #     add flags to this group in a block.
       # @return [self]
       #
-      def at_most_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
-                               prepend: false, &block)
+      def at_most_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                      prepend: false, &block)
         flag_group(type: :at_most_one, desc: desc, long_desc: long_desc,
                    name: name, report_collisions: report_collisions, prepend: prepend, &block)
       end
+      alias at_most_one_required at_most_one
 
       ##
       # Create a flag group of type `:at_least_one`. If a block is given, flags
       # defined in the block belong to the group. At least one flag in this
       # group must be provided on the command line.
       #
+      # ## Example
+      #
+      # The following example creates a group of flags in which one or more
+      # may be set.
+      #
+      #     def "run-tests" do
+      #       at_least_one do
+      #         flag :unit, desc: "Run unit tests"
+      #         flag :integration, desc: "Run integration tests"
+      #         flag :performance, desc: "Run performance tests"
+      #       end
+      #       ...
+      #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
@@ -442,17 +642,31 @@ module Toys
       #     add flags to this group in a block.
       # @return [self]
       #
-      def at_least_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
-                                prepend: false, &block)
+      def at_least_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                       prepend: false, &block)
         flag_group(type: :at_least_one, desc: desc, long_desc: long_desc,
                    name: name, report_collisions: report_collisions, prepend: prepend, &block)
       end
+      alias at_least_one_required at_least_one
 
       ##
       # Create a flag group of type `:exactly_one`. If a block is given, flags
       # defined in the block belong to the group. Exactly one flag in this
       # group must be provided on the command line.
       #
+      # ## Example
+      #
+      # The following example creates a group of flags in which exactly one
+      # must be set.
+      #
+      #     def "deploy" do
+      #       exactly_one do
+      #         flag :server, "--server=IP_ADDR", desc: "Deploy to server"
+      #         flag :vm, "--vm=ID", desc: "Deploy to a VM"
+      #         flag :container, "--container=ID", desc: "Deploy to a container"
+      #       end
+      #       ...
+      #
       # @param [String,Array<String>,Toys::WrappableString] desc Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
@@ -471,11 +685,12 @@ module Toys
       #     add flags to this group in a block.
       # @return [self]
       #
-      def exactly_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
-                               prepend: false, &block)
+      def exactly_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
+                      prepend: false, &block)
         flag_group(type: :exactly_one, desc: desc, long_desc: long_desc,
                    name: name, report_collisions: report_collisions, prepend: prepend, &block)
       end
+      alias exactly_one_required exactly_one
 
       ##
       # Add a flag to the current tool. Each flag must specify a key which
