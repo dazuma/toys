@@ -54,7 +54,7 @@ module Toys
       # and the results are cumulative.
       #
       # @param [String...] flags
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def flags(*flags)
         @flags += flags.flatten
@@ -66,7 +66,7 @@ module Toys
       # See {Toys::Acceptor.create} for recognized formats.
       #
       # @param [Object] spec The spec.
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def accept(spec = nil, type_desc: nil, &block)
         @acceptor_spec = spec
@@ -79,7 +79,7 @@ module Toys
       # Set the default value.
       #
       # @param [Object] default
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def default(default)
         @default = default
@@ -94,7 +94,7 @@ module Toys
       # responding to the `call` method) or you may pass a block.
       #
       # @param [Proc] handler
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def handler(handler = nil, &block)
         @handler = handler || block
@@ -108,7 +108,7 @@ module Toys
       # {Toys::Completion.create} for other recognized formats.
       #
       # @param [Object] spec
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def complete_flags(spec = nil, &block)
         @flag_completion = spec || block
@@ -120,7 +120,7 @@ module Toys
       # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] spec
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def complete_values(spec = nil, &block)
         @value_completion = spec || block
@@ -132,7 +132,7 @@ module Toys
       # already in use or marked as disabled.
       #
       # @param [Boolean] setting
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def report_collisions(setting)
         @report_collisions = setting
@@ -144,7 +144,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def desc(desc)
         @desc = desc
@@ -157,7 +157,7 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::WrappableString...] long_desc
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def long_desc(*long_desc)
         @long_desc += long_desc
@@ -169,7 +169,7 @@ module Toys
       # `nil` selects the default group.
       #
       # @param [String,Symbol,Toys::FlagGroup,nil] group
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def group(group)
         @group = group
@@ -180,7 +180,7 @@ module Toys
       # Set the display name. This may be used in help text and error messages.
       #
       # @param [String] display_name
-      # @return [Toys::DSL::Flag] self, for chaining.
+      # @return [self]
       #
       def display_name(display_name)
         @display_name = display_name

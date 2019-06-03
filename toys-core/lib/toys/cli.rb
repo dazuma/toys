@@ -181,6 +181,7 @@ module Toys
     # @param [String] path A path to add.
     # @param [Boolean] high_priority Add the config at the head of the priority
     #     list rather than the tail.
+    # @return [self]
     #
     def add_config_path(path, high_priority: false)
       @loader.add_path(path, high_priority: high_priority)
@@ -195,6 +196,7 @@ module Toys
     # @param [String] name The source name that will be shown in documentation
     #     for tools defined in this block. If omitted, a default unique string
     #     will be generated.
+    # @return [self]
     #
     def add_config_block(high_priority: false, name: nil, &block)
       @loader.add_block(high_priority: high_priority, name: name, &block)
@@ -212,6 +214,7 @@ module Toys
     # @param [String] search_path A path to search for configs.
     # @param [Boolean] high_priority Add the configs at the head of the
     #     priority list rather than the tail.
+    # @return [self]
     #
     def add_search_path(search_path, high_priority: false)
       paths = []
@@ -237,6 +240,7 @@ module Toys
     #     terminate the search.
     # @param [Boolean] high_priority Add the configs at the head of the
     #     priority list rather than the tail.
+    # @return [self]
     #
     def add_search_path_hierarchy(start: nil, terminate: [], high_priority: false)
       path = start || ::Dir.pwd

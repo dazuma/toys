@@ -374,6 +374,7 @@ module Toys
     # Include the given mixin in the tool class.
     #
     # @param [String,Symbol,Module] name The mixin name or module
+    # @return [self]
     #
     def include_mixin(name)
       tool_class.include(name)
@@ -386,6 +387,7 @@ module Toys
     # already set, raises {Toys::ToolDefinitionError}
     #
     # @param [Toys::SourceInfo] source Source info
+    # @return [self]
     #
     def lock_source(source)
       if source_info && source_info.source != source.source
@@ -394,6 +396,7 @@ module Toys
               " (already defined in #{source_info.source_name})"
       end
       @source_info = source
+      self
     end
 
     ##
@@ -432,10 +435,12 @@ module Toys
     # interpreted as string fragments that will be concatenated and wrapped.
     #
     # @param [Array<Toys::WrappableString,String,Array<String>>] long_desc
+    # @return [self]
     #
     def append_long_desc(long_desc)
       check_definition_state
       @long_desc += WrappableString.make_array(long_desc)
+      self
     end
 
     ##
@@ -449,6 +454,7 @@ module Toys
     #     {Toys::Acceptor.create}.
     # @param [String] type_desc Type description string, shown in help.
     #     Defaults to the acceptor name.
+    # @return [self]
     #
     def add_acceptor(name, acceptor = nil, type_desc: nil, &block)
       name = name.to_s
@@ -467,6 +473,7 @@ module Toys
     #
     # @param [String] name The name of the mixin.
     # @param [Module] mixin_module The mixin module.
+    # @return [self]
     #
     def add_mixin(name, mixin_module = nil, &block)
       name = name.to_s
@@ -489,6 +496,7 @@ module Toys
     # @param [Proc,Tool::Completion::Base,Object] completion The completion to
     #     add. You can provide either a completion object, or a spec understood
     #     by {Toys::Completion.create}.
+    # @return [self]
     #
     def add_completion(name, completion = nil, &block)
       name = name.to_s
@@ -507,6 +515,7 @@ module Toys
     #
     # @param [String] name The name of the template.
     # @param [Class] template_class The template class.
+    # @return [self]
     #
     def add_template(name, template_class = nil, &block)
       name = name.to_s
@@ -522,6 +531,8 @@ module Toys
     ##
     # Disable argument parsing for this tool.
     #
+    # @return [self]
+    #
     def disable_argument_parsing
       check_definition_state
       if includes_arguments?
@@ -536,7 +547,9 @@ module Toys
     ##
     # Enforce that flags must come before args for this tool.
     # You may disable enforcement by passoing `false` for the state.
+    #
     # @param [Boolean] state
+    # @return [self]
     #
     def enforce_flags_before_args(state = true)
       check_definition_state
@@ -573,6 +586,7 @@ module Toys
     #     `true`.
     # @param [Boolean] prepend If `true`, prepend rather than append the
     #     group to the list. Default is `false`.
+    # @return [self]
     #
     def add_flag_group(type: :optional, desc: nil, long_desc: nil,
                        name: nil, report_collisions: true, prepend: false)
@@ -639,6 +653,7 @@ module Toys
     #     description of allowed formats. Defaults to the empty array.
     # @param [String] display_name A display name for this flag, used in help
     #     text and error messages.
+    # @return [self]
     #
     def add_flag(key, flags = [],
                  accept: nil, default: nil, handler: nil, complete_flags: nil,
@@ -669,6 +684,7 @@ module Toys
     # defining a particular flag.
     #
     # @param [String...] flags The flags to disable
+    # @return [self]
     #
     def disable_flag(*flags)
       check_definition_state(is_arg: true)
@@ -702,6 +718,7 @@ module Toys
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
+    # @return [self]
     #
     def add_required_arg(key, accept: nil, complete: nil, display_name: nil,
                          desc: nil, long_desc: nil)
@@ -739,6 +756,7 @@ module Toys
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
+    # @return [self]
     #
     def add_optional_arg(key, default: nil, accept: nil, complete: nil,
                          display_name: nil, desc: nil, long_desc: nil)
@@ -776,6 +794,7 @@ module Toys
     # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
     #     Long description for the arg. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
+    # @return [self]
     #
     def set_remaining_args(key, default: [], accept: nil, complete: nil,
                            display_name: nil, desc: nil, long_desc: nil)
@@ -812,6 +831,7 @@ module Toys
     #
     # @param [Proc] proc The initializer block
     # @param [Object...] args Arguments to pass to the initializer
+    # @return [self]
     #
     def add_initializer(proc, *args)
       check_definition_state

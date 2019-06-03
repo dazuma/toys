@@ -109,7 +109,7 @@ module Toys
     # Incrementally parse an array of strings
     #
     # @param [Array<String>] args
-    # @return [Toys::ArgParser] self, for chaining.
+    # @return [self]
     #
     def parse(args)
       args.each { |arg| add(arg) }
@@ -120,7 +120,7 @@ module Toys
     # Incrementally parse a single string
     #
     # @param [String] arg
-    # @return [Toys::ArgParser] self, for chaining.
+    # @return [self]
     #
     def add(arg)
       raise "Parser has finished" if @finished
@@ -146,6 +146,8 @@ module Toys
     #
     # After this method is called, this object is locked down, and no
     # additional arguments may be parsed.
+    #
+    # @return [self]
     #
     def finish
       finish_active_flag

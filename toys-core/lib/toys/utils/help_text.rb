@@ -60,7 +60,7 @@ module Toys
       ##
       # Create a usage helper.
       #
-      # @param [Toys::ToolDefintion] tool The tool to document.
+      # @param [Toys::Tool] tool The tool to document.
       # @param [Toys::Loader] loader A loader that can provide subcommands.
       # @param [String] binary_name The name of the binary. e.g. `"toys"`.
       #
@@ -72,6 +72,10 @@ module Toys
         @binary_name = binary_name
       end
 
+      ##
+      # The Tool being documented.
+      # @return [Toys::Tool]
+      #
       attr_reader :tool
 
       ##

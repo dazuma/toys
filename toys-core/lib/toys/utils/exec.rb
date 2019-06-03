@@ -145,6 +145,7 @@ module Toys
       # Set default options
       #
       # @param [Hash] opts New default options to set
+      # @return [self]
       #
       def configure_defaults(opts = {})
         @default_opts.add(opts)

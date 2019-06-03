@@ -49,7 +49,7 @@ module Toys
       # See {Toys::Acceptor.create} for recognized formats.
       #
       # @param [Object] spec The spec.
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def accept(spec = nil, type_desc: nil, &block)
         @acceptor_spec = spec
@@ -62,7 +62,7 @@ module Toys
       # Set the default value.
       #
       # @param [Object] default
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def default(default)
         @default = default
@@ -74,7 +74,7 @@ module Toys
       # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] value
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def complete(value = nil, &block)
         @completion = value || block
@@ -85,7 +85,7 @@ module Toys
       # Set the name of this arg as it appears in help screens.
       #
       # @param [String] display_name
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def display_name(display_name)
         @display_name = display_name
@@ -97,7 +97,7 @@ module Toys
       # formats.
       #
       # @param [String,Array<String>,Toys::WrappableString] desc
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def desc(desc)
         @desc = desc
@@ -110,7 +110,7 @@ module Toys
       # allowed formats.
       #
       # @param [String,Array<String>,Toys::WrappableString...] long_desc
-      # @return [Toys::DSL::PositionalArg] self, for chaining.
+      # @return [self]
       #
       def long_desc(*long_desc)
         @long_desc += long_desc

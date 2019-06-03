@@ -91,7 +91,7 @@ module Toys
       #     text and error messages.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil,

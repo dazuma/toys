@@ -102,7 +102,7 @@ module Toys
       # @param [Object] spec The acceptor specification.
       # @param [String] type_desc Type description string, shown in help.
       #     Defaults to the acceptor name.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def acceptor(name, spec = nil, type_desc: nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -117,7 +117,7 @@ module Toys
       # You should pass a block and define methods in that block.
       #
       # @param [String] name Name of the mixin
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def mixin(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -136,7 +136,7 @@ module Toys
       # define how to expand the template.
       #
       # @param [String] name Name of the template
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def template(name, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -150,7 +150,7 @@ module Toys
       #
       # @param [String] name Name of the completion
       # @param [Object] spec Completion specification.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def completion(name, spec = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -168,7 +168,7 @@ module Toys
       #     existing definition, `:reset` indicating the earlier definition
       #     should be reset and the new definition applied instead, or
       #     `:ignore` indicating the new definition should be ignored.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def tool(words, if_defined: :combine, &block)
         subtool_words = @__words
@@ -200,7 +200,7 @@ module Toys
       #
       # @param [String] word The name of the alias
       # @param [String] target The target of the alias
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def alias_tool(word, target)
         @__loader.make_alias(@__words + [word.to_s], @__words + [target.to_s], @__priority)
@@ -212,7 +212,7 @@ module Toys
       # at the current location.
       #
       # @param [String] path The file or directory to load.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def load(path)
         @__loader.load_path(source_info, path, @__words, @__remaining_words, @__priority)
@@ -228,7 +228,7 @@ module Toys
       # @param [Class,String,Symbol] template_class The template, either as a
       #     class or a well-known name.
       # @param [Object...] args Template arguments
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def expand(template_class, *args)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -275,7 +275,7 @@ module Toys
       #     desc ["This sentence will not be wrapped."]
       #
       # @param [Toys::WrappableString,String,Array<String>] str
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def desc(str)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -302,7 +302,7 @@ module Toys
       #               ["This line will not be wrapped."]
       #
       # @param [Toys::WrappableString,String,Array<String>...] strs
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def long_desc(*strs)
         DSL::Tool.current_tool(self, true)&.append_long_desc(strs)
@@ -340,7 +340,7 @@ module Toys
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def flag_group(type: :optional, desc: nil, long_desc: nil, name: nil,
                      report_collisions: true, prepend: false, &block)
@@ -382,7 +382,7 @@ module Toys
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def all_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
                        prepend: false, &block)
@@ -411,7 +411,7 @@ module Toys
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def at_most_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
                                prepend: false, &block)
@@ -440,7 +440,7 @@ module Toys
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def at_least_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
                                 prepend: false, &block)
@@ -469,7 +469,7 @@ module Toys
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def exactly_one_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
                                prepend: false, &block)
@@ -538,7 +538,7 @@ module Toys
       #     text and error messages.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def flag(key, *flags,
                accept: nil, default: nil, handler: nil,
@@ -592,7 +592,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
       #     configure this argument in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def required_arg(key,
                        accept: nil, complete: nil, display_name: nil,
@@ -646,7 +646,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
       #     configure this argument in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def optional_arg(key,
                        default: nil, accept: nil, complete: nil, display_name: nil,
@@ -699,7 +699,7 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
       #     configure this argument in a block.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def remaining_args(key,
                          default: [], accept: nil, complete: nil, display_name: nil,
@@ -726,7 +726,7 @@ module Toys
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
       # @param [Object] value The value to set.
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def static(key, value = nil)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -752,7 +752,7 @@ module Toys
       # off by passsing `false` as the parameter.
       #
       # @param [Boolean] state
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def enforce_flags_before_args(state = true)
         DSL::Tool.current_tool(self, true)&.enforce_flags_before_args(state)
@@ -767,7 +767,7 @@ module Toys
       # This directive is mutually exclusive with any of the directives that
       # declare arguments or flags.
       #
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def disable_argument_parsing
         DSL::Tool.current_tool(self, true)&.disable_argument_parsing
@@ -780,7 +780,7 @@ module Toys
       # defining a particular flag.
       #
       # @param [String...] flags The flags to disable
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def disable_flag(*flags)
         DSL::Tool.current_tool(self, true)&.disable_flag(*flags)
@@ -793,7 +793,7 @@ module Toys
       # You may want to do this if your method needs access to local variables
       # in the lexical scope.
       #
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def to_run(&block)
         define_method(:run, &block)
@@ -806,7 +806,7 @@ module Toys
       # method. You may want to do this if your method needs access to local
       # variables in the lexical scope.
       #
-      # @return [Toys::DSL::Tool] self, for chaining.
+      # @return [self]
       #
       def to_interrupt(&block)
         define_method(:interrupt, &block)
@@ -823,10 +823,11 @@ module Toys
       #
       # @param [Module,Symbol,String] mod Module or module name.
       # @param [Object...] args Arguments to pass to the initializer
+      # @return [self]
       #
       def include(mod, *args)
         cur_tool = DSL::Tool.current_tool(self, true)
-        return if cur_tool.nil?
+        return self if cur_tool.nil?
         mod = DSL::Tool.resolve_mixin(mod, cur_tool, @__loader)
         if included_modules.include?(mod)
           raise ToolDefinitionError, "Mixin already included: #{mod.name}"
@@ -841,6 +842,7 @@ module Toys
           class_exec(*args, &callback) if callback
         end
         super(mod)
+        self
       end
 
       ##
@@ -898,6 +900,7 @@ module Toys
       # Set a custom context directory for this tool.
       #
       # @param [String] dir Context directory
+      # @return [self]
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
         cur_tool = DSL::Tool.current_tool(self, false)

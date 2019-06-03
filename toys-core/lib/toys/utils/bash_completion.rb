@@ -51,7 +51,7 @@ module Toys
       # *   **0** for success
       # *   **1** if completion failed
       # *   **-1** if the required `COMP_LINE` and `COMP_POINT` environment
-      #     variables are not present.
+      #     variables are not set.
       #
       # @return [Integer] status code
       #

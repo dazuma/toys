@@ -45,8 +45,8 @@ tool "update" do
 
   def run
     configure_exec(exit_on_nonzero_status: true)
-    version_info = terminal.spinner(leading_text: "Checking rubygems for the latest release... ",
-                                    final_text: "Done.\n") do
+    version_info = spinner(leading_text: "Checking rubygems for the latest release... ",
+                           final_text: "Done.\n") do
       capture(["gem", "query", "-q", "-r", "-e", "toys"])
     end
     if version_info =~ /toys\s\((.+)\)/
@@ -55,8 +55,8 @@ tool "update" do
       if latest_version > cur_version
         prompt = "Update Toys from #{cur_version} to #{latest_version}? "
         exit(1) unless yes || confirm(prompt, default: true)
-        result = terminal.spinner(leading_text: "Installing Toys version #{latest_version}... ",
-                                  final_text: "Done.\n") do
+        result = spinner(leading_text: "Installing Toys version #{latest_version}... ",
+                         final_text: "Done.\n") do
           exec(["gem", "install", "toys", "--version", latest_version.to_s],
                out: :capture, err: :capture)
         end
@@ -96,11 +96,16 @@ tool "bash-completion" do
     "It is also possible to install completions for different binary names if you have" \
       " aliases for Toys. See the help for the \"install\" and \"remove\" tools for details.",
     "",
-    "The \"eval\" tool is the actual completion command invoked by bash via `complete -C`." \
-      " You shouldn't need to invoke it directly. See the bash manual for details."
+    "The \"eval\" tool is the actual completion command invoked by bash when it needs to" \
+      " complete a toys command line. You shouldn't need to invoke it directly."
 
   tool "eval" do
     desc "Tab completion command (executed by bash)"
+
+    long_desc \
+      "Completion command invoked by bash to compete a toys command line. Generally you do not" \
+        " need to invoke this directly. It reads the command line context from the COMP_LINE" \
+        " and COMP_POINT environment variables, and outputs completion candidates to stdout."
 
     disable_argument_parsing
 

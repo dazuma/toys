@@ -99,6 +99,7 @@ module Toys
     # @param [Boolean] high_priority If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
+    # @return [self]
     #
     def add_path(paths, high_priority: false)
       paths = Array(paths)
@@ -119,6 +120,7 @@ module Toys
     # @param [String] name The source name that will be shown in documentation
     #     for tools defined in this block. If omitted, a default unique string
     #     will be generated.
+    # @return [self]
     #
     def add_block(high_priority: false, name: nil, &block)
       name ||= "(Code block #{block.object_id})"
@@ -295,6 +297,8 @@ module Toys
     # @param [Symbol] name Mixin name
     # @return [Module,nil] The mixin, or `nil` if not found.
     #
+    # @private
+    #
     def resolve_standard_mixin(name)
       @mixin_lookup.lookup(name)
     end
@@ -304,6 +308,8 @@ module Toys
     #
     # @param [Symbol] name Template name
     # @return [Class,nil] The template, or `nil` if not found.
+    #
+    # @private
     #
     def resolve_standard_template(name)
       @template_lookup.lookup(name)
@@ -338,6 +344,7 @@ module Toys
     private
 
     ALLOWED_DELIMITERS = %r{^[\./:]*$}.freeze
+    private_constant :ALLOWED_DELIMITERS
 
     def process_extra_delimiters(input)
       unless ALLOWED_DELIMITERS =~ input

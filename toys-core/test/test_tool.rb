@@ -577,7 +577,31 @@ describe Toys::Tool do
     end
 
     describe "resolve" do
-      # TODO
+      it "finds an acceptor by name" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        assert_same(acceptor, tool.resolve_acceptor(acceptor_name))
+      end
+
+      it "raises when given a nonexisting name" do
+        assert_raises(Toys::ToolDefinitionError) do
+          tool.resolve_acceptor("acc2")
+        end
+      end
+
+      it "finds an acceptor from a subtool" do
+        tool.add_acceptor(acceptor_name, acceptor)
+        assert_same(acceptor, subtool.resolve_acceptor(acceptor_name))
+      end
+
+      it "resolves well-known acceptors" do
+        acceptor = tool.resolve_acceptor(Integer)
+        assert_equal(Integer, acceptor.well_known_spec)
+      end
+
+      it "builds regex acceptors" do
+        acceptor = tool.resolve_acceptor(/[A-Z]\w+/)
+        assert_instance_of(Toys::Acceptor::Pattern, acceptor)
+      end
     end
 
     describe "usage in flags and args" do
@@ -748,7 +772,19 @@ describe Toys::Tool do
       assert_equal(0, Toys::Runner.new(cli, tool).run([]))
     end
 
-    # TODO: pass block to add_mixin
+    it "interprets add_mixin with a block" do
+      test = self
+      tool.add_mixin("mymixin") do
+        def foo
+          :bar
+        end
+      end
+      tool.include_mixin("mymixin")
+      tool.runnable = proc do
+        test.assert_equal(:bar, foo)
+      end
+      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
+    end
   end
 
   describe "template class" do
@@ -766,7 +802,15 @@ describe Toys::Tool do
       assert_equal(MyTemplate, subtool.lookup_template("mytemplate"))
     end
 
-    # TODO: pass block to add_template
+    it "interprets add_template with a block" do
+      tool.add_template("mytemplate") do
+        def initialize
+          @foo = :bar
+        end
+        attr_reader :foo
+      end
+      assert_equal(:bar, tool.lookup_template("mytemplate").new.foo)
+    end
   end
 
   describe "finish_definition" do

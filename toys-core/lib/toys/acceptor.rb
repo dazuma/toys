@@ -26,12 +26,13 @@ module Toys
   # An Acceptor validates and converts arguments. It is designed to be
   # compatible with the OptionParser accept mechanism.
   #
-  # First, an acceptor validates an argument via the {#match} method. This
-  # method should determine whether the argument is valid, and return
-  # information that will help with conversion of the argument.
+  # First, an acceptor validates an argument via the
+  # {Toys::Acceptor::Base#match} method. This method should determine whether
+  # the argument is valid, and return information that will help with
+  # conversion of the argument.
   #
   # Second, an acceptor converts the argument from the input string to its
-  # final form via the {#convert} method.
+  # final form via the {Toys::Acceptor::Base#convert} method.
   #
   # Finally, an acceptor has a name that may appear in help text for flags
   # and arguments that use it.
