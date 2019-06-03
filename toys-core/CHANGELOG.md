@@ -14,6 +14,7 @@ Major changes and features:
 Other notable changes:
 
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
+* ADDED: Function and range based acceptors.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
@@ -77,6 +78,7 @@ Changes to internal interfaces:
     * CHANGED: Replaced `name` field with separate `type_desc` and `well_known_spec` fields.
     * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
     * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
+    * ADDED: Range acceptor (`Acceptor::Range`) which validates against a range.
     * ADDED: Class methods `Acceptor.create` and `Acceptor.lookup_well_known`.
 
 ### 0.7.0 / 2019-01-23

@@ -170,12 +170,12 @@ module Toys
 
       ## @private
       def <=>(other)
-        to_s <=> other.to_s
+        string <=> other.string
       end
 
       ## @private
       def hash
-        to_s.hash
+        string.hash
       end
 
       ##

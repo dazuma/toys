@@ -152,6 +152,162 @@ describe Toys::Acceptor::Enum do
   end
 end
 
+describe Toys::Acceptor::Range do
+  describe "of integer" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(1..10)
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["1", 1], acceptor.match("1"))
+    end
+
+    it "rejects integers outside the range" do
+      assert_nil(acceptor.match("0"))
+    end
+
+    it "rejects floats" do
+      assert_nil(acceptor.match("2.0"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+
+  describe "of float" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(1.1..10.0)
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["2", 2.0], acceptor.match("2"))
+    end
+
+    it "accepts floats in the range" do
+      assert_equal(["2.0", 2.0], acceptor.match("2.0"))
+    end
+
+    it "rejects floats outside the range" do
+      assert_nil(acceptor.match("1.0"))
+    end
+
+    it "rejects rationals" do
+      assert_nil(acceptor.match("5/2"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+
+  describe "of rational" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(Rational(1, 1)..Rational(21, 2))
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["2", Rational(2, 1)], acceptor.match("2"))
+    end
+
+    it "accepts floats in the range" do
+      assert_equal(["2.0", Rational(2, 1)], acceptor.match("2.0"))
+    end
+
+    it "accepts rationals in the range" do
+      assert_equal(["3/2", Rational(3, 2)], acceptor.match("3/2"))
+    end
+
+    it "rejects rationals outside the range" do
+      assert_nil(acceptor.match("1/2"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+
+  describe "of numeric" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(1..9.9)
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["2", 2], acceptor.match("2"))
+    end
+
+    it "accepts floats in the range" do
+      assert_equal(["2.0", 2.0], acceptor.match("2.0"))
+    end
+
+    it "accepts rationals in the range" do
+      assert_equal(["3/2", Rational(3, 2)], acceptor.match("3/2"))
+    end
+
+    it "rejects integers outside the range" do
+      assert_nil(acceptor.match("10"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+
+  describe "of string" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new("a".."f")
+    }
+
+    it "accepts strings" do
+      assert_equal(["b", "b"], acceptor.match("b"))
+    end
+
+    it "rejects strings outside the range" do
+      assert_nil(acceptor.match("A"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+
+  describe "of custom" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(Time.new(10)..Time.new(20)) do |s|
+        s.nil? ? nil : Time.new(Integer(s))
+      end
+    }
+
+    it "accepts times" do
+      assert_equal(["11", Time.new(11)], acceptor.match("11"))
+    end
+
+    it "rejects times outside the range" do
+      assert_nil(acceptor.match("21"))
+    end
+
+    it "accepts nil" do
+      assert_equal([nil, nil], acceptor.match(nil))
+    end
+  end
+end
+
 describe Toys::Acceptor do
   def assert_accept(acceptor, value, converted)
     match = acceptor.match(value)
@@ -199,6 +355,14 @@ describe Toys::Acceptor do
       assert_equal("number", acceptor.type_desc)
       assert_accept(acceptor, "two", :two)
       refute_accept(acceptor, "four")
+    end
+
+    it "recognizes a range" do
+      acceptor = Toys::Acceptor.create(1..10, type_desc: "number")
+      assert_instance_of(Toys::Acceptor::Range, acceptor)
+      assert_equal("number", acceptor.type_desc)
+      assert_accept(acceptor, "2", 2)
+      refute_accept(acceptor, "11")
     end
 
     it "recognizes a proc" do

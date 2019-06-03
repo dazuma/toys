@@ -17,6 +17,7 @@ Details:
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
+* ADDED: Function and range based acceptors.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `:gem_build` template includes an `:install_gem` option.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.

@@ -285,6 +285,116 @@ module Toys
       end
     end
 
+    ##
+    # An acceptor that recognizes a range of values.
+    #
+    # The input argument is matched against the given range. For example, you
+    # can match against the integers from 1 to 10 by passing the range
+    # `(1..10)`.
+    #
+    # You can also provide a conversion function that takes the input string
+    # and converts it an object that can be compared by the range. If you do
+    # not provide a converter, a default converter will be provided depending
+    # on the types of objects serving as the range limits. Specifically:
+    #
+    # *   If the range beginning and end are both `Integer`, then input strings
+    #     are likewise converted to `Integer` when matched against the range.
+    #     Accepted values are returned as integers.
+    # *   If the range beginning and end are both `Float`, then input strings
+    #     are likewise converted to `Float`.
+    # *   If the range beginning and end are both `Rational`, then input
+    #     strings are likewise converted to `Rational`.
+    # *   If the range beginning and end are both `Numeric` types but different
+    #     subtypes (e.g. an `Integer` and a `Float`), then any type of numeric
+    #     input (integer, float, rational) is accepted and matched against the
+    #     range.
+    # *   If the range beginning and/or end are not numeric types, then no
+    #     conversion is done by default.
+    #
+    class Range < Simple
+      ##
+      # Create an acceptor.
+      #
+      # @param [Range] range The range of acceptable values
+      # @param [Proc] converter A converter proc that takes an input string and
+      #     attempts to convert it to a type comparable by the range. For
+      #     numeric ranges, this can be omitted because one is provided by
+      #     default. You should provide a converter for other types of ranges.
+      #     You can also pass the converter as a block.
+      # @param [String] type_desc Type description string, shown in help.
+      #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
+      # @param [Object] well_known_spec The well-known acceptor spec associated
+      #     with this acceptor, or `nil` for none.
+      #
+      def initialize(range, converter = nil, type_desc: nil, well_known_spec: nil, &block)
+        converter ||= block || make_converter(range.begin, range.end)
+        super(type_desc: type_desc, well_known_spec: well_known_spec) do |val|
+          val = converter.call(val) if converter
+          val.nil? || range.include?(val) ? val : REJECT
+        end
+        @range = range
+      end
+
+      ##
+      # The range being checked.
+      # @return [Range]
+      #
+      attr_reader :range
+
+      private
+
+      def make_converter(val1, val2)
+        if val1.is_a?(::Integer) && val2.is_a?(::Integer)
+          INTEGER_CONVERTER
+        elsif val1.is_a?(::Float) && val2.is_a?(::Float)
+          FLOAT_CONVERTER
+        elsif val1.is_a?(::Rational) && val2.is_a?(::Rational)
+          RATIONAL_CONVERTER
+        elsif val1.is_a?(::Numeric) && val2.is_a?(::Numeric)
+          NUMERIC_CONVERTER
+        end
+      end
+    end
+
+    ##
+    # A converter proc that handles integers. Useful in Simple and Range
+    # acceptors.
+    # @return [Proc]
+    #
+    INTEGER_CONVERTER = proc { |s| s.nil? ? nil : Integer(s) }
+
+    ##
+    # A converter proc that handles floats. Useful in Simple and Range
+    # acceptors.
+    # @return [Proc]
+    #
+    FLOAT_CONVERTER = proc { |s| s.nil? ? nil : Float(s) }
+
+    ##
+    # A converter proc that handles rationals. Useful in Simple and Range
+    # acceptors.
+    # @return [Proc]
+    #
+    RATIONAL_CONVERTER = proc { |s| s.nil? ? nil : Rational(s) }
+
+    ##
+    # A converter proc that handles any numeric value. Useful in Simple and
+    # Range acceptors.
+    # @return [Proc]
+    #
+    NUMERIC_CONVERTER =
+      proc do |s|
+        if s.nil?
+          nil
+        elsif s.include?("/")
+          Rational(s)
+        elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
+          Float(s)
+        else
+          Integer(s)
+        end
+      end
+
     class << self
       ##
       # Lookup a standard acceptor name recognized by OptionParser.
@@ -334,6 +444,12 @@ module Toys
       #     and then store the symbol `:foo` in the tool data. You may not
       #     further customize the conversion function; any block is ignored.
       #
+      # *   A **range** of possible values, along with a conversion function
+      #     that converts a string parameter to a type comparable by the range.
+      #     (See the "function" spec below for a detailed description of
+      #     conversion functions.) If the range has numeric endpoints, the
+      #     conversion function is optional because a default will be provided.
+      #
       # *   A **function** as a Proc (where the block is ignored) or a block
       #     (if the spec is nil). This function performs *both* validation and
       #     conversion. It should take the string parameter as its argument,
@@ -365,6 +481,8 @@ module Toys
           Enum.new(spec, type_desc: type_desc)
         when ::Proc
           Simple.new(spec, type_desc: type_desc)
+        when ::Range
+          Range.new(spec, type_desc: type_desc, &block)
         when nil
           block ? Simple.new(type_desc: type_desc, &block) : DEFAULT
         else
@@ -409,35 +527,19 @@ module Toys
       end
 
       def build_integer
-        Simple.new(type_desc: "integer", well_known_spec: ::Integer) do |s|
-          s.nil? ? nil : Integer(s)
-        end
+        Simple.new(INTEGER_CONVERTER, type_desc: "integer", well_known_spec: ::Integer)
       end
 
       def build_float
-        Simple.new(type_desc: "floating point number", well_known_spec: ::Float) do |s|
-          s.nil? ? nil : Float(s)
-        end
+        Simple.new(FLOAT_CONVERTER, type_desc: "floating point number", well_known_spec: ::Float)
       end
 
       def build_rational
-        Simple.new(type_desc: "rational number", well_known_spec: ::Rational) do |s|
-          s.nil? ? nil : Rational(s)
-        end
+        Simple.new(RATIONAL_CONVERTER, type_desc: "rational number", well_known_spec: ::Rational)
       end
 
       def build_numeric
-        Simple.new(type_desc: "number", well_known_spec: ::Numeric) do |s|
-          if s.nil?
-            nil
-          elsif s.include?("/")
-            Rational(s)
-          elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
-            Float(s)
-          else
-            Integer(s)
-          end
-        end
+        Simple.new(NUMERIC_CONVERTER, type_desc: "number", well_known_spec: ::Numeric)
       end
 
       TRUE_STRINGS = ["+", "true", "yes"].freeze

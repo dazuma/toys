@@ -68,7 +68,7 @@ module Toys
       # positional argument. It also optionally converts the string to a
       # different object before storing it in your tool's data.
       #
-      # Acceptors can be defined in one of three ways.
+      # Acceptors can be defined in one of four ways.
       #
       # *   You can provide a **regular expression**. This acceptor validates
       #     only if the regex matches the *entire string parameter*.
@@ -86,9 +86,16 @@ module Toys
       #     array elements.)
       #
       #     An array acceptor automatically converts the string parameter to
-      #     the actual array element that it matchd. For example, if the symbol
-      #     `:foo` is in the array, it will match the string `"foo"`, and then
-      #     store the symbol `:foo` in the tool data.
+      #     the actual array element that it matched. For example, if the
+      #     symbol `:foo` is in the array, it will match the string `"foo"`,
+      #     and then store the symbol `:foo` in the tool data.
+      #
+      # *   You can provide a **range** of possible values, along with a
+      #     conversion function that converts a string parameter to a type
+      #     comparable by the range. (See the "function" spec below for a
+      #     detailed description of conversion functions.) If the range has
+      #     numeric endpoints, the conversion function is optional because a
+      #     default will be provided.
       #
       # *   You can provide a **function** by passing it as a proc or a block.
       #     This function performs *both* validation and conversion. It should
