@@ -270,7 +270,7 @@ you build and ship a custom command line binary written in Ruby. However, you
 *can* use it in that way by building with the "toys-core" API, available as a
 separate gem. You would effectively write your command line binary using the
 same Toys DSL that you use to write `.toys.rb` files. For more info on using
-toys-core, see https://www.rubydoc.info/gems/toys-core
+toys-core, see (its documentation)[https://www.rubydoc.info/gems/toys-core].
 
 ## Why Toys?
 
@@ -288,9 +288,9 @@ writing *and organizing* your own command line scripts. You provide the actual
 functionality, and Toys takes care of all the other details expected from a
 good command line tool. It provides a streamlined interface for defining and
 handling command line flags and positional arguments, and sensible ways to
-organize shared code. It automatically generates help text, so you can see
-usage information at a glance, and it also provides a search feature to help
-you find the script you need.
+organize shared code. It automatically generates help text so you can see
+usage information at a glance, provides a search feature to help you find the
+script you need, and generates tab completion for your shell.
 
 Toys can also be used to share scripts. For example, it can be used instead of
 Rake to provide build and test scripts for a project. Unlike Rake tasks,

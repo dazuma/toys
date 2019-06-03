@@ -17,11 +17,20 @@ provides a single binary called `toys`. You define the commands recognized by
 the Toys binary by writing configuration files. (You can, however, build your
 own custom command line binary using the related **toys-core** library.)
 
-This user's guide covers everything you need to know to use Toys effectively.
+If this is your first time using Toys, we recommend starting with the
+[README](https://www.rubydoc.info/gems/toys/file/README.md), which includes a
+tutorial that introduces how to install Toys, write and execute tools, and even
+use Toys to replace Rake. The tutorial will likely give you enough information
+to start using Toys effectively.
+
+This user's guide is also structured like an extended tutorial, but it is much
+longer and covers all the features of Toys in much more depth. Read it when
+you're ready to unlock all the capabilities of Toys to create sophisticated
+command line tools.
 
 ## Conceptual overview
 
-Toys is a command line *framework*. It provides a binary called `toys` along
+Toys is a command line *framework*. It provides an executable called `toys`
 with basic functions such as argument parsing and online help. You provide the
 actual behavior of the Toys binary by writing **Toys files**.
 
@@ -42,12 +51,12 @@ tool's **online help** screen. Descriptions come in **long** and **short**
 forms, which appear in different styles of help.
 
 Toys searches for tools in specifically-named **Toys files** and **Toys
-directories**. It searches for these in the current directory, its ancestors,
-and in the Toys **search path**.
+directories**. It searches for these in the current directory, in its
+ancestors, and in the Toys **search path**.
 
 Toys provides various features to help you write tools. This includes providing
 a **logger** for each tool, **mixins** that provide common functions a tool can
-call (such as controlling subprocesses and styling output), and **templates**
+call (such as to control subprocesses and style output), and **templates**
 which are prefabricated tools that you can configure for your needs.
 
 Finally, Toys provides useful **built-in behavior**, including automatically
@@ -147,7 +156,7 @@ Pass multiple long flags (for verbose output and recursive subtool search).
 
 You can combine short flags. This does the same as the previous example.
 
-    toys system -rv
+    toys system -vr
 
 Long flags can be abbreviated, as long as the abbreviation is not ambiguous.
 For example, there is only one flag (`--recursive`) beginning with the string
@@ -466,11 +475,11 @@ For example:
 
 Now, running:
 
-    toys args-demo foo bar baz bey
+    toys args-demo foo bar baz qux
 
 Sets the following option data:
 
-    {arg1: "foo", arg2: "bar", arg3: ["baz", "bey"]}
+    {arg1: "foo", arg2: "bar", arg3: ["baz", "qux"]}
 
 If instead you run:
 
@@ -638,9 +647,10 @@ required. (Again, this is consistent with OptionParser's behavior.)
 
 #### Handling optional values
 
-There are some subtleties in how OptionParser treats flags with optional
-values, and for the most part, Toys follows OptionParser's lead. It is thus
-important to understand the behavior if you use optional values.
+There are some subtleties in how the Ruby OptionParser library treats flags
+with optional values. Although Toys does not use OptionParser interally, it
+does, for the most part, replicate OptionParser's behavior. It is thus
+important to understand that behavior if you use optional values.
 
 First, if a flag has an optional value that is not provided on the command
 line, then the "value" is automatically set to `nil`. Consider this example:
@@ -761,7 +771,7 @@ will be `false`, i.e. the last value set on the command line. This is because a
 flag normally *sets* its option value, replacing any previously set value.
 
 You can, however, change this behavior by providing a **handler**. A handler is
-a proc that governs what a flag does to its option value. It takes two
+a Ruby Proc that defines what a flag does to its option value. It takes two
 arguments, the new value given, and the previously set value (which might be
 the default value if this is the first appearance of the flag), and returns the
 new value that should be set.
@@ -1258,7 +1268,7 @@ the same point (the current directory) in the search path.
 
 Note that in the search path above, steps (1) and (2) are *context-dependent*.
 That is, they may be different depending on what directory you are in. However,
-step (3) is *not* context-dependent, and are searched regardless of where you
+step (3) is *not* context-dependent, and is searched regardless of where you
 are located. Tools defined here are **global**, available everywhere.
 
 ## The execution environment
@@ -1776,7 +1786,8 @@ Remember that classes created this way are constants, and so the name
 `GreetTemplate` is available only inside the Toys file where it was defined.
 
 You must `include Toys::Template` if you define a template directly as a class,
-but you can omit it if you use the `template` directive to define the template.
+but you can omit it if you use the `template` directive to define the template
+in a block.
 
 Defining templates as classes is also a useful way for third-party gems to
 provide Toys integration. For example, suppose you are writing a code analysis
@@ -2798,8 +2809,9 @@ A similar effect can of course be obtained by running `gem install toys`.
 
 ### Installing tab completion for Bash
 
-Toys provides basic tab completion for the bash shell. Currently, tool names
-and flags are auto-completed. The following command sets up tab completion in
+Toys provides tab completion for the bash shell, and lets tools customize the
+completions for their arguments. However, you need to install the Toys
+completion tool into your shell. The following command sets up tab completion
 the current shell:
 
     $(toys system bash-completion install)
