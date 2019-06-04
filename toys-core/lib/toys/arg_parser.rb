@@ -215,11 +215,11 @@ module Toys
       when "--"
         @flags_allowed = false
       when /\A(--\w[\?\w-]*)=(.*)\z/
-        handle_valued_flag($1, $2)
+        handle_valued_flag(::Regexp.last_match(1), ::Regexp.last_match(2))
       when /\A--.+\z/
         handle_plain_flag(arg)
       when /\A-(.+)\z/
-        handle_single_flags($1)
+        handle_single_flags(::Regexp.last_match(1))
       else
         return false
       end

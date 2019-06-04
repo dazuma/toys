@@ -401,7 +401,7 @@ module Toys
           rgb = style.to_i(16)
           [38, 2, (rgb >> 8) * 0x11, ((rgb & 0xf0) >> 4) * 0x11, (rgb & 0xf) * 0x11]
         when /^\e\[([\d;]+)m$/
-          $1.split(";").map(&:to_i)
+          ::Regexp.last_match(1).split(";").map(&:to_i)
         end
       end
 

@@ -50,7 +50,7 @@ tool "update" do
       capture(["gem", "query", "-q", "-r", "-e", "toys"])
     end
     if version_info =~ /toys\s\((.+)\)/
-      latest_version = ::Gem::Version.new($1)
+      latest_version = ::Gem::Version.new(::Regexp.last_match(1))
       cur_version = ::Gem::Version.new(::Toys::VERSION)
       if latest_version > cur_version
         prompt = "Update Toys from #{cur_version} to #{latest_version}? "

@@ -421,34 +421,38 @@ module Toys
     # Representation of a single flag.
     #
     class Syntax
+      # rubocop:disable Style/PerlBackrefs
+
       ##
       # Parse flag syntax
       # @param [String] str syntax.
       #
       def initialize(str)
         case str
-        when /^(-([\?\w]))$/
+        when /\A(-([\?\w]))\z/
           setup(str, $1, nil, $1, $2, :short, nil, nil, nil, nil)
-        when /^(-([\?\w]))( ?)\[(\w+)\]$/
+        when /\A(-([\?\w]))( ?)\[(\w+)\]\z/
           setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
-        when /^(-([\?\w]))\[( )(\w+)\]$/
+        when /\A(-([\?\w]))\[( )(\w+)\]\z/
           setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
-        when /^(-([\?\w]))( ?)(\w+)$/
+        when /\A(-([\?\w]))( ?)(\w+)\z/
           setup(str, $1, nil, $1, $2, :short, :value, :required, $3, $4)
-        when /^--\[no-\](\w[\?\w-]*)$/
+        when /\A--\[no-\](\w[\?\w-]*)\z/
           setup(str, "--#{$1}", "--no-#{$1}", str, $1, :long, :boolean, nil, nil, nil)
-        when /^(--(\w[\?\w-]*))$/
+        when /\A(--(\w[\?\w-]*))\z/
           setup(str, $1, nil, $1, $2, :long, nil, nil, nil, nil)
-        when /^(--(\w[\?\w-]*))([= ])\[(\w+)\]$/
+        when /\A(--(\w[\?\w-]*))([= ])\[(\w+)\]\z/
           setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
-        when /^(--(\w[\?\w-]*))\[([= ])(\w+)\]$/
+        when /\A(--(\w[\?\w-]*))\[([= ])(\w+)\]\z/
           setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
-        when /^(--(\w[\?\w-]*))([= ])(\w+)$/
+        when /\A(--(\w[\?\w-]*))([= ])(\w+)\z/
           setup(str, $1, nil, $1, $2, :long, :value, :required, $3, $4)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
         end
       end
+
+      # rubocop:enable Style/PerlBackrefs
 
       attr_reader :original_str
       attr_reader :flags

@@ -68,8 +68,8 @@ module Toys
         add_config_path_if_missing(e, path)
         raise e
       rescue ::SyntaxError => e
-        if e.message =~ /#{::Regexp.escape(path)}:(\d+)/
-          opts = opts.merge(config_path: path, config_line: $1.to_i)
+        if (match = /#{::Regexp.escape(path)}:(\d+)/.match(e.message))
+          opts = opts.merge(config_path: path, config_line: match[1].to_i)
           e = ContextualError.new(e, banner, opts)
         end
         raise e

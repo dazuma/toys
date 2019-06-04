@@ -85,9 +85,9 @@ module Toys
         return nil unless words.shift
         words.map! { |_type, word| word }
         prefix = ""
-        if last =~ /\A(.*=)(.*)\z/
-          prefix = $1
-          last = $2
+        if (match = /\A(.*=)(.*)\z/.match(last))
+          prefix = match[1]
+          last = match[2]
         end
         context = Completion::Context.new(
           cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
@@ -99,16 +99,23 @@ module Toys
 
       private
 
-      # rubocop: disable all
+      word_re = "([^\\s\\\\\\'\\\"]+)"
+      sq_re = "'([^\\']*)(?:'|\\z)"
+      dq_re = "\"((?:[^\\\"\\\\]|\\\\.)*)(?:\"|\\z)"
+      esc_re = "(\\\\.?)"
+      sep_re = "(\\s|\\z)"
+      ## @private
+      SPLIT_REGEX = /\G\s*(?>#{word_re}|#{sq_re}|#{dq_re}|#{esc_re}|(\S))#{sep_re}?/m.freeze
+      private_constant :SPLIT_REGEX
+
       def split(line)
         words = []
         field = ::String.new
         quote_type = nil
-        regex = /\G\s*(?>([^\s\\\'\"]+)|'([^\']*)(?:'|\z)|"((?:[^\"\\]|\\.)*)(?:"|\z)|(\\.?)|(\S))(\s|\z)?/m
-        line.scan(regex) do |word, sq, dq, esc, garbage, sep|
+        line.scan(SPLIT_REGEX) do |word, sqw, dqw, esc, garbage, sep|
           raise ArgumentError, "Didn't expect garbage: #{line.inspect}" if garbage
-          field << (word || sq || (dq && dq.gsub(/\\([$`"\\\n])/, '\\1')) || esc.gsub(/\\(.)/, '\\1'))
-          quote_type = quote_type ? :multi : sq ? :single : dq ? :double : :bare
+          field << field_str(word, sqw, dqw, esc)
+          quote_type = update_quote_type(quote_type, sqw, dqw)
           if sep
             words << [quote_type, field]
             quote_type = nil
@@ -118,7 +125,26 @@ module Toys
         words << [quote_type, field] if field
         words
       end
-      # rubocop:enable all
+
+      def field_str(word, sqw, dqw, esc)
+        word ||
+          sqw ||
+          dqw&.gsub(/\\([$`"\\\n])/, '\\1') ||
+          esc&.gsub(/\\(.)/, '\\1') ||
+          ""
+      end
+
+      def update_quote_type(quote_type, sqw, dqw)
+        if quote_type
+          :multi
+        elsif sqw
+          :single
+        elsif dqw
+          :double
+        else
+          :bare
+        end
+      end
 
       def format_candidate(candidate, quote_type)
         str = candidate.to_s

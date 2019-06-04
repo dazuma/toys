@@ -581,9 +581,9 @@ module Toys
             nil
           else
             flags = 0
-            if s =~ %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}
-              s = $1
-              opts = $2 || ""
+            if (match = %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}.match(s))
+              s = match[1]
+              opts = match[2] || ""
               flags |= ::Regexp::IGNORECASE if opts.include?("i")
               flags |= ::Regexp::MULTILINE if opts.include?("m")
               flags |= ::Regexp::EXTENDED if opts.include?("x")

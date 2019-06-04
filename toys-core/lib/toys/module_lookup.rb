@@ -51,7 +51,7 @@ module Toys
       #
       def to_module_name(str)
         str = str.to_s.sub(/^_/, "").sub(/_$/, "").gsub(/_+/, "_")
-        str.to_s.gsub(/(^|_)([a-zA-Z])/) { |_m| $2.upcase }.to_sym
+        str.to_s.gsub(/(?:^|_)([a-zA-Z])/) { ::Regexp.last_match(1).upcase }.to_sym
       end
 
       ##

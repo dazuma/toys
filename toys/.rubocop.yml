@@ -55,8 +55,6 @@ Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
   Enabled: false
-Style/PerlBackrefs:
-  Enabled: false
 Style/Semicolon:
   Enabled: false
 Style/StringLiterals:
