@@ -421,7 +421,7 @@ module Toys
     def self.create(spec = nil, **options, &block)
       spec ||= block
       case spec
-      when nil, :empty
+      when nil, :empty, :default
         EMPTY
       when ::Proc, Base
         spec

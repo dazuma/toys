@@ -35,22 +35,16 @@ module Toys
       def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
                      report_collisions, group, desc, long_desc, display_name)
         @flags = flags
-        @acceptor_spec = acceptor
-        @acceptor_type_desc = nil
-        @acceptor_block = nil
         @default = default
         @handler = handler
-        @flag_completion = flag_completion
-        @flag_completion_options = {}
-        @flag_completion_block = nil
-        @value_completion = value_completion
-        @value_completion_options = {}
-        @value_completion_block = nil
         @report_collisions = report_collisions
         @group = group
         @desc = desc
         @long_desc = long_desc || []
         @display_name = display_name
+        accept(acceptor)
+        complete_flags(flag_completion)
+        complete_values(value_completion)
       end
 
       ##
@@ -69,12 +63,13 @@ module Toys
       # Set the acceptor for this flag's values.
       # See {Toys::Acceptor.create} for recognized formats.
       #
-      # @param [Object] spec The spec.
+      # @param [Object] spec
+      # @param [Hash] options
       # @return [self]
       #
-      def accept(spec = nil, type_desc: nil, &block)
+      def accept(spec = nil, **options, &block)
         @acceptor_spec = spec
-        @acceptor_type_desc = type_desc
+        @acceptor_options = options
         @acceptor_block = block
         self
       end
@@ -116,7 +111,7 @@ module Toys
       # @return [self]
       #
       def complete_flags(spec = nil, **options, &block)
-        @flag_completion = spec
+        @flag_completion_spec = spec
         @flag_completion_options = options
         @flag_completion_block = block
         self
@@ -131,7 +126,7 @@ module Toys
       # @return [self]
       #
       def complete_values(spec = nil, **options, &block)
-        @value_completion = spec
+        @value_completion_spec = spec
         @value_completion_options = options
         @value_completion_block = block
         self
@@ -199,19 +194,13 @@ module Toys
 
       ## @private
       def _add_to(tool, key)
-        acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
-                                         &@acceptor_block)
-        flag_completion =
-          if @flag_completion.is_a?(::Hash)
-            @flag_completion
-          elsif @flag_completion.nil? && @flag_completion_block.nil?
-            @flag_completion_options
-          else
-            tool.resolve_completion(@flag_completion, @flag_completion_options,
-                                    &@flag_completion_block)
-          end
-        value_completion = tool.resolve_completion(@value_completion, @value_completion_options,
-                                                   &@value_completion_block)
+        acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
+        flag_completion = tool.scalar_flag_completion(
+          @flag_completion_spec, @flag_completion_options, &@flag_completion_block
+        )
+        value_completion = tool.scalar_value_completion(
+          @value_completion_spec, @value_completion_options, &@value_completion_block
+        )
         tool.add_flag(key, @flags,
                       accept: acceptor, default: @default, handler: @handler,
                       complete_flags: flag_completion, complete_values: value_completion,

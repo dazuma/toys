@@ -4,8 +4,8 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Reenable Style/PerlBackrefs cop
 * Write toys-core user guide
+* Intgrate with did_you_mean
 
 ## Ideas under investigation
 

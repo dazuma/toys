@@ -61,7 +61,7 @@ module Toys
       @desc = WrappableString.make(desc)
       @long_desc = WrappableString.make_array(long_desc)
       @default = default
-      @flag_completion = resolve_flag_completion(flag_completion)
+      @flag_completion = create_flag_completion(flag_completion)
       @value_completion = Completion.create(value_completion)
       create_default_flag if @flag_syntax.empty?
       remove_used_flags(used_flags, report_collisions)
@@ -331,11 +331,14 @@ module Toys
       end
     end
 
-    def resolve_flag_completion(spec = nil, **options)
-      if spec.nil?
-        StandardCompletion.new(self, options)
+    def create_flag_completion(spec)
+      case spec
+      when nil, :default
+        StandardCompletion.new(self)
+      when ::Hash
+        StandardCompletion.new(self, spec)
       else
-        Completion.create(spec, options)
+        Completion.create(spec)
       end
     end
 

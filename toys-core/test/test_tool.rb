@@ -556,7 +556,7 @@ describe Toys::Tool do
     let(:acceptor_name) { "acc1" }
     let(:acceptor) { Toys::Acceptor::Base.new }
 
-    describe "lookup" do
+    describe "add and lookup" do
       it "finds an acceptor by name" do
         tool.add_acceptor(acceptor_name, acceptor)
         assert_same(acceptor, tool.lookup_acceptor(acceptor_name))
@@ -574,33 +574,27 @@ describe Toys::Tool do
         tool.add_acceptor(acceptor_name, acceptor)
         assert_same(acceptor, subtool.lookup_acceptor(acceptor_name))
       end
-    end
 
-    describe "resolve" do
-      it "finds an acceptor by name" do
-        tool.add_acceptor(acceptor_name, acceptor)
-        assert_same(acceptor, tool.resolve_acceptor(acceptor_name))
+      it "adds default" do
+        tool.add_acceptor(acceptor_name, nil)
+        assert_same(Toys::Acceptor::DEFAULT, tool.lookup_acceptor(acceptor_name))
       end
 
-      it "raises when given a nonexisting name" do
-        assert_raises(Toys::ToolDefinitionError) do
-          tool.resolve_acceptor("acc2")
-        end
+      it "adds enum" do
+        tool.add_acceptor(acceptor_name, ["one", "two", "three"])
+        assert_instance_of(Toys::Acceptor::Enum, tool.lookup_acceptor(acceptor_name))
       end
 
-      it "finds an acceptor from a subtool" do
-        tool.add_acceptor(acceptor_name, acceptor)
-        assert_same(acceptor, subtool.resolve_acceptor(acceptor_name))
+      it "adds enum with an option" do
+        tool.add_acceptor(acceptor_name, ["one", "two", "three"], type_desc: "hi")
+        found_acceptor = tool.lookup_acceptor(acceptor_name)
+        assert_instance_of(Toys::Acceptor::Enum, found_acceptor)
+        assert_equal("hi", found_acceptor.type_desc)
       end
 
-      it "resolves well-known acceptors" do
-        acceptor = tool.resolve_acceptor(Integer)
-        assert_equal(Integer, acceptor.well_known_spec)
-      end
-
-      it "builds regex acceptors" do
-        acceptor = tool.resolve_acceptor(/[A-Z]\w+/)
-        assert_instance_of(Toys::Acceptor::Pattern, acceptor)
+      it "adds block" do
+        tool.add_acceptor(acceptor_name) { |str| str }
+        assert_instance_of(Toys::Acceptor::Simple, tool.lookup_acceptor(acceptor_name))
       end
     end
 
@@ -610,9 +604,19 @@ describe Toys::Tool do
         assert_equal(Toys::Acceptor::DEFAULT, tool.flags.first.acceptor)
       end
 
+      it "resolves the default acceptor by passing :default" do
+        tool.add_flag(:a, ["-a VAL"], accept: :default)
+        assert_equal(Toys::Acceptor::DEFAULT, tool.flags.first.acceptor)
+      end
+
       it "resolves well-known acceptors" do
         tool.add_flag(:a, ["-a VAL"], accept: Integer)
         assert_equal(Integer, tool.flags.first.acceptor.well_known_spec)
+      end
+
+      it "builds regex acceptors" do
+        tool.add_flag(:a, ["-a VAL"], accept: /[A-Z]\w+/)
+        assert_instance_of(Toys::Acceptor::Pattern, tool.flags.first.acceptor)
       end
 
       it "can be referenced by name in a flag" do
@@ -649,16 +653,18 @@ describe Toys::Tool do
 
   describe "completion" do
     let(:completion_name) { "comp1" }
+    let(:completion_name2) { "comp2" }
     let(:completion) { Toys::Completion::Base.new }
+    let(:completion2) { Toys::Completion::Base.new }
 
-    describe "lookup" do
+    describe "add and lookup" do
       it "finds a completion by name" do
         tool.add_completion(completion_name, completion)
         assert_same(completion, tool.lookup_completion(completion_name))
       end
 
       it "returns nil on an unknown name" do
-        assert_nil(tool.lookup_completion("comp2"))
+        assert_nil(tool.lookup_completion(completion_name2))
       end
 
       it "does not do full resolution" do
@@ -669,18 +675,48 @@ describe Toys::Tool do
         tool.add_completion(completion_name, completion)
         assert_same(completion, subtool.lookup_completion(completion_name))
       end
+
+      it "adds default" do
+        tool.add_completion(completion_name, nil)
+        assert_same(Toys::Completion::EMPTY, tool.lookup_completion(completion_name))
+      end
+
+      it "adds enum" do
+        tool.add_completion(completion_name, ["one", "two", "three"])
+        assert_instance_of(Toys::Completion::Enum, tool.lookup_completion(completion_name))
+      end
+
+      it "adds enum with an option" do
+        tool.add_completion(completion_name, ["one", "two", "three"], prefix_constraint: "hi=")
+        found_completion = tool.lookup_completion(completion_name)
+        assert_instance_of(Toys::Completion::Enum, found_completion)
+        assert_equal("hi=", found_completion.prefix_constraint)
+      end
+
+      it "adds block" do
+        tool.add_completion(completion_name) { ["one", "two"] }
+        assert_instance_of(Proc, tool.lookup_completion(completion_name))
+      end
     end
 
     describe "usage in flags and args" do
-      it "resolves the default completion" do
+      it "resolves the default completions" do
         tool.add_flag(:a, ["-a VAL"])
         assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
+        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
+      end
+
+      it "resolves the default completions by passing :default" do
+        tool.add_flag(:a, ["-a VAL"], complete_flags: :default, complete_values: :default)
+        assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
+        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
       end
 
       it "can be referenced by name in a flag" do
         tool.add_completion(completion_name, completion)
-        tool.add_flag(:a, ["-a VAL"], complete_values: completion)
-        assert_same(completion, tool.flags.first.value_completion)
+        tool.add_flag(:a, ["-a VAL"], complete_flags: completion, complete_values: completion2)
+        assert_same(completion, tool.flags.first.flag_completion)
+        assert_same(completion2, tool.flags.first.value_completion)
       end
 
       it "can be referenced by name in a positional arg" do
@@ -695,15 +731,24 @@ describe Toys::Tool do
         assert_same(completion, subtool.flags.first.value_completion)
       end
 
-      it "can be added based on a spec" do
-        tool.add_completion(completion_name, ["one", "two"])
-        tool.add_flag(:a, ["-a VAL"], complete_values: completion_name)
+      it "can be set based on a spec" do
+        tool.add_flag(:a, ["-a VAL"],
+                      complete_flags: ["three", "four"], complete_values: ["one", "two"])
+        assert_instance_of(Toys::Completion::Enum, tool.flags.first.flag_completion)
+        assert_equal("four", tool.flags.first.flag_completion.values.first.string)
         assert_instance_of(Toys::Completion::Enum, tool.flags.first.value_completion)
+        assert_equal("one", tool.flags.first.value_completion.values.first.string)
+      end
+
+      it "can be set based on options" do
+        tool.add_flag(:a, ["-a VAL"], complete_flags: {include_negative: false})
+        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
+        refute(tool.flags.first.flag_completion.include_negative?)
       end
 
       it "raises if name not found" do
         assert_raises(Toys::ToolDefinitionError) do
-          tool.add_flag(:a, ["-a VAL"], complete_values: "comp2")
+          tool.add_flag(:a, ["-a VAL"], complete_values: completion_name2)
         end
       end
     end

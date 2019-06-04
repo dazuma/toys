@@ -483,7 +483,7 @@ module Toys
           Simple.new(spec, type_desc: type_desc)
         when ::Range
           Range.new(spec, type_desc: type_desc, &block)
-        when nil
+        when nil, :default
           block ? Simple.new(type_desc: type_desc, &block) : DEFAULT
         else
           raise ToolDefinitionError, "Illegal acceptor spec: #{spec.inspect}"

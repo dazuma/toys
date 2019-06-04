@@ -357,34 +357,6 @@ module Toys
     end
 
     ##
-    # Perform a full resolution of an acceptor specification with respect to
-    # this tool. Recognizes acceptor names, and any specification understood by
-    # {Toys::Acceptor.create}
-    #
-    # @param [Toys::Acceptor::Base,Object] spec The acceptor spec, either an
-    #     acceptor object, or a spec understood by {Toys::Acceptor.create}.
-    # @param [String] type_desc Type description string, shown in help.
-    # @return [Toys::Acceptor::Base]
-    #
-    def resolve_acceptor(spec = nil, type_desc: nil, &block)
-      Acceptor.create(resolve_acceptor_name(spec), type_desc: type_desc, &block)
-    end
-
-    ##
-    # Perform a full resolution of a completion specification with respect to
-    # this tool. Recognizes completion names, and any specification understood
-    # by {Toys::Completion.create}
-    #
-    # @param [Toys::Completion::Base,Object] spec The completion spec, either a
-    #     completion object, or a spec understood by {Toys::Completion.create}.
-    # @param [Hash] options Additional options to pass to the completion.
-    # @return [Toys::Completion::Base]
-    #
-    def resolve_completion(spec = nil, **options, &block)
-      Completion.create(resolve_completion_name(spec), options, &block)
-    end
-
-    ##
     # Include the given mixin in the tool class.
     #
     # @param [String,Symbol,Module] name The mixin name or module
@@ -906,6 +878,25 @@ module Toys
     #
     def lookup_custom_context_directory
       custom_context_directory || @parent&.lookup_custom_context_directory
+    end
+
+    ## @private
+    def scalar_acceptor(spec = nil, type_desc: nil, &block)
+      Acceptor.create(resolve_acceptor_name(spec), type_desc: type_desc, &block)
+    end
+
+    ## @private
+    def scalar_value_completion(spec = nil, **options, &block)
+      Completion.create(resolve_completion_name(spec), options, &block)
+    end
+
+    ## @private
+    def scalar_flag_completion(spec = nil, **options, &block)
+      if spec.nil? && block.nil? || spec == :default
+        options
+      else
+        Completion.create(resolve_completion_name(spec), options, &block)
+      end
     end
 
     ##
