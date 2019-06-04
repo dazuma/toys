@@ -264,11 +264,12 @@ module Toys
       #
       # @param [String] name Name of the completion
       # @param [Object] spec Completion specification.
+      # @param [Hash] options Additional options to pass to the completion.
       # @return [self]
       #
-      def completion(name, spec = nil, &block)
+      def completion(name, spec = nil, **options, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_completion(name, spec || block)
+        cur_tool&.add_completion(name, spec, options, &block)
         self
       end
 

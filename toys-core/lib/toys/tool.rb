@@ -371,6 +371,20 @@ module Toys
     end
 
     ##
+    # Perform a full resolution of a completion specification with respect to
+    # this tool. Recognizes completion names, and any specification understood
+    # by {Toys::Completion.create}
+    #
+    # @param [Toys::Completion::Base,Object] spec The completion spec, either a
+    #     completion object, or a spec understood by {Toys::Completion.create}.
+    # @param [Hash] options Additional options to pass to the completion.
+    # @return [Toys::Completion::Base]
+    #
+    def resolve_completion(spec = nil, **options, &block)
+      Completion.create(resolve_completion_name(spec), options, &block)
+    end
+
+    ##
     # Include the given mixin in the tool class.
     #
     # @param [String,Symbol,Module] name The mixin name or module
@@ -496,16 +510,17 @@ module Toys
     # @param [Proc,Tool::Completion::Base,Object] completion The completion to
     #     add. You can provide either a completion object, or a spec understood
     #     by {Toys::Completion.create}.
+    # @param [Hash] options Additional options to pass to the completion.
     # @return [self]
     #
-    def add_completion(name, completion = nil, &block)
+    def add_completion(name, completion = nil, **options, &block)
       name = name.to_s
       if @completions.key?(name)
         raise ToolDefinitionError,
               "A completion named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @completions[name] = Toys::Completion.create(completion || block)
+      @completions[name] = Toys::Completion.create(completion, options, &block)
       self
     end
 
@@ -999,13 +1014,12 @@ module Toys
         return unless arg_parser.flags_allowed?
         active_flag_def = arg_parser.active_flag_def
         return if active_flag_def && active_flag_def.value_type == :required
-        match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment)
+        match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment_prefix)
         return unless match
-
-        flag_def = context.tool.resolve_flag(match[1]).unique_flag
+        flag_value_context = context.with(fragment_prefix: match[2])
+        flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag
         return [] unless flag_def
-        context.fragment = match[2]
-        flag_def.value_completion.call(context)
+        flag_def.value_completion.call(flag_value_context)
       end
 
       def subtool_or_arg_candidates(context)
@@ -1015,7 +1029,7 @@ module Toys
       end
 
       def subtool_candidates(context)
-        return if !@complete_subtools || !context.args.empty?
+        return if !@complete_subtools || !context.args.empty? || !context.fragment_prefix.empty?
         subtools = context.cli.loader.list_subtools(context.tool.full_name,
                                                     include_hidden: @include_hidden_subtools)
         return if subtools.empty?
@@ -1041,7 +1055,7 @@ module Toys
         return [] unless arg_parser.flags_allowed?
         flag_def = arg_parser.active_flag_def
         return [] if flag_def && flag_def.value_type == :required
-        return [] if context.fragment =~ /\A[^-]/ || context.fragment.include?("=")
+        return [] if context.fragment =~ /\A[^-]/ || !context.fragment_prefix.empty?
         context.tool.flags.flat_map do |flag|
           flag.flag_completion.call(context)
         end

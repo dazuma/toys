@@ -41,7 +41,11 @@ module Toys
         @default = default
         @handler = handler
         @flag_completion = flag_completion
+        @flag_completion_options = {}
+        @flag_completion_block = nil
         @value_completion = value_completion
+        @value_completion_options = {}
+        @value_completion_block = nil
         @report_collisions = report_collisions
         @group = group
         @desc = desc
@@ -108,10 +112,13 @@ module Toys
       # {Toys::Completion.create} for other recognized formats.
       #
       # @param [Object] spec
+      # @param [Hash] options
       # @return [self]
       #
-      def complete_flags(spec = nil, &block)
-        @flag_completion = spec || block
+      def complete_flags(spec = nil, **options, &block)
+        @flag_completion = spec
+        @flag_completion_options = options
+        @flag_completion_block = block
         self
       end
 
@@ -120,10 +127,13 @@ module Toys
       # See {Toys::Completion.create} for recognized formats.
       #
       # @param [Object] spec
+      # @param [Hash] options
       # @return [self]
       #
-      def complete_values(spec = nil, &block)
-        @value_completion = spec || block
+      def complete_values(spec = nil, **options, &block)
+        @value_completion = spec
+        @value_completion_options = options
+        @value_completion_block = block
         self
       end
 
@@ -191,9 +201,20 @@ module Toys
       def _add_to(tool, key)
         acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
                                          &@acceptor_block)
+        flag_completion =
+          if @flag_completion.is_a?(::Hash)
+            @flag_completion
+          elsif @flag_completion.nil? && @flag_completion_block.nil?
+            @flag_completion_options
+          else
+            tool.resolve_completion(@flag_completion, @flag_completion_options,
+                                    &@flag_completion_block)
+          end
+        value_completion = tool.resolve_completion(@value_completion, @value_completion_options,
+                                                   &@value_completion_block)
         tool.add_flag(key, @flags,
                       accept: acceptor, default: @default, handler: @handler,
-                      complete_flags: @flag_completion, complete_values: @value_completion,
+                      complete_flags: flag_completion, complete_values: value_completion,
                       report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end

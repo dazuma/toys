@@ -84,8 +84,15 @@ module Toys
         quote_type, last = words.pop
         return nil unless words.shift
         words.map! { |_type, word| word }
-        params = {quote_type: quote_type}
-        context = Completion::Context.new(@cli, words, last, params)
+        prefix = ""
+        if last =~ /\A(.*=)(.*)\z/
+          prefix = $1
+          last = $2
+        end
+        context = Completion::Context.new(
+          cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
+          params: {quote_type: quote_type}
+        )
         candidates = @cli.completion.call(context)
         candidates.uniq.sort.map { |candidate| format_candidate(candidate, quote_type) }
       end

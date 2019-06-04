@@ -331,14 +331,11 @@ module Toys
       end
     end
 
-    def resolve_flag_completion(spec)
-      case spec
-      when nil
-        StandardCompletion.new(self)
-      when ::Hash
-        StandardCompletion.new(self, spec)
+    def resolve_flag_completion(spec = nil, **options)
+      if spec.nil?
+        StandardCompletion.new(self, options)
       else
-        Completion.create(spec)
+        Completion.create(spec, options)
       end
     end
 
@@ -623,6 +620,27 @@ module Toys
         @include_long = include_long
         @include_negative = include_negative
       end
+
+      ##
+      # Whether to include short flags
+      # @return [Boolean]
+      #
+      attr_reader :include_short
+      alias include_short? include_short
+
+      ##
+      # Whether to include long flags
+      # @return [Boolean]
+      #
+      attr_reader :include_long
+      alias include_long? include_long
+
+      ##
+      # Whether to include negative long flags
+      # @return [Boolean]
+      #
+      attr_reader :include_negative
+      alias include_negative? include_negative
 
       ##
       # Returns candidates for the current completion.

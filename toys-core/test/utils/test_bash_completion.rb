@@ -46,7 +46,9 @@ describe Toys::Utils::BashCompletion do
         flag :world, "--world VALUE", "-wVALUE", complete_values: ["building", "news"]
         flag :ruby, "--ruby [VALUE]", complete_values: ["gems", "tuesday"]
         required_arg :foo, complete: ["lish", "sball"]
-        optional_arg :bar, complete: ["n", "k"]
+        optional_arg :bar do
+          complete ["n", "k"], prefix_constraint: /\A([a-z]+=)?\z/
+        end
         remaining_args :baz, complete: ["aar", "ooka"]
       end
       tool "two" do
@@ -88,6 +90,11 @@ describe Toys::Utils::BashCompletion do
     assert_equal(["two "], result)
   end
 
+  it "completes key=t" do
+    result = completion.run_internal("toys key=t")
+    assert_equal([], result)
+  end
+
   it "completes subtool" do
     result = completion.run_internal("toys three ")
     assert_equal(["four "], result)
@@ -98,6 +105,11 @@ describe Toys::Utils::BashCompletion do
     assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
   end
 
+  it "completes first arg with prefix" do
+    result = completion.run_internal("toys one key=")
+    assert_equal([], result)
+  end
+
   it "completes flag names only" do
     result = completion.run_internal("toys one --")
     assert_equal(["--hello ", "--ruby ", "--world "], result)
@@ -106,6 +118,16 @@ describe Toys::Utils::BashCompletion do
   it "completes flag names and second arg" do
     result = completion.run_internal("toys one x ")
     assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "k ", "n "], result)
+  end
+
+  it "completes flag names and second arg with a valid prefix" do
+    result = completion.run_internal("toys one x pre=")
+    assert_equal(["k ", "n "], result)
+  end
+
+  it "completes flag names and second arg with an invalid prefix" do
+    result = completion.run_internal("toys one x PRE=")
+    assert_equal([], result)
   end
 
   it "completes flag names and remaining arg" do
@@ -123,9 +145,24 @@ describe Toys::Utils::BashCompletion do
     assert_equal(["building ", "news "], result)
   end
 
+  it "completes empty string after flag with required argument and =" do
+    result = completion.run_internal("toys one --world=")
+    assert_equal(["building ", "news "], result)
+  end
+
+  it "completes empty string after flag with required argument and = with prefixed value" do
+    result = completion.run_internal("toys one --world=key=b")
+    assert_equal([], result)
+  end
+
   it "completes empty string after flag with optional argument" do
     result = completion.run_internal("toys one --ruby ")
     assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "gems ", "tuesday "], result)
+  end
+
+  it "completes empty string after flag with optional argument and =" do
+    result = completion.run_internal("toys one --ruby=")
+    assert_equal(["gems ", "tuesday "], result)
   end
 
   it "completes apparent flag after flag with optional argument" do

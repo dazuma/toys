@@ -43,17 +43,42 @@ module Toys
       # @param [Toys::CLI] cli The CLI being run.
       # @param [Array<String>] previous_words Array of complete strings that
       #     appeared prior to the fragment to complete.
+      # @param [String] fragment_prefix The non-completed prefix (e.g. "key=")
+      #     of the fragment.
       # @param [String] fragment The string fragment to complete
       # @param [Hash] params Miscellaneous context data
       #
-      def initialize(cli, previous_words, fragment, params = {})
+      def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", params: {})
         @cli = cli
         @previous_words = previous_words
+        @fragment_prefix = fragment_prefix
         @fragment = fragment
         @params = params
         @tool = nil
         @args = nil
         @arg_parser = nil
+      end
+
+      ##
+      # Create a new completion context with the given modifications.
+      #
+      # @param [Toys::CLI] cli The CLI being run.
+      # @param [Array<String>] previous_words Array of complete strings that
+      #     appeared prior to the fragment to complete.
+      # @param [String] fragment_prefix The non-completed prefix (e.g. "key=")
+      #     of the fragment.
+      # @param [String] fragment The string fragment to complete
+      # @param [Hash] add_params Add miscellaneous context data
+      # @param [Hash,nil] replace_params Replace miscellaneous context data.
+      # @return [Toys::Completion::Context]
+      #
+      def with(cli: nil, previous_words: nil, fragment_prefix: nil, fragment: nil,
+               add_params: {}, replace_params: nil)
+        Context.new(cli: cli || self.cli,
+                    previous_words: previous_words || self.previous_words,
+                    fragment_prefix: fragment_prefix || self.fragment_prefix,
+                    fragment: fragment || self.fragment,
+                    params: (replace_params || params).merge(add_params))
       end
 
       ##
@@ -69,10 +94,16 @@ module Toys
       attr_reader :previous_words
 
       ##
+      # A non-completed prefix for the current fragment.
+      # @return [String]
+      #
+      attr_reader :fragment_prefix
+
+      ##
       # The current string fragment to complete
       # @return [String]
       #
-      attr_accessor :fragment
+      attr_reader :fragment
 
       ##
       # Context parameters.
@@ -108,6 +139,12 @@ module Toys
       def arg_parser
         lookup_tool
         @arg_parser ||= ArgParser.new(@cli, @tool).parse(@args)
+      end
+
+      ## @private
+      def inspect
+        "<Toys::Completion::Context previous=#{previous_words.inspect}" \
+          " prefix=#{fragment_prefix.inspect} fragment=#{fragment.inspect}>"
       end
 
       private
@@ -220,11 +257,14 @@ module Toys
       # @param [String] cwd Working directory (defaults to the current dir).
       # @param [Boolean] omit_files Omit files from candidates
       # @param [Boolean] omit_directories Omit directories from candidates
+      # @param [String,Regexp] prefix_constraint Constraint on the fragment
+      #     prefix. Defaults to requiring the prefix be empty.
       #
-      def initialize(cwd: nil, omit_files: false, omit_directories: false)
+      def initialize(cwd: nil, omit_files: false, omit_directories: false, prefix_constraint: "")
         @cwd = cwd || ::Dir.pwd
         @include_files = !omit_files
         @include_directories = !omit_directories
+        @prefix_constraint = prefix_constraint
       end
 
       ##
@@ -240,6 +280,12 @@ module Toys
       attr_reader :include_directories
 
       ##
+      # Constraint on the fragment prefix.
+      # @return [String,Regexp]
+      #
+      attr_reader :prefix_constraint
+
+      ##
       # Path to the starting directory.
       # @return [String]
       #
@@ -253,6 +299,7 @@ module Toys
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
       def call(context)
+        return [] unless @prefix_constraint === context.fragment_prefix
         substring = context.fragment
         prefix, name =
           if substring.empty? || substring.end_with?("/")
@@ -277,10 +324,12 @@ module Toys
 
       private
 
-      def glob_in(name, base_dir)
-        if ::RUBY_VERSION < "2.5"
+      if ::RUBY_VERSION < "2.5"
+        def glob_in(name, base_dir)
           ::Dir.chdir(base_dir) { ::Dir.glob(name) }
-        else
+        end
+      else
+        def glob_in(name, base_dir)
           ::Dir.glob(name, base: base_dir)
         end
       end
@@ -312,9 +361,12 @@ module Toys
       # Create a completion from a list of values.
       #
       # @param [Array<String>] values
+      # @param [String,Regexp] prefix_constraint Constraint on the fragment
+      #     prefix. Defaults to requiring the prefix be empty.
       #
-      def initialize(values)
+      def initialize(values, prefix_constraint: "")
         @values = values.flatten.map { |v| Candidate.new(v) }.sort
+        @prefix_constraint = prefix_constraint
       end
 
       ##
@@ -324,6 +376,12 @@ module Toys
       attr_reader :values
 
       ##
+      # Constraint on the fragment prefix.
+      # @return [String,Regexp]
+      #
+      attr_reader :prefix_constraint
+
+      ##
       # Returns candidates for the current completion.
       #
       # @param [Toys::Completion::Context] context the current completion
@@ -331,6 +389,7 @@ module Toys
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
       def call(context)
+        return [] unless @prefix_constraint === context.fragment_prefix
         fragment = context.fragment
         @values.find_all { |val| val.string.start_with?(fragment) }
       end
@@ -356,18 +415,20 @@ module Toys
     #
     # @param [Object] spec The completion spec. See above for recognized
     #     values.
+    # @param [Hash] options Additional options to pass to the completion.
     # @return [Toys::Completion::Base,Proc]
     #
-    def self.create(spec)
+    def self.create(spec = nil, **options, &block)
+      spec ||= block
       case spec
       when nil, :empty
         EMPTY
       when ::Proc, Base
         spec
       when ::Array
-        Enum.new(spec)
+        Enum.new(spec, options)
       when :file_system
-        FileSystem.new
+        FileSystem.new(options)
       else
         if spec.respond_to?(:call)
           spec

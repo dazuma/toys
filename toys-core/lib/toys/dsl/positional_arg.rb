@@ -39,6 +39,8 @@ module Toys
         @acceptor_block = nil
         @default = default
         @completion = completion
+        @completion_options = {}
+        @completion_block = nil
         @display_name = display_name
         @desc = desc
         @long_desc = long_desc || []
@@ -70,14 +72,17 @@ module Toys
       end
 
       ##
-      # Set the shell completion strategy.
+      # Set the shell completion strategy for arg values.
       # See {Toys::Completion.create} for recognized formats.
       #
-      # @param [Object] value
+      # @param [Object] spec
+      # @param [Hash] options
       # @return [self]
       #
-      def complete(value = nil, &block)
-        @completion = value || block
+      def complete(spec = nil, **options, &block)
+        @completion = spec
+        @completion_options = options
+        @completion_block = block
         self
       end
 
@@ -121,8 +126,9 @@ module Toys
       def _add_required_to(tool, key)
         acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
                                          &@acceptor_block)
+        completion = tool.resolve_completion(@completion, @completion_options, &@completion_block)
         tool.add_required_arg(key,
-                              accept: acceptor, complete: @completion,
+                              accept: acceptor, complete: completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
@@ -130,8 +136,9 @@ module Toys
       def _add_optional_to(tool, key)
         acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
                                          &@acceptor_block)
+        completion = tool.resolve_completion(@completion, @completion_options, &@completion_block)
         tool.add_optional_arg(key,
-                              accept: acceptor, default: @default, complete: @completion,
+                              accept: acceptor, default: @default, complete: completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
@@ -139,8 +146,9 @@ module Toys
       def _set_remaining_on(tool, key)
         acceptor = tool.resolve_acceptor(@acceptor_spec, type_desc: @acceptor_type_desc,
                                          &@acceptor_block)
+        completion = tool.resolve_completion(@completion, @completion_options, &@completion_block)
         tool.set_remaining_args(key,
-                                accept: acceptor, default: @default, complete: @completion,
+                                accept: acceptor, default: @default, complete: completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
     end

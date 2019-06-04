@@ -25,7 +25,7 @@ require "helper"
 
 describe Toys::Completion do
   def context(str)
-    Toys::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(cli: nil, fragment: str)
   end
 
   describe ".create" do
@@ -84,7 +84,7 @@ describe Toys::Completion::FileSystem do
   let(:data_dir) { ::File.join(__dir__, "data") }
   let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
   def context(str)
-    Toys::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(cli: nil, fragment: str)
   end
 
   it "returns objects when passed an empty string" do
@@ -176,7 +176,7 @@ end
 describe Toys::Completion::Enum do
   let(:completion) { Toys::Completion::Enum.new(["one", :two, ["three"]]) }
   def context(str)
-    Toys::Completion::Context.new(nil, [], str, {})
+    Toys::Completion::Context.new(cli: nil, fragment: str)
   end
 
   it "returns all values when given an empty string" do
