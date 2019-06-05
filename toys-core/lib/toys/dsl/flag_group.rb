@@ -70,12 +70,14 @@ module Toys
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
-      #     to a hash of options to pass to the constructor for
-      #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
-      #     by {Toys::Completion.create}.
+      #     to the name of a previously defined completion, a hash of options
+      #     to pass to the constructor for {Toys::Flag::StandardCompletion}, or
+      #     any other spec recognized by {Toys::Completion.create}.
       # @param [Object] complete_values A specifier for shell tab completion
-      #     for flag values associated with this flag. Pass any spec
-      #     recognized by {Toys::Completion.create}.
+      #     for flag values associated with this flag. This is the empty
+      #     completion by default. To customize completion, set this to the
+      #     name of a previously defined completion, or any spec recognized by
+      #     {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.

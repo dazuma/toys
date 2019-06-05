@@ -26,16 +26,16 @@ module Toys
   # An Acceptor validates and converts arguments. It is designed to be
   # compatible with the OptionParser accept mechanism.
   #
-  # First, an acceptor validates an argument via the
+  # First, an acceptor validates the argument via its
   # {Toys::Acceptor::Base#match} method. This method should determine whether
   # the argument is valid, and return information that will help with
   # conversion of the argument.
   #
-  # Second, an acceptor converts the argument from the input string to its
-  # final form via the {Toys::Acceptor::Base#convert} method.
+  # Second, an acceptor converts the argument to its final form via the
+  # {Toys::Acceptor::Base#convert} method.
   #
-  # Finally, an acceptor has a name that may appear in help text for flags
-  # and arguments that use it.
+  # Finally, an acceptor has a name that may appear in help text for flags and
+  # arguments that use it.
   #
   module Acceptor
     ##
@@ -55,9 +55,9 @@ module Toys
     # A base class for acceptors.
     #
     # The base acceptor does not do any validation (i.e. it accepts all
-    # arguments) or conversion (i.e. it returns the original string).
-    # You may subclass this object and override the {#match} and {#convert}
-    # methods to change this behavior.
+    # arguments) or conversion (i.e. it returns the original string). You can
+    # subclass this base class and override the {#match} and {#convert} methods
+    # to implement an acceptor.
     #
     class Base
       ##
@@ -81,6 +81,10 @@ module Toys
 
       ##
       # The well-known acceptor spec associated with this acceptor, if any.
+      # This generally identifies an OptionParser-compatible acceptor spec. For
+      # example, the acceptor object that corresponds to `Integer` will return
+      # `Integer` from this attribute.
+      #
       # @return [Object,nil]
       #
       attr_reader :well_known_spec
@@ -108,10 +112,10 @@ module Toys
       # duck-types the appropriate array.
       #
       # This default implementation simply returns the original input string,
-      # indicating all inputs are valid. You may override this method to
-      # specify a validation function.
+      # as the only array element, indicating all inputs are valid. You can
+      # override this method to provide a different validation function.
       #
-      # @param [String,nil] str Input argument string. May be `nil` if the
+      # @param [String,nil] str The input argument string. May be `nil` if the
       #     value is optional and not provided.
       # @return [String,Array,nil]
       #
@@ -128,18 +132,19 @@ module Toys
       #
       # @param [String,nil] str Original argument string. May be `nil` if the
       #     value is optional and not provided.
-      # @param [Object...] _extra Zero or more additional arguments comprising
+      # @param [Object...] extra Zero or more additional arguments comprising
       #     additional elements returned from the match function.
       # @return [Object] The converted argument as it should be stored in the
       #     context data.
       #
-      def convert(str, *_extra)
+      def convert(str, *extra) # rubocop:disable Lint/UnusedMethodArgument
         str
       end
     end
 
     ##
-    # The default acceptor.
+    # The default acceptor. Corresponds to the well-known acceptor for
+    # `NilClass`.
     # @return [Toys::Acceptor::Base]
     #
     DEFAULT = Base.new(type_desc: "string", well_known_spec: ::NilClass)
@@ -148,8 +153,7 @@ module Toys
     # An acceptor that uses a simple function to validate and convert input.
     # The function must take the input string as its argument, and either
     # return the converted object to indicate success, or raise an exception or
-    # return the sentinel {Toys::Acceptor::REJECT} to
-    # indicate invalid input.
+    # return the sentinel {Toys::Acceptor::REJECT} to indicate invalid input.
     #
     class Simple < Base
       ##
@@ -182,8 +186,8 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Acceptor::Base#convert} to use the given
-      # function's result.
+      # Overrides {Toys::Acceptor::Base#convert} to use the given function's
+      # result.
       #
       def convert(_str, result)
         result
@@ -192,14 +196,14 @@ module Toys
 
     ##
     # An acceptor that uses a regex to validate input. It also supports a
-    # custom conversion function that can be passed to the constructor as a
-    # proc or a block.
+    # custom conversion function that generates the final value from the match
+    # results.
     #
     class Pattern < Base
       ##
       # Create a pattern acceptor.
       #
-      # You must provide a regular expression or any object that duck-types
+      # You must provide a regular expression (or any object that duck-types
       # `Regexp#match`) as a validator.
       #
       # You may also optionally provide a converter, either as a proc or a
@@ -233,8 +237,7 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Acceptor::Base#convert} to use the given
-      # converter.
+      # Overrides {Toys::Acceptor::Base#convert} to use the given converter.
       #
       def convert(str, *extra)
         @converter ? @converter.call(str, *extra) : str
@@ -277,8 +280,8 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Acceptor::Base#convert} to return the actual
-      # enum element.
+      # Overrides {Toys::Acceptor::Base#convert} to return the actual enum
+      # element.
       #
       def convert(_str, elem)
         elem
@@ -444,11 +447,12 @@ module Toys
       #     and then store the symbol `:foo` in the tool data. You may not
       #     further customize the conversion function; any block is ignored.
       #
-      # *   A **range** of possible values, along with a conversion function
-      #     that converts a string parameter to a type comparable by the range.
-      #     (See the "function" spec below for a detailed description of
-      #     conversion functions.) If the range has numeric endpoints, the
-      #     conversion function is optional because a default will be provided.
+      # *   A **range** of possible values. The acceptor validates if the
+      #     string parameter, after conversion to the range type, lies within
+      #     the range. The final value stored in context data is the converted
+      #     value. For numeric ranges, conversion is provided, but if the range
+      #     has a different type, you must provide the conversion function as
+      #     a block.
       #
       # *   A **function** as a Proc (where the block is ignored) or a block
       #     (if the spec is nil). This function performs *both* validation and

@@ -4,13 +4,14 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Write toys-core user guide
+* ArgParser::Error objects in USAGE_ERRORS
+* Better distinguishing between subtool not found and unacceptable positional arg
 * Intgrate with did_you_mean
+* Write toys-core user guide
 
 ## Ideas under investigation
 
 * Flags can supply the default for when an optional value is omitted (currently nil is passed to the acceptor, which matches OptionParser behavior).
-* DSL method for changing the tool completion function.
 * Convenience methods for creating pipes/splits/joins in exec
 * Integrate with the "less" tool in exec.
 * toys system new: Create toys files and gems

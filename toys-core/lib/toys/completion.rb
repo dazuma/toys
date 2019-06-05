@@ -402,16 +402,33 @@ module Toys
     EMPTY = Base.new
 
     ##
-    # Create a completion Proc from a variety of specification formats.
+    # Create a completion Proc from a variety of specification formats. The
+    # completion is constructed from the given specification object and/or the
+    # given block. Additionally, some completions can take a hash of options.
     #
     # Recognized specs include:
     #
-    # *   `nil`: Returns the empty completion.
+    # *   `:empty`: Returns the empty completion. Any block or options are
+    #     ignored.
+    #
     # *   `:file_system`: Returns a completion that searches the current
-    #     directory for file and directory names.
-    # *   An **Array** of strings. Returns a completion that uses those
-    #     values as candidates.
-    # *   A **Proc**. Returns the proc itself.
+    #     directory for file and directory names. You may also pass any of the
+    #     options recognized by {Toys::Completion::FileSystem#initialize}. The
+    #     block is ignored.
+    #
+    # *   An **Array** of strings. Returns a completion that uses those values
+    #     as candidates. You may also pass any of the options recognized by
+    #     {Toys::Completion::Enum#initialize}. The block is ignored.
+    #
+    # *   A **function**, either passed as a Proc (where the block is ignored)
+    #     or as a block (if the spec is nil). The function must behave as a
+    #     completion object, taking {Toys::Completion::Context} as the sole
+    #     argument, and returning an array of {Toys::Completion::Candidate}.
+    #
+    # *   `:default` and `nil` indicate the **default completion**. For this
+    #     method, the default is the empty completion (i.e. these are synonyms
+    #     for `:empty`). However, other completion resolution methods might
+    #     have a different default.
     #
     # @param [Object] spec The completion spec. See above for recognized
     #     values.

@@ -102,9 +102,15 @@ module Toys
 
       ##
       # Set the shell completion strategy for flag names.
-      # This may be set to a hash of options to pass to the constructor for
-      # {Toys::Flag::StandardCompletion}. Otherwise, see
-      # {Toys::Completion.create} for other recognized formats.
+      # You can pass one of the following:
+      #
+      # *   The string name of a completion defined in this tool or any of its
+      #     ancestors.
+      # *   A hash of options to pass to the constructor of
+      #     {Toys::Flag::StandardCompletion}.
+      # *   `nil` or `:default` to select the standard completion strategy
+      #     (which is {Toys::Flag::StandardCompletion} with no extra options).
+      # *   Any other specification recognized by {Toys::Completion.create}.
       #
       # @param [Object] spec
       # @param [Hash] options
@@ -119,7 +125,9 @@ module Toys
 
       ##
       # Set the shell completion strategy for flag values.
-      # See {Toys::Completion.create} for recognized formats.
+      # You can pass either the string name of a completion defined in this
+      # tool or any of its ancestors, or any other specification recognized by
+      # {Toys::Completion.create}.
       #
       # @param [Object] spec
       # @param [Hash] options
@@ -195,10 +203,10 @@ module Toys
       ## @private
       def _add_to(tool, key)
         acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        flag_completion = tool.scalar_flag_completion(
+        flag_completion = tool.scalar_completion(
           @flag_completion_spec, @flag_completion_options, &@flag_completion_block
         )
-        value_completion = tool.scalar_value_completion(
+        value_completion = tool.scalar_completion(
           @value_completion_spec, @value_completion_options, &@value_completion_block
         )
         tool.add_flag(key, @flags,

@@ -1146,6 +1146,33 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "complete_tool_args directive" do
+    it "sets a named completion" do
+      loader.add_block do
+        completion "mycomp", ["one", "two"]
+        complete_tool_args "mycomp"
+      end
+      tool, _remaining = loader.lookup([])
+      assert_instance_of(Toys::Completion::Enum, tool.completion)
+    end
+
+    it "sets a completion from an options hash" do
+      loader.add_block do
+        complete_tool_args include_hidden_subtools: true
+      end
+      tool, _remaining = loader.lookup([])
+      assert(tool.completion.include_hidden_subtools?)
+    end
+
+    it "sets a completion from a standard spec" do
+      loader.add_block do
+        complete_tool_args ["one", "two"]
+      end
+      tool, _remaining = loader.lookup([])
+      assert_instance_of(Toys::Completion::Enum, tool.completion)
+    end
+  end
+
   describe "disable_argument_parsing directive" do
     it "disables argument parsing" do
       loader.add_block do

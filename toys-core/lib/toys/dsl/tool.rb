@@ -742,12 +742,14 @@ module Toys
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
-      #     to a hash of options to pass to the constructor for
-      #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
-      #     by {Toys::Completion.create}.
+      #     to the name of a previously defined completion, a hash of options
+      #     to pass to the constructor for {Toys::Flag::StandardCompletion}, or
+      #     any other spec recognized by {Toys::Completion.create}.
       # @param [Object] complete_values A specifier for shell tab completion
-      #     for flag values associated with this flag. Pass any spec
-      #     recognized by {Toys::Completion.create}.
+      #     for flag values associated with this flag. This is the empty
+      #     completion by default. To customize completion, set this to the
+      #     name of a previously defined completion, or any spec recognized by
+      #     {Toys::Completion.create}.
       # @param [Boolean] report_collisions Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
@@ -806,8 +808,10 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion. See
-      #     {Toys::Completion.create} for recognized formats.
+      # @param [Object] complete A specifier for shell tab completion for
+      #     values of this arg. This is the empty completion by default. To
+      #     customize completion, set this to the name of a previously defined
+      #     completion, or any spec recognized by {Toys::Completion.create}.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -860,8 +864,10 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion. See
-      #     {Toys::Completion.create} for recognized formats.
+      # @param [Object] complete A specifier for shell tab completion for
+      #     values of this arg. This is the empty completion by default. To
+      #     customize completion, set this to the name of a previously defined
+      #     completion, or any spec recognized by {Toys::Completion.create}.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -913,8 +919,10 @@ module Toys
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion. See
-      #     {Toys::Completion.create} for recognized formats.
+      # @param [Object] complete A specifier for shell tab completion for
+      #     values of this arg. This is the empty completion by default. To
+      #     customize completion, set this to the name of a previously defined
+      #     completion, or any spec recognized by {Toys::Completion.create}.
       # @param [String] display_name A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
       # @param [String,Array<String>,Toys::WrappableString] desc Short
@@ -1012,6 +1020,29 @@ module Toys
       #
       def disable_flag(*flags)
         DSL::Tool.current_tool(self, true)&.disable_flag(*flags)
+        self
+      end
+
+      ##
+      # Set the shell completion strategy for this tool's arguments.
+      # You can pass one of the following:
+      #
+      # *   The string name of a completion defined in this tool or any of its
+      #     its ancestors.
+      # *   A hash of options to pass to the constructor of
+      #     {Toys::Tool::StandardCompletion}.
+      # *   `nil` or `:default` to select the standard completion strategy
+      #     (which is {Toys::Tool::StandardCompletion} with no extra options).
+      # *   Any other specification recognized by {Toys::Completion.create}.
+      #
+      # @param [Object] spec
+      # @param [Hash] options
+      # @return [self]
+      #
+      def complete_tool_args(spec = nil, **options, &block)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
+        cur_tool.completion = cur_tool.scalar_completion(spec, options, &block)
         self
       end
 

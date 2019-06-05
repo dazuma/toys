@@ -849,7 +849,7 @@ module Toys
     def completion=(spec)
       @completion =
         case spec
-        when nil
+        when nil, :default
           StandardCompletion.new
         when ::Hash
           StandardCompletion.new(spec)
@@ -886,12 +886,7 @@ module Toys
     end
 
     ## @private
-    def scalar_value_completion(spec = nil, **options, &block)
-      Completion.create(resolve_completion_name(spec), options, &block)
-    end
-
-    ## @private
-    def scalar_flag_completion(spec = nil, **options, &block)
+    def scalar_completion(spec = nil, **options, &block)
       if spec.nil? && block.nil? || spec == :default
         options
       else
@@ -980,6 +975,41 @@ module Toys
         @complete_args = complete_args
         @complete_flag_values = complete_flag_values
       end
+
+      ##
+      # Whether to complete subtool names
+      # @return [Boolean]
+      #
+      attr_reader :complete_subtools
+      alias complete_subtools? complete_subtools
+
+      ##
+      # Whether to include hidden subtools
+      # @return [Boolean]
+      #
+      attr_reader :include_hidden_subtools
+      alias include_hidden_subtools? include_hidden_subtools
+
+      ##
+      # Whether to complete flags
+      # @return [Boolean]
+      #
+      attr_reader :complete_flags
+      alias complete_flags? complete_flags
+
+      ##
+      # Whether to complete positional args
+      # @return [Boolean]
+      #
+      attr_reader :complete_args
+      alias complete_args? complete_args
+
+      ##
+      # Whether to complete flag values
+      # @return [Boolean]
+      #
+      attr_reader :complete_flag_values
+      alias complete_flag_values? complete_flag_values
 
       ##
       # Returns candidates for the current completion.

@@ -44,7 +44,9 @@ module Toys
 
       ##
       # Set the acceptor for this argument's values.
-      # See {Toys::Acceptor.create} for recognized formats.
+      # You can pass either the string name of an acceptor defined in this tool
+      # or any of its ancestors, or any other specification recognized by
+      # {Toys::Acceptor.create}.
       #
       # @param [Object] spec
       # @param [Hash] options
@@ -70,7 +72,9 @@ module Toys
 
       ##
       # Set the shell completion strategy for arg values.
-      # See {Toys::Completion.create} for recognized formats.
+      # You can pass either the string name of a completion defined in this
+      # tool or any of its ancestors, or any other specification recognized by
+      # {Toys::Completion.create}.
       #
       # @param [Object] spec
       # @param [Hash] options
@@ -122,8 +126,8 @@ module Toys
       ## @private
       def _add_required_to(tool, key)
         acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_value_completion(@completion_spec, @completion_options,
-                                                  &@completion_block)
+        completion = tool.scalar_completion(@completion_spec, @completion_options,
+                                            &@completion_block)
         tool.add_required_arg(key,
                               accept: acceptor, complete: completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
@@ -132,8 +136,8 @@ module Toys
       ## @private
       def _add_optional_to(tool, key)
         acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_value_completion(@completion_spec, @completion_options,
-                                                  &@completion_block)
+        completion = tool.scalar_completion(@completion_spec, @completion_options,
+                                            &@completion_block)
         tool.add_optional_arg(key,
                               accept: acceptor, default: @default, complete: completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
@@ -142,8 +146,8 @@ module Toys
       ## @private
       def _set_remaining_on(tool, key)
         acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_value_completion(@completion_spec, @completion_options,
-                                                  &@completion_block)
+        completion = tool.scalar_completion(@completion_spec, @completion_options,
+                                            &@completion_block)
         tool.set_remaining_args(key,
                                 accept: acceptor, default: @default, complete: completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
