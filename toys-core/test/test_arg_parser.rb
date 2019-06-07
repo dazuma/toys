@@ -24,6 +24,7 @@
 require "helper"
 
 describe Toys::ArgParser do
+  let(:supports_suggestions?) { ::RUBY_VERSION >= "2.4" }
   let(:binary_name) { "toys" }
   let(:cli) {
     Toys::CLI.new(binary_name: binary_name, middleware_stack: [],
@@ -54,7 +55,7 @@ describe Toys::ArgParser do
       when ::String
         err.message == expected
       when ::Array
-        err.alternatives == expected
+        err.suggestions == expected
       when ::Class
         err.is_a?(expected)
       end
@@ -504,12 +505,12 @@ describe Toys::ArgParser do
       assert_includes(arg_parser.unmatched_flags, "-a")
     end
 
-    it "errors on an unknown flag with alternatives" do
+    it "errors on an unknown flag with suggestions" do
       tool.add_flag(:abcde)
       arg_parser.parse(["--abcdd"])
       arg_parser.finish
       assert_errors_include('Flag "--abcdd" is not recognized.', arg_parser.errors)
-      assert_errors_include(["--abcde"], arg_parser.errors)
+      assert_errors_include(["--abcde"], arg_parser.errors) if supports_suggestions?
       assert_includes(arg_parser.unmatched_flags, "--abcdd")
     end
 
@@ -693,12 +694,12 @@ describe Toys::ArgParser do
       assert_equal(["baz"], arg_parser.extra_args)
     end
 
-    it "includes tool alternatives" do
+    it "includes tool suggestions" do
       tool
       root_arg_parser.parse(["fop"])
       root_arg_parser.finish
       assert_errors_include('Tool not found: "fop".', root_arg_parser.errors)
-      assert_errors_include(["foo"], root_arg_parser.errors)
+      assert_errors_include(["foo"], root_arg_parser.errors) if supports_suggestions?
     end
 
     it "honors defaults for optional arg" do
@@ -726,7 +727,7 @@ describe Toys::ArgParser do
       arg_parser.finish
       assert_errors_include('Unacceptable value "baz" for positional argument "A".',
                             arg_parser.errors)
-      assert_errors_include(["bar"], arg_parser.errors)
+      assert_errors_include(["bar"], arg_parser.errors) if supports_suggestions?
     end
   end
 end

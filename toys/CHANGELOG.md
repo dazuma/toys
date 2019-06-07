@@ -11,14 +11,13 @@ Highlights:
 * Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
 * A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a host of fixes, especially around acceptors and optional flag values.
 * Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.
-* Toys now requires Ruby 2.4 or later.
 
 Details:
 
 * CHANGED: Relicensed under the MIT License.
 * CHANGED: Toys now requires Ruby 2.4 or later.
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
-* ADDED: The usage error screen displays alternative suggestions when an argument is misspelled.
+* ADDED: The usage error screen displays alternative suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
 * ADDED: Function and range based acceptors.

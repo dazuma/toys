@@ -7,9 +7,8 @@ This is a major update with significant new features and a bunch of fixes. It al
 Major changes and features:
 
 * CHANGED: Relicensed under the MIT License.
-* CHANGED: Toys now requires Ruby 2.4 or later.
 * ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
-* ADDED: The usage error screen displays alternative suggestions when an argument is misspelled.
+* ADDED: The usage error screen displays suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler. Added appropriate APIs and a DSL method.
 * ADDED: Tools can enforce that flags must be given before positional args.
 
@@ -44,6 +43,7 @@ Changes to internal interfaces:
     * CHANGED: All the classes under `Toys::Definition` are now located directly under `Toys`. For example, `Toys::Definition::Tool` is now `Toys::Tool`.
     * CHANGED: Generally removed the term "definition" from interfaces. For example, an accessor method called `tool_definition` is now just called `tool`.
     * CHANGED: Renamed `Toys::DSL::Arg` to `Toys::DSL::PositionalArg`
+    * ADDED: Functionality dependent on Ruby version is kept in `Toys::Compat`.
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.
     * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.
@@ -83,7 +83,7 @@ Changes to internal interfaces:
     * CHANGED: Subclasses are now submodules under `Acceptor`. For example, moved `Toys::Definition::PatternAcceptor` to `Toys::Acceptor::Pattern`.
     * CHANGED: Replaced `name` field with separate `type_desc` and `well_known_spec` fields.
     * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
-    * ADDED: Acceptors may define `alternatives` which returns did-you-mean alternatives.
+    * ADDED: Acceptors may define `suggestions` which returns results from did-you-mean.
     * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
     * ADDED: Range acceptor (`Acceptor::Range`) which validates against a range.
     * ADDED: Class methods `Acceptor.create` and `Acceptor.lookup_well_known`.

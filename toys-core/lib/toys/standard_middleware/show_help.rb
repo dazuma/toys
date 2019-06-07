@@ -325,12 +325,12 @@ module Toys
 
       def report_usage_error(help_text, loader, tool_name, next_word)
         dict = loader.list_subtools(tool_name).map(&:simple_name)
-        alts = ::DidYouMean::SpellChecker.new(dictionary: dict).correct(next_word)
+        suggestions = Compat.suggestions(next_word, dict)
         tool_name = (tool_name + [next_word]).join(" ")
         message = "Tool not found: \"#{tool_name}\"."
-        unless alts.empty?
-          alts_str = alts.join("\n                 ")
-          message = "#{message}\nDid you mean...  #{alts_str}"
+        unless suggestions.empty?
+          suggestions_str = suggestions.join("\n                 ")
+          message = "#{message}\nDid you mean...  #{suggestions_str}"
         end
         terminal.puts(message, :bright_red, :bold)
         terminal.puts

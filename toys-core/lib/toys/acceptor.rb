@@ -142,15 +142,15 @@ module Toys
       end
 
       ##
-      # Return alternatives for a given non-matching string.
+      # Return suggestions for a given non-matching string.
       #
       # This method may be called when a match fails. It should return a
-      # (possibly empty) array of alternatives that could be displayed to the
+      # (possibly empty) array of suggestions that could be displayed to the
       # user as "did you mean..."
       #
       # The default implementation returns the empty list.
       #
-      def alternatives(str) # rubocop:disable Lint/UnusedMethodArgument
+      def suggestions(str) # rubocop:disable Lint/UnusedMethodArgument
         []
       end
     end
@@ -301,11 +301,11 @@ module Toys
       end
 
       ##
-      # Overrides {Toys::Acceptor::Base#alternatives} to return close matches
+      # Overrides {Toys::Acceptor::Base#suggestions} to return close matches
       # from the enum.
       #
-      def alternatives(str)
-        ::DidYouMean::SpellChecker.new(dictionary: @values.map(&:first)).correct(str)
+      def suggestions(str)
+        Compat.suggestions(str, @values.map(&:first))
       end
     end
 

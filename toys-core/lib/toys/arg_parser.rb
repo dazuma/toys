@@ -43,17 +43,17 @@ module Toys
       # @param [String] name The name of the element (normally flag or
       #     positional argument) that reported the error.
       # @param [String] value The value that was rejected.
-      # @param [Array<String>,nil] alternatives An array of alternatives from
+      # @param [Array<String>,nil] suggestions An array of suggestions from
       #     DidYouMean, or nil if not applicable.
-      def initialize(message, name: nil, value: nil, alternatives: nil)
+      def initialize(message, name: nil, value: nil, suggestions: nil)
         @message = message
         @name = name
         @value = value
-        @alternatives = alternatives
+        @suggestions = suggestions
       end
 
       ##
-      # The basic error message. Does not include alternatives, if any.
+      # The basic error message. Does not include suggestions, if any.
       # @return [String]
       #
       attr_reader :message
@@ -72,18 +72,18 @@ module Toys
       attr_reader :value
 
       ##
-      # An array of alternatives from DidYouMean, or nil if not applicable.
+      # An array of suggestions from DidYouMean, or nil if not applicable.
       # @return [Array<String>,nil]
       #
-      attr_reader :alternatives
+      attr_reader :suggestions
 
       ##
-      # A fully formatted error message including alternatives.
+      # A fully formatted error message including suggestions.
       # @return [String]
       #
       def to_s
-        if alternatives && !alternatives.empty?
-          alts_str = alternatives.join("\n                 ")
+        if suggestions && !suggestions.empty?
+          alts_str = suggestions.join("\n                 ")
           "#{message}\nDid you mean...  #{alts_str}"
         else
           message
@@ -135,12 +135,12 @@ module Toys
       # @param [String,nil] message A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
       # @param [String] value The requested flag name. Normally required.
-      # @param [Array<String>] alternatives An array of alternative flags to
-      #     present to the user. Optional.
+      # @param [Array<String>] suggestions An array of suggestions to present
+      #     to the user. Optional.
       #
-      def initialize(message = nil, value: nil, alternatives: nil)
+      def initialize(message = nil, value: nil, suggestions: nil)
         super(message || "Flag \"#{value}\" is not recognized.",
-              value: value, alternatives: alternatives)
+              value: value, suggestions: suggestions)
       end
     end
 
@@ -155,12 +155,12 @@ module Toys
       # @param [String,nil] message A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
       # @param [String] value The requested flag name. Normally required.
-      # @param [Array<String>] alternatives An array of alternatives to present
+      # @param [Array<String>] suggestions An array of suggestions to present
       #     to the user. Optional.
       #
-      def initialize(message = nil, value: nil, alternatives: nil)
+      def initialize(message = nil, value: nil, suggestions: nil)
         super(message || "Flag prefix \"#{value}\" is ambiguous.",
-              value: value, alternatives: alternatives)
+              value: value, suggestions: suggestions)
       end
     end
 
@@ -175,12 +175,12 @@ module Toys
       #     which case an appropriate default is supplied.
       # @param [String] name The name of the flag. Normally required.
       # @param [String] value The value given. Normally required.
-      # @param [Array<String>] alternatives An array of alternatives to present
+      # @param [Array<String>] suggestions An array of suggestions to present
       #     to the user. Optional.
       #
-      def initialize(message = nil, name: nil, value: nil, alternatives: nil)
+      def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for flag \"#{name}\".",
-              name: name, alternatives: alternatives)
+              name: name, suggestions: suggestions)
       end
     end
 
@@ -196,12 +196,12 @@ module Toys
       #     which case an appropriate default is supplied.
       # @param [String] name The name of the argument. Normally required.
       # @param [String] value The value given. Normally required.
-      # @param [Array<String>] alternatives An array of alternatives to present
+      # @param [Array<String>] suggestions An array of suggestions to present
       #     to the user. Optional.
       #
-      def initialize(message = nil, name: nil, value: nil, alternatives: nil)
+      def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for positional argument \"#{name}\".",
-              name: name, alternatives: alternatives)
+              name: name, suggestions: suggestions)
       end
     end
 
@@ -250,12 +250,12 @@ module Toys
       # @param [String] value The requested subtool. Normally required.
       # @param [Array<String>] values The full path of the requested tool.
       #     Normally required.
-      # @param [Array<String>] alternatives An array of alternative flags to
-      #     present to the user. Optional.
+      # @param [Array<String>] suggestions An array of suggestions to present
+      #     to the user. Optional.
       #
-      def initialize(message = nil, value: nil, values: nil, alternatives: nil)
+      def initialize(message = nil, value: nil, values: nil, suggestions: nil)
         super(message || "Tool not found: \"#{Array(values).join(' ')}\".",
-              value: value, alternatives: alternatives)
+              value: value, suggestions: suggestions)
         @name = name
       end
     end
@@ -435,13 +435,9 @@ module Toys
         Context::Key::TOOL_NAME => tool.full_name,
         Context::Key::USAGE_ERRORS => [],
       }
-      merge_default_data(data, tool.default_data)
+      Compat.merge_clones(data, tool.default_data)
       data[Context::Key::VERBOSITY] ||= verbosity
       data
-    end
-
-    def merge_default_data(data, orig)
-      orig.each { |k, v| data[k] = v.clone }
     end
 
     def check_flag_value(arg)
@@ -532,12 +528,12 @@ module Toys
       flag_result = @tool.resolve_flag(name)
       if flag_result.not_found?
         @errors << FlagUnrecognizedError.new(
-          value: name, alternatives: find_alternatives(name, @tool.used_flags)
+          value: name, suggestions: Compat.suggestions(name, @tool.used_flags)
         )
         @unmatched_flags << name
       elsif flag_result.found_multiple?
         @errors << FlagAmbiguousError.new(
-          value: name, alternatives: flag_result.matching_flag_strings
+          value: name, suggestions: flag_result.matching_flag_strings
         )
         @unmatched_flags << name
       end
@@ -549,8 +545,8 @@ module Toys
         match = accept.match(value)
         unless match
           error_class = type_name == :flag ? FlagValueUnacceptableError : ArgValueUnacceptableError
-          alternatives = accept.respond_to?(:alternatives) ? accept.alternatives(value) : nil
-          @errors << error_class.new(value: value, name: display_name, alternatives: alternatives)
+          suggestions = accept.respond_to?(:suggestions) ? accept.suggestions(value) : nil
+          @errors << error_class.new(value: value, name: display_name, suggestions: suggestions)
           return
         end
         value = accept.convert(*Array(match))
@@ -586,7 +582,7 @@ module Toys
             dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
             ToolUnrecognizedError.new(values: @tool.full_name + [first_arg],
                                       value: first_arg,
-                                      alternatives: find_alternatives(first_arg, dictionary))
+                                      suggestions: Compat.suggestions(first_arg, dictionary))
           end
       end
     end
@@ -601,10 +597,6 @@ module Toys
       @data[Context::Key::USAGE_ERRORS] = @errors
       @data[Context::Key::ARGS] = @parsed_args
       @data[Context::Key::EXTRA_ARGS] = @extra_args
-    end
-
-    def find_alternatives(word, dictionary)
-      ::DidYouMean::SpellChecker.new(dictionary: dictionary).correct(word)
     end
   end
 end

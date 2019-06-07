@@ -44,8 +44,8 @@ describe Toys::Acceptor::Base do
     assert_equal(Toys::Acceptor::DEFAULT_TYPE_DESC, acceptor.type_desc)
   end
 
-  it "returns no alternatives" do
-    assert_equal([], acceptor.alternatives("Jon Snow"))
+  it "returns no suggestions" do
+    assert_equal([], acceptor.suggestions("Jon Snow"))
   end
 end
 
@@ -155,8 +155,10 @@ describe Toys::Acceptor::Enum do
     assert_nil(acceptor.convert(nil, nil))
   end
 
-  it "returns alternatives" do
-    assert_equal(["Robb"], acceptor.alternatives("robb"))
+  if ::RUBY_VERSION >= "2.4"
+    it "returns suggestions" do
+      assert_equal(["Robb"], acceptor.suggestions("robb"))
+    end
   end
 end
 

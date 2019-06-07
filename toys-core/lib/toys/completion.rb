@@ -311,7 +311,7 @@ module Toys
         return [] unless ::File.directory?(dir)
         prefix = nil if [".", ""].include?(prefix)
         omits = [".", ".."]
-        children = glob_in(name, dir).find_all do |child|
+        children = Compat.glob_in_dir(name, dir).find_all do |child|
           !omits.include?(child)
         end
         if children.empty?
@@ -323,16 +323,6 @@ module Toys
       end
 
       private
-
-      if ::RUBY_VERSION < "2.5"
-        def glob_in(name, base_dir)
-          ::Dir.chdir(base_dir) { ::Dir.glob(name) }
-        end
-      else
-        def glob_in(name, base_dir)
-          ::Dir.glob(name, base: base_dir)
-        end
-      end
 
       def generate_candidates(children, prefix, dir)
         children.flat_map do |child|
