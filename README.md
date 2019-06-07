@@ -23,6 +23,8 @@ Here's a tutorial to help you get a feel of what Toys can do.
 
 ### Install Toys
 
+Toys requires Ruby 2.4 or later.
+
 Install the **toys** gem using:
 
     gem install toys

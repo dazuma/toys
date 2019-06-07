@@ -440,21 +440,8 @@ module Toys
       data
     end
 
-    if ::RUBY_VERSION < "2.4"
-      def merge_default_data(data, orig)
-        orig.each do |k, v|
-          data[k] =
-            begin
-              v.clone
-            rescue ::TypeError
-              v
-            end
-        end
-      end
-    else
-      def merge_default_data(data, orig)
-        orig.each { |k, v| data[k] = v.clone }
-      end
+    def merge_default_data(data, orig)
+      orig.each { |k, v| data[k] = v.clone }
     end
 
     def check_flag_value(arg)

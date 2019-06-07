@@ -27,6 +27,8 @@ be modified if you're running on Windows.
 
 ### Install Toys
 
+Toys requires Ruby 2.4 or later.
+
 Install the **toys-core** gem using:
 
     gem install toys-core

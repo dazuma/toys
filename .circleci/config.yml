@@ -1,14 +1,5 @@
 version: 2
 jobs:
-  Test Ruby 2.3:
-    docker:
-       - image: circleci/ruby:2.3-stretch
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: CI on Ruby 2.3
-          command: ./toys-dev ci
   Test Ruby 2.4:
     docker:
        - image: circleci/ruby:2.4-stretch
@@ -40,7 +31,6 @@ workflows:
   version: 2
   tests:
     jobs:
-      - Test Ruby 2.3
       - Test Ruby 2.4
       - Test Ruby 2.5
       - Test Ruby 2.6
