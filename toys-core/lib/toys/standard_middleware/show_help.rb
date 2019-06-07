@@ -229,13 +229,12 @@ module Toys
           help_flags = add_help_flags(tool)
           usage_flags = add_usage_flags(tool)
           list_flags = has_subtools ? add_list_flags(tool) : []
-          if (!help_flags.empty? || !list_flags.empty? || @fallback_execution) && has_subtools
+          can_display_help = !help_flags.empty? || !list_flags.empty? ||
+                             !usage_flags.empty? || @fallback_execution
+          if can_display_help && has_subtools
             add_recursive_flags(tool)
             add_search_flags(tool)
             add_show_all_subtools_flags(tool)
-          end
-          if !help_flags.empty? || !usage_flags.empty? || !list_flags.empty?
-            add_root_args(tool)
           end
         end
         yield
@@ -244,24 +243,15 @@ module Toys
       ##
       # Display help text if requested.
       #
-      def run(context) # rubocop:disable Metrics/AbcSize
+      def run(context)
         if context[SHOW_USAGE_KEY]
-          terminal.puts(get_help_text(context).usage_string(wrap_width: terminal.width))
+          show_usage(context)
         elsif context[SHOW_LIST_KEY]
-          terminal.puts(
-            get_help_text(context).list_string(
-              recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
-              include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
-            )
-          )
-        elsif should_show_help(context)
-          output_help(
-            get_help_text(context).help_string(
-              recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
-              include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
-              wrap_width: terminal.width
-            )
-          )
+          show_list(context)
+        elsif context[SHOW_HELP_KEY]
+          show_help(context, true)
+        elsif @fallback_execution && !context[Context::Key::TOOL].runnable?
+          show_help(context, false)
         else
           yield
         end
@@ -274,12 +264,31 @@ module Toys
         @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
       end
 
-      def should_show_help(context)
-        @fallback_execution && !context[Context::Key::TOOL].runnable? ||
-          context[SHOW_HELP_KEY]
+      def show_usage(context)
+        help_text = get_help_text(context, true)
+        str = help_text.usage_string(
+          recursive: context[RECURSIVE_SUBTOOLS_KEY],
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
+        )
+        terminal.puts(str)
       end
 
-      def output_help(str)
+      def show_list(context)
+        help_text = get_help_text(context, true)
+        str = help_text.list_string(
+          recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
+        )
+        terminal.puts(str)
+      end
+
+      def show_help(context, use_extra_args)
+        help_text = get_help_text(context, use_extra_args)
+        str = help_text.help_string(
+          recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
+          wrap_width: terminal.width
+        )
         if less_path
           require "toys/utils/exec"
           Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
@@ -299,19 +308,31 @@ module Toys
         @less_path
       end
 
-      def get_help_text(context)
+      def get_help_text(context, use_extra_args)
         require "toys/utils/help_text"
-        tool_name = context[TOOL_NAME_KEY]
-        return Utils::HelpText.from_context(context) if tool_name.nil? || tool_name.empty?
-        loader = context[Context::Key::LOADER]
-        tool, rest = loader.lookup(tool_name)
-        help_text = Utils::HelpText.new(tool, loader, context[Context::Key::BINARY_NAME])
-        report_usage_error(tool_name, help_text) unless rest.empty?
-        help_text
+        if use_extra_args && @allow_root_args && context[Context::Key::TOOL].root?
+          tool_name = Array(context[Context::Key::EXTRA_ARGS])
+          unless tool_name.empty?
+            loader = context[Context::Key::LOADER]
+            tool, rest = loader.lookup(tool_name)
+            help_text = Utils::HelpText.new(tool, loader, context[Context::Key::BINARY_NAME])
+            report_usage_error(help_text, loader, tool.full_name, rest.first) unless rest.empty?
+            return help_text
+          end
+        end
+        Utils::HelpText.from_context(context)
       end
 
-      def report_usage_error(tool_name, help_text)
-        terminal.puts("Tool not found: #{tool_name.join(' ')}", :bright_red, :bold)
+      def report_usage_error(help_text, loader, tool_name, next_word)
+        dict = loader.list_subtools(tool_name).map(&:simple_name)
+        alts = ::DidYouMean::SpellChecker.new(dictionary: dict).correct(next_word)
+        tool_name = (tool_name + [next_word]).join(" ")
+        message = "Tool not found: \"#{tool_name}\"."
+        unless alts.empty?
+          alts_str = alts.join("\n                 ")
+          message = "#{message}\nDid you mean...  #{alts_str}"
+        end
+        terminal.puts(message, :bright_red, :bold)
         terminal.puts
         terminal.puts help_text.usage_string(wrap_width: terminal.width)
         Context.exit(1)
@@ -399,14 +420,6 @@ module Toys
           )
         end
         flags
-      end
-
-      def add_root_args(tool)
-        if @allow_root_args && tool.root? && tool.positional_args.empty?
-          tool.set_remaining_args(TOOL_NAME_KEY,
-                                  display_name: "TOOL_NAME",
-                                  desc: "The tool for which to display help")
-        end
       end
 
       def resolve_flags_spec(flags, tool, defaults)

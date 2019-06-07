@@ -59,7 +59,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
       end
     end
     assert_equal(-1, cli.run("bar"))
-    assert_match(/Tool not found: \["bar"\]/, error_io.string)
+    assert_match(/Tool not found: "bar"/, error_io.string)
   end
 
   it "reports an invalid option" do
@@ -83,7 +83,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
       end
     end
     assert_equal(-1, cli.run("foo", "vee"))
-    assert_match(/Extra arguments: \["vee"\]/, error_io.string)
+    assert_match(/Extra arguments: "vee"/, error_io.string)
   end
 
   it "reports an unsatisfied required arg" do
@@ -96,6 +96,6 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
       end
     end
     assert_equal(-1, cli.run("foo"))
-    assert_match(/Required argument "ARG1" is missing/, error_io.string)
+    assert_match(/Required positional argument "ARG1" is missing/, error_io.string)
   end
 end

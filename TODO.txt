@@ -4,9 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* ArgParser::Error objects in USAGE_ERRORS
-* Better distinguishing between subtool not found and unacceptable positional arg
-* Intgrate with did_you_mean
 * Write toys-core user guide
 
 ## Ideas under investigation

@@ -77,6 +77,12 @@ module Toys
       CONTEXT_DIRECTORY = ::Object.new.freeze
 
       ##
+      # Context key for unmatched positional args.
+      # @return [Object]
+      #
+      EXTRA_ARGS = ::Object.new.freeze
+
+      ##
       # Context key for the active `Toys::Loader` object.
       # @return [Object]
       #
@@ -109,11 +115,11 @@ module Toys
       TOOL_SOURCE = ::Object.new.freeze
 
       ##
-      # Context key for the usage error raised. Value is a string if there was
-      # an error, or nil if there was no error.
+      # Context key for the list of usage errors raised. Value is an array
+      # of {Toys::ArgParser::UsageError}.
       # @return [Object]
       #
-      USAGE_ERROR = ::Object.new.freeze
+      USAGE_ERRORS = ::Object.new.freeze
 
       ##
       # Context key for the verbosity value. Verbosity is an integer defaulting
@@ -214,12 +220,12 @@ module Toys
     end
 
     ##
-    # Return any usage error detected during argument parsing, or `nil` if
-    # no error was detected.
-    # @return [String,nil]
+    # Return a (possibly empty) array of errors detected during argument
+    # parsing.
+    # @return [Array<Toys::ArgParser::UsageError>]
     #
-    def usage_error
-      @__data[Key::USAGE_ERROR]
+    def usage_errors
+      @__data[Key::USAGE_ERRORS]
     end
 
     ##

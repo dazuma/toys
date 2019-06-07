@@ -30,6 +30,251 @@ module Toys
   #
   class ArgParser
     ##
+    # Base representation of a usage error reported by the ArgParser.
+    #
+    # This functions similarly to an exception, but is not raised. Rather, it
+    # is returned in the {Toys::ArgParser#errors} array.
+    #
+    class UsageError
+      ##
+      # Create a UsageError given a message and common data
+      #
+      # @param [String] message The basic error message.
+      # @param [String] name The name of the element (normally flag or
+      #     positional argument) that reported the error.
+      # @param [String] value The value that was rejected.
+      # @param [Array<String>,nil] alternatives An array of alternatives from
+      #     DidYouMean, or nil if not applicable.
+      def initialize(message, name: nil, value: nil, alternatives: nil)
+        @message = message
+        @name = name
+        @value = value
+        @alternatives = alternatives
+      end
+
+      ##
+      # The basic error message. Does not include alternatives, if any.
+      # @return [String]
+      #
+      attr_reader :message
+
+      ##
+      # The name of the element (normally flag or positional argument) that
+      # reported the error.
+      # @return [String]
+      #
+      attr_reader :name
+
+      ##
+      # The value that was rejected.
+      # @return [String]
+      #
+      attr_reader :value
+
+      ##
+      # An array of alternatives from DidYouMean, or nil if not applicable.
+      # @return [Array<String>,nil]
+      #
+      attr_reader :alternatives
+
+      ##
+      # A fully formatted error message including alternatives.
+      # @return [String]
+      #
+      def to_s
+        if alternatives && !alternatives.empty?
+          alts_str = alternatives.join("\n                 ")
+          "#{message}\nDid you mean...  #{alts_str}"
+        else
+          message
+        end
+      end
+    end
+
+    ##
+    # A UsageError indicating a value was provided for a flag that does not
+    # take a value.
+    #
+    class FlagValueNotAllowedError < UsageError
+      ##
+      # Create a FlagValueNotAllowedError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] name The name of the flag. Normally required.
+      #
+      def initialize(message = nil, name: nil)
+        super(message || "Flag \"#{name}\" should not take an argument.", name: name)
+      end
+    end
+
+    ##
+    # A UsageError indicating a value was not provided for a flag that requires
+    # a value.
+    #
+    class FlagValueMissingError < UsageError
+      ##
+      # Create a FlagValueMissingError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] name The name of the flag. Normally required.
+      #
+      def initialize(message = nil, name: nil)
+        super(message || "Flag \"#{name}\" is missing a value.", name: name)
+      end
+    end
+
+    ##
+    # A UsageError indicating a flag name was not recognized.
+    #
+    class FlagUnrecognizedError < UsageError
+      ##
+      # Create a FlagUnrecognizedError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] value The requested flag name. Normally required.
+      # @param [Array<String>] alternatives An array of alternative flags to
+      #     present to the user. Optional.
+      #
+      def initialize(message = nil, value: nil, alternatives: nil)
+        super(message || "Flag \"#{value}\" is not recognized.",
+              value: value, alternatives: alternatives)
+      end
+    end
+
+    ##
+    # A UsageError indicating a flag name prefix was given that matched
+    # multiple flags.
+    #
+    class FlagAmbiguousError < UsageError
+      ##
+      # Create a FlagAmbiguousError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] value The requested flag name. Normally required.
+      # @param [Array<String>] alternatives An array of alternatives to present
+      #     to the user. Optional.
+      #
+      def initialize(message = nil, value: nil, alternatives: nil)
+        super(message || "Flag prefix \"#{value}\" is ambiguous.",
+              value: value, alternatives: alternatives)
+      end
+    end
+
+    ##
+    # A UsageError indicating a flag did not accept the value given it.
+    #
+    class FlagValueUnacceptableError < UsageError
+      ##
+      # Create a FlagValueUnacceptableError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] name The name of the flag. Normally required.
+      # @param [String] value The value given. Normally required.
+      # @param [Array<String>] alternatives An array of alternatives to present
+      #     to the user. Optional.
+      #
+      def initialize(message = nil, name: nil, value: nil, alternatives: nil)
+        super(message || "Unacceptable value \"#{value}\" for flag \"#{name}\".",
+              name: name, alternatives: alternatives)
+      end
+    end
+
+    ##
+    # A UsageError indicating a positional argument did not accept the value
+    # given it.
+    #
+    class ArgValueUnacceptableError < UsageError
+      ##
+      # Create an ArgValueUnacceptableError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] name The name of the argument. Normally required.
+      # @param [String] value The value given. Normally required.
+      # @param [Array<String>] alternatives An array of alternatives to present
+      #     to the user. Optional.
+      #
+      def initialize(message = nil, name: nil, value: nil, alternatives: nil)
+        super(message || "Unacceptable value \"#{value}\" for positional argument \"#{name}\".",
+              name: name, alternatives: alternatives)
+      end
+    end
+
+    ##
+    # A UsageError indicating a required positional argument was not fulfilled.
+    #
+    class ArgMissingError < UsageError
+      ##
+      # Create an ArgMissingError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] name The name of the argument. Normally required.
+      #
+      def initialize(message = nil, name: nil)
+        super(message || "Required positional argument \"#{name}\" is missing.", name: name)
+      end
+    end
+
+    ##
+    # A UsageError indicating extra arguments were supplied.
+    #
+    class ExtraArgumentsError < UsageError
+      ##
+      # Create an ExtraArgumentsError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] value The first extra argument. Normally required.
+      # @param [Array<String>] values All extra arguments. Normally required.
+      #
+      def initialize(message = nil, value: nil, values: nil)
+        super(message || "Extra arguments: \"#{Array(values).join(' ')}\".", value: value)
+      end
+    end
+
+    ##
+    # A UsageError indicating the given subtool name does not exist.
+    #
+    class ToolUnrecognizedError < UsageError
+      ##
+      # Create a ToolUnrecognizedError.
+      #
+      # @param [String,nil] message A custom message. Normally omitted, in
+      #     which case an appropriate default is supplied.
+      # @param [String] value The requested subtool. Normally required.
+      # @param [Array<String>] values The full path of the requested tool.
+      #     Normally required.
+      # @param [Array<String>] alternatives An array of alternative flags to
+      #     present to the user. Optional.
+      #
+      def initialize(message = nil, value: nil, values: nil, alternatives: nil)
+        super(message || "Tool not found: \"#{Array(values).join(' ')}\".",
+              value: value, alternatives: alternatives)
+        @name = name
+      end
+    end
+
+    ##
+    # A UsageError indicating a flag group constraint was not fulfilled.
+    #
+    class FlagGroupConstraintError < UsageError
+      ##
+      # Create a FlagGroupConstraintError.
+      #
+      # @param [String] message The message. Required.
+      #
+      def initialize(message)
+        super(message)
+      end
+    end
+
+    ##
     # Create an argument parser for a particular tool.
     #
     # @param [Toys::CLI] cli The CLI in effect.
@@ -37,11 +282,13 @@ module Toys
     # @param [Integer] verbosity The initial verbosity level (default is 0).
     #
     def initialize(cli, tool, verbosity: 0)
+      @loader = cli.loader
       @data = initial_data(cli, tool, verbosity)
       @tool = tool
       @seen_flag_keys = []
       @errors = []
       @extra_args = []
+      @unmatched_flags = []
       @parsed_args = []
       @active_flag_def = nil
       @active_flag_arg = nil
@@ -62,6 +309,18 @@ module Toys
     # @return [Array<String>]
     #
     attr_reader :parsed_args
+
+    ##
+    # Extra positional args that were not matched.
+    # @return [Array<String>]
+    #
+    attr_reader :extra_args
+
+    ##
+    # Flags that were not matched.
+    # @return [Array<String>]
+    #
+    attr_reader :unmatched_flags
 
     ##
     # The collected tool data from parsed arguments.
@@ -142,7 +401,7 @@ module Toys
     # *   Restrictions defined in one or more flag groups were not fulfilled.
     #
     # Any errors are added to the errors array. It also fills in final values
-    # for `Context::Key::USAGE_ERROR` and `Context::Key::ARGS`.
+    # for `Context::Key::USAGE_ERRORS` and `Context::Key::ARGS`.
     #
     # After this method is called, this object is locked down, and no
     # additional arguments may be parsed.
@@ -174,7 +433,7 @@ module Toys
         Context::Key::TOOL => tool,
         Context::Key::TOOL_SOURCE => tool.source_info,
         Context::Key::TOOL_NAME => tool.full_name,
-        Context::Key::USAGE_ERROR => nil,
+        Context::Key::USAGE_ERRORS => [],
       }
       merge_default_data(data, tool.default_data)
       data[Context::Key::VERBOSITY] ||= verbosity
@@ -202,7 +461,7 @@ module Toys
       return false unless @active_flag_def
       result = @active_flag_def.value_type == :required || !arg.start_with?("-")
       add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
-               result ? arg : nil, "flag", @active_flag_arg)
+               result ? arg : nil, :flag, @active_flag_arg)
       @seen_flag_keys << @active_flag_def.key
       @active_flag_def = nil
       @active_flag_arg = nil
@@ -239,16 +498,16 @@ module Toys
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :boolean
         add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?,
-                 "flag", name)
+                 :flag, name)
       elsif following.empty?
         if flag_def.value_type == :required || flag_result.unique_flag_syntax.value_delim == " "
           @active_flag_def = flag_def
           @active_flag_arg = name
         else
-          add_data(flag_def.key, flag_def.handler, flag_def.acceptor, nil, "flag", name)
+          add_data(flag_def.key, flag_def.handler, flag_def.acceptor, nil, :flag, name)
         end
       else
-        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, following, "flag", name)
+        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, following, :flag, name)
         following = ""
       end
       following
@@ -260,11 +519,11 @@ module Toys
       return unless flag_def
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :value
-        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, value, "flag", name)
+        add_data(flag_def.key, flag_def.handler, flag_def.acceptor, value, :flag, name)
       else
         add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?,
-                 "flag", name)
-        @errors << "Flag \"#{name}\" should not take an argument."
+                 :flag, name)
+        @errors << FlagValueNotAllowedError.new(name: name)
       end
     end
 
@@ -279,14 +538,21 @@ module Toys
       end
       @arg_def_index += 1 unless arg_def.type == :remaining
       handler = arg_def.type == :remaining ? REMAINING_HANDLER : ARG_HANDLER
-      add_data(arg_def.key, handler, arg_def.acceptor, arg, "arg", arg_def.display_name)
+      add_data(arg_def.key, handler, arg_def.acceptor, arg, :arg, arg_def.display_name)
     end
 
     def find_flag(name)
       flag_result = @tool.resolve_flag(name)
-      unless flag_result.found_unique?
-        @errors << "Flag \"#{name}\" is not recognized." if flag_result.not_found?
-        @errors << "Flag prefix \"#{name}\" is ambiguous." if flag_result.found_multiple?
+      if flag_result.not_found?
+        @errors << FlagUnrecognizedError.new(
+          value: name, alternatives: find_alternatives(name, @tool.used_flags)
+        )
+        @unmatched_flags << name
+      elsif flag_result.found_multiple?
+        @errors << FlagAmbiguousError.new(
+          value: name, alternatives: flag_result.matching_flag_strings
+        )
+        @unmatched_flags << name
       end
       flag_result
     end
@@ -295,7 +561,9 @@ module Toys
       if accept
         match = accept.match(value)
         unless match
-          @errors << "Unacceptable value for #{type_name} \"#{display_name}\"."
+          error_class = type_name == :flag ? FlagValueUnacceptableError : ArgValueUnacceptableError
+          alternatives = accept.respond_to?(:alternatives) ? accept.alternatives(value) : nil
+          @errors << error_class.new(value: value, name: display_name, alternatives: alternatives)
           return
         end
         value = accept.convert(*Array(match))
@@ -309,10 +577,10 @@ module Toys
     def finish_active_flag
       if @active_flag_def
         if @active_flag_def.value_type == :required
-          @errors << "Flag \"#{@active_flag_arg}\" is missing a value."
+          @errors << FlagValueMissingError.new(name: @active_flag_arg)
         else
           add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
-                   nil, "flag", @active_flag_arg)
+                   nil, :flag, @active_flag_arg)
         end
       end
     end
@@ -320,14 +588,18 @@ module Toys
     def finish_arg_defs
       arg_def = @arg_defs[@arg_def_index]
       if arg_def && arg_def.type == :required
-        @errors << "Required argument \"#{arg_def.display_name}\" is missing."
+        @errors << ArgMissingError.new(name: arg_def.display_name)
       end
       unless @extra_args.empty?
+        first_arg = @extra_args.first
         @errors <<
           if @tool.runnable? || !@seen_flag_keys.empty?
-            "Extra arguments: #{@extra_args.inspect}."
+            ExtraArgumentsError.new(values: @extra_args, value: first_arg)
           else
-            "Tool not found: #{(@tool.full_name + parsed_args).inspect}."
+            dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
+            ToolUnrecognizedError.new(values: @tool.full_name + [first_arg],
+                                      value: first_arg,
+                                      alternatives: find_alternatives(first_arg, dictionary))
           end
       end
     end
@@ -339,10 +611,13 @@ module Toys
     end
 
     def finish_special_data
-      unless @errors.empty?
-        @data[Context::Key::USAGE_ERROR] = @errors.join("\n")
-      end
+      @data[Context::Key::USAGE_ERRORS] = @errors
       @data[Context::Key::ARGS] = @parsed_args
+      @data[Context::Key::EXTRA_ARGS] = @extra_args
+    end
+
+    def find_alternatives(word, dictionary)
+      ::DidYouMean::SpellChecker.new(dictionary: dictionary).correct(word)
     end
   end
 end

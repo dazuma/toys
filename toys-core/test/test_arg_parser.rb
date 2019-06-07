@@ -34,6 +34,7 @@ describe Toys::ArgParser do
   let(:root_tool) { loader.activate_tool([], 0) }
   let(:tool) { loader.activate_tool([tool_name], 0) }
   let(:arg_parser) { Toys::ArgParser.new(cli, tool) }
+  let(:root_arg_parser) { Toys::ArgParser.new(cli, root_tool) }
 
   def assert_data_includes(expected, data)
     expected.each do |k, v|
@@ -45,6 +46,20 @@ describe Toys::ArgParser do
                      "data for key #{k.inspect} was #{data[k].inspect}, expected #{v.inspect}")
       end
     end
+  end
+
+  def assert_errors_include(expected, errors)
+    return if errors.any? do |err|
+      case expected
+      when ::String
+        err.message == expected
+      when ::Array
+        err.alternatives == expected
+      when ::Class
+        err.is_a?(expected)
+      end
+    end
+    flunk("Errors #{errors.inspect} did not include expected #{expected.inspect}")
   end
 
   it "allows empty arguments when none are specified" do
@@ -170,7 +185,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["--aa"])
         arg_parser.parse(["--aa=hi"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Flag "--aa" should not take an argument.')
+        assert_errors_include('Flag "--aa" should not take an argument.', arg_parser.errors)
       end
     end
 
@@ -260,7 +275,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: Integer)
         arg_parser.parse(["--aa", "a1234"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Unacceptable value for flag "--aa".')
+        assert_errors_include('Unacceptable value "a1234" for flag "--aa".', arg_parser.errors)
       end
 
       it "converts a value using a custom acceptor" do
@@ -277,7 +292,7 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], accept: "myenum")
         arg_parser.parse(["--aa", "1234"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Unacceptable value for flag "--aa".')
+        assert_errors_include('Unacceptable value "1234" for flag "--aa".', arg_parser.errors)
       end
 
       it "creates a default flag name" do
@@ -308,14 +323,14 @@ describe Toys::ArgParser do
         tool.add_flag(:a, ["-a", "--aa=VALUE"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Flag "--aa" is missing a value.')
+        assert_errors_include('Flag "--aa" is missing a value.', arg_parser.errors)
       end
 
       it "errors if no value is given with space delimiter" do
         tool.add_flag(:a, ["-a", "--aa VALUE"])
         arg_parser.parse(["--aa"])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Flag "--aa" is missing a value.')
+        assert_errors_include('Flag "--aa" is missing a value.', arg_parser.errors)
       end
     end
 
@@ -484,7 +499,18 @@ describe Toys::ArgParser do
     it "errors on an unknown flag" do
       arg_parser.parse(["-a"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Flag "-a" is not recognized.')
+      assert_errors_include('Flag "-a" is not recognized.', arg_parser.errors)
+      assert_errors_include([], arg_parser.errors)
+      assert_includes(arg_parser.unmatched_flags, "-a")
+    end
+
+    it "errors on an unknown flag with alternatives" do
+      tool.add_flag(:abcde)
+      arg_parser.parse(["--abcdd"])
+      arg_parser.finish
+      assert_errors_include('Flag "--abcdd" is not recognized.', arg_parser.errors)
+      assert_errors_include(["--abcde"], arg_parser.errors)
+      assert_includes(arg_parser.unmatched_flags, "--abcdd")
     end
 
     it "errors on ambiguous flag" do
@@ -492,7 +518,8 @@ describe Toys::ArgParser do
       tool.add_flag(:abd)
       arg_parser.parse(["--ab"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Flag prefix "--ab" is ambiguous.')
+      assert_errors_include('Flag prefix "--ab" is ambiguous.', arg_parser.errors)
+      assert_errors_include(["--abc", "--abd"], arg_parser.errors)
     end
 
     it "stops flag parsing after --" do
@@ -522,8 +549,8 @@ describe Toys::ArgParser do
       it "errors when flags are missing" do
         arg_parser.parse([])
         arg_parser.finish
-        assert_includes(arg_parser.errors, 'Flag "-a" is required.')
-        assert_includes(arg_parser.errors, 'Flag "-b" is required.')
+        assert_errors_include('Flag "-a" is required.', arg_parser.errors)
+        assert_errors_include('Flag "-b" is required.', arg_parser.errors)
       end
     end
 
@@ -544,17 +571,15 @@ describe Toys::ArgParser do
       it "errors when no flag is provided" do
         arg_parser.parse([])
         arg_parser.finish
-        assert_includes(arg_parser.errors,
-                        'Exactly one flag out of group "My Group" is required, but' \
-                        " none were provided.")
+        assert_errors_include('Exactly one flag out of group "My Group" is required, but' \
+                              " none were provided.", arg_parser.errors)
       end
 
       it "errors when mulitple flags are provided" do
         arg_parser.parse(["-a", "-b"])
         arg_parser.finish
-        assert_includes(arg_parser.errors,
-                        'Exactly one flag out of group "My Group" is required, but' \
-                        ' 2 were provided: ["-a", "-b"].')
+        assert_errors_include('Exactly one flag out of group "My Group" is required, but' \
+                              ' 2 were provided: ["-a", "-b"].', arg_parser.errors)
       end
     end
 
@@ -582,9 +607,8 @@ describe Toys::ArgParser do
       it "errors when mulitple flags are provided" do
         arg_parser.parse(["-a", "-b"])
         arg_parser.finish
-        assert_includes(arg_parser.errors,
-                        'At most one flag out of group "My Group" is required, but' \
-                        ' 2 were provided: ["-a", "-b"].')
+        assert_errors_include('At most one flag out of group "My Group" is required, but' \
+                              ' 2 were provided: ["-a", "-b"].', arg_parser.errors)
       end
     end
 
@@ -605,9 +629,8 @@ describe Toys::ArgParser do
       it "errors when no flag is provided" do
         arg_parser.parse([])
         arg_parser.finish
-        assert_includes(arg_parser.errors,
-                        'At least one flag out of group "My Group" is required, but' \
-                        " none were provided.")
+        assert_errors_include('At least one flag out of group "My Group" is required, but' \
+                              " none were provided.", arg_parser.errors)
       end
 
       it "succeeds when mulitple flags are provided" do
@@ -648,7 +671,7 @@ describe Toys::ArgParser do
       tool.add_required_arg(:b)
       arg_parser.parse(["foo"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Required argument "B" is missing.')
+      assert_errors_include('Required positional argument "B" is missing.', arg_parser.errors)
     end
 
     it "errors on runnable tool if there are too many arguments" do
@@ -657,7 +680,8 @@ describe Toys::ArgParser do
       tool.runnable = proc {}
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Extra arguments: ["baz"].')
+      assert_errors_include('Extra arguments: "baz".', arg_parser.errors)
+      assert_equal(["baz"], arg_parser.extra_args)
     end
 
     it "errors non-runnable tool if there are too many arguments" do
@@ -665,7 +689,16 @@ describe Toys::ArgParser do
       tool.add_required_arg(:a)
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Tool not found: ["foo", "foo", "bar", "baz"].')
+      assert_errors_include('Tool not found: "foo baz".', arg_parser.errors)
+      assert_equal(["baz"], arg_parser.extra_args)
+    end
+
+    it "includes tool alternatives" do
+      tool
+      root_arg_parser.parse(["fop"])
+      root_arg_parser.finish
+      assert_errors_include('Tool not found: "fop".', root_arg_parser.errors)
+      assert_errors_include(["foo"], root_arg_parser.errors)
     end
 
     it "honors defaults for optional arg" do
@@ -689,9 +722,11 @@ describe Toys::ArgParser do
     it "handles match failure using a custom acceptor" do
       tool.add_acceptor("myenum", Toys::Acceptor::Enum.new([:foo, :bar]))
       tool.add_optional_arg(:a, accept: "myenum")
-      arg_parser.parse(["1234"])
+      arg_parser.parse(["baz"])
       arg_parser.finish
-      assert_includes(arg_parser.errors, 'Unacceptable value for arg "A".')
+      assert_errors_include('Unacceptable value "baz" for positional argument "A".',
+                            arg_parser.errors)
+      assert_errors_include(["bar"], arg_parser.errors)
     end
   end
 end

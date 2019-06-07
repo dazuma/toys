@@ -588,6 +588,16 @@ module Toys
         found_unique? ? @flags.first[2] : nil
       end
 
+      ##
+      # Returns an array of the matching full flag strings.
+      # @return [Array<String>]
+      #
+      def matching_flag_strings
+        @flags.map do |_flag, flag_syntax, negative|
+          negative ? flag_syntax.negative_flag : flag_syntax.positive_flag
+        end
+      end
+
       ## @private
       def add!(flag, flag_syntax, negative, exact)
         @flags = [] if exact && !found_exact?

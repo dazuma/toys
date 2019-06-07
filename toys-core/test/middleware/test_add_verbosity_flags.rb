@@ -126,7 +126,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
       tool "foo" do
         disable_flag "--verbose"
         def run
-          exit(usage_error ? -1 : 10 + verbosity)
+          exit(usage_errors.empty? ? 10 + verbosity : -1)
         end
       end
     end
@@ -140,7 +140,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
       tool "foo" do
         disable_flag "--quiet"
         def run
-          exit(usage_error ? -1 : 10 + verbosity)
+          exit(usage_errors.empty? ? 10 + verbosity : -1)
         end
       end
     end

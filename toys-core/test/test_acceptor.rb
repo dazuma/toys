@@ -43,6 +43,10 @@ describe Toys::Acceptor::Base do
   it "defaults type desc to DEFAULT_TYPE_DESC" do
     assert_equal(Toys::Acceptor::DEFAULT_TYPE_DESC, acceptor.type_desc)
   end
+
+  it "returns no alternatives" do
+    assert_equal([], acceptor.alternatives("Jon Snow"))
+  end
 end
 
 describe Toys::Acceptor::Simple do
@@ -149,6 +153,10 @@ describe Toys::Acceptor::Enum do
 
   it "converts nil" do
     assert_nil(acceptor.convert(nil, nil))
+  end
+
+  it "returns alternatives" do
+    assert_equal(["Robb"], acceptor.alternatives("robb"))
   end
 end
 

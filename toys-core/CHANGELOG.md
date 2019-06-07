@@ -8,6 +8,7 @@ Major changes and features:
 
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
+* ADDED: The usage error screen displays alternative suggestions when an argument is misspelled.
 * ADDED: Tools can provide an interrupt handler. Added appropriate APIs and a DSL method.
 * ADDED: Tools can enforce that flags must be given before positional args.
 
@@ -17,18 +18,22 @@ Other notable changes:
 * ADDED: Function and range based acceptors.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
+* ADDED: An `EXTRA_ARGS` context key that provides unmatched positional arguments.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default and/or acceptor.
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
+* CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects.
+* CHANGED: The help middleware no longer defines remaining_args on the root tool.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
 * IMPROVED: Error messages for flag groups are more complete.
 * IMPROVED: All context data, including well-known data, is available to be modified by flags and args.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
+* FIXED: The `--usage` help flag now honors `--all` and `--no-recursive`.
 
 Changes to internal interfaces:
 
@@ -77,6 +82,7 @@ Changes to internal interfaces:
     * CHANGED: Subclasses are now submodules under `Acceptor`. For example, moved `Toys::Definition::PatternAcceptor` to `Toys::Acceptor::Pattern`.
     * CHANGED: Replaced `name` field with separate `type_desc` and `well_known_spec` fields.
     * CHANGED: The base class no longer takes a conversion proc. It is always a no-op. `Acceptor::Pattern`, however, does take a converter so it can continue to handle custom OptionParser acceptors.
+    * ADDED: Acceptors may define `alternatives` which returns did-you-mean alternatives.
     * ADDED: Simple acceptor (`Acceptor::Simple`) which uses a single function to validate and convert input.
     * ADDED: Range acceptor (`Acceptor::Range`) which validates against a range.
     * ADDED: Class methods `Acceptor.create` and `Acceptor.lookup_well_known`.

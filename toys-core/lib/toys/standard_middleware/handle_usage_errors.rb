@@ -52,15 +52,16 @@ module Toys
       # Intercept and handle usage errors during execution.
       #
       def run(context)
-        if context[Context::Key::USAGE_ERROR]
+        usage_errors = context[Context::Key::USAGE_ERRORS]
+        if usage_errors.empty?
+          yield
+        else
           require "toys/utils/help_text"
           help_text = Utils::HelpText.from_context(context)
-          @terminal.puts(context[Context::Key::USAGE_ERROR], :bright_red, :bold)
+          @terminal.puts(usage_errors.join("\n"), :bright_red, :bold)
           @terminal.puts("")
           @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
           Context.exit(@exit_code)
-        else
-          yield
         end
       end
     end
