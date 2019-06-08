@@ -4,6 +4,8 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
+* interruptible is misspelled. Maybe interrupt_handler and run_handler.
+* Rename StandardCompletion to DefaultCompletion.
 * Write toys-core user guide
 
 ## Ideas under investigation

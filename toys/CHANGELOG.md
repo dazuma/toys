@@ -7,7 +7,7 @@ This is a major update with significant new features and a bunch of fixes. It do
 Highlights:
 
 * Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values.
-* Toys now integrates with `did_you_mean` to provide suggestions for misspelled tools, flags, and arguments.
+* Toys now integrates with `did_you_mean` to provide suggestions for misspelled tools, flags, and arguments (when run on Ruby 2.4 or later.)
 * Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
 * A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a host of fixes, especially around acceptors and optional flag values.
 * Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.

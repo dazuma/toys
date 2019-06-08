@@ -35,7 +35,7 @@ module Toys
       ##
       # Create a HandleUsageErrors middleware.
       #
-      # @param [Intgeer] exit_code The exit code to return if a usage error
+      # @param [Integer] exit_code The exit code to return if a usage error
       #     occurs. Default is -1.
       # @param [IO] stream Output stream to write to. Default is stderr.
       # @param [Boolean,nil] styled_output Cause the tool to display help text

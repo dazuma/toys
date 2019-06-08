@@ -43,6 +43,7 @@ Changes to internal interfaces:
     * CHANGED: All the classes under `Toys::Definition` are now located directly under `Toys`. For example, `Toys::Definition::Tool` is now `Toys::Tool`.
     * CHANGED: Generally removed the term "definition" from interfaces. For example, an accessor method called `tool_definition` is now just called `tool`.
     * CHANGED: Renamed `Toys::DSL::Arg` to `Toys::DSL::PositionalArg`
+    * CHANGED: Removed `Toys::Runner` and folded its functionality into `Toys::CLI`.
     * ADDED: Functionality dependent on Ruby version is kept in `Toys::Compat`.
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.

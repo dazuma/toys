@@ -790,7 +790,7 @@ describe Toys::Tool do
       tool.runnable = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
-      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
+      assert_equal(0, cli.run(tool_name))
     end
 
     it "defaults to nil if not set" do
@@ -814,7 +814,7 @@ describe Toys::Tool do
       tool.runnable = proc do
         test.assert_equal(:mixin1, mixin1)
       end
-      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
+      assert_equal(0, cli.run(tool_name))
     end
 
     it "interprets add_mixin with a block" do
@@ -828,7 +828,7 @@ describe Toys::Tool do
       tool.runnable = proc do
         test.assert_equal(:bar, foo)
       end
-      assert_equal(0, Toys::Runner.new(cli, tool).run([]))
+      assert_equal(0, cli.run(tool_name))
     end
   end
 

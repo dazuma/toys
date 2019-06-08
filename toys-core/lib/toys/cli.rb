@@ -121,6 +121,36 @@ module Toys
     end
 
     ##
+    # Make a clone with the same settings but no paths in the loader.
+    # This is sometimes useful for running sub-tools.
+    #
+    # @param [Hash] _opts Unused options that can be used by subclasses.
+    # @return [Toys::CLI]
+    # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
+    #     to it so you can add paths and make other modifications.
+    #
+    def child(_opts = {})
+      cli = CLI.new(binary_name: @binary_name,
+                    config_dir_name: @config_dir_name,
+                    config_file_name: @config_file_name,
+                    index_file_name: @index_file_name,
+                    preload_directory_name: @preload_directory_name,
+                    preload_file_name: @preload_file_name,
+                    data_directory_name: @data_directory_name,
+                    middleware_stack: @middleware_stack,
+                    extra_delimiters: @extra_delimiters,
+                    mixin_lookup: @mixin_lookup,
+                    middleware_lookup: @middleware_lookup,
+                    template_lookup: @template_lookup,
+                    logger: @logger,
+                    base_level: @base_level,
+                    error_handler: @error_handler,
+                    completion: @completion)
+      yield cli if block_given?
+      cli
+    end
+
+    ##
     # Return the current loader for this CLI
     # @return [Toys::Loader]
     #
@@ -261,6 +291,7 @@ module Toys
 
     ##
     # Run the CLI with the given command line arguments.
+    # Handles exceptions using the error handler.
     #
     # @param [String...] args Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
@@ -277,40 +308,75 @@ module Toys
         "Error during tool execution!", tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
-        Runner.new(self, tool).run(remaining, verbosity: verbosity)
+        run_tool(tool, remaining, verbosity: verbosity)
       end
     rescue ContextualError, ::Interrupt => e
       @error_handler.call(e).to_i
     end
 
+    private
+
     ##
-    # Make a clone with the same settings but no paths in the loader.
-    # This is sometimes useful for running sub-tools.
+    # Run the given tool with the given arguments.
+    # Does not handle exceptions.
     #
-    # @param [Hash] _opts Unused options that can be used by subclasses.
-    # @return [Toys::CLI]
-    # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
-    #     to it so you can add paths and make other modifications.
+    # @param [Toys::Tool] tool The tool to run.
+    # @param [Array<String>] args Command line arguments passed to the tool.
+    # @param [Integer] verbosity Initial verbosity. Default is 0.
+    # @return [Integer] The resulting status code
     #
-    def child(_opts = {})
-      cli = CLI.new(binary_name: @binary_name,
-                    config_dir_name: @config_dir_name,
-                    config_file_name: @config_file_name,
-                    index_file_name: @index_file_name,
-                    preload_directory_name: @preload_directory_name,
-                    preload_file_name: @preload_file_name,
-                    data_directory_name: @data_directory_name,
-                    middleware_stack: @middleware_stack,
-                    extra_delimiters: @extra_delimiters,
-                    mixin_lookup: @mixin_lookup,
-                    middleware_lookup: @middleware_lookup,
-                    template_lookup: @template_lookup,
-                    logger: @logger,
-                    base_level: @base_level,
-                    error_handler: @error_handler,
-                    completion: @completion)
-      yield cli if block_given?
-      cli
+    def run_tool(tool, args, verbosity: 0)
+      arg_parser = ArgParser.new(self, tool, verbosity: verbosity)
+      arg_parser.parse(args).finish
+      context = tool.tool_class.new(arg_parser.data)
+      tool.run_initializers(context)
+
+      cur_logger = logger
+      original_level = cur_logger.level
+      cur_logger.level = base_level - context[Context::Key::VERBOSITY]
+      begin
+        perform_execution(tool, cur_logger, context)
+      ensure
+        cur_logger.level = original_level
+      end
+    end
+
+    def perform_execution(tool, cur_logger, context)
+      executor = proc do
+        unless tool.runnable?
+          cur_logger.fatal("No implementation for tool #{tool.display_name.inspect}")
+          context.exit(-1)
+        end
+        interruptable = tool.interruptable?
+        begin
+          context.run
+        rescue ::Interrupt => e
+          raise e unless interruptable
+          handle_interrupt(context, e)
+        end
+      end
+      tool.middleware_stack.reverse_each do |middleware|
+        executor = make_executor(middleware, context, executor)
+      end
+      catch(:result) do
+        executor.call
+        0
+      end
+    end
+
+    def handle_interrupt(context, exception)
+      if context.method(:interrupt).arity.zero?
+        context.interrupt
+      else
+        context.interrupt(exception)
+      end
+    rescue ::Interrupt => e
+      raise e if e.equal?(exception)
+      handle_interrupt(context, e)
+    end
+
+    def make_executor(middleware, context, next_executor)
+      proc { middleware.run(context, &next_executor) }
     end
 
     ##

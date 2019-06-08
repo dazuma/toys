@@ -24,8 +24,9 @@
 require "helper"
 
 describe Toys::CLI do
+  let(:logger_io) { ::StringIO.new }
   let(:logger) {
-    Logger.new(StringIO.new).tap do |lgr|
+    Logger.new(logger_io).tap do |lgr|
       lgr.level = Logger::WARN
     end
   }
@@ -35,43 +36,235 @@ describe Toys::CLI do
   let(:cli) {
     Toys::CLI.new(
       binary_name: binary_name, logger: logger, middleware_stack: [],
-      error_handler: error_handler
+      error_handler: error_handler, index_file_name: ".toys.rb",
+      data_directory_name: ".data"
     )
   }
 
-  it "runs a tool" do
-    cli.add_config_block do
-      tool "foo" do
-        def run
-          exit(3)
+  describe "execution" do
+    it "returns the exit value" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
         end
       end
+      assert_equal(3, cli.run("foo"))
     end
-    assert_equal(3, cli.run("foo"))
+
+    it "handles an error" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise "whoops"
+          end
+        end
+      end
+      assert_equal(-1, cli.run("foo"))
+      assert_match(/RuntimeError: whoops/, error_io.string)
+    end
+
+    it "handles no script defined" do
+      cli.add_config_block do
+        tool "foo" do
+        end
+      end
+      assert_equal(-1, cli.run("foo"))
+      assert_match(/No implementation for tool/, logger_io.string)
+    end
+
+    it "can disable argument parsing" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          disable_argument_parsing
+          to_run do
+            test.assert_equal(["baz", "--bar"], args)
+            test.assert(usage_errors.empty?)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", "baz", "--bar"))
+    end
+
+    it "runs initializer at the beginning" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          t = Toys::DSL::Tool.current_tool(self, true)
+          t.add_initializer(proc { |a| set(:a, a) }, 123)
+          to_run do
+            test.assert_equal(123, get(:a))
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+    end
+
+    it "makes context fields available via convenience methods" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          optional_arg(:arg1)
+          optional_arg(:arg2)
+          flag(:sw1, "-a")
+          to_run do
+            test.assert_equal(0, verbosity)
+            test.assert_equal(["foo"], tool.full_name)
+            test.assert_equal(["foo"], tool_name)
+            test.assert_instance_of(Logger, logger)
+            test.assert_equal("toys", binary_name)
+            test.assert_equal(["hello", "-a"], args)
+            test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
+          end
+        end
+      end
+      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+    end
+
+    it "makes context fields available via get" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          optional_arg(:arg1)
+          optional_arg(:arg2)
+          flag(:sw1, "-a")
+          to_run do
+            test.assert_equal(0, get(Toys::Context::Key::VERBOSITY))
+            test.assert_equal(["foo"], get(Toys::Context::Key::TOOL).full_name)
+            test.assert_equal(["foo"], get(Toys::Context::Key::TOOL_NAME))
+            test.assert_instance_of(Logger, get(Toys::Context::Key::LOGGER))
+            test.assert_equal("toys", get(Toys::Context::Key::BINARY_NAME))
+            test.assert_equal(["hello", "-a"], get(Toys::Context::Key::ARGS))
+          end
+        end
+      end
+      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+    end
+
+    it "makes options available via get" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          optional_arg(:arg1)
+          optional_arg(:arg2)
+          flag(:sw1, "-a")
+          to_run do
+            test.assert_equal(true, get(:sw1))
+            test.assert_equal("hello", get(:arg1))
+            test.assert_nil(get(:arg2))
+          end
+        end
+      end
+      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+    end
+
+    it "supports sub-runs" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          optional_arg :arg1
+          to_run do
+            test.assert_equal("hi", self[:arg1])
+            exit(cli.run("bar", "ho"))
+          end
+        end
+        tool "bar" do
+          optional_arg :arg2
+          to_run do
+            test.assert_equal("ho", self[:arg2])
+            exit(3)
+          end
+        end
+      end
+      assert_equal(3, cli.run(["foo", "hi"]))
+    end
+
+    it "accesses data from run" do
+      cli.loader.add_path(File.join(__dir__, "lookup-cases", "data-finder"))
+      assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
+    end
   end
 
-  it "handles an error" do
-    cli.add_config_block do
-      tool "foo" do
-        def run
-          raise "whoops"
+  describe "interrupt handling" do
+    it "uses the default interrupt handler" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
         end
       end
+      assert_equal(130, cli.run("foo"))
+      assert_match(/INTERRUPT/, error_io.string)
     end
-    assert_equal(-1, cli.run("foo"))
-    assert_match(/RuntimeError: whoops/, error_io.string)
-  end
 
-  it "handles an interrupt" do
-    cli.add_config_block do
-      tool "foo" do
-        def run
-          raise ::Interrupt
+    it "supports an interrupt block with no argument" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          def interrupt
+            exit(2)
+          end
         end
       end
+      assert_equal(2, cli.run("foo"))
     end
-    assert_equal(130, cli.run("foo"))
-    assert_match(/INTERRUPT/, error_io.string)
+
+    it "supports propagating an interrupt" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          def interrupt(interrupt)
+            raise interrupt
+          end
+        end
+      end
+      assert_equal(130, cli.run("foo"))
+      assert_match(/INTERRUPT/, error_io.string)
+    end
+
+    it "supports an interrupt block with an argument" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          to_interrupt do |ex|
+            test.assert_instance_of(::Interrupt, ex)
+            exit(2)
+          end
+        end
+      end
+      assert_equal(2, cli.run("foo"))
+    end
+
+    it "supports nested interrupts" do
+      counter = 0
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          to_interrupt do |ex|
+            counter += 1
+            raise ::Interrupt if ex.cause.nil?
+            exit(counter)
+          end
+        end
+      end
+      assert_equal(2, cli.run("foo"))
+    end
   end
 
   it "creates a child" do
