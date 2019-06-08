@@ -224,7 +224,7 @@ module Toys
     # Returns true if this tool handles interrupts.
     # @return [Boolean]
     #
-    def interruptable?
+    def interruptible?
       tool_class.public_instance_methods(false).include?(:interrupt)
     end
 
@@ -796,20 +796,20 @@ module Toys
     end
 
     ##
-    # Set the runnable block
+    # Set the run handler block
     #
     # @param [Proc] proc The runnable block
     #
-    def runnable=(proc)
+    def run_handler=(proc)
       @tool_class.to_run(&proc)
     end
 
     ##
-    # Set the interruptable block
+    # Set the interrupt handler block
     #
     # @param [Proc] proc The interrupt block
     #
-    def interruptable=(proc)
+    def interrupt_handler=(proc)
       @tool_class.to_interrupt(&proc)
     end
 

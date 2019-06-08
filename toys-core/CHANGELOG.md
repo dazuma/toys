@@ -48,6 +48,7 @@ Changes to internal interfaces:
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.
     * CHANGED: Removed the term "definition" from accessors. Specifically `flag_definitions` renamed to `flags`, `required_arg_definitions` renamed to `required_args`, `optional_arg_definitions` renamed to `optional_args`, `remaining_args_definition` renamed to `remaining_arg`, and `arg_definitions` renamed to `positional_args`.
+    * CHANGED: Renamed `Tool#runnable=` to `Tool#run_handler=`.
     * CHANGED: `Tool#add_acceptor` takes the name as a separate argument, for consistency with `add_mixin` and `add_template`.
     * CHANGED: Removed `Tool#custom_acceptors` method.
     * CHANGED: Removed `Tool#resolve_acceptor` and replaced with `lookup_acceptor` which only looks up names.

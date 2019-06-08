@@ -787,7 +787,7 @@ describe Toys::Tool do
     it "can be looked up from standard mixins" do
       test = self
       tool.include_mixin(:fileutils)
-      tool.runnable = proc do
+      tool.run_handler = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
       assert_equal(0, cli.run(tool_name))
@@ -811,7 +811,7 @@ describe Toys::Tool do
       test = self
       tool.add_mixin("mymixin", MyMixin)
       tool.include_mixin("mymixin")
-      tool.runnable = proc do
+      tool.run_handler = proc do
         test.assert_equal(:mixin1, mixin1)
       end
       assert_equal(0, cli.run(tool_name))
@@ -825,7 +825,7 @@ describe Toys::Tool do
         end
       end
       tool.include_mixin("mymixin")
-      tool.runnable = proc do
+      tool.run_handler = proc do
         test.assert_equal(:bar, foo)
       end
       assert_equal(0, cli.run(tool_name))

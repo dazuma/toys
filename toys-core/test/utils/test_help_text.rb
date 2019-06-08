@@ -35,37 +35,37 @@ describe Toys::Utils::HelpText do
 
   let(:single_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool(tool_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0).run_handler = runnable
     loader
   }
   let(:namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool(tool_name, 0)
-    loader.activate_tool(subtool_one_name, 0).runnable = runnable
-    loader.activate_tool(subtool_two_name, 0).runnable = runnable
-    loader.activate_tool(hidden_subtool_name, 0).runnable = runnable
+    loader.activate_tool(subtool_one_name, 0).run_handler = runnable
+    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
+    loader.activate_tool(hidden_subtool_name, 0).run_handler = runnable
     loader
   }
   let(:runnable_namespace_loader) {
     loader = Toys::Loader.new
-    loader.activate_tool(tool_name, 0).runnable = runnable
-    loader.activate_tool(subtool_one_name, 0).runnable = runnable
-    loader.activate_tool(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool(tool_name, 0).run_handler = runnable
+    loader.activate_tool(subtool_one_name, 0).run_handler = runnable
+    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
     loader
   }
   let(:recursive_namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool(tool_name, 0)
     loader.activate_tool(subtool_one_name, 0)
-    loader.activate_tool(subtool_one_name + ["a"], 0).runnable = runnable
-    loader.activate_tool(subtool_one_name + ["b"], 0).runnable = runnable
-    loader.activate_tool(subtool_two_name, 0).runnable = runnable
+    loader.activate_tool(subtool_one_name + ["a"], 0).run_handler = runnable
+    loader.activate_tool(subtool_one_name + ["b"], 0).run_handler = runnable
+    loader.activate_tool(subtool_two_name, 0).run_handler = runnable
     loader
   }
   let(:long_namespace_loader) {
     loader = Toys::Loader.new
     loader.activate_tool(tool_name, 0)
-    loader.activate_tool(tool_name + [long_tool_name], 0).runnable = runnable
+    loader.activate_tool(tool_name + [long_tool_name], 0).run_handler = runnable
     loader
   }
 

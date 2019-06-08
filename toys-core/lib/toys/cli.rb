@@ -347,11 +347,11 @@ module Toys
           cur_logger.fatal("No implementation for tool #{tool.display_name.inspect}")
           context.exit(-1)
         end
-        interruptable = tool.interruptable?
+        interruptible = tool.interruptible?
         begin
           context.run
         rescue ::Interrupt => e
-          raise e unless interruptable
+          raise e unless interruptible
           handle_interrupt(context, e)
         end
       end

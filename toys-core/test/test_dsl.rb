@@ -125,7 +125,7 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["foo"])
       assert_equal(false, tool.runnable?)
-      assert_equal(false, tool.interruptable?)
+      assert_equal(false, tool.interruptible?)
     end
 
     it "makes a tool runnable when the run method is defined" do
@@ -159,17 +159,17 @@ describe Toys::DSL::Tool do
       assert_equal(true, tool.runnable?)
     end
 
-    it "makes a tool interruptable when the interrupt method is defined" do
+    it "makes a tool interruptible when the interrupt method is defined" do
       loader.add_block do
         tool "foo" do
           def interrupt; end
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal(true, tool.interruptable?)
+      assert_equal(true, tool.interruptible?)
     end
 
-    it "makes a tool interruptable when the to_interrupt directive is given" do
+    it "makes a tool interruptible when the to_interrupt directive is given" do
       loader.add_block do
         tool "foo" do
           to_interrupt do
@@ -177,7 +177,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal(true, tool.interruptable?)
+      assert_equal(true, tool.interruptible?)
     end
 
     it "makes callable methods" do
