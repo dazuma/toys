@@ -4,7 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Rename StandardCompletion to DefaultCompletion.
 * Write toys-core user guide
 
 ## Ideas under investigation

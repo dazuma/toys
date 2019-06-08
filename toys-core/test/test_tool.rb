@@ -703,13 +703,13 @@ describe Toys::Tool do
       it "resolves the default completions" do
         tool.add_flag(:a, ["-a VAL"])
         assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
-        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
+        assert_instance_of(Toys::Flag::DefaultCompletion, tool.flags.first.flag_completion)
       end
 
       it "resolves the default completions by passing :default" do
         tool.add_flag(:a, ["-a VAL"], complete_flags: :default, complete_values: :default)
         assert_equal(Toys::Completion::EMPTY, tool.flags.first.value_completion)
-        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
+        assert_instance_of(Toys::Flag::DefaultCompletion, tool.flags.first.flag_completion)
       end
 
       it "can be referenced by name in a flag" do
@@ -742,7 +742,7 @@ describe Toys::Tool do
 
       it "can be set based on options" do
         tool.add_flag(:a, ["-a VAL"], complete_flags: {include_negative: false})
-        assert_instance_of(Toys::Flag::StandardCompletion, tool.flags.first.flag_completion)
+        assert_instance_of(Toys::Flag::DefaultCompletion, tool.flags.first.flag_completion)
         refute(tool.flags.first.flag_completion.include_negative?)
       end
 

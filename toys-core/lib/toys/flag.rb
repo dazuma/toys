@@ -93,10 +93,10 @@ module Toys
     #     `default: []` and is intended for "multi-valued" flags.
     # @param [Object] complete_flags A specifier for shell tab completion for
     #     flag names associated with this flag. By default, a
-    #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+    #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
     #     names as completion candidates. To customize completion, set this to
     #     a hash of options to pass to the constructor for
-    #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
+    #     {Toys::Flag::DefaultCompletion}, or pass any other spec recognized
     #     by {Toys::Completion.create}.
     # @param [Object] complete_values A specifier for shell tab completion for
     #     flag values associated with this flag. Pass any spec recognized by
@@ -334,9 +334,9 @@ module Toys
     def create_flag_completion(spec)
       case spec
       when nil, :default
-        StandardCompletion.new(self)
+        DefaultCompletion.new(self)
       when ::Hash
-        StandardCompletion.new(self, spec)
+        DefaultCompletion.new(self, spec)
       else
         Completion.create(spec)
       end
@@ -622,7 +622,7 @@ module Toys
     # A Completion that returns all possible flags associated with a
     # {Toys::Flag}.
     #
-    class StandardCompletion < Completion::Base
+    class DefaultCompletion < Completion::Base
       ##
       # Create a completion given configuration options.
       #

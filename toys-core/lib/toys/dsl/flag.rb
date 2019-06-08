@@ -107,9 +107,9 @@ module Toys
       # *   The string name of a completion defined in this tool or any of its
       #     ancestors.
       # *   A hash of options to pass to the constructor of
-      #     {Toys::Flag::StandardCompletion}.
+      #     {Toys::Flag::DefaultCompletion}.
       # *   `nil` or `:default` to select the standard completion strategy
-      #     (which is {Toys::Flag::StandardCompletion} with no extra options).
+      #     (which is {Toys::Flag::DefaultCompletion} with no extra options).
       # *   Any other specification recognized by {Toys::Completion.create}.
       #
       # @param [Object] spec

@@ -183,10 +183,10 @@ module Toys
 
     ##
     # Set the completion strategy for the CLI overall. By default, a
-    # {Toys::CLI::StandardCompletion} is used, providing a standard algorithm
+    # {Toys::CLI::DefaultCompletion} is used, providing a standard algorithm
     # that finds the appropriate tool and uses its completion setting. To
     # customize completion, set this either to a hash of options to pass to the
-    # {Toys::Tool::StandardCompletion} constructor, or any other spec
+    # {Toys::Tool::DefaultCompletion} constructor, or any other spec
     # recognized by {Toys::Completion.create}.
     #
     # @param [Object] spec
@@ -194,8 +194,8 @@ module Toys
     def completion=(spec)
       @completion =
         case spec
-        when nil, ::Hash
-          StandardCompletion.new
+        when nil, :default, ::Hash
+          DefaultCompletion.new
         else
           Completion.create(spec)
         end
@@ -446,9 +446,10 @@ module Toys
     end
 
     ##
-    # A Completion that implements the standard algorithm for a CLI.
+    # A Completion that implements the default algorithm for a CLI. This
+    # algorithm simply determines the tool and uses its completion.
     #
-    class StandardCompletion < Completion::Base
+    class DefaultCompletion < Completion::Base
       ##
       # Returns candidates for the current completion.
       #

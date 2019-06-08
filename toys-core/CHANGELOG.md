@@ -57,7 +57,7 @@ Changes to internal interfaces:
     * ADDED: Accessor for interrupt handler.
     * ADDED: `enforce_flags_before_args` setting and `flags_before_args_enforced?` query.
     * ADDED: Completion accessor, and options to the various flag and positional arg methods to set their completion strategies.
-    * ADDED: Added `Tool::StandardCompletion` class.
+    * ADDED: Added `Tool::DefaultCompletion` class.
     * IMPROVED: `add_mixin`, `add_template`, and `add_acceptor` support all the specs understood by their create methods.
 * Changes related to the flag classes:
     * CHANGED: Moved `Toys::Definition::Flag` to `Toys::Flag`
@@ -69,7 +69,7 @@ Changes to internal interfaces:
     * ADDED: `Flag#create` class method providing a sane construction interface.
     * ADDED: `Flag#resolve` method to look up flag syntax.
     * ADDED: `Flag#completion` field.
-    * ADDED: Added `Flag::Resolution` and `Flag::StandardCompletion` classes.
+    * ADDED: Added `Flag::Resolution` and `Flag::DefaultCompletion` classes.
 * Changes related to the positional arg classes:
     * CHANGED: Moved `Toys::Definition::Arg` to `Toys::PositionalArg`.
     * CHANGED: Renamed `Arg#accept` to `PositionalArg#acceptor` which now always returns an acceptor object (even for well-known acceptors such as `Integer`).

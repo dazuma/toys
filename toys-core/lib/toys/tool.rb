@@ -84,7 +84,7 @@ module Toys
       @includes_modules = false
       @custom_context_directory = nil
 
-      @completion = StandardCompletion.new
+      @completion = DefaultCompletion.new
     end
 
     ##
@@ -618,10 +618,10 @@ module Toys
     #     `default: []` and is intended for "multi-valued" flags.
     # @param [Object] complete_flags A specifier for shell tab completion
     #     for flag names associated with this flag. By default, a
-    #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+    #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
     #     names as completion candidates. To customize completion, set this to
     #     a hash of options to pass to the constructor for
-    #     {Toys::Flag::StandardCompletion}, or pass any other spec recognized
+    #     {Toys::Flag::DefaultCompletion}, or pass any other spec recognized
     #     by {Toys::Completion.create}.
     # @param [Object] complete_values A specifier for shell tab completion
     #     for flag values associated with this flag. Pass any spec
@@ -838,10 +838,10 @@ module Toys
 
     ##
     # Set the completion strategy for this Tool. By default, a
-    # {Toys::Tool::StandardCompletion} is used, providing a standard algorithm
+    # {Toys::Tool::DefaultCompletion} is used, providing a standard algorithm
     # that finds appropriate completions from flags, positional arguments, and
     # subtools. To customize completion, set this either to a hash of options
-    # to pass to the {Toys::Tool::StandardCompletion} constructor, or any other
+    # to pass to the {Toys::Tool::DefaultCompletion} constructor, or any other
     # spec recognized by {Toys::Completion.create}.
     #
     # @param [Object] spec
@@ -850,9 +850,9 @@ module Toys
       @completion =
         case spec
         when nil, :default
-          StandardCompletion.new
+          DefaultCompletion.new
         when ::Hash
-          StandardCompletion.new(spec)
+          DefaultCompletion.new(spec)
         else
           Completion.create(spec)
         end
@@ -954,9 +954,9 @@ module Toys
     end
 
     ##
-    # A Completion that implements the standard algorithm for a tool.
+    # A Completion that implements the default algorithm for a tool.
     #
-    class StandardCompletion < Completion::Base
+    class DefaultCompletion < Completion::Base
       ##
       # Create a completion given configuration options.
       #

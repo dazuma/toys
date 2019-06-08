@@ -68,10 +68,10 @@ module Toys
       #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
       # @param [Object] complete_flags A specifier for shell tab completion
       #     for flag names associated with this flag. By default, a
-      #     {Toys::Flag::StandardCompletion} is used, which provides the flag's
+      #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
       #     to the name of a previously defined completion, a hash of options
-      #     to pass to the constructor for {Toys::Flag::StandardCompletion}, or
+      #     to pass to the constructor for {Toys::Flag::DefaultCompletion}, or
       #     any other spec recognized by {Toys::Completion.create}.
       # @param [Object] complete_values A specifier for shell tab completion
       #     for flag values associated with this flag. This is the empty
