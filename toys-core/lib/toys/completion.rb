@@ -40,7 +40,7 @@ module Toys
       ##
       # Create completion context
       #
-      # @param [Toys::CLI] cli The CLI being run.
+      # @param [Toys::CLI] cli The CLI being run. Required.
       # @param [Array<String>] previous_words Array of complete strings that
       #     appeared prior to the fragment to complete.
       # @param [String] fragment_prefix The non-completed prefix (e.g. "key=")
@@ -314,12 +314,10 @@ module Toys
         children = Compat.glob_in_dir(name, dir).find_all do |child|
           !omits.include?(child)
         end
-        if children.empty?
-          children = ::Dir.entries(dir).find_all do |child|
-            child.start_with?(name) && !omits.include?(child)
-          end
+        children += ::Dir.entries(dir).find_all do |child|
+          child.start_with?(name) && !omits.include?(child)
         end
-        generate_candidates(children.sort, prefix, dir)
+        generate_candidates(children.uniq.sort, prefix, dir)
       end
 
       private

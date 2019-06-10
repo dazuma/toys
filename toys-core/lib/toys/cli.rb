@@ -28,65 +28,105 @@ module Toys
   ##
   # A Toys-based CLI.
   #
-  # Use this class to implement a CLI using Toys.
+  # This is the entry point for command line execution. It includes tool
+  # definitions (and/or information on how to load them from the file system),
+  # configuration parameters such as logging and error handling, and a method
+  # to call to invoke a command.
   #
   class CLI
     ##
     # Create a CLI.
     #
-    # @param [String,nil] binary_name The binary name displayed in help text.
-    #     Optional. Defaults to the ruby program name.
-    # @param [String,nil] config_dir_name A directory with this name that
-    #     appears in the loader path, is treated as a configuration directory
-    #     whose contents are loaded into the toys configuration. Optional.
-    #     If not provided, toplevel configuration directories are disabled.
-    #     The default toys CLI sets this to `".toys"`.
-    # @param [String,nil] config_file_name A file with this name that appears
-    #     in the loader path, is treated as a toplevel configuration file
-    #     whose contents are loaded into the toys configuration. Optional.
-    #     If not provided, toplevel configuration files are disabled.
-    #     The default toys CLI sets this to `".toys.rb"`.
-    # @param [String,nil] index_file_name A file with this name that appears
-    #     in any configuration directory (not just a toplevel directory) is
-    #     loaded first as a standalone configuration file. If not provided,
-    #     standalone configuration files are disabled.
-    #     The default toys CLI sets this to `".toys.rb"`.
-    # @param [String,nil] preload_file_name A file with this name that appears
-    #     in any configuration directory is preloaded before any tools in that
-    #     configuration directory are defined.
-    #     The default toys CLI sets this to `".preload.rb"`.
-    # @param [String,nil] preload_directory_name A directory with this name
-    #     that appears in any configuration directory is searched for Ruby
-    #     files, which are preloaded before any tools in that configuration
-    #     directory are defined.
-    #     The default toys CLI sets this to `".preload"`.
-    # @param [String,nil] data_directory_name A directory with this name that
-    #     appears in any configuration directory is added to the data directory
-    #     search path for any tool file in that directory.
-    #     The default toys CLI sets this to `".data"`.
-    # @param [Array] middleware_stack An array of middleware that will be used
-    #     by default for all tools loaded by this CLI. If not provided, uses
-    #     {Toys::CLI.default_middleware_stack}.
-    # @param [String] extra_delimiters A string containing characters that can
-    #     function as delimiters in a tool name. Defaults to empty. Allowed
-    #     characters are period, colon, and slash.
-    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known mixin
-    #     modules. If not provided, uses {Toys::CLI.default_mixin_lookup}.
-    # @param [Toys::ModuleLookup] middleware_lookup A lookup for well-known
-    #     middleware classes. If not provided, uses
-    #     {Toys::CLI.default_middleware_lookup}.
-    # @param [Toys::ModuleLookup] template_lookup A lookup for well-known
-    #     template classes. If not provided, uses
-    #     {Toys::CLI.default_template_lookup}.
-    # @param [Logger,nil] logger The logger to use. If not provided, a default
-    #     logger that writes to `STDERR` is used.
-    # @param [Integer,nil] base_level The logger level that should correspond
-    #     to zero verbosity. If not provided, will default to the current level
-    #     of the logger.
+    # @param [Logger] logger The logger to use.
+    #     Optional. If not provided, will use a default logger that writes
+    #     formatted output to `STDERR`, as defined by
+    #     {Toys::CLI.default_logger}.
+    # @param [Integer] base_level The logger level that should correspond
+    #     to zero verbosity.
+    #     Optional. If not provided, defaults to the current level of the
+    #     logger (which is often `Logger::WARN`).
     # @param [Proc,nil] error_handler A proc that is called when an error is
     #     caught. The proc should take a {Toys::ContextualError} argument and
     #     report the error. It should return an exit code (normally nonzero).
-    #     Default is a {Toys::CLI::DefaultErrorHandler} writing to the logger.
+    #     Optional. If not provided, defaults to an instance of
+    #     {Toys::CLI::DefaultErrorHandler}, which displays an error message to
+    #     `STDERR`.
+    # @param [Toys::Completion::Base] completion A specifier for shell tab
+    #     completion for the CLI as a whole.
+    #     Optional. If not provided, defaults to an instance of
+    #     {Toys::CLI::DefaultCompletion}, which delegates completion to the
+    #     relevant tool.
+    #
+    # @param [Array] middleware_stack An array of middleware that will be used
+    #     by default for all tools loaded by this CLI.
+    #     Optional. If not provided, uses a default set of middleware defined
+    #     in {Toys::CLI.default_middleware_stack}. To include no middleware,
+    #     pass the empty array explicitly.
+    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known mixin
+    #     modules (i.e. with symbol names).
+    #     Optional. If not provided, defaults to the set of standard mixins
+    #     provided by toys-core, as defined by
+    #     {Toys::CLI.default_mixin_lookup}. If you explicitly want no standard
+    #     mixins, pass an empty instance of {Toys::ModuleLookup}.
+    # @param [Toys::ModuleLookup] middleware_lookup A lookup for well-known
+    #     middleware classes.
+    #     Optional. If not provided, defaults to the set of standard middleware
+    #     classes provided by toys-core, as defined by
+    #     {Toys::CLI.default_middleware_lookup}. If you explicitly want no
+    #     standard middleware, pass an empty instance of
+    #     {Toys::ModuleLookup}.
+    # @param [Toys::ModuleLookup] template_lookup A lookup for well-known
+    #     template classes.
+    #     Optional. If not provided, defaults to the set of standard template
+    #     classes provided by toys core, as defined by
+    #     {Toys::CLI.default_template_lookup}. If you explicitly want no
+    #     standard tenokates, pass an empty instance of {Toys::ModuleLookup}.
+    #
+    # @param [String] config_dir_name A directory with this name that appears
+    #     in the loader path, is treated as a configuration directory whose
+    #     contents are loaded into the toys configuration.
+    #     Optional. If not provided, toplevel configuration directories are
+    #     disabled.
+    #     Note: the standard toys executable sets this to `".toys"`.
+    # @param [String] config_file_name A file with this name that appears in
+    #     the loader path, is treated as a toplevel configuration file whose
+    #     contents are loaded into the toys configuration. This does not
+    #     include "index" configuration files located within a configuration
+    #     directory.
+    #     Optional. If not provided, toplevel configuration files are disabled.
+    #     Note: the standard toys executable sets this to `".toys.rb"`.
+    # @param [String] index_file_name A file with this name that appears in any
+    #     configuration directory is loaded first as a standalone configuration
+    #     file. This does not include "toplevel" configuration files outside
+    #     configuration directories.
+    #     Optional. If not provided, index configuration files are disabled.
+    #     Note: the standard toys executable sets this to `".toys.rb"`.
+    # @param [String] preload_file_name A file with this name that appears
+    #     in any configuration directory is preloaded using `require` before
+    #     any tools in that configuration directory are defined. A preload file
+    #     includes normal Ruby code, rather than Toys DSL definitions. The
+    #     preload file is loaded before any files in a preload directory.
+    #     Optional. If not provided, preload files are disabled.
+    #     Note: the standard toys executable sets this to `".preload.rb"`.
+    # @param [String] preload_directory_name A directory with this name that
+    #     appears in any configuration directory is searched for Ruby files,
+    #     which are preloaded using `require` before any tools in that
+    #     configuration directory are defined. Files in a preload directory
+    #     include normal Ruby code, rather than Toys DSL definitions. Files in
+    #     a preload directory are loaded after any standalone preload file.
+    #     Optional. If not provided, preload directories are disabled.
+    #     Note: the standard toys executable sets this to `".preload"`.
+    # @param [String] data_directory_name A directory with this name that
+    #     appears in any configuration directory is added to the data directory
+    #     search path for any tool file in that directory.
+    #     Optional. If not provided, data directories are disabled.
+    #     Note: the standard toys executable sets this to `".data"`.
+    #
+    # @param [String] binary_name The binary name displayed in help text.
+    #     Optional. Defaults to the ruby program name.
+    # @param [String] extra_delimiters A string containing characters that can
+    #     function as delimiters in a tool name. Defaults to empty. Allowed
+    #     characters are period, colon, and slash.
     #
     def initialize(
       binary_name: nil, middleware_stack: nil, extra_delimiters: "",
@@ -95,20 +135,22 @@ module Toys
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil, completion: nil
     )
-      @logger = logger || self.class.default_logger
-      @base_level = base_level || @logger.level
-      @middleware_stack = middleware_stack || self.class.default_middleware_stack
-      @extra_delimiters = extra_delimiters
       @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
+      @middleware_stack = middleware_stack || CLI.default_middleware_stack
+      @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
+      @middleware_lookup = middleware_lookup || CLI.default_middleware_lookup
+      @template_lookup = template_lookup || CLI.default_template_lookup
+      @error_handler = error_handler || DefaultErrorHandler.new
+      @completion = completion || DefaultCompletion.new
+      @logger = logger || CLI.default_logger
+      @base_level = base_level || @logger.level
+      @extra_delimiters = extra_delimiters
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @preload_directory_name = preload_directory_name
       @data_directory_name = data_directory_name
-      @mixin_lookup = mixin_lookup || self.class.default_mixin_lookup
-      @middleware_lookup = middleware_lookup || self.class.default_middleware_lookup
-      @template_lookup = template_lookup || self.class.default_template_lookup
       @loader = Loader.new(
         index_file_name: @index_file_name, extra_delimiters: @extra_delimiters,
         preload_directory_name: @preload_directory_name, preload_file_name: @preload_file_name,
@@ -116,13 +158,12 @@ module Toys
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
-      @error_handler = error_handler || DefaultErrorHandler.new
-      self.completion = completion
     end
 
     ##
     # Make a clone with the same settings but no paths in the loader.
-    # This is sometimes useful for running sub-tools.
+    # This is sometimes useful for running sub-tools that have to be loaded
+    # from a different configuration.
     #
     # @param [Hash] _opts Unused options that can be used by subclasses.
     # @return [Toys::CLI]
@@ -163,6 +204,12 @@ module Toys
     attr_reader :binary_name
 
     ##
+    # Return the string of delimiters
+    # @return [String]
+    #
+    attr_reader :extra_delimiters
+
+    ##
     # Return the logger used by this CLI
     # @return [Logger]
     #
@@ -180,26 +227,6 @@ module Toys
     # @return [Toys::Completion::Base,Proc]
     #
     attr_reader :completion
-
-    ##
-    # Set the completion strategy for the CLI overall. By default, a
-    # {Toys::CLI::DefaultCompletion} is used, providing a standard algorithm
-    # that finds the appropriate tool and uses its completion setting. To
-    # customize completion, set this either to a hash of options to pass to the
-    # {Toys::Tool::DefaultCompletion} constructor, or any other spec
-    # recognized by {Toys::Completion.create}.
-    #
-    # @param [Object] spec
-    #
-    def completion=(spec)
-      @completion =
-        case spec
-        when nil, :default, ::Hash
-          DefaultCompletion.new
-        else
-          Completion.create(spec)
-        end
-    end
 
     ##
     # Add a configuration file or directory to the loader.
@@ -389,7 +416,7 @@ module Toys
       #
       # @param [IO] output Where to write errors. Default is `$stderr`.
       #
-      def initialize(output = $stderr)
+      def initialize(output: $stderr)
         require "toys/utils/terminal"
         @terminal = Utils::Terminal.new(output: output)
       end
@@ -518,15 +545,16 @@ module Toys
       end
 
       ##
-      # Returns a default logger that logs to `$stderr`.
+      # Returns a default logger that writes formatted logs to a given stream.
       #
-      # @param [IO] stream Stream to write to. Defaults to `$stderr`.
+      # @param [IO] output The stream to output to (defaults to `$stderr`)
       # @return [Logger]
       #
-      def default_logger(stream = $stderr)
+      def default_logger(output: nil)
         require "toys/utils/terminal"
-        logger = ::Logger.new(stream)
-        terminal = Utils::Terminal.new(output: stream)
+        output ||= $stderr
+        logger = ::Logger.new(output)
+        terminal = Utils::Terminal.new(output: output)
         logger.formatter = proc do |severity, time, _progname, msg|
           msg_str =
             case msg

@@ -32,7 +32,7 @@ describe Toys::CLI do
   }
   let(:binary_name) { "toys" }
   let(:error_io) { ::StringIO.new }
-  let(:error_handler) { Toys::CLI::DefaultErrorHandler.new(error_io) }
+  let(:error_handler) { Toys::CLI::DefaultErrorHandler.new(output: error_io) }
   let(:cli) {
     Toys::CLI.new(
       binary_name: binary_name, logger: logger, middleware_stack: [],

@@ -1050,17 +1050,40 @@ module Toys
       end
 
       def subtool_candidates(context)
-        return if !@complete_subtools || !context.args.empty? || !context.fragment_prefix.empty?
-        subtools = context.cli.loader.list_subtools(context.tool.full_name,
+        return if !@complete_subtools || !context.args.empty?
+        tool_name, prefix, fragment = analyze_subtool_fragment(context)
+        return unless tool_name
+        subtools = context.cli.loader.list_subtools(tool_name,
                                                     include_hidden: @include_hidden_subtools)
         return if subtools.empty?
-        fragment = context.fragment
         candidates = []
         subtools.each do |subtool|
           name = subtool.simple_name
-          candidates << Completion::Candidate.new(name) if name.start_with?(fragment)
+          candidates << Completion::Candidate.new("#{prefix}#{name}") if name.start_with?(fragment)
         end
         candidates
+      end
+
+      def analyze_subtool_fragment(context)
+        tool_name = context.tool.full_name
+        prefix = ""
+        fragment = context.fragment
+        delims = context.cli.extra_delimiters
+        unless context.fragment_prefix.empty?
+          if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
+            return [nil, nil, nil]
+          end
+          tool_name += context.fragment_prefix.split(":")
+        end
+        unless delims.empty?
+          delims_regex = ::Regexp.escape(delims)
+          if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
+            fragment = match[3]
+            tool_name += match[2].split(/[#{delims_regex}]/)
+            prefix = match[1]
+          end
+        end
+        [tool_name, prefix, fragment]
       end
 
       def arg_candidates(context)

@@ -60,10 +60,13 @@ module Toys
     #    you cannot access it otherwise. For example, here is how to log the
     #    exit code for every subcommand:
     #
-    #        callback = proc do |result, context|
-    #          context.logger.info "Exit code: #{result.exit_code}"
+    #        tool "mytool" do
+    #          callback = proc do |result, context|
+    #            context.logger.info "Exit code: #{result.exit_code}"
+    #          end
+    #          include :exec, result_callback: callback
+    #          # ...
     #        end
-    #        include :exec, result_callback: callback
     #
     #    You may also pass a symbol as the `:result_callback`. The method with
     #    that name is then called as the callback. The method must take one

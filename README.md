@@ -44,11 +44,15 @@ Let's run one of them:
 
 The `system version` tool displays the current version of the toys gem.
 
-Toys also provides optional tab completion for bash. To install it, add the
-following line to your bash configuration file (e.g. `.bashrc` or `.profile`).
+Toys also provides optional tab completion for bash. To install it, execute the
+following command in your shell, or add it to your bash configuration file
+(e.g. `~/.bashrc`).
 
-    # Install tab completion for toys
     $(toys system bash-completion install)
+
+Toys does not yet specially implement tab completion for zsh or other shells.
+However, if you are using zsh, installing bash completion using `bashcompinit`
+_mostly_ works.
 
 ### Write your first tool
 

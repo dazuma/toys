@@ -23,7 +23,7 @@
 
 module Toys
   ##
-  # A string intended to be wrapped.
+  # A string intended for word-wrapped display.
   #
   class WrappableString
     ##
