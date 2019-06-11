@@ -35,10 +35,10 @@ module Toys
       ##
       # Create a HandleUsageErrors middleware.
       #
-      # @param [Integer] exit_code The exit code to return if a usage error
+      # @param exit_code [Integer] The exit code to return if a usage error
       #     occurs. Default is -1.
-      # @param [IO] stream Output stream to write to. Default is stderr.
-      # @param [Boolean,nil] styled_output Cause the tool to display help text
+      # @param stream [IO] Output stream to write to. Default is stderr.
+      # @param styled_output [Boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #

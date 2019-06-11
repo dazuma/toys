@@ -36,14 +36,14 @@ module Toys
     # *   `:at_least_one` At least one flag in the group must be provided
     # *   `:at_most_one` At most one flag in the group must be provided
     #
-    # @param [Symbol] type The type of group. Default is `:optional`.
-    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    # @param type [Symbol] The type of group. Default is `:optional`.
+    # @param desc [String,Array<String>,Toys::WrappableString] Short
     #     description for the group. See {Toys::Tool#desc=} for a description
     #     of allowed formats. Defaults to `"Flags"`.
-    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
     #     Long description for the flag group. See {Toys::Tool#long_desc=} for
     #     a description of allowed formats. Defaults to the empty array.
-    # @param [String,Symbol,nil] name The name of the group, or nil for no
+    # @param name [String,Symbol,nil] The name of the group, or nil for no
     #     name.
     # @return [Toys::FlagGroup::Base] A flag group of the correct subclass.
     #

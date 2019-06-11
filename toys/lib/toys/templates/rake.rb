@@ -38,13 +38,13 @@ module Toys
       ##
       # Create the template settings for the rake template.
       #
-      # @param [String,Array<String>,nil] gem_version Version requirements for
+      # @param gem_version [String,Array<String>,nil] Version requirements for
       #     the rake gem. Defaults to nil, indicating no version requirement.
-      # @param [String] rakefile_path Path to the Rakefile. Defaults to
+      # @param rakefile_path [String] Path to the Rakefile. Defaults to
       #     {DEFAULT_RAKEFILE_PATH}.
-      # @param [Boolean] only_described If true, tools are generated only for
+      # @param only_described [Boolean] If true, tools are generated only for
       #     rake tasks with descriptions. Default is false.
-      # @param [Boolean] use_flags Generated tools use flags instead of
+      # @param use_flags [Boolean] Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
       #

@@ -63,9 +63,9 @@ module Toys
       ##
       # Create a base acceptor.
       #
-      # @param [String] type_desc Type description string, shown in help.
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
-      # @param [Object] well_known_spec The well-known acceptor spec associated
+      # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
       #
       def initialize(type_desc: nil, well_known_spec: nil)
@@ -115,7 +115,7 @@ module Toys
       # as the only array element, indicating all inputs are valid. You can
       # override this method to provide a different validation function.
       #
-      # @param [String,nil] str The input argument string. May be `nil` if the
+      # @param str [String,nil] The input argument string. May be `nil` if the
       #     value is optional and not provided.
       # @return [String,Array,nil]
       #
@@ -130,9 +130,9 @@ module Toys
       # original input string and any other values returned from {#match}. It
       # must return the final converted value to use.
       #
-      # @param [String,nil] str Original argument string. May be `nil` if the
+      # @param str [String,nil] Original argument string. May be `nil` if the
       #     value is optional and not provided.
-      # @param [Object...] extra Zero or more additional arguments comprising
+      # @param extra [Object...] Zero or more additional arguments comprising
       #     additional elements returned from the match function.
       # @return [Object] The converted argument as it should be stored in the
       #     context data.
@@ -179,10 +179,10 @@ module Toys
       # the function may either raise an exception (which must descend from
       # `StandardError`) or return {Toys::Acceptor::REJECT}.
       #
-      # @param [Proc] function The acceptor function
-      # @param [String] type_desc Type description string, shown in help.
+      # @param function [Proc] The acceptor function
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
-      # @param [Object] well_known_spec The well-known acceptor spec associated
+      # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
       #
       def initialize(function = nil, type_desc: nil, well_known_spec: nil, &block)
@@ -227,13 +227,13 @@ module Toys
       # If no converter is provided, no conversion is done and the input string
       # is returned.
       #
-      # @param [Regexp] regex Regular expression defining value values.
-      # @param [Proc] converter A converter function. May also be given as a
+      # @param regex [Regexp] Regular expression defining value values.
+      # @param converter [Proc] A converter function. May also be given as a
       #     block. Note that the converter will be passed all elements of
       #     the `MatchData`.
-      # @param [String] type_desc Type description string, shown in help.
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
-      # @param [Object] well_known_spec The well-known acceptor spec associated
+      # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
       #
       def initialize(regex, converter = nil, type_desc: nil, well_known_spec: nil, &block)
@@ -274,10 +274,10 @@ module Toys
       ##
       # Create an acceptor.
       #
-      # @param [Array] values Valid values.
-      # @param [String] type_desc Type description string, shown in help.
+      # @param values [Array] Valid values.
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
-      # @param [Object] well_known_spec The well-known acceptor spec associated
+      # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
       #
       def initialize(values, type_desc: nil, well_known_spec: nil)
@@ -339,15 +339,15 @@ module Toys
       ##
       # Create an acceptor.
       #
-      # @param [Range] range The range of acceptable values
-      # @param [Proc] converter A converter proc that takes an input string and
+      # @param range [Range] The range of acceptable values
+      # @param converter [Proc] A converter proc that takes an input string and
       #     attempts to convert it to a type comparable by the range. For
       #     numeric ranges, this can be omitted because one is provided by
       #     default. You should provide a converter for other types of ranges.
       #     You can also pass the converter as a block.
-      # @param [String] type_desc Type description string, shown in help.
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
-      # @param [Object] well_known_spec The well-known acceptor spec associated
+      # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
       #
       def initialize(range, converter = nil, type_desc: nil, well_known_spec: nil, &block)
@@ -423,7 +423,7 @@ module Toys
       ##
       # Lookup a standard acceptor name recognized by OptionParser.
       #
-      # @param [Object] spec A well-known acceptor specification, such as
+      # @param spec [Object] A well-known acceptor specification, such as
       #     `String`, `Integer`, `Array`, `OptionParser::DecimalInteger`, etc.
       # @return [Toys::Acceptor::Base,nil] The corresponding Acceptor object,
       #     or nil if not found.
@@ -488,8 +488,8 @@ module Toys
       #     acceptor {Toys::Acceptor::DEFAULT}. Any type description you
       #     provide is ignored.
       #
-      # @param [Object] spec The spec. See above for recognized values.
-      # @param [String] type_desc The type description for interpolating into
+      # @param spec [Object] The spec. See above for recognized values.
+      # @param type_desc [String] The type description for interpolating into
       #     help text. Ignored if the spec indicates the default acceptor or a
       #     well-known acceptor.
       # @return [Toys::Acceptor::Base,Proc]

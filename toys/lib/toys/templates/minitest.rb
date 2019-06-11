@@ -56,15 +56,15 @@ module Toys
       ##
       # Create the template settings for the Minitest template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String,Array<String>] gem_version Version requirements for
+      # @param gem_version [String,Array<String>] Version requirements for
       #     the minitest gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param [Array<String>] libs An array of library paths to add to the
+      # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
-      # @param [Array<String>] files An array of globs indicating the test
+      # @param files [Array<String>] An array of globs indicating the test
       #     files to load. Defaults to {DEFAULT_FILES}.
-      # @param [Boolean] warnings If true, runs tests with Ruby warnings.
+      # @param warnings [Boolean] If true, runs tests with Ruby warnings.
       #     Defaults to true.
       #
       def initialize(name: nil,

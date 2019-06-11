@@ -67,21 +67,21 @@ module Toys
       ##
       # Create a SetDefaultDescriptions middleware given default descriptions.
       #
-      # @param [String,nil] default_tool_desc The default short description for
+      # @param default_tool_desc [String,nil] The default short description for
       #     runnable tools, or `nil` not to set one. Defaults to
       #     {DEFAULT_TOOL_DESC}.
-      # @param [String,nil] default_tool_long_desc The default long description
+      # @param default_tool_long_desc [String,nil] The default long description
       #     for runnable tools, or `nil` not to set one. Defaults to `nil`.
-      # @param [String,nil] default_namespace_desc The default short
+      # @param default_namespace_desc [String,nil] The default short
       #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to {DEFAULT_TOOL_DESC}.
-      # @param [String,nil] default_namespace_long_desc The default long
+      # @param default_namespace_long_desc [String,nil] The default long
       #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to `nil`.
-      # @param [String,nil] default_root_desc The default short description for
+      # @param default_root_desc [String,nil] The default short description for
       #     the root tool, or `nil` not to set one. Defaults to
       #     {DEFAULT_ROOT_DESC}.
-      # @param [String,nil] default_root_long_desc The default long description
+      # @param default_root_long_desc [String,nil] The default long description
       #     for the root tool, or `nil` not to set one. Defaults to
       #     {DEFAULT_ROOT_LONG_DESC}.
       #
@@ -121,8 +121,8 @@ module Toys
       # By default, it uses the parameters given to the middleware object.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool] tool The tool to document.
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param tool [Toys::Tool] The tool to document.
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Loader} is passed with key `:loader`. Future versions
       #     of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString,nil] The default
@@ -144,8 +144,8 @@ module Toys
       # By default, it uses the parameters given to the middleware object.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Tool] tool The tool to document
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param tool [Toys::Tool] The tool to document
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Loader} is passed with key `:loader`. Future versions of
       #     Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
@@ -166,8 +166,8 @@ module Toys
       # This method implements the logic for generating a flag description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Flag] flag The flag to document
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param flag [Toys::Flag] The flag to document
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Tool} is passed with key `:tool`. Future
       #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString,nil] The default
@@ -185,8 +185,8 @@ module Toys
       # This method implements logic for generating a flag long description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::Flag] flag The flag to document
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param flag [Toys::Flag] The flag to document
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Tool} is passed with key `:tool`. Future versions of
       #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
@@ -201,8 +201,8 @@ module Toys
       # This method implements the logic for generating an arg description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::PositionalArg] arg The arg to document
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param arg [Toys::PositionalArg] The arg to document
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Tool} is passed with key `:tool`. Future versions of
       #     Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString,nil] The default
@@ -226,8 +226,8 @@ module Toys
       # This method implements logic for generating an arg long description.
       # Override this method to provide different logic.
       #
-      # @param [Toys::PositionalArg] arg The arg to document
-      # @param [Hash] data Additional data that might be useful. Currently,
+      # @param arg [Toys::PositionalArg] The arg to document
+      # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Tool} is passed with key `:tool`. Future versions of
       #     Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The

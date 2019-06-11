@@ -49,7 +49,7 @@ module Toys
       ##
       # Create a usage helper given an execution context.
       #
-      # @param [Toys::Context] context The current context.
+      # @param context [Toys::Context] The current context.
       # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
@@ -60,9 +60,9 @@ module Toys
       ##
       # Create a usage helper.
       #
-      # @param [Toys::Tool] tool The tool to document.
-      # @param [Toys::Loader] loader A loader that can provide subcommands.
-      # @param [String] binary_name The name of the binary. e.g. `"toys"`.
+      # @param tool [Toys::Tool] The tool to document.
+      # @param loader [Toys::Loader] A loader that can provide subcommands.
+      # @param binary_name [String] The name of the binary. e.g. `"toys"`.
       #
       # @return [Toys::Utils::HelpText]
       #
@@ -81,14 +81,14 @@ module Toys
       ##
       # Generate a short usage string.
       #
-      # @param [Boolean] recursive If true, and the tool is a namespace,
+      # @param recursive [Boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
-      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param [Integer] left_column_width Width of the first column. Default
+      # @param left_column_width [Integer] Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
-      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
-      # @param [Integer,nil] wrap_width Overall width to wrap to. Default is
+      # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
+      # @param wrap_width [Integer,nil] Overall width to wrap to. Default is
       #     `nil` indicating no wrapping.
       #
       # @return [String] A usage string.
@@ -106,20 +106,20 @@ module Toys
       ##
       # Generate a long help string.
       #
-      # @param [Boolean] recursive If true, and the tool is a namespace,
+      # @param recursive [Boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
-      # @param [String,nil] search An optional string to search for when
+      # @param search [String,nil] An optional string to search for when
       #     listing subtools. Defaults to `nil` which finds all subtools.
-      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param [Boolean] show_source_path If true, shows the source path
+      # @param show_source_path [Boolean] If true, shows the source path
       #     section. Defaults to false.
-      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
-      # @param [Integer] indent2 Second indent width. Default is
+      # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
+      # @param indent2 [Integer] Second indent width. Default is
       #     {DEFAULT_INDENT}.
-      # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
+      # @param wrap_width [Integer,nil] Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
-      # @param [Boolean] styled Output ansi styles. Default is `true`.
+      # @param styled [Boolean] Output ansi styles. Default is `true`.
       #
       # @return [String] A usage string.
       #
@@ -137,16 +137,16 @@ module Toys
       ##
       # Generate a subtool list string.
       #
-      # @param [Boolean] recursive If true, and the tool is a namespace,
+      # @param recursive [Boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
-      # @param [String,nil] search An optional string to search for when
+      # @param search [String,nil] An optional string to search for when
       #     listing subtools. Defaults to `nil` which finds all subtools.
-      # @param [Boolean] include_hidden Include hidden subtools (i.e. whose
+      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param [Integer] indent Indent width. Default is {DEFAULT_INDENT}.
-      # @param [Integer,nil] wrap_width Wrap width of the column, or `nil` to
+      # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
+      # @param wrap_width [Integer,nil] Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
-      # @param [Boolean] styled Output ansi styles. Default is `true`.
+      # @param styled [Boolean] Output ansi styles. Default is `true`.
       #
       # @return [String] A usage string.
       #

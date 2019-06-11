@@ -118,9 +118,9 @@ module Toys
       #       end
       #     end
       #
-      # @param [String] name The acceptor name.
-      # @param [Object] spec The acceptor specification.
-      # @param [String] type_desc Type description string, shown in help.
+      # @param name [String] The acceptor name.
+      # @param spec [Object] The acceptor specification.
+      # @param type_desc [String] Type description string, shown in help.
       #     Defaults to the acceptor name.
       # @return [self]
       #
@@ -161,8 +161,8 @@ module Toys
       #       end
       #     end
       #
-      # @param [String] name Name of the mixin
-      # @param [Module] mixin_module Module to use as the mixin. Optional.
+      # @param name [String] Name of the mixin
+      # @param mixin_module [Module] Module to use as the mixin. Optional.
       #     Either pass a module here, _or_ provide a block and define the
       #     mixin within the block.
       # @return [self]
@@ -215,8 +215,8 @@ module Toys
       #
       #     expand "hello-generator", "mytool", "mytool is running!"
       #
-      # @param [String] name Name of the template
-      # @param [Class] template_class Module to use as the mixin. Optional.
+      # @param name [String] Name of the template
+      # @param template_class [Class] Module to use as the mixin. Optional.
       #     Either pass a module here, _or_ provide a block and define the
       #     mixin within the block.
       # @return [self]
@@ -262,9 +262,9 @@ module Toys
       #       end
       #     end
       #
-      # @param [String] name Name of the completion
-      # @param [Object] spec Completion specification.
-      # @param [Hash] options Additional options to pass to the completion.
+      # @param name [String] Name of the completion
+      # @param spec [Object] Completion specification.
+      # @param options [Hash] Additional options to pass to the completion.
       # @return [self]
       #
       def completion(name, spec = nil, **options, &block)
@@ -293,8 +293,8 @@ module Toys
       #       end
       #     end
       #
-      # @param [String,Array<String>] words The name of the subtool
-      # @param [:combine,:reset,:ignore] if_defined What to do if a definition
+      # @param words [String,Array<String>] The name of the subtool
+      # @param if_defined [:combine,:reset,:ignore] What to do if a definition
       #     already exists for this tool. Possible values are `:combine` (the
       #     default) indicating the definition should be combined with the
       #     existing definition, `:reset` indicating the earlier definition
@@ -345,8 +345,8 @@ module Toys
       #     end
       #     alias_tool "t", "test"
       #
-      # @param [String] word The name of the alias
-      # @param [String] target The target of the alias
+      # @param word [String] The name of the alias
+      # @param target [String] The target of the alias
       # @return [self]
       #
       def alias_tool(word, target)
@@ -358,7 +358,7 @@ module Toys
       # Load another config file or directory, as if its contents were inserted
       # at the current location.
       #
-      # @param [String] path The file or directory to load.
+      # @param path [String] The file or directory to load.
       # @return [self]
       #
       def load(path)
@@ -393,9 +393,9 @@ module Toys
       #
       #     expand "hello-generator", "mytool", "mytool is running!"
       #
-      # @param [Class,String,Symbol] template_class The template, either as a
+      # @param template_class [Class,String,Symbol] The template, either as a
       #     class or a well-known name.
-      # @param [Object...] args Template arguments
+      # @param args [Object...] Template arguments
       # @return [self]
       #
       def expand(template_class, *args)
@@ -445,7 +445,7 @@ module Toys
       #
       #     desc ["This sentence will not be wrapped."]
       #
-      # @param [Toys::WrappableString,String,Array<String>] str
+      # @param str [Toys::WrappableString,String,Array<String>]
       # @return [self]
       #
       def desc(str)
@@ -473,7 +473,7 @@ module Toys
       #               ["This line will not be wrapped."],
       #               ["    This indent is preserved."]
       #
-      # @param [Toys::WrappableString,String,Array<String>...] strs
+      # @param strs [Toys::WrappableString,String,Array<String>...]
       # @return [self]
       #
       def long_desc(*strs)
@@ -499,22 +499,22 @@ module Toys
       #       # ...
       #     end
       #
-      # @param [Symbol] type The type of group. Allowed values: `:required`,
+      # @param type [Symbol] The type of group. Allowed values: `:required`,
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       #     Default is `:optional`.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
       #     {Toys::Tool#long_desc=} for a description of allowed formats.
       #     Defaults to the empty array.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      # @param report_collisions [Boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param [Boolean] prepend If `true`, prepend rather than append the
+      # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
@@ -549,19 +549,19 @@ module Toys
       #       # ...
       #     end
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
       #     {Toys::Tool#long_desc=} for a description of allowed formats.
       #     Defaults to the empty array.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      # @param report_collisions [Boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param [Boolean] prepend If `true`, prepend rather than append the
+      # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
@@ -592,19 +592,19 @@ module Toys
       #       # ...
       #     end
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
       #     {Toys::Tool#long_desc=} for a description of allowed formats.
       #     Defaults to the empty array.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      # @param report_collisions [Boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param [Boolean] prepend If `true`, prepend rather than append the
+      # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
@@ -636,19 +636,19 @@ module Toys
       #       # ...
       #     end
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
       #     {Toys::Tool#long_desc=} for a description of allowed formats.
       #     Defaults to the empty array.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      # @param report_collisions [Boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param [Boolean] prepend If `true`, prepend rather than append the
+      # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
@@ -680,19 +680,19 @@ module Toys
       #       # ...
       #     end
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the group. See {Toys::Tool#desc=} for a description
       #     of allowed formats. Defaults to `"Flags"`.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
       #     {Toys::Tool#long_desc=} for a description of allowed formats.
       #     Defaults to the empty array.
-      # @param [String,Symbol,nil] name The name of the group, or nil for no
+      # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param [Boolean] report_collisions If `true`, raise an exception if a
+      # @param report_collisions [Boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param [Boolean] prepend If `true`, prepend rather than append the
+      # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
       #     add flags to this group in a block.
@@ -820,17 +820,17 @@ module Toys
       #                 ["    toys say --shout hello"]
       #     end
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [String...] flags The flags in OptionParser format.
-      # @param [Object] accept An acceptor that validates and/or converts the
+      # @param flags [String...] The flags in OptionParser format.
+      # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] default The default value. This is the value that will
+      # @param default [Object] The default value. This is the value that will
       #     be set in the context if this flag is not provided on the command
       #     line. Defaults to `nil`.
-      # @param [Proc,nil,:set,:push] handler An optional handler for
+      # @param handler [Proc,nil,:set,:push] An optional handler for
       #     setting/updating the value. A handler is a proc taking two
       #     arguments, the given value and the previous value, returning the
       #     new value that should be set. You may also specify a predefined
@@ -839,33 +839,33 @@ module Toys
       #     `:push` handler expects the previous value to be an array and
       #     pushes the given value onto it; it should be combined with setting
       #     `default: []` and is intended for "multi-valued" flags.
-      # @param [Object] complete_flags A specifier for shell tab completion
+      # @param complete_flags [Object] A specifier for shell tab completion
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
       #     to the name of a previously defined completion, a hash of options
       #     to pass to the constructor for {Toys::Flag::DefaultCompletion}, or
       #     any other spec recognized by {Toys::Completion.create}.
-      # @param [Object] complete_values A specifier for shell tab completion
+      # @param complete_values [Object] A specifier for shell tab completion
       #     for flag values associated with this flag. This is the empty
       #     completion by default. To customize completion, set this to the
       #     name of a previously defined completion, or any spec recognized by
       #     {Toys::Completion.create}.
-      # @param [Boolean] report_collisions Raise an exception if a flag is
+      # @param report_collisions [Boolean] Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
-      # @param [Toys::FlagGroup,String,Symbol,nil] group Group for this flag.
+      # @param group [Toys::FlagGroup,String,Symbol,nil] Group for this flag.
       #     You may provide a group name, a FlagGroup object, or `nil` which
       #     denotes the default group.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @param [String] display_name A display name for this flag, used in help
+      # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.
@@ -916,22 +916,22 @@ module Toys
       #       end
       #     end
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [Object] accept An acceptor that validates and/or converts the
+      # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion for
+      # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param [String] display_name A name to use for display (in help text and
+      # @param display_name [String] A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -983,25 +983,25 @@ module Toys
       #       end
       #     end
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [Object] default The default value. This is the value that will
+      # @param default [Object] The default value. This is the value that will
       #     be set in the context if this argument is not provided on the command
       #     line. Defaults to `nil`.
-      # @param [Object] accept An acceptor that validates and/or converts the
+      # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion for
+      # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param [String] display_name A name to use for display (in help text and
+      # @param display_name [String] A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -1053,25 +1053,25 @@ module Toys
       #       end
       #     end
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [Object] default The default value. This is the value that will
+      # @param default [Object] The default value. This is the value that will
       #     be set in the context if no unmatched arguments are provided on the
       #     command line. Defaults to the empty array `[]`.
-      # @param [Object] accept An acceptor that validates and/or converts the
+      # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] complete A specifier for shell tab completion for
+      # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param [String] display_name A name to use for display (in help text and
+      # @param display_name [String] A name to use for display (in help text and
       #     error reports). Defaults to the key in upper case.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
@@ -1102,9 +1102,18 @@ module Toys
       # if the key is a string or does not represent a valid method name, the
       # tool can retrieve the value by calling {Toys::Context#get}.
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # ## Example
+      #
+      #     tool "hello" do
+      #       static :greeting, "Hi there"
+      #       def run
+      #         puts "#{greeting}, world!"
+      #       end
+      #     end
+      #
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [Object] value The value to set.
+      # @param value [Object] The value to set.
       # @return [self]
       #
       def static(key, value = nil)
@@ -1130,7 +1139,7 @@ module Toys
       # Issuing this directive by itself turns on enforcement. You may turn it
       # off by passsing `false` as the parameter.
       #
-      # @param [Boolean] state
+      # @param state [Boolean]
       # @return [self]
       #
       def enforce_flags_before_args(state = true)
@@ -1158,7 +1167,7 @@ module Toys
       # subsequent flag definition. This can be used to prevent middleware from
       # defining a particular flag.
       #
-      # @param [String...] flags The flags to disable
+      # @param flags [String...] The flags to disable
       # @return [self]
       #
       def disable_flag(*flags)
@@ -1178,8 +1187,8 @@ module Toys
       #     (which is {Toys::Tool::DefaultCompletion} with no extra options).
       # *   Any other specification recognized by {Toys::Completion.create}.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def complete_tool_args(spec = nil, **options, &block)
@@ -1223,8 +1232,8 @@ module Toys
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
       #
-      # @param [Module,Symbol,String] mod Module or module name.
-      # @param [Object...] args Arguments to pass to the initializer
+      # @param mod [Module,Symbol,String] Module or module name.
+      # @param args [Object...] Arguments to pass to the initializer
       # @return [self]
       #
       def include(mod, *args)
@@ -1254,7 +1263,7 @@ module Toys
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
       #
-      # @param [Module,Symbol,String] mod Module or module name.
+      # @param mod [Module,Symbol,String] Module or module name.
       # @return [Boolean,nil] A boolean value, or `nil` if the current tool
       #     is not active.
       #
@@ -1276,8 +1285,8 @@ module Toys
       ##
       # Find the given data path (file or directory)
       #
-      # @param [String] path The path to find
-      # @param [nil,:file,:directory] type Type of file system object to find,
+      # @param path [String] The path to find
+      # @param type [nil,:file,:directory] Type of file system object to find,
       #     or nil to return any type.
       # @return [String,nil] Absolute path of the result, or nil if not found.
       #
@@ -1301,7 +1310,7 @@ module Toys
       ##
       # Set a custom context directory for this tool.
       #
-      # @param [String] dir Context directory
+      # @param dir [String] Context directory
       # @return [self]
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName

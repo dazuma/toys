@@ -40,13 +40,13 @@ module Toys
       ##
       # Create completion context
       #
-      # @param [Toys::CLI] cli The CLI being run. Required.
-      # @param [Array<String>] previous_words Array of complete strings that
+      # @param cli [Toys::CLI] The CLI being run. Required.
+      # @param previous_words [Array<String>] Array of complete strings that
       #     appeared prior to the fragment to complete.
-      # @param [String] fragment_prefix The non-completed prefix (e.g. "key=")
+      # @param fragment_prefix [String] The non-completed prefix (e.g. "key=")
       #     of the fragment.
-      # @param [String] fragment The string fragment to complete
-      # @param [Hash] params Miscellaneous context data
+      # @param fragment [String] The string fragment to complete
+      # @param params [Hash] Miscellaneous context data
       #
       def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", params: {})
         @cli = cli
@@ -62,14 +62,14 @@ module Toys
       ##
       # Create a new completion context with the given modifications.
       #
-      # @param [Toys::CLI] cli The CLI being run.
-      # @param [Array<String>] previous_words Array of complete strings that
+      # @param cli [Toys::CLI] The CLI being run.
+      # @param previous_words [Array<String>] Array of complete strings that
       #     appeared prior to the fragment to complete.
-      # @param [String] fragment_prefix The non-completed prefix (e.g. "key=")
+      # @param fragment_prefix [String] The non-completed prefix (e.g. "key=")
       #     of the fragment.
-      # @param [String] fragment The string fragment to complete
-      # @param [Hash] add_params Add miscellaneous context data
-      # @param [Hash,nil] replace_params Replace miscellaneous context data.
+      # @param fragment [String] The string fragment to complete
+      # @param add_params [Hash] Add miscellaneous context data
+      # @param replace_params [Hash,nil] Replace miscellaneous context data.
       # @return [Toys::Completion::Context]
       #
       def with(cli: nil, previous_words: nil, fragment_prefix: nil, fragment: nil,
@@ -168,8 +168,8 @@ module Toys
 
       ##
       # Create a new candidate
-      # @param [String] string The candidate string
-      # @param [Boolean] partial Whether the candidate is partial. Defaults
+      # @param string [String] The candidate string
+      # @param partial [Boolean] Whether the candidate is partial. Defaults
       #     to `false`.
       #
       def initialize(string, partial: false)
@@ -218,7 +218,7 @@ module Toys
       ##
       # Create an array of candidates given an array of strings.
       #
-      # @param [Array<String>] array
+      # @param array [Array<String>]
       # @return [Array<Toys::Completion::Candidate]
       #
       def self.new_multi(array, partial: false)
@@ -237,7 +237,7 @@ module Toys
       # Returns candidates for the current completion.
       # This default implementation returns an empty list.
       #
-      # @param [Toys::Completion::Context] context The current completion
+      # @param context [Toys::Completion::Context] The current completion
       #     context including the string fragment.
       # @return [Array<Toys::Completion::Candidate>] An array of candidates
       #
@@ -254,10 +254,10 @@ module Toys
       # Create a completion that gets candidates from names in the local file
       # system.
       #
-      # @param [String] cwd Working directory (defaults to the current dir).
-      # @param [Boolean] omit_files Omit files from candidates
-      # @param [Boolean] omit_directories Omit directories from candidates
-      # @param [String,Regexp] prefix_constraint Constraint on the fragment
+      # @param cwd [String] Working directory (defaults to the current dir).
+      # @param omit_files [Boolean] Omit files from candidates
+      # @param omit_directories [Boolean] Omit directories from candidates
+      # @param prefix_constraint [String,Regexp] Constraint on the fragment
       #     prefix. Defaults to requiring the prefix be empty.
       #
       def initialize(cwd: nil, omit_files: false, omit_directories: false, prefix_constraint: "")
@@ -294,7 +294,7 @@ module Toys
       ##
       # Returns candidates for the current completion.
       #
-      # @param [Toys::Completion::Context] context the current completion
+      # @param context [Toys::Completion::Context] the current completion
       #     context including the string fragment.
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
@@ -348,8 +348,8 @@ module Toys
       ##
       # Create a completion from a list of values.
       #
-      # @param [Array<String>] values
-      # @param [String,Regexp] prefix_constraint Constraint on the fragment
+      # @param values [Array<String>]
+      # @param prefix_constraint [String,Regexp] Constraint on the fragment
       #     prefix. Defaults to requiring the prefix be empty.
       #
       def initialize(values, prefix_constraint: "")
@@ -372,7 +372,7 @@ module Toys
       ##
       # Returns candidates for the current completion.
       #
-      # @param [Toys::Completion::Context] context the current completion
+      # @param context [Toys::Completion::Context] the current completion
       #     context including the string fragment.
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
@@ -418,9 +418,9 @@ module Toys
     #     for `:empty`). However, other completion resolution methods might
     #     have a different default.
     #
-    # @param [Object] spec The completion spec. See above for recognized
+    # @param spec [Object] The completion spec. See above for recognized
     #     values.
-    # @param [Hash] options Additional options to pass to the completion.
+    # @param options [Hash] Additional options to pass to the completion.
     # @return [Toys::Completion::Base,Proc]
     #
     def self.create(spec = nil, **options, &block)

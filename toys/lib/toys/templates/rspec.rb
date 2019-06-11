@@ -62,21 +62,21 @@ module Toys
       ##
       # Create the template settings for the RSpec template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String,Array<String>] gem_version Version requirements for
+      # @param gem_version [String,Array<String>] Version requirements for
       #     the rspec gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param [Array<String>] libs An array of library paths to add to the
+      # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
-      # @param [String] options The path to a custom options file.
-      # @param [String] order The order in which to run examples. Default is
+      # @param options [String] The path to a custom options file.
+      # @param order [String] The order in which to run examples. Default is
       #     {DEFAULT_ORDER}.
-      # @param [String] format Choose a formatter code. Default is `p`.
-      # @param [String] out Write output to a file instead of stdout.
-      # @param [Boolean] backtrace Enable full backtrace (default is false).
-      # @param [String] pattern A glob indicating the spec files to load.
+      # @param format [String] Choose a formatter code. Default is `p`.
+      # @param out [String] Write output to a file instead of stdout.
+      # @param backtrace [Boolean] Enable full backtrace (default is false).
+      # @param pattern [String] A glob indicating the spec files to load.
       #     Defaults to {DEFAULT_PATTERN}.
-      # @param [Boolean] warnings If true, runs specs with Ruby warnings.
+      # @param warnings [Boolean] If true, runs specs with Ruby warnings.
       #     Defaults to true.
       #
       def initialize(name: nil,

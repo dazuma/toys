@@ -39,11 +39,11 @@ module Toys
       ##
       # Create a UsageError given a message and common data
       #
-      # @param [String] message The basic error message.
-      # @param [String] name The name of the element (normally flag or
+      # @param message [String] The basic error message.
+      # @param name [String] The name of the element (normally flag or
       #     positional argument) that reported the error.
-      # @param [String] value The value that was rejected.
-      # @param [Array<String>,nil] suggestions An array of suggestions from
+      # @param value [String] The value that was rejected.
+      # @param suggestions [Array<String>,nil] An array of suggestions from
       #     DidYouMean, or nil if not applicable.
       def initialize(message, name: nil, value: nil, suggestions: nil)
         @message = message
@@ -99,9 +99,9 @@ module Toys
       ##
       # Create a FlagValueNotAllowedError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] name The name of the flag. Normally required.
+      # @param name [String] The name of the flag. Normally required.
       #
       def initialize(message = nil, name: nil)
         super(message || "Flag \"#{name}\" should not take an argument.", name: name)
@@ -116,9 +116,9 @@ module Toys
       ##
       # Create a FlagValueMissingError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] name The name of the flag. Normally required.
+      # @param name [String] The name of the flag. Normally required.
       #
       def initialize(message = nil, name: nil)
         super(message || "Flag \"#{name}\" is missing a value.", name: name)
@@ -132,10 +132,10 @@ module Toys
       ##
       # Create a FlagUnrecognizedError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] value The requested flag name. Normally required.
-      # @param [Array<String>] suggestions An array of suggestions to present
+      # @param value [String] The requested flag name. Normally required.
+      # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
       def initialize(message = nil, value: nil, suggestions: nil)
@@ -152,10 +152,10 @@ module Toys
       ##
       # Create a FlagAmbiguousError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] value The requested flag name. Normally required.
-      # @param [Array<String>] suggestions An array of suggestions to present
+      # @param value [String] The requested flag name. Normally required.
+      # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
       def initialize(message = nil, value: nil, suggestions: nil)
@@ -171,11 +171,11 @@ module Toys
       ##
       # Create a FlagValueUnacceptableError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] name The name of the flag. Normally required.
-      # @param [String] value The value given. Normally required.
-      # @param [Array<String>] suggestions An array of suggestions to present
+      # @param name [String] The name of the flag. Normally required.
+      # @param value [String] The value given. Normally required.
+      # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
@@ -192,11 +192,11 @@ module Toys
       ##
       # Create an ArgValueUnacceptableError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] name The name of the argument. Normally required.
-      # @param [String] value The value given. Normally required.
-      # @param [Array<String>] suggestions An array of suggestions to present
+      # @param name [String] The name of the argument. Normally required.
+      # @param value [String] The value given. Normally required.
+      # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
@@ -212,9 +212,9 @@ module Toys
       ##
       # Create an ArgMissingError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] name The name of the argument. Normally required.
+      # @param name [String] The name of the argument. Normally required.
       #
       def initialize(message = nil, name: nil)
         super(message || "Required positional argument \"#{name}\" is missing.", name: name)
@@ -228,10 +228,10 @@ module Toys
       ##
       # Create an ExtraArgumentsError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] value The first extra argument. Normally required.
-      # @param [Array<String>] values All extra arguments. Normally required.
+      # @param value [String] The first extra argument. Normally required.
+      # @param values [Array<String>] All extra arguments. Normally required.
       #
       def initialize(message = nil, value: nil, values: nil)
         super(message || "Extra arguments: \"#{Array(values).join(' ')}\".", value: value)
@@ -245,12 +245,12 @@ module Toys
       ##
       # Create a ToolUnrecognizedError.
       #
-      # @param [String,nil] message A custom message. Normally omitted, in
+      # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param [String] value The requested subtool. Normally required.
-      # @param [Array<String>] values The full path of the requested tool.
+      # @param value [String] The requested subtool. Normally required.
+      # @param values [Array<String>] The full path of the requested tool.
       #     Normally required.
-      # @param [Array<String>] suggestions An array of suggestions to present
+      # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
       def initialize(message = nil, value: nil, values: nil, suggestions: nil)
@@ -267,7 +267,7 @@ module Toys
       ##
       # Create a FlagGroupConstraintError.
       #
-      # @param [String] message The message. Required.
+      # @param message [String] The message. Required.
       #
       def initialize(message)
         super(message)
@@ -277,9 +277,9 @@ module Toys
     ##
     # Create an argument parser for a particular tool.
     #
-    # @param [Toys::CLI] cli The CLI in effect.
-    # @param [Toys::Tool] tool The tool defining the argument format.
-    # @param [Integer] verbosity The initial verbosity level (default is 0).
+    # @param cli [Toys::CLI] The CLI in effect.
+    # @param tool [Toys::Tool] The tool defining the argument format.
+    # @param verbosity [Integer] The initial verbosity level (default is 0).
     #
     def initialize(cli, tool, verbosity: 0)
       @loader = cli.loader
@@ -367,7 +367,7 @@ module Toys
     ##
     # Incrementally parse an array of strings
     #
-    # @param [Array<String>] args
+    # @param args [Array<String>]
     # @return [self]
     #
     def parse(args)
@@ -378,7 +378,7 @@ module Toys
     ##
     # Incrementally parse a single string
     #
-    # @param [String] arg
+    # @param arg [String]
     # @return [self]
     #
     def add(arg)

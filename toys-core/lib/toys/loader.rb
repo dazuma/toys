@@ -45,30 +45,30 @@ module Toys
     ##
     # Create a Loader
     #
-    # @param [String,nil] index_file_name A file with this name that appears
+    # @param index_file_name [String,nil] A file with this name that appears
     #     in any configuration directory (not just a toplevel directory) is
     #     loaded first as a standalone configuration file. If not provided,
     #     standalone configuration files are disabled.
-    # @param [String,nil] preload_file_name A file with this name that appears
+    # @param preload_file_name [String,nil] A file with this name that appears
     #     in any configuration directory is preloaded before any tools in that
     #     configuration directory are defined.
-    # @param [String,nil] preload_directory_name A directory with this name
+    # @param preload_directory_name [String,nil] A directory with this name
     #     that appears in any configuration directory is searched for Ruby
     #     files, which are preloaded before any tools in that configuration
     #     directory are defined.
-    # @param [String,nil] data_directory_name A directory with this name that
+    # @param data_directory_name [String,nil] A directory with this name that
     #     appears in any configuration directory is added to the data directory
     #     search path for any tool file in that directory.
-    # @param [Array] middleware_stack An array of middleware that will be used
+    # @param middleware_stack [Array] An array of middleware that will be used
     #     by default for all tools loaded by this loader.
-    # @param [String] extra_delimiters A string containing characters that can
+    # @param extra_delimiters [String] A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
-    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known
+    # @param mixin_lookup [Toys::ModuleLookup] A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
-    # @param [Toys::ModuleLookup] middleware_lookup A lookup for
+    # @param middleware_lookup [Toys::ModuleLookup] A lookup for
     #     well-known middleware classes. Defaults to an empty lookup.
-    # @param [Toys::ModuleLookup] template_lookup A lookup for
+    # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
     def initialize(index_file_name: nil, preload_directory_name: nil, preload_file_name: nil,
@@ -95,8 +95,8 @@ module Toys
     ##
     # Add a configuration file/directory to the loader.
     #
-    # @param [String,Array<String>] paths One or more paths to add.
-    # @param [Boolean] high_priority If true, add this path at the top of the
+    # @param paths [String,Array<String>] One or more paths to add.
+    # @param high_priority [Boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
     # @return [self]
@@ -114,10 +114,10 @@ module Toys
     ##
     # Add a configuration block to the loader.
     #
-    # @param [Boolean] high_priority If true, add this block at the top of the
+    # @param high_priority [Boolean] If true, add this block at the top of the
     #     priority list. Defaults to false, indicating the block should be at
     #     the bottom of the priority list.
-    # @param [String] name The source name that will be shown in documentation
+    # @param name [String] The source name that will be shown in documentation
     #     for tools defined in this block. If omitted, a default unique string
     #     will be generated.
     # @return [self]
@@ -141,7 +141,7 @@ module Toys
     # Returns a tuple of the found tool, and the array of remaining arguments
     # that are not part of the tool name and should be passed as tool args.
     #
-    # @param [Array<String>] args Command line arguments
+    # @param args [Array<String>] Command line arguments
     # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
@@ -168,10 +168,10 @@ module Toys
     # Returns a list of subtools for the given path, loading from the
     # configuration if necessary.
     #
-    # @param [Array<String>] words The name of the parent tool
-    # @param [Boolean] recursive If true, return all subtools recursively
+    # @param words [Array<String>] The name of the parent tool
+    # @param recursive [Boolean] If true, return all subtools recursively
     #     rather than just the immediate children (the default)
-    # @param [Boolean] include_hidden If true, include hidden subtools,
+    # @param include_hidden [Boolean] If true, include hidden subtools,
     #     e.g. names beginning with underscores.
     # @return [Array<Toys::Tool,Toys::Alias>]
     #
@@ -197,7 +197,7 @@ module Toys
     # Returns true if the given path has at least one subtool. Loads from the
     # configuration if necessary.
     #
-    # @param [Array<String>] words The name of the parent tool
+    # @param words [Array<String>] The name of the parent tool
     # @return [Boolean]
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicateName
@@ -218,8 +218,8 @@ module Toys
     # the active priority, returns `nil`. If the given priority is higher than
     # the active priority, returns and activates a new tool.
     #
-    # @param [Array<String>] words The name of the tool.
-    # @param [Integer] priority The priority of the request.
+    # @param words [Array<String>] The name of the tool.
+    # @param priority [Integer] The priority of the request.
     # @return [Toys::Tool,Toys::Alias,nil] The tool or
     #     alias, or `nil` if the given priority is insufficient.
     #
@@ -236,9 +236,9 @@ module Toys
     ##
     # Sets the given name as an alias to the given target.
     #
-    # @param [Array<String>] words The alias name
-    # @param [Array<String>] target The alias target name
-    # @param [Integer] priority The priority of the request
+    # @param words [Array<String>] The alias name
+    # @param target [Array<String>] The alias target name
+    # @param priority [Integer] The priority of the request
     #
     # @return [Toys::Alias] The alias created
     #
@@ -260,7 +260,7 @@ module Toys
     # Returns true if the given tool name currently exists in the loader.
     # Does not load the tool if not found.
     #
-    # @param [Array<String>] words The name of the tool.
+    # @param words [Array<String>] The name of the tool.
     # @return [Boolean]
     #
     # @private
@@ -294,7 +294,7 @@ module Toys
     ##
     # Attempt to get a well-known mixin module for the given symbolic name.
     #
-    # @param [Symbol] name Mixin name
+    # @param name [Symbol] Mixin name
     # @return [Module,nil] The mixin, or `nil` if not found.
     #
     # @private
@@ -306,7 +306,7 @@ module Toys
     ##
     # Attempt to get a well-known template class for the given symbolic name.
     #
-    # @param [Symbol] name Template name
+    # @param name [Symbol] Template name
     # @return [Class,nil] The template, or `nil` if not found.
     #
     # @private

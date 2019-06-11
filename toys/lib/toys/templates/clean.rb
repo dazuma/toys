@@ -38,9 +38,9 @@ module Toys
       ##
       # Create the template settings for the Clean template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [Array<String>] paths An array of glob patterns indicating what
+      # @param paths [Array<String>] An array of glob patterns indicating what
       #     to clean.
       #
       def initialize(name: DEFAULT_TOOL_NAME, paths: [])

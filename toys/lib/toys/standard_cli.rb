@@ -116,7 +116,7 @@ module Toys
     # Create a standard CLI, configured with the appropriate paths and
     # middleware.
     #
-    # @param [String,nil] cur_dir Starting search directory for configs.
+    # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.
     # @return [Toys::CLI]
     #
@@ -148,11 +148,12 @@ module Toys
     #    `$HOME:/etc` by default.
     # *  The builtins for the standard toys binary.
     #
-    # @param [Toys::CLI] cli Add paths to this CLI
-    # @param [String,nil] cur_dir Starting search directory for configs.
+    # @param cli [Toys::CLI] Add paths to this CLI
+    # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.
-    # @param [Array<String>,nil] global_dirs Optional list of global
+    # @param global_dirs [Array<String>,nil] Optional list of global
     #     directories, or `nil` to use the defaults.
+    # @return [Toys::CLI]
     #
     def self.add_standard_paths(cli, cur_dir: nil, global_dirs: nil)
       cur_dir ||= ::Dir.pwd

@@ -51,11 +51,11 @@ module Toys
       ##
       # Create a ShowVersion middleware
       #
-      # @param [String] version_string The string that should be displayed.
-      # @param [Array<String>] version_flags A list of flags that should
+      # @param version_string [String] The string that should be displayed.
+      # @param version_flags [Array<String>] A list of flags that should
       #     trigger displaying the version. Default is
       #     {DEFAULT_VERSION_FLAGS}.
-      # @param [IO] stream Output stream to write to. Default is stdout.
+      # @param stream [IO] Output stream to write to. Default is stdout.
       #
       def initialize(version_string: nil,
                      version_flags: DEFAULT_VERSION_FLAGS,

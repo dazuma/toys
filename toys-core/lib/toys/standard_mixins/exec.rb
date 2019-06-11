@@ -111,10 +111,12 @@ module Toys
       # All options listed in the {Toys::Utils::Exec} documentation are
       # supported, plus the `exit_on_nonzero_status` option.
       #
-      # @param [Hash] opts The default options.
+      # @param opts [Hash] The default options.
+      # @return [self]
       #
       def configure_exec(opts = {})
         self[KEY].configure_defaults(Exec._setup_exec_opts(opts, self))
+        self
       end
 
       ##
@@ -124,8 +126,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. All options listed in the
+      # @param cmd [String,Array<String>] The command to execute.
+      # @param opts [Hash] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
@@ -145,8 +147,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. All options listed in the
+      # @param args [String,Array<String>] The arguments to ruby.
+      # @param opts [Hash] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
@@ -167,8 +169,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. Most options listed in the
+      # @param func [Proc] The proc to call.
+      # @param opts [Hash] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -189,8 +191,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [String,Array<String>] cmd The tool to execute.
-      # @param [Hash] opts The command options. Most options listed in the
+      # @param cmd [String,Array<String>] The tool to execute.
+      # @param opts [Hash] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -215,8 +217,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. All options listed in the
+      # @param cmd [String,Array<String>] The command to execute.
+      # @param opts [Hash] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -237,8 +239,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. All options listed in the
+      # @param args [String,Array<String>] The arguments to ruby.
+      # @param opts [Hash] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -259,8 +261,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. Most options listed in the
+      # @param func [Proc] The proc to call.
+      # @param opts [Hash] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -282,8 +284,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String,Array<String>] cmd The tool to execute.
-      # @param [Hash] opts The command options. Most options listed in the
+      # @param cmd [String,Array<String>] The tool to execute.
+      # @param opts [Hash] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -303,8 +305,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String] cmd The shell command to execute.
-      # @param [Hash] opts The command options. All options listed in the
+      # @param cmd [String] The shell command to execute.
+      # @param opts [Hash] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -319,7 +321,8 @@ module Toys
       ##
       # Exit if the given status code is nonzero. Otherwise, returns 0.
       #
-      # @param [Integer,Process::Status,Toys::Utils::Exec::Result] status
+      # @param status [Integer,Process::Status,Toys::Utils::Exec::Result]
+      # @return [Integer]
       #
       def exit_on_nonzero_status(status)
         status = status.exit_code if status.respond_to?(:exit_code)

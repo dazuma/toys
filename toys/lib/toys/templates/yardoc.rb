@@ -44,41 +44,41 @@ module Toys
       ##
       # Create the template settings for the Yardoc template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String,Array<String>] gem_version Version requirements for
+      # @param gem_version [String,Array<String>] Version requirements for
       #     the yard gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param [Array<String>] files An array of globs indicating the files
+      # @param files [Array<String>] An array of globs indicating the files
       #     to document.
-      # @param [Boolean] generate_output Whether to generate output. Setting to
+      # @param generate_output [Boolean] Whether to generate output. Setting to
       #     false causes yardoc to emit warnings/errors but not generate html.
       #     Defaults to true.
-      # @param [Boolean] generate_output_flag Whether to create a flag
+      # @param generate_output_flag [Boolean] Whether to create a flag
       #     `--[no-]output` that can control whether output is generated.
       #     Defaults to false.
-      # @param [String,nil] output_dir Output directory. Defaults to "doc".
-      # @param [Boolean] fail_on_warning Whether the tool should return a
+      # @param output_dir [String,nil] Output directory. Defaults to "doc".
+      # @param fail_on_warning [Boolean] Whether the tool should return a
       #     nonzero error code if any warnings happen. Defaults to false.
-      # @param [Boolean] fail_on_undocumented_objects Whether the tool should
+      # @param fail_on_undocumented_objects [Boolean] Whether the tool should
       #     return a nonzero error code if any objects remain undocumented.
       #     Defaults to false.
-      # @param [Boolean] show_public Show public methods. Defaults to true.
-      # @param [Boolean] show_protected Show protected methods. Defaults to
+      # @param show_public [Boolean] Show public methods. Defaults to true.
+      # @param show_protected [Boolean] Show protected methods. Defaults to
       #     false.
-      # @param [Boolean] show_private Show private methods. Defaults to false.
-      # @param [Boolean] hide_private_tag Hide methods with the `@private` tag.
+      # @param show_private [Boolean] Show private methods. Defaults to false.
+      # @param hide_private_tag [Boolean] Hide methods with the `@private` tag.
       #     Defaults to false.
-      # @param [String,nil] readme Name of the readme file used as the title
+      # @param readme [String,nil] Name of the readme file used as the title
       #     page, or `nil` to use the default.
-      # @param [String,nil] markup Markup style used in documentation. Defaults
+      # @param markup [String,nil] Markup style used in documentation. Defaults
       #     to "rdoc".
-      # @param [String,nil] template Template to use. Defaults to "default".
-      # @param [String,nil] template_path The optional template path to look
+      # @param template [String,nil] Template to use. Defaults to "default".
+      # @param template_path [String,nil] The optional template path to look
       #     for templates in.
-      # @param [String,nil] format The output format for the template. Defaults
+      # @param format [String,nil] The output format for the template. Defaults
       #     to "html".
-      # @param [Array<String>] options Additional options passed to YARD
-      # @param [Array<String>] stats_options Additional options passed to YARD
+      # @param options [Array<String>] Additional options passed to YARD
+      # @param stats_options [Array<String>] Additional options passed to YARD
       #     stats
       #
       def initialize(name: nil,

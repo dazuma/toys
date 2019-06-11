@@ -28,7 +28,7 @@ module Toys
   class WrappableString
     ##
     # Create a wrapped string.
-    # @param [String,Array<String>] string The string or array of string
+    # @param string [String,Array<String>] The string or array of string
     #     fragments
     #
     def initialize(string = "")
@@ -43,7 +43,8 @@ module Toys
 
     ##
     # Concatenates this WrappableString with another WrappableString
-    # @param [WrappableString] other
+    # @param other [WrappableString]
+    # @return [WrappableString]
     #
     def +(other)
       other = WrappableString.new(other) unless other.is_a?(WrappableString)
@@ -52,7 +53,7 @@ module Toys
 
     ##
     # Returns true if the string is empty (i.e. has no fragments)
-    # @return [String]
+    # @return [Boolean]
     #
     def empty?
       @fragments.empty?
@@ -82,8 +83,8 @@ module Toys
     ##
     # Wraps the string to the given width.
     #
-    # @param [Integer,nil] width Width in characters, or `nil` for infinite.
-    # @param [Integer,nil] width2 Width in characters for the second and
+    # @param width [Integer,nil] Width in characters, or `nil` for infinite.
+    # @param width2 [Integer,nil] Width in characters for the second and
     #     subsequent lines, or `nil` to use the same as width.
     # @return [Array<String>] Wrapped lines
     #
@@ -113,9 +114,9 @@ module Toys
     ##
     # Wraps an array of lines to the given width.
     #
-    # @param [Array<WrappableString>] strs Array of strings to wrap.
-    # @param [Integer,nil] width Width in characters, or `nil` for infinite.
-    # @param [Integer,nil] width2 Width in characters for the second and
+    # @param strs [Array<WrappableString>] Array of strings to wrap.
+    # @param width [Integer,nil] Width in characters, or `nil` for infinite.
+    # @param width2 [Integer,nil] Width in characters for the second and
     #     subsequent lines, or `nil` to use the same as width.
     # @return [Array<String>] Wrapped lines
     #
@@ -136,7 +137,7 @@ module Toys
     # treat it as a string or an array of strings and wrap it in a
     # WrappableString.
     #
-    # @param [Toys::WrappableString,String,Array<String>] obj
+    # @param obj [Toys::WrappableString,String,Array<String>]
     # @return [Toys::WrappableString]
     #
     def self.make(obj)
@@ -146,7 +147,7 @@ module Toys
     ##
     # Make the given object an array of WrappableString.
     #
-    # @param [Array<Toys::WrappableString,String,Array<String>>] objs
+    # @param objs [Array<Toys::WrappableString,String,Array<String>>]
     # @return [Array<Toys::WrappableString>]
     #
     def self.make_array(objs)

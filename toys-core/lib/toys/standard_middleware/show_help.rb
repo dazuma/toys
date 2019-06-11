@@ -117,7 +117,7 @@ module Toys
       ##
       # Create a ShowHelp middleware.
       #
-      # @param [Boolean,Array<String>,Proc] help_flags Specify flags to
+      # @param help_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display help. The value may be any of the following:
       #
       #     *  An array of flags.
@@ -125,7 +125,7 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean,Array<String>,Proc] usage_flags Specify flags to
+      # @param usage_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display usage. The value may be any of the following:
       #
       #     *  An array of flags.
@@ -133,7 +133,7 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean,Array<String>,Proc] list_flags Specify flags to
+      # @param list_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display subtool list. The value may be any of the following:
       #
       #     *  An array of flags.
@@ -141,7 +141,7 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean,Array<String>,Proc] recursive_flags Specify flags
+      # @param recursive_flags [Boolean,Array<String>,Proc] Specify flags
       #     to control recursive subtool search. The value may be any of the
       #     following:
       #
@@ -150,7 +150,7 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean,Array<String>,Proc] search_flags Specify flags
+      # @param search_flags [Boolean,Array<String>,Proc] Specify flags
       #     to search subtools for a search term. The value may be any of
       #     the following:
       #
@@ -159,7 +159,7 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean,Array<String>,Proc] show_all_subtools_flags Specify
+      # @param show_all_subtools_flags [Boolean,Array<String>,Proc] Specify
       #     flags to show all subtools, including hidden tools and non-runnable
       #     namespaces. The value may be any of the following:
       #
@@ -168,24 +168,24 @@ module Toys
       #     *  The `false` value for no flags. (Default)
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param [Boolean] default_recursive Whether to search recursively for
+      # @param default_recursive [Boolean] Whether to search recursively for
       #     subtools by default. Default is `false`.
-      # @param [Boolean] default_show_all_subtools Whether to show all subtools
+      # @param default_show_all_subtools [Boolean] Whether to show all subtools
       #     by default. Default is `false`.
-      # @param [Boolean] fallback_execution Cause the tool to display its own
+      # @param fallback_execution [Boolean] Cause the tool to display its own
       #     help text if it is not otherwise runnable. This is mostly useful
       #     for namespaces, which have children are not runnable. Default is
       #     `false`.
-      # @param [Boolean] allow_root_args If the root tool includes flags for
+      # @param allow_root_args [Boolean] If the root tool includes flags for
       #     help or usage, and doesn't otherwise use positional arguments,
       #     then a tool name can be passed as arguments to display help for
       #     that tool.
-      # @param [Boolean] show_source_path Show the source path section. Default
+      # @param show_source_path [Boolean] Show the source path section. Default
       #     is `false`.
-      # @param [Boolean] use_less If the `less` tool is available, and the
+      # @param use_less [Boolean] If the `less` tool is available, and the
       #     output stream is a tty, then use `less` to display help text.
-      # @param [IO] stream Output stream to write to. Default is stdout.
-      # @param [Boolean,nil] styled_output Cause the tool to display help text
+      # @param stream [IO] Output stream to write to. Default is stdout.
+      # @param styled_output [Boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #

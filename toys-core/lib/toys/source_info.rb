@@ -94,8 +94,8 @@ module Toys
     ##
     # Return the absolute path to the given data file or directory.
     #
-    # @param [String] path The relative path to find
-    # @param [nil,:file,:directory] type Type of file system object to find,
+    # @param path [String] The relative path to find
+    # @param type [nil,:file,:directory] Type of file system object to find,
     #     or nil (the default) to return any type.
     # @return [String,nil] Absolute path of the result, or nil if not found.
     #

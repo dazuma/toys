@@ -51,45 +51,47 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::Flag} within the block.
       #
-      # @param [String,Symbol] key The key to use to retrieve the value from
+      # See {Toys::DSL::Tool#flag} for more information and examples.
+      #
+      # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
-      # @param [String...] flags The flags in OptionParser format.
-      # @param [Object] accept An acceptor that validates and/or converts the
+      # @param flags [String...] The flags in OptionParser format.
+      # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, or one of the default acceptors provided by OptionParser.
       #     Optional. If not specified, accepts any value as a string.
-      # @param [Object] default The default value. This is the value that will
+      # @param default [Object] The default value. This is the value that will
       #     be set in the context if this flag is not provided on the command
       #     line. Defaults to `nil`.
-      # @param [Proc,nil] handler An optional handler for setting/updating the
+      # @param handler [Proc,nil] An optional handler for setting/updating the
       #     value. If given, it should take two arguments, the new given value
       #     and the previous value, and it should return the new value that
       #     should be set. The default handler simply replaces the previous
       #     value. i.e. the default is effectively `-> (val, _prev) { val }`.
-      # @param [Object] complete_flags A specifier for shell tab completion
+      # @param complete_flags [Object] A specifier for shell tab completion
       #     for flag names associated with this flag. By default, a
       #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
       #     names as completion candidates. To customize completion, set this
       #     to the name of a previously defined completion, a hash of options
       #     to pass to the constructor for {Toys::Flag::DefaultCompletion}, or
       #     any other spec recognized by {Toys::Completion.create}.
-      # @param [Object] complete_values A specifier for shell tab completion
+      # @param complete_values [Object] A specifier for shell tab completion
       #     for flag values associated with this flag. This is the empty
       #     completion by default. To customize completion, set this to the
       #     name of a previously defined completion, or any spec recognized by
       #     {Toys::Completion.create}.
-      # @param [Boolean] report_collisions Raise an exception if a flag is
+      # @param report_collisions [Boolean] Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
-      # @param [String,Array<String>,Toys::WrappableString] desc Short
+      # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
-      # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+      # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @param [String] display_name A display name for this flag, used in help
+      # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
       # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
       #     configure this flag in a block.

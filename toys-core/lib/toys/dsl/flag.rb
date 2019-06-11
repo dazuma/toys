@@ -51,7 +51,7 @@ module Toys
       # Add flags in OptionParser format. This may be called multiple times,
       # and the results are cumulative.
       #
-      # @param [String...] flags
+      # @param flags [String...]
       # @return [self]
       #
       def flags(*flags)
@@ -63,8 +63,8 @@ module Toys
       # Set the acceptor for this flag's values.
       # See {Toys::Acceptor.create} for recognized formats.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
@@ -77,7 +77,7 @@ module Toys
       ##
       # Set the default value.
       #
-      # @param [Object] default
+      # @param default [Object]
       # @return [self]
       #
       def default(default)
@@ -92,7 +92,7 @@ module Toys
       # should be set. You may pass the handler as a Proc (or an object
       # responding to the `call` method) or you may pass a block.
       #
-      # @param [Proc] handler
+      # @param handler [Proc]
       # @return [self]
       #
       def handler(handler = nil, &block)
@@ -112,8 +112,8 @@ module Toys
       #     (which is {Toys::Flag::DefaultCompletion} with no extra options).
       # *   Any other specification recognized by {Toys::Completion.create}.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def complete_flags(spec = nil, **options, &block)
@@ -129,8 +129,8 @@ module Toys
       # tool or any of its ancestors, or any other specification recognized by
       # {Toys::Completion.create}.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def complete_values(spec = nil, **options, &block)
@@ -144,7 +144,7 @@ module Toys
       # Set whether to raise an exception if a flag is requested that is
       # already in use or marked as disabled.
       #
-      # @param [Boolean] setting
+      # @param setting [Boolean]
       # @return [self]
       #
       def report_collisions(setting)
@@ -156,7 +156,7 @@ module Toys
       # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
       # formats.
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc
+      # @param desc [String,Array<String>,Toys::WrappableString]
       # @return [self]
       #
       def desc(desc)
@@ -169,7 +169,7 @@ module Toys
       # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
       # allowed formats.
       #
-      # @param [String,Array<String>,Toys::WrappableString...] long_desc
+      # @param long_desc [String,Array<String>,Toys::WrappableString...]
       # @return [self]
       #
       def long_desc(*long_desc)
@@ -181,7 +181,7 @@ module Toys
       # Set the group. A group may be set by name or group object. Setting
       # `nil` selects the default group.
       #
-      # @param [String,Symbol,Toys::FlagGroup,nil] group
+      # @param group [String,Symbol,Toys::FlagGroup,nil]
       # @return [self]
       #
       def group(group)
@@ -192,7 +192,7 @@ module Toys
       ##
       # Set the display name. This may be used in help text and error messages.
       #
-      # @param [String] display_name
+      # @param display_name [String]
       # @return [self]
       #
       def display_name(display_name)

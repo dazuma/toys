@@ -110,8 +110,8 @@ functionality at the "top level" of a `.toys.rb` file without including any
 ### Tool-based executables
 
 But perhaps you want your executable to have multiple "tools", similar to other
-familiar executables like git or kubectl. You can include the same `tool`
-blocks, and even nested tools, in your config. Here's an example:
+familiar executables like git or kubectl. You can define tools, including
+nested tools, by writing `tool` blocks in your config. Here's an example:
 
     #!/usr/bin/env ruby
     # frozen_string_literal: true
@@ -198,9 +198,14 @@ Try these runs. Do they behave as you expected?
     ./mycmd example.greet
     ./mycmd example error
 
-The next example modifies the *middleware stack* to effect other kinds of
-behavior change. Toys middleware are objects that alter the behavior of all
-tools in your executable.
+### Configuring middleware
+
+Toys _middleware_ are objects that provide common functionality for all the
+tools in your executable. For example, a middleware adds the `--help` flag to
+your tools by default.
+
+The next example modifies the middleware stack to alter this common tool
+functionality.
 
     #!/usr/bin/env ruby
     # frozen_string_literal: true
@@ -275,7 +280,9 @@ directory, run:
     toys install
 
 Once the gem has successfully installed, you can run the executable, which
-Rubygems should have added to your path.
+Rubygems should have added to your path. (Note: if you are using a ruby
+installation manager, you may need to "rehash" or "reshim" to gain access to
+the executable.)
 
     toys-core-simple-example --whom=Toys
 
@@ -305,7 +312,9 @@ Try it out now. From the `examples/multi-file-gem` directory, run:
     toys install
 
 Once the gem has successfully installed, you can run the executable, which
-Rubygems should have added to your path.
+Rubygems should have added to your path. (Note: if you are using a ruby
+installation manager, you may need to "rehash" or "reshim" to gain access to
+the executable.)
 
     toys-core-multi-file-example greet
 

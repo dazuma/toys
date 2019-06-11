@@ -115,7 +115,7 @@ module Toys
       ##
       # Returns a copy of the given string with all ANSI style codes removed.
       #
-      # @param [String] str Input string
+      # @param str [String] Input string
       # @return [String] String with styles removed
       #
       def self.remove_style_escapes(str)
@@ -125,9 +125,9 @@ module Toys
       ##
       # Create a terminal.
       #
-      # @param [IO,nil] input Input stream.
-      # @param [IO,Logger,nil] output Output stream or logger.
-      # @param [Boolean,nil] styled Whether to output ansi styles. If `nil`, the
+      # @param input [IO,nil] Input stream.
+      # @param output [IO,Logger,nil] Output stream or logger.
+      # @param styled [Boolean,nil] Whether to output ansi styles. If `nil`, the
       #     setting is inferred from whether the output has a tty.
       #
       def initialize(input: $stdin, output: $stdout, styled: nil)
@@ -163,9 +163,10 @@ module Toys
       ##
       # Write a partial line without appending a newline.
       #
-      # @param [String] str The line to write
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      # @param str [String] The line to write
+      # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     partial line.
+      # @return [self]
       #
       def write(str = "", *styles)
         output.write(apply_styles(str, *styles))
@@ -176,9 +177,10 @@ module Toys
       ##
       # Write a line, appending a newline if one is not already present.
       #
-      # @param [String] str The line to write
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      # @param str [String] The line to write
+      # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     entire line.
+      # @return [self]
       #
       def puts(str = "", *styles)
         str = "#{str}\n" unless str.end_with?("\n")
@@ -189,7 +191,8 @@ module Toys
       ##
       # Write a line, appending a newline if one is not already present.
       #
-      # @param [String] str The line to write
+      # @param str [String] The line to write
+      # @return [self]
       #
       def <<(str)
         puts(str)
@@ -197,6 +200,7 @@ module Toys
 
       ##
       # Write a newline and flush the current line.
+      # @return [self]
       #
       def newline
         puts
@@ -205,12 +209,12 @@ module Toys
       ##
       # Ask a question and get a response.
       #
-      # @param [String] prompt Required prompt string.
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      # @param prompt [String] Required prompt string.
+      # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     prompt.
-      # @param [String,nil] default Default value, or `nil` for no default.
+      # @param default [String,nil] Default value, or `nil` for no default.
       #     Uses `nil` if not specified.
-      # @param [:default,String,nil] trailing_text Trailing text appended to
+      # @param trailing_text [:default,String,nil] Trailing text appended to
       #     the prompt, `nil` for none, or `:default` to show the default.
       # @return [String]
       #
@@ -230,10 +234,10 @@ module Toys
       ##
       # Confirm with the user.
       #
-      # @param [String] prompt Prompt string. Defaults to `"Proceed?"`.
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply to the
+      # @param prompt [String] Prompt string. Defaults to `"Proceed?"`.
+      # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     prompt.
-      # @param [Boolean,nil] default Default value, or `nil` for no default.
+      # @param default [Boolean,nil] Default value, or `nil` for no default.
       #     Uses `nil` if not specified.
       # @return [Boolean]
       #
@@ -265,17 +269,18 @@ module Toys
       # performs the long-running task. While the block is executing, a
       # spinner will be displayed.
       #
-      # @param [String] leading_text Optional leading string to display to the
+      # @param leading_text [String] Optional leading string to display to the
       #     left of the spinner. Default is the empty string.
-      # @param [Float] frame_length Length of a single frame, in seconds.
+      # @param frame_length [Float] Length of a single frame, in seconds.
       #     Defaults to {DEFAULT_SPINNER_FRAME_LENGTH}.
-      # @param [Array<String>] frames An array of frames. Defaults to
+      # @param frames [Array<String>] An array of frames. Defaults to
       #     {DEFAULT_SPINNER_FRAMES}.
-      # @param [Symbol,Array<Symbol>] style A terminal style or array of styles
+      # @param style [Symbol,Array<Symbol>] A terminal style or array of styles
       #     to apply to all frames in the spinner. Defaults to empty,
-      # @param [String] final_text Optional final string to display when the
+      # @param final_text [String] Optional final string to display when the
       #     spinner is complete. Default is the empty string. A common practice
       #     is to set this to newline.
+      # @return [Object] The return value of the block.
       #
       def spinner(leading_text: "", final_text: "",
                   frame_length: nil, frames: nil, style: nil)
@@ -330,8 +335,9 @@ module Toys
       # The definition of a style may include any valid style specification,
       # including the symbol names of existing defined styles.
       #
-      # @param [Symbol] name The name for the style
-      # @param [Symbol,String,Array<Integer>...] styles
+      # @param name [Symbol] The name for the style
+      # @param styles [Symbol,String,Array<Integer>...]
+      # @return [self]
       #
       def define_style(name, *styles)
         @named_styles[name] = resolve_styles(*styles)
@@ -344,8 +350,8 @@ module Toys
       # add any ANSI style codes and in fact removes any existing codes. If
       # styles were added, ensures that the string ends with a clear code.
       #
-      # @param [String] str String to style
-      # @param [Symbol,String,Array<Integer>...] styles Styles to apply
+      # @param str [String] String to style
+      # @param styles [Symbol,String,Array<Integer>...] Styles to apply
       # @return [String] The styled string
       #
       def apply_styles(str, *styles)

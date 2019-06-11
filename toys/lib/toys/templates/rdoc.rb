@@ -50,25 +50,25 @@ module Toys
       ##
       # Create the template settings for the Rdoc template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String,Array<String>] gem_version Version requirements for
+      # @param gem_version [String,Array<String>] Version requirements for
       #     the rdoc gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param [Array<String>] files An array of globs indicating the files
+      # @param files [Array<String>] An array of globs indicating the files
       #     to document.
-      # @param [String] output_dir Name of directory to receive html output
+      # @param output_dir [String] Name of directory to receive html output
       #     files. Defaults to {DEFAULT_OUTPUT_DIR}.
-      # @param [String,nil] markup Markup format. Allowed values include
+      # @param markup [String,nil] Markup format. Allowed values include
       #     "rdoc", "rd", and "tomdoc". Default is "rdoc".
-      # @param [String,nil] title Title of RDoc documentation. If `nil`, RDoc
+      # @param title [String,nil] Title of RDoc documentation. If `nil`, RDoc
       #     will use a default title.
-      # @param [String,nil] main Name of the file to use as the main top level
+      # @param main [String,nil] Name of the file to use as the main top level
       #     document. Default is none.
-      # @param [String,nil] template Name of the template to use. If `nil`,
+      # @param template [String,nil] Name of the template to use. If `nil`,
       #     RDoc will use its default template.
-      # @param [String,nil] generator Name of the format generator. If `nil`,
+      # @param generator [String,nil] Name of the format generator. If `nil`,
       #     RDoc will use its default generator.
-      # @param [Array<String>] options Additional options to pass to RDoc.
+      # @param options [Array<String>] Additional options to pass to RDoc.
       #
       def initialize(name: nil,
                      gem_version: nil,

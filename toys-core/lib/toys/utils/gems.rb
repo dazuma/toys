@@ -49,8 +49,8 @@ module Toys
         ##
         # Create a GemfileUpdateNeededError.
         #
-        # @param [String] requirements_text Gems and versions missing.
-        # @param [String] gemfile_path Path to the offending Gemfile.
+        # @param requirements_text [String] Gems and versions missing.
+        # @param gemfile_path [String] Path to the offending Gemfile.
         #
         def initialize(requirements_text, gemfile_path)
           super("Required gem not available in the bundle: #{requirements_text}.\n" \
@@ -62,8 +62,9 @@ module Toys
       # Activate the given gem. If it is not present, attempt to install it (or
       # inform the user to update the bundle).
       #
-      # @param [String] name Name of the gem
-      # @param [String...] requirements Version requirements
+      # @param name [String] Name of the gem
+      # @param requirements [String...] Version requirements
+      # @return [void]
       #
       def self.activate(name, *requirements)
         new.activate(name, *requirements)
@@ -72,12 +73,12 @@ module Toys
       ##
       # Create a new gem activator.
       #
-      # @param [IO] input Input IO
-      # @param [IO] output Output IO
-      # @param [Boolean] suppress_confirm Suppress the confirmation prompt and
+      # @param input [IO] Input IO
+      # @param output [IO] Output IO
+      # @param suppress_confirm [Boolean] Suppress the confirmation prompt and
       #     just use the given `default_confirm` value. Default is false,
       #     indicating the confirmation prompt appears by default.
-      # @param [Boolean] default_confirm Default response for the confirmation
+      # @param default_confirm [Boolean] Default response for the confirmation
       #     prompt. Default is true.
       #
       def initialize(input: $stdin,
@@ -96,8 +97,9 @@ module Toys
       # Activate the given gem. If it is not present, attempt to install it (or
       # inform the user to update the bundle).
       #
-      # @param [String] name Name of the gem
-      # @param [String...] requirements Version requirements
+      # @param name [String] Name of the gem
+      # @param requirements [String...] Version requirements
+      # @return [void]
       #
       def activate(name, *requirements)
         gem(name, *requirements)

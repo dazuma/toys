@@ -135,7 +135,7 @@ module Toys
       ##
       # Create an exec service.
       #
-      # @param [Hash] opts Initial default options.
+      # @param opts [Hash] Initial default options.
       #
       def initialize(opts = {}, &block)
         @default_opts = Opts.new(&block).add(opts)
@@ -144,7 +144,7 @@ module Toys
       ##
       # Set default options
       #
-      # @param [Hash] opts New default options to set
+      # @param opts [Hash] New default options to set
       # @return [self]
       #
       def configure_defaults(opts = {})
@@ -159,8 +159,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. See the section on
+      # @param cmd [String,Array<String>] The command to execute.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -191,8 +191,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. See the section on
+      # @param args [String,Array<String>] The arguments to ruby.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -214,8 +214,8 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. See the section on
+      # @param func [Proc] The proc to call.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -240,8 +240,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String,Array<String>] cmd The command to execute.
-      # @param [Hash] opts The command options. See the section on
+      # @param cmd [String,Array<String>] The command to execute.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -261,8 +261,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String,Array<String>] args The arguments to ruby.
-      # @param [Hash] opts The command options. See the section on
+      # @param args [String,Array<String>] The arguments to ruby.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -282,8 +282,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [Proc] func The proc to call.
-      # @param [Hash] opts The command options. See the section on
+      # @param func [Proc] The proc to call.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -301,8 +301,8 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # @param [String] cmd The shell command to execute.
-      # @param [Hash] opts The command options. See the section on
+      # @param cmd [String] The shell command to execute.
+      # @param opts [Hash] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -476,7 +476,8 @@ module Toys
         # Captures the remaining data in the given stream.
         # After calling this, do not read directly from the stream.
         #
-        # @param [:out,:err] which Which stream to capture
+        # @param which [:out,:err] Which stream to capture
+        # @return [self]
         #
         def capture(which)
           stream = stream_for(which)
@@ -493,6 +494,7 @@ module Toys
         ##
         # Captures the remaining data in the standard output stream.
         # After calling this, do not read directly from the stream.
+        # @return [self]
         #
         def capture_out
           capture(:out)
@@ -501,6 +503,7 @@ module Toys
         ##
         # Captures the remaining data in the standard error stream.
         # After calling this, do not read directly from the stream.
+        # @return [self]
         #
         def capture_err
           capture(:err)
@@ -516,10 +519,11 @@ module Toys
         #
         # After calling this, do not interact directly with the stream.
         #
-        # @param [:in,:out,:err] which Which stream to redirect
-        # @param [IO,StringIO,String,:null] io Where to redirect the stream
-        # @param [Object...] io_args The mode and permissions for opening the
+        # @param which [:in,:out,:err] Which stream to redirect
+        # @param io [IO,StringIO,String,:null] Where to redirect the stream
+        # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to/from a file.
+        # @return [self]
         #
         def redirect(which, io, *io_args)
           io = ::File::NULL if io == :null
@@ -540,6 +544,7 @@ module Toys
               io.close
             end
           end
+          self
         end
 
         ##
@@ -552,9 +557,10 @@ module Toys
         #
         # After calling this, do not interact directly with the stream.
         #
-        # @param [IO,StringIO,String,:null] io Where to redirect the stream
-        # @param [Object...] io_args The mode and permissions for opening the
+        # @param io [IO,StringIO,String,:null] Where to redirect the stream
+        # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting from a file.
+        # @return [self]
         #
         def redirect_in(io, *io_args)
           redirect(:in, io, *io_args)
@@ -570,9 +576,10 @@ module Toys
         #
         # After calling this, do not interact directly with the stream.
         #
-        # @param [IO,StringIO,String,:null] io Where to redirect the stream
-        # @param [Object...] io_args The mode and permissions for opening the
+        # @param io [IO,StringIO,String,:null] Where to redirect the stream
+        # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to a file.
+        # @return [self]
         #
         def redirect_out(io, *io_args)
           redirect(:out, io, *io_args)
@@ -587,9 +594,10 @@ module Toys
         #
         # After calling this, do not interact directly with the stream.
         #
-        # @param [IO,StringIO,String] io Where to redirect the stream
-        # @param [Object...] io_args The mode and permissions for opening the
+        # @param io [IO,StringIO,String] Where to redirect the stream
+        # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to a file.
+        # @return [self]
         #
         def redirect_err(io, *io_args)
           redirect(:err, io, *io_args)
@@ -599,10 +607,12 @@ module Toys
         # Send the given signal to the process. The signal may be specified
         # by name or number.
         #
-        # @param [Integer,String] sig The signal to send.
+        # @param sig [Integer,String] The signal to send.
+        # @return [self]
         #
         def kill(sig)
           ::Process.kill(sig, pid) if pid
+          self
         end
         alias signal kill
 
@@ -618,7 +628,7 @@ module Toys
         ##
         # Wait for the subcommand to complete, and return a result object.
         #
-        # @param [Numeric,nil] timeout The timeout in seconds, or `nil` to
+        # @param timeout [Numeric,nil] The timeout in seconds, or `nil` to
         #     wait indefinitely.
         # @return [Toys::Utils::Exec::Result,nil] The result object, or `nil`
         #     if a timeout occurred.

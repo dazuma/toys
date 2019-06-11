@@ -44,13 +44,13 @@ module Toys
       ##
       # Create the template settings for the Rubocop template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String,Array<String>] gem_version Version requirements for
+      # @param gem_version [String,Array<String>] Version requirements for
       #     the rubocop gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param [Boolean] fail_on_error If true, exits with a nonzero code if
+      # @param fail_on_error [Boolean] If true, exits with a nonzero code if
       #     Rubocop fails. Defaults to true.
-      # @param [Array<String>] options Additional options passed to the Rubocop
+      # @param options [Array<String>] Additional options passed to the Rubocop
       #     CLI.
       #
       def initialize(name: DEFAULT_TOOL_NAME,

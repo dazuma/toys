@@ -135,7 +135,7 @@ module Toys
     # for execution.
     # @private
     #
-    # @param [Hash] data
+    # @param data [Hash]
     #
     def initialize(data)
       @__data = data
@@ -239,7 +239,7 @@ module Toys
     ##
     # Return an option or other piece of data by key.
     #
-    # @param [Symbol] key
+    # @param key [Symbol]
     # @return [Object]
     #
     def [](key)
@@ -251,8 +251,8 @@ module Toys
     ##
     # Set an option or other piece of context data by key.
     #
-    # @param [Symbol] key
-    # @param [Object] value
+    # @param key [Symbol]
+    # @param value [Object]
     #
     def []=(key, value)
       @__data[key] = value
@@ -261,8 +261,9 @@ module Toys
     ##
     # Set an option or other piece of context data by key.
     #
-    # @param [Symbol] key
-    # @param [Object] value
+    # @param key [Symbol]
+    # @param value [Object]
+    # @return [self]
     #
     def set(key, value = nil)
       if key.is_a?(::Hash)
@@ -290,8 +291,8 @@ module Toys
     ##
     # Find the given data file or directory in this tool's search path.
     #
-    # @param [String] path The path to find
-    # @param [nil,:file,:directory] type Type of file system object to find,
+    # @param path [String] The path to find
+    # @param type [nil,:file,:directory] Type of file system object to find,
     #     or nil to return any type.
     # @return [String,nil] Absolute path of the result, or nil if not found.
     #
@@ -302,8 +303,9 @@ module Toys
     ##
     # Exit immediately with the given status code
     #
-    # @param [Integer] code The status code, which should be 0 for no error,
+    # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
+    # @return [void]
     #
     def exit(code = 0)
       throw :result, code
@@ -312,8 +314,9 @@ module Toys
     ##
     # Exit immediately with the given status code
     #
-    # @param [Integer] code The status code, which should be 0 for no error,
+    # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
+    # @return [void]
     #
     def self.exit(code = 0)
       throw :result, code

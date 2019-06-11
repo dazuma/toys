@@ -72,17 +72,17 @@ module Toys
     ##
     # Create a flag definition.
     #
-    # @param [String,Symbol] key The key to use to retrieve the value from
+    # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
-    # @param [Array<String>] flags The flags in OptionParser format. If empty,
+    # @param flags [Array<String>] The flags in OptionParser format. If empty,
     #     a flag will be inferred from the key.
-    # @param [Object] accept An acceptor that validates and/or converts the
+    # @param accept [Object] An acceptor that validates and/or converts the
     #     value. See {Toys::Acceptor.create} for recognized formats. Optional.
     #     If not specified, defaults to {Toys::Acceptor::DEFAULT}.
-    # @param [Object] default The default value. This is the value that will
+    # @param default [Object] The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
-    # @param [Proc,nil,:set,:push] handler An optional handler for
+    # @param handler [Proc,nil,:set,:push] An optional handler for
     #     setting/updating the value. A handler is a proc taking two
     #     arguments, the given value and the previous value, returning the
     #     new value that should be set. You may also specify a predefined
@@ -91,29 +91,29 @@ module Toys
     #     `:push` handler expects the previous value to be an array and
     #     pushes the given value onto it; it should be combined with setting
     #     `default: []` and is intended for "multi-valued" flags.
-    # @param [Object] complete_flags A specifier for shell tab completion for
+    # @param complete_flags [Object] A specifier for shell tab completion for
     #     flag names associated with this flag. By default, a
     #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
     #     names as completion candidates. To customize completion, set this to
     #     a hash of options to pass to the constructor for
     #     {Toys::Flag::DefaultCompletion}, or pass any other spec recognized
     #     by {Toys::Completion.create}.
-    # @param [Object] complete_values A specifier for shell tab completion for
+    # @param complete_values [Object] A specifier for shell tab completion for
     #     flag values associated with this flag. Pass any spec recognized by
     #     {Toys::Completion.create}.
-    # @param [Boolean] report_collisions Raise an exception if a flag is
+    # @param report_collisions [Boolean] Raise an exception if a flag is
     #     requested that is already in use or marked as disabled. Default is
     #     true.
-    # @param [Toys::FlagGroup] group Group containing this flag.
-    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    # @param group [Toys::FlagGroup] Group containing this flag.
+    # @param desc [String,Array<String>,Toys::WrappableString] Short
     #     description for the flag. See {Toys::Tool#desc=} for a description of
     #     allowed formats. Defaults to the empty string.
-    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
     #     Long description for the flag. See {Toys::Tool#long_desc=} for a
     #     description of allowed formats. Defaults to the empty array.
-    # @param [String] display_name A display name for this flag, used in help
+    # @param display_name [String] A display name for this flag, used in help
     #     text and error messages.
-    # @param [Array<String>] used_flags An array of flags already in use.
+    # @param used_flags [Array<String>] An array of flags already in use.
     #
     def self.create(key, flags = [],
                     used_flags: nil, report_collisions: true, accept: nil, handler: nil,
@@ -252,7 +252,7 @@ module Toys
     # the given string matched this flag, whether the match was unique, and
     # other pertinent information.
     #
-    # @param [String] str Flag string to look up
+    # @param str [String] Flag string to look up
     # @return [Toys::Flag::Resolution] Information about the match.
     #
     def resolve(str)
@@ -295,7 +295,7 @@ module Toys
     # string (which will be wrapped), or an array of strings, which will be
     # interpreted as string fragments that will be concatenated and wrapped.
     #
-    # @param [Toys::WrappableString,String,Array<String>] desc
+    # @param desc [Toys::WrappableString,String,Array<String>]
     #
     def desc=(desc)
       @desc = WrappableString.make(desc)
@@ -308,7 +308,7 @@ module Toys
     # string (which will be wrapped), or an array of strings, which will be
     # interpreted as string fragments that will be concatenated and wrapped.
     #
-    # @param [Array<Toys::WrappableString,String,Array<String>>] long_desc
+    # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     #
     def long_desc=(long_desc)
       @long_desc = WrappableString.make_array(long_desc)
@@ -428,7 +428,7 @@ module Toys
 
       ##
       # Parse flag syntax
-      # @param [String] str syntax.
+      # @param str [String] syntax.
       #
       def initialize(str)
         case str
@@ -626,10 +626,10 @@ module Toys
       ##
       # Create a completion given configuration options.
       #
-      # @param [Toys::Flag] flag The flag definition.
-      # @param [Boolean] include_short Whether to include short flags.
-      # @param [Boolean] include_long Whether to include long flags.
-      # @param [Boolean] include_negative Whether to include `--no-*` forms.
+      # @param flag [Toys::Flag] The flag definition.
+      # @param include_short [Boolean] Whether to include short flags.
+      # @param include_long [Boolean] Whether to include long flags.
+      # @param include_negative [Boolean] Whether to include `--no-*` forms.
       #
       def initialize(flag, include_short: true, include_long: true, include_negative: true)
         @flag = flag
@@ -662,7 +662,7 @@ module Toys
       ##
       # Returns candidates for the current completion.
       #
-      # @param [Toys::Completion::Context] context the current completion
+      # @param context [Toys::Completion::Context] the current completion
       #     context including the string fragment.
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #

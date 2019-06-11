@@ -37,78 +37,78 @@ module Toys
     ##
     # Create a CLI.
     #
-    # @param [Logger] logger The logger to use.
+    # @param logger [Logger] The logger to use.
     #     Optional. If not provided, will use a default logger that writes
     #     formatted output to `STDERR`, as defined by
     #     {Toys::CLI.default_logger}.
-    # @param [Integer] base_level The logger level that should correspond
+    # @param base_level [Integer] The logger level that should correspond
     #     to zero verbosity.
     #     Optional. If not provided, defaults to the current level of the
     #     logger (which is often `Logger::WARN`).
-    # @param [Proc,nil] error_handler A proc that is called when an error is
+    # @param error_handler [Proc,nil] A proc that is called when an error is
     #     caught. The proc should take a {Toys::ContextualError} argument and
     #     report the error. It should return an exit code (normally nonzero).
     #     Optional. If not provided, defaults to an instance of
     #     {Toys::CLI::DefaultErrorHandler}, which displays an error message to
     #     `STDERR`.
-    # @param [Toys::Completion::Base] completion A specifier for shell tab
+    # @param completion [Toys::Completion::Base] A specifier for shell tab
     #     completion for the CLI as a whole.
     #     Optional. If not provided, defaults to an instance of
     #     {Toys::CLI::DefaultCompletion}, which delegates completion to the
     #     relevant tool.
     #
-    # @param [Array] middleware_stack An array of middleware that will be used
+    # @param middleware_stack [Array] An array of middleware that will be used
     #     by default for all tools loaded by this CLI.
     #     Optional. If not provided, uses a default set of middleware defined
     #     in {Toys::CLI.default_middleware_stack}. To include no middleware,
     #     pass the empty array explicitly.
-    # @param [Toys::ModuleLookup] mixin_lookup A lookup for well-known mixin
+    # @param mixin_lookup [Toys::ModuleLookup] A lookup for well-known mixin
     #     modules (i.e. with symbol names).
     #     Optional. If not provided, defaults to the set of standard mixins
     #     provided by toys-core, as defined by
     #     {Toys::CLI.default_mixin_lookup}. If you explicitly want no standard
     #     mixins, pass an empty instance of {Toys::ModuleLookup}.
-    # @param [Toys::ModuleLookup] middleware_lookup A lookup for well-known
+    # @param middleware_lookup [Toys::ModuleLookup] A lookup for well-known
     #     middleware classes.
     #     Optional. If not provided, defaults to the set of standard middleware
     #     classes provided by toys-core, as defined by
     #     {Toys::CLI.default_middleware_lookup}. If you explicitly want no
     #     standard middleware, pass an empty instance of
     #     {Toys::ModuleLookup}.
-    # @param [Toys::ModuleLookup] template_lookup A lookup for well-known
+    # @param template_lookup [Toys::ModuleLookup] A lookup for well-known
     #     template classes.
     #     Optional. If not provided, defaults to the set of standard template
     #     classes provided by toys core, as defined by
     #     {Toys::CLI.default_template_lookup}. If you explicitly want no
     #     standard tenokates, pass an empty instance of {Toys::ModuleLookup}.
     #
-    # @param [String] config_dir_name A directory with this name that appears
+    # @param config_dir_name [String] A directory with this name that appears
     #     in the loader path, is treated as a configuration directory whose
     #     contents are loaded into the toys configuration.
     #     Optional. If not provided, toplevel configuration directories are
     #     disabled.
     #     Note: the standard toys executable sets this to `".toys"`.
-    # @param [String] config_file_name A file with this name that appears in
+    # @param config_file_name [String] A file with this name that appears in
     #     the loader path, is treated as a toplevel configuration file whose
     #     contents are loaded into the toys configuration. This does not
     #     include "index" configuration files located within a configuration
     #     directory.
     #     Optional. If not provided, toplevel configuration files are disabled.
     #     Note: the standard toys executable sets this to `".toys.rb"`.
-    # @param [String] index_file_name A file with this name that appears in any
+    # @param index_file_name [String] A file with this name that appears in any
     #     configuration directory is loaded first as a standalone configuration
     #     file. This does not include "toplevel" configuration files outside
     #     configuration directories.
     #     Optional. If not provided, index configuration files are disabled.
     #     Note: the standard toys executable sets this to `".toys.rb"`.
-    # @param [String] preload_file_name A file with this name that appears
+    # @param preload_file_name [String] A file with this name that appears
     #     in any configuration directory is preloaded using `require` before
     #     any tools in that configuration directory are defined. A preload file
     #     includes normal Ruby code, rather than Toys DSL definitions. The
     #     preload file is loaded before any files in a preload directory.
     #     Optional. If not provided, preload files are disabled.
     #     Note: the standard toys executable sets this to `".preload.rb"`.
-    # @param [String] preload_directory_name A directory with this name that
+    # @param preload_directory_name [String] A directory with this name that
     #     appears in any configuration directory is searched for Ruby files,
     #     which are preloaded using `require` before any tools in that
     #     configuration directory are defined. Files in a preload directory
@@ -116,15 +116,15 @@ module Toys
     #     a preload directory are loaded after any standalone preload file.
     #     Optional. If not provided, preload directories are disabled.
     #     Note: the standard toys executable sets this to `".preload"`.
-    # @param [String] data_directory_name A directory with this name that
+    # @param data_directory_name [String] A directory with this name that
     #     appears in any configuration directory is added to the data directory
     #     search path for any tool file in that directory.
     #     Optional. If not provided, data directories are disabled.
     #     Note: the standard toys executable sets this to `".data"`.
     #
-    # @param [String] binary_name The binary name displayed in help text.
+    # @param binary_name [String] The binary name displayed in help text.
     #     Optional. Defaults to the ruby program name.
-    # @param [String] extra_delimiters A string containing characters that can
+    # @param extra_delimiters [String] A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
     #
@@ -165,7 +165,7 @@ module Toys
     # This is sometimes useful for running sub-tools that have to be loaded
     # from a different configuration.
     #
-    # @param [Hash] _opts Unused options that can be used by subclasses.
+    # @param _opts [Hash] Unused options that can be used by subclasses.
     # @return [Toys::CLI]
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
@@ -235,8 +235,8 @@ module Toys
     # directory that defines those tools. For example, the default Toys CLI
     # uses this to load the builtin tools from the "builtins" directory.
     #
-    # @param [String] path A path to add.
-    # @param [Boolean] high_priority Add the config at the head of the priority
+    # @param path [String] A path to add.
+    # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
     # @return [self]
     #
@@ -248,9 +248,9 @@ module Toys
     ##
     # Add a configuration block to the loader.
     #
-    # @param [Boolean] high_priority Add the config at the head of the priority
+    # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
-    # @param [String] name The source name that will be shown in documentation
+    # @param name [String] The source name that will be shown in documentation
     #     for tools defined in this block. If omitted, a default unique string
     #     will be generated.
     # @return [self]
@@ -268,8 +268,8 @@ module Toys
     # working directory, the user's home directory, or some other well-known
     # general configuration-oriented directory such as "/etc".
     #
-    # @param [String] search_path A path to search for configs.
-    # @param [Boolean] high_priority Add the configs at the head of the
+    # @param search_path [String] A path to search for configs.
+    # @param high_priority [Boolean] Add the configs at the head of the
     #     priority list rather than the tail.
     # @return [self]
     #
@@ -291,11 +291,11 @@ module Toys
     # A convenience method that searches the current working directory, and all
     # ancestor directories, for configs to add to the loader.
     #
-    # @param [String] start The first directory to add. Defaults to the current
+    # @param start [String] The first directory to add. Defaults to the current
     #     working directory.
-    # @param [Array<String>] terminate Optional list of directories that should
+    # @param terminate [Array<String>] Optional list of directories that should
     #     terminate the search.
-    # @param [Boolean] high_priority Add the configs at the head of the
+    # @param high_priority [Boolean] Add the configs at the head of the
     #     priority list rather than the tail.
     # @return [self]
     #
@@ -320,10 +320,10 @@ module Toys
     # Run the CLI with the given command line arguments.
     # Handles exceptions using the error handler.
     #
-    # @param [String...] args Command line arguments specifying which tool to
+    # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
-    # @param [Integer] verbosity Initial verbosity. Default is 0.
+    # @param verbosity [Integer] Initial verbosity. Default is 0.
     #
     # @return [Integer] The resulting status code
     #
@@ -347,9 +347,9 @@ module Toys
     # Run the given tool with the given arguments.
     # Does not handle exceptions.
     #
-    # @param [Toys::Tool] tool The tool to run.
-    # @param [Array<String>] args Command line arguments passed to the tool.
-    # @param [Integer] verbosity Initial verbosity. Default is 0.
+    # @param tool [Toys::Tool] The tool to run.
+    # @param args [Array<String>] Command line arguments passed to the tool.
+    # @param verbosity [Integer] Initial verbosity. Default is 0.
     # @return [Integer] The resulting status code
     #
     def run_tool(tool, args, verbosity: 0)
@@ -414,7 +414,7 @@ module Toys
       ##
       # Create an error handler.
       #
-      # @param [IO] output Where to write errors. Default is `$stderr`.
+      # @param output [IO] Where to write errors. Default is `$stderr`.
       #
       def initialize(output: $stderr)
         require "toys/utils/terminal"
@@ -425,7 +425,7 @@ module Toys
       # The error handler routine. Prints out the error message and backtrace,
       # and returns the correct result code.
       #
-      # @param [Exception] error The error that occurred.
+      # @param error [Exception] The error that occurred.
       # @return [Integer] The result code for the execution.
       #
       def call(error)
@@ -480,7 +480,7 @@ module Toys
       ##
       # Returns candidates for the current completion.
       #
-      # @param [Toys::Completion::Context] context the current completion
+      # @param context [Toys::Completion::Context] the current completion
       #     context including the string fragment.
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
@@ -547,7 +547,7 @@ module Toys
       ##
       # Returns a default logger that writes formatted logs to a given stream.
       #
-      # @param [IO] output The stream to output to (defaults to `$stderr`)
+      # @param output [IO] The stream to output to (defaults to `$stderr`)
       # @return [Logger]
       #
       def default_logger(output: nil)

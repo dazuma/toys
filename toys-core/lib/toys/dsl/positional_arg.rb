@@ -48,8 +48,8 @@ module Toys
       # or any of its ancestors, or any other specification recognized by
       # {Toys::Acceptor.create}.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
@@ -62,7 +62,7 @@ module Toys
       ##
       # Set the default value.
       #
-      # @param [Object] default
+      # @param default [Object]
       # @return [self]
       #
       def default(default)
@@ -76,8 +76,8 @@ module Toys
       # tool or any of its ancestors, or any other specification recognized by
       # {Toys::Completion.create}.
       #
-      # @param [Object] spec
-      # @param [Hash] options
+      # @param spec [Object]
+      # @param options [Hash]
       # @return [self]
       #
       def complete(spec = nil, **options, &block)
@@ -90,7 +90,7 @@ module Toys
       ##
       # Set the name of this arg as it appears in help screens.
       #
-      # @param [String] display_name
+      # @param display_name [String]
       # @return [self]
       #
       def display_name(display_name)
@@ -102,7 +102,7 @@ module Toys
       # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
       # formats.
       #
-      # @param [String,Array<String>,Toys::WrappableString] desc
+      # @param desc [String,Array<String>,Toys::WrappableString]
       # @return [self]
       #
       def desc(desc)
@@ -115,7 +115,7 @@ module Toys
       # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
       # allowed formats.
       #
-      # @param [String,Array<String>,Toys::WrappableString...] long_desc
+      # @param long_desc [String,Array<String>,Toys::WrappableString...]
       # @return [self]
       #
       def long_desc(*long_desc)

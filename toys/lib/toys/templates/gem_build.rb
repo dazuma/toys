@@ -38,14 +38,14 @@ module Toys
       ##
       # Create the template settings for the GemBuild template.
       #
-      # @param [String] name Name of the tool to create. Defaults to
+      # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param [String] gem_name Name of the gem to build. If not provided,
+      # @param gem_name [String] Name of the gem to build. If not provided,
       #     defaults to the first gemspec file it finds.
-      # @param [Boolean] push_gem If true, pushes the built gem to rubygems.
-      # @param [Boolean] install_gem If true, installs the built gem locally.
-      # @param [Boolean] tag If true, tags the git repo with the gem version.
-      # @param [Boolean,String] push_tag If truthy, pushes the new tag to
+      # @param push_gem [Boolean] If true, pushes the built gem to rubygems.
+      # @param install_gem [Boolean] If true, installs the built gem locally.
+      # @param tag [Boolean] If true, tags the git repo with the gem version.
+      # @param push_tag [Boolean,String] If truthy, pushes the new tag to
       #     a git remote. You may specify which remote by setting the value to
       #     a string. Otherwise, if the value is simply `true`, the "origin"
       #     remote is used by default.

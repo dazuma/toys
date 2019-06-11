@@ -46,21 +46,21 @@ module Toys
     ##
     # Create a PositionalArg definition.
     #
-    # @param [String,Symbol] key The key to use to retrieve the value from
+    # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
-    # @param [Symbol] type The type of arg. Valid values are `:required`,
+    # @param type [Symbol] The type of arg. Valid values are `:required`,
     #     `:optional`, and `:remaining`.
-    # @param [Object] accept An acceptor that validates and/or converts the
+    # @param accept [Object] An acceptor that validates and/or converts the
     #     value. See {Toys::Acceptor.create} for recognized formats. Optional.
     #     If not specified, defaults to {Toys::Acceptor::DEFAULT}.
-    # @param [Object] complete A specifier for shell tab completion. See
+    # @param complete [Object] A specifier for shell tab completion. See
     #     {Toys::Completion.create} for recognized formats.
-    # @param [String] display_name A name to use for display (in help text and
+    # @param display_name [String] A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
-    # @param [String,Array<String>,Toys::WrappableString] desc Short
+    # @param desc [String,Array<String>,Toys::WrappableString] Short
     #     description for the flag. See {Toys::DSL::Tool#desc} for a
     #     description of the allowed formats. Defaults to the empty string.
-    # @param [Array<String,Array<String>,Toys::WrappableString>] long_desc
+    # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
     #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
     #     a description of the allowed formats. (But note that this param
     #     takes an Array of description lines, rather than a series of
@@ -128,7 +128,7 @@ module Toys
     # string (which will be wrapped), or an array of strings, which will be
     # interpreted as string fragments that will be concatenated and wrapped.
     #
-    # @param [Toys::WrappableString,String,Array<String>] desc
+    # @param desc [Toys::WrappableString,String,Array<String>]
     #
     def desc=(desc)
       @desc = WrappableString.make(desc)
@@ -141,7 +141,7 @@ module Toys
     # string (which will be wrapped), or an array of strings, which will be
     # interpreted as string fragments that will be concatenated and wrapped.
     #
-    # @param [Array<Toys::WrappableString,String,Array<String>>] long_desc
+    # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     #
     def long_desc=(long_desc)
       @long_desc = WrappableString.make_array(long_desc)
