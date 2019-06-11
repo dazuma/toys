@@ -32,12 +32,13 @@ Details:
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Flags with explicit value-less syntax are no longer given a value even if they specify a default and/or acceptor.
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
-* CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects.
+* CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The root tool no longer defines remaining_args.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.
 * IMPROVED: Error messages for flag groups are more complete.
 * IMPROVED: All context data, including well-known data, is available to be modified by flags and args.
+* FIXED: Flags with optional values are properly set to `true` (rather than left at `nil`) if no value is provided.
 * FIXED: Prevented toys-core from being ousted from the load path if a toys file invoked bundler setup.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.

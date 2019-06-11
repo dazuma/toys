@@ -719,6 +719,107 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::Flag} within the block.
       #
+      # ## Flag syntax
+      #
+      # The flags themselves should be provided in OptionParser form. Following
+      # are examples of valid syntax.
+      #
+      # *   `-a` : A short boolean switch. When this appears as an argument,
+      #     the value is set to `true`.
+      # *   `--abc` : A long boolean switch. When this appears as an argument,
+      #     the value is set to `true`.
+      # *   `-aVAL` or `-a VAL` : A short flag that takes a required value.
+      #     These two forms are treated identically. If this argument appears
+      #     with a value attached (e.g. `-afoo`), the attached string (e.g.
+      #     `"foo"`) is taken as the value. Otherwise, the following argument
+      #     is taken as the value (e.g. for `-a foo`, the value is set to
+      #     `"foo"`.) The following argument is treated as the value even if it
+      #     looks like a flag (e.g. `-a -a` causes the string `"-a"` to be
+      #     taken as the value.)
+      # *   `-a[VAL]` : A short flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `-afoo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, the value
+      #     is set to `true`. The following argument is never interpreted as
+      #     the value. (Compare with `-a [VAL]`.)
+      # *   `-a [VAL]` : A short flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `-afoo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, if the
+      #     following argument does not look like a flag (i.e. it does not
+      #     begin with a hyphen), it is taken as the value. (e.g. `-a foo`
+      #     causes the string `"foo"` to be taken as the value.). If there is
+      #     no following argument, or the following argument looks like a flag,
+      #     the value is set to `true`. (Compare with `-a[VAL]`.)
+      # *   `--abc=VAL` or `--abc VAL` : A long flag that takes a required
+      #     value. These two forms are treated identically. If this argument
+      #     appears with a value attached (e.g. `--abc=foo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
+      #     following argument is taken as the value (e.g. for `--abc foo`, the
+      #     value is set to `"foo"`.) The following argument is treated as the
+      #     value even if it looks like a flag (e.g. `--abc --abc` causes the
+      #     string `"--abc"` to be taken as the value.)
+      # *   `--abc[=VAL]` : A long flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `--abc=foo`), the
+      #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,
+      #     the value is set to `true`. The following argument is never
+      #     interpreted as the value. (Compare with `--abc [VAL]`.)
+      # *   `--abc [VAL]` : A long flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `--abc=foo`), the
+      #     attached string (e.g. `"foo"`) is taken as the value. Otherwise, if
+      #     the following argument does not look like a flag (i.e. it does not
+      #     begin with a hyphen), it is taken as the value. (e.g. `--abc foo`
+      #     causes the string `"foo"` to be taken as the value.). If there is
+      #     no following argument, or the following argument looks like a flag,
+      #     the value is set to `true`. (Compare with `--abc=[VAL]`.)
+      # *   `--[no-]abc` : A long boolean switch that can be turned either on
+      #     or off. This effectively creates two flags, `--abc` which sets the
+      #     value to `true`, and `--no-abc` which sets the falue to `false`.
+      #
+      # ## Default flag syntax
+      #
+      # If no flag syntax strings are provided, a default syntax will be
+      # inferred based on the key and other options.
+      #
+      # Specifically, if the key has one character, then that character will be
+      # chosen as a short flag. If the key has multiple characters, a long flag
+      # will be generated.
+      #
+      # Furthermore, if a custom completion, a non-boolean acceptor, or a
+      # non-boolean default value is provided in the options, then the flag
+      # will be considered to take a value. Otherwise, it will be considered to
+      # be a boolean switch.
+      #
+      # For example, the following pairs of flags are identical:
+      #
+      #     flag :a
+      #     flag :a, "-a"
+      #
+      #     flag :abc_def
+      #     flag :abc_def, "--abc-def"
+      #
+      #     flag :number, accept: Integer
+      #     flag :number, "--number=VAL", accept: Integer
+      #
+      # ## More examples
+      #
+      # A flag that sets its value to the number of times it appears on the
+      # command line:
+      #
+      #     flag :verbose, "-v", "--verbose",
+      #          default: 0, handler: ->(_val, count) { count + 1 }
+      #
+      # An example using block form:
+      #
+      #     flag :shout do
+      #       flags "-s", "--shout"
+      #       default false
+      #       desc "Say it louder"
+      #       long_desc "This flag says it lowder.",
+      #                 "You might use this when people can't hear you.",
+      #                 "",
+      #                 "Example:",
+      #                 ["    toys say --shout hello"]
+      #     end
+      #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
       # @param [String...] flags The flags in OptionParser format.
@@ -802,6 +903,19 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
       #
+      # ## Example
+      #
+      # This tool "moves" something from a source to destination, and takes two
+      # required arguments:
+      #
+      #     tool "mv" do
+      #       required_arg :source
+      #       required_arg :dest
+      #       def run
+      #         puts "moving from #{source} to #{dest}..."
+      #       end
+      #     end
+      #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
       # @param [Object] accept An acceptor that validates and/or converts the
@@ -854,6 +968,20 @@ module Toys
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
+      #
+      # ## Example
+      #
+      # This tool creates a "link" to a given target. The link location is
+      # optional; if it is not given, it is inferred from the target.
+      #
+      #     tool "ln" do
+      #       required_arg :target
+      #       optional_arg :location
+      #       def run
+      #         loc = location || File.basename(target)
+      #         puts "linking to #{target} from #{loc}..."
+      #       end
+      #     end
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.
@@ -909,6 +1037,21 @@ module Toys
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
+      #
+      # ## Example
+      #
+      # This tool displays a "list" of the given directories. If no directories
+      # ar given, lists the current directory.
+      #
+      #     tool "ln" do
+      #       remaining_args :directories
+      #       def run
+      #         dirs = directories.empty? ? [Dir.pwd] : directories
+      #         dirs.each do |dir|
+      #           puts "Listing directory #{dir}..."
+      #         end
+      #       end
+      #     end
       #
       # @param [String,Symbol] key The key to use to retrieve the value from
       #     the execution context.

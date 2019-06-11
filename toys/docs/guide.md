@@ -2336,7 +2336,7 @@ To define an alias, use the `alias_tool` directive:
     alias_tool "t", "test"
 
 You may create an alias of a subtool, but the alias must have the same parent
-(namespace) tool as the target tool. For example:
+(namespace) as the target tool. For example:
 
     tool "gem" do
       tool "test" do
@@ -2451,6 +2451,7 @@ simplified excerpt from the implementation that tool:
         # the "flags" to pass to them.
         commands.each do
           # ...
+        end
       end
     end
 
@@ -2829,7 +2830,10 @@ You can also remove the completion logic from the current shell:
 
     $(toys system bash-completion remove)
 
-At this time, bash is the only supported shell.
+At this time, bash is the only shell that is supported directly. If you are
+using zsh, however, you can use the `bashcompinit` function to load the toys
+bash completion (as well as other bash-based completions). This _mostly_ works,
+with a few caveats. Native zsh completion is on the future roadmap.
 
 ## Writing your own CLI using Toys
 

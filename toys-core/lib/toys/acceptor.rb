@@ -138,7 +138,7 @@ module Toys
       #     context data.
       #
       def convert(str, *extra) # rubocop:disable Lint/UnusedMethodArgument
-        str
+        str.nil? ? true : str
       end
 
       ##
@@ -157,10 +157,10 @@ module Toys
 
     ##
     # The default acceptor. Corresponds to the well-known acceptor for
-    # `NilClass`.
+    # `Object`.
     # @return [Toys::Acceptor::Base]
     #
-    DEFAULT = Base.new(type_desc: "string", well_known_spec: ::NilClass)
+    DEFAULT = Base.new(type_desc: "string", well_known_spec: ::Object)
 
     ##
     # An acceptor that uses a simple function to validate and convert input.
@@ -519,8 +519,8 @@ module Toys
 
       def standard_well_knowns
         @standard_well_knowns ||= {
-          ::Object => build_object,
-          ::NilClass => DEFAULT,
+          ::Object => DEFAULT,
+          ::NilClass => build_nil,
           ::String => build_string,
           ::Integer => build_integer,
           ::Float => build_float,
@@ -541,10 +541,8 @@ module Toys
         }
       end
 
-      def build_object
-        Simple.new(type_desc: "string", well_known_spec: ::Object) do |s|
-          s.nil? ? true : s
-        end
+      def build_nil
+        Simple.new(type_desc: "string", well_known_spec: ::NilClass) { |s| s }
       end
 
       def build_string

@@ -358,17 +358,17 @@ describe Toys::ArgParser do
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when the value is in a separate arg" do
+        it "goes to true when the value is in a separate arg" do
           arg_parser.parse(["--aa", "hoho"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: ["hoho"]}, arg_parser.data)
+          assert_data_includes({a: true, r: ["hoho"]}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when no more args are available" do
+        it "goes to true when no more args are available" do
           arg_parser.parse(["--aa"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: true, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -393,17 +393,17 @@ describe Toys::ArgParser do
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil if the next separate arg looks like a flag" do
+        it "goes to true if the next separate arg looks like a flag" do
           arg_parser.parse(["--aa", "--"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: true, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when no more args are available" do
+        it "goes to true when no more args are available" do
           arg_parser.parse(["--aa"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: true, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -429,25 +429,25 @@ describe Toys::ArgParser do
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when the value is in a separate arg" do
+        it "goes to true when the value is in a separate arg" do
           arg_parser.parse(["-a", "hoho"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: ["hoho"]}, arg_parser.data)
+          assert_data_includes({a: true, r: ["hoho"]}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when at the end of a squash and the value is in a separate arg" do
+        it "goes to true when at the end of a squash and the value is in a separate arg" do
           tool.add_flag(:h, ["-h"])
           arg_parser.parse(["-ha", "hoho"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: ["hoho"], h: true}, arg_parser.data)
+          assert_data_includes({a: true, r: ["hoho"], h: true}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when no more args are available" do
+        it "goes to true when no more args are available" do
           arg_parser.parse(["-a"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: true, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end
@@ -488,10 +488,10 @@ describe Toys::ArgParser do
           assert_empty(arg_parser.errors)
         end
 
-        it "goes to nil when no more args are available" do
+        it "goes to true when no more args are available" do
           arg_parser.parse(["-a"])
           arg_parser.finish
-          assert_data_includes({a: nil, r: []}, arg_parser.data)
+          assert_data_includes({a: true, r: []}, arg_parser.data)
           assert_empty(arg_parser.errors)
         end
       end

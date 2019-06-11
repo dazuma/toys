@@ -25,12 +25,13 @@ Other notable changes:
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default and/or acceptor.
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
-* CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects.
+* CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The help middleware no longer defines remaining_args on the root tool.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
 * IMPROVED: Error messages for flag groups are more complete.
 * IMPROVED: All context data, including well-known data, is available to be modified by flags and args.
+* FIXED: Flags with optional values are properly set to `true` (rather than left at `nil`) if no value is provided.
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 * FIXED: The `--usage` help flag now honors `--all` and `--no-recursive`.
