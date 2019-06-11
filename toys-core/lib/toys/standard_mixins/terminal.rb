@@ -62,7 +62,7 @@ module Toys
       end
 
       ##
-      # Returns a tool-wide terminal instance
+      # A tool-wide terminal instance
       # @return [Toys::Utils::Terminal]
       #
       def terminal

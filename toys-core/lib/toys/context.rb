@@ -142,16 +142,18 @@ module Toys
     end
 
     ##
-    # Return the raw arguments passed to the tool, as an array of strings.
+    # The raw arguments passed to the tool, as an array of strings.
     # This does not include the tool name itself.
-    # @return [Array[String]]
+    #
+    # @return [Array<String>]
     #
     def args
       @__data[Key::ARGS]
     end
 
     ##
-    # Return the name of the binary that was executed.
+    # The name of the binary that was executed.
+    #
     # @return [String]
     #
     def binary_name
@@ -159,7 +161,8 @@ module Toys
     end
 
     ##
-    # Return the currently running CLI.
+    # The currently running CLI.
+    #
     # @return [Toys::CLI]
     #
     def cli
@@ -171,16 +174,17 @@ module Toys
     # to the directory containing the toys config directory structure being
     # read, but it may be changed by setting a different context directory
     # for the tool.
-    # May return nil if there is no context.
     #
-    # @return [String,nil] Context directory
+    # @return [String] Context directory path
+    # @return [nil] if there is no context.
     #
     def context_directory
       @__data[Key::CONTEXT_DIRECTORY]
     end
 
     ##
-    # Return the active loader that can be used to get other tools.
+    # The active loader that can be used to get other tools.
+    #
     # @return [Toys::Loader]
     #
     def loader
@@ -188,7 +192,8 @@ module Toys
     end
 
     ##
-    # Return the logger for this execution.
+    # The logger for this execution.
+    #
     # @return [Logger]
     #
     def logger
@@ -196,7 +201,8 @@ module Toys
     end
 
     ##
-    # Return the tool being executed.
+    # The tool being executed.
+    #
     # @return [Toys::Tool]
     #
     def tool
@@ -204,15 +210,17 @@ module Toys
     end
 
     ##
-    # Return the name of the tool being executed, as an array of strings.
-    # @return [Array[String]]
+    # The full name of the tool being executed, as an array of strings.
+    #
+    # @return [Array<String>]
     #
     def tool_name
       @__data[Key::TOOL_NAME]
     end
 
     ##
-    # Return the source of the tool being executed.
+    # The source of the tool being executed.
+    #
     # @return [Toys::SourceInfo]
     #
     def tool_source
@@ -220,8 +228,8 @@ module Toys
     end
 
     ##
-    # Return a (possibly empty) array of errors detected during argument
-    # parsing.
+    # The (possibly empty) array of errors detected during argument parsing.
+    #
     # @return [Array<Toys::ArgParser::UsageError>]
     #
     def usage_errors
@@ -229,7 +237,8 @@ module Toys
     end
 
     ##
-    # Return the current verbosity setting as an integer.
+    # The current verbosity setting as an integer.
+    #
     # @return [Integer]
     #
     def verbosity
@@ -237,7 +246,7 @@ module Toys
     end
 
     ##
-    # Return an option or other piece of data by key.
+    # Fetch an option or other piece of data by key.
     #
     # @param key [Symbol]
     # @return [Object]
@@ -275,10 +284,10 @@ module Toys
     end
 
     ##
-    # Returns the subset of the context that uses string or symbol keys. By
-    # convention, this includes keys that are set by tool flags and arguments,
-    # but does not include well-known context values such as verbosity or
-    # private context values used by middleware or mixins.
+    # The subset of the context that uses string or symbol keys. By convention,
+    # this includes keys that are set by tool flags and arguments, but does not
+    # include well-known context values such as verbosity or private context
+    # values used by middleware or mixins.
     #
     # @return [Hash]
     #
@@ -294,7 +303,9 @@ module Toys
     # @param path [String] The path to find
     # @param type [nil,:file,:directory] Type of file system object to find,
     #     or nil to return any type.
-    # @return [String,nil] Absolute path of the result, or nil if not found.
+    #
+    # @return [String] Absolute path of the result
+    # @return [nil] if the data was not found.
     #
     def find_data(path, type: nil)
       @__data[Key::TOOL_SOURCE].find_data(path, type: type)

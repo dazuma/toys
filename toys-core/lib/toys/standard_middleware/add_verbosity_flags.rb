@@ -71,6 +71,7 @@ module Toys
 
       ##
       # Configure the tool flags.
+      # @private
       #
       def config(tool, _loader)
         unless tool.argument_parsing_disabled?

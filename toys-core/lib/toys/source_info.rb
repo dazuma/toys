@@ -46,58 +46,70 @@ module Toys
     end
 
     ##
-    # Return the parent SourceInfo, or nil if this is the root.
-    # @return [Toys::SourceInfo,nil]
+    # The parent of this SourceInfo.
+    #
+    # @return [Toys::SourceInfo] The parent.
+    # @return [nil] if this SourceInfo is the root.
     #
     attr_reader :parent
 
     ##
-    # Return the context directory path (normally the directory containing
-    # the toplevel toys file or directory). May return nil if there is no
-    # context (e.g. the tool is being defined from a block).
-    # @return [String,nil]
+    # The context directory path (normally the directory containing the
+    # toplevel toys file or directory).
+    #
+    # @return [String] The context directory path.
+    # @return [nil] if there is no context directory (perhaps because the tool
+    #     is being defined from a block)
     #
     attr_reader :context_directory
 
     ##
-    # Return the source, which may be a path or a proc.
-    # @return [String,Proc]
+    # The source, which may be a path or a proc.
+    #
+    # @return [String] Path to the source file or directory.
+    # @return [Proc] The block serving as the source.
     #
     attr_reader :source
 
     ##
     # Return the type of source.
+    #
     # @return [:file,:directory,:proc]
     #
     attr_reader :source_type
 
     ##
-    # Return the path of the current source file or directory, or nil if this
-    # source is not a file system path.
-    # @return [String,nil]
+    # The path of the current source file or directory.
+    #
+    # @return [String] The source path
+    # @return [nil] if this source is not a file system path.
     #
     attr_reader :source_path
 
     ##
-    # Return the source proc, or nil if this source is not a proc.
-    # @return [Proc,nil]
+    # The source proc.
+    #
+    # @return [Proc] The source proc
+    # @return [nil] if this source is not a proc.
     #
     attr_reader :source_proc
 
     ##
-    # Return the user-visible name of this source.
+    # The user-visible name of this source.
+    #
     # @return [String]
     #
     attr_reader :source_name
     alias to_s source_name
 
     ##
-    # Return the absolute path to the given data file or directory.
+    # Locate the given data file or directory and return an absolute path.
     #
     # @param path [String] The relative path to find
     # @param type [nil,:file,:directory] Type of file system object to find,
     #     or nil (the default) to return any type.
-    # @return [String,nil] Absolute path of the result, or nil if not found.
+    # @return [String] Absolute path of the resulting data.
+    # @return [nil] if the data was not found.
     #
     def find_data(path, type: nil)
       if @data_dir

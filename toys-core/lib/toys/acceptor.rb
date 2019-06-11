@@ -85,7 +85,8 @@ module Toys
       # example, the acceptor object that corresponds to `Integer` will return
       # `Integer` from this attribute.
       #
-      # @return [Object,nil]
+      # @return [Object] the well-known acceptor
+      # @return [nil] if there is no corresponding well-known acceptor
       #
       attr_reader :well_known_spec
 
@@ -192,6 +193,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to use the given function.
+      # @private
       #
       def match(str)
         result = @function.call(str) rescue REJECT # rubocop:disable Style/RescueModifier
@@ -201,6 +203,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#convert} to use the given function's
       # result.
+      # @private
       #
       def convert(_str, result)
         result
@@ -244,6 +247,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to use the given regex.
+      # @private
       #
       def match(str)
         str.nil? ? [nil] : @regex.match(str)
@@ -251,6 +255,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#convert} to use the given converter.
+      # @private
       #
       def convert(str, *extra)
         @converter ? @converter.call(str, *extra) : str
@@ -274,7 +279,7 @@ module Toys
       ##
       # Create an acceptor.
       #
-      # @param values [Array] Valid values.
+      # @param values [Array<Object>] Valid values.
       # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
       # @param well_known_spec [Object] The well-known acceptor spec associated
@@ -286,7 +291,14 @@ module Toys
       end
 
       ##
+      # The array of enum values.
+      # @return [Array<Object>]
+      #
+      attr_reader :values
+
+      ##
       # Overrides {Toys::Acceptor::Base#match} to find the value.
+      # @private
       #
       def match(str)
         str.nil? ? [nil, nil] : @values.find { |s, _e| s == str }
@@ -295,6 +307,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#convert} to return the actual enum
       # element.
+      # @private
       #
       def convert(_str, elem)
         elem
@@ -303,6 +316,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#suggestions} to return close matches
       # from the enum.
+      # @private
       #
       def suggestions(str)
         Compat.suggestions(str, @values.map(&:first))
@@ -425,8 +439,8 @@ module Toys
       #
       # @param spec [Object] A well-known acceptor specification, such as
       #     `String`, `Integer`, `Array`, `OptionParser::DecimalInteger`, etc.
-      # @return [Toys::Acceptor::Base,nil] The corresponding Acceptor object,
-      #     or nil if not found.
+      # @return [Toys::Acceptor::Base] The corresponding Acceptor object
+      # @return [nil] if the given standard acceptor was not recognized.
       #
       def lookup_well_known(spec)
         result = standard_well_knowns[spec]

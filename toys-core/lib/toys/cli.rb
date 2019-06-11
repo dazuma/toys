@@ -503,7 +503,7 @@ module Toys
       # *  {Toys::StandardMiddleware::AddVerbosityFlags} adding the `--verbose`
       #    and `--quiet` flags for managing the logger level
       #
-      # @return [Array]
+      # @return [Array<Toys::Middleware>]
       #
       def default_middleware_stack
         [

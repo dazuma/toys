@@ -154,77 +154,107 @@ module Toys
     attr_reader :default
 
     ##
-    # Returns the short description string.
+    # The short description string.
+    #
+    # When reading, this is always returned as a {Toys::WrappableString}.
+    #
+    # When setting, the description may be provided as any of the following:
+    # *   A {Toys::WrappableString}.
+    # *   A normal String, which will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String, which will be transformed into a
+    #     {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Toys::WrappableString]
     #
     attr_reader :desc
 
     ##
-    # Returns the long description strings as an array.
+    # The long description strings.
+    #
+    # When reading, this is returned as an Array of {Toys::WrappableString}
+    # representing the lines in the description.
+    #
+    # When setting, the description must be provided as an Array where _each
+    # element_ may be any of the following:
+    # *   A {Toys::WrappableString} representing one line.
+    # *   A normal String representing a line. This will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String representing a line. This will be transformed into
+    #     a {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Array<Toys::WrappableString>]
     #
     attr_reader :long_desc
 
     ##
-    # Returns the handler for setting/updating the value.
+    # The handler for setting/updating the value.
     # @return [Proc]
     #
     attr_reader :handler
 
     ##
-    # Returns the proc that determines shell completions for the flag.
+    # The proc that determines shell completions for the flag.
     # @return [Proc,Toys::Completion::Base]
     #
     attr_reader :flag_completion
 
     ##
-    # Returns the proc that determines shell completions for the value.
+    # The proc that determines shell completions for the value.
     # @return [Proc,Toys::Completion::Base]
     #
     attr_reader :value_completion
 
     ##
-    # The type of flag. Possible values are `:boolean` for a simple boolean
-    # switch, or `:value` for a flag that sets a value.
-    # @return [:boolean,:value]
+    # The type of flag.
+    #
+    # @return [:boolean] if the flag is a simple boolean switch
+    # @return [:value] if the flag sets a value
     #
     attr_reader :flag_type
 
     ##
-    # The type of value. Set to `:required` or `:optional` if the flag type
-    # is `:value`. Otherwise set to `nil`.
-    # @return [:required,:optional,nil]
+    # The type of value.
+    #
+    # @return [:required] if the flag type is `:value` and the value is
+    #     required.
+    # @return [:optional] if the flag type is `:value` and the value is
+    #     optional.
+    # @return [nil] if the flag type is not `:value`.
     #
     attr_reader :value_type
 
     ##
-    # The string label for the value as it should display in help, or `nil`
-    # if the flag type is not `:value`.
-    # @return [String,nil]
+    # The string label for the value as it should display in help.
+    # @return [String] The label
+    # @return [nil] if the flag type is not `:value`.
     #
     attr_reader :value_label
 
     ##
-    # The value delimiter, which may be `""`, `" "`, or `"="`. Set to `nil`
-    # if the flag type is not `:value`.
-    # @return [String,nil]
+    # The value delimiter, which may be `""`, `" "`, or `"="`.
+    #
+    # @return [String] The delimiter
+    # @return [nil] if the flag type is not `:value`.
     #
     attr_reader :value_delim
 
     ##
-    # Returns the display name of this flag.
+    # The display name of this flag.
     # @return [String]
     #
     attr_reader :display_name
 
     ##
-    # Returns a string that can be used to sort this flag
+    # A string that can be used to sort this flag
     # @return [String]
     #
     attr_reader :sort_str
 
     ##
-    # Returns an array of Flag::Syntax including only short (single dash) flags
+    # An array of Flag::Syntax including only short (single dash) flags.
     # @return [Array<Flag::Syntax>]
     #
     def short_flag_syntax
@@ -232,7 +262,7 @@ module Toys
     end
 
     ##
-    # Returns an array of Flag::Syntax including only long (double-dash) flags
+    # An array of Flag::Syntax including only long (double-dash) flags.
     # @return [Array<Flag::Syntax>]
     #
     def long_flag_syntax
@@ -240,7 +270,7 @@ module Toys
     end
 
     ##
-    # Returns the list of all effective flags used.
+    # The list of all effective flags used.
     # @return [Array<String>]
     #
     def effective_flags
@@ -272,16 +302,17 @@ module Toys
     end
 
     ##
-    # Returns a list of canonical flag syntax strings.
-    # @return [Array]
+    # A list of canonical flag syntax strings.
+    #
+    # @return [Array<String>]
     #
     def canonical_syntax_strings
       @canonical_syntax_strings ||= flag_syntax.map(&:canonical_str)
     end
 
     ##
-    # Returns true if this flag is active. That is, it has a nonempty
-    # flags list.
+    # Whether this flag is active--that is, it has a nonempty flags list.
+    #
     # @return [Boolean]
     #
     def active?
@@ -291,9 +322,7 @@ module Toys
     ##
     # Set the short description string.
     #
-    # The description may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#desc} for details.
     #
     # @param desc [Toys::WrappableString,String,Array<String>]
     #
@@ -304,9 +333,7 @@ module Toys
     ##
     # Set the long description strings.
     #
-    # Each string may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#long_desc} for details.
     #
     # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     #

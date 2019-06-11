@@ -165,9 +165,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec(cmd, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
@@ -197,9 +198,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec_ruby(args, opts = {}, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
@@ -220,9 +222,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec_proc(func, opts = {}, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
@@ -428,47 +431,55 @@ module Toys
         end
 
         ##
-        # Return the subcommand's name.
+        # The subcommand's name.
         # @return [Object]
         #
         attr_reader :name
 
         ##
-        # Return the subcommand's standard input stream (which can be written
-        # to), if the command was configured with `in: :controller`.
-        # Returns `nil` otherwise.
-        # @return [IO,nil]
+        # The subcommand's standard input stream (which can be written to).
+        #
+        # @return [IO] if the command was configured with `in: :controller`
+        # @return [nil] if the command was not configured with
+        #     `in: :controller`
         #
         attr_reader :in
 
         ##
-        # Return the subcommand's standard output stream (which can be read
-        # from), if the command was configured with `out: :controller`.
-        # Returns `nil` otherwise.
-        # @return [IO,nil]
+        # The subcommand's standard output stream (which can be read from).
+        #
+        # @return [IO] if the command was configured with `out: :controller`
+        # @return [nil] if the command was not configured with
+        #     `out: :controller`
         #
         attr_reader :out
 
         ##
-        # Return the subcommand's standard error stream (which can be read
-        # from), if the command was configured with `err: :controller`.
-        # Returns `nil` otherwise.
-        # @return [IO,nil]
+        # The subcommand's standard error stream (which can be read from).
+        #
+        # @return [IO] if the command was configured with `err: :controller`
+        # @return [nil] if the command was not configured with
+        #     `err: :controller`
         #
         attr_reader :err
 
         ##
-        # Returns the process ID, or `nil` if a process couldn't be started.
+        # The process ID.
+        #
         # Exactly one of `exception` and `pid` will be non-nil.
-        # @return [Integer,nil]
+        #
+        # @return [Integer] if the process start was successful
+        # @return [nil] if the process could not be started.
         #
         attr_reader :pid
 
         ##
-        # Returns the exception raised if a process couldn't be started, or
-        # `nil` if the process was successfully started.
+        # The exception raised when the process failed to start.
+        #
         # Exactly one of `exception` and `pid` will be non-nil.
-        # @return [Exception,nil]
+        #
+        # @return [Exception] if the process failed to start.
+        # @return [nil] if the process start was successful.
         #
         attr_reader :exception
 
@@ -630,8 +641,8 @@ module Toys
         #
         # @param timeout [Numeric,nil] The timeout in seconds, or `nil` to
         #     wait indefinitely.
-        # @return [Toys::Utils::Exec::Result,nil] The result object, or `nil`
-        #     if a timeout occurred.
+        # @return [Toys::Utils::Exec::Result] The result object
+        # @return [nil] if a timeout occurred.
         #
         def result(timeout: nil)
           return nil if @wait_thread && !@wait_thread.join(timeout)

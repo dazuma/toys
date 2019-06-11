@@ -45,6 +45,7 @@ module Toys
       # @param value [String] The value that was rejected.
       # @param suggestions [Array<String>,nil] An array of suggestions from
       #     DidYouMean, or nil if not applicable.
+      #
       def initialize(message, name: nil, value: nil, suggestions: nil)
         @message = message
         @name = name
@@ -72,8 +73,10 @@ module Toys
       attr_reader :value
 
       ##
-      # An array of suggestions from DidYouMean, or nil if not applicable.
-      # @return [Array<String>,nil]
+      # An array of suggestions from DidYouMean.
+      #
+      # @return [Array<String>] array of suggestions
+      # @return [nil] if suggestions are not applicable to this error
       #
       attr_reader :suggestions
 
@@ -330,14 +333,15 @@ module Toys
 
     ##
     # An array of parse error messages.
-    # @return [Array<String>]
+    # @return [Array<Toys::ArgParser::UsageError>]
     #
     attr_reader :errors
 
     ##
-    # The current flag definition whose value is still pending, or `nil` if
-    # there is no pending flag.
-    # @return [Toys::Flag,nil]
+    # The current flag definition whose value is still pending
+    #
+    # @return [Toys::Flag] The pending flag definition
+    # @return [nil] if there is no pending flag
     #
     attr_reader :active_flag_def
 
@@ -356,9 +360,10 @@ module Toys
     alias finished? finished
 
     ##
-    # The argument definition that will be applied to the next argument, or
-    # `nil` if all arguments have been filled.
-    # @return [Toys::PositionalArg,nil]
+    # The argument definition that will be applied to the next argument.
+    #
+    # @return [Toys::PositionalArg] The next argument definition.
+    # @return [nil] if all arguments have been filled.
     #
     def next_arg_def
       @arg_defs[@arg_def_index]

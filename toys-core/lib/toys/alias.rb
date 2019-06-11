@@ -45,33 +45,38 @@ module Toys
     end
 
     ##
-    # Return the tool class.
+    # The tool class.
+    #
     # @return [Class]
     #
     attr_reader :tool_class
 
     ##
-    # Return the name of the tool as an array of strings.
+    # The name of the tool as an array of strings.
     # This array may not be modified.
+    #
     # @return [Array<String>]
     #
     attr_reader :full_name
 
     ##
-    # Return the priority of this alias.
+    # The priority of this alias.
+    #
     # @return [Integer]
     #
     attr_reader :priority
 
     ##
-    # Return the name of the target as an array of strings.
+    # The name of the target as an array of strings.
     # This array may not be modified.
+    #
     # @return [Array<String>]
     #
     attr_reader :target_name
 
     ##
-    # Returns the local name of this tool.
+    # The local name of this alias, i.e. the last element of the full name.
+    #
     # @return [String]
     #
     def simple_name
@@ -79,8 +84,9 @@ module Toys
     end
 
     ##
-    # Returns a displayable name of this tool, generally the full name
-    # delimited by spaces.
+    # A displayable name of this alias, generally the full name delimited by
+    # spaces.
+    #
     # @return [String]
     #
     def display_name
@@ -88,8 +94,9 @@ module Toys
     end
 
     ##
-    # Returns a displayable name of the target, generally the full name
-    # delimited by spaces.
+    # A displayable name of the target, generally the full name delimited by
+    # spaces.
+    #
     # @return [String]
     #
     def display_target

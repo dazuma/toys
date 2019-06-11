@@ -88,107 +88,158 @@ module Toys
     end
 
     ##
-    # Return the name of the tool as an array of strings.
+    # The name of the tool as an array of strings.
     # This array may not be modified.
+    #
     # @return [Array<String>]
     #
     attr_reader :full_name
 
     ##
-    # Return the priority of this tool definition.
+    # The priority of this tool definition.
+    #
     # @return [Integer]
     #
     attr_reader :priority
 
     ##
-    # Return the tool class.
+    # The tool class.
+    #
     # @return [Class]
     #
     attr_reader :tool_class
 
     ##
-    # Returns the short description string.
+    # The short description string.
+    #
+    # When reading, this is always returned as a {Toys::WrappableString}.
+    #
+    # When setting, the description may be provided as any of the following:
+    # *   A {Toys::WrappableString}.
+    # *   A normal String, which will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String, which will be transformed into a
+    #     {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Toys::WrappableString]
     #
     attr_reader :desc
 
     ##
-    # Returns the long description strings as an array.
+    # The long description strings.
+    #
+    # When reading, this is returned as an Array of {Toys::WrappableString}
+    # representing the lines in the description.
+    #
+    # When setting, the description must be provided as an Array where _each
+    # element_ may be any of the following:
+    # *   A {Toys::WrappableString} representing one line.
+    # *   A normal String representing a line. This will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String representing a line. This will be transformed into
+    #     a {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Array<Toys::WrappableString>]
     #
     attr_reader :long_desc
 
     ##
-    # Return a list of all defined flag groups, in order.
+    # A list of all defined flag groups, in order.
+    #
     # @return [Array<Toys::FlagGroup>]
     #
     attr_reader :flag_groups
 
     ##
-    # Return a list of all defined flags.
+    # A list of all defined flags.
+    #
     # @return [Array<Toys::Flag>]
     #
     attr_reader :flags
 
     ##
-    # Return a list of all defined required positional arguments.
+    # A list of all defined required positional arguments.
+    #
     # @return [Array<Toys::PositionalArg>]
     #
     attr_reader :required_args
 
     ##
-    # Return a list of all defined optional positional arguments.
+    # A list of all defined optional positional arguments.
+    #
     # @return [Array<Toys::PositionalArg>]
     #
     attr_reader :optional_args
 
     ##
-    # Return the remaining arguments specification, or `nil` if remaining
-    # arguments are currently not supported by this tool.
-    # @return [Toys::PositionalArg,nil]
+    # The remaining arguments specification.
+    #
+    # @return [Toys::PositionalArg] The argument definition
+    # @return [nil] if remaining arguments are not supported by this tool.
     #
     attr_reader :remaining_arg
 
     ##
-    # Return a list of flags that have been used in the flag definitions.
+    # A list of flags that have been used in the flag definitions.
+    #
     # @return [Array<String>]
     #
     attr_reader :used_flags
 
     ##
-    # Return the default argument data.
+    # The default context data set by arguments.
+    #
     # @return [Hash]
     #
     attr_reader :default_data
 
     ##
-    # Returns the middleware stack
-    # @return [Array<Object>]
+    # The middleware stack active for this tool.
+    #
+    # @return [Array<Toys::Middleware>]
     #
     attr_reader :middleware_stack
 
     ##
-    # Returns info on the source of this tool, or `nil` if the source is not
-    # defined.
-    # @return [Toys::SourceInfo,nil]
+    # Info on the source of this tool.
+    #
+    # @return [Toys::SourceInfo] The source info
+    # @return [nil] if the source is not defined.
     #
     attr_reader :source_info
 
     ##
-    # Returns the custom context directory set for this tool, or `nil` if none
-    # is set.
-    # @return [String,nil]
+    # The custom context directory set for this tool.
+    #
+    # @return [String] The directory path
+    # @return [nil] if no custom context directory is set.
     #
     attr_reader :custom_context_directory
 
     ##
-    # Returns the completion strategy for this tool.
+    # The completion strategy for this tool.
+    #
+    # When reading, this may return an instance of one of the subclasses of
+    # {Toys::Completion::Base}, or a Proc that duck-types it. Generally, this
+    # defaults to a {Toys::Tool::DefaultCompletion}, providing a standard
+    # algorithm that finds appropriate completions from flags, positional
+    # arguments, and subtools.
+    #
+    # When setting, you may pass any of the following:
+    # *   `nil` or `:default` which sets the value to a default instance.
+    # *   A Hash of options to pass to the {Toys::Tool::DefaultCompletion}
+    #     constructor.
+    # *   Any other form recognized by {Toys::Completion.create}.
+    #
     # @return [Toys::Completion::Base,Proc]
     #
     attr_reader :completion
 
     ##
-    # Returns the local name of this tool.
+    # The local name of this tool, i.e. the last element of the full name.
+    #
     # @return [String]
     #
     def simple_name
@@ -196,8 +247,9 @@ module Toys
     end
 
     ##
-    # Returns a displayable name of this tool, generally the full name
-    # delimited by spaces.
+    # A displayable name of this tool, generally the full name delimited by
+    # spaces.
+    #
     # @return [String]
     #
     def display_name
@@ -289,7 +341,8 @@ module Toys
     end
 
     ##
-    # Returns all arg definitions in order: required, optional, remaining.
+    # All arg definitions in order: required, optional, remaining.
+    #
     # @return [Array<Toys::PositionalArg>]
     #
     def positional_args
@@ -318,8 +371,9 @@ module Toys
     ##
     # Get the named acceptor from this tool or its ancestors.
     #
-    # @param name [String] The acceptor name
-    # @return [Tool::Acceptor::Base,nil] The acceptor, or `nil` if not found.
+    # @param name [String] The acceptor name.
+    # @return [Tool::Acceptor::Base] The acceptor.
+    # @return [nil] if no acceptor of the given name is found.
     #
     def lookup_acceptor(name)
       @acceptors.fetch(name.to_s) { |k| @parent ? @parent.lookup_acceptor(k) : nil }
@@ -328,8 +382,9 @@ module Toys
     ##
     # Get the named template from this tool or its ancestors.
     #
-    # @param name [String] The template name
-    # @return [Class,nil] The template class, or `nil` if not found.
+    # @param name [String] The template name.
+    # @return [Class,nil] The template class.
+    # @return [nil] if no template of the given name is found.
     #
     def lookup_template(name)
       @templates.fetch(name.to_s) { |k| @parent ? @parent.lookup_template(k) : nil }
@@ -338,8 +393,9 @@ module Toys
     ##
     # Get the named mixin from this tool or its ancestors.
     #
-    # @param name [String] The mixin name
-    # @return [Module,nil] The mixin module, or `nil` if not found.
+    # @param name [String] The mixin name.
+    # @return [Module] The mixin module.
+    # @return [nil] if no mixin of the given name is found.
     #
     def lookup_mixin(name)
       @mixins.fetch(name.to_s) { |k| @parent ? @parent.lookup_mixin(k) : nil }
@@ -349,8 +405,8 @@ module Toys
     # Get the named completion from this tool or its ancestors.
     #
     # @param name [String] The completion name
-    # @return [Tool::Completion::Base,Proc,nil] The completion proc, or `nil`
-    #     if not found.
+    # @return [Tool::Completion::Base,Proc] The completion proc.
+    # @return [nil] if no completion of the given name is found.
     #
     def lookup_completion(name)
       @completions.fetch(name.to_s) { |k| @parent ? @parent.lookup_completion(k) : nil }
@@ -388,9 +444,7 @@ module Toys
     ##
     # Set the short description string.
     #
-    # The description may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#desc} for details.
     #
     # @param desc [Toys::WrappableString,String,Array<String>]
     #
@@ -402,9 +456,7 @@ module Toys
     ##
     # Set the long description strings.
     #
-    # Each string may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#long_desc} for details.
     #
     # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     #
@@ -416,9 +468,8 @@ module Toys
     ##
     # Append long description strings.
     #
-    # Each string may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # You must pass an array of lines in the long description. See {#long_desc}
+    # for details on how each line may be represented.
     #
     # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     # @return [self]
@@ -829,6 +880,8 @@ module Toys
     ##
     # Set the custom context directory.
     #
+    # See {#custom_context_directory} for details.
+    #
     # @param dir [String]
     #
     def custom_context_directory=(dir)
@@ -837,12 +890,9 @@ module Toys
     end
 
     ##
-    # Set the completion strategy for this Tool. By default, a
-    # {Toys::Tool::DefaultCompletion} is used, providing a standard algorithm
-    # that finds appropriate completions from flags, positional arguments, and
-    # subtools. To customize completion, set this either to a hash of options
-    # to pass to the {Toys::Tool::DefaultCompletion} constructor, or any other
-    # spec recognized by {Toys::Completion.create}.
+    # Set the completion strategy for this Tool.
+    #
+    # See {#completion} for details.
     #
     # @param spec [Object]
     #
@@ -866,7 +916,8 @@ module Toys
     # possible for there to be no context directory at all, in which case,
     # returns nil.
     #
-    # @return [String,nil]
+    # @return [String] The effective context directory path.
+    # @return [nil] if there is no effective context directory.
     #
     def context_directory
       lookup_custom_context_directory || source_info&.context_directory

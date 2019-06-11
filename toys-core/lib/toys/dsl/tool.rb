@@ -1264,8 +1264,9 @@ module Toys
       # of a well-known mixin.
       #
       # @param mod [Module,Symbol,String] Module or module name.
-      # @return [Boolean,nil] A boolean value, or `nil` if the current tool
-      #     is not active.
+      #
+      # @return [Boolean] Whether the mixin is included
+      # @return [nil] if the current tool is not active.
       #
       def include?(mod)
         cur_tool = DSL::Tool.current_tool(self, false)
@@ -1288,7 +1289,9 @@ module Toys
       # @param path [String] The path to find
       # @param type [nil,:file,:directory] Type of file system object to find,
       #     or nil to return any type.
-      # @return [String,nil] Absolute path of the result, or nil if not found.
+      #
+      # @return [String] Absolute path of the data.
+      # @return [nil] if the given data path is not found.
       #
       def find_data(path, type: nil)
         source_info.find_data(path, type: type)
@@ -1299,9 +1302,9 @@ module Toys
       # to the directory containing the toys config directory structure being
       # read, but it may be changed by setting a different context directory
       # for the tool.
-      # May return nil if there is no context.
       #
-      # @return [String,nil] Context directory
+      # @return [String] Context directory path
+      # @return [nil] if there is no context.
       #
       def context_directory
         DSL::Tool.current_tool(self, false)&.context_directory || source_info.context_directory

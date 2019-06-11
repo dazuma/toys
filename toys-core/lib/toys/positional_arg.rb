@@ -74,7 +74,7 @@ module Toys
     end
 
     ##
-    # Returns the key.
+    # The key for this arg.
     # @return [Symbol]
     #
     attr_reader :key
@@ -86,37 +86,61 @@ module Toys
     attr_reader :type
 
     ##
-    # Returns the effective acceptor.
+    # The effective acceptor.
     # @return [Tool::Acceptor::Base]
     #
     attr_accessor :acceptor
 
     ##
-    # Returns the default value, which may be `nil`.
+    # The default value, which may be `nil`.
     # @return [Object]
     #
     attr_reader :default
 
     ##
-    # Returns the proc that determines shell completions for the value.
+    # The proc that determines shell completions for the value.
     # @return [Proc,Toys::Completion::Base]
     #
     attr_reader :completion
 
     ##
-    # Returns the short description string.
+    # The short description string.
+    #
+    # When reading, this is always returned as a {Toys::WrappableString}.
+    #
+    # When setting, the description may be provided as any of the following:
+    # *   A {Toys::WrappableString}.
+    # *   A normal String, which will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String, which will be transformed into a
+    #     {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Toys::WrappableString]
     #
     attr_reader :desc
 
     ##
-    # Returns the long description strings as an array.
+    # The long description strings.
+    #
+    # When reading, this is returned as an Array of {Toys::WrappableString}
+    # representing the lines in the description.
+    #
+    # When setting, the description must be provided as an Array where _each
+    # element_ may be any of the following:
+    # *   A {Toys::WrappableString} representing one line.
+    # *   A normal String representing a line. This will be transformed into a
+    #     {Toys::WrappableString} using spaces as word delimiters.
+    # *   An Array of String representing a line. This will be transformed into
+    #     a {Toys::WrappableString} where each array element represents an
+    #     individual word for wrapping.
+    #
     # @return [Array<Toys::WrappableString>]
     #
     attr_reader :long_desc
 
     ##
-    # Returns the displayable name.
+    # The displayable name.
     # @return [String]
     #
     attr_accessor :display_name
@@ -124,9 +148,7 @@ module Toys
     ##
     # Set the short description string.
     #
-    # The description may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#desc} for details.
     #
     # @param desc [Toys::WrappableString,String,Array<String>]
     #
@@ -137,9 +159,7 @@ module Toys
     ##
     # Set the long description strings.
     #
-    # Each string may be provided as a {Toys::WrappableString}, a single
-    # string (which will be wrapped), or an array of strings, which will be
-    # interpreted as string fragments that will be concatenated and wrapped.
+    # See {#long_desc} for details.
     #
     # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
     #

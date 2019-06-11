@@ -101,6 +101,7 @@ module Toys
 
       ##
       # Add default description text to tools.
+      # @private
       #
       def config(tool, loader)
         data = {tool: tool, loader: loader}

@@ -65,7 +65,7 @@ module Toys
       end
 
       ##
-      # Returns a tool-wide instance of {Toys::Utils::Gems}.
+      # A tool-wide instance of {Toys::Utils::Gems}.
       # @return [Toys::Utils::Gems]
       #
       def gems
@@ -77,7 +77,7 @@ module Toys
       #
       # @param name [String] Name of the gem
       # @param requirements [String...] Version requirements
-      # @return [Toys::Utils::Gems]
+      # @return [void]
       #
       def gem(name, *requirements)
         self.class.gems.activate(name, *requirements)

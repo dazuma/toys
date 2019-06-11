@@ -173,7 +173,8 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param include_hidden [Boolean] If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::Tool,Toys::Alias>]
+    # @return [Array<Toys::Tool,Toys::Alias>] An array of subtools, which may
+    #     be tools or aliases.
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -220,8 +221,10 @@ module Toys
     #
     # @param words [Array<String>] The name of the tool.
     # @param priority [Integer] The priority of the request.
-    # @return [Toys::Tool,Toys::Alias,nil] The tool or
-    #     alias, or `nil` if the given priority is insufficient.
+    #
+    # @return [Toys::Tool] The tool found.
+    # @return [Toys::Alias] The alias found.
+    # @return [nil] if the given priority is insufficient.
     #
     # @private
     #
@@ -295,7 +298,8 @@ module Toys
     # Attempt to get a well-known mixin module for the given symbolic name.
     #
     # @param name [Symbol] Mixin name
-    # @return [Module,nil] The mixin, or `nil` if not found.
+    # @return [Module] The mixin
+    # @return [nil] if not found.
     #
     # @private
     #
@@ -307,7 +311,8 @@ module Toys
     # Attempt to get a well-known template class for the given symbolic name.
     #
     # @param name [Symbol] Template name
-    # @return [Class,nil] The template, or `nil` if not found.
+    # @return [Class] The template.
+    # @return [nil] if not found.
     #
     # @private
     #

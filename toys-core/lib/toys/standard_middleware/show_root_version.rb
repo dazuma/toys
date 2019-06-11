@@ -69,6 +69,7 @@ module Toys
 
       ##
       # Adds the version flag if requested.
+      # @private
       #
       def config(tool, _loader)
         if @version_string && tool.root?
@@ -80,6 +81,7 @@ module Toys
 
       ##
       # This middleware displays the version.
+      # @private
       #
       def run(context)
         if context[SHOW_VERSION_KEY]

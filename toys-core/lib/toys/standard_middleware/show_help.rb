@@ -221,6 +221,7 @@ module Toys
 
       ##
       # Configure flags and default data.
+      # @private
       #
       def config(tool, loader)
         unless tool.argument_parsing_disabled?
@@ -242,6 +243,7 @@ module Toys
 
       ##
       # Display help text if requested.
+      # @private
       #
       def run(context)
         if context[SHOW_USAGE_KEY]

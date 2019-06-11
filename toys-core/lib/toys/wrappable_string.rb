@@ -36,13 +36,16 @@ module Toys
     end
 
     ##
-    # Returns the fragments.
+    # Returns the string fragments, i.e. the individual "words" for wrapping.
+    #
     # @return [Array<String>]
     #
     attr_reader :fragments
 
     ##
-    # Concatenates this WrappableString with another WrappableString
+    # Returns a new WrappaableString whose content is the concatenation of this
+    # WrappableString with another WrappableString.
+    #
     # @param other [WrappableString]
     # @return [WrappableString]
     #
@@ -86,6 +89,7 @@ module Toys
     # @param width [Integer,nil] Width in characters, or `nil` for infinite.
     # @param width2 [Integer,nil] Width in characters for the second and
     #     subsequent lines, or `nil` to use the same as width.
+    #
     # @return [Array<String>] Wrapped lines
     #
     def wrap(width, width2 = nil)
@@ -118,6 +122,7 @@ module Toys
     # @param width [Integer,nil] Width in characters, or `nil` for infinite.
     # @param width2 [Integer,nil] Width in characters for the second and
     #     subsequent lines, or `nil` to use the same as width.
+    #
     # @return [Array<String>] Wrapped lines
     #
     def self.wrap_lines(strs, width, width2 = nil)

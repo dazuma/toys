@@ -6,6 +6,8 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 * More detailed yardocs for DSL methods, including an example for each.
 * Really flesh out the reference docs for Toys::CLI.
+* Completion::Context should be a simple hash internally
+* Maybe get rid of desc/long_desc setters in flag and positional_arg
 * Write toys-core user guide
 
 ## Ideas under investigation

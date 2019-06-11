@@ -198,9 +198,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec_tool(cmd, opts = {}, &block)
         func = Exec._make_tool_caller(cmd)
