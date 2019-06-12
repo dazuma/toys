@@ -52,7 +52,7 @@ following command in your shell, or add it to your bash configuration file
 
 Toys does not yet specially implement tab completion for zsh or other shells.
 However, if you are using zsh, installing bash completion using `bashcompinit`
-_mostly_ works.
+*mostly* works.
 
 ### Write your first tool
 
@@ -269,9 +269,9 @@ interpret command line arguments. You can create your own mixins and templates,
 and take advantage of a variety of third-party libraries such as Highline and
 TTY. In addition, Toys lets you "scope" your tools to a directory or an entire
 directory tree, so you can have tools specific to different projects. Finally,
-if you outgrow `.toys.rb` files, you can create `.toys` directories containing
-many tool definitions, shared code, normal Ruby classes, and even data files
-for use by tools.
+if your `.toys.rb` files are growing too large or complicated, you can create
+`.toys` directories containing tool definitions in separate files, as well as
+shared code, normal Ruby classes, and even data files for use by tools.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line binary written in Ruby. However, you
@@ -282,7 +282,7 @@ toys-core, see (its documentation)[https://www.rubydoc.info/gems/toys-core].
 
 ## Why Toys?
 
-I originally wrote Toys because I was accumulating dozens of _ad hoc_ Ruby
+I originally wrote Toys because I was accumulating dozens of **ad hoc* Ruby
 scripts I had written to automate various tasks in my workflow, everything from
 refreshing credentials, to displaying git history in my favorite format, to
 running builds and tests of complex multi-component projects. It was becoming

@@ -456,14 +456,15 @@ module Toys
       alias short_desc desc
 
       ##
-      # Set the long description for the current tool. The long description is
-      # displayed in the usage documentation for the tool itself.
+      # Add to the long description for the current tool. The long description
+      # is displayed in the usage documentation for the tool itself. This
+      # directive may be given multiple times, and the results are cumulative.
       #
       # A long description is a series of descriptions, which are generally
       # displayed in a series of lines/paragraphs. Each individual description
-      # uses the form described in the {Toys::DSL::Tool#desc} documentation,
-      # and may be word-wrapped when displayed. To insert a blank line, include
-      # an empty string as one of the descriptions.
+      # uses the form described in the {#desc} documentation, and may be
+      # word-wrapped when displayed. To insert a blank line, include an empty
+      # string as one of the descriptions.
       #
       # ## Example
       #
@@ -472,6 +473,7 @@ module Toys
       #               "",
       #               ["This line will not be wrapped."],
       #               ["    This indent is preserved."]
+      #     long_desc "This line is appended to the description."
       #
       # @param strs [Toys::WrappableString,String,Array<String>...]
       # @return [self]

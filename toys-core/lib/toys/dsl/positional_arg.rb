@@ -99,8 +99,33 @@ module Toys
       end
 
       ##
-      # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
-      # formats.
+      # Set the short description for the current positional argument. The
+      # short description is displayed with the argument in online help.
+      #
+      # The description is a {Toys::WrappableString}, which may be word-wrapped
+      # when displayed in a help screen. You may pass a {Toys::WrappableString}
+      # directly to this method, or you may pass any input that can be used to
+      # construct a wrappable string:
+      #
+      # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+      #     newlines, and multiple consecutive whitespace will be turned into a
+      #     single space), and it will be word-wrapped on whitespace.
+      # *   If you pass an Array of Strings, each string will be considered a
+      #     literal word that cannot be broken, and wrapping will be done
+      #     across the strings in the array. In this case, whitespace is not
+      #     compacted.
+      #
+      # ## Examples
+      #
+      # If you pass in a sentence as a simple string, it may be word wrapped
+      # when displayed:
+      #
+      #     desc "This sentence may be wrapped."
+      #
+      # To specify a sentence that should never be word-wrapped, pass it as the
+      # sole element of a string array:
+      #
+      #     desc ["This sentence will not be wrapped."]
       #
       # @param desc [String,Array<String>,Toys::WrappableString]
       # @return [self]
@@ -111,9 +136,24 @@ module Toys
       end
 
       ##
-      # Adds to the long description. This may be called multiple times, and
-      # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
-      # allowed formats.
+      # Add to the long description for the current positional argument. The
+      # long description is displayed with the argument in online help. This
+      # directive may be given multiple times, and the results are cumulative.
+      #
+      # A long description is a series of descriptions, which are generally
+      # displayed in a series of lines/paragraphs. Each individual description
+      # uses the form described in the {#desc} documentation, and may be
+      # word-wrapped when displayed. To insert a blank line, include an empty
+      # string as one of the descriptions.
+      #
+      # ## Example
+      #
+      #     long_desc "This initial paragraph might get word wrapped.",
+      #               "This next paragraph is followed by a blank line.",
+      #               "",
+      #               ["This line will not be wrapped."],
+      #               ["    This indent is preserved."]
+      #     long_desc "This line is appended to the description."
       #
       # @param long_desc [String,Array<String>,Toys::WrappableString...]
       # @return [self]

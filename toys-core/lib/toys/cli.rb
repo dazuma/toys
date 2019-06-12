@@ -28,10 +28,10 @@ module Toys
   ##
   # A Toys-based CLI.
   #
-  # This is the entry point for command line execution. It includes tool
-  # definitions (and/or information on how to load them from the file system),
-  # configuration parameters such as logging and error handling, and a method
-  # to call to invoke a command.
+  # This is the entry point for command line execution. It includes the set of
+  # tool definitions (and/or information on how to load them from the file
+  # system), configuration parameters such as logging and error handling, and a
+  # method to call to invoke a command.
   #
   class CLI
     ##

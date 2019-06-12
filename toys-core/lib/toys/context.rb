@@ -25,26 +25,28 @@ require "logger"
 
 module Toys
   ##
-  # This class manages the object context in effect during the execution of a
-  # tool. The context is a hash of key-value pairs.
+  # This is the base class for tool execution. It represents `self` when your
+  # tool's methods (such as `run`) are called, and it defines the methods that
+  # can be called by your tool (such as {#logger} and {#exit}.)
   #
-  # Flags and arguments defined by your tool normally report their values in
-  # the context, using keys that are strings or symbols.
+  # This class also manages the "data" available to your tool when it runs.
+  # This data is a hash of key-value pairs. This data consists of values set by
+  # flags and arguments defined by the tool, along with a few "well-known"
+  # values such as the logger and verbosity level.
   #
-  # Keys that are neither strings nor symbols are by convention used for other
-  # context information, including:
+  # You can obtain a value from the data using the {Toys::Context#get} method.
+  # Additionally, convenience methods are provided for many of the well-known
+  # keys. For instance, you can call {Toys::Context#verbosity} to obtain the
+  # value for the key {Toys::Context::Key::VERBOSITY}. Finally, flags and
+  # positional arguments that store their data here will also typically
+  # generate convenience methods. For example, an argument with key `:abc` will
+  # add a method called `abc` that you can call to get the value.
   #
-  # *   Common information such as the {Toys::Tool} tool description being
-  #     executed, the arguments originally passed to it, or the usage error
-  #     string. These well-known keys can be accessed via constants in the
-  #     {Toys::Context::Key} module.
-  # *   Common settings such as the verbosity level, and whether to exit
-  #     immediately if a subprocess exits with a nonzero result. These keys are
-  #     also present as {Toys::Context::Key} constants.
-  # *   Private information used internally by middleware and mixins.
-  #
-  # This class provides convenience accessors for common keys and settings, and
-  # you can retrieve argument-set keys using the {#options} hash.
+  # By convention, flags and arguments defined by your tool should use strings
+  # or symbols as keys. Any other keys should correspond either to well-known
+  # data, or private information used internally by middleware and mixins. The
+  # module {Toys::Context::Key} defines a number of well-known keys as
+  # constants.
   #
   class Context
     ##
@@ -65,7 +67,8 @@ module Toys
       BINARY_NAME = ::Object.new.freeze
 
       ##
-      # Context key for the currently running CLI.
+      # Context key for the currently running {Toys::CLI}. You can use this
+      # object to run other tools from your tool by calling {Toys::CLI#run}.
       # @return [Object]
       #
       CLI = ::Object.new.freeze
@@ -145,6 +148,8 @@ module Toys
     # The raw arguments passed to the tool, as an array of strings.
     # This does not include the tool name itself.
     #
+    # This is a convenience getter for {Toys::Context::Key::ARGS}.
+    #
     # @return [Array<String>]
     #
     def args
@@ -154,6 +159,8 @@ module Toys
     ##
     # The name of the binary that was executed.
     #
+    # This is a convenience getter for {Toys::Context::Key::BINARY_NAME}.
+    #
     # @return [String]
     #
     def binary_name
@@ -162,6 +169,8 @@ module Toys
 
     ##
     # The currently running CLI.
+    #
+    # This is a convenience getter for {Toys::Context::Key::CLI}.
     #
     # @return [Toys::CLI]
     #
@@ -175,6 +184,8 @@ module Toys
     # read, but it may be changed by setting a different context directory
     # for the tool.
     #
+    # This is a convenience getter for {Toys::Context::Key::CONTEXT_DIRECTORY}.
+    #
     # @return [String] Context directory path
     # @return [nil] if there is no context.
     #
@@ -185,6 +196,8 @@ module Toys
     ##
     # The active loader that can be used to get other tools.
     #
+    # This is a convenience getter for {Toys::Context::Key::LOADER}.
+    #
     # @return [Toys::Loader]
     #
     def loader
@@ -193,6 +206,8 @@ module Toys
 
     ##
     # The logger for this execution.
+    #
+    # This is a convenience getter for {Toys::Context::Key::LOGGER}.
     #
     # @return [Logger]
     #
@@ -203,6 +218,8 @@ module Toys
     ##
     # The tool being executed.
     #
+    # This is a convenience getter for {Toys::Context::Key::TOOL}.
+    #
     # @return [Toys::Tool]
     #
     def tool
@@ -211,6 +228,8 @@ module Toys
 
     ##
     # The full name of the tool being executed, as an array of strings.
+    #
+    # This is a convenience getter for {Toys::Context::Key::TOOL_NAME}.
     #
     # @return [Array<String>]
     #
@@ -221,6 +240,8 @@ module Toys
     ##
     # The source of the tool being executed.
     #
+    # This is a convenience getter for {Toys::Context::Key::TOOL_SOURCE}.
+    #
     # @return [Toys::SourceInfo]
     #
     def tool_source
@@ -230,6 +251,8 @@ module Toys
     ##
     # The (possibly empty) array of errors detected during argument parsing.
     #
+    # This is a convenience getter for {Toys::Context::Key::USAGE_ERRORS}.
+    #
     # @return [Array<Toys::ArgParser::UsageError>]
     #
     def usage_errors
@@ -238,6 +261,8 @@ module Toys
 
     ##
     # The current verbosity setting as an integer.
+    #
+    # This is a convenience getter for {Toys::Context::Key::VERBOSITY}.
     #
     # @return [Integer]
     #

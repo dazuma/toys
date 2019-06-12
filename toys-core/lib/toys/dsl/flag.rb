@@ -51,6 +51,58 @@ module Toys
       # Add flags in OptionParser format. This may be called multiple times,
       # and the results are cumulative.
       #
+      # Following are examples of valid syntax.
+      #
+      # *   `-a` : A short boolean switch. When this appears as an argument,
+      #     the value is set to `true`.
+      # *   `--abc` : A long boolean switch. When this appears as an argument,
+      #     the value is set to `true`.
+      # *   `-aVAL` or `-a VAL` : A short flag that takes a required value.
+      #     These two forms are treated identically. If this argument appears
+      #     with a value attached (e.g. `-afoo`), the attached string (e.g.
+      #     `"foo"`) is taken as the value. Otherwise, the following argument
+      #     is taken as the value (e.g. for `-a foo`, the value is set to
+      #     `"foo"`.) The following argument is treated as the value even if it
+      #     looks like a flag (e.g. `-a -a` causes the string `"-a"` to be
+      #     taken as the value.)
+      # *   `-a[VAL]` : A short flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `-afoo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, the value
+      #     is set to `true`. The following argument is never interpreted as
+      #     the value. (Compare with `-a [VAL]`.)
+      # *   `-a [VAL]` : A short flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `-afoo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, if the
+      #     following argument does not look like a flag (i.e. it does not
+      #     begin with a hyphen), it is taken as the value. (e.g. `-a foo`
+      #     causes the string `"foo"` to be taken as the value.). If there is
+      #     no following argument, or the following argument looks like a flag,
+      #     the value is set to `true`. (Compare with `-a[VAL]`.)
+      # *   `--abc=VAL` or `--abc VAL` : A long flag that takes a required
+      #     value. These two forms are treated identically. If this argument
+      #     appears with a value attached (e.g. `--abc=foo`), the attached
+      #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
+      #     following argument is taken as the value (e.g. for `--abc foo`, the
+      #     value is set to `"foo"`.) The following argument is treated as the
+      #     value even if it looks like a flag (e.g. `--abc --abc` causes the
+      #     string `"--abc"` to be taken as the value.)
+      # *   `--abc[=VAL]` : A long flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `--abc=foo`), the
+      #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,
+      #     the value is set to `true`. The following argument is never
+      #     interpreted as the value. (Compare with `--abc [VAL]`.)
+      # *   `--abc [VAL]` : A long flag that takes an optional value. If this
+      #     argument appears with a value attached (e.g. `--abc=foo`), the
+      #     attached string (e.g. `"foo"`) is taken as the value. Otherwise, if
+      #     the following argument does not look like a flag (i.e. it does not
+      #     begin with a hyphen), it is taken as the value. (e.g. `--abc foo`
+      #     causes the string `"foo"` to be taken as the value.). If there is
+      #     no following argument, or the following argument looks like a flag,
+      #     the value is set to `true`. (Compare with `--abc=[VAL]`.)
+      # *   `--[no-]abc` : A long boolean switch that can be turned either on
+      #     or off. This effectively creates two flags, `--abc` which sets the
+      #     value to `true`, and `--no-abc` which sets the falue to `false`.
+      #
       # @param flags [String...]
       # @return [self]
       #
@@ -61,7 +113,9 @@ module Toys
 
       ##
       # Set the acceptor for this flag's values.
-      # See {Toys::Acceptor.create} for recognized formats.
+      # You can pass either the string name of an acceptor defined in this tool
+      # or any of its ancestors, or any other specification recognized by
+      # {Toys::Acceptor.create}.
       #
       # @param spec [Object]
       # @param options [Hash]
@@ -153,8 +207,33 @@ module Toys
       end
 
       ##
-      # Set the short description. See {Toys::DSL::Tool#desc} for the allowed
-      # formats.
+      # Set the short description for the current flag. The short description
+      # is displayed with the flag in online help.
+      #
+      # The description is a {Toys::WrappableString}, which may be word-wrapped
+      # when displayed in a help screen. You may pass a {Toys::WrappableString}
+      # directly to this method, or you may pass any input that can be used to
+      # construct a wrappable string:
+      #
+      # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+      #     newlines, and multiple consecutive whitespace will be turned into a
+      #     single space), and it will be word-wrapped on whitespace.
+      # *   If you pass an Array of Strings, each string will be considered a
+      #     literal word that cannot be broken, and wrapping will be done
+      #     across the strings in the array. In this case, whitespace is not
+      #     compacted.
+      #
+      # ## Examples
+      #
+      # If you pass in a sentence as a simple string, it may be word wrapped
+      # when displayed:
+      #
+      #     desc "This sentence may be wrapped."
+      #
+      # To specify a sentence that should never be word-wrapped, pass it as the
+      # sole element of a string array:
+      #
+      #     desc ["This sentence will not be wrapped."]
       #
       # @param desc [String,Array<String>,Toys::WrappableString]
       # @return [self]
@@ -165,9 +244,24 @@ module Toys
       end
 
       ##
-      # Adds to the long description. This may be called multiple times, and
-      # the results are cumulative. See {Toys::DSL::Tool#long_desc} for the
-      # allowed formats.
+      # Add to the long description for the current flag. The long description
+      # is displayed with the argument in online help. This directive may be
+      # given multiple times, and the results are cumulative.
+      #
+      # A long description is a series of descriptions, which are generally
+      # displayed in a series of lines/paragraphs. Each individual description
+      # uses the form described in the {#desc} documentation, and may be
+      # word-wrapped when displayed. To insert a blank line, include an empty
+      # string as one of the descriptions.
+      #
+      # ## Example
+      #
+      #     long_desc "This initial paragraph might get word wrapped.",
+      #               "This next paragraph is followed by a blank line.",
+      #               "",
+      #               ["This line will not be wrapped."],
+      #               ["    This indent is preserved."]
+      #     long_desc "This line is appended to the description."
       #
       # @param long_desc [String,Array<String>,Toys::WrappableString...]
       # @return [self]
@@ -190,7 +284,8 @@ module Toys
       end
 
       ##
-      # Set the display name. This may be used in help text and error messages.
+      # Set the display name for this flag. This may be used in help text and
+      # error messages.
       #
       # @param display_name [String]
       # @return [self]
