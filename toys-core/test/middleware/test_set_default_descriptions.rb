@@ -153,6 +153,77 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
     end
   end
 
+  describe "default flag group description" do
+    it "is set for an basic group" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo" do
+          flag_group
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      flag_group = tool.flag_groups.last
+      assert_equal("Flags", flag_group.desc.to_s)
+      assert(flag_group.long_desc.empty?)
+    end
+
+    it "is set for a required group" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo" do
+          all_required
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      flag_group = tool.flag_groups.last
+      assert_equal("Required Flags", flag_group.desc.to_s)
+      assert_equal(1, flag_group.long_desc.size)
+      assert_equal("These flags are required.", flag_group.long_desc.first.to_s)
+    end
+
+    it "is set for an exactly-one group" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo" do
+          exactly_one
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      flag_group = tool.flag_groups.last
+      assert_equal("Flags", flag_group.desc.to_s)
+      assert_equal(1, flag_group.long_desc.size)
+      assert_equal("Exactly one of these flags must be set.", flag_group.long_desc.first.to_s)
+    end
+
+    it "is set for an at-most-one group" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo" do
+          at_most_one
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      flag_group = tool.flag_groups.last
+      assert_equal("Flags", flag_group.desc.to_s)
+      assert_equal(1, flag_group.long_desc.size)
+      assert_equal("At most one of these flags must be set.", flag_group.long_desc.first.to_s)
+    end
+
+    it "is set for an at-least-one group" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo" do
+          at_least_one
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      flag_group = tool.flag_groups.last
+      assert_equal("Flags", flag_group.desc.to_s)
+      assert_equal(1, flag_group.long_desc.size)
+      assert_equal("At least one of these flags must be set.", flag_group.long_desc.first.to_s)
+    end
+  end
+
   describe "default required arg description" do
     it "is set for a string" do
       cli = make_cli

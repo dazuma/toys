@@ -1167,6 +1167,19 @@ module Toys
       # subsequent flag definition. This can be used to prevent middleware from
       # defining a particular flag.
       #
+      # ## Example
+      #
+      # This tool does not support the `-v` and `-q` short forms for the two
+      # verbosity flags (although it still supports the long forms `--verbose`
+      # and `--quiet`.)
+      #
+      #     tool "mytool" do
+      #       disable_flag "-v", "-q"
+      #       def run
+      #         # ...
+      #       end
+      #     end
+      #
       # @param flags [String...] The flags to disable
       # @return [self]
       #
@@ -1187,6 +1200,21 @@ module Toys
       #     (which is {Toys::Tool::DefaultCompletion} with no extra options).
       # *   Any other specification recognized by {Toys::Completion.create}.
       #
+      # ## Example
+      #
+      # The namespace "foo" supports completion only of subtool names. It does
+      # not complete the standard flags (like --help).
+      #
+      #     tool "foo" do
+      #       complete_tool_args complete_args: false, complete_flags: false,
+      #                          complete_flag_values: false
+      #       tool "bar" do
+      #         def run
+      #           puts "in foo bar"
+      #         end
+      #       end
+      #     end
+      #
       # @param spec [Object]
       # @param options [Hash]
       # @return [self]
@@ -1200,9 +1228,21 @@ module Toys
 
       ##
       # Specify how to run this tool. Typically you do this by defining a
-      # method namd `run`. Alternatively, you can pass a block to this method.
+      # method namd `run`. Alternatively, however, you can pass a block to the
+      # `to_run` method.
+      #
       # You may want to do this if your method needs access to local variables
-      # in the lexical scope.
+      # in the lexical scope. However, it is often more convenient to use
+      # {#static} to set the value in the context.)
+      #
+      # ## Example
+      #
+      #     tool "foo" do
+      #       cur_time = Time.new
+      #       to_run do
+      #         puts "The time at tool definition was #{cur_time}"
+      #       end
+      #     end
       #
       # @return [self]
       #
@@ -1213,9 +1253,24 @@ module Toys
 
       ##
       # Specify how to handle interrupts. Typically you do this by defining a
-      # method namd `interrupt`. Alternatively, you can pass a block to this
-      # method. You may want to do this if your method needs access to local
-      # variables in the lexical scope.
+      # method namd `interrupt`. Alternatively, however, you can pass a block
+      # to the `to_interrupt` method.
+      #
+      # You may want to do this if your method needs access to local variables
+      # in the lexical scope. However, it is often more convenient to use
+      # {#static} to set the value in the context.)
+      #
+      # ## Example
+      #
+      #     tool "foo" do
+      #       cur_time = Time.new
+      #       def run
+      #         sleep 10
+      #       end
+      #       to_interrupt do
+      #         puts "The time at tool definition was #{cur_time}"
+      #       end
+      #     end
       #
       # @return [self]
       #
@@ -1231,6 +1286,21 @@ module Toys
       # You may provide either a module, the string name of a mixin that you
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
+      #
+      # ## Example
+      #
+      # Include the well-known mixin `:terminal` and perform some terminal
+      # magic.
+      #
+      #     tool "spin" do
+      #       include :terminal
+      #       def run
+      #         # The spinner method is defined by the :terminal mixin.
+      #         spinner(leading_text: "Waiting...", final_text: "\n") do
+      #           sleep 5
+      #         end
+      #       end
+      #     end
       #
       # @param mod [Module,Symbol,String] Module or module name.
       # @param args [Object...] Arguments to pass to the initializer
