@@ -111,6 +111,10 @@ module Toys
         tool.positional_args.each do |arg|
           config_desc(arg, generate_arg_desc(arg, data), generate_arg_long_desc(arg, data))
         end
+        tool.flag_groups.each do |flag_group|
+          config_desc(flag_group, generate_flag_group_desc(flag_group, data),
+                      generate_flag_group_long_desc(flag_group, data))
+        end
         config_desc(tool, generate_tool_desc(tool, data), generate_tool_long_desc(tool, data))
         yield
       end
@@ -237,6 +241,51 @@ module Toys
       #
       def generate_arg_long_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
         nil
+      end
+
+      ##
+      # This method implements the logic for generating a flag group
+      # description. Override this method to provide different logic.
+      #
+      # @param group [Toys::FlagGroup] The flag group to document
+      # @param data [Hash] Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
+      # @return [String,Array<String>,Toys::WrappableString,nil] The default
+      #     description, or `nil` not to set a default. See {Toys::Tool#desc=}
+      #     for info on the format.
+      #
+      def generate_flag_group_desc(group, data) # rubocop:disable Lint/UnusedMethodArgument
+        if group.is_a?(FlagGroup::Required)
+          "Required Flags"
+        else
+          "Flags"
+        end
+      end
+
+      ##
+      # This method implements the logic for generating a flag group long
+      # description. Override this method to provide different logic.
+      #
+      # @param group [Toys::FlagGroup] The flag group to document
+      # @param data [Hash] Additional data that might be useful. Currently,
+      #     the {Toys::Tool} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
+      # @return [Array<Toys::WrappableString,String,Array<String>>,nil] The
+      #     default long description, or `nil` not to set a default. See
+      #     {Toys::Tool#long_desc=} for info on the format.
+      #
+      def generate_flag_group_long_desc(group, data) # rubocop:disable Lint/UnusedMethodArgument
+        case group
+        when FlagGroup::Required
+          ["These flags are required."]
+        when FlagGroup::ExactlyOne
+          ["Exactly one of these flags must be set."]
+        when FlagGroup::AtMostOne
+          ["At most one of these flags must be set."]
+        when FlagGroup::AtLeastOne
+          ["At least one of these flags must be set."]
+        end
       end
 
       private

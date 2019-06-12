@@ -48,8 +48,7 @@ remaining_args :commands do
   complete do |context|
     commands = context.arg_parser.data[:commands]
     last_command = commands.inject([]) { |acc, arg| arg == "," ? [] : (acc << arg) }
-    new_context = context.with(previous_words: last_command,
-                               add_params: {disable_flags: commands.empty?})
+    new_context = context.with(previous_words: last_command, disable_flags: commands.empty?)
     new_context.tool.completion.call(new_context)
   end
   desc "A series of tools to run, separated by the delimiter"

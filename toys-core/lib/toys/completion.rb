@@ -48,12 +48,16 @@ module Toys
       # @param fragment [String] The string fragment to complete
       # @param params [Hash] Miscellaneous context data
       #
-      def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", params: {})
+      def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", **params)
         @cli = cli
         @previous_words = previous_words
         @fragment_prefix = fragment_prefix
         @fragment = fragment
-        @params = params
+        extra_params = {
+          cli: cli, previous_words: previous_words, fragment_prefix: fragment_prefix,
+          fragment: fragment
+        }
+        @params = params.merge(extra_params)
         @tool = nil
         @args = nil
         @arg_parser = nil
@@ -62,23 +66,11 @@ module Toys
       ##
       # Create a new completion context with the given modifications.
       #
-      # @param cli [Toys::CLI] The CLI being run.
-      # @param previous_words [Array<String>] Array of complete strings that
-      #     appeared prior to the fragment to complete.
-      # @param fragment_prefix [String] The non-completed prefix (e.g. "key=")
-      #     of the fragment.
-      # @param fragment [String] The string fragment to complete
-      # @param add_params [Hash] Add miscellaneous context data
-      # @param replace_params [Hash,nil] Replace miscellaneous context data.
+      # @param delta_params [Hash] Replace context data.
       # @return [Toys::Completion::Context]
       #
-      def with(cli: nil, previous_words: nil, fragment_prefix: nil, fragment: nil,
-               add_params: {}, replace_params: nil)
-        Context.new(cli: cli || self.cli,
-                    previous_words: previous_words || self.previous_words,
-                    fragment_prefix: fragment_prefix || self.fragment_prefix,
-                    fragment: fragment || self.fragment,
-                    params: (replace_params || params).merge(add_params))
+      def with(**delta_params)
+        Context.new(@params.merge(delta_params))
       end
 
       ##
@@ -106,10 +98,14 @@ module Toys
       attr_reader :fragment
 
       ##
-      # Context parameters.
-      # @return [Hash]
+      # Get data for arbitrary key.
+      # @param [Symbol] key
+      # @return [Object]
       #
-      attr_reader :params
+      def [](key)
+        @params[key]
+      end
+      alias get []
 
       ##
       # The tool being invoked, which should control the completion.

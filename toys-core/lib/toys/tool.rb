@@ -1145,7 +1145,7 @@ module Toys
       end
 
       def plain_flag_candidates(context)
-        return [] if !@complete_flags || context.params[:disable_flags]
+        return [] if !@complete_flags || context[:disable_flags]
         arg_parser = context.arg_parser
         return [] unless arg_parser.flags_allowed?
         flag_def = arg_parser.active_flag_def

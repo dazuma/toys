@@ -227,7 +227,9 @@ module Toys
           @tool.flag_groups.each do |group|
             next if group.empty?
             @lines << ""
-            @lines << group.desc.to_s + ":"
+            desc_str = group.desc.to_s
+            desc_str = "Flags" if desc_str.empty?
+            @lines << desc_str + ":"
             group.flags.each do |flag|
               add_flag(flag)
             end
@@ -476,7 +478,9 @@ module Toys
           @tool.flag_groups.each do |group|
             next if group.empty?
             @lines << ""
-            @lines << bold(group.desc.to_s.upcase)
+            desc_str = group.desc.to_s.upcase
+            desc_str = "FLAGS" if desc_str.empty?
+            @lines << bold(desc_str)
             precede_with_blank = false
             unless group.long_desc.empty?
               wrap_indent(group.long_desc).each do |line|

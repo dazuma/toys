@@ -78,8 +78,8 @@ module Toys
       #
       def initialize(name, desc, long_desc)
         @name = name
-        @desc = WrappableString.make(desc || default_desc)
-        @long_desc = WrappableString.make_array(long_desc || default_long_desc)
+        @desc = WrappableString.make(desc)
+        @long_desc = WrappableString.make_array(long_desc)
         @flags = []
       end
 
@@ -91,12 +91,36 @@ module Toys
 
       ##
       # The short description string.
+      #
+      # When reading, this is always returned as a {Toys::WrappableString}.
+      #
+      # When setting, the description may be provided as any of the following:
+      # *   A {Toys::WrappableString}.
+      # *   A normal String, which will be transformed into a
+      #     {Toys::WrappableString} using spaces as word delimiters.
+      # *   An Array of String, which will be transformed into a
+      #     {Toys::WrappableString} where each array element represents an
+      #     individual word for wrapping.
+      #
       # @return [Toys::WrappableString]
       #
       attr_reader :desc
 
       ##
-      # The long description strings as an array.
+      # The long description strings.
+      #
+      # When reading, this is returned as an Array of {Toys::WrappableString}
+      # representing the lines in the description.
+      #
+      # When setting, the description must be provided as an Array where _each
+      # element_ may be any of the following:
+      # *   A {Toys::WrappableString} representing one line.
+      # *   A normal String representing a line. This will be transformed into
+      #     a {Toys::WrappableString} using spaces as word delimiters.
+      # *   An Array of String representing a line. This will be transformed
+      #     into a {Toys::WrappableString} where each array element represents
+      #     an individual word for wrapping.
+      #
       # @return [Array<Toys::WrappableString>]
       #
       attr_reader :long_desc
@@ -116,19 +140,41 @@ module Toys
         flags.empty?
       end
 
+      ##
+      # Returns a string summarizing this group. This is generally either the
+      # short description or a representation of all the flags included.
+      # @return [String]
+      #
+      def summary
+        return desc.to_s.inspect unless desc.empty?
+        flags.map(&:display_name).inspect
+      end
+
+      ##
+      # Set the short description string.
+      #
+      # See {#desc} for details.
+      #
+      # @param desc [Toys::WrappableString,String,Array<String>]
+      #
+      def desc=(desc)
+        @desc = WrappableString.make(desc)
+      end
+
+      ##
+      # Set the long description strings.
+      #
+      # See {#long_desc} for details.
+      #
+      # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
+      #
+      def long_desc=(long_desc)
+        @long_desc = WrappableString.make_array(long_desc)
+      end
+
       ## @private
       def <<(flag)
         flags << flag
-      end
-
-      ## @private
-      def default_desc
-        "Flags"
-      end
-
-      ## @private
-      def default_long_desc
-        nil
       end
 
       ## @private
@@ -152,16 +198,6 @@ module Toys
         end
         results
       end
-
-      ## @private
-      def default_desc
-        "Required Flags"
-      end
-
-      ## @private
-      def default_long_desc
-        "These flags are required."
-      end
     end
 
     ##
@@ -181,20 +217,15 @@ module Toys
           seen_names << flag.display_name if seen.include?(flag.key)
         end
         if seen_names.size > 1
-          str = "Exactly one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+          str = "Exactly one flag out of group #{summary} is required, but #{seen_names.size}" \
                 " were provided: #{seen_names.inspect}."
           [ArgParser::FlagGroupConstraintError.new(str)]
         elsif seen_names.empty?
-          str = "Exactly one flag out of group \"#{desc}\" is required, but none were provided."
+          str = "Exactly one flag out of group #{summary} is required, but none were provided."
           [ArgParser::FlagGroupConstraintError.new(str)]
         else
           []
         end
-      end
-
-      ## @private
-      def default_long_desc
-        "Exactly one of these flags must be set."
       end
     end
 
@@ -209,17 +240,12 @@ module Toys
           seen_names << flag.display_name if seen.include?(flag.key)
         end
         if seen_names.size > 1
-          str = "At most one flag out of group \"#{desc}\" is required, but #{seen_names.size}" \
+          str = "At most one flag out of group #{summary} is required, but #{seen_names.size}" \
                 " were provided: #{seen_names.inspect}."
           [ArgParser::FlagGroupConstraintError.new(str)]
         else
           []
         end
-      end
-
-      ## @private
-      def default_long_desc
-        "At most one of these flags must be set."
       end
     end
 
@@ -232,13 +258,8 @@ module Toys
         flags.each do |flag|
           return [] if seen.include?(flag.key)
         end
-        str = "At least one flag out of group \"#{desc}\" is required, but none were provided."
+        str = "At least one flag out of group #{summary} is required, but none were provided."
         [ArgParser::FlagGroupConstraintError.new(str)]
-      end
-
-      ## @private
-      def default_long_desc
-        "At least one of these flags must be set."
       end
     end
   end

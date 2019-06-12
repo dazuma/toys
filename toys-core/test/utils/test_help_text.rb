@@ -352,7 +352,7 @@ describe Toys::Utils::HelpText do
 
       it "shows separate sections per flag group" do
         normal_tool.add_flag_group(type: :required, name: :required, prepend: true,
-                                   long_desc: "List of required args")
+                                   desc: "Required flags", long_desc: "List of required args")
         normal_tool.add_flag(:opt1, ["--opt1=VAL"], desc: "set opt1")
         normal_tool.add_flag(:opt2, ["--opt2=VAL"], desc: "set opt2")
         normal_tool.add_flag(:req1, ["--req1=VAL"], group: :required, desc: "set req1")
@@ -842,7 +842,7 @@ describe Toys::Utils::HelpText do
 
       it "shows separate sections per flag group" do
         normal_tool.add_flag_group(type: :required, name: :required, prepend: true,
-                                   long_desc: "List of required args")
+                                   desc: "Required Flags", long_desc: "List of required args")
         normal_tool.add_flag(:opt1, ["--opt1=VAL"])
         normal_tool.add_flag(:opt2, ["--opt2=VAL"])
         normal_tool.add_flag(:req1, ["--req1=VAL"], group: :required)
