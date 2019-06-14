@@ -27,7 +27,20 @@ module Toys
     # DSL for a flag group definition block. Lets you create flags in a group.
     #
     # These directives are available inside a block passed to
-    # {Toys::DSL::Tool#flag_group} and related methods.
+    # {Toys::DSL::Tool#flag_group}, {Toys::DSL::Tool#all_required},
+    # {Toys::DSL::Tool#at_most_one}, {Toys::DSL::Tool#at_least_one}, or
+    # {Toys::DSL::Tool#exactly_one}.
+    #
+    # ## Example
+    #
+    #     tool "login" do
+    #       all_required do
+    #         # The directives in here are defined by this class
+    #         flag :username, "--username=VAL", desc: "Set username (required)"
+    #         flag :password, "--password=VAL", desc: "Set password (required)"
+    #       end
+    #       # ...
+    #     end
     #
     class FlagGroup
       ## @private

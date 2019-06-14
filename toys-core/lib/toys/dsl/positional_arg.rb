@@ -31,6 +31,17 @@ module Toys
     # {Toys::DSL::Tool#required_arg}, {Toys::DSL::Tool#optional_arg}, or
     # {Toys::DSL::Tool#remaining_args}.
     #
+    # ## Example
+    #
+    #     tool "mytool" do
+    #       optional_arg :value do
+    #         # The directives in here are defined by this class
+    #         accept Integer
+    #         desc "An integer value"
+    #       end
+    #       # ...
+    #     end
+    #
     class PositionalArg
       ## @private
       def initialize(acceptor, default, completion, display_name, desc, long_desc)

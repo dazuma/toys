@@ -1356,11 +1356,29 @@ module Toys
       end
 
       ##
-      # Find the given data path (file or directory)
+      # Find the given data path (file or directory).
+      #
+      # Data directories are a convenient place to put images, archives, keys,
+      # or other such static data needed by your tools. Data files are located
+      # in a directory called `.data` inside a Toys directory. This directive
+      # locates a data file during tool definition.
+      #
+      # ## Example
+      #
+      # This tool reads its description from a text file in the `.data`
+      # directory.
+      #
+      #     tool "mytool" do
+      #       path = find_data("mytool-desc.txt", type: :file)
+      #       desc IO.read(path) if path
+      #       def run
+      #         # ...
+      #       end
+      #     end
       #
       # @param path [String] The path to find
-      # @param type [nil,:file,:directory] Type of file system object to find,
-      #     or nil to return any type.
+      # @param type [nil,:file,:directory] Type of file system object to find.
+      #     Default is `nil`, indicating any type.
       #
       # @return [String] Absolute path of the data.
       # @return [nil] if the given data path is not found.

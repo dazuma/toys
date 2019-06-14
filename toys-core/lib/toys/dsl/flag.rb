@@ -30,6 +30,18 @@ module Toys
     # These directives are available inside a block passed to
     # {Toys::DSL::Tool#flag}.
     #
+    # ## Example
+    #
+    #     tool "mytool" do
+    #       flag :value do
+    #         # The directives in here are defined by this class
+    #         flags "--value=VAL"
+    #         accept Integer
+    #         desc "An integer value"
+    #       end
+    #       # ...
+    #     end
+    #
     class Flag
       ## @private
       def initialize(flags, acceptor, default, handler, flag_completion, value_completion,

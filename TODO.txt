@@ -4,13 +4,11 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* More detailed yardocs for DSL methods, including an example for each.
-* Really flesh out the reference docs for Toys::CLI.
 * Write toys-core user guide
 
 ## Ideas under investigation
 
-* Special tab completion for zsh
+* Native tab completion for zsh
 * Flags can supply the default for when an optional value is omitted (currently nil is passed to the acceptor, which matches OptionParser behavior).
 * Convenience methods for creating pipes/splits/joins in exec
 * Integrate with the "less" tool in exec.
