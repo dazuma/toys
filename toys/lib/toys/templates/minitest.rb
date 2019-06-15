@@ -91,7 +91,7 @@ module Toys
       attr_accessor :verbose
       attr_accessor :warnings
 
-      to_expand do |template|
+      expansion do |template|
         tool(template.name) do
           desc "Run minitest on the current project."
 

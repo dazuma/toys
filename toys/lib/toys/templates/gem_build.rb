@@ -30,10 +30,17 @@ module Toys
       include Template
 
       ##
-      # Default tool name
+      # Default tool name.
       # @return [String]
       #
       DEFAULT_TOOL_NAME = "build"
+
+      ##
+      # Default output flags. If `output_flags` is set to `true`, this is the
+      # value used.
+      # @return [Array<String>]
+      #
+      DEFAULT_OUTPUT_FLAGS = ["-o", "--output"].freeze
 
       ##
       # Create the template settings for the GemBuild template.
@@ -52,12 +59,16 @@ module Toys
       #
       def initialize(name: DEFAULT_TOOL_NAME,
                      gem_name: nil,
+                     output: nil,
+                     output_flags: nil,
                      push_gem: false,
                      install_gem: false,
                      tag: false,
                      push_tag: false)
         @name = name
         @gem_name = gem_name
+        @output = output
+        @output_flags = output_flags == true ? DEFAULT_OUTPUT_FLAGS : output_flags
         @push_gem = push_gem
         @install_gem = install_gem
         @tag = tag
@@ -66,12 +77,14 @@ module Toys
 
       attr_accessor :name
       attr_accessor :gem_name
+      attr_accessor :output
+      attr_accessor :output_flags
       attr_accessor :push_gem
       attr_accessor :install_gem
       attr_accessor :tag
       attr_accessor :push_tag
 
-      to_expand do |template|
+      expansion do |template|
         unless template.gem_name
           candidates = ::Dir.chdir(context_directory || ::Dir.getwd) do
             ::Dir.glob("*.gemspec")
@@ -90,6 +103,16 @@ module Toys
           desc "#{task_names} the gem: #{template.gem_name}"
 
           flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
+          if template.output_flags
+            flag :output do
+              flags(Array(template.output_flags).map { |f| "#{f} VAL" })
+              desc "output gem with the given filename"
+              default template.output
+              complete_values :file_system
+            end
+          else
+            static :output, template.output
+          end
 
           include :exec, exit_on_nonzero_status: true
           include :fileutils
@@ -98,23 +121,23 @@ module Toys
           to_run do
             require "rubygems/package"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              gemspec = ::Gem::Specification.load("#{template.gem_name}.gemspec")
+              gemspec_path = "#{template.gem_name}.gemspec"
+              gemspec = ::Gem::Specification.load(gemspec_path)
               version = gemspec.version
-              gemfile = "#{template.gem_name}-#{version}.gem"
-              ::Gem::Package.build(gemspec)
-              mkdir_p("pkg")
-              mv(gemfile, "pkg")
+              gem_archive_path = output || "pkg/#{template.gem_name}-#{version}.gem"
+              mkdir_p(::File.dirname(gem_archive_path))
+              exec ["gem", "build", "--output", gem_archive_path, gemspec_path]
               if template.install_gem
-                exit(1) unless yes || confirm("Install #{gemfile}? ", default: true)
-                exec ["gem", "install", "pkg/#{gemfile}"]
+                exit(1) unless yes || confirm("Install #{gem_archive_path}? ", default: true)
+                exec ["gem", "install", gem_archive_path]
               end
               if template.push_gem
                 if ::File.directory?(".git") && capture("git status -s").strip != ""
                   logger.error "Cannot push the gem when there are uncommited changes"
                   exit(1)
                 end
-                exit(1) unless yes || confirm("Release #{gemfile}? ", default: true)
-                exec(["gem", "push", "pkg/#{gemfile}"])
+                exit(1) unless yes || confirm("Release #{gem_archive_path}? ", default: true)
+                exec(["gem", "push", gem_archive_path])
                 if template.tag
                   exec(["git", "tag", "v#{version}"])
                   if template.push_tag

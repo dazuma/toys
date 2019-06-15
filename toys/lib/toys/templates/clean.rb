@@ -51,7 +51,7 @@ module Toys
       attr_accessor :name
       attr_accessor :paths
 
-      to_expand do |template|
+      expansion do |template|
         tool(template.name) do
           desc "Clean built files and directories."
 

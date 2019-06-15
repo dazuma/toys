@@ -34,7 +34,7 @@ gem "minitest-rg", "~> 5.2"
 gem "rake", "~> 12.0"
 gem "redcarpet", "~> 3.4"
 gem "rspec", "~> 3.8"
-gem "rubocop", "~> 0.70.0"
+gem "rubocop", "~> 0.71.0"
 gem "yard", "~> 0.9.19"
 
 tool "install" do

@@ -9,7 +9,7 @@ Highlights:
 * Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values.
 * Toys now integrates with `did_you_mean` to provide suggestions for misspelled tools, flags, and arguments (when run on Ruby 2.4 or later.)
 * Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
-* A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a host of fixes, especially around acceptors and optional flag values.
+* A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a bunch of fixes, especially around acceptors and optional flag values.
 * Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.
 
 Details:
@@ -22,7 +22,7 @@ Details:
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
 * ADDED: Function and range based acceptors.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
-* ADDED: The `:gem_build` template includes an `:install_gem` option.
+* ADDED: The `:gem_build` template includes an `:install_gem` option. It also allows customization of gem output.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
 * ADDED: An `EXTRA_ARGS` context key that provides unmatched positional arguments.
@@ -34,6 +34,7 @@ Details:
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
 * CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The root tool no longer defines remaining_args.
+* CHANGED: Use `expansion` instead of `to_expand` to define a template expansion block.
 * CHANGED: Default descriptions for flag groups is now handled by the `set_default_descriptions` middleware rather than hard-coded in FlagGroup.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Toys no longer displays a stack trace if a tool is interrupted.

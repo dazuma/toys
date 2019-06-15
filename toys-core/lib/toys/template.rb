@@ -40,8 +40,8 @@ module Toys
   # {Toys::DSL::Tool#expand} method are passed to your constructor, and your
   # template object is passed to any block given to {Toys::DSL::Tool#expand}.
   #
-  # Next, in your template class, call the `to_expand` method, which is defined
-  # in {Toys::Template::ClassMethods#to_expand}. Pass this a block which
+  # Next, in your template class, call the `expansion` method, which is defined
+  # in {Toys::Template::ClassMethods#expansion}. Pass this a block which
   # defines the implementation of the template. Effectively, the contents of
   # this block are "inserted" into the user's configuration. The template
   # object is passed to the block so you have access to the template options.
@@ -68,7 +68,7 @@ module Toys
   #       attr_accessor :name
   #
   #       # The following block is inserted when the template is expanded.
-  #       to_expand do |template|
+  #       expansion do |template|
   #         desc "Prints a greeting to #{template.name}"
   #         tool "templated-greeting" do
   #           to_run do
@@ -106,7 +106,7 @@ module Toys
 
     ## @private
     def self.included(mod)
-      return if mod.respond_to?(:to_expand)
+      return if mod.respond_to?(:expansion)
       mod.extend(ClassMethods)
       mod.include(Context::Key)
     end
@@ -116,17 +116,22 @@ module Toys
     #
     module ClassMethods
       ##
-      # Provide the block that implements the template.
-      #
-      def to_expand(&block)
-        self.expander = block
-      end
-
-      ##
-      # You may alternately set the expander block using this accessor.
+      # Returns the current expansion block as a Proc.
+      # If you provide a block, also sets the expansion to the given block.
       # @return [Proc]
       #
-      attr_accessor :expander
+      def expansion(&block)
+        @expansion = block if block
+        @expansion
+      end
+      alias to_expand expansion
+
+      ##
+      # Sets the expansion to the given Proc.
+      #
+      def expansion=(proc)
+        @expansion = proc
+      end
     end
   end
 end

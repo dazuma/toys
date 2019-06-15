@@ -62,7 +62,7 @@ require "toys/version"
   spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "redcarpet", "~> 3.4"
   spec.add_development_dependency "rspec", "~> 3.8"
-  spec.add_development_dependency "rubocop", "~> 0.70.0"
+  spec.add_development_dependency "rubocop", "~> 0.71.0"
   spec.add_development_dependency "yard", "~> 0.9.19"
 
   if spec.respond_to?(:metadata)

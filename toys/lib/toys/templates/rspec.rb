@@ -112,7 +112,7 @@ module Toys
       attr_accessor :pattern
       attr_accessor :warnings
 
-      to_expand do |template|
+      expansion do |template|
         tool(template.name) do
           desc "Run rspec on the current project."
 

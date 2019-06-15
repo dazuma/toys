@@ -103,7 +103,7 @@ module Toys
       attr_accessor :generator
       attr_accessor :options
 
-      to_expand do |template|
+      expansion do |template|
         tool(template.name) do
           desc "Run rdoc on the current project."
 

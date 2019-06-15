@@ -469,7 +469,7 @@ describe Toys::DSL::Tool do
             @name = name
           end
           attr_reader :name
-          to_expand do |t|
+          expansion do |t|
             tool t.name do
               def run
                 exit(2)
@@ -491,7 +491,7 @@ describe Toys::DSL::Tool do
             @name = name
           end
           attr_reader :name
-          to_expand do |t|
+          expansion do |t|
             tool t.name do
               def run
                 exit(2)
@@ -522,7 +522,7 @@ describe Toys::DSL::Tool do
               @name = name
             end
             attr_reader :name
-            to_expand do |t|
+            expansion do |t|
               tool t.name do
                 def run
                   exit(2)

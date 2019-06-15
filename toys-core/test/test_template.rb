@@ -27,8 +27,8 @@ describe Toys::Template do
   it "provides class methods" do
     klass = Toys::Template.create
     assert_equal(true, klass.respond_to?(:to_expand))
-    assert_equal(true, klass.respond_to?(:expander))
-    assert_equal(true, klass.respond_to?(:expander=))
+    assert_equal(true, klass.respond_to?(:expansion))
+    assert_equal(true, klass.respond_to?(:expansion=))
   end
 
   it "includes context key constants" do
@@ -41,11 +41,11 @@ describe Toys::Template do
       def mithrandir
         :mithrandir
       end
-      to_expand do
+      expansion do
         :gandalf
       end
     end
     assert_equal(:mithrandir, klass.new.mithrandir)
-    assert_equal(:gandalf, klass.expander.call)
+    assert_equal(:gandalf, klass.expansion.call)
   end
 end

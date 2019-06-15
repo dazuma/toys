@@ -192,6 +192,7 @@ describe Toys::Utils::Exec do
                   in: [:file, input_path], out: [:file, output_path])
         assert_equal("hello\nworld\n", ::File.read(output_path))
       end
+      ::FileUtils.rm_rf(tmp_dir)
     end
 
     it "interprets bare strings as file names" do
@@ -202,6 +203,7 @@ describe Toys::Utils::Exec do
                   in: input_path, out: output_path)
         assert_equal("hello\nworld\n", ::File.read(output_path))
       end
+      ::FileUtils.rm_rf(tmp_dir)
     end
 
     it "inherits parent streams by default when running in the foreground" do
@@ -321,6 +323,7 @@ describe Toys::Utils::Exec do
         exec.exec_proc(func, in: [:file, input_path], out: [:file, output_path])
         assert_equal("hello\nworld\n", ::File.read(output_path))
       end
+      ::FileUtils.rm_rf(tmp_dir)
     end
 
     it "closes stdin" do
@@ -509,6 +512,7 @@ describe Toys::Utils::Exec do
         end
         assert_equal("hello\nworld\n", ::File.read(output_path))
       end
+      ::FileUtils.rm_rf(tmp_dir)
     end
   end
 

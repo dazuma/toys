@@ -179,15 +179,15 @@ module Toys
       #
       # A template is an object that generates DSL directives. You can use it
       # to build "prefabricated" tools, and then instantiate them in your Toys
-      # files. Generally, a template is a class with an associated `to_expand`
+      # files. Generally, a template is a class with an associated `expansion`
       # procedure. The class defines parameters for the template expansion,
-      # and `to_expand` includes DSL directives that should be run based on
+      # and `expansion` includes DSL directives that should be run based on
       # those parameters.
       #
       # Normally, you provide a block and define the template class in that
       # block. Most templates will define an `initialize` method that takes any
       # arguments passed into the template expansion. The template must also
-      # provide a `to_expand` block showing how to use the template object to
+      # provide an `expansion` block showing how to use the template object to
       # produce DSL directives.
       #
       # Alternately, you can create a template class separately and pass it
@@ -204,7 +204,7 @@ module Toys
       #         @message = message
       #       end
       #       attr_reader :name, :message
-      #       to_expand do |template|
+      #       expansion do |template|
       #         tool template.name do
       #           to_run do
       #             puts template.message
@@ -382,7 +382,7 @@ module Toys
       #         @message = message
       #       end
       #       attr_reader :name, :message
-      #       to_expand do |template|
+      #       expansion do |template|
       #         tool template.name do
       #           to_run do
       #             puts template.message
@@ -411,7 +411,7 @@ module Toys
         end
         template = template_class.new(*args)
         yield template if block_given?
-        class_exec(template, &template_class.expander)
+        class_exec(template, &template_class.expansion)
         self
       end
 

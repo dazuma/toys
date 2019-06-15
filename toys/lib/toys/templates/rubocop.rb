@@ -68,7 +68,7 @@ module Toys
       attr_accessor :fail_on_error
       attr_accessor :options
 
-      to_expand do |template|
+      expansion do |template|
         tool(template.name) do
           desc "Run rubocop on the current project."
 
