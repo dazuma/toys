@@ -28,7 +28,7 @@ module Toys
   # A mixin is a collection of methods that are available to be called from a
   # tool implementation (i.e. its run method). The mixin is added to the tool
   # class, so it has access to the same methods that can be called by the tool,
-  # such as {Toys::Context#option}.
+  # such as {Toys::Context#get}.
   #
   # ## Usage
   #
@@ -36,20 +36,24 @@ module Toys
   # the methods you want to be available.
   #
   # If you want to perform some initialization specific to the mixin, you can
-  # provide an `initializer` block and/or an `inclusion` block.
+  # provide an _initializer_ block and/or an _inclusion_ block. These can be
+  # specified by calling the module methods defined in
+  # {Toys::Mixin::ModuleMethods}.
   #
-  # The `initializer` block is called when the tool context is instantiated
+  # The initializer block is called when the tool context is instantiated
   # in preparation for execution. It has access to context methods such as
   # {Toys::Context#get}, and can perform setup for the tool execution itself,
   # such as initializing some persistent state and storing it in the tool using
-  # {Toys::Context#set}. The `initializer` block is passed any extra arguments
-  # that were provided to the `include` directive.
+  # {Toys::Context#set}. The initializer block is passed any extra arguments
+  # that were provided to the `include` directive. Define the initializer by
+  # calling {Toys::Mixin::ModuleMethods#on_initialize}.
   #
-  # The `inclusion` block is called in the context of your tool class when your
+  # The inclusion block is called in the context of your tool class when your
   # mixin is included. It is also passed any extra arguments that were provided
   # to the `include` directive. It can be used to issue directives to define
   # tools or other objects in the DSL, or even enhance the DSL by defining DSL
-  # methods specific to the mixin.
+  # methods specific to the mixin. Define the inclusion block by calling
+  # {Toys::Mixin::ModuleMethods#on_include}.
   #
   # ## Example
   #
@@ -61,14 +65,16 @@ module Toys
   #     module MyCounterMixin
   #       include Toys::Mixin
   #
-  #       # Initialize the counter. Called with self set to the tool so it can
-  #       # affect the tool state.
+  #       # Initialize the counter. Notice that the initializer is evaluated
+  #       # in the context of the runtime context, so has access to the runtime
+  #       # context state.
   #       on_initialize do |start = 0|
   #         set(:counter_value, start)
   #       end
   #
-  #       # Mixin methods are called with self set to the tool and can affect
-  #       # the tool state.
+  #       # Mixin methods are evaluated in the runtime context and so have
+  #       # access to the runtime context state, just as if you had defined
+  #       # them in your tool.
   #       def counter_value
   #         get(:counter_value)
   #       end

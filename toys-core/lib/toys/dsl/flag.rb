@@ -131,6 +131,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def accept(spec = nil, **options, &block)

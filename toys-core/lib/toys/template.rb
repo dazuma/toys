@@ -40,8 +40,8 @@ module Toys
   # {Toys::DSL::Tool#expand} method are passed to your constructor, and your
   # template object is passed to any block given to {Toys::DSL::Tool#expand}.
   #
-  # Next, in your template class, call the `expansion` method, which is defined
-  # in {Toys::Template::ClassMethods#expansion}. Pass this a block which
+  # Next, in your template class, call the `on_expand` method, which is defined
+  # in {Toys::Template::ClassMethods#on_expand}. Pass this a block which
   # defines the implementation of the template. Effectively, the contents of
   # this block are "inserted" into the user's configuration. The template
   # object is passed to the block so you have access to the template options.
@@ -68,7 +68,7 @@ module Toys
   #       attr_accessor :name
   #
   #       # The following block is inserted when the template is expanded.
-  #       expansion do |template|
+  #       on_expand do |template|
   #         desc "Prints a greeting to #{template.name}"
   #         tool "templated-greeting" do
   #           to_run do

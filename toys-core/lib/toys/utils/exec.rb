@@ -508,6 +508,7 @@ module Toys
         ##
         # Captures the remaining data in the standard output stream.
         # After calling this, do not read directly from the stream.
+        #
         # @return [self]
         #
         def capture_out
@@ -517,6 +518,7 @@ module Toys
         ##
         # Captures the remaining data in the standard error stream.
         # After calling this, do not read directly from the stream.
+        #
         # @return [self]
         #
         def capture_err
@@ -693,7 +695,7 @@ module Toys
       end
 
       ##
-      # The return result from a subcommand
+      # The result returned from a subcommand execution.
       #
       class Result
         ## @private
@@ -706,45 +708,54 @@ module Toys
         end
 
         ##
-        # Return the subcommand's name.
+        # The subcommand's name.
+        #
         # @return [Object]
         #
         attr_reader :name
 
         ##
-        # Returns the captured output string, if the command was configured
-        # with `out: :capture`. Returns `nil` otherwise.
-        # @return [String,nil]
+        # The captured output string.
+        #
+        # @return [String] The string captured from stdout.
+        # @return [nil] if the command was not configured to capture stdout.
         #
         attr_reader :captured_out
 
         ##
-        # Returns the captured error string, if the command was configured
-        # with `err: :capture`. Returns `nil` otherwise.
-        # @return [String,nil]
+        # The captured error string.
+        #
+        # @return [String] The string captured from stderr.
+        # @return [nil] if the command was not configured to capture stderr.
         #
         attr_reader :captured_err
 
         ##
-        # Returns the status code object, or `nil` if the process could not
-        # be started.
+        # The status code object.
+        #
         # Exactly one of `exception` and `status` will be non-nil.
-        # @return [Process::Status,nil]
+        #
+        # @return [Process::Status] The status code.
+        # @return [nil] if the process could not be started.
         #
         attr_reader :status
 
         ##
-        # Returns the exception raised if a process couldn't be started, or
-        # `nil` if the process was successfully started.
+        # The exception raised if a process couldn't be started.
+        #
         # Exactly one of `exception` and `status` will be non-nil.
-        # @return [Exception]
+        #
+        # @return [Exception] The exception raised from process start.
+        # @return [nil] if the process started successfully.
         #
         attr_reader :exception
 
         ##
-        # Returns the numeric status code.
+        # The numeric status code.
+        #
         # This will be a nonzero integer if the process failed to start. That
         # is, `exit_code` will never be `nil`, even if `status` is `nil`.
+        #
         # @return [Integer]
         #
         def exit_code
@@ -753,6 +764,7 @@ module Toys
 
         ##
         # Returns true if the subprocess terminated with a zero status.
+        #
         # @return [Boolean]
         #
         def success?
@@ -761,6 +773,7 @@ module Toys
 
         ##
         # Returns true if the subprocess terminated with a nonzero status.
+        #
         # @return [Boolean]
         #
         def error?

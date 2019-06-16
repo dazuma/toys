@@ -52,6 +52,18 @@ module Toys
     ##
     # Well-known context keys.
     #
+    # This module is mixed into the runtime context. This means you can
+    # reference any of these constants directly from your run method.
+    #
+    # ## Example
+    #
+    #     tool "my-name" do
+    #       def run
+    #         # BINARY_NAME is available here.
+    #         puts "My name is #{get(BINARY_NAME)}"
+    #       end
+    #     end
+    #
     module Key
       ##
       # Context key for the argument list passed to the current tool. Value is
