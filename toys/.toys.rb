@@ -52,8 +52,8 @@ tool "ci" do
   long_desc "The CI tool runs all CI checks for the toys gem, including unit" \
               " tests, rubocop, and documentation checks. It is useful for" \
               " running tests in normal development, as well as being the" \
-              " entrypoint for CI systems like Travis. Any failure will" \
-              " result in a nonzero result code."
+              " entrypoint for CI systems. Any failure will result in a" \
+              " nonzero result code."
 
   include :exec, result_callback: :handle_result
   include :terminal

@@ -2244,9 +2244,9 @@ all the basic tools for a Ruby gem. It includes:
   actually build) the documentation for warnings and completeness.
 
 Below is the full annotated `.toys.rb` file. For many gems, you could drop this
-into the gem source repo with minimal or no modifications. Indeed, it is
-nearly identical to the Toys files provided for the **toys** and **toys-core**
-gems themselves.
+into the gem source repo with minimal or no modifications. Indeed, it is very
+similar to the Toys files provided for the **toys** and **toys-core** gems
+themselves.
 
     # This file is .toys.rb
 
@@ -2283,8 +2283,7 @@ gems themselves.
     expand :gem_build, name: "release", push_gem: true
 
     # Now we create a full CI tool. It runs the test, rubocop, and yardoc tools
-    # and checks for errors. This tool could be invoked from Travis-CI or
-    # similar CI system.
+    # and checks for errors. This tool could be invoked from a CI system.
     tool "ci" do
       # The :exec mixin provides the exec_tool() method that we will use to run
       # other tools and check their exit status.
@@ -2404,8 +2403,8 @@ the flag as you choose. Flags explicitly defined by your tool take precedence
 over the built-ins.
 
 For example, normally two built-in flags are provided to decrease the verbosity
-level: `-q` and `--quiet`. If you define `-q` yourself—for example to activate
-a "quick" mode—then `-q` will be repurposed for your flag, but `--quiet` will
+level: `-q` and `--quiet`. If you define `-q` yourself (for example to activate
+a "quick" mode) then `-q` will be repurposed for your flag, but `--quiet` will
 still be present to decrease verbosity.
 
     # Repurposes -q to set the "quick" option instead of "quiet"

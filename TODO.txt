@@ -2,13 +2,14 @@
 
 This is a dumping ground of possible ideas and future directions for Toys.
 
-## Immediate tasks
+## Planned for next release
 
 * Write toys-core user guide
+* Native tab completion for zsh
 
 ## Ideas under investigation
 
-* Native tab completion for zsh
+* Evaluate use cases for thread safety
 * Convenience methods for creating pipes/splits/joins in exec
 * Integrate with the "less" tool in exec.
 * toys system new: Create toys files and gems

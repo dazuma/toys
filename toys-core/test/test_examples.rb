@@ -37,7 +37,6 @@ describe "toys-core" do
     gems_dir = File.join(tmp_dir, "gems")
     bin_dir = File.join(tmp_dir, "bin")
     pkg_dir = File.join(tmp_dir, "pkg")
-    core_gem_pkg = File.join(pkg_dir, "core.gem")
     simple_gem_pkg = File.join(pkg_dir, "simple.gem")
     multi_file_gem_pkg = File.join(pkg_dir, "multi-file.gem")
     examples_dir = File.join(core_dir, "examples")
@@ -48,12 +47,6 @@ describe "toys-core" do
     FileUtils.mkdir_p(gems_dir)
     FileUtils.mkdir_p(bin_dir)
     FileUtils.mkdir_p(pkg_dir)
-
-    Dir.chdir(core_dir) do
-      assert_succeeds("gem build toys-core.gemspec >/dev/null 2>&1")
-      FileUtils.mv("toys-core-#{Toys::CORE_VERSION}.gem", core_gem_pkg)
-    end
-    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{core_gem_pkg} >/dev/null")
 
     Dir.chdir(simple_example_dir) do
       assert_succeeds("gem build toys-core-simple-example.gemspec >/dev/null 2>&1")
