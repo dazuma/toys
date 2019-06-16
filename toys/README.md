@@ -85,6 +85,18 @@ automatically generates a full help screen, which you can view using the
 
     toys greet --help
 
+It matters where you put the `.toys.rb` file. If you are in the same directory
+as the file, you have access to the tools you defined. And if you cd down into
+a subdirectory, you will still have access, because Toys searches up the
+directory tree. But if you cd up to a parent directory, Toys will no longer
+find the file. So by writing different `.toys.rb` files in different
+directories, you can "scope" your tools to the projects where they apply.
+(You might notice this is similar to how Rake searches for `Rakefile`s!)
+
+If you want to define "global" tools that apply anywhere, write a `.toys.rb`
+file either in your home directory, or in the system config directory (usually
+`/etc`). Toys always searches these directories.
+
 ### A more sophisticated example
 
 Let's take a look at another example that exercises some of the features you're
@@ -205,10 +217,12 @@ here. These flags, like `--help`, are provided automatically to every tool.
 ### A better Rake?
 
 Let's look at one more example. Traditionally, Ruby developers often use
-Rakefiles to write scripts for tasks such as build, test, and deploy. But Rake
-is really designed for dependency management, not for writing scripts. As a
-result, some elements, such as passing arguments to a task, are very clumsy
-with Rake.
+Rakefiles to write scripts for tasks such as build, test, and deploy. And Toys
+is similar to Rake in how it uses directory-scoped files to define tools.
+
+But Rake is really designed for dependency management, not for writing scripts.
+As a result, some features, such as passing arguments to a task, are very
+clumsy with Rake.
 
 If you have a project with a Rakefile, move into that directory and create a
 new file called `.toys.rb` in that same directory (next to the Rakefile). Add
@@ -265,11 +279,11 @@ For example, Toys lets you create tool namespaces and "subtools", and search
 for tools by name and description. There are various ways to validate and
 interpret command line arguments. You can create your own mixins and templates,
 and take advantage of a variety of third-party libraries such as Highline and
-TTY. In addition, Toys lets you "scope" your tools to a directory or an entire
-directory tree, so you can have tools specific to different projects. Finally,
-if your `.toys.rb` files are growing too large or complicated, you can create
-`.toys` directories containing tool definitions in separate files, as well as
-shared code, normal Ruby classes, and even data files for use by tools.
+TTY. Finally, if your `.toys.rb` files are growing too large or complicated,
+you can replace them with `.toys` directories that contain tool definitions in
+separate files. Such directories are versatile, letting you organize your tool
+definitions, along with shared code, normal Ruby classes, and even data files
+for use by tools.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line executable written in Ruby. However,

@@ -39,7 +39,7 @@ require "toys/core_version"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("*.md") +
-               ::Dir.glob("docs/**/*.md") + [".yardopts"]
+               ::Dir.glob("docs/*.md") + [".yardopts"]
   spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
 

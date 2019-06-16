@@ -36,9 +36,10 @@ describe "toys-core" do
     tmp_dir = File.join(core_dir, "tmp")
     gems_dir = File.join(tmp_dir, "gems")
     bin_dir = File.join(tmp_dir, "bin")
-    core_gem_pkg = File.join(tmp_dir, "core.gem")
-    simple_gem_pkg = File.join(tmp_dir, "simple.gem")
-    multi_file_gem_pkg = File.join(tmp_dir, "multi-file.gem")
+    pkg_dir = File.join(tmp_dir, "pkg")
+    core_gem_pkg = File.join(pkg_dir, "core.gem")
+    simple_gem_pkg = File.join(pkg_dir, "simple.gem")
+    multi_file_gem_pkg = File.join(pkg_dir, "multi-file.gem")
     examples_dir = File.join(core_dir, "examples")
     simple_example_dir = File.join(examples_dir, "simple-gem")
     multi_file_example_dir = File.join(examples_dir, "multi-file-gem")
@@ -46,33 +47,34 @@ describe "toys-core" do
     FileUtils.rm_rf(tmp_dir)
     FileUtils.mkdir_p(gems_dir)
     FileUtils.mkdir_p(bin_dir)
+    FileUtils.mkdir_p(pkg_dir)
 
     Dir.chdir(core_dir) do
       assert_succeeds("gem build toys-core.gemspec >/dev/null 2>&1")
       FileUtils.mv("toys-core-#{Toys::CORE_VERSION}.gem", core_gem_pkg)
     end
-    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} --ignore-dependencies" \
-                    " #{core_gem_pkg} >/dev/null")
+    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{core_gem_pkg} >/dev/null")
 
     Dir.chdir(simple_example_dir) do
-      assert_succeeds("GEM_PATH=#{gems_dir} gem build" \
-                      " toys-core-simple-example.gemspec >/dev/null 2>&1")
+      assert_succeeds("gem build toys-core-simple-example.gemspec >/dev/null 2>&1")
       FileUtils.mv("toys-core-simple-example-0.0.1.gem", simple_gem_pkg)
     end
     Dir.chdir(multi_file_example_dir) do
-      assert_succeeds("GEM_PATH=#{gems_dir} gem build" \
-                      " toys-core-multi-file-example.gemspec >/dev/null 2>&1")
+      assert_succeeds("gem build toys-core-multi-file-example.gemspec >/dev/null 2>&1")
       FileUtils.mv("toys-core-multi-file-example-0.0.1.gem", multi_file_gem_pkg)
     end
-    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} --ignore-dependencies" \
-                    " #{simple_gem_pkg} >/dev/null")
-    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} --ignore-dependencies" \
-                    " #{multi_file_gem_pkg} >/dev/null")
+    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{simple_gem_pkg} >/dev/null")
+    assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{multi_file_gem_pkg} >/dev/null")
 
     assert_equal("Hello, Toys!\n",
-                 `GEM_PATH=#{gems_dir} #{bin_dir}/toys-core-simple-example --whom=Toys`)
+                 `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-simple-example --whom=Toys`)
     assert_equal("Hello, Toys!\n",
-                 `GEM_PATH=#{gems_dir} #{bin_dir}/toys-core-multi-file-example greet --whom=Toys`)
+                 `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example greet --whom=Toys`)
+    Dir.chdir(tmp_dir) do
+      assert_match(/Created repo in myrepo/,
+                   `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example new-repo myrepo`)
+      assert(File.directory?("myrepo/.git"))
+    end
 
     FileUtils.rm_rf(tmp_dir)
   end

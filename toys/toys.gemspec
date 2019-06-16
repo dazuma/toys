@@ -45,7 +45,7 @@ require "toys/version"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
-               ::Dir.glob("*.md") + ::Dir.glob("docs/**/*.md") +
+               ::Dir.glob("*.md") + ::Dir.glob("docs/*.md") +
                ::Dir.glob("bin/*") + ::Dir.glob("share/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]

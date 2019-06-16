@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "toys-core"
-
 ::Gem::Specification.new do |spec|
   spec.name = "toys-core-simple-example"
   spec.version = "0.0.1"
@@ -22,5 +20,5 @@ require "toys-core"
   spec.bindir = "bin"
   spec.executables = ["toys-core-simple-example"]
 
-  spec.add_dependency "toys-core", "~> #{::Toys::CORE_VERSION}"
+  spec.add_dependency "toys-core", "= 0.7.0"
 end
