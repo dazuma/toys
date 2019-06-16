@@ -135,6 +135,9 @@ module Toys
       ##
       # Create an exec service.
       #
+      # @param block [Proc] A block that is called if a key is not found. It is
+      #     passed the unknown key, and expected to return a default value
+      #     (which can be nil).
       # @param opts [Hash] Initial default options.
       #
       def initialize(opts = {}, &block)

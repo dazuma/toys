@@ -209,8 +209,8 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
-      # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
-      #     configure this flag in a block.
+      # @param block [Proc] Configures the flag. See {Toys::DSL::Flag} for the
+      #     directives that can be called in this block.
       # @return [self]
       #
       def flag(key, *flags,

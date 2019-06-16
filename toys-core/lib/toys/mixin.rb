@@ -36,19 +36,20 @@ module Toys
   # the methods you want to be available.
   #
   # If you want to perform some initialization specific to the mixin, you can
-  # provide a `to_initialize` block and/or a `to_include` block.
+  # provide an `initializer` block and/or an `inclusion` block.
   #
-  # The `to_initialize` block is called when the tool itself is instantiated.
-  # It has access to tool methods such as {Toys::Context#option}, and can
-  # perform setup for the tool execution itself, often involving initializing
-  # some persistent state and storing it in the tool using {Toys::Context#set}.
-  # The `to_initialize` block is passed any extra arguments that were provided
-  # to the `include` directive.
+  # The `initializer` block is called when the tool context is instantiated
+  # in preparation for execution. It has access to context methods such as
+  # {Toys::Context#get}, and can perform setup for the tool execution itself,
+  # such as initializing some persistent state and storing it in the tool using
+  # {Toys::Context#set}. The `initializer` block is passed any extra arguments
+  # that were provided to the `include` directive.
   #
-  # The `to_include` block is called in the context of your tool class when
-  # your mixin is included. It is also passed any extra arguments that were
-  # provided to the `include` directive. It can be used to issue directives
-  # or define methods on the DSL, specific to the mixin.
+  # The `inclusion` block is called in the context of your tool class when your
+  # mixin is included. It is also passed any extra arguments that were provided
+  # to the `include` directive. It can be used to issue directives to define
+  # tools or other objects in the DSL, or even enhance the DSL by defining DSL
+  # methods specific to the mixin.
   #
   # ## Example
   #
@@ -62,7 +63,7 @@ module Toys
   #
   #       # Initialize the counter. Called with self set to the tool so it can
   #       # affect the tool state.
-  #       to_initialize do |start = 0|
+  #       on_initialize do |start = 0|
   #         set(:counter_value, start)
   #       end
   #
@@ -95,6 +96,7 @@ module Toys
     ##
     # Create a mixin module with the given block.
     #
+    # @param block [Proc] Defines the mixin module.
     # @return [Class]
     #
     def self.create(&block)
@@ -107,7 +109,7 @@ module Toys
 
     ## @private
     def self.included(mod)
-      return if mod.respond_to?(:to_initialize)
+      return if mod.respond_to?(:on_initialize)
       mod.extend(ModuleMethods)
     end
 
@@ -116,32 +118,50 @@ module Toys
     #
     module ModuleMethods
       ##
-      # Provide a block that initializes this mixin when the tool is
-      # constructed.
+      # Set the initializer for this mixin. This block is evaluated in the
+      # runtime context before execution, and is passed any arguments provided
+      # to the `include` directive. It can perform any runtime initialization
+      # needed by the mixin.
       #
-      def to_initialize(&block)
-        self.initialization_callback = block
+      # @param block [Proc] Sets the initializer proc.
+      # @return [self]
+      #
+      def on_initialize(&block)
+        self.initializer = block
+        self
       end
 
       ##
-      # Provide a block that modifies the tool class when the mixin is
-      # included.
+      # The initializer proc for this mixin. This proc is evaluated in the
+      # runtime context before execution, and is passed any arguments provided
+      # to the `include` directive. It can perform any runtime initialization
+      # needed by the mixin.
       #
-      def to_include(&block)
-        self.inclusion_callback = block
+      # @return [Proc] The iniitiliazer for this mixin.
+      #
+      attr_accessor :initializer
+
+      ##
+      # Set an inclusion proc for this mixin. This block is evaluated in the
+      # tool class immediately after the mixin is included, and is passed any
+      # arguments provided to the `include` directive.
+      #
+      # @param block [Proc] Sets the inclusion proc.
+      # @return [self]
+      #
+      def on_include(&block)
+        self.inclusion = block
+        self
       end
 
       ##
-      # You may alternately set the initializer block using this accessor.
-      # @return [Proc]
+      # The inclusion proc for this mixin. This block is evaluated in the tool
+      # class immediately after the mixin is included, and is passed any
+      # arguments provided to the `include` directive.
       #
-      attr_accessor :initialization_callback
-
-      ##
-      # You may alternately set the inclusion block using this accessor.
-      # @return [Proc]
+      # @return [Proc] The inclusion procedure for this mixin.
       #
-      attr_accessor :inclusion_callback
+      attr_accessor :inclusion
     end
   end
 end

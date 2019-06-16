@@ -32,7 +32,7 @@ end
 
 module MyTemplate
   include Toys::Template
-  expansion do |t|
+  on_expand do |t|
   end
 end
 

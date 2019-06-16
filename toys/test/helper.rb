@@ -39,8 +39,11 @@ module Toys
     ##
     # Execute toys and capture the result
     #
-    def self.capture_toys(*args)
-      `#{::Shellwords.join([TOYS_BINARY] + args.flatten)}`
+    def self.capture_toys(*args, stream: :out)
+      executor = Toys::Utils::Exec.new
+      result = executor.exec([TOYS_BINARY] + args, out: :capture, err: :capture)
+      str = stream == :err ? result.captured_err : result.captured_out
+      str.to_s
     end
 
     ##

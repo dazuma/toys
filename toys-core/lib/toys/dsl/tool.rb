@@ -119,9 +119,10 @@ module Toys
       #     end
       #
       # @param name [String] The acceptor name.
-      # @param spec [Object] The acceptor specification.
+      # @param spec [Object] See the description for recognized values.
       # @param type_desc [String] Type description string, shown in help.
       #     Defaults to the acceptor name.
+      # @param block [Proc] See the description for recognized forms.
       # @return [self]
       #
       def acceptor(name, spec = nil, type_desc: nil, &block)
@@ -165,6 +166,7 @@ module Toys
       # @param mixin_module [Module] Module to use as the mixin. Optional.
       #     Either pass a module here, _or_ provide a block and define the
       #     mixin within the block.
+      # @param block [Proc] Defines the mixin module.
       # @return [self]
       #
       def mixin(name, mixin_module = nil, &block)
@@ -219,6 +221,7 @@ module Toys
       # @param template_class [Class] Module to use as the mixin. Optional.
       #     Either pass a module here, _or_ provide a block and define the
       #     mixin within the block.
+      # @param block [Proc] Defines the template class.
       # @return [self]
       #
       def template(name, template_class = nil, &block)
@@ -263,8 +266,9 @@ module Toys
       #     end
       #
       # @param name [String] Name of the completion
-      # @param spec [Object] Completion specification.
+      # @param spec [Object] See the description for recognized values.
       # @param options [Hash] Additional options to pass to the completion.
+      # @param block [Proc] See the description for recognized forms.
       # @return [self]
       #
       def completion(name, spec = nil, **options, &block)
@@ -300,6 +304,7 @@ module Toys
       #     existing definition, `:reset` indicating the earlier definition
       #     should be reset and the new definition applied instead, or
       #     `:ignore` indicating the new definition should be ignored.
+      # @param block [Proc] Defines the subtool.
       # @return [self]
       #
       def tool(words, if_defined: :combine, &block)
@@ -518,8 +523,8 @@ module Toys
       #     `true`.
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
-      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
-      #     add flags to this group in a block.
+      # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
+      #     for the directives that can be called in this block.
       # @return [self]
       #
       def flag_group(type: :optional, desc: nil, long_desc: nil, name: nil,
@@ -565,8 +570,8 @@ module Toys
       #     `true`.
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
-      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
-      #     add flags to this group in a block.
+      # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
+      #     for the directives that can be called in this block.
       # @return [self]
       #
       def all_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -608,8 +613,8 @@ module Toys
       #     `true`.
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
-      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
-      #     add flags to this group in a block.
+      # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
+      #     for the directives that can be called in this block.
       # @return [self]
       #
       def at_most_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -652,8 +657,8 @@ module Toys
       #     `true`.
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
-      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
-      #     add flags to this group in a block.
+      # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
+      #     for the directives that can be called in this block.
       # @return [self]
       #
       def at_least_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -696,8 +701,8 @@ module Toys
       #     `true`.
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
-      # @yieldparam flag_group_dsl [Toys::DSL::FlagGroup] An object that lets
-      #     add flags to this group in a block.
+      # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
+      #     for the directives that can be called in this block.
       # @return [self]
       #
       def exactly_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -869,8 +874,8 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
-      # @yieldparam flag_dsl [Toys::DSL::Flag] An object that lets you
-      #     configure this flag in a block.
+      # @param block [Proc] Configures the flag. See {Toys::DSL::Flag} for the
+      #     directives that can be called in this block.
       # @return [self]
       #
       def flag(key, *flags,
@@ -938,8 +943,9 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
-      #     configure this argument in a block.
+      # @param block [Proc] Configures the positional argument. See
+      #     {Toys::DSL::PositionalArg} for the directives that can be called in
+      #     this block.
       # @return [self]
       #
       def required_arg(key,
@@ -1008,8 +1014,9 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
-      #     configure this argument in a block.
+      # @param block [Proc] Configures the positional argument. See
+      #     {Toys::DSL::PositionalArg} for the directives that can be called in
+      #     this block.
       # @return [self]
       #
       def optional_arg(key,
@@ -1078,8 +1085,9 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
-      # @yieldparam arg_dsl [Toys::DSL::PositionalArg] An object that lets you
-      #     configure this argument in a block.
+      # @param block [Proc] Configures the positional argument. See
+      #     {Toys::DSL::PositionalArg} for the directives that can be called in
+      #     this block.
       # @return [self]
       #
       def remaining_args(key,
@@ -1219,6 +1227,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def complete_tool_args(spec = nil, **options, &block)
@@ -1246,17 +1255,19 @@ module Toys
       #       end
       #     end
       #
+      # @param block [Proc] The run method.
       # @return [self]
       #
       def to_run(&block)
         define_method(:run, &block)
         self
       end
+      alias on_run to_run
 
       ##
       # Specify how to handle interrupts. Typically you do this by defining a
       # method namd `interrupt`. Alternatively, however, you can pass a block
-      # to the `to_interrupt` method.
+      # to the `on_interrupt` method.
       #
       # You may want to do this if your method needs access to local variables
       # in the lexical scope. However, it is often more convenient to use
@@ -1269,14 +1280,15 @@ module Toys
       #       def run
       #         sleep 10
       #       end
-      #       to_interrupt do
+      #       on_interrupt do
       #         puts "The time at tool definition was #{cur_time}"
       #       end
       #     end
       #
+      # @param block [Proc] The interrupt callback.
       # @return [self]
       #
-      def to_interrupt(&block)
+      def on_interrupt(&block)
         define_method(:interrupt, &block)
         self
       end
@@ -1316,15 +1328,15 @@ module Toys
           raise ToolDefinitionError, "Mixin already included: #{mod.name}"
         end
         cur_tool.mark_includes_modules
-        if mod.respond_to?(:initialization_callback)
-          callback = mod.initialization_callback
+        super(mod)
+        if mod.respond_to?(:initializer)
+          callback = mod.initializer
           cur_tool.add_initializer(callback, *args) if callback
         end
-        if mod.respond_to?(:inclusion_callback)
-          callback = mod.inclusion_callback
+        if mod.respond_to?(:inclusion)
+          callback = mod.inclusion
           class_exec(*args, &callback) if callback
         end
-        super(mod)
         self
       end
 

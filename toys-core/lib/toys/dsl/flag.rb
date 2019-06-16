@@ -159,6 +159,7 @@ module Toys
       # responding to the `call` method) or you may pass a block.
       #
       # @param handler [Proc]
+      # @param block [Proc]
       # @return [self]
       #
       def handler(handler = nil, &block)
@@ -180,6 +181,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def complete_flags(spec = nil, **options, &block)
@@ -197,6 +199,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def complete_values(spec = nil, **options, &block)

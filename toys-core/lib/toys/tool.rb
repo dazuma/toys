@@ -491,6 +491,8 @@ module Toys
     #     {Toys::Acceptor.create}.
     # @param type_desc [String] Type description string, shown in help.
     #     Defaults to the acceptor name.
+    # @param block [Proc] Optional block used to create an acceptor. See
+    #     {Toys::Acceptor.create}.
     # @return [self]
     #
     def add_acceptor(name, acceptor = nil, type_desc: nil, &block)
@@ -510,6 +512,8 @@ module Toys
     #
     # @param name [String] The name of the mixin.
     # @param mixin_module [Module] The mixin module.
+    # @param block [Proc] Define the mixin module here if a `mixin_module` is
+    #     not provided directly.
     # @return [self]
     #
     def add_mixin(name, mixin_module = nil, &block)
@@ -534,6 +538,8 @@ module Toys
     #     add. You can provide either a completion object, or a spec understood
     #     by {Toys::Completion.create}.
     # @param options [Hash] Additional options to pass to the completion.
+    # @param block [Proc] Optional block used to create a completion. See
+    #     {Toys::Completion.create}.
     # @return [self]
     #
     def add_completion(name, completion = nil, **options, &block)
@@ -553,6 +559,8 @@ module Toys
     #
     # @param name [String] The name of the template.
     # @param template_class [Class] The template class.
+    # @param block [Proc] Define the template class here if a `template_class`
+    #     is not provided directly.
     # @return [self]
     #
     def add_template(name, template_class = nil, &block)
@@ -861,7 +869,7 @@ module Toys
     # @param proc [Proc] The interrupt block
     #
     def interrupt_handler=(proc)
-      @tool_class.to_interrupt(&proc)
+      @tool_class.on_interrupt(&proc)
     end
 
     ##

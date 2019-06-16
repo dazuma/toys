@@ -61,6 +61,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
@@ -89,6 +90,7 @@ module Toys
       #
       # @param spec [Object]
       # @param options [Hash]
+      # @param block [Proc]
       # @return [self]
       #
       def complete(spec = nil, **options, &block)

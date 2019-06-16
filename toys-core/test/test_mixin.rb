@@ -26,12 +26,12 @@ require "helper"
 describe Toys::Mixin do
   it "provides module methods" do
     mod = Toys::Mixin.create
-    assert_equal(true, mod.respond_to?(:to_initialize))
-    assert_equal(true, mod.respond_to?(:to_include))
-    assert_equal(true, mod.respond_to?(:initialization_callback))
-    assert_equal(true, mod.respond_to?(:initialization_callback=))
-    assert_equal(true, mod.respond_to?(:inclusion_callback))
-    assert_equal(true, mod.respond_to?(:inclusion_callback=))
+    assert_equal(true, mod.respond_to?(:on_initialize))
+    assert_equal(true, mod.respond_to?(:initializer))
+    assert_equal(true, mod.respond_to?(:initializer=))
+    assert_equal(true, mod.respond_to?(:on_include))
+    assert_equal(true, mod.respond_to?(:inclusion))
+    assert_equal(true, mod.respond_to?(:inclusion=))
   end
 
   it "allows block configuration" do
@@ -39,15 +39,15 @@ describe Toys::Mixin do
       def mithrandir
         :mithrandir
       end
-      to_initialize do
+      on_initialize do
         :gandalf
       end
-      to_include do
+      on_include do
         :frodo
       end
     end
-    assert_equal(:gandalf, mod.initialization_callback.call)
-    assert_equal(:frodo, mod.inclusion_callback.call)
+    assert_equal(:gandalf, mod.initializer.call)
+    assert_equal(:frodo, mod.inclusion.call)
     klass = ::Class.new do
       include mod
     end

@@ -63,7 +63,7 @@ module Toys
       attr_accessor :only_described
       attr_accessor :use_flags
 
-      expansion do |template|
+      on_expand do |template|
         gem "rake", *Array(template.gem_version)
         require "rake"
         rakefile_path = Templates::Rake.find_rakefile(template.rakefile_path, context_directory)

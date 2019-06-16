@@ -239,7 +239,7 @@ describe Toys::CLI do
             raise ::Interrupt
           end
 
-          to_interrupt do |ex|
+          on_interrupt do |ex|
             test.assert_instance_of(::Interrupt, ex)
             exit(2)
           end
@@ -256,7 +256,7 @@ describe Toys::CLI do
             raise ::Interrupt
           end
 
-          to_interrupt do |ex|
+          on_interrupt do |ex|
             counter += 1
             raise ::Interrupt if ex.cause.nil?
             exit(counter)

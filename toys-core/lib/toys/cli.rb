@@ -253,6 +253,8 @@ module Toys
     # @param name [String] The source name that will be shown in documentation
     #     for tools defined in this block. If omitted, a default unique string
     #     will be generated.
+    # @param block [Proc] The block of configuration, executed in the context
+    #     of the tool DSL {Toys::DSL::Tool}.
     # @return [self]
     #
     def add_config_block(high_priority: false, name: nil, &block)

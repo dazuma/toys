@@ -26,7 +26,7 @@ require "helper"
 describe Toys::Template do
   it "provides class methods" do
     klass = Toys::Template.create
-    assert_equal(true, klass.respond_to?(:to_expand))
+    assert_equal(true, klass.respond_to?(:on_expand))
     assert_equal(true, klass.respond_to?(:expansion))
     assert_equal(true, klass.respond_to?(:expansion=))
   end
@@ -41,7 +41,7 @@ describe Toys::Template do
       def mithrandir
         :mithrandir
       end
-      expansion do
+      on_expand do
         :gandalf
       end
     end

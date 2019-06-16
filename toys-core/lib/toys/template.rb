@@ -94,6 +94,7 @@ module Toys
     ##
     # Create a template class with the given block.
     #
+    # @param block [Proc] Defines the template class.
     # @return [Class]
     #
     def self.create(&block)
@@ -106,7 +107,7 @@ module Toys
 
     ## @private
     def self.included(mod)
-      return if mod.respond_to?(:expansion)
+      return if mod.respond_to?(:on_expand)
       mod.extend(ClassMethods)
       mod.include(Context::Key)
     end
@@ -116,22 +117,27 @@ module Toys
     #
     module ClassMethods
       ##
-      # Returns the current expansion block as a Proc.
-      # If you provide a block, also sets the expansion to the given block.
-      # @return [Proc]
+      # Define how to expand this template. The given block is passed the
+      # template object, and is evaluated in the tool class. It should invoke
+      # directives to create tools and other objects.
       #
-      def expansion(&block)
-        @expansion = block if block
-        @expansion
+      # @param block [Proc] The expansion of this template.
+      # @return [self]
+      #
+      def on_expand(&block)
+        self.expansion = block
+        self
       end
-      alias to_expand expansion
+      alias to_expand on_expand
 
       ##
-      # Sets the expansion to the given Proc.
+      # The template expansion proc. This proc is passed the template object,
+      # and is evaluted in the tool class. It should invoke directives to
+      # create tools and other objects.
       #
-      def expansion=(proc)
-        @expansion = proc
-      end
+      # @return [Proc] The expansion of this template.
+      #
+      attr_accessor :expansion
     end
   end
 end

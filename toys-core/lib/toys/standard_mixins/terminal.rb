@@ -56,7 +56,7 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      to_initialize do |opts = {}|
+      on_initialize do |opts = {}|
         require "toys/utils/terminal"
         self[KEY] = Utils::Terminal.new(opts)
       end

@@ -185,6 +185,8 @@ module Toys
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
       # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
+      # @param block [Proc] The acceptor function, if not provided as a normal
+      #     parameter.
       #
       def initialize(function = nil, type_desc: nil, well_known_spec: nil, &block)
         super(type_desc: type_desc, well_known_spec: well_known_spec)
@@ -231,13 +233,15 @@ module Toys
       # is returned.
       #
       # @param regex [Regexp] Regular expression defining value values.
-      # @param converter [Proc] A converter function. May also be given as a
-      #     block. Note that the converter will be passed all elements of
-      #     the `MatchData`.
+      # @param converter [Proc] An optional converter function. May also be
+      #     given as a block. Note that the converter will be passed all
+      #     elements of the `MatchData`.
       # @param type_desc [String] Type description string, shown in help.
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
       # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
+      # @param block [Proc] A converter function, if not provided as a normal
+      #     parameter.
       #
       def initialize(regex, converter = nil, type_desc: nil, well_known_spec: nil, &block)
         super(type_desc: type_desc, well_known_spec: well_known_spec)
@@ -363,6 +367,8 @@ module Toys
       #     Defaults to {Toys::Acceptor::DEFAULT_TYPE_DESC}.
       # @param well_known_spec [Object] The well-known acceptor spec associated
       #     with this acceptor, or `nil` for none.
+      # @param block [Proc] Converter function, if not provided as a normal
+      #     parameter.
       #
       def initialize(range, converter = nil, type_desc: nil, well_known_spec: nil, &block)
         converter ||= block || make_converter(range.begin, range.end)
@@ -502,10 +508,11 @@ module Toys
       #     acceptor {Toys::Acceptor::DEFAULT}. Any type description you
       #     provide is ignored.
       #
-      # @param spec [Object] The spec. See above for recognized values.
+      # @param spec [Object] See the description for recognized values.
       # @param type_desc [String] The type description for interpolating into
       #     help text. Ignored if the spec indicates the default acceptor or a
       #     well-known acceptor.
+      # @param block [Proc] See the description for recognized forms.
       # @return [Toys::Acceptor::Base,Proc]
       #
       def create(spec = nil, type_desc: nil, &block)

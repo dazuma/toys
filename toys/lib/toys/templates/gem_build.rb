@@ -49,6 +49,13 @@ module Toys
       #     {DEFAULT_TOOL_NAME}.
       # @param gem_name [String] Name of the gem to build. If not provided,
       #     defaults to the first gemspec file it finds.
+      # @param output [String] Path to the gem package to generate. Optional.
+      #     If not provided, generates a default file name based on the gem
+      #     name and version, under the "pkg" directory.
+      # @param output_flags [Array<String>,true] Provide flags on the tool that
+      #     set the output path. Optional. If not provided, no flags are
+      #     created. You may set this to an array of flags (e.g. `["-o"]`) or
+      #     set to `true` to choose {DEFAULT_OUTPUT_FLAGS}.
       # @param push_gem [Boolean] If true, pushes the built gem to rubygems.
       # @param install_gem [Boolean] If true, installs the built gem locally.
       # @param tag [Boolean] If true, tags the git repo with the gem version.
@@ -84,7 +91,7 @@ module Toys
       attr_accessor :tag
       attr_accessor :push_tag
 
-      expansion do |template|
+      on_expand do |template|
         unless template.gem_name
           candidates = ::Dir.chdir(context_directory || ::Dir.getwd) do
             ::Dir.glob("*.gemspec")

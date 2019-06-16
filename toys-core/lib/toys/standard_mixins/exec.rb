@@ -91,7 +91,7 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      to_initialize do |opts = {}|
+      on_initialize do |opts = {}|
         require "toys/utils/exec"
         context = self
         opts = Exec._setup_exec_opts(opts, context)

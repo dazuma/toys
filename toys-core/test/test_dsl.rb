@@ -169,10 +169,10 @@ describe Toys::DSL::Tool do
       assert_equal(true, tool.interruptible?)
     end
 
-    it "makes a tool interruptible when the to_interrupt directive is given" do
+    it "makes a tool interruptible when the on_interrupt directive is given" do
       loader.add_block do
         tool "foo" do
-          to_interrupt do
+          on_interrupt do
           end
         end
       end
@@ -366,7 +366,7 @@ describe Toys::DSL::Tool do
     it "creates a simple mixin" do
       loader.add_block do
         mixin("mixin1") do
-          to_initialize do
+          on_initialize do
             set(:foo, 1)
           end
           def foo
@@ -390,7 +390,7 @@ describe Toys::DSL::Tool do
     it "can be looked up in a subtool" do
       loader.add_block do
         mixin("mixin1") do
-          to_initialize do
+          on_initialize do
             set(:foo, 1)
           end
           def foo
@@ -418,7 +418,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         tool "foo" do
           mixin("mixin1") do
-            to_initialize do
+            on_initialize do
               set(:foo, 1)
             end
             def foo
@@ -443,7 +443,7 @@ describe Toys::DSL::Tool do
         tool "host" do
           desc "not the one"
           mixin("mixin1") do
-            to_initialize do
+            on_initialize do
               set(:foo, 1)
             end
             def foo
@@ -469,7 +469,7 @@ describe Toys::DSL::Tool do
             @name = name
           end
           attr_reader :name
-          expansion do |t|
+          on_expand do |t|
             tool t.name do
               def run
                 exit(2)
@@ -491,7 +491,7 @@ describe Toys::DSL::Tool do
             @name = name
           end
           attr_reader :name
-          expansion do |t|
+          on_expand do |t|
             tool t.name do
               def run
                 exit(2)
@@ -522,7 +522,7 @@ describe Toys::DSL::Tool do
               @name = name
             end
             attr_reader :name
-            expansion do |t|
+            on_expand do |t|
               tool t.name do
                 def run
                   exit(2)

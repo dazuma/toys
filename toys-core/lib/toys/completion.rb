@@ -414,9 +414,9 @@ module Toys
     #     for `:empty`). However, other completion resolution methods might
     #     have a different default.
     #
-    # @param spec [Object] The completion spec. See above for recognized
-    #     values.
+    # @param spec [Object] See the description for recognized values.
     # @param options [Hash] Additional options to pass to the completion.
+    # @param block [Proc] See the description for recognized forms.
     # @return [Toys::Completion::Base,Proc]
     #
     def self.create(spec = nil, **options, &block)
