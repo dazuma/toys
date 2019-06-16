@@ -128,23 +128,27 @@ module Toys
           to_run do
             require "rubygems/package"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              gemspec_path = "#{template.gem_name}.gemspec"
-              gemspec = ::Gem::Specification.load(gemspec_path)
+              gem_name = template.gem_name
+              gemspec = ::Gem::Specification.load("#{gem_name}.gemspec")
+              ::Gem::Package.build(gemspec)
               version = gemspec.version
-              gem_archive_path = output || "pkg/#{template.gem_name}-#{version}.gem"
-              mkdir_p(::File.dirname(gem_archive_path))
-              exec ["gem", "build", "--output", gem_archive_path, gemspec_path]
+              archive_name = "#{gem_name}-#{version}.gem"
+              archive_path = output || "pkg/#{archive_name}"
+              if archive_name != archive_path
+                mkdir_p(::File.dirname(archive_path))
+                mv(archive_name, archive_path)
+              end
               if template.install_gem
-                exit(1) unless yes || confirm("Install #{gem_archive_path}? ", default: true)
-                exec ["gem", "install", gem_archive_path]
+                exit(1) unless yes || confirm("Install #{gem_name} #{version}? ", default: true)
+                exec ["gem", "install", archive_path]
               end
               if template.push_gem
                 if ::File.directory?(".git") && capture("git status -s").strip != ""
                   logger.error "Cannot push the gem when there are uncommited changes"
                   exit(1)
                 end
-                exit(1) unless yes || confirm("Release #{gem_archive_path}? ", default: true)
-                exec(["gem", "push", gem_archive_path])
+                exit(1) unless yes || confirm("Release #{gem_name} #{version}? ", default: true)
+                exec(["gem", "push", archive_path])
                 if template.tag
                   exec(["git", "tag", "v#{version}"])
                   if template.push_tag

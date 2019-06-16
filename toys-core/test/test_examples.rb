@@ -48,18 +48,21 @@ describe "toys-core" do
     FileUtils.mkdir_p(bin_dir)
 
     Dir.chdir(core_dir) do
-      assert_succeeds("gem build -o #{core_gem_pkg} toys-core.gemspec >/dev/null 2>&1")
+      assert_succeeds("gem build toys-core.gemspec >/dev/null 2>&1")
+      FileUtils.mv("toys-core-#{Toys::CORE_VERSION}.gem", core_gem_pkg)
     end
     assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} --ignore-dependencies" \
                     " #{core_gem_pkg} >/dev/null")
 
     Dir.chdir(simple_example_dir) do
-      assert_succeeds("GEM_PATH=#{gems_dir} gem build -o #{simple_gem_pkg}" \
+      assert_succeeds("GEM_PATH=#{gems_dir} gem build" \
                       " toys-core-simple-example.gemspec >/dev/null 2>&1")
+      FileUtils.mv("toys-core-simple-example-0.0.1.gem", simple_gem_pkg)
     end
     Dir.chdir(multi_file_example_dir) do
-      assert_succeeds("GEM_PATH=#{gems_dir} gem build -o #{multi_file_gem_pkg}" \
+      assert_succeeds("GEM_PATH=#{gems_dir} gem build" \
                       " toys-core-multi-file-example.gemspec >/dev/null 2>&1")
+      FileUtils.mv("toys-core-multi-file-example-0.0.1.gem", multi_file_gem_pkg)
     end
     assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} --ignore-dependencies" \
                     " #{simple_gem_pkg} >/dev/null")
