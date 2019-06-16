@@ -42,9 +42,11 @@ describe Toys::Tool do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
-  let(:full_cli) { Toys::CLI.new(binary_name: binary_name, logger: logger) }
+  let(:executable_name) { "toys" }
+  let(:cli) {
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [])
+  }
+  let(:full_cli) { Toys::CLI.new(executable_name: executable_name, logger: logger) }
   let(:loader) { cli.loader }
   let(:full_loader) { full_cli.loader }
   let(:tool_name) { "foo" }

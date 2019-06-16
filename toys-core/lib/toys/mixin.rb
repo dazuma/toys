@@ -36,7 +36,7 @@ module Toys
   # the methods you want to be available.
   #
   # If you want to perform some initialization specific to the mixin, you can
-  # provide an _initializer_ block and/or an _inclusion_ block. These can be
+  # provide an *initializer* block and/or an *inclusion* block. These can be
   # specified by calling the module methods defined in
   # {Toys::Mixin::ModuleMethods}.
   #

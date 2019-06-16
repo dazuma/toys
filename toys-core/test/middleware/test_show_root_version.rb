@@ -31,13 +31,13 @@ describe Toys::StandardMiddleware::ShowRootVersion do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:version_string) { "v1.2.3" }
   let(:string_io) { ::StringIO.new }
   let(:cli) {
     middleware = [[Toys::StandardMiddleware::ShowRootVersion,
                    version_string: version_string, stream: string_io]]
-    Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: middleware)
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   }
 
   it "displays a version string for the root" do

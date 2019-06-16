@@ -430,7 +430,7 @@ module Toys
     def initial_data(cli, tool, verbosity)
       data = {
         Context::Key::ARGS => nil,
-        Context::Key::BINARY_NAME => cli.binary_name,
+        Context::Key::EXECUTABLE_NAME => cli.executable_name,
         Context::Key::CLI => cli,
         Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
         Context::Key::LOADER => cli.loader,

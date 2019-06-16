@@ -122,20 +122,20 @@ module Toys
     #     Optional. If not provided, data directories are disabled.
     #     Note: the standard toys executable sets this to `".data"`.
     #
-    # @param binary_name [String] The binary name displayed in help text.
-    #     Optional. Defaults to the ruby program name.
+    # @param executable_name [String] The executable name displayed in help
+    #     text. Optional. Defaults to the ruby program name.
     # @param extra_delimiters [String] A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
     #
     def initialize(
-      binary_name: nil, middleware_stack: nil, extra_delimiters: "",
+      executable_name: nil, middleware_stack: nil, extra_delimiters: "",
       config_dir_name: nil, config_file_name: nil, index_file_name: nil,
       preload_file_name: nil, preload_directory_name: nil, data_directory_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil, completion: nil
     )
-      @binary_name = binary_name || ::File.basename($PROGRAM_NAME)
+      @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @middleware_stack = middleware_stack || CLI.default_middleware_stack
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
       @middleware_lookup = middleware_lookup || CLI.default_middleware_lookup
@@ -171,7 +171,7 @@ module Toys
     #     to it so you can add paths and make other modifications.
     #
     def child(_opts = {})
-      cli = CLI.new(binary_name: @binary_name,
+      cli = CLI.new(executable_name: @executable_name,
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,
                     index_file_name: @index_file_name,
@@ -198,10 +198,10 @@ module Toys
     attr_reader :loader
 
     ##
-    # Return the effective binary name used for usage text in this CLI
+    # Return the effective executable name used for usage text in this CLI
     # @return [String]
     #
-    attr_reader :binary_name
+    attr_reader :executable_name
 
     ##
     # Return the string of delimiters

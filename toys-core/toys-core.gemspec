@@ -31,10 +31,10 @@ require "toys/core_version"
   spec.authors = ["Daniel Azuma"]
   spec.email = ["dazuma@gmail.com"]
 
-  spec.summary = "Framework for creating command line binaries"
+  spec.summary = "Framework for creating command line executables"
   spec.description =
     "Toys-Core is the command line tool framework underlying Toys. It can be" \
-    " used to create command line binaries using the internal Toys APIs."
+    " used to create command line executables using the internal Toys APIs."
   spec.license = "MIT"
   spec.homepage = "https://github.com/dazuma/toys"
 

@@ -31,11 +31,11 @@ describe Toys::StandardMiddleware::ShowHelp do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:string_io) { ::StringIO.new }
   def make_cli(opts = {})
     middleware = [[Toys::StandardMiddleware::ShowHelp, opts.merge(stream: string_io)]]
-    Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: middleware)
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   end
 
   it "causes a tool to respond to help flags" do

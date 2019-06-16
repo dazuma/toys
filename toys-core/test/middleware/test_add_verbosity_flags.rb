@@ -30,10 +30,10 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   def make_cli(opts = {})
     middleware = [[Toys::StandardMiddleware::AddVerbosityFlags, opts]]
-    Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: middleware)
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   end
 
   it "recognizes short verbose flag" do

@@ -29,8 +29,10 @@ describe Toys::DSL::Tool do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+  let(:executable_name) { "toys" }
+  let(:cli) {
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [])
+  }
   let(:loader) { cli.loader }
 
   describe "tool directive" do

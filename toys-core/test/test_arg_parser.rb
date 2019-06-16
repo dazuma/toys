@@ -25,9 +25,9 @@ require "helper"
 
 describe Toys::ArgParser do
   let(:supports_suggestions?) { ::RUBY_VERSION >= "2.4" }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:cli) {
-    Toys::CLI.new(binary_name: binary_name, middleware_stack: [],
+    Toys::CLI.new(executable_name: executable_name, middleware_stack: [],
                   index_file_name: ".toys.rb", data_directory_name: ".data")
   }
   let(:loader) { cli.loader }

@@ -54,7 +54,7 @@ module Toys
       #
       def self.from_context(context)
         new(context[Context::Key::TOOL], context[Context::Key::LOADER],
-            context[Context::Key::BINARY_NAME])
+            context[Context::Key::EXECUTABLE_NAME])
       end
 
       ##
@@ -62,14 +62,15 @@ module Toys
       #
       # @param tool [Toys::Tool] The tool to document.
       # @param loader [Toys::Loader] A loader that can provide subcommands.
-      # @param binary_name [String] The name of the binary. e.g. `"toys"`.
+      # @param executable_name [String] The name of the executable.
+      #     e.g. `"toys"`.
       #
       # @return [Toys::Utils::HelpText]
       #
-      def initialize(tool, loader, binary_name)
+      def initialize(tool, loader, executable_name)
         @tool = tool
         @loader = loader
-        @binary_name = binary_name
+        @executable_name = executable_name
       end
 
       ##
@@ -98,7 +99,7 @@ module Toys
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, nil, include_hidden)
-        assembler = UsageStringAssembler.new(@tool, @binary_name, subtools,
+        assembler = UsageStringAssembler.new(@tool, @executable_name, subtools,
                                              indent, left_column_width, wrap_width)
         assembler.result
       end
@@ -129,8 +130,8 @@ module Toys
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search, include_hidden)
-        assembler = HelpStringAssembler.new(@tool, @binary_name, subtools, search, show_source_path,
-                                            indent, indent2, wrap_width, styled)
+        assembler = HelpStringAssembler.new(@tool, @executable_name, subtools, search,
+                                            show_source_path, indent, indent2, wrap_width, styled)
         assembler.result
       end
 
@@ -173,10 +174,10 @@ module Toys
 
       ## @private
       class UsageStringAssembler
-        def initialize(tool, binary_name, subtools,
+        def initialize(tool, executable_name, subtools,
                        indent, left_column_width, wrap_width)
           @tool = tool
-          @binary_name = binary_name
+          @executable_name = executable_name
           @subtools = subtools
           @indent = indent
           @left_column_width = left_column_width
@@ -211,7 +212,7 @@ module Toys
         end
 
         def tool_synopsis
-          synopsis = [@binary_name] + @tool.full_name
+          synopsis = [@executable_name] + @tool.full_name
           synopsis << "[FLAGS...]" unless @tool.flags.empty?
           @tool.positional_args.each do |arg_info|
             synopsis << arg_name(arg_info)
@@ -220,7 +221,7 @@ module Toys
         end
 
         def namespace_synopsis
-          ([@binary_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
+          ([@executable_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
         end
 
         def add_flag_group_sections
@@ -309,11 +310,11 @@ module Toys
 
       ## @private
       class HelpStringAssembler
-        def initialize(tool, binary_name, subtools, search_term, show_source_path,
+        def initialize(tool, executable_name, subtools, search_term, show_source_path,
                        indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
           @tool = tool
-          @binary_name = binary_name
+          @executable_name = executable_name
           @subtools = subtools
           @search_term = search_term
           @show_source_path = show_source_path
@@ -341,7 +342,7 @@ module Toys
 
         def add_name_section
           @lines << bold("NAME")
-          name_str = ([@binary_name] + @tool.full_name).join(" ")
+          name_str = ([@executable_name] + @tool.full_name).join(" ")
           add_prefix_with_desc(name_str, @tool.desc)
         end
 
@@ -376,7 +377,7 @@ module Toys
         end
 
         def tool_synopsis
-          synopsis = [full_binary_name]
+          synopsis = [full_executable_name]
           @tool.flag_groups.each do |flag_group|
             case flag_group
             when FlagGroup::Required
@@ -449,12 +450,12 @@ module Toys
         end
 
         def namespace_synopsis
-          synopsis = [full_binary_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
+          synopsis = [full_executable_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
-        def full_binary_name
-          bold(([@binary_name] + @tool.full_name).join(" "))
+        def full_executable_name
+          bold(([@executable_name] + @tool.full_name).join(" "))
         end
 
         def add_source_section

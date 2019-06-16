@@ -30,7 +30,7 @@ describe Toys::Utils::CompletionEngine do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:context_capture) {
     proc { |context|
       @context = context
@@ -39,7 +39,7 @@ describe Toys::Utils::CompletionEngine do
   }
   let(:cli) {
     tester = self
-    cli = Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: [],
+    cli = Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [],
                         extra_delimiters: ".:")
     cli.add_config_block do
       tool "one" do
@@ -73,7 +73,7 @@ describe Toys::Utils::CompletionEngine do
       Toys::Utils::CompletionEngine::Bash.new(cli)
     }
 
-    it "detects failure to find binary name" do
+    it "detects failure to find executable name" do
       result = completion.run_internal("toys")
       assert_nil(result)
     end

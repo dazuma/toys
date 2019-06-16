@@ -93,7 +93,7 @@ tool "bash-completion" do
     "To remove tab completion, execute:",
     ["  $(toys system bash-completion remove)"],
     "",
-    "It is also possible to install completions for different binary names if you have" \
+    "It is also possible to install completions for different executable names if you have" \
       " aliases for Toys. See the help for the \"install\" and \"remove\" tools for details.",
     "",
     "The \"eval\" tool is the actual completion command invoked by bash when it needs to" \
@@ -129,19 +129,19 @@ tool "bash-completion" do
         " such as your .bashrc:",
       ["  $(toys system bash-completion install)"],
       "",
-      "This will associate the toys tab completion logic with the `toys` binary by default." \
-        " If you have other names or aliases for the toys binary, pass them as arguments. e.g.",
+      "This will associate the toys tab completion logic with the `toys` executable by default." \
+        " If you have aliases for the toys executable, pass them as arguments. e.g.",
       ["  $(toys system bash-completion install my-toys-alias another-alias)"]
 
-    remaining_args :binary_names,
-                   desc: "Names of binaries for which to set up tab completion" \
-                         " (default: #{::Toys::StandardCLI::BINARY_NAME})"
+    remaining_args :executable_names,
+                   desc: "Names of executables for which to set up tab completion" \
+                         " (default: #{::Toys::StandardCLI::EXECUTABLE_NAME})"
 
     def run
       require "shellwords"
       path = ::File.join(::File.dirname(__dir__), "share", "bash-completion.sh")
-      binaries = binary_names.empty? ? [::Toys::StandardCLI::BINARY_NAME] : binary_names
-      puts Shellwords.join(["source", path] + binaries)
+      exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
+      puts Shellwords.join(["source", path] + exes)
     end
   end
 
@@ -154,18 +154,18 @@ tool "bash-completion" do
       "To use, execute the following line in a bash shell:",
       ["  $(toys system bash-completion remove)"],
       "",
-      "If you have other names or aliases for the toys binary, pass them as arguments. e.g.",
+      "If you have other names or aliases for the toys executable, pass them as arguments. e.g.",
       ["  $(toys system bash-completion remove my-toys-alias another-alias)"]
 
-    remaining_args :binary_names,
-                   desc: "Names of binaries for which to set up tab completion" \
-                         " (default: #{::Toys::StandardCLI::BINARY_NAME})"
+    remaining_args :executable_names,
+                   desc: "Names of executables for which to set up tab completion" \
+                         " (default: #{::Toys::StandardCLI::EXECUTABLE_NAME})"
 
     def run
       require "shellwords"
       path = ::File.join(::File.dirname(__dir__), "share", "bash-completion-remove.sh")
-      binaries = binary_names.empty? ? [::Toys::StandardCLI::BINARY_NAME] : binary_names
-      puts Shellwords.join(["source", path] + binaries)
+      exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
+      puts Shellwords.join(["source", path] + exes)
     end
   end
 end

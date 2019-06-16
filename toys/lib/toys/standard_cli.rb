@@ -26,7 +26,7 @@ require "logger"
 module Toys
   ##
   # Helpers that configure the toys-core CLI with the behavior for the
-  # standard Toys binary.
+  # standard Toys executable.
   #
   module StandardCLI
     ##
@@ -72,10 +72,10 @@ module Toys
     DATA_DIRECTORY_NAME = ".data"
 
     ##
-    # Name of standard toys binary
+    # Name of the standard toys executable
     # @return [String]
     #
-    BINARY_NAME = "toys"
+    EXECUTABLE_NAME = "toys"
 
     ##
     # Delimiter characters recognized
@@ -122,7 +122,7 @@ module Toys
     #
     def self.create(cur_dir: nil)
       cli = CLI.new(
-        binary_name: BINARY_NAME,
+        executable_name: EXECUTABLE_NAME,
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
@@ -146,7 +146,7 @@ module Toys
     # *  Read the `TOYS_PATH` environment variable and search for config files
     #    and directories in the given paths. If this variable is empty, use
     #    `$HOME:/etc` by default.
-    # *  The builtins for the standard toys binary.
+    # *  The builtins for the standard toys executable.
     #
     # @param cli [Toys::CLI] Add paths to this CLI
     # @param cur_dir [String,nil] Starting search directory for configs.

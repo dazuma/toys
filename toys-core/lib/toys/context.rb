@@ -59,8 +59,8 @@ module Toys
     #
     #     tool "my-name" do
     #       def run
-    #         # BINARY_NAME is available here.
-    #         puts "My name is #{get(BINARY_NAME)}"
+    #         # EXECUTABLE_NAME is available here.
+    #         puts "My name is #{get(EXECUTABLE_NAME)}"
     #       end
     #     end
     #
@@ -71,12 +71,6 @@ module Toys
       # @return [Object]
       #
       ARGS = ::Object.new.freeze
-
-      ##
-      # Context key for the name of the toys binary. Value is a string.
-      # @return [Object]
-      #
-      BINARY_NAME = ::Object.new.freeze
 
       ##
       # Context key for the currently running {Toys::CLI}. You can use this
@@ -90,6 +84,12 @@ module Toys
       # @return [Object]
       #
       CONTEXT_DIRECTORY = ::Object.new.freeze
+
+      ##
+      # Context key for the name of the toys executable. Value is a string.
+      # @return [Object]
+      #
+      EXECUTABLE_NAME = ::Object.new.freeze
 
       ##
       # Context key for unmatched positional args.
@@ -169,14 +169,14 @@ module Toys
     end
 
     ##
-    # The name of the binary that was executed.
+    # The name of the executable that was executed.
     #
-    # This is a convenience getter for {Toys::Context::Key::BINARY_NAME}.
+    # This is a convenience getter for {Toys::Context::Key::EXECUTABLE_NAME}.
     #
     # @return [String]
     #
-    def binary_name
-      @__data[Key::BINARY_NAME]
+    def executable_name
+      @__data[Key::EXECUTABLE_NAME]
     end
 
     ##

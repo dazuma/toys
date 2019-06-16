@@ -31,11 +31,11 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:error_io) { ::StringIO.new }
   def make_cli(opts = {})
     middleware = [[Toys::StandardMiddleware::SetDefaultDescriptions, opts]]
-    Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: middleware)
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   end
 
   describe "default tool description" do

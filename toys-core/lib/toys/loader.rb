@@ -138,7 +138,7 @@ module Toys
     # following aliases.
     # This always returns a tool. If the specific tool path is not defined and
     # cannot be found in any configuration, it finds the nearest namespace that
-    # _would_ contain that tool, up to the root tool.
+    # *would* contain that tool, up to the root tool.
     #
     # Returns a tuple of the found tool, and the array of remaining arguments
     # that are not part of the tool name and should be passed as tool args.

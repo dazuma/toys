@@ -3,8 +3,8 @@
 [![CircleCI](https://circleci.com/gh/dazuma/toys/tree/master.svg?style=svg)](https://circleci.com/gh/dazuma/toys/tree/master)
 
 Toys is a configurable command line tool. Write commands in config files using
-a simple DSL, and Toys will provide the command line binary and take care of
-all the details such as argument parsing, online help, and error reporting.
+a simple DSL, and Toys will provide the command line executable and take care
+of all the details such as argument parsing, online help, and error reporting.
 
 Toys is designed for software developers, IT professionals, and other power
 users who want to write and organize scripts to automate their workflows. It
@@ -29,13 +29,13 @@ Install the **toys** gem using:
 
     gem install toys
 
-This installs the `toys` binary, along with some builtin tools and libraries.
-You can run the binary immediately:
+This installs the `toys` executable, along with some builtin tools and
+libraries. You can run the executable immediately:
 
     toys
 
-This displays overall help for the Toys binary. If you have `less` installed,
-Toys will use it to display the help screen. Press `q` to exit.
+This displays overall help for Toys. If you have `less` installed, Toys will
+use it to display the help screen. Press `q` to exit.
 
 You may notice that the help screen lists some tools that are preinstalled.
 Let's run one of them:
@@ -274,10 +274,10 @@ if your `.toys.rb` files are growing too large or complicated, you can create
 shared code, normal Ruby classes, and even data files for use by tools.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line binary written in Ruby. However, you
-*can* use it in that way by building with the "toys-core" API, available as a
-separate gem. You would effectively write your command line binary using the
-same Toys DSL that you use to write `.toys.rb` files. For more info on using
+you build and ship a custom command line executable written in Ruby. However,
+you *can* use it in that way with the "toys-core" API, available as a separate
+gem. You would effectively write your command line executable using the same
+Toys DSL that you use to write `.toys.rb` files. For more info on using
 toys-core, see (its documentation)[https://www.rubydoc.info/gems/toys-core].
 
 ## Why Toys?

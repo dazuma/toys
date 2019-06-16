@@ -31,8 +31,10 @@ describe Toys::StandardMixins::Terminal do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
-  let(:cli) { Toys::CLI.new(binary_name: binary_name, logger: logger, middleware_stack: []) }
+  let(:executable_name) { "toys" }
+  let(:cli) {
+    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [])
+  }
 
   it "provides a terminal instance" do
     cli.add_config_block do

@@ -317,7 +317,7 @@ module Toys
           unless tool_name.empty?
             loader = context[Context::Key::LOADER]
             tool, rest = loader.lookup(tool_name)
-            help_text = Utils::HelpText.new(tool, loader, context[Context::Key::BINARY_NAME])
+            help_text = Utils::HelpText.new(tool, loader, context[Context::Key::EXECUTABLE_NAME])
             report_usage_error(help_text, loader, tool.full_name, rest.first) unless rest.empty?
             return help_text
           end

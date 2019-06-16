@@ -23,8 +23,8 @@
 
 ##
 # Toys is a configurable command line tool. Write commands in config files
-# using a simple DSL, and Toys will provide the command line binary and take
-# care of all the details such as argument parsing, online help, and error
+# using a simple DSL, and Toys will provide the command line executable and
+# take care of all the details such as argument parsing, online help, and error
 # reporting. Toys is designed for software developers, IT professionals, and
 # other power users who want to write and organize scripts to automate their
 # workflows. It can also be used as a Rake replacement, providing a more
@@ -32,10 +32,10 @@
 #
 module Toys
   ##
-  # Path to the Toys binary
+  # Path to the Toys executable.
   # @return [String]
   #
-  BINARY_PATH = ::ENV["TOYS_BIN_PATH"] || "toys"
+  EXECUTABLE = ::ENV["TOYS_BIN_PATH"] || "toys"
 
   ##
   # Namespace for standard template classes.

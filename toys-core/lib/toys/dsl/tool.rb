@@ -164,7 +164,7 @@ module Toys
       #
       # @param name [String] Name of the mixin
       # @param mixin_module [Module] Module to use as the mixin. Optional.
-      #     Either pass a module here, _or_ provide a block and define the
+      #     Either pass a module here, *or* provide a block and define the
       #     mixin within the block.
       # @param block [Proc] Defines the mixin module.
       # @return [self]
@@ -219,7 +219,7 @@ module Toys
       #
       # @param name [String] Name of the template
       # @param template_class [Class] Module to use as the mixin. Optional.
-      #     Either pass a module here, _or_ provide a block and define the
+      #     Either pass a module here, *or* provide a block and define the
       #     mixin within the block.
       # @param block [Proc] Defines the template class.
       # @return [self]

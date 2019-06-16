@@ -3,8 +3,8 @@
 # Toys User Guide
 
 Toys is a configurable command line tool. Write commands in config files using
-a simple DSL, and Toys will provide the command line binary and take care of
-all the details such as argument parsing, online help, and error reporting.
+a simple DSL, and Toys will provide the command line executable and take care
+of all the details such as argument parsing, online help, and error reporting.
 
 Toys is designed for software developers, IT professionals, and other power
 users who want to write and organize scripts to automate their workflows. It
@@ -12,10 +12,11 @@ can also be used as a Rake replacement, providing a more natural command line
 interface for your project's build tasks.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line binary written in Ruby. Rather, it
-provides a single binary called `toys`. You define the commands recognized by
-the Toys binary by writing configuration files. (You can, however, build your
-own custom command line binary using the related **toys-core** library.)
+you build and ship a custom command line executable written in Ruby. Rather, it
+provides a single executable called `toys`. You define the commands recognized
+by the Toys executable by writing configuration files. (You can, however, build
+your own custom command line executable using the related **toys-core**
+library.)
 
 If this is your first time using Toys, we recommend starting with the
 [README](https://www.rubydoc.info/gems/toys/file/README.md), which includes a
@@ -32,12 +33,12 @@ command line tools.
 
 Toys is a command line *framework*. It provides an executable called `toys`
 with basic functions such as argument parsing and online help. You provide the
-actual behavior of the Toys binary by writing **Toys files**.
+actual behavior of the Toys executable by writing **Toys files**.
 
-Toys is a multi-command binary. You may define any number of commands, called
-**tools**, which can be invoked by passing the tool name as an argument to the
-`toys` binary. Tools are arranged in a hierarchy; you may define **namespaces**
-that have **subtools**.
+Toys is a multi-command executable. You may define any number of commands,
+called **tools**, which can be invoked by passing the tool name as an argument
+to the `toys` executable. Tools are arranged in a hierarchy; you may define
+**namespaces** that have **subtools**.
 
 Tools may recognize command line arguments in the form of **flags** and
 **positional arguments**. Flags can optionally take **values**, while
@@ -977,7 +978,7 @@ When you declare a flag or argument, if the option name is a symbol that is a
 valid Ruby method name, Toys will provide a method that you can call to get the
 value. In the above example, `whom` and `shout` are such methods.
 
-If you create a flag or argument whose option name is not a symbol _or_ is not
+If you create a flag or argument whose option name is not a symbol *or* is not
 a valid method name, you can still get the value by calling the
 [Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
 method. For example:
@@ -1585,7 +1586,7 @@ Toys file), it is important to understand how they work.
 Constants in Toys are visible only within the Toys file in which they are
 defined. They normally behave as though they are defined at the "top level" of
 the file. Even if you define a constant lexically "inside" a tool or a mixin,
-the constant does _not_ end up connected to that tool or mixin; it is defined
+the constant does *not* end up connected to that tool or mixin; it is defined
 at the file level.
 
     tool "test" do
@@ -1648,7 +1649,7 @@ constants, and thus follow the same rules. So you could, for example, define a
 The difference between this technique and using the `mixin` directive we saw
 earlier, is the scope. The module here is accessed via a constant, and so, like
 any constant, it is visible only in the same file it is defined in. The `mixin`
-directive creates mixins that are visible from _all_ files at the same point in
+directive creates mixins that are visible from *all* files at the same point in
 the search path.
 
 Not also, when you define a mixin in this way, you should include `Toys::Mixin`
@@ -1738,7 +1739,7 @@ passed to the block, so it can access the template configuration when
 generating directives. The "greet" template in the above example generates a
 tool whose name is set by the template's `name` property.
 
-Notice that in the above example, we used `to_run do`, providing a _block_ for
+Notice that in the above example, we used `to_run do`, providing a *block* for
 the tool's execution, rather than `def run`, providing a method. Both forms are
 valid and will work in a template (as well as in a normal Toys file), but the
 block form is often useful in a template because you can access the `template`
@@ -1868,8 +1869,8 @@ This section describes how to use a third-party gem in your tool.
 
 ### Activating gems
 
-The toys binary itself uses only two gems: **toys** and **toys-core**. It has
-no other gem dependencies. However, if you want to use a third-party gem in
+The toys executable itself uses only two gems: **toys** and **toys-core**. It
+has no other gem dependencies. However, if you want to use a third-party gem in
 your tool, Toys provides a convenient mechanism to ensure the gem is installed.
 
 (Note that you generally do not use bundler when running Toys; i.e. you do not
@@ -2030,7 +2031,7 @@ Although Toys and Rake serve many of the same use cases, they have very
 different design goals, and it is useful to understand them.
 
 Rake's design is based on the classic "make" tool often provided in unix
-development environments. This design focuses on _targets_ and _dependencies_,
+development environments. This design focuses on *targets* and *dependencies*,
 and is meant for a world where you invoke an external compiler tool whenever
 changes are made to an individual source file or any of its dependencies. This
 "declarative" approach expresses very well the build process for programs
@@ -2410,7 +2411,7 @@ still be present to decrease verbosity.
     # Repurposes -q to set the "quick" option instead of "quiet"
     flag :quick, "-q"
 
-You may also completely disable a flag, and _not_ repurpose it, using the
+You may also completely disable a flag, and *not* repurpose it, using the
 `disable_flag` directive. It lets you mark one or more flags as "never use".
 
 For example, if you disable the `-q` flag, then `-q` will no longer be a
@@ -2501,11 +2502,11 @@ will handle interrupts as follows:
     point. It may terminate execution by returning or calling `exit`, or it may
     restart or resume processing (perhaps by calling the `run` method again).
     Or it may invoke the normal Toys interrupt handling (i.e. terminating
-    execution, displaying the message `INTERRUPTED`) by re-raising _the same_
+    execution, displaying the message `INTERRUPTED`) by re-raising *the same*
     interrupt exception object.
 4.  If another interrupt takes place during the execution of the `interrupt`
-    method, Toys will terminate it by raising a _second_ `Interrupt` exception
-    (calling any `ensure` blocks). Then, `interrupt` will be called _again_ and
+    method, Toys will terminate it by raising a *second* `Interrupt` exception
+    (calling any `ensure` blocks). Then, `interrupt` will be called *again* and
     passed the new exception. Any additional interrupts will be handled
     similarly.
 
@@ -2822,7 +2823,7 @@ Typically, you will want to include the above in your `.bashrc` or other bash
 initialization file.
 
 By default, this associates the Toys tab completion logic with the `toys`
-binary. If you have other names or aliases for the binary, pass them as
+executable. If you have other names or aliases for the executable, pass them as
 arguments like this:
 
     $(toys system bash-completion install my-alias)
@@ -2833,40 +2834,40 @@ You can also remove the completion logic from the current shell:
 
 At this time, bash is the only shell that is supported directly. If you are
 using zsh, however, you can use the `bashcompinit` function to load the toys
-bash completion (as well as other bash-based completions). This _mostly_ works,
+bash completion (as well as other bash-based completions). This *mostly* works,
 with a few caveats. Native zsh completion is on the future roadmap.
 
 ## Writing your own CLI using Toys
 
 Although Toys is not primarily designed to help you write a custom command-line
-binary, you can use it in that way. Toys is factored into two gems:
+executable, you can use it in that way. Toys is factored into two gems:
 **toys-core**, which includes all the underlying machinery for creating
-command-line binaries, and **toys**, which is really just a wrapper that
-provides the `toys` binary itself and its built-in commands and behavior. To
-write your own command line binary based on the Toys system, just require the
-**toys-core** gem and configure your binary the way you want.
+command-line executables, and **toys**, which is really just a wrapper that
+provides the `toys` executable itself and its built-in commands and behavior.
+To write your own command line executable based on the Toys system, just
+require the **toys-core** gem and configure your executable the way you want.
 
 Toys-Core is modular and lets you customize much of the behavior of a command
-line binary, simply by setting options or adding plugins. For example:
+line executable, simply by setting options or adding plugins. For example:
 
 *   Toys itself automatically adds a number of flags, such as `--verbose` and
     `--help`, to each tool. Toys-Core lets you customize what flags (if any)
-    are automatically added for your own command line binary.
+    are automatically added for your own command line executable.
 *   Toys itself provides a default way to run tools that have no `run` method.
     It assumes such tools are namespaces, and displays the online help screen.
     Toys-Core lets you provide an alternate default run method for your own
-    command line binary.
+    command line executable.
 *   Toys itself provides several built-in tools, such as `do`, and `system`.
-    Toys-Core lets you write your own command line binary with its own built-in
-    tools.
+    Toys-Core lets you write your own command line executable with its own
+    built-in tools.
 *   Toys itself implements a particular search path for user-provided Toys
     files, and looks for specific file and directory names such as `.toys.rb`.
     Toys-Core lets you change the search path, the file/directory names, or
     disable user-provided Toys files altogether for your own command line
-    binary. Indeed, most command line binaries do not need user-customizable
-    tools, and can ship with only built-in tools.
+    executable. Indeed, most command line executables do not need
+    user-customizable tools, and can ship with only built-in tools.
 *   Toys itself has a particular way of displaying online help and reporting
-    errors. Toys-Core lets your own command line binary customize these and
+    errors. Toys-Core lets your own command line executable customize these and
     many other features.
 
 For more information, see the

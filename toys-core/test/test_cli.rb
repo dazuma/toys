@@ -30,12 +30,12 @@ describe Toys::CLI do
       lgr.level = Logger::WARN
     end
   }
-  let(:binary_name) { "toys" }
+  let(:executable_name) { "toys" }
   let(:error_io) { ::StringIO.new }
   let(:error_handler) { Toys::CLI::DefaultErrorHandler.new(output: error_io) }
   let(:cli) {
     Toys::CLI.new(
-      binary_name: binary_name, logger: logger, middleware_stack: [],
+      executable_name: executable_name, logger: logger, middleware_stack: [],
       error_handler: error_handler, index_file_name: ".toys.rb",
       data_directory_name: ".data"
     )
@@ -114,7 +114,7 @@ describe Toys::CLI do
             test.assert_equal(["foo"], tool.full_name)
             test.assert_equal(["foo"], tool_name)
             test.assert_instance_of(Logger, logger)
-            test.assert_equal("toys", binary_name)
+            test.assert_equal("toys", executable_name)
             test.assert_equal(["hello", "-a"], args)
             test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
           end
@@ -135,7 +135,7 @@ describe Toys::CLI do
             test.assert_equal(["foo"], get(Toys::Context::Key::TOOL).full_name)
             test.assert_equal(["foo"], get(Toys::Context::Key::TOOL_NAME))
             test.assert_instance_of(Logger, get(Toys::Context::Key::LOGGER))
-            test.assert_equal("toys", get(Toys::Context::Key::BINARY_NAME))
+            test.assert_equal("toys", get(Toys::Context::Key::EXECUTABLE_NAME))
             test.assert_equal(["hello", "-a"], get(Toys::Context::Key::ARGS))
           end
         end

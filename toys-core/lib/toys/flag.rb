@@ -176,8 +176,8 @@ module Toys
     # When reading, this is returned as an Array of {Toys::WrappableString}
     # representing the lines in the description.
     #
-    # When setting, the description must be provided as an Array where _each
-    # element_ may be any of the following:
+    # When setting, the description must be provided as an Array where *each
+    # element* may be any of the following:
     # *   A {Toys::WrappableString} representing one line.
     # *   A normal String representing a line. This will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.

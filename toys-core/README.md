@@ -1,11 +1,11 @@
 # Toys-Core
 
 Toys is a configurable command line tool. Write commands in config files using
-a simple DSL, and Toys will provide the command line binary and take care of
-all the details such as argument parsing, online help, and error reporting.
+a simple DSL, and Toys will provide the command line executable and take care
+of all the details such as argument parsing, online help, and error reporting.
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to write command line binaries using the same Toys DSL and the power of the
+to write command line executables using the same Toys DSL and the power of the
 Toys APIs.
 
 For more detailed information about Toys-Core, see the
@@ -17,7 +17,7 @@ For background information about Toys itself, see the
 ## Introductory tutorial
 
 Here's a tutorial to help you get a feel for how to write a basic command line
-binary using Toys-Core.
+executable using Toys-Core.
 
 It assumes basic familiarity with Toys, so, if you have not done so, I
 recommend first walking through the tutorial in the
@@ -38,8 +38,8 @@ dependency.
 
 ### Create a new executable
 
-We'll start by creating an executable binary. Using your favorite text editor,
-create new a file called `mycmd`, copy the following into it, and save it:
+We'll start by creating an executable Ruby script. Using your favorite text
+editor, create new a file called `mycmd` with the following contents:
 
     #!/usr/bin/env ruby
     # frozen_string_literal: true

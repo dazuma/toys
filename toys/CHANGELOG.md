@@ -30,8 +30,9 @@ Details:
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags create a short form flag by default if the name has one character.
-* CHANGED: Flags with explicit value-less syntax are no longer given a value even if they specify a default and/or acceptor.
+* CHANGED: Flags with explicit value-less syntax are no longer given a value even if they specify a default or an acceptor.
 * CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
+* CHANGED: Renamed the `BINARY_NAME` context key to `EXECUTABLE_NAME`, and the corresponding convenience method from `binary_name` to `executable_name`.
 * CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The root tool no longer defines remaining_args.
 * CHANGED: Renamed `to_expand` to `on_expand` in template definitions.
