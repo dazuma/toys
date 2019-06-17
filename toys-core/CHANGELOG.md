@@ -30,6 +30,7 @@ Other notable changes:
 * CHANGED: The help middleware no longer defines remaining_args on the root tool.
 * CHANGED: Renamed `to_expand` to `on_expand` in template definitions.
 * CHANGED: Renamed `to_initialize` to `on_initialize`, and `to_include` to `on_include` in mixin definitions.
+* CHANGED: The CLI options `preload_directory_name` and `data_directory_name` renamed to `preload_dir_name` and `data_dir_name`.
 * CHANGED: Default descriptions for flag groups is now handled by the `set_default_descriptions` middleware rather than hard-coded in FlagGroup.
 * CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.
 * IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.
@@ -39,6 +40,7 @@ Other notable changes:
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 * FIXED: The `--usage` help flag now honors `--all` and `--no-recursive`.
+* FIXED: The terminal now handles nil streams, as advertised.
 
 Changes to internal interfaces:
 

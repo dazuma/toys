@@ -33,9 +33,63 @@ module Toys
   # system), configuration parameters such as logging and error handling, and a
   # method to call to invoke a command.
   #
+  # This is the class to instantiate to create a Toys-based command line
+  # executable. For example:
+  #
+  #     #!/usr/bin/env ruby
+  #     require "toys-core"
+  #     cli = Toys::CLI.new
+  #     cli.add_config_block do
+  #       def run
+  #         puts "Hello, world!"
+  #       end
+  #     end
+  #     exit(cli.run(*ARGV))
+  #
+  # The currently running CLI is also available at runtime, and can be used by
+  # tools that want to invoke other tools. For example:
+  #
+  #     # My .toys.rb
+  #     tool "foo" do
+  #       def run
+  #         puts "in foo"
+  #       end
+  #     end
+  #     tool "bar" do
+  #       def run
+  #         puts "in bar"
+  #         cli.run "foo"
+  #       end
+  #     end
+  #
   class CLI
     ##
     # Create a CLI.
+    #
+    # Most configuration parameters (besides tool definitions and tool lookup
+    # paths) are set as options passed to the constructor. These options fall
+    # roughly into four categories:
+    #
+    # * Options affecting output behavior:
+    #   * `logger`: The logger
+    #   * `base_level`: The default log level
+    #   * `error_handler`: Callback for handling exceptions
+    #   * `executable_name`: The name of the executable
+    # * Options affecting tool specification
+    #   * `extra_delimibers`: Tool name delimiters besides space
+    #   * `completion`: Tab completion handler
+    # * Options affecting tool definition
+    #   * `middleware_stack`: The middleware applied to all tools
+    #   * `mixin_lookup`: Where to find well-known mixins
+    #   * `middleware_lookup`: Where to find well-known middleware
+    #   * `template_lookup`: Where to find well-known templates
+    # * Options affecting tool files and directories
+    #   * `config_dir_name`: Directory name containing tool files
+    #   * `config_file_name`: File name for tools
+    #   * `index_file_name`: Name of index files in tool directories
+    #   * `preload_file_name`: Name of preload files in tool directories
+    #   * `preload_dir_name`: Name of preload directories in tool directories
+    #   * `data_dir_name`: Name of data directories in tool directories
     #
     # @param logger [Logger] The logger to use.
     #     Optional. If not provided, will use a default logger that writes
@@ -51,6 +105,12 @@ module Toys
     #     Optional. If not provided, defaults to an instance of
     #     {Toys::CLI::DefaultErrorHandler}, which displays an error message to
     #     `STDERR`.
+    # @param executable_name [String] The executable name displayed in help
+    #     text. Optional. Defaults to the ruby program name.
+    #
+    # @param extra_delimiters [String] A string containing characters that can
+    #     function as delimiters in a tool name. Defaults to empty. Allowed
+    #     characters are period, colon, and slash.
     # @param completion [Toys::Completion::Base] A specifier for shell tab
     #     completion for the CLI as a whole.
     #     Optional. If not provided, defaults to an instance of
@@ -108,30 +168,24 @@ module Toys
     #     preload file is loaded before any files in a preload directory.
     #     Optional. If not provided, preload files are disabled.
     #     Note: the standard toys executable sets this to `".preload.rb"`.
-    # @param preload_directory_name [String] A directory with this name that
-    #     appears in any configuration directory is searched for Ruby files,
-    #     which are preloaded using `require` before any tools in that
-    #     configuration directory are defined. Files in a preload directory
-    #     include normal Ruby code, rather than Toys DSL definitions. Files in
-    #     a preload directory are loaded after any standalone preload file.
+    # @param preload_dir_name [String] A directory with this name that appears
+    #     in any configuration directory is searched for Ruby files, which are
+    #     preloaded using `require` before any tools in that configuration
+    #     directory are defined. Files in a preload directory include normal
+    #     Ruby code, rather than Toys DSL definitions. Files in a preload
+    #     directory are loaded after any standalone preload file.
     #     Optional. If not provided, preload directories are disabled.
     #     Note: the standard toys executable sets this to `".preload"`.
-    # @param data_directory_name [String] A directory with this name that
-    #     appears in any configuration directory is added to the data directory
-    #     search path for any tool file in that directory.
+    # @param data_dir_name [String] A directory with this name that appears in
+    #     any configuration directory is added to the data directory search
+    #     path for any tool file in that directory.
     #     Optional. If not provided, data directories are disabled.
     #     Note: the standard toys executable sets this to `".data"`.
-    #
-    # @param executable_name [String] The executable name displayed in help
-    #     text. Optional. Defaults to the ruby program name.
-    # @param extra_delimiters [String] A string containing characters that can
-    #     function as delimiters in a tool name. Defaults to empty. Allowed
-    #     characters are period, colon, and slash.
     #
     def initialize(
       executable_name: nil, middleware_stack: nil, extra_delimiters: "",
       config_dir_name: nil, config_file_name: nil, index_file_name: nil,
-      preload_file_name: nil, preload_directory_name: nil, data_directory_name: nil,
+      preload_file_name: nil, preload_dir_name: nil, data_dir_name: nil,
       mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
       logger: nil, base_level: nil, error_handler: nil, completion: nil
     )
@@ -149,12 +203,12 @@ module Toys
       @config_file_name = config_file_name
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
-      @preload_directory_name = preload_directory_name
-      @data_directory_name = data_directory_name
+      @preload_dir_name = preload_dir_name
+      @data_dir_name = data_dir_name
       @loader = Loader.new(
         index_file_name: @index_file_name, extra_delimiters: @extra_delimiters,
-        preload_directory_name: @preload_directory_name, preload_file_name: @preload_file_name,
-        data_directory_name: @data_directory_name,
+        preload_dir_name: @preload_dir_name, preload_file_name: @preload_file_name,
+        data_dir_name: @data_dir_name,
         mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
       )
@@ -175,9 +229,9 @@ module Toys
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,
                     index_file_name: @index_file_name,
-                    preload_directory_name: @preload_directory_name,
+                    preload_dir_name: @preload_dir_name,
                     preload_file_name: @preload_file_name,
-                    data_directory_name: @data_directory_name,
+                    data_dir_name: @data_dir_name,
                     middleware_stack: @middleware_stack,
                     extra_delimiters: @extra_delimiters,
                     mixin_lookup: @mixin_lookup,
@@ -192,50 +246,52 @@ module Toys
     end
 
     ##
-    # Return the current loader for this CLI
+    # The current loader for this CLI.
     # @return [Toys::Loader]
     #
     attr_reader :loader
 
     ##
-    # Return the effective executable name used for usage text in this CLI
+    # The effective executable name used for usage text in this CLI.
     # @return [String]
     #
     attr_reader :executable_name
 
     ##
-    # Return the string of delimiters
+    # The string of tool name delimiter characters (besides space).
     # @return [String]
     #
     attr_reader :extra_delimiters
 
     ##
-    # Return the logger used by this CLI
+    # The logger used by this CLI.
     # @return [Logger]
     #
     attr_reader :logger
 
     ##
-    # Return the initial logger level in this CLI, used as the level for
-    # verbosity 0.
+    # The initial logger level in this CLI, used as the level for verbosity 0.
     # @return [Integer]
     #
     attr_reader :base_level
 
     ##
-    # Returns the overall completion strategy for this CLI.
+    # The overall completion strategy for this CLI.
     # @return [Toys::Completion::Base,Proc]
     #
     attr_reader :completion
 
     ##
-    # Add a configuration file or directory to the loader.
+    # Add a specific configuration file or directory to the loader.
     #
-    # If a CLI has a default tool set, it might use this to point to the
-    # directory that defines those tools. For example, the default Toys CLI
-    # uses this to load the builtin tools from the "builtins" directory.
+    # This is generally used to load a static or "built-in" set of tools,
+    # either for a standalone command line executable based on Toys, or to
+    # provide a "default" set of tools for a dynamic executable. For example,
+    # the main Toys executable uses this to load the builtin tools from its
+    # "builtins" directory.
     #
-    # @param path [String] A path to add.
+    # @param path [String] A path to add. May reference a single Toys file or
+    #     a Toys directory.
     # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
     # @return [self]
@@ -247,6 +303,9 @@ module Toys
 
     ##
     # Add a configuration block to the loader.
+    #
+    # This is used to create tools "inline", and is useful for simple command
+    # line executables based on Toys.
     #
     # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
@@ -263,12 +322,11 @@ module Toys
     end
 
     ##
-    # Searches the given directory for a well-known config directory and/or
-    # config file. If found, these are added to the loader.
+    # Checks the given directory path. If it contains a config file and/or
+    # config directory, those are added to the loader.
     #
-    # Typically, a CLI will use this to find toys configs in the current
-    # working directory, the user's home directory, or some other well-known
-    # general configuration-oriented directory such as "/etc".
+    # The main Toys executable uses this method to load tools from directories
+    # in the `TOYS_PATH`.
     #
     # @param search_path [String] A path to search for configs.
     # @param high_priority [Boolean] Add the configs at the head of the
@@ -290,13 +348,18 @@ module Toys
     end
 
     ##
-    # A convenience method that searches the current working directory, and all
-    # ancestor directories, for configs to add to the loader.
+    # Walk up the directory hierarchy from the given start location, and add to
+    # the loader any config files and directories found.
+    #
+    # The main Toys executable uses this method to load tools from the current
+    # directory and its ancestors.
     #
     # @param start [String] The first directory to add. Defaults to the current
     #     working directory.
     # @param terminate [Array<String>] Optional list of directories that should
-    #     terminate the search.
+    #     terminate the search. If the walk up the directory tree encounters
+    #     one of these directories, the search is halted without checking the
+    #     terminating directory.
     # @param high_priority [Boolean] Add the configs at the head of the
     #     priority list rather than the tail.
     # @return [self]
@@ -327,7 +390,7 @@ module Toys
     #     array of strings, or a series of string arguments.
     # @param verbosity [Integer] Initial verbosity. Default is 0.
     #
-    # @return [Integer] The resulting status code
+    # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0)
       tool, remaining = ContextualError.capture("Error finding tool definition") do
@@ -416,7 +479,7 @@ module Toys
       ##
       # Create an error handler.
       #
-      # @param output [IO] Where to write errors. Default is `$stderr`.
+      # @param output [IO,nil] Where to write errors. Default is `$stderr`.
       #
       def initialize(output: $stderr)
         require "toys/utils/terminal"

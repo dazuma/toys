@@ -158,4 +158,32 @@ describe Toys::Utils::Terminal do
       assert_equal("Proceed? (Y/n) ", output.string)
     end
   end
+
+  describe "nil streams" do
+    let(:terminal) { Toys::Utils::Terminal.new(input: nil, output: nil) }
+
+    it "allows write" do
+      terminal.write("hello")
+    end
+
+    it "allows puts" do
+      terminal.puts("hello")
+    end
+
+    it "allows ask" do
+      resp = terminal.ask("prompt", default: "hello", trailing_text: "trailing")
+      assert_equal("hello", resp)
+    end
+
+    it "allows confirm with a default" do
+      resp = terminal.confirm(default: true)
+      assert(resp)
+    end
+
+    it "errors on confirm with no default" do
+      assert_raises(Toys::Utils::Terminal::TerminalError) do
+        terminal.confirm
+      end
+    end
+  end
 end

@@ -331,7 +331,7 @@ describe Toys::Loader do
     let(:preloading_loader) {
       Toys::Loader.new(index_file_name: ".toys.rb",
                        preload_file_name: ".preload.rb",
-                       preload_directory_name: ".preload")
+                       preload_dir_name: ".preload")
     }
 
     before do
@@ -369,7 +369,7 @@ describe Toys::Loader do
   describe "with data directory" do
     let(:finding_loader) {
       Toys::Loader.new(index_file_name: ".toys.rb",
-                       data_directory_name: ".data")
+                       data_dir_name: ".data")
     }
 
     before do

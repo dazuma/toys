@@ -52,13 +52,13 @@ module Toys
     # @param preload_file_name [String,nil] A file with this name that appears
     #     in any configuration directory is preloaded before any tools in that
     #     configuration directory are defined.
-    # @param preload_directory_name [String,nil] A directory with this name
-    #     that appears in any configuration directory is searched for Ruby
-    #     files, which are preloaded before any tools in that configuration
-    #     directory are defined.
-    # @param data_directory_name [String,nil] A directory with this name that
-    #     appears in any configuration directory is added to the data directory
-    #     search path for any tool file in that directory.
+    # @param preload_dir_name [String,nil] A directory with this name that
+    #     appears in any configuration directory is searched for Ruby files,
+    #     which are preloaded before any tools in that configuration directory
+    #     are defined.
+    # @param data_dir_name [String,nil] A directory with this name that appears
+    #     in any configuration directory is added to the data directory search
+    #     path for any tool file in that directory.
     # @param middleware_stack [Array] An array of middleware that will be used
     #     by default for all tools loaded by this loader.
     # @param extra_delimiters [String] A string containing characters that can
@@ -71,8 +71,8 @@ module Toys
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, preload_directory_name: nil, preload_file_name: nil,
-                   data_directory_name: nil, middleware_stack: [], extra_delimiters: "",
+    def initialize(index_file_name: nil, preload_dir_name: nil, preload_file_name: nil,
+                   data_dir_name: nil, middleware_stack: [], extra_delimiters: "",
                    mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
@@ -82,8 +82,8 @@ module Toys
       @template_lookup = template_lookup || ModuleLookup.new
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
-      @preload_directory_name = preload_directory_name
-      @data_directory_name = data_directory_name
+      @preload_dir_name = preload_dir_name
+      @data_dir_name = data_dir_name
       @middleware_stack = middleware_stack
       @worklist = []
       @tool_data = {}
@@ -491,15 +491,15 @@ module Toys
 
     def load_index_in(source, words, remaining_words, priority)
       return unless @index_file_name
-      index_source = source.relative_child(@index_file_name, @data_directory_name)
+      index_source = source.relative_child(@index_file_name, @data_dir_name)
       load_relevant_path(index_source, words, remaining_words, priority) if index_source
     end
 
     def load_child_in(source, child, words, remaining_words, priority)
       return if child.start_with?(".") || child == @index_file_name ||
-                child == @preload_file_name || child == @preload_directory_name ||
-                child == @data_directory_name
-      child_source = source.relative_child(child, @data_directory_name)
+                child == @preload_file_name || child == @preload_dir_name ||
+                child == @data_dir_name
+      child_source = source.relative_child(child, @data_dir_name)
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
@@ -513,8 +513,8 @@ module Toys
           require preload_file
         end
       end
-      if @preload_directory_name
-        preload_dir = ::File.join(path, @preload_directory_name)
+      if @preload_dir_name
+        preload_dir = ::File.join(path, @preload_dir_name)
         if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
           ::Dir.entries(preload_dir).each do |child|
             next unless ::File.extname(child) == ".rb"

@@ -169,8 +169,8 @@ module Toys
       # @return [self]
       #
       def write(str = "", *styles)
-        output.write(apply_styles(str, *styles))
-        output.flush
+        output&.write(apply_styles(str, *styles))
+        output&.flush
         self
       end
 
@@ -227,7 +227,7 @@ module Toys
           prompt = "#{ptext} #{trailing_text}#{pspaces}"
         end
         write(prompt, *styles)
-        resp = input.gets.to_s.chomp
+        resp = input&.gets.to_s.chomp
         resp.empty? ? default.to_s : resp
       end
 
@@ -258,6 +258,9 @@ module Toys
           raise TerminalError, "Cannot confirm because the input stream is at eof."
         end
         if !resp.strip.empty? || default.nil?
+          if input.nil?
+            raise TerminalError, "Cannot confirm because there is no input stream."
+          end
           confirm('Please answer "y" or "n"', default: default)
         else
           default

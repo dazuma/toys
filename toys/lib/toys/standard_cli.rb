@@ -51,7 +51,7 @@ module Toys
     # Standard preload directory name in a toys configuration.
     # @return [String]
     #
-    PRELOAD_DIRECTORY_NAME = ".preload"
+    PRELOAD_DIR_NAME = ".preload"
 
     ##
     # Standard preload file name in a toys configuration.
@@ -63,7 +63,7 @@ module Toys
     # Standard data directory name in a toys configuration.
     # @return [String]
     #
-    DATA_DIRECTORY_NAME = ".data"
+    DATA_DIR_NAME = ".data"
 
     ##
     # Name of the standard toys executable.
@@ -120,8 +120,8 @@ module Toys
         config_file_name: CONFIG_FILE_NAME,
         index_file_name: INDEX_FILE_NAME,
         preload_file_name: PRELOAD_FILE_NAME,
-        preload_directory_name: PRELOAD_DIRECTORY_NAME,
-        data_directory_name: DATA_DIRECTORY_NAME,
+        preload_dir_name: PRELOAD_DIR_NAME,
+        data_dir_name: DATA_DIR_NAME,
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup

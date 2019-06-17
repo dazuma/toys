@@ -47,6 +47,7 @@ Details:
 * FIXED: Acceptors no longer raise errors when run on missing optional values.
 * FIXED: When reporting errors in toys files, the line number was off by 2.
 * FIXED: The `--usage` help flag now honors `--all` and `--no-recursive`.
+* FIXED: The terminal now handles nil streams, as advertised.
 
 Additionally, a significant amount of internal reorganization and cleanup happened in the toys-core gem. See the changelog for toys-core for more details.
 

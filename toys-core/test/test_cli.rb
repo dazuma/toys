@@ -37,7 +37,7 @@ describe Toys::CLI do
     Toys::CLI.new(
       executable_name: executable_name, logger: logger, middleware_stack: [],
       error_handler: error_handler, index_file_name: ".toys.rb",
-      data_directory_name: ".data"
+      data_dir_name: ".data"
     )
   }
 

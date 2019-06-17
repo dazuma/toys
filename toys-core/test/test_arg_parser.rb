@@ -28,7 +28,7 @@ describe Toys::ArgParser do
   let(:executable_name) { "toys" }
   let(:cli) {
     Toys::CLI.new(executable_name: executable_name, middleware_stack: [],
-                  index_file_name: ".toys.rb", data_directory_name: ".data")
+                  index_file_name: ".toys.rb", data_dir_name: ".data")
   }
   let(:loader) { cli.loader }
   let(:tool_name) { "foo" }
