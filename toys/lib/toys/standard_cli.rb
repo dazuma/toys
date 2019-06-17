@@ -25,72 +25,66 @@ require "logger"
 
 module Toys
   ##
-  # Helpers that configure the toys-core CLI with the behavior for the
-  # standard Toys executable.
+  # Subclass of `Toys::CLI` configured for the behavior of the standard Toys
+  # executable.
   #
-  module StandardCLI
+  class StandardCLI < CLI
     ##
-    # Path to standard built-in tools
-    # @return [String]
-    #
-    BUILTINS_PATH = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins").freeze
-
-    ##
-    # Standard toys configuration directory name
+    # Standard toys configuration directory name.
     # @return [String]
     #
     CONFIG_DIR_NAME = ".toys"
 
     ##
-    # Standard toys configuration file name
+    # Standard toys configuration file name.
     # @return [String]
     #
     CONFIG_FILE_NAME = ".toys.rb"
 
     ##
-    # Standard index file name in a toys configuration
+    # Standard index file name in a toys configuration.
     # @return [String]
     #
     INDEX_FILE_NAME = ".toys.rb"
 
     ##
-    # Standard preload directory name in a toys configuration
+    # Standard preload directory name in a toys configuration.
     # @return [String]
     #
     PRELOAD_DIRECTORY_NAME = ".preload"
 
     ##
-    # Standard preload file name in a toys configuration
+    # Standard preload file name in a toys configuration.
     # @return [String]
     #
     PRELOAD_FILE_NAME = ".preload.rb"
 
     ##
-    # Standard data directory name in a toys configuration
+    # Standard data directory name in a toys configuration.
     # @return [String]
     #
     DATA_DIRECTORY_NAME = ".data"
 
     ##
-    # Name of the standard toys executable
+    # Name of the standard toys executable.
     # @return [String]
     #
     EXECUTABLE_NAME = "toys"
 
     ##
-    # Delimiter characters recognized
+    # Delimiter characters recognized.
     # @return [String]
     #
     EXTRA_DELIMITERS = ":."
 
     ##
-    # Short description for the standard root tool
+    # Short description for the standard root tool.
     # @return [String]
     #
     DEFAULT_ROOT_DESC = "Your personal command line tool"
 
     ##
-    # Help text for the standard root tool
+    # Help text for the standard root tool.
     # @return [String]
     #
     DEFAULT_ROOT_LONG_DESC =
@@ -101,13 +95,13 @@ module Toys
       " For detailed information, see https://www.rubydoc.info/gems/toys"
 
     ##
-    # Short description for the verion flag
+    # Short description for the version flag.
     # @return [String]
     #
     DEFAULT_VERSION_FLAG_DESC = "Show the version of Toys."
 
     ##
-    # Name of the toys path environment variable
+    # Name of the toys path environment variable.
     # @return [String]
     #
     TOYS_PATH_ENV = "TOYS_PATH"
@@ -118,10 +112,9 @@ module Toys
     #
     # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.
-    # @return [Toys::CLI]
     #
-    def self.create(cur_dir: nil)
-      cli = CLI.new(
+    def initialize(cur_dir: nil)
+      super(
         executable_name: EXECUTABLE_NAME,
         config_dir_name: CONFIG_DIR_NAME,
         config_file_name: CONFIG_FILE_NAME,
@@ -133,9 +126,10 @@ module Toys
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup
       )
-      add_standard_paths(cli, cur_dir: cur_dir)
-      cli
+      add_standard_paths(cur_dir: cur_dir)
     end
+
+    private
 
     ##
     # Add paths for a toys standard CLI. Paths added, in order from high to
@@ -148,20 +142,20 @@ module Toys
     #    `$HOME:/etc` by default.
     # *  The builtins for the standard toys executable.
     #
-    # @param cli [Toys::CLI] Add paths to this CLI
     # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.
     # @param global_dirs [Array<String>,nil] Optional list of global
     #     directories, or `nil` to use the defaults.
-    # @return [Toys::CLI]
+    # @return [self]
     #
-    def self.add_standard_paths(cli, cur_dir: nil, global_dirs: nil)
+    def add_standard_paths(cur_dir: nil, global_dirs: nil)
       cur_dir ||= ::Dir.pwd
       global_dirs ||= default_global_dirs
-      cli.add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
-      global_dirs.each { |path| cli.add_search_path(path) }
-      cli.add_config_path(BUILTINS_PATH)
-      cli
+      add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
+      global_dirs.each { |path| add_search_path(path) }
+      builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
+      add_config_path(builtins_path)
+      self
     end
 
     # rubocop:disable Metrics/MethodLength
@@ -171,7 +165,7 @@ module Toys
     #
     # @return [Array]
     #
-    def self.default_middleware_stack
+    def default_middleware_stack
       [
         [
           :set_default_descriptions,
@@ -221,7 +215,7 @@ module Toys
     #
     # @return [Array<String>]
     #
-    def self.default_global_dirs
+    def default_global_dirs
       paths = ::ENV[TOYS_PATH_ENV].to_s.split(::File::PATH_SEPARATOR)
       paths = [::Dir.home, "/etc"] if paths.empty?
       paths
@@ -236,7 +230,7 @@ module Toys
     #
     # @return [Toys::ModuleLookup]
     #
-    def self.default_template_lookup
+    def default_template_lookup
       ModuleLookup.new.add_path("toys/templates")
     end
   end

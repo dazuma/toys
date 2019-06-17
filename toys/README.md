@@ -13,7 +13,7 @@ Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line executable written in Ruby. However,
 you *can* use it in that way with the "toys-core" API, available as a separate
 gem. For more info on using toys-core, see
-(its documentation)[https://www.rubydoc.info/gems/toys-core].
+[its documentation](https://www.rubydoc.info/gems/toys-core).
 
 ## Introductory tutorial
 
@@ -290,7 +290,7 @@ you build and ship a custom command line executable written in Ruby. However,
 you *can* use it in that way with the "toys-core" API, available as a separate
 gem. You would effectively write your command line executable using the same
 Toys DSL that you use to write `.toys.rb` files. For more info on using
-toys-core, see (its documentation)[https://www.rubydoc.info/gems/toys-core].
+toys-core, see [its documentation](https://www.rubydoc.info/gems/toys-core).
 
 ## Why Toys?
 

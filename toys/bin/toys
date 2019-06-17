@@ -27,4 +27,4 @@
 $LOAD_PATH.unshift(::File.absolute_path(::File.join(::File.dirname(__dir__), "lib")))
 require "toys"
 
-exit(::Toys::StandardCLI.create.run(::ARGV))
+exit(::Toys::StandardCLI.new.run(::ARGV))

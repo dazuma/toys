@@ -26,7 +26,7 @@ module Toys
   # An internal class that parses command line arguments for a tool.
   #
   # Generally, you should not need to use this class directly. It is called
-  # from {Toys::Runner}.
+  # from {Toys::CLI}.
   #
   class ArgParser
     ##
