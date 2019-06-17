@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: CI on Ruby 2.3
-          command: ./toys-dev ci
+          command: ./toys-dev do ci init , ci
   Test Ruby 2.4:
     docker:
        - image: circleci/ruby:2.4-stretch
@@ -17,7 +17,7 @@ jobs:
       - checkout
       - run:
           name: CI on Ruby 2.4
-          command: ./toys-dev ci
+          command: ./toys-dev do ci init , ci
   Test Ruby 2.5:
     docker:
        - image: circleci/ruby:2.5-stretch
@@ -26,7 +26,7 @@ jobs:
       - checkout
       - run:
           name: CI on Ruby 2.5
-          command: ./toys-dev ci
+          command: ./toys-dev do ci init , ci
   Test Ruby 2.6:
     docker:
        - image: circleci/ruby:2.6-stretch
@@ -35,7 +35,7 @@ jobs:
       - checkout
       - run:
           name: CI on Ruby 2.6
-          command: ./toys-dev ci
+          command: ./toys-dev do ci init , ci
 workflows:
   version: 2
   tests:

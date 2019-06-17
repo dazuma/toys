@@ -88,6 +88,32 @@ tool "ci" do
     handle_gem("toys-core")
     handle_gem("toys")
   end
+
+  tool "init" do
+    desc "Initialize the environment for CI systems"
+
+    include :exec
+    include :terminal
+
+    def run
+      changed = false
+      if exec(["git", "config", "--global", "--get", "user.email"], out: :null).error?
+        exec(["git", "config", "--global", "user.email", "hello@example.com"],
+             exit_on_nonzero_status: true)
+        changed = true
+      end
+      if exec(["git", "config", "--global", "--get", "user.name"], out: :null).error?
+        exec(["git", "config", "--global", "user.name", "Hello Ruby"],
+             exit_on_nonzero_status: true)
+        changed = true
+      end
+      if changed
+        puts("**** Environment is now set up for CI", :bold, :green)
+      else
+        puts("**** Environment was already set up for CI", :bold, :yellow)
+      end
+    end
+  end
 end
 
 tool "yardoc" do
