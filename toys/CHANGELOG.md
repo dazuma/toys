@@ -20,6 +20,7 @@ Details:
 * ADDED: The usage error screen displays alternative suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler.
 * ADDED: Tools can enforce that flags must be given before positional args. In particular, `toys do` now uses this feature, which eliminates most of the need to use `--` to get flags to work for subtools.
+* ADDED: Tools can control whether their flags can be invoked by partial matches.
 * ADDED: Function and range based acceptors.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
 * ADDED: The `:gem_build` template includes an `:install_gem` option. It also allows customization of gem output.

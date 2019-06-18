@@ -1158,6 +1158,22 @@ module Toys
       end
 
       ##
+      # Require that flags must match exactly. That is, flags must appear in
+      # their entirety on the command line. (If false, substrings of flags are
+      # accepted as long as they are unambiguous.)
+      #
+      # Issuing this directive by itself turns on exact match. You may turn it
+      # off by passsing `false` as the parameter.
+      #
+      # @param state [Boolean]
+      # @return [self]
+      #
+      def require_exact_flag_match(state = true)
+        DSL::Tool.current_tool(self, true)&.require_exact_flag_match(state)
+        self
+      end
+
+      ##
       # Disable argument parsing for this tool. Arguments will not be parsed
       # and the options will not be populated. Instead, tools can retrieve the
       # full unparsed argument list by calling {Toys::Context#args}.
@@ -1508,9 +1524,11 @@ module Toys
       ## @private
       def self.maybe_add_getter(tool_class, key)
         if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!\?]?$/ && key != :run
-          tool_class.class_eval do
-            define_method(key) do
-              self[key]
+          unless tool_class.public_method_defined?(key)
+            tool_class.class_eval do
+              define_method(key) do
+                self[key]
+              end
             end
           end
         end

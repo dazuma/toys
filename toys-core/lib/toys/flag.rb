@@ -370,14 +370,15 @@ module Toys
     end
 
     def create_default_flag
-      canonical_flag = key.to_s.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
-      unless canonical_flag.empty?
-        flag_str =
-          if canonical_flag.length == 1
-            "-#{canonical_flag}"
-          else
-            "--#{canonical_flag}"
-          end
+      key_str = key.to_s
+      flag_str =
+        if key_str.length == 1
+          "-#{key_str}" if key_str =~ /[a-zA-Z0-9\?]/
+        elsif key_str.length > 1
+          key_str = key_str.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
+          "--#{key_str}" unless key_str.empty?
+        end
+      if flag_str
         needs_val = @value_completion != Completion::EMPTY ||
                     ![::Object, ::TrueClass, ::FalseClass].include?(@acceptor.well_known_spec) ||
                     ![nil, true, false].include?(@default)

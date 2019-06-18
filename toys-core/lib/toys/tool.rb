@@ -81,6 +81,7 @@ module Toys
 
       @disable_argument_parsing = false
       @enforce_flags_before_args = false
+      @require_exact_flag_match = false
       @includes_modules = false
       @custom_context_directory = nil
 
@@ -370,6 +371,14 @@ module Toys
     end
 
     ##
+    # Returns true if this tool requires exact flag matches.
+    # @return [Boolean]
+    #
+    def exact_flag_match_required?
+      @require_exact_flag_match
+    end
+
+    ##
     # All arg definitions in order: required, optional, remaining.
     #
     # @return [Array<Toys::PositionalArg>]
@@ -634,6 +643,24 @@ module Toys
               " because parsing is disabled."
       end
       @enforce_flags_before_args = state
+      self
+    end
+
+    ##
+    # Require that flags must match exactly. (If false, flags can match an
+    # unambiguous substring.)
+    #
+    # @param state [Boolean]
+    # @return [self]
+    #
+    def require_exact_flag_match(state = true)
+      check_definition_state
+      if argument_parsing_disabled?
+        raise ToolDefinitionError,
+              "Cannot require exact flag match for tool" \
+              " #{display_name.inspect} because parsing is disabled."
+      end
+      @require_exact_flag_match = state
       self
     end
 

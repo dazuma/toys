@@ -15,7 +15,7 @@ Metrics/BlockNesting:
   Exclude:
     - "test/**/*"
 Metrics/ClassLength:
-  Max: 400
+  Max: 500
 Metrics/CyclomaticComplexity:
   Max: 10
 Metrics/LineLength:
@@ -23,7 +23,7 @@ Metrics/LineLength:
 Metrics/MethodLength:
   Max: 25
 Metrics/ModuleLength:
-  Max: 400
+  Max: 500
 Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:

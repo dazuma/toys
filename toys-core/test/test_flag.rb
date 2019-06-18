@@ -265,146 +265,171 @@ describe Toys::Flag::Syntax do
 end
 
 describe Toys::Flag do
-  it "defaults to a boolean switch with a long name" do
-    flag = Toys::Flag.create(:abc)
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("--abc", flag.flag_syntax.first.canonical_str)
-    assert_equal(:boolean, flag.flag_syntax.first.flag_type)
-    assert_equal(:boolean, flag.flag_type)
+  describe "default flags" do
+    it "defaults to a boolean switch with a long name" do
+      flag = Toys::Flag.create(:abc)
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--abc", flag.flag_syntax.first.canonical_str)
+      assert_equal(:boolean, flag.flag_syntax.first.flag_type)
+      assert_equal(:boolean, flag.flag_type)
+    end
+
+    it "strips bad characters from a default" do
+      flag = Toys::Flag.create(:"abc-123_xyz[]")
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--abc-123-xyz", flag.flag_syntax.first.canonical_str)
+      assert_equal(:boolean, flag.flag_syntax.first.flag_type)
+      assert_equal(:boolean, flag.flag_type)
+    end
+
+    it "omits default if it can't create one" do
+      flag = Toys::Flag.create(:"!!!")
+      assert_equal(0, flag.flag_syntax.size)
+    end
+
+    it "defaults to a boolean switch with a short name" do
+      flag = Toys::Flag.create(:a)
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("-a", flag.flag_syntax.first.canonical_str)
+      assert_equal(:boolean, flag.flag_syntax.first.flag_type)
+      assert_equal(:boolean, flag.flag_type)
+    end
+
+    it "defaults to a boolean switch with a capital short name" do
+      flag = Toys::Flag.create(:A)
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("-A", flag.flag_syntax.first.canonical_str)
+      assert_equal(:boolean, flag.flag_syntax.first.flag_type)
+      assert_equal(:boolean, flag.flag_type)
+    end
+
+    it "defaults to a value switch with a string default" do
+      flag = Toys::Flag.create(:abc, default: "hello")
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
+      assert_equal(:value, flag.flag_syntax.first.flag_type)
+      assert_equal(:required, flag.flag_syntax.first.value_type)
+      assert_equal(" ", flag.flag_syntax.first.value_delim)
+      assert_equal("VALUE", flag.flag_syntax.first.value_label)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("VALUE", flag.value_label)
+      assert_equal("hello", flag.default)
+      assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+      assert_equal(Toys::Completion::EMPTY, flag.value_completion)
+    end
+
+    it "defaults to a value switch with an integer acceptor" do
+      flag = Toys::Flag.create(:abc, accept: Integer)
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
+      assert_equal(:value, flag.flag_syntax.first.flag_type)
+      assert_equal(:required, flag.flag_syntax.first.value_type)
+      assert_equal(" ", flag.flag_syntax.first.value_delim)
+      assert_equal("VALUE", flag.flag_syntax.first.value_label)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("VALUE", flag.value_label)
+      assert_nil(flag.default)
+      assert_equal(Toys::Acceptor.lookup_well_known(Integer), flag.acceptor)
+      assert_equal(Toys::Completion::EMPTY, flag.value_completion)
+    end
+
+    it "defaults to a value switch with a value completion" do
+      flag = Toys::Flag.create(:abc, complete_values: ["hello"])
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
+      assert_equal(:value, flag.flag_syntax.first.flag_type)
+      assert_equal(:required, flag.flag_syntax.first.value_type)
+      assert_equal(" ", flag.flag_syntax.first.value_delim)
+      assert_equal("VALUE", flag.flag_syntax.first.value_label)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("VALUE", flag.value_label)
+      assert_nil(flag.default)
+      assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+      assert_instance_of(Toys::Completion::Enum, flag.value_completion)
+    end
+
+    it "defaults to a value switch with a short name" do
+      flag = Toys::Flag.create(:a, default: "hello")
+      assert_equal(1, flag.flag_syntax.size)
+      assert_equal("-a VALUE", flag.flag_syntax.first.canonical_str)
+      assert_equal(:value, flag.flag_syntax.first.flag_type)
+      assert_equal(:required, flag.flag_syntax.first.value_type)
+      assert_equal(" ", flag.flag_syntax.first.value_delim)
+      assert_equal("VALUE", flag.flag_syntax.first.value_label)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("VALUE", flag.value_label)
+      assert_equal("hello", flag.default)
+      assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
+      assert_equal(Toys::Completion::EMPTY, flag.value_completion)
+    end
   end
 
-  it "defaults to a boolean switch with a short name" do
-    flag = Toys::Flag.create(:a)
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("-a", flag.flag_syntax.first.canonical_str)
-    assert_equal(:boolean, flag.flag_syntax.first.flag_type)
-    assert_equal(:boolean, flag.flag_type)
-  end
+  describe "canonicalization" do
+    it "chooses the first long flag's value label and delim as canonical" do
+      flag = Toys::Flag.create(:abc, ["--bb=VAL", "--aa LAV", "-aFOO"])
+      assert_equal(3, flag.flag_syntax.size)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal("VAL", flag.value_label)
+      assert_equal("=", flag.value_delim)
+      assert_equal("--bb=VAL", flag.display_name)
+      assert_equal("bb", flag.sort_str)
+    end
 
-  it "defaults to a value switch with a string default" do
-    flag = Toys::Flag.create(:abc, default: "hello")
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
-    assert_equal(:value, flag.flag_syntax.first.flag_type)
-    assert_equal(:required, flag.flag_syntax.first.value_type)
-    assert_equal(" ", flag.flag_syntax.first.value_delim)
-    assert_equal("VALUE", flag.flag_syntax.first.value_label)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("VALUE", flag.value_label)
-    assert_equal("hello", flag.default)
-    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
-    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
-  end
+    it "chooses the first short flag's value label and delim as canonical" do
+      flag = Toys::Flag.create(:abc, ["-aFOO", "-b BAR"])
+      assert_equal(2, flag.flag_syntax.size)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal("FOO", flag.value_label)
+      assert_equal("", flag.value_delim)
+      assert_equal("-aFOO", flag.display_name)
+      assert_equal("a", flag.sort_str)
+    end
 
-  it "defaults to a value switch with an integer acceptor" do
-    flag = Toys::Flag.create(:abc, accept: Integer)
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
-    assert_equal(:value, flag.flag_syntax.first.flag_type)
-    assert_equal(:required, flag.flag_syntax.first.value_type)
-    assert_equal(" ", flag.flag_syntax.first.value_delim)
-    assert_equal("VALUE", flag.flag_syntax.first.value_label)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("VALUE", flag.value_label)
-    assert_nil(flag.default)
-    assert_equal(Toys::Acceptor.lookup_well_known(Integer), flag.acceptor)
-    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
-  end
+    it "canonicalizes to required value flags" do
+      flag = Toys::Flag.create(:abc, ["--aa VAL", "--bb", "-a"])
+      assert_equal(3, flag.flag_syntax.size)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:required, flag.value_type)
+      assert_equal("VAL", flag.value_label)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("--bb VAL", flag.flag_syntax[1].canonical_str)
+      assert_equal("-a VAL", flag.flag_syntax[2].canonical_str)
+      assert_equal("--aa VAL", flag.display_name)
+      assert_equal("aa", flag.sort_str)
+    end
 
-  it "defaults to a value switch with a value completion" do
-    flag = Toys::Flag.create(:abc, complete_values: ["hello"])
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
-    assert_equal(:value, flag.flag_syntax.first.flag_type)
-    assert_equal(:required, flag.flag_syntax.first.value_type)
-    assert_equal(" ", flag.flag_syntax.first.value_delim)
-    assert_equal("VALUE", flag.flag_syntax.first.value_label)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("VALUE", flag.value_label)
-    assert_nil(flag.default)
-    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
-    assert_instance_of(Toys::Completion::Enum, flag.value_completion)
-  end
+    it "canonicalizes to optional value flags" do
+      flag = Toys::Flag.create(:abc, ["--aa", "--cc [VAL]", "--bb", "-a"])
+      assert_equal(4, flag.flag_syntax.size)
+      assert_equal(:value, flag.flag_type)
+      assert_equal(:optional, flag.value_type)
+      assert_equal("VAL", flag.value_label)
+      assert_equal(" ", flag.value_delim)
+      assert_equal("--bb [VAL]", flag.flag_syntax[2].canonical_str)
+      assert_equal("-a [VAL]", flag.flag_syntax[3].canonical_str)
+      assert_equal("--aa [VAL]", flag.display_name)
+      assert_equal("aa", flag.sort_str)
+    end
 
-  it "defaults to a value switch with a short name" do
-    flag = Toys::Flag.create(:a, default: "hello")
-    assert_equal(1, flag.flag_syntax.size)
-    assert_equal("-a VALUE", flag.flag_syntax.first.canonical_str)
-    assert_equal(:value, flag.flag_syntax.first.flag_type)
-    assert_equal(:required, flag.flag_syntax.first.value_type)
-    assert_equal(" ", flag.flag_syntax.first.value_delim)
-    assert_equal("VALUE", flag.flag_syntax.first.value_label)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("VALUE", flag.value_label)
-    assert_equal("hello", flag.default)
-    assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
-    assert_equal(Toys::Completion::EMPTY, flag.value_completion)
-  end
-
-  it "chooses the first long flag's value label and delim as canonical" do
-    flag = Toys::Flag.create(:abc, ["--bb=VAL", "--aa LAV", "-aFOO"])
-    assert_equal(3, flag.flag_syntax.size)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal("VAL", flag.value_label)
-    assert_equal("=", flag.value_delim)
-    assert_equal("--bb=VAL", flag.display_name)
-    assert_equal("bb", flag.sort_str)
-  end
-
-  it "chooses the first short flag's value label and delim as canonical" do
-    flag = Toys::Flag.create(:abc, ["-aFOO", "-b BAR"])
-    assert_equal(2, flag.flag_syntax.size)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal("FOO", flag.value_label)
-    assert_equal("", flag.value_delim)
-    assert_equal("-aFOO", flag.display_name)
-    assert_equal("a", flag.sort_str)
-  end
-
-  it "canonicalizes to required value flags" do
-    flag = Toys::Flag.create(:abc, ["--aa VAL", "--bb", "-a"])
-    assert_equal(3, flag.flag_syntax.size)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:required, flag.value_type)
-    assert_equal("VAL", flag.value_label)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("--bb VAL", flag.flag_syntax[1].canonical_str)
-    assert_equal("-a VAL", flag.flag_syntax[2].canonical_str)
-    assert_equal("--aa VAL", flag.display_name)
-    assert_equal("aa", flag.sort_str)
-  end
-
-  it "canonicalizes to optional value flags" do
-    flag = Toys::Flag.create(:abc, ["--aa", "--cc [VAL]", "--bb", "-a"])
-    assert_equal(4, flag.flag_syntax.size)
-    assert_equal(:value, flag.flag_type)
-    assert_equal(:optional, flag.value_type)
-    assert_equal("VAL", flag.value_label)
-    assert_equal(" ", flag.value_delim)
-    assert_equal("--bb [VAL]", flag.flag_syntax[2].canonical_str)
-    assert_equal("-a [VAL]", flag.flag_syntax[3].canonical_str)
-    assert_equal("--aa [VAL]", flag.display_name)
-    assert_equal("aa", flag.sort_str)
-  end
-
-  it "canonicalizes to boolean flags" do
-    flag = Toys::Flag.create(:abc, ["--[no-]aa", "--bb", "-a"])
-    assert_equal(3, flag.flag_syntax.size)
-    assert_equal(:boolean, flag.flag_type)
-    assert_equal(:boolean, flag.flag_syntax[1].flag_type)
-    assert_equal(:boolean, flag.flag_syntax[2].flag_type)
-    assert_equal("--[no-]aa", flag.display_name)
-    assert_equal("aa", flag.sort_str)
+    it "canonicalizes to boolean flags" do
+      flag = Toys::Flag.create(:abc, ["--[no-]aa", "--bb", "-a"])
+      assert_equal(3, flag.flag_syntax.size)
+      assert_equal(:boolean, flag.flag_type)
+      assert_equal(:boolean, flag.flag_syntax[1].flag_type)
+      assert_equal(:boolean, flag.flag_syntax[2].flag_type)
+      assert_equal("--[no-]aa", flag.display_name)
+      assert_equal("aa", flag.sort_str)
+    end
   end
 
   it "honors provided display name" do

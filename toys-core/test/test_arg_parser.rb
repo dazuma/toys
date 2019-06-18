@@ -532,6 +532,23 @@ describe Toys::ArgParser do
       assert_errors_include(["--abc", "--abd"], arg_parser.errors)
     end
 
+    it "matches partially" do
+      tool.add_flag(:abcde)
+      arg_parser.parse(["--ab"])
+      arg_parser.finish
+      assert_data_includes({abcde: true}, arg_parser.data)
+    end
+
+    it "does not match partially" do
+      tool.add_flag(:abcde)
+      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser.parse(["--abcd"])
+      arg_parser.finish
+      assert_errors_include('Flag "--abcd" is not recognized.', arg_parser.errors)
+      assert_errors_include(["--abcde"], arg_parser.errors) if supports_suggestions?
+      assert_includes(arg_parser.unmatched_flags, "--abcd")
+    end
+
     it "stops flag parsing after --" do
       tool.add_flag(:a, ["-a", "--aa VALUE"])
       tool.set_remaining_args(:b)

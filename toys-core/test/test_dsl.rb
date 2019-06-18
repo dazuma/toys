@@ -623,6 +623,8 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup([])
       assert_equal(true, tool.tool_class.public_method_defined?(:abc_2def?))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      context = tool.tool_class.new(abc_2def?: 10)
+      assert_equal(10, context.abc_2def?)
     end
 
     it "defines a getter for another valid symbol key" do
@@ -632,6 +634,17 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup([])
       assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter for a single capital letter symbol key" do
+      loader.add_block do
+        flag(:A)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:A))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      context = tool.tool_class.new(A: 10)
+      assert_equal(10, context.A())
     end
 
     it "does not define a getter for a string key" do
@@ -659,6 +672,32 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:run))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter if the method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        flag(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.hello)
+    end
+
+    it "recognizes require_exact_flag_match" do
+      loader.add_block do
+        tool "foo" do
+          require_exact_flag_match
+        end
+        tool "bar" do
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert(tool.exact_flag_match_required?)
+      tool, _remaining = loader.lookup(["bar"])
+      refute(tool.exact_flag_match_required?)
     end
   end
 

@@ -402,6 +402,33 @@ describe Toys::CLI do
     end
   end
 
+  describe "directive alterations" do
+    it "allows partial flag match" do
+      cli.add_config_block do
+        tool "foo" do
+          flag :abcde
+          def run
+            exit(0)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", "--abc"))
+    end
+
+    it "requires exact flag match" do
+      cli.add_config_block do
+        tool "foo" do
+          flag :abcde
+          require_exact_flag_match
+          def run
+            exit(0)
+          end
+        end
+      end
+      assert_equal(2, cli.run("foo", "--abc"))
+    end
+  end
+
   it "creates a child" do
     cli.add_config_block do
       tool "foo" do

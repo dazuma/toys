@@ -10,7 +10,7 @@ Major changes and features:
 * ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
 * ADDED: The usage error screen displays suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler and a custom usage error handler. Added appropriate APIs and DSL methods.
-* ADDED: Tools can enforce that flags must be given before positional args.
+* ADDED: Tools can enforce that flags must be given before positional args, and can control whether partial flags are accepted.
 
 Other notable changes:
 

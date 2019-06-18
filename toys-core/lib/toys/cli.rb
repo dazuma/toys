@@ -418,7 +418,9 @@ module Toys
     # @return [Integer] The resulting status code
     #
     def run_tool(tool, args, verbosity: 0)
-      arg_parser = ArgParser.new(self, tool, verbosity: verbosity)
+      arg_parser = ArgParser.new(self, tool,
+                                 verbosity: verbosity,
+                                 require_exact_flag_match: tool.exact_flag_match_required?)
       arg_parser.parse(args).finish
       context = tool.tool_class.new(arg_parser.data)
       tool.run_initializers(context)

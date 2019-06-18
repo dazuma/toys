@@ -283,8 +283,11 @@ module Toys
     # @param cli [Toys::CLI] The CLI in effect.
     # @param tool [Toys::Tool] The tool defining the argument format.
     # @param verbosity [Integer] The initial verbosity level (default is 0).
+    # @param require_exact_flag_match [Boolean] Whether to require flag matches
+    #     be exact (not partial). Default is false.
     #
-    def initialize(cli, tool, verbosity: 0)
+    def initialize(cli, tool, verbosity: 0, require_exact_flag_match: false)
+      @require_exact_flag_match = require_exact_flag_match
       @loader = cli.loader
       @data = initial_data(cli, tool, verbosity)
       @tool = tool
@@ -486,7 +489,7 @@ module Toys
 
     def handle_plain_flag(name, following = "")
       flag_result = find_flag(name)
-      flag_def = flag_result.unique_flag
+      flag_def = flag_result&.unique_flag
       return "" unless flag_def
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :boolean
@@ -508,7 +511,7 @@ module Toys
 
     def handle_valued_flag(name, value)
       flag_result = find_flag(name)
-      flag_def = flag_result.unique_flag
+      flag_def = flag_result&.unique_flag
       return unless flag_def
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :value
@@ -537,18 +540,20 @@ module Toys
 
     def find_flag(name)
       flag_result = @tool.resolve_flag(name)
-      if flag_result.not_found?
+      if flag_result.not_found? || @require_exact_flag_match && !flag_result.found_exact?
         @errors << FlagUnrecognizedError.new(
           value: name, suggestions: Compat.suggestions(name, @tool.used_flags)
         )
         @unmatched_flags << name
         @unmatched_args << name
+        flag_result = nil
       elsif flag_result.found_multiple?
         @errors << FlagAmbiguousError.new(
           value: name, suggestions: flag_result.matching_flag_strings
         )
         @unmatched_flags << name
         @unmatched_args << name
+        flag_result = nil
       end
       flag_result
     end
