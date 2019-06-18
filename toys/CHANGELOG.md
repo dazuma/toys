@@ -8,7 +8,7 @@ Highlights:
 
 * Tab completion is available for Bash! See the README for instructions on installing it. Tab completion covers tool names, flags, flag values, and positional arguments. Tools can also customize the completion for their own flag and argument values.
 * Toys now integrates with `did_you_mean` to provide suggestions for misspelled tools, flags, and arguments (when run on Ruby 2.4 or later.)
-* Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace.
+* Tools can now provide their own interrupt handler to respond to user `CTRL-C`. And the default handler no longer displays an unsightly stack trace. Tools can also provide their own handler for usage errors.
 * A new argument parsing engine, supporting additional features such as optional enforcing that flags appear before positional arguments, as well as a bunch of fixes, especially around acceptors and optional flag values.
 * Changed the license from BSD to MIT to better match how most libraries in the Ruby community are licensed.
 
@@ -25,14 +25,14 @@ Details:
 * ADDED: The `:gem_build` template includes an `:install_gem` option. It also allows customization of gem output.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
-* ADDED: An `EXTRA_ARGS` context key that provides unmatched positional arguments.
+* ADDED: Context keys `UNMATCHED_ARGS`, `UNMATCHED_POSITIONAL`, and `UNMATCHED_FLAGS` that provide arguments that were not handled during arg parsing.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Toys now implements its own argument parsing and standard acceptors rather than relying on OptionParser. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Flags with explicit value-less syntax are no longer given a value even if they specify a default or an acceptor.
-* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
-* CHANGED: Renamed the `BINARY_NAME` context key to `EXECUTABLE_NAME`, and the corresponding convenience method from `binary_name` to `executable_name`.
+* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and removed the `tool_definition` convenience method.
+* CHANGED: Removed the `BINARY_NAME` and `LOADER` context keys, and removed and the corresponding convenience methods. Get these values from the CLI if needed.
 * CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The root tool no longer defines remaining_args.
 * CHANGED: Renamed `to_expand` to `on_expand` in template definitions.

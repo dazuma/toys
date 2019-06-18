@@ -53,8 +53,8 @@ module Toys
       # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
-        new(context[Context::Key::TOOL], context[Context::Key::LOADER],
-            context[Context::Key::EXECUTABLE_NAME])
+        cli = context[Context::Key::CLI]
+        new(context[Context::Key::TOOL], cli.loader, cli.executable_name)
       end
 
       ##

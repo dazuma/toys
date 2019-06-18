@@ -252,10 +252,13 @@ module Toys
           show_list(context)
         elsif context[SHOW_HELP_KEY]
           show_help(context, true)
-        elsif @fallback_execution && !context[Context::Key::TOOL].runnable?
-          show_help(context, false)
         else
-          yield
+          begin
+            yield
+          rescue NotRunnableError => e
+            raise e unless @fallback_execution
+            show_help(context, false)
+          end
         end
       end
 
@@ -313,11 +316,12 @@ module Toys
       def get_help_text(context, use_extra_args)
         require "toys/utils/help_text"
         if use_extra_args && @allow_root_args && context[Context::Key::TOOL].root?
-          tool_name = Array(context[Context::Key::EXTRA_ARGS])
+          tool_name = Array(context[Context::Key::UNMATCHED_POSITIONAL])
           unless tool_name.empty?
-            loader = context[Context::Key::LOADER]
+            cli = context[Context::Key::CLI]
+            loader = cli.loader
             tool, rest = loader.lookup(tool_name)
-            help_text = Utils::HelpText.new(tool, loader, context[Context::Key::EXECUTABLE_NAME])
+            help_text = Utils::HelpText.new(tool, loader, cli.executable_name)
             report_usage_error(help_text, loader, tool.full_name, rest.first) unless rest.empty?
             return help_text
           end

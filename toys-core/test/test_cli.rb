@@ -61,7 +61,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(-1, cli.run("foo"))
+      assert_equal(1, cli.run("foo"))
       assert_match(/RuntimeError: whoops/, error_io.string)
     end
 
@@ -70,8 +70,8 @@ describe Toys::CLI do
         tool "foo" do
         end
       end
-      assert_equal(-1, cli.run("foo"))
-      assert_match(/No implementation for tool/, logger_io.string)
+      assert_equal(126, cli.run("foo"))
+      assert_match(/No implementation for tool/, error_io.string)
     end
 
     it "can disable argument parsing" do
@@ -85,7 +85,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run("foo", "baz", "--bar"))
+      assert_equal(0, cli.run("foo", "baz", "--bar"), error_io.string)
     end
 
     it "runs initializer at the beginning" do
@@ -99,7 +99,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run("foo"))
+      assert_equal(0, cli.run("foo"), error_io.string)
     end
 
     it "makes context fields available via convenience methods" do
@@ -111,16 +111,15 @@ describe Toys::CLI do
           flag(:sw1, "-a")
           to_run do
             test.assert_equal(0, verbosity)
-            test.assert_equal(["foo"], tool.full_name)
             test.assert_equal(["foo"], tool_name)
             test.assert_instance_of(Logger, logger)
-            test.assert_equal("toys", executable_name)
+            test.assert_equal("toys", cli.executable_name)
             test.assert_equal(["hello", "-a"], args)
             test.assert_equal({arg1: "hello", arg2: nil, sw1: true}, options)
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
     end
 
     it "makes context fields available via get" do
@@ -135,12 +134,12 @@ describe Toys::CLI do
             test.assert_equal(["foo"], get(Toys::Context::Key::TOOL).full_name)
             test.assert_equal(["foo"], get(Toys::Context::Key::TOOL_NAME))
             test.assert_instance_of(Logger, get(Toys::Context::Key::LOGGER))
-            test.assert_equal("toys", get(Toys::Context::Key::EXECUTABLE_NAME))
+            test.assert_equal("toys", get(Toys::Context::Key::CLI).executable_name)
             test.assert_equal(["hello", "-a"], get(Toys::Context::Key::ARGS))
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
     end
 
     it "makes options available via get" do
@@ -157,7 +156,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]))
+      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
     end
 
     it "supports sub-runs" do
@@ -207,7 +206,7 @@ describe Toys::CLI do
             raise ::Interrupt
           end
 
-          def interrupt
+          on_interrupt do
             exit(2)
           end
         end
@@ -222,8 +221,8 @@ describe Toys::CLI do
             raise ::Interrupt
           end
 
-          def interrupt(interrupt)
-            raise interrupt
+          on_interrupt do |ex|
+            raise ex
           end
         end
       end
@@ -264,6 +263,142 @@ describe Toys::CLI do
         end
       end
       assert_equal(2, cli.run("foo"))
+    end
+
+    it "supports an interrupt method with no argument" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          on_interrupt :int_handler
+
+          def int_handler
+            exit(2)
+          end
+        end
+      end
+      assert_equal(2, cli.run("foo"))
+    end
+
+    it "supports an interrupt method with an argument" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::Interrupt
+          end
+
+          def int_handler(exception)
+            exit(exception.is_a?(::Interrupt) ? 2 : 3)
+          end
+
+          on_interrupt :int_handler
+        end
+      end
+      assert_equal(2, cli.run("foo"))
+    end
+  end
+
+  describe "usage error handling" do
+    it "uses the default handler" do
+      cli.add_config_block do
+        tool "foo" do
+          def run; end
+        end
+      end
+      assert_equal(2, cli.run("foo", "--bar"))
+      assert_match(/Flag "--bar" is not recognized/, error_io.string)
+    end
+
+    it "sets the default handler" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error :run
+          on_usage_error nil
+
+          def run; end
+        end
+      end
+      assert_equal(2, cli.run("foo", "--bar"))
+      assert_match(/Flag "--bar" is not recognized/, error_io.string)
+    end
+
+    it "supports redirecting back to run" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error :run
+
+          def run
+            exit usage_errors.size
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo", "--bar", "--baz", "--qux"))
+    end
+
+    it "supports invoking a method with no argument" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error :usage_handler
+
+          def run
+            exit(-1)
+          end
+
+          def usage_handler
+            exit usage_errors.size
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo", "--bar", "--baz", "--qux"))
+    end
+
+    it "supports invoking a method with an argument" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error :usage_handler
+
+          def run
+            exit(-1)
+          end
+
+          def usage_handler(errs)
+            exit errs.size
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo", "--bar", "--baz", "--qux"))
+    end
+
+    it "supports invoking a block with no argument" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error do
+            exit usage_errors.size
+          end
+
+          def run
+            exit(-1)
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo", "--bar", "--baz", "--qux"))
+    end
+
+    it "supports invoking a block with no argument" do
+      cli.add_config_block do
+        tool "foo" do
+          on_usage_error do |errs|
+            exit errs.size
+          end
+
+          def run
+            exit(-1)
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo", "--bar", "--baz", "--qux"))
     end
   end
 

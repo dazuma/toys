@@ -84,6 +84,9 @@ module Toys
       @includes_modules = false
       @custom_context_directory = nil
 
+      @interrupt_handler = nil
+      @usage_error_handler = nil
+
       @completion = DefaultCompletion.new
     end
 
@@ -238,6 +241,24 @@ module Toys
     attr_reader :completion
 
     ##
+    # The interrupt handler.
+    #
+    # @return [Proc] The interrupt handler proc
+    # @return [Symbol] The name of a method to call
+    # @return [nil] if there is no interrupt handler
+    #
+    attr_reader :interrupt_handler
+
+    ##
+    # The usage error handler.
+    #
+    # @return [Proc] The usage error handler proc
+    # @return [Symbol] The name of a method to call
+    # @return [nil] if there is no usage error handler
+    #
+    attr_reader :usage_error_handler
+
+    ##
     # The local name of this tool, i.e. the last element of the full name.
     #
     # @return [String]
@@ -276,8 +297,16 @@ module Toys
     # Returns true if this tool handles interrupts.
     # @return [Boolean]
     #
-    def interruptible?
-      tool_class.public_instance_methods(false).include?(:interrupt)
+    def handles_interrupts?
+      !interrupt_handler.nil?
+    end
+
+    ##
+    # Returns true if this tool handles usage errors.
+    # @return [Boolean]
+    #
+    def handles_usage_errors?
+      !usage_error_handler.nil?
     end
 
     ##
@@ -860,16 +889,34 @@ module Toys
     # @param proc [Proc] The runnable block
     #
     def run_handler=(proc)
+      check_definition_state
       @tool_class.to_run(&proc)
     end
 
     ##
-    # Set the interrupt handler block
+    # Set the interrupt handler.
     #
-    # @param proc [Proc] The interrupt block
+    # @param handler [Proc,Symbol] The interrupt handler
     #
-    def interrupt_handler=(proc)
-      @tool_class.on_interrupt(&proc)
+    def interrupt_handler=(handler)
+      check_definition_state
+      if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
+        raise ToolDefinitionError, "Interrupt handler must be a proc or symbol"
+      end
+      @interrupt_handler = handler
+    end
+
+    ##
+    # Set the usage error handler.
+    #
+    # @param handler [Proc,Symbol] The usage error handler
+    #
+    def usage_error_handler=(handler)
+      check_definition_state
+      if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
+        raise ToolDefinitionError, "Usage error handler must be a proc or symbol"
+      end
+      @usage_error_handler = handler
     end
 
     ##

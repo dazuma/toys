@@ -427,24 +427,25 @@ module Toys
       original_level = cur_logger.level
       cur_logger.level = base_level - context[Context::Key::VERBOSITY]
       begin
-        perform_execution(tool, cur_logger, context)
+        perform_execution(context, tool)
       ensure
         cur_logger.level = original_level
       end
     end
 
-    def perform_execution(tool, cur_logger, context)
+    def perform_execution(context, tool)
       executor = proc do
-        unless tool.runnable?
-          cur_logger.fatal("No implementation for tool #{tool.display_name.inspect}")
-          context.exit(-1)
-        end
-        interruptible = tool.interruptible?
         begin
-          context.run
+          if !context[Context::Key::USAGE_ERRORS].empty?
+            handle_usage_errors(context, tool)
+          elsif !tool.runnable?
+            raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
+          else
+            context.run
+          end
         rescue ::Interrupt => e
-          raise e unless interruptible
-          handle_interrupt(context, e)
+          raise e unless tool.handles_interrupts?
+          handle_interrupt(context, tool.interrupt_handler, e)
         end
       end
       tool.middleware_stack.reverse_each do |middleware|
@@ -456,15 +457,28 @@ module Toys
       end
     end
 
-    def handle_interrupt(context, exception)
-      if context.method(:interrupt).arity.zero?
-        context.interrupt
+    def handle_usage_errors(context, tool)
+      usage_errors = context[Context::Key::USAGE_ERRORS]
+      handler = tool.usage_error_handler
+      raise UsageError, usage_errors if handler.nil?
+      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
+      if handler.arity.zero?
+        context.instance_exec(&handler)
       else
-        context.interrupt(exception)
+        context.instance_exec(usage_errors, &handler)
+      end
+    end
+
+    def handle_interrupt(context, handler, exception)
+      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
+      if handler.arity.zero?
+        context.instance_exec(&handler)
+      else
+        context.instance_exec(exception, &handler)
       end
     rescue ::Interrupt => e
       raise e if e.equal?(exception)
-      handle_interrupt(context, e)
+      handle_interrupt(context, handler, e)
     end
 
     def make_executor(middleware, context, next_executor)
@@ -494,22 +508,35 @@ module Toys
       # @return [Integer] The result code for the execution.
       #
       def call(error)
+        cause = error
         case error
         when ContextualError
-          @terminal.puts(cause_string(error.cause))
+          cause = error.cause
+          @terminal.puts(cause_string(cause))
           @terminal.puts(context_string(error), :bold)
-          -1
         when ::Interrupt
           @terminal.puts
           @terminal.puts("INTERRUPTED", :bold)
-          130
         else
           @terminal.puts(cause_string(error))
-          1
         end
+        exit_code_for(cause)
       end
 
       private
+
+      def exit_code_for(error)
+        case error
+        when UsageError
+          2
+        when NotRunnableError
+          126
+        when ::Interrupt
+          130
+        else
+          1
+        end
+      end
 
       def cause_string(cause)
         lines = ["#{cause.class}: #{cause.message}"]
@@ -573,9 +600,8 @@ module Toys
       def default_middleware_stack
         [
           [:set_default_descriptions],
-          [:show_help, help_flags: true],
+          [:show_help, help_flags: true, fallback_execution: true],
           [:handle_usage_errors],
-          [:show_help, fallback_execution: true],
           [:add_verbosity_flags],
         ]
       end

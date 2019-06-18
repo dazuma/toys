@@ -59,8 +59,8 @@ module Toys
     #
     #     tool "my-name" do
     #       def run
-    #         # EXECUTABLE_NAME is available here.
-    #         puts "My name is #{get(EXECUTABLE_NAME)}"
+    #         # TOOL_NAME is available here.
+    #         puts "My name is #{get(TOOL_NAME)}"
     #       end
     #     end
     #
@@ -84,24 +84,6 @@ module Toys
       # @return [Object]
       #
       CONTEXT_DIRECTORY = ::Object.new.freeze
-
-      ##
-      # Context key for the name of the toys executable. Value is a string.
-      # @return [Object]
-      #
-      EXECUTABLE_NAME = ::Object.new.freeze
-
-      ##
-      # Context key for unmatched positional args.
-      # @return [Object]
-      #
-      EXTRA_ARGS = ::Object.new.freeze
-
-      ##
-      # Context key for the active `Toys::Loader` object.
-      # @return [Object]
-      #
-      LOADER = ::Object.new.freeze
 
       ##
       # Context key for the active `Logger` object.
@@ -128,6 +110,24 @@ module Toys
       # @return [Object]
       #
       TOOL_SOURCE = ::Object.new.freeze
+
+      ##
+      # Context key for all unmatched args in order.
+      # @return [Object]
+      #
+      UNMATCHED_ARGS = ::Object.new.freeze
+
+      ##
+      # Context key for unmatched flags.
+      # @return [Object]
+      #
+      UNMATCHED_FLAGS = ::Object.new.freeze
+
+      ##
+      # Context key for unmatched positional args.
+      # @return [Object]
+      #
+      UNMATCHED_POSITIONAL = ::Object.new.freeze
 
       ##
       # Context key for the list of usage errors raised. Value is an array
@@ -169,17 +169,6 @@ module Toys
     end
 
     ##
-    # The name of the executable that was executed.
-    #
-    # This is a convenience getter for {Toys::Context::Key::EXECUTABLE_NAME}.
-    #
-    # @return [String]
-    #
-    def executable_name
-      @__data[Key::EXECUTABLE_NAME]
-    end
-
-    ##
     # The currently running CLI.
     #
     # This is a convenience getter for {Toys::Context::Key::CLI}.
@@ -206,17 +195,6 @@ module Toys
     end
 
     ##
-    # The active loader that can be used to get other tools.
-    #
-    # This is a convenience getter for {Toys::Context::Key::LOADER}.
-    #
-    # @return [Toys::Loader]
-    #
-    def loader
-      @__data[Key::LOADER]
-    end
-
-    ##
     # The logger for this execution.
     #
     # This is a convenience getter for {Toys::Context::Key::LOGGER}.
@@ -225,17 +203,6 @@ module Toys
     #
     def logger
       @__data[Key::LOGGER]
-    end
-
-    ##
-    # The tool being executed.
-    #
-    # This is a convenience getter for {Toys::Context::Key::TOOL}.
-    #
-    # @return [Toys::Tool]
-    #
-    def tool
-      @__data[Key::TOOL]
     end
 
     ##

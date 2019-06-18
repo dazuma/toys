@@ -52,8 +52,12 @@ describe Toys::StandardMiddleware::ShowRootVersion do
   it "does not alter non-root" do
     cli.add_config_block do
       tool "foo" do
+        on_usage_error :run
+        def run
+          exit(usage_errors.empty? ? 3 : 4)
+        end
       end
     end
-    refute_equal(0, cli.run("foo", "--version"))
+    assert_equal(4, cli.run("foo", "--version"))
   end
 end

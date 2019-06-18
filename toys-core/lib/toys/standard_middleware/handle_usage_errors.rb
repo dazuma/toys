@@ -33,18 +33,24 @@ module Toys
       include Middleware
 
       ##
+      # Exit code for usage error. (2 by convention)
+      # @return [Integer]
+      #
+      USAGE_ERROR_EXIT_CODE = 2
+
+      ##
       # Create a HandleUsageErrors middleware.
       #
       # @param exit_code [Integer] The exit code to return if a usage error
-      #     occurs. Default is -1.
+      #     occurs. Default is {USAGE_ERROR_EXIT_CODE}.
       # @param stream [IO] Output stream to write to. Default is stderr.
       # @param styled_output [Boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #
-      def initialize(exit_code: -1, stream: $stderr, styled_output: nil)
+      def initialize(exit_code: nil, stream: $stderr, styled_output: nil)
         require "toys/utils/terminal"
-        @exit_code = exit_code
+        @exit_code = exit_code || USAGE_ERROR_EXIT_CODE
         @terminal = Utils::Terminal.new(output: stream, styled: styled_output)
       end
 
@@ -53,17 +59,14 @@ module Toys
       # @private
       #
       def run(context)
-        usage_errors = context[Context::Key::USAGE_ERRORS]
-        if usage_errors.empty?
-          yield
-        else
-          require "toys/utils/help_text"
-          help_text = Utils::HelpText.from_context(context)
-          @terminal.puts(usage_errors.join("\n"), :bright_red, :bold)
-          @terminal.puts("")
-          @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
-          Context.exit(@exit_code)
-        end
+        yield
+      rescue UsageError => e
+        require "toys/utils/help_text"
+        help_text = Utils::HelpText.from_context(context)
+        @terminal.puts(e.usage_errors.join("\n"), :bright_red, :bold)
+        @terminal.puts("")
+        @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
+        Context.exit(@exit_code)
       end
     end
   end

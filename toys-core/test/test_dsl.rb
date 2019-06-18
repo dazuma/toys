@@ -127,7 +127,6 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["foo"])
       assert_equal(false, tool.runnable?)
-      assert_equal(false, tool.interruptible?)
     end
 
     it "makes a tool runnable when the run method is defined" do
@@ -159,27 +158,6 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup(["foo"])
       assert_equal(true, tool.runnable?)
-    end
-
-    it "makes a tool interruptible when the interrupt method is defined" do
-      loader.add_block do
-        tool "foo" do
-          def interrupt; end
-        end
-      end
-      tool, _remaining = loader.lookup(["foo"])
-      assert_equal(true, tool.interruptible?)
-    end
-
-    it "makes a tool interruptible when the on_interrupt directive is given" do
-      loader.add_block do
-        tool "foo" do
-          on_interrupt do
-          end
-        end
-      end
-      tool, _remaining = loader.lookup(["foo"])
-      assert_equal(true, tool.interruptible?)
     end
 
     it "makes callable methods" do
@@ -671,6 +649,15 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the run method" do
+      loader.add_block do
+        flag(:run)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:run))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end

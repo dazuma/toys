@@ -184,6 +184,7 @@ module Toys
           allow_root_args: true,
           show_source_path: true,
           use_less: true,
+          fallback_execution: true,
         ],
         [
           :show_root_version,
@@ -192,15 +193,6 @@ module Toys
         ],
         [
           :handle_usage_errors,
-        ],
-        [
-          :show_help,
-          fallback_execution: true,
-          recursive_flags: true,
-          search_flags: true,
-          default_recursive: true,
-          show_source_path: true,
-          use_less: true,
         ],
         [
           :add_verbosity_flags,

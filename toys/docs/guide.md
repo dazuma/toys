@@ -2489,34 +2489,37 @@ terminate execution and display the message `INTERRUPTED` on the standard error
 stream.
 
 If your tool needs to handle interrupts itself, you have several options. You
-can rescue the `Interrupt` exception or call `Signal.trap`. Or you can
-implement the `interrupt` method in your tool. If this method is present, Toys
-will handle interrupts as follows:
+can rescue the `Interrupt` exception or call `Signal.trap`. Or you can provide
+an *interrupt handler* in your tool using the `on_interrupt` directive. This
+directive either provides a block to handle interrupts, or designates a named
+method as the handler. If an interrupt handler is present, Toys will handle
+interrupts as follows:
 
 1.  Toys will terminate the tool's `run` method by raising an `Interrupt`
     exception. Any `ensure` blocks will be called.
-2.  Toys will call the `interrupt` method. If this method takes an argument,
-    Toys will pass it the `Interrupt` exception object.
-3.  The `interrupt` method is then responsible for tool execution from that
+2.  Toys will call the interrupt handler. If this method or block takes an
+    argument, Toys will pass it the `Interrupt` exception object.
+3.  The interrupt handler is then responsible for tool execution from that
     point. It may terminate execution by returning or calling `exit`, or it may
     restart or resume processing (perhaps by calling the `run` method again).
     Or it may invoke the normal Toys interrupt handling (i.e. terminating
     execution, displaying the message `INTERRUPTED`) by re-raising *the same*
     interrupt exception object.
-4.  If another interrupt takes place during the execution of the `interrupt`
-    method, Toys will terminate it by raising a *second* `Interrupt` exception
-    (calling any `ensure` blocks). Then, `interrupt` will be called *again* and
-    passed the new exception. Any additional interrupts will be handled
-    similarly.
+4.  If another interrupt takes place during the execution of the interrupt
+    handler, Toys will terminate it by raising a *second* `Interrupt` exception
+    (calling any `ensure` blocks). Then, the interrupt handler will be called
+    *again* and passed the new exception. Any additional interrupts will be
+    handled similarly.
 
-Because the `interrupt` method is called again even if the interrupt handling
-is itself interrupted, you might consider detecting this case if your interrupt
-handler might be long-running. You can tell how many interrupts have taken
-place by looking at the `Exception#cause` property of the exception. The first
-interrupt will have a cause of `nil`. The second interrupt (i.e. the interrupt
-raised the first time the interrupt handler is itself interrupted) will have
-its cause point to the first interrupt (which in turn has a `nil` cause.) The
-third interrupt's cause will point to the second interrupt, and so on.
+Because the interrupt handler is called again even if it is itself interrupted,
+you might consider detecting this case if your interrupt handler might be
+long-running. You can tell how many interrupts have taken place by looking at
+the `Exception#cause` property of the exception. The first interrupt will have
+a cause of `nil`. The second interrupt (i.e. the interrupt raised the first
+time the interrupt handler is itself interrupted) will have its cause point to
+the first interrupt (which in turn has a `nil` cause.) The third interrupt's
+cause will point to the second interrupt, and so on. So you can determine the
+interrupt "depth" by counting the length of the cause chain.
 
 Here is an example that performs a long-running task. The first two times the
 task is interrupted, it is restarted. The third time, it is terminated.
@@ -2532,13 +2535,49 @@ task is interrupted, it is restarted. The third time, it is terminated.
         long_task(false)
       end
 
-      def interrupt(ex)
+      on_interrupt do |ex|
         # The third interrupt will have a non-nil ex.cause.cause.
         # At that time, just give up and re-raise the exception, which causes
         # it to propagate out and invoke the standard Toys interrupt handler.
         raise ex if ex.cause&.cause
         # Otherwise, restart the long task.
         long_task(true)
+      end
+    end
+
+### Handling usage errors
+
+Normally, if Toys detects a usage error (such as an unrecognized flag) while
+parsing arguments, it will respond by aborting the tool and displaying the
+usage error. It is possible to override this behavior by providing your own
+usage error handler using the `on_usage_error` directive. This directive either
+provides a block to handle usage errors, or designates a named method as the
+handler.
+
+If your handler block or method takes a parameter, Toys will pass it the array
+of usage errors. Otherwise, you can get the array by calling
+[Toys::Context#usage_errors](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:usage_errors).
+This array will provide you with a list of the usage errors encountered.
+
+You can also get information about the arguments that could not be parsed from
+the context. For example, the list of unrecognized flags is available from the
+context key `UNMATCHED_FLAGS`.
+
+One common technique is to redirect usage errors back to the `run` method. In
+this way, `run` is called regardless of whether argument parsing succeeded or
+failed.
+
+    tool "lenient-parser" do
+      flag :abc
+
+      on_usage_error :run
+
+      def run
+        if usage_errors.empty?
+          puts "Usage was correct"
+        else
+          puts "Usage was not correct"
+        end
       end
     end
 

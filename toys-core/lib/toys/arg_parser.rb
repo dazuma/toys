@@ -290,7 +290,8 @@ module Toys
       @tool = tool
       @seen_flag_keys = []
       @errors = []
-      @extra_args = []
+      @unmatched_args = []
+      @unmatched_positional = []
       @unmatched_flags = []
       @parsed_args = []
       @active_flag_def = nil
@@ -317,13 +318,19 @@ module Toys
     # Extra positional args that were not matched.
     # @return [Array<String>]
     #
-    attr_reader :extra_args
+    attr_reader :unmatched_positional
 
     ##
     # Flags that were not matched.
     # @return [Array<String>]
     #
     attr_reader :unmatched_flags
+
+    ##
+    # All args that were not matched.
+    # @return [Array<String>]
+    #
+    attr_reader :unmatched_args
 
     ##
     # The collected tool data from parsed arguments.
@@ -430,10 +437,8 @@ module Toys
     def initial_data(cli, tool, verbosity)
       data = {
         Context::Key::ARGS => nil,
-        Context::Key::EXECUTABLE_NAME => cli.executable_name,
         Context::Key::CLI => cli,
         Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
-        Context::Key::LOADER => cli.loader,
         Context::Key::LOGGER => cli.logger,
         Context::Key::TOOL => tool,
         Context::Key::TOOL_SOURCE => tool.source_info,
@@ -521,7 +526,8 @@ module Toys
       end
       arg_def = next_arg_def
       unless arg_def
-        @extra_args << arg
+        @unmatched_positional << arg
+        @unmatched_args << arg
         return
       end
       @arg_def_index += 1 unless arg_def.type == :remaining
@@ -536,11 +542,13 @@ module Toys
           value: name, suggestions: Compat.suggestions(name, @tool.used_flags)
         )
         @unmatched_flags << name
+        @unmatched_args << name
       elsif flag_result.found_multiple?
         @errors << FlagAmbiguousError.new(
           value: name, suggestions: flag_result.matching_flag_strings
         )
         @unmatched_flags << name
+        @unmatched_args << name
       end
       flag_result
     end
@@ -578,11 +586,11 @@ module Toys
       if arg_def && arg_def.type == :required
         @errors << ArgMissingError.new(name: arg_def.display_name)
       end
-      unless @extra_args.empty?
-        first_arg = @extra_args.first
+      unless @unmatched_positional.empty?
+        first_arg = @unmatched_positional.first
         @errors <<
           if @tool.runnable? || !@seen_flag_keys.empty?
-            ExtraArgumentsError.new(values: @extra_args, value: first_arg)
+            ExtraArgumentsError.new(values: @unmatched_positional, value: first_arg)
           else
             dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
             ToolUnrecognizedError.new(values: @tool.full_name + [first_arg],
@@ -601,7 +609,9 @@ module Toys
     def finish_special_data
       @data[Context::Key::USAGE_ERRORS] = @errors
       @data[Context::Key::ARGS] = @parsed_args
-      @data[Context::Key::EXTRA_ARGS] = @extra_args
+      @data[Context::Key::UNMATCHED_ARGS] = @unmatched_args
+      @data[Context::Key::UNMATCHED_POSITIONAL] = @unmatched_positional
+      @data[Context::Key::UNMATCHED_FLAGS] = @unmatched_flags
     end
   end
 end

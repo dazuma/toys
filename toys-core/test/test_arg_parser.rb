@@ -107,6 +107,15 @@ describe Toys::ArgParser do
     assert_empty(arg_parser.errors)
   end
 
+  it "records unmatched" do
+    tool.add_flag(:a)
+    tool.add_optional_arg(:b)
+    arg_parser.parse(["x", "y", "-b", "-a", "z"])
+    assert_equal(["y", "z"], arg_parser.unmatched_positional)
+    assert_equal(["-b"], arg_parser.unmatched_flags)
+    assert_equal(["y", "-b", "z"], arg_parser.unmatched_args)
+  end
+
   describe "flag parsing" do
     describe "boolean flag" do
       it "defaults to nil" do
@@ -682,7 +691,7 @@ describe Toys::ArgParser do
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
       assert_errors_include('Extra arguments: "baz".', arg_parser.errors)
-      assert_equal(["baz"], arg_parser.extra_args)
+      assert_equal(["baz"], arg_parser.unmatched_positional)
     end
 
     it "errors non-runnable tool if there are too many arguments" do
@@ -691,7 +700,7 @@ describe Toys::ArgParser do
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
       assert_errors_include('Tool not found: "foo baz".', arg_parser.errors)
-      assert_equal(["baz"], arg_parser.extra_args)
+      assert_equal(["baz"], arg_parser.unmatched_positional)
     end
 
     it "includes tool suggestions" do

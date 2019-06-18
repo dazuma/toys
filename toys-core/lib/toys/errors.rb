@@ -29,6 +29,28 @@ module Toys
   end
 
   ##
+  # An exception indicating that a tool cannot be run
+  #
+  class NotRunnableError < ::StandardError
+  end
+
+  ##
+  # An exception indicating a usage error
+  #
+  class UsageError < ::StandardError
+    ##
+    # Create a UsageError given a set of error messages
+    # @param errors [Array<Toys::ArgParser::UsageError>]
+    #
+    def initialize(errors)
+      @usage_errors = errors
+      super(errors.join("\n"))
+    end
+
+    attr_reader :usage_errors
+  end
+
+  ##
   # An exception indicating a problem during tool lookup
   #
   class LoaderError < ::StandardError

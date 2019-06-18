@@ -1265,31 +1265,62 @@ module Toys
       alias on_run to_run
 
       ##
-      # Specify how to handle interrupts. Typically you do this by defining a
-      # method namd `interrupt`. Alternatively, however, you can pass a block
-      # to the `on_interrupt` method.
+      # Specify how to handle interrupts.
       #
-      # You may want to do this if your method needs access to local variables
-      # in the lexical scope. However, it is often more convenient to use
-      # {#static} to set the value in the context.)
+      # You may pass a block to be called, or the name of a method to call. In
+      # either case, the block or method should take one argument, the
+      # Interrupt exception that was raised.
       #
       # ## Example
       #
       #     tool "foo" do
-      #       cur_time = Time.new
       #       def run
       #         sleep 10
       #       end
-      #       on_interrupt do
-      #         puts "The time at tool definition was #{cur_time}"
+      #       on_interrupt do |e|
+      #         puts "I was interrupted."
       #       end
       #     end
       #
-      # @param block [Proc] The interrupt callback.
+      # @param handler [Proc,Symbol,nil] The interrupt callback proc or method
+      #     name. Pass nil to disable interrupt handling.
+      # @param block [Proc] The interrupt callback as a block.
       # @return [self]
       #
-      def on_interrupt(&block)
-        define_method(:interrupt, &block)
+      def on_interrupt(handler = nil, &block)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool.interrupt_handler = handler || block unless cur_tool.nil?
+        self
+      end
+
+      ##
+      # Specify how to handle usage errors.
+      #
+      # You may pass a block to be called, or the name of a method to call. In
+      # either case, the block or method should take one argument, the array of
+      # usage errors reported.
+      #
+      # ## Example
+      #
+      # This tool runs even if a usage error is encountered. You can find info
+      # on the errors from {Toys::Context::Key::USAGE_ERRORS},
+      # {Toys::Context::Key::UNMATCHED_ARGS}, and similar keys.
+      #
+      #     tool "foo" do
+      #       def run
+      #         puts "Errors: #{usage_errors.join("\n")}"
+      #       end
+      #       on_usage_error :run
+      #     end
+      #
+      # @param handler [Proc,Symbol,nil] The interrupt callback proc or method
+      #     name. Pass nil to disable interrupt handling.
+      # @param block [Proc] The interrupt callback as a block.
+      # @return [self]
+      #
+      def on_usage_error(handler = nil, &block)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool.usage_error_handler = handler || block unless cur_tool.nil?
         self
       end
 
@@ -1476,7 +1507,7 @@ module Toys
 
       ## @private
       def self.maybe_add_getter(tool_class, key)
-        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!\?]?$/
+        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!\?]?$/ && key != :run
           tool_class.class_eval do
             define_method(key) do
               self[key]

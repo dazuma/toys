@@ -9,7 +9,7 @@ Major changes and features:
 * CHANGED: Relicensed under the MIT License.
 * ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
 * ADDED: The usage error screen displays suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
-* ADDED: Tools can provide an interrupt handler. Added appropriate APIs and a DSL method.
+* ADDED: Tools can provide an interrupt handler and a custom usage error handler. Added appropriate APIs and DSL methods.
 * ADDED: Tools can enforce that flags must be given before positional args.
 
 Other notable changes:
@@ -18,14 +18,14 @@ Other notable changes:
 * ADDED: Function and range based acceptors.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
-* ADDED: An `EXTRA_ARGS` context key that provides unmatched positional arguments.
+* ADDED: Context keys `UNMATCHED_ARGS`, `UNMATCHED_POSITIONAL`, and `UNMATCHED_FLAGS` that provide arguments that were not handled during arg parsing.
 * ADDED: The Exec util and mixin support specifying a callback for process results.
 * ADDED: The Exec util and mixin provide a way to identify processes by name.
 * CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.
 * CHANGED: Flags create a short form flag by default if the name has one character.
 * CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default or an acceptor.
-* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and the corresponding convenience method from `tool_definition` to `tool`.
-* CHANGED: Renamed the `BINARY_NAME` context key to `EXECUTABLE_NAME`, and the corresponding convenience method from `binary_name` to `executable_name`.
+* CHANGED: Renamed the `TOOL_DEFINITION` context key to `TOOL`, and removed the `tool_definition` convenience method.
+* CHANGED: Removed the `BINARY_NAME` and `LOADER` context keys, and removed the corresponding convenience methods. Get these values from the CLI if needed.
 * CHANGED: Renamed the `USAGE_ERROR` context key to `USAGE_ERRORS`, and the corresponding convenience method to `usage_errors`. The value is now a (possibly empty) array of `Toys::ArgParser::UsageError` objects rather than a string that isn't machine-parseable.
 * CHANGED: The help middleware no longer defines remaining_args on the root tool.
 * CHANGED: Renamed `to_expand` to `on_expand` in template definitions.
@@ -51,6 +51,7 @@ Changes to internal interfaces:
     * CHANGED: Generally removed the term "definition" from interfaces. For example, an accessor method called `tool_definition` is now just called `tool`.
     * CHANGED: Renamed `Toys::DSL::Arg` to `Toys::DSL::PositionalArg`
     * CHANGED: Removed `Toys::Runner` and folded its functionality into `Toys::CLI`.
+    * CHANGED: The fallback execution feature of the show_help middleware is implemented by catching an exception afterward rather than detecting non-runnable up front. This lets us remove the second copy of show_help from the middleware stack.
     * ADDED: Functionality dependent on Ruby version is kept in `Toys::Compat`.
 * Changes related to the tool classes:
     * CHANGED: Moved `Toys::Definition::Tool` to `Toys::Tool`.

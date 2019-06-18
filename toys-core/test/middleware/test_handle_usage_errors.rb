@@ -58,7 +58,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
         end
       end
     end
-    assert_equal(-1, cli.run("bar"))
+    assert_equal(2, cli.run("bar"))
     assert_match(/Tool not found: "bar"/, error_io.string)
   end
 
@@ -70,7 +70,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
         end
       end
     end
-    assert_equal(-1, cli.run("foo", "-v"))
+    assert_equal(2, cli.run("foo", "-v"))
     assert_match(/Flag "-v" is not recognized./, error_io.string)
   end
 
@@ -82,7 +82,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
         end
       end
     end
-    assert_equal(-1, cli.run("foo", "vee"))
+    assert_equal(2, cli.run("foo", "vee"))
     assert_match(/Extra arguments: "vee"/, error_io.string)
   end
 
@@ -95,7 +95,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
         end
       end
     end
-    assert_equal(-1, cli.run("foo"))
+    assert_equal(2, cli.run("foo"))
     assert_match(/Required positional argument "ARG1" is missing/, error_io.string)
   end
 end
