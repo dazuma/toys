@@ -4,8 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Recheck documentation for correctness with recent changes.
-
 ## Planned for next release
 
 * Write toys-core user guide
@@ -14,6 +12,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 ## Ideas under investigation
 
 * Evaluate use cases for thread safety
+* Should it be possible to set require_exact_flag_match per-flag?
 * Convenience methods for creating pipes/splits/joins in exec
 * Integrate with the "less" tool in exec.
 * toys system new: Create toys files and gems
@@ -27,3 +26,4 @@ This is a dumping ground of possible ideas and future directions for Toys.
 ## Other ideas we probably won't do
 
 * toys system clean: Clean old installations of toys. Probably not a good idea because other versions may be in bundles.
+* Customize the value to set when not providing a value to an optional-value flag. Probably not worth it since normal boolean flags are always set to `true`, and the handler can be used to customize it already.

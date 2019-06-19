@@ -359,15 +359,17 @@ module Toys
     # Whether flags are currently allowed. Returns false after `--` is received.
     # @return [Boolean]
     #
-    attr_reader :flags_allowed
-    alias flags_allowed? flags_allowed
+    def flags_allowed?
+      @flags_allowed
+    end
 
     ##
     # Determine if this parser is finished
     # @return [Boolean]
     #
-    attr_reader :finished
-    alias finished? finished
+    def finished?
+      @finished
+    end
 
     ##
     # The argument definition that will be applied to the next argument.

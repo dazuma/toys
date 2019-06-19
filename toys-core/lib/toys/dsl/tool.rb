@@ -1105,9 +1105,9 @@ module Toys
       alias remaining remaining_args
 
       ##
-      # Set an option value statically.
+      # Set a option values statically and create a helper method.
       #
-      # If the given key is a symbol representing a valid method name, then a
+      # If any given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
       # if the key is a string or does not represent a valid method name, the
       # tool can retrieve the value by calling {Toys::Context#get}.
@@ -1121,10 +1121,19 @@ module Toys
       #       end
       #     end
       #
-      # @param key [String,Symbol] The key to use to retrieve the value from
-      #     the execution context.
-      # @param value [Object] The value to set.
       # @return [self]
+      #
+      # @overload static(key, value)
+      #   Set a single value by key.
+      #   @param key [String,Symbol] The key to use to retrieve the value from
+      #       the execution context.
+      #   @param value [Object] The value to set.
+      #   @return [self]
+      #
+      # @overload static(hash)
+      #   Set multiple keys and values
+      #   @param hash [Hash] The keys and values to set
+      #   @return [self]
       #
       def static(key, value = nil)
         cur_tool = DSL::Tool.current_tool(self, true)
@@ -1137,6 +1146,43 @@ module Toys
         else
           cur_tool.default_data[key] = value
           DSL::Tool.maybe_add_getter(self, key)
+        end
+        self
+      end
+
+      ##
+      # Set a option values statically without creating helper methods.
+      #
+      # ## Example
+      #
+      #     tool "hello" do
+      #       set :greeting, "Hi there"
+      #       def run
+      #         puts "#{get(:greeting)}, world!"
+      #       end
+      #     end
+      #
+      # @return [self]
+      #
+      # @overload set(key, value)
+      #   Set a single value by key.
+      #   @param key [String,Symbol] The key to use to retrieve the value from
+      #       the execution context.
+      #   @param value [Object] The value to set.
+      #   @return [self]
+      #
+      # @overload set(hash)
+      #   Set multiple keys and values
+      #   @param hash [Hash] The keys and values to set
+      #   @return [self]
+      #
+      def set(key, value = nil)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
+        if key.is_a?(::Hash)
+          cur_tool.default_data.merge!(key)
+        else
+          cur_tool.default_data[key] = value
         end
         self
       end

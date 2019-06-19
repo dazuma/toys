@@ -151,6 +151,10 @@ module Toys
       #
       # The default implementation returns the empty list.
       #
+      # @param str [String] A string that failed matching.
+      # @return [Array<String>] A possibly empty array of alternative
+      #     suggestions that could be displayed with "did you mean..."
+      #
       def suggestions(str) # rubocop:disable Lint/UnusedMethodArgument
         []
       end
@@ -504,9 +508,9 @@ module Toys
       #     return the sentinel value {Toys::Acceptor::REJECT} to indicate that
       #     the string is invalid.
       #
-      # *   The value `nil` with no block, to indicate the default pass-through
-      #     acceptor {Toys::Acceptor::DEFAULT}. Any type description you
-      #     provide is ignored.
+      # *   The value `nil` or `:default` with no block, to indicate the
+      #     default pass-through acceptor {Toys::Acceptor::DEFAULT}. Any type
+      #     description you provide is ignored.
       #
       # @param spec [Object] See the description for recognized values.
       # @param type_desc [String] The type description for interpolating into

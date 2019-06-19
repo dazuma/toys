@@ -1113,36 +1113,41 @@ module Toys
       # Whether to complete subtool names
       # @return [Boolean]
       #
-      attr_reader :complete_subtools
-      alias complete_subtools? complete_subtools
+      def complete_subtools?
+        @complete_subtools
+      end
 
       ##
       # Whether to include hidden subtools
       # @return [Boolean]
       #
-      attr_reader :include_hidden_subtools
-      alias include_hidden_subtools? include_hidden_subtools
+      def include_hidden_subtools?
+        @include_hidden_subtools
+      end
 
       ##
       # Whether to complete flags
       # @return [Boolean]
       #
-      attr_reader :complete_flags
-      alias complete_flags? complete_flags
+      def complete_flags?
+        @complete_flags
+      end
 
       ##
       # Whether to complete positional args
       # @return [Boolean]
       #
-      attr_reader :complete_args
-      alias complete_args? complete_args
+      def complete_args?
+        @complete_args
+      end
 
       ##
       # Whether to complete flag values
       # @return [Boolean]
       #
-      attr_reader :complete_flag_values
-      alias complete_flag_values? complete_flag_values
+      def complete_flag_values?
+        @complete_flag_values
+      end
 
       ##
       # Returns candidates for the current completion.

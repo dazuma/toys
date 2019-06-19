@@ -25,12 +25,12 @@ Toys requires Ruby 2.3 or later.
 
 Install the **toys** gem using:
 
-    gem install toys
+    $ gem install toys
 
 This installs the `toys` executable, along with some builtin tools and
 libraries. You can run the executable immediately:
 
-    toys
+    $ toys
 
 This displays overall help for Toys. If you have `less` installed, Toys will
 use it to display the help screen. Press `q` to exit.
@@ -38,7 +38,7 @@ use it to display the help screen. Press `q` to exit.
 You may notice that the help screen lists some tools that are preinstalled.
 Let's run one of them:
 
-    toys system version
+    $ toys system version
 
 The `system version` tool displays the current version of the toys gem.
 
@@ -68,22 +68,22 @@ leading period). Copy the following text into the file, and save it:
 
 This defines a tool named "greet". Try running it:
 
-    toys greet
+    $ toys greet
 
 The tool also recognizes a flag on the command line. Try this:
 
-    toys greet --whom=ruby
+    $ toys greet --whom=ruby
 
 Toys provides a rich set of features for defining command line arguments and
 flags. It can also validate arguments. Try this:
 
-    toys greet --bye
+    $ toys greet --bye
 
 Notice that Toys automatically generated a usage summary for your tool. It also
 automatically generates a full help screen, which you can view using the
 `--help` flag:
 
-    toys greet --help
+    $ toys greet --help
 
 Toys searches up the directory hierarchy for Toys files. So it will find this
 `.toys.rb` if you are located in this directory or any subdirectory. It will
@@ -141,13 +141,13 @@ tool to the end of the file.)
 
 Now you should have an additional tool called `new-repo` available. Type:
 
-    toys
+    $ toys
 
 The help screen lists both the `greet` tool we started with, and the new
 `new-repo` tool. This new tool creates a directory containing a newly created
 git repo. (It assumes you have `git` available on your path.) Try running it:
 
-    toys new-repo foo
+    $ toys new-repo foo
 
 That should create a directory `foo`, initialize a git repository within it,
 and make a commit.
@@ -157,7 +157,7 @@ any combination of flags and required and optional arguments. This tool's
 argument is declared with a description string, which you can see if you view
 the tool's help:
 
-    toys new-repo --help
+    $ toys new-repo --help
 
 The argument is marked as "optional" which means you can omit it. Notice that
 the tool's code detects that it has been omitted and responds by prompting you
@@ -195,7 +195,7 @@ provide methods your tool can call, or invoke other behavior. In our example:
 
 Now try running this:
 
-    toys new-repo bar --verbose
+    $ toys new-repo bar --verbose
 
 You'll notice some diagnostic log output. Toys provides a standard Ruby Logger
 for each tool, and you can use it to emit diagnostic logs directly as
@@ -228,7 +228,7 @@ programmatically. In this case, Toys provides the `:rake` template, which reads
 your Rakefile and generates Toys tools corresponding to all your Rake tasks!
 Now if you run:
 
-    toys
+    $ toys
 
 You'll see that you now have tools associated with each of your Rake tasks. So
 if you have a `rake test` task, you can run it using `toys test`.

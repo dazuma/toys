@@ -39,6 +39,8 @@ module Toys
         ##
         # Create a bash completion engine.
         #
+        # @param cli [Toys::CLI] The CLI.
+        #
         def initialize(cli)
           @cli = cli
         end

@@ -148,6 +148,7 @@ module Toys
     # Create a Context object. Applications generally will not need to create
     # these objects directly; they are created by the tool when it is preparing
     # for execution.
+    #
     # @private
     #
     # @param data [Hash]
@@ -272,11 +273,20 @@ module Toys
     end
 
     ##
-    # Set an option or other piece of context data by key.
+    # Set one or more options or other context data by key.
     #
-    # @param key [Symbol]
-    # @param value [Object]
     # @return [self]
+    #
+    # @overload set(key, value)
+    #   Set an option or other piece of context data by key.
+    #   @param key [Symbol]
+    #   @param value [Object]
+    #   @return [self]
+    #
+    # @overload set(hash)
+    #   Set multiple content data keys and values
+    #   @param hash [Hash] The keys and values to set
+    #   @return [self]
     #
     def set(key, value = nil)
       if key.is_a?(::Hash)

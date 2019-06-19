@@ -1130,6 +1130,35 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "set directive" do
+    it "sets a single key" do
+      loader.add_block do
+        set(:foo, "bar")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal("bar", tool.default_data[:foo])
+    end
+
+    it "sets multiple keys" do
+      loader.add_block do
+        set(foo: "bar", hello: "world", one: 2)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal("bar", tool.default_data[:foo])
+      assert_equal("world", tool.default_data[:hello])
+      assert_equal(2, tool.default_data[:one])
+    end
+
+    it "does not define a getter for a valid symbol key" do
+      loader.add_block do
+        set(:hello, "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:hello))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+  end
+
   describe "static directive" do
     it "sets a single key" do
       loader.add_block do

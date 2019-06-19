@@ -23,19 +23,19 @@
 
 module Toys
   ##
-  # An exception indicating an error in a tool definition
+  # An exception indicating an error in a tool definition.
   #
   class ToolDefinitionError < ::StandardError
   end
 
   ##
-  # An exception indicating that a tool cannot be run
+  # An exception indicating that a tool has no run method.
   #
   class NotRunnableError < ::StandardError
   end
 
   ##
-  # An exception indicating a usage error
+  # An exception indicating a usage error.
   #
   class UsageError < ::StandardError
     ##
@@ -47,6 +47,10 @@ module Toys
       super(errors.join("\n"))
     end
 
+    ##
+    # The usage errors.
+    # @return [Array<Toys::ArgParser::UsageError>]
+    #
     attr_reader :usage_errors
   end
 

@@ -184,17 +184,17 @@ module Toys
       # Determine whether the candidate is partial completion.
       # @return [Boolean]
       #
-      attr_reader :partial
-      alias partial? partial
+      def partial?
+        @partial
+      end
 
       ##
       # Determine whether the candidate is a final completion.
       # @return [Boolean]
       #
-      def final
-        !partial
+      def final?
+        !@partial
       end
-      alias final? final
 
       ## @private
       def eql?(other)

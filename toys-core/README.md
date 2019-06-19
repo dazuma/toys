@@ -31,7 +31,7 @@ Toys requires Ruby 2.3 or later.
 
 Install the **toys-core** gem using:
 
-    gem install toys-core
+    $ gem install toys-core
 
 You may also install the **toys** gem, which brings in **toys-core** as a
 dependency.
@@ -42,7 +42,6 @@ We'll start by creating an executable Ruby script. Using your favorite text
 editor, create new a file called `mycmd` with the following contents:
 
     #!/usr/bin/env ruby
-    # frozen_string_literal: true
 
     require "toys-core"
 
@@ -52,12 +51,12 @@ editor, create new a file called `mycmd` with the following contents:
 
 Make sure the file's executable bit is set:
 
-    chmod a+x mycmd
+    $ chmod a+x mycmd
 
 That's it! This is a fully-functional Toys-based executable! Let's see what
 happens when you run it:
 
-    ./mycmd
+    $ ./mycmd
 
 Just as with Toys itself, you get a help screen by default (since we haven't
 yet actually implemented any behavior.) As you can see, some of the same
@@ -75,7 +74,6 @@ information to the Toys CLI object in a block.
 Let's add some functionality. 
 
     #!/usr/bin/env ruby
-    # frozen_string_literal: true
 
     require "toys-core"
 
@@ -95,10 +93,10 @@ Let's add some functionality.
 If you went through the tutorial in the README for the Toys gem, this should
 look familiar. Let's run it now, and experiment with passing flags to it.
 
-    ./mycmd
-    ./mycmd --whom=ruby
-    ./mycmd --bye
-    ./mycmd --help
+    $ ./mycmd
+    $ ./mycmd --whom=ruby
+    $ ./mycmd --bye
+    $ ./mycmd --help
 
 Notice that we did not create a `tool` block, but instead set up description,
 flags, and functionality directly in the configuration block. This configures
@@ -114,7 +112,6 @@ familiar executables like git or kubectl. You can define tools, including
 nested tools, by writing `tool` blocks in your config. Here's an example:
 
     #!/usr/bin/env ruby
-    # frozen_string_literal: true
 
     require "toys-core"
 
@@ -142,12 +139,12 @@ nested tools, by writing `tool` blocks in your config. Here's an example:
 
 Now you can run `greet` as a tool:
 
-    ./mycmd greet
+    $ ./mycmd greet
 
 The "root" functionality once again shows global help, including a list of the
 available tools.
 
-    ./mycmd
+    $ ./mycmd
 
 Notice that the description set at the "root" of the config block (outside the
 tool blocks) shows up here.     
@@ -163,7 +160,6 @@ by passing options to the `Toys::CLI` constructor. Here's an example that
 modifies error handling and delimiter parsing.
 
     #!/usr/bin/env ruby
-    # frozen_string_literal: true
 
     require "toys-core"
 
@@ -196,10 +192,10 @@ modifies error handling and delimiter parsing.
 
 Try these runs. Do they behave as you expected?
 
-    ./mycmd example greet
-    ./mycmd example:greet
-    ./mycmd example.greet
-    ./mycmd example error
+    $ ./mycmd example greet
+    $ ./mycmd example:greet
+    $ ./mycmd example.greet
+    $ ./mycmd example error
 
 ### Configuring middleware
 
@@ -211,7 +207,6 @@ The next example modifies the middleware stack to alter this common tool
 functionality.
 
     #!/usr/bin/env ruby
-    # frozen_string_literal: true
 
     require "toys-core"
 
@@ -236,7 +231,7 @@ functionality.
 We've now modified the default description applied to tools that don't provide
 their own description. See the effect with:
 
-    ./mycmd greet --help
+    $ ./mycmd greet --help
 
 We've also omitted some of the default middleware, including the one that adds
 the `--verbose` and `--quiet` flags to all your tools. Notice those flags are
@@ -247,7 +242,7 @@ We've also omitted the middleware that provides default execution behavior
 haven't defined a toplevel `run` method in this last example, invoking the root
 tool will cause an error:
 
-    ./mycmd
+    $ ./mycmd
 
 It is even possible to write your own middleware. In general, while the
 `Toys::CLI` constructor provides defaults that should work for many use cases,
@@ -265,12 +260,12 @@ includes a few simple examples that you can use as a starting point.
 
 To experiment with the examples, clone the Toys repo from GitHub:
 
-    git clone https://github.com/dazuma/toys.git
-    cd toys
+    $ git clone https://github.com/dazuma/toys.git
+    $ cd toys
 
 Navigate to the simple-gem example:
 
-    cd toys-core/examples/simple-gem
+    $ cd toys-core/examples/simple-gem
 
 This example wraps the simple "greet" executable that we
 [covered earlier](#Add_some_functionality) in a gem. You can see the
@@ -280,23 +275,23 @@ in the bin directory.
 Try it out by building and installing the gem. From the `examples/simple-gem`
 directory, run:
 
-    toys install
+    $ toys install
 
 Once the gem has successfully installed, you can run the executable, which
 Rubygems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
-    toys-core-simple-example --whom=Toys
+    $ toys-core-simple-example --whom=Toys
 
 Clean up by uninstalling the gem:
 
-    gem uninstall toys-core-simple-example
+    $ gem uninstall toys-core-simple-example
 
 If the implementation of your executable is more complex, you might want to
 break it up into multiple files. The multi-file gem example demonstrates this.
 
-    cd ../multi-file-gem
+    $ cd ../multi-file-gem
 
 This executable's implementation resides in its
 [lib directory](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/lib),
@@ -312,18 +307,18 @@ as you can see in
 
 Try it out now. From the `examples/multi-file-gem` directory, run:
 
-    toys install
+    $ toys install
 
 Once the gem has successfully installed, you can run the executable, which
 Rubygems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
-    toys-core-multi-file-example greet
+    $ toys-core-multi-file-example greet
 
 Clean up by uninstalling the gem:
 
-    gem uninstall toys-core-multi-file-example
+    $ gem uninstall toys-core-multi-file-example
 
 ### Learning more
 

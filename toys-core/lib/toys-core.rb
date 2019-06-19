@@ -22,10 +22,16 @@
 ;
 
 ##
-# Toys is a Ruby library and command line tool that lets you build your own
-# command line suite of tools (with commands and subcommands) using a Ruby DSL.
-# You can define commands globally or configure special commands scoped to
-# individual directories.
+# Toys is a configurable command line tool. Write commands in config files
+# using a simple DSL, and Toys will provide the command line executable and
+# take care of all the details such as argument parsing, online help, and error
+# reporting. Toys is designed for software developers, IT professionals, and
+# other power users who want to write and organize scripts to automate their
+# workflows. It can also be used as a Rake replacement, providing a more
+# natural command line interface for your project's build tasks.
+#
+# This module contains the command line framework underlying Toys. It can be
+# used to create command line executables using the Toys DSL and classes.
 #
 module Toys
   ##

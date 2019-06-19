@@ -568,8 +568,9 @@ module Toys
       # Whether an exact match of the string was found
       # @return [Boolean]
       #
-      attr_reader :found_exact
-      alias found_exact? found_exact
+      def found_exact?
+        @found_exact
+      end
 
       ##
       # The number of matches that were found.
@@ -684,22 +685,25 @@ module Toys
       # Whether to include short flags
       # @return [Boolean]
       #
-      attr_reader :include_short
-      alias include_short? include_short
+      def include_short?
+        @include_short
+      end
 
       ##
       # Whether to include long flags
       # @return [Boolean]
       #
-      attr_reader :include_long
-      alias include_long? include_long
+      def include_long?
+        @include_long
+      end
 
       ##
       # Whether to include negative long flags
       # @return [Boolean]
       #
-      attr_reader :include_negative
-      alias include_negative? include_negative
+      def include_negative?
+        @include_negative
+      end
 
       ##
       # Returns candidates for the current completion.

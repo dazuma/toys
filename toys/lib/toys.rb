@@ -33,9 +33,11 @@
 module Toys
   ##
   # Path to the Toys executable.
-  # @return [String]
   #
-  EXECUTABLE = ::ENV["TOYS_BIN_PATH"] || "toys"
+  # @return [String] Absolute path to the executable
+  # @return [nil] if the Toys executable is not running.
+  #
+  EXECUTABLE_PATH = ::ENV["TOYS_BIN_PATH"]
 
   ##
   # Namespace for standard template classes.

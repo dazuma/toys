@@ -53,10 +53,16 @@ module Toys
       class TerminalError < ::StandardError
       end
 
-      ## ANSI style code to clear styles
+      ##
+      # ANSI style code to clear styles
+      # @return [String]
+      #
       CLEAR_CODE = "\e[0m"
 
-      ## Standard ANSI style codes
+      ##
+      # Standard ANSI style codes by name.
+      # @return [Hash{Symbol => Array<Integer>}]
+      #
       BUILTIN_STYLE_NAMES = {
         clear: [0],
         reset: [0],
