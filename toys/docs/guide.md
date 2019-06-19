@@ -72,7 +72,7 @@ tool to run, and interprets flags and other command line arguments.
 
 The general form of the `toys` command line is:
 
-    toys [TOOL...] [FLAGS...] [ARGS...]
+    $ toys [TOOL...] [FLAGS...] [ARGS...]
 
 ### Tools
 
@@ -83,8 +83,8 @@ first **positional argument**), or until there are no more arguments.
 
 For example, in the following command:
 
-         |----TOOL----|
-    toys system version
+           |----TOOL----|
+    $ toys system version
 
 The tool name is `system version`. Notice that the tool name may have multiple
 words. Tools are arranged hierarchically. In this case, `system` is a
@@ -95,13 +95,13 @@ The words in a tool name can be delimited with spaces as shown above, or
 alternately periods or colons. The following commands also invoke the tool
 `system version`:
 
-    toys system.version
-    toys system:version
+    $ toys system.version
+    $ toys system:version
 
 In the following command:
 
-         |TOOL| |ARG|
-    toys system frodo
+           |TOOL| |ARG|
+    $ toys system frodo
 
 There is no subtool `frodo` under the `system` namespace, so Toys works
 backward until it finds an existing tool. In this case, the `system` namespace
@@ -113,7 +113,7 @@ other tool. In the above case, it takes the argument `frodo`, determines it has
 no subtool of that name, and prints an error message. More commonly, though,
 you might execute a namespace without arguments:
 
-    toys system
+    $ toys system
 
 This displays the **online help screen** for the `system` namespace, which
 includes a list of all its subtools and what they do.
@@ -121,14 +121,14 @@ includes a list of all its subtools and what they do.
 It is also legitimate for the tool name to be empty. This invokes the **root
 tool**, the toplevel namespace:
 
-    toys
+    $ toys
 
 Like any namespace, invoking the root tool displays its help screen, including
 showing the list of all its subtools.
 
 One last example:
 
-    toys frodo
+    $ toys frodo
 
 If there is no tool called `frodo` in the toplevel namespace, then once again,
 `frodo` is interpreted as an argument to the root tool. The root tool responds
@@ -144,49 +144,51 @@ tool, the tool will generally display an error message.
 
 Toys follows the typical unix conventions for flags, specifically those covered
 by Ruby's OptionParser library. You can provide short (single-character) flags
-with a single hyphen, or long flags with a double hyphen. You can also provide
-optional **values** for flags. Following are a few examples.
+with a single hyphen, or long flags with a double hyphen. Some flags can also
+take **values**. Following are a few examples.
 
-Pass a single short flag (for verbose output).
+Here we pass a single short flag (for verbose output).
 
-    toys system -v
+    $ toys system -v
 
-Pass multiple long flags (for verbose output and recursive subtool search).
+Here we pass multiple long flags (for verbose output and recursive subtool
+search).
 
-    toys system --verbose --recursive
+    $ toys system --verbose --recursive
 
-You can combine short flags. This does the same as the previous example.
+You can combine short flags. The following passes both the `-v` and `-r` flags
+(i.e. it has the same effect as the previous example.)
 
-    toys system -vr
+    $ toys system -vr
 
 Long flags can be abbreviated, as long as the abbreviation is not ambiguous.
 For example, there is only one flag (`--recursive`) beginning with the string
 `--rec`, so you can use the shortened form.
 
-    toys --rec
+    $ toys --rec
 
 However, there are two flags (`--version` and `--verbose`) beginning with
 `--ver`, so it cannot be used as an abbreviation. This will cause an error:
 
-    toys --ver
+    $ toys --ver
 
-Pass a value using a long flag. The root tool supports the `--search` flag to
-search for tools that have the given keyword.
+Some flags take values. The root tool supports the `--search` flag to search
+for tools that have the given keyword.
 
-    toys --search=build
-    toys --search build
+    $ toys --search=build
+    $ toys --search build
 
-Pass a value using a short flag.
+The short form of the search flag `-s` also takes a value.
 
-    toys -s build
-    toys -sbuild
+    $ toys -s build
+    $ toys -sbuild
 
 If a double hyphen `--` appears by itself in the arguments, it disables flag
 parsing from that point. Any further arguments are treated as positional
 arguments, even if they begin with hyphens. For example:
 
-         |--FLAG--|   |---ARG---|
-    toys --verbose -- --recursive
+           |--FLAG--|   |---ARG---|
+    $ toys --verbose -- --recursive
 
 That will cause `--recursive` to be treated as a positional argument. (In this
 case, as we saw earlier, the root tool will respond by printing an error
@@ -244,10 +246,10 @@ recognizes any number of positional arguments. Those arguments specify which
 tools to run and what arguments to pass to them. If, for example, you had a
 `build` tool and a `test` tool, you could run them in sequence with:
 
-            |---ARGS---|
-    toys do build , test
+              |---ARGS---|
+    $ toys do build , test
 
-The three arguments `build`, `,`, and `test` are positional arguments to the
+The three arguments `build` and `,` and `test` are positional arguments to the
 `do` tool. (The `do` tool uses `,` to delimit the tools that it should run.)
 
 Most tools allow flags and positional arguments to be interspersed. A flag will
@@ -259,8 +261,8 @@ to be treated as positional even if they look like flags.) So `do` stops
 recognizing flags once it encounters its first positional argument. That is,
 you could do this:
 
-            |------------ARGS-----------|
-    toys do build --staging , test --help
+              |------------ARGS-----------|
+    $ toys do build --staging , test --help
 
 Each tool can choose which behavior it will support, whether or not to enforce
 [flags before positional args](#Enforcing_flags_before_args).
@@ -278,7 +280,7 @@ Toys will complete tool and subtool names, flags, values passed to flags, and
 positional argument values, and it will respect the current context. For
 example, if you type:
 
-    toys <TAB><TAB>
+    $ toys <TAB><TAB>
 
 The tab completion will show you a list of reasonable things that could appear
 next, including the defined tool names (such as `system` and `do`) as well as
@@ -287,11 +289,11 @@ course, if you start typing something, tab completion will limit the display to
 matching completions. The following displays only flags, i.e. completions that
 begin with a hyphen:
 
-    toys -<TAB><TAB>
+    $ toys -<TAB><TAB>
 
 And if you type the following:
 
-    toys sys<TAB>
+    $ toys sys<TAB>
 
 It is likely only one tool name starts with `sys`, so completion will
 automatically type the rest of `system` for you.
@@ -390,12 +392,14 @@ The above example uses the directive
 to declare an **optional argument** named `:whom`. If the argument is provided
 on the command line e.g.
 
-    toys greet ruby
+    $ toys greet ruby
+    Hello, ruby!
 
 Then the option `:whom` is set to the string `"ruby"`. Otherwise, if the
 argument is omitted, e.g.
 
-    toys greet
+    $ toys greet
+    Hello, world!
 
 Then the option `:whom` is set to the default value `"world"`.
 
@@ -418,29 +422,35 @@ first, in order, followed by the optional arguments. For example:
     tool "args-demo" do
       optional_arg :arg2
       required_arg :arg1
-      # ...
+
+      def run
+        puts "options data is #{options.inspect}"
+      end
+    end
 
 If a user runs
 
-    toys args-demo foo
+    $ toys args-demo foo
+    Options data is {arg1: "foo", arg2: nil}
 
 Then the required argument `:arg1` will be set to `"foo"`, and the optional
 argument `:arg2` will not be set (i.e. it will remain `nil`).
 
 If the user runs:
 
-    toys args-demo foo bar
+    $ toys args-demo foo bar
+    Options data is {arg1: "foo", arg2: "bar"}
 
 Then `:arg1` is set to `"foo"`, and `:arg2` is set to `"bar"`.
 
 Running the following:
 
-    toys args-demo
+    $ toys args-demo
 
 Will produce a usage error, because no value is set for the required argument
 `:arg1`. Similarly, running:
 
-    toys args-demo foo bar baz
+    $ toys args-demo foo bar baz
 
 Will also produce an error, since the tool does not define an argument to
 match `"baz"`.
@@ -451,11 +461,16 @@ not provided on the command line. For example:
     tool "args-demo" do
       required_arg :arg1
       optional_arg :arg2, default: "the-default"
-      # ...
+
+      def run
+        puts "options data is #{options.inspect}"
+      end
+    end
 
 Now running the following:
 
-    toys args-demo foo
+    $ toys args-demo foo
+    Options data is {arg1: "foo", arg2: "the-default"}
 
 Will set the required argument to `"foo"` as usual, and the optional argument,
 because it is not provided, will default to `"the-default"` instead of `nil`.
@@ -472,23 +487,19 @@ For example:
       required_arg :arg1
       optional_arg :arg2
       remaining_args :arg3
-      # ...
 
-Now, running:
+      def run
+        puts "Options data is #{options.inspect}"
+      end
+    end
 
-    toys args-demo foo bar baz qux
+Now, we can see how the remaining arguments (if any) are collected by `:arg3`:
 
-Sets the following option data:
+    $ toys args-demo foo bar baz qux
+    Options data is {arg1: "foo", arg2: "bar", arg3: ["baz", "qux"]}
 
-    {arg1: "foo", arg2: "bar", arg3: ["baz", "qux"]}
-
-If instead you run:
-
-    toys args-demo foo
-
-This sets the following option data:
-
-    {arg1: "foo", arg2: nil, arg3: []}
+    $ toys args-demo foo
+    Options data is {arg1: "foo", arg2: nil, arg3: []}
 
 Tools can include any number of `required_arg` and `optional_arg` directives,
 declaring any number of required and optional arguments. But tools can have at
@@ -540,7 +551,8 @@ integer during parsing:
       required_arg :age, accept: Integer
       def run
         puts "Next year I will be #{age + 1}"  # Age is an integer
-        ...
+      end
+    end
 
 If you pass a non-integer for this argument, Toys will report a usage error.
 
@@ -603,18 +615,6 @@ means you can also declare a flag that can be set either to true or false:
 
     flag :shout, "--[no-]shout"
 
-If you do not provide any actual flags, Toys will infer a long flag from the
-name of the option. Hence, the following two definitions are equivalent:
-
-    flag :shout
-    flag :shout, "--shout"
-
-Inferred flags will convert underscores to hyphens. So the following two
-definitions are also equivalent:
-
-    flag :call_out
-    flag :call_out, "--call-out
-
 You can declare that a short or long flag takes a value:
 
     flag :whom, "--whom=VALUE"
@@ -646,6 +646,26 @@ example:
 Raises an error because one flag's value is optional while the other is
 required. (Again, this is consistent with OptionParser's behavior.)
 
+#### Inferred flags
+
+If you do not provide any actual flags, Toys will attempt to infer one from the
+name of the option. A one-character name will yield a short flag, and a longer
+name a long flag. Hence, the following two definitions are equivalent:
+
+    flag :shout
+    flag :shout, "--shout"
+
+And the following two are equivalent:
+
+    flag :S
+    flag :S, "-S"
+
+Inferred flags will convert underscores to hyphens. So the following two
+definitions are also equivalent:
+
+    flag :call_out
+    flag :call_out, "--call-out
+
 #### Handling optional values
 
 There are some subtleties in how the Ruby OptionParser library treats flags
@@ -654,7 +674,8 @@ does, for the most part, replicate OptionParser's behavior. It is thus
 important to understand that behavior if you use optional values.
 
 First, if a flag has an optional value that is not provided on the command
-line, then the "value" is automatically set to `nil`. Consider this example:
+line, then the option is set to `true`, as if it were a normal boolean flag
+that didn't take a value. Consider this example:
 
     tool "flags-demo" do
       flag :output, "--output [DIRECTORY]", default: "."
@@ -674,10 +695,10 @@ If a user executes this and provides a value for `--output`, it will show up:
     $ toys flags-demo --output /etc
     output is "/etc"
 
-However, if a user provides `--output` but omits the value, it displays `nil`:
+If a user provides `--output` but omits the value, it displays `true`:
 
     $ toys flags-demo --output
-    output is nil
+    output is true
 
 Second, if the following argument looks like a flag (i.e. it begins with a
 hyphen), it is not treated as an optional value. In this example, the argument
@@ -686,7 +707,7 @@ hyphen), it is not treated as an optional value. In this example, the argument
 as the value.)
 
     $ toys flags-demo --output --verbose
-    output is nil
+    output is true
 
 Finally, there is an important difference between the syntax
 `"--output [DIRECTORY]"` and `"--output=[DIRECTORY]"`. In the former case, the
@@ -695,7 +716,8 @@ the value. In the latter case, however, the following argument is *never*
 treated as the value. In that latter case, you *must* use the equals sign
 syntax to provide a value.
 
-To illustrate:
+To illustrate, consider two flags with optional values, one using space and the
+other using equals.
 
     tool "flags-demo-space" do
       flag :output, "--output [DIRECTORY]", default: "."
@@ -712,6 +734,8 @@ To illustrate:
       end
     end
 
+Here is the behavior:
+
     $ toys flags-demo-space --output=/etc
     output is "/etc"
     $ toys flags-demo-space --output /etc
@@ -719,7 +743,7 @@ To illustrate:
     $ toys flags-demo-equals --output=/etc
     output is "/etc"
     $ toys flags-demo-equals --output /etc
-    output is nil
+    output is true
 
 #### Flag acceptors
 
@@ -738,7 +762,8 @@ integer during parsing:
       flag :age, accept: Integer
       def run
         puts "Next year I will be #{age + 1}"  # Age is an integer
-        ...
+      end
+    end
 
 If you pass a non-integer for this flag value, Toys will report a usage error.
 
@@ -781,6 +806,11 @@ Effectively, the default behavior (setting the value and ignoring the previous
 value) is equivalent to the following handler:
 
     flag :shout, "--[no-]shout", handler: proc { | val, _prev| val }
+
+Toys gives the default handler the special name `:set`. So the above is also
+equivalent to:
+
+    flag :shout, "--[no-]shout", handler: :set
 
 The `--verbose` flag, provided automatically by Toys for most tools, shows an
 example of an alternate handler. Verbosity is represented by an integer value,
@@ -1066,15 +1096,17 @@ To define a subtool, create nested `tool` directives. Here's a simple example:
 
 You can now invoke them like this:
 
-    toys test unit
-    toys test integration
+    $ toys test unit
+    run unit tests here...
+    $ toys test integration
+    run integration tests here...
 
 Notice in this case, the parent "test" tool itself has no `run` method. This is
 a common pattern: "test" is just a "container" for tools, a way of organizing
 your tools. In Toys terminology, it is called a **namespace**. But it is still
 a tool, and it can still be run:
 
-    toys test
+    $ toys test
 
 As discussed earlier, Toys provides a default implementation that displays the
 help screen, which includes a list of the subtools and their descriptions.
@@ -1082,7 +1114,7 @@ help screen, which includes a list of the subtools and their descriptions.
 As another example, the "root" tool is also normally a namespace. If you just
 run Toys with no arguments:
 
-    toys
+    $ toys
 
 The root tool will display the overall help screen for Toys.
 
@@ -1164,8 +1196,8 @@ The contents of `greet.rb` would be:
     end
 
 Notice that we did not use a `tool "greet"` block here. That is because the
-name of the file `greet.rb` already provides a tool context: Toys already knows
-that we are defining a "greet" tool.
+name of the file `greet.rb` already provides a naming context: Toys already
+knows that we are defining a "greet" tool.
 
 If you do include a `tool` block inside the `greet.rb` file, it will create a
 *subtool* of `greet`. In other words, the path to the Ruby file defines a
@@ -1235,12 +1267,12 @@ move to a different directory, they may not be available.
 
 When Toys runs, it looks for tools in a **search path**. Specifically:
 
-(1) It looks for a `.toys.rb` file and/or a `.toys` directory in the *current
+1.  It looks for a `.toys.rb` file and/or a `.toys` directory in the *current
     working directory*.
-(2) It does the same in the *parent directory* of the current directory, and
+2.  It does the same in the *parent directory* of the current directory, and
     then its parent, and so on until it hits either the root of the file system
     or one of the global directories described in (3).
-(3) It looks in a list of *global directories*, specified in the environment
+3.  It looks in a list of *global directories*, specified in the environment
     variable `TOYS_PATH`. This variable can contain a colon-delimited list of
     directory paths. If the variable is not set, the current user's *home
     directory*, and the system configuration directory (`/etc` on unix systems)
@@ -1522,9 +1554,9 @@ define a mixin in a file located in a `.toys` directory, it will be visible to
 descendant tools defined in that same directory, but not in a different `.toys`
 directory.
 
-A common technique, for example, would be to define a mixin in the index file
-in a Toys directory. You can then include it from any subtools defined in other
-files in that same directory.
+A common technique, for example, would be to define a mixin in the
+[index file](#Index_files) in a Toys directory. You can then include it from
+any subtools defined in other files in that same directory.
 
 #### Mixin initializers
 
@@ -1904,6 +1936,8 @@ defined.
       end
       def run
         # ...
+      end
+    end
 
 Here's an example tool that just runs `rake`. Because it requires rake to be
 installed in order to *run* the tool, we call the
@@ -2083,13 +2117,13 @@ following contents:
 Now within that directory, if you had a Rake task called `test`, you can invoke
 it with:
 
-    toys test
+    $ toys test
 
 Similarly, a Rake task named `test:integration` can be invoked with either of
 the following:
 
-    toys test integration
-    toys test:integration
+    $ toys test integration
+    $ toys test:integration
 
 Rake tasks with arguments are mapped to tool arguments, making it easier to
 invoke those tasks using Toys. For example, consider a Rake task with two
@@ -2103,12 +2137,12 @@ arguments, defined as follows:
 
 would have to be invoked as follows using rake:
 
-    rake my_task[value1,value2]
+    $ rake my_task[value1,value2]
 
 You may even need to escape the brackets if you are using a shell that treats
 them specially. Toys will let you pass them as normal command line arguments:
 
-    toys my_task value1 value2
+    $ toys my_task value1 value2
 
 The `:rake` template provides several options. If your Rakefile is named
 something other than `Rakefile` or isn't in the current directory, you can
@@ -2126,7 +2160,7 @@ arguments. Set `:use_flags` when expanding the template:
 Now with this option, to pass arguments to the tool, use the argument names as
 flags:
 
-    toys my_task --first=value1 --second=value2
+    $ toys my_task --first=value1 --second=value2
 
 ### From Rakefiles to Toys files
 
@@ -2456,6 +2490,49 @@ simplified excerpt from the implementation that tool:
       end
     end
 
+### Requiring exact flag matches
+
+By default, tools will recognized "shortened" forms of long flags. For example,
+most suppose you are defining a tool with long flags:
+
+    tool "my-tool" do
+      flag :long_flag_name, "--long-flag-name"
+      flag :another_long_flag, "--another-long-flag"
+      def run
+        # ...
+      end
+    end
+
+When you invoke this tool, you do not need to type the entire flag names.
+Abbreviations will also work:
+
+    $ toys my-tool --long --an
+
+As long as the abbreviation is unambiguous (i.e. there is no other flag that
+begins with the same string), the Toys argument parser will recognize the flag.
+This is consistent with the behavior of most command line tools (and is also
+the behavior of Ruby's OptionParser library.)
+
+However, it is possible to disable this behavior and require that flags be
+presented in their entirety, using the `require_exact_flag_match` directive.
+
+    tool "my-tool" do
+      require_exact_flag_match
+      flag :long_flag_name, "--long-flag-name"
+      flag :another_long_flag, "--another-long-flag"
+      def run
+        # ...
+      end
+    end
+
+Now, all flags for this tool must be presented in their entirety. Abbreviations
+are not allowed.
+
+    $ toys my-tool --long-flag-name --another-long-flag
+
+Currently you can require exact flag matches only at the tool level, applied to
+all flags for that tool. You cannot set this option for individual flags.
+
 ### Disabling argument parsing
 
 Normally Toys handles parsing command line arguments for you. This makes
@@ -2709,8 +2786,8 @@ This tool assumes it will be run from the main project directory (`my-project`
 in the above case). However, Toys lets you invoke tools even if you are in a
 subdirectory:
 
-    cd lib
-    toys list-tests  # Does not work
+    $ cd lib
+    $ toys list-tests  # Does not work
 
 Rake handles this by actually changing the current working directory to the
 directory containing the active Rakefile. Toys, however, does not change the
@@ -2862,13 +2939,15 @@ initialization file.
 
 By default, this associates the Toys tab completion logic with the `toys`
 executable. If you have other names or aliases for the executable, pass them as
-arguments like this:
+arguments. For example, I use `t` as an alias for `toys`, and I therefore
+install Toys's completion logic for `t`:
 
-    $(toys system bash-completion install my-alias)
+    $(toys system bash-completion install t)
 
 You can also remove the completion logic from the current shell:
 
     $(toys system bash-completion remove)
+    $(toys system bash-completion remove t)
 
 At this time, bash is the only shell that is supported directly. If you are
 using zsh, however, you can use the `bashcompinit` function to load the toys

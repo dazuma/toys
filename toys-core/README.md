@@ -5,8 +5,8 @@ a simple DSL, and Toys will provide the command line executable and take care
 of all the details such as argument parsing, online help, and error reporting.
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
-to write command line executables using the same Toys DSL and the power of the
-Toys APIs.
+to write command line executables using the Toys DSL and the power of the Toys
+classes.
 
 For more detailed information about Toys-Core, see the
 [Toys-Core User's Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md).
@@ -170,7 +170,10 @@ modifies error handling and delimiter parsing.
     #### Pass some additional options to the CLI constructor ...
     cli = Toys::CLI.new(
       extra_delimiters: ":",
-      error_handler: ->(e) { puts "Dude, an error happened..." }
+      error_handler: ->(e) {
+        puts "Dude, an error happened..."
+        return 1
+      }
     )
 
     #### Change the config block as follows ...

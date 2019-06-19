@@ -597,6 +597,7 @@ describe Toys::DSL::Tool do
           end
           desc "short description"
           long_desc "long description", "in two lines"
+          long_desc "and another line"
         end
       end
       tool, _remaining = loader.lookup([])
@@ -610,7 +611,7 @@ describe Toys::DSL::Tool do
       assert_equal(false, flag.flag_completion.include_negative?)
       assert_equal(-1, flag.default)
       assert_equal("short description", flag.desc.to_s)
-      assert_equal("in two lines", flag.long_desc[1].to_s)
+      assert_equal("and another line", flag.long_desc[2].to_s)
       assert_equal(3, flag.handler.call("4"))
       assert_equal(:value, flag.flag_type)
       assert_equal(:required, flag.value_type)
@@ -722,6 +723,9 @@ describe Toys::DSL::Tool do
       loader.add_block do
         flag_group(name: :my_group) do
           flag(:inside_group)
+          desc "short description"
+          long_desc "long description", "in two lines"
+          long_desc "and another line"
         end
         flag(:outside_group)
       end
@@ -729,6 +733,8 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
+      assert_equal("short description", my_group.desc.to_s)
+      assert_equal("and another line", my_group.long_desc[2].to_s)
       assert_equal(1, my_group.flags.size)
       assert_equal(:inside_group, my_group.flags.first.key)
       assert_equal(1, default_group.flags.size)
@@ -756,6 +762,9 @@ describe Toys::DSL::Tool do
     it "provides a block that defines flags" do
       loader.add_block do
         all_required(name: :my_group) do
+          desc "short description"
+          long_desc "long description", "in two lines"
+          long_desc "and another line"
           flag(:inside_group)
         end
         flag(:outside_group)
@@ -764,6 +773,8 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flag_groups.size)
       default_group, my_group = tool.flag_groups
       assert_equal(:my_group, my_group.name)
+      assert_equal("short description", my_group.desc.to_s)
+      assert_equal("and another line", my_group.long_desc[2].to_s)
       assert_equal(1, my_group.flags.size)
       assert_equal(:inside_group, my_group.flags.first.key)
       assert_equal(1, default_group.flags.size)
@@ -906,6 +917,7 @@ describe Toys::DSL::Tool do
           display_name "FOOOO"
           desc "short description"
           long_desc "long description", "in two lines"
+          long_desc "and another line"
         end
       end
       tool, _remaining = loader.lookup([])
@@ -917,7 +929,7 @@ describe Toys::DSL::Tool do
       assert_instance_of(Toys::Completion::Enum, arg.completion)
       assert_equal("hi=", arg.completion.prefix_constraint)
       assert_equal("short description", arg.desc.to_s)
-      assert_equal("in two lines", arg.long_desc[1].to_s)
+      assert_equal("and another line", arg.long_desc[2].to_s)
       assert_equal("FOOOO", arg.display_name)
     end
 

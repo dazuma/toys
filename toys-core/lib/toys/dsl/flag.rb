@@ -261,8 +261,8 @@ module Toys
 
       ##
       # Add to the long description for the current flag. The long description
-      # is displayed with the argument in online help. This directive may be
-      # given multiple times, and the results are cumulative.
+      # is displayed with the flag in online help. This directive may be given
+      # multiple times, and the results are cumulative.
       #
       # A long description is a series of descriptions, which are generally
       # displayed in a series of lines/paragraphs. Each individual description

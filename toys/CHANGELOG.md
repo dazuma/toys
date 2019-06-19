@@ -2,7 +2,9 @@
 
 ### 0.8.0 / Unreleased
 
-This is a major update with significant new features and a bunch of fixes. It does include a few minor backward-incompatible changes. All features planned for beta are now implemented.
+This is a major update with significant new features and a bunch of fixes.
+It does include a few minor backward-incompatible changes. All signifiant
+features planned for beta are now implemented.
 
 Highlights:
 

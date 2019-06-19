@@ -514,7 +514,7 @@ module Toys
     #
     def append_long_desc(long_desc)
       check_definition_state
-      @long_desc += WrappableString.make_array(long_desc)
+      @long_desc.concat(WrappableString.make_array(long_desc))
       self
     end
 

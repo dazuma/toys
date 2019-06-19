@@ -341,6 +341,20 @@ module Toys
       @long_desc = WrappableString.make_array(long_desc)
     end
 
+    ##
+    # Append long description strings.
+    #
+    # You must pass an array of lines in the long description. See {#long_desc}
+    # for details on how each line may be represented.
+    #
+    # @param long_desc [Array<Toys::WrappableString,String,Array<String>>]
+    # @return [self]
+    #
+    def append_long_desc(long_desc)
+      @long_desc.concat(WrappableString.make_array(long_desc))
+      self
+    end
+
     private
 
     def resolve_handler(handler)

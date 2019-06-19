@@ -85,17 +85,14 @@ automatically generates a full help screen, which you can view using the
 
     toys greet --help
 
-It matters where you put the `.toys.rb` file. If you are in the same directory
-as the file, you have access to the tools you defined. And if you cd down into
-a subdirectory, you will still have access, because Toys searches up the
-directory tree. But if you cd up to a parent directory, Toys will no longer
-find the file. So by writing different `.toys.rb` files in different
-directories, you can "scope" your tools to the projects where they apply.
-(You might notice this is similar to how Rake searches for `Rakefile`s!)
+Toys searches up the directory hierarchy for Toys files. So it will find this
+`.toys.rb` if you are located in this directory or any subdirectory. It will
+also read multiple files if it finds them, so you can "scope" your tools more
+specifically or generally by locating them in your directory hierarchy. 
 
-If you want to define "global" tools that apply anywhere, write a `.toys.rb`
-file either in your home directory, or in the system config directory (usually
-`/etc`). Toys always searches these directories.
+If you want to define "global" tools that apply anywhere, write a Toys file
+either in your home directory, or in the system configuration directory
+(usually `/etc`). Toys always searches these locations.
 
 ### A more sophisticated example
 
@@ -142,17 +139,13 @@ tool to the end of the file.)
       end
     end
 
-Now you should have an additional tool called `new-repo` available. Type
+Now you should have an additional tool called `new-repo` available. Type:
 
     toys
 
-to see a list of the tools available, and you should see both the `greet` tool
-we started with, and the new `new-repo` tool. (You may include any number of
-tools in your `.toys.rb` file, and you can even break it up into multiple files
-if it starts getting unwieldly.)
-
-This new tool creates a directory containing a newly created git repo. It
-assumes you have `git` available on your path. Try running it:
+The help screen lists both the `greet` tool we started with, and the new
+`new-repo` tool. This new tool creates a directory containing a newly created
+git repo. (It assumes you have `git` available on your path.) Try running it:
 
     toys new-repo foo
 
@@ -187,9 +180,9 @@ provide methods your tool can call, or invoke other behavior. In our example:
     and redirect streams, and so forth. Note that we pass the
     `:exit_on_nonzero_status` option, which configures the `:exec` mixin to
     abort the tool automatically if any of the external commands fails (similar
-    to `set -e` in bash). This is a common pattern when writing tools. (If you
-    want more control, the `:exec` mixin also provides ways to respond to
-    result codes individually.)
+    to `set -e` in bash). This is a common pattern when writing tools that
+    invoke external commands. (If you want more control, the `:exec` mixin also
+    provides ways to respond to result codes individually.)
 *   The `:fileutils` mixin provides the methods of the Ruby `FileUtils`
     library, such as `mkdir` and `cd` used in this example. It's effectively
     shorthand for `require "fileutils"; include ::FileUtils`.
@@ -231,21 +224,21 @@ the following line to your `.toys.rb` file:
     expand :rake
 
 This syntax is called a "template expansion." It's a way to generate tools
-programmatically. In this case, the `:rake` template reads your Rakefile and
-generates Toys tools corresponding to all your Rake tasks! If you run:
+programmatically. In this case, Toys provides the `:rake` template, which reads
+your Rakefile and generates Toys tools corresponding to all your Rake tasks!
+Now if you run:
 
     toys
 
-You'll see that your Rake tasks can now be invoked from Toys. So if you have a
-`rake test` task, you can run it using `toys test`.
+You'll see that you now have tools associated with each of your Rake tasks. So
+if you have a `rake test` task, you can run it using `toys test`.
 
 Note that if you normally run Rake with Bundler (e.g. `bundle exec rake test`),
-you may need to add toys to your Gemfile and invoke toys with Bundler as well
-(i.e. `bundle exec toys test`). This is because Toys is just calling the Rake
-API to run your task, and, well, if your Rake task requires a bundle, then you
-need to set it up. However, when Toys is not wrapping Rake, typical practice is
-actually *not* to use Bundler. Toys provides its own mechanisms to activate and
-even install needed gems for you.
+you may need to add Toys to your Gemfile and use Bundler to invoke Toys (i.e.
+`bundle exec toys test`). This is because Toys is just calling the Rake API to
+run your task, and the Rake task might require the bundle. However, when Toys
+is not wrapping Rake, typical practice is actually *not* to use Bundler. Toys
+provides its own mechanisms to activate and even install needed gems for you.
 
 So far, we've made Toys a front-end for your Rake tasks. This may be useful by
 itself. Toys lets you pass command line arguments "normally" to tools, whereas
@@ -267,7 +260,7 @@ native Toys tools. You can do so in your existing `.toys.rb` file. Keep the
 `expand :rake` line at the *end* of the file, and locate your tools (whether
 simple tools or template expansions) before it. That way, your Toys-native
 tools will take precedence, and `expand :rake` will proxy out to Rake only for
-the remaining tasks.
+the remaining tasks that haven't been ported explicitly.
 
 ### Learning more
 
@@ -305,12 +298,13 @@ OptionParser boilerplate and common functionality.
 
 Toys was designed to address those problems by providing a framework for
 writing *and organizing* your own command line scripts. You provide the actual
-functionality, and Toys takes care of all the other details expected from a
-good command line tool. It provides a streamlined interface for defining and
-handling command line flags and positional arguments, and sensible ways to
-organize shared code. It automatically generates help text so you can see
-usage information at a glance, provides a search feature to help you find the
-script you need, and generates tab completion for your shell.
+functionality by writing Toys files, and Toys takes care of all the other
+details expected from a good command line tool. It provides a streamlined
+interface for defining and handling command line flags and positional
+arguments, and sensible ways to organize shared code. It automatically
+generates help text so you can see usage information at a glance, provides a
+search feature to help you find the script you need, and generates tab
+completion for your shell.
 
 Toys can also be used to share scripts. For example, it can be used instead of
 Rake to provide build and test scripts for a project. Unlike Rake tasks,
