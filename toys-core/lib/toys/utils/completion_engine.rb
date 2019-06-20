@@ -51,15 +51,15 @@ module Toys
         # variables. Prints out completion candidates, one per line, and
         # returns a status code indicating the result.
         #
-        # *   **0** for success.
-        # *   **1** if completion failed.
-        # *   **-1** if the environment is incorrect (e.g. expected environment
+        #  *  **0** for success.
+        #  *  **1** if completion failed.
+        #  *  **2** if the environment is incorrect (e.g. expected environment
         #     variables not found)
         #
         # @return [Integer] status code
         #
         def run
-          return -1 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
+          return 2 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
           line = ::ENV["COMP_LINE"].to_s
           point = ::ENV["COMP_POINT"].to_i
           point = line.length if point.negative?

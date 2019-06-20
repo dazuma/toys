@@ -60,7 +60,7 @@ module Toys
       #
       def run(context)
         yield
-      rescue UsageError => e
+      rescue ArgParsingError => e
         require "toys/utils/help_text"
         help_text = Utils::HelpText.from_context(context)
         @terminal.puts(e.usage_errors.join("\n"), :bright_red, :bold)

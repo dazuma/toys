@@ -70,7 +70,7 @@ module Toys
       #
       # Acceptors can be defined in one of four ways.
       #
-      # *   You can provide a **regular expression**. This acceptor validates
+      #  *  You can provide a **regular expression**. This acceptor validates
       #     only if the regex matches the *entire string parameter*.
       #
       #     You can also provide an optional conversion function as a block. If
@@ -80,7 +80,7 @@ module Toys
       #     that will be stored in the context data. If you do not provide a
       #     block, the original string will be used.
       #
-      # *   You can provide an **array** of possible values. The acceptor
+      #  *  You can provide an **array** of possible values. The acceptor
       #     validates if the string parameter matches the *string form* of one
       #     of the array elements (i.e. the results of calling `to_s` on the
       #     array elements.)
@@ -90,14 +90,14 @@ module Toys
       #     symbol `:foo` is in the array, it will match the string `"foo"`,
       #     and then store the symbol `:foo` in the tool data.
       #
-      # *   You can provide a **range** of possible values, along with a
+      #  *  You can provide a **range** of possible values, along with a
       #     conversion function that converts a string parameter to a type
       #     comparable by the range. (See the "function" spec below for a
       #     detailed description of conversion functions.) If the range has
       #     numeric endpoints, the conversion function is optional because a
       #     default will be provided.
       #
-      # *   You can provide a **function** by passing it as a proc or a block.
+      #  *  You can provide a **function** by passing it as a proc or a block.
       #     This function performs *both* validation and conversion. It should
       #     take the string parameter as its argument, and it must either
       #     return the object that should be stored in the tool data, or raise
@@ -241,11 +241,11 @@ module Toys
       #
       # Completions can be specified in one of three ways.
       #
-      # *   A Proc object itself, either passed directly to this directive or
+      #  *  A Proc object itself, either passed directly to this directive or
       #     provided as a block.
-      # *   A static array of strings, indicating the completion candidates
+      #  *  A static array of strings, indicating the completion candidates
       #     independent of context.
-      # *   The symbol `:file_system` which indicates that paths in the file
+      #  *  The symbol `:file_system` which indicates that paths in the file
       #     system should serve as completion candidates.
       #
       # ## Example
@@ -430,10 +430,10 @@ module Toys
       # directly to this method, or you may pass any input that can be used to
       # construct a wrappable string:
       #
-      # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+      #  *  If you pass a String, its whitespace will be compacted (i.e. tabs,
       #     newlines, and multiple consecutive whitespace will be turned into a
       #     single space), and it will be word-wrapped on whitespace.
-      # *   If you pass an Array of Strings, each string will be considered a
+      #  *  If you pass an Array of Strings, each string will be considered a
       #     literal word that cannot be broken, and wrapping will be done
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.
@@ -731,11 +731,11 @@ module Toys
       # The flags themselves should be provided in OptionParser form. Following
       # are examples of valid syntax.
       #
-      # *   `-a` : A short boolean switch. When this appears as an argument,
+      #  *  `-a` : A short boolean switch. When this appears as an argument,
       #     the value is set to `true`.
-      # *   `--abc` : A long boolean switch. When this appears as an argument,
+      #  *  `--abc` : A long boolean switch. When this appears as an argument,
       #     the value is set to `true`.
-      # *   `-aVAL` or `-a VAL` : A short flag that takes a required value.
+      #  *  `-aVAL` or `-a VAL` : A short flag that takes a required value.
       #     These two forms are treated identically. If this argument appears
       #     with a value attached (e.g. `-afoo`), the attached string (e.g.
       #     `"foo"`) is taken as the value. Otherwise, the following argument
@@ -743,12 +743,12 @@ module Toys
       #     `"foo"`.) The following argument is treated as the value even if it
       #     looks like a flag (e.g. `-a -a` causes the string `"-a"` to be
       #     taken as the value.)
-      # *   `-a[VAL]` : A short flag that takes an optional value. If this
+      #  *  `-a[VAL]` : A short flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `-afoo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the value
       #     is set to `true`. The following argument is never interpreted as
       #     the value. (Compare with `-a [VAL]`.)
-      # *   `-a [VAL]` : A short flag that takes an optional value. If this
+      #  *  `-a [VAL]` : A short flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `-afoo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, if the
       #     following argument does not look like a flag (i.e. it does not
@@ -756,7 +756,7 @@ module Toys
       #     causes the string `"foo"` to be taken as the value.). If there is
       #     no following argument, or the following argument looks like a flag,
       #     the value is set to `true`. (Compare with `-a[VAL]`.)
-      # *   `--abc=VAL` or `--abc VAL` : A long flag that takes a required
+      #  *  `--abc=VAL` or `--abc VAL` : A long flag that takes a required
       #     value. These two forms are treated identically. If this argument
       #     appears with a value attached (e.g. `--abc=foo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
@@ -764,12 +764,12 @@ module Toys
       #     value is set to `"foo"`.) The following argument is treated as the
       #     value even if it looks like a flag (e.g. `--abc --abc` causes the
       #     string `"--abc"` to be taken as the value.)
-      # *   `--abc[=VAL]` : A long flag that takes an optional value. If this
+      #  *  `--abc[=VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,
       #     the value is set to `true`. The following argument is never
       #     interpreted as the value. (Compare with `--abc [VAL]`.)
-      # *   `--abc [VAL]` : A long flag that takes an optional value. If this
+      #  *  `--abc [VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise, if
       #     the following argument does not look like a flag (i.e. it does not
@@ -777,7 +777,7 @@ module Toys
       #     causes the string `"foo"` to be taken as the value.). If there is
       #     no following argument, or the following argument looks like a flag,
       #     the value is set to `true`. (Compare with `--abc=[VAL]`.)
-      # *   `--[no-]abc` : A long boolean switch that can be turned either on
+      #  *  `--[no-]abc` : A long boolean switch that can be turned either on
       #     or off. This effectively creates two flags, `--abc` which sets the
       #     value to `true`, and `--no-abc` which sets the falue to `false`.
       #
@@ -1264,13 +1264,13 @@ module Toys
       # Set the shell completion strategy for this tool's arguments.
       # You can pass one of the following:
       #
-      # *   The string name of a completion defined in this tool or any of its
+      #  *  The string name of a completion defined in this tool or any of its
       #     its ancestors.
-      # *   A hash of options to pass to the constructor of
+      #  *  A hash of options to pass to the constructor of
       #     {Toys::Tool::DefaultCompletion}.
-      # *   `nil` or `:default` to select the standard completion strategy
+      #  *  `nil` or `:default` to select the standard completion strategy
       #     (which is {Toys::Tool::DefaultCompletion} with no extra options).
-      # *   Any other specification recognized by {Toys::Completion.create}.
+      #  *  Any other specification recognized by {Toys::Completion.create}.
       #
       # ## Example
       #

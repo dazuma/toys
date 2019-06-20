@@ -30,11 +30,11 @@ module Toys
     # Create a flag group object of the given type.
     #
     # The type should be one of the following symbols:
-    # *   `:optional` All flags in the group are optional
-    # *   `:required` All flags in the group are required
-    # *   `:exactly_one` Exactly one flag in the group must be provided
-    # *   `:at_least_one` At least one flag in the group must be provided
-    # *   `:at_most_one` At most one flag in the group must be provided
+    #  *  `:optional` All flags in the group are optional
+    #  *  `:required` All flags in the group are required
+    #  *  `:exactly_one` Exactly one flag in the group must be provided
+    #  *  `:at_least_one` At least one flag in the group must be provided
+    #  *  `:at_most_one` At most one flag in the group must be provided
     #
     # @param type [Symbol] The type of group. Default is `:optional`.
     # @param desc [String,Array<String>,Toys::WrappableString] Short
@@ -66,8 +66,10 @@ module Toys
 
     ##
     # The base class of a FlagGroup, implementing everything except validation.
-    # The base class effectively behaves as an Optional group. However, you
-    # should use {Toys::FlagGroup::Optional} to represent such a group.
+    # The base class effectively behaves as an Optional group. And the default
+    # group that contains flags not otherwise assigned to a group, is of this
+    # type. However, you should use {Toys::FlagGroup::Optional} when creating
+    # an explicit optional group.
     #
     class Base
       ##
@@ -95,10 +97,10 @@ module Toys
       # When reading, this is always returned as a {Toys::WrappableString}.
       #
       # When setting, the description may be provided as any of the following:
-      # *   A {Toys::WrappableString}.
-      # *   A normal String, which will be transformed into a
+      #  *  A {Toys::WrappableString}.
+      #  *  A normal String, which will be transformed into a
       #     {Toys::WrappableString} using spaces as word delimiters.
-      # *   An Array of String, which will be transformed into a
+      #  *  An Array of String, which will be transformed into a
       #     {Toys::WrappableString} where each array element represents an
       #     individual word for wrapping.
       #
@@ -114,10 +116,10 @@ module Toys
       #
       # When setting, the description must be provided as an Array where *each
       # element* may be any of the following:
-      # *   A {Toys::WrappableString} representing one line.
-      # *   A normal String representing a line. This will be transformed into
+      #  *  A {Toys::WrappableString} representing one line.
+      #  *  A normal String representing a line. This will be transformed into
       #     a {Toys::WrappableString} using spaces as word delimiters.
-      # *   An Array of String representing a line. This will be transformed
+      #  *  An Array of String representing a line. This will be transformed
       #     into a {Toys::WrappableString} where each array element represents
       #     an individual word for wrapping.
       #

@@ -119,10 +119,10 @@ module Toys
     # When reading, this is always returned as a {Toys::WrappableString}.
     #
     # When setting, the description may be provided as any of the following:
-    # *   A {Toys::WrappableString}.
-    # *   A normal String, which will be transformed into a
+    #  *  A {Toys::WrappableString}.
+    #  *  A normal String, which will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String, which will be transformed into a
+    #  *  An Array of String, which will be transformed into a
     #     {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #
@@ -138,10 +138,10 @@ module Toys
     #
     # When setting, the description must be provided as an Array where *each
     # element* may be any of the following:
-    # *   A {Toys::WrappableString} representing one line.
-    # *   A normal String representing a line. This will be transformed into a
+    #  *  A {Toys::WrappableString} representing one line.
+    #  *  A normal String representing a line. This will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String representing a line. This will be transformed into
+    #  *  An Array of String representing a line. This will be transformed into
     #     a {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #
@@ -232,10 +232,10 @@ module Toys
     # arguments, and subtools.
     #
     # When setting, you may pass any of the following:
-    # *   `nil` or `:default` which sets the value to a default instance.
-    # *   A Hash of options to pass to the {Toys::Tool::DefaultCompletion}
+    #  *  `nil` or `:default` which sets the value to a default instance.
+    #  *  A Hash of options to pass to the {Toys::Tool::DefaultCompletion}
     #     constructor.
-    # *   Any other form recognized by {Toys::Completion.create}.
+    #  *  Any other form recognized by {Toys::Completion.create}.
     #
     # @return [Toys::Completion::Base,Proc]
     #
@@ -668,11 +668,11 @@ module Toys
     # Add a flag group to the group list.
     #
     # The type should be one of the following symbols:
-    # *   `:optional` All flags in the group are optional
-    # *   `:required` All flags in the group are required
-    # *   `:exactly_one` Exactly one flag in the group must be provided
-    # *   `:at_least_one` At least one flag in the group must be provided
-    # *   `:at_most_one` At most one flag in the group must be provided
+    #  *  `:optional` All flags in the group are optional
+    #  *  `:required` All flags in the group are required
+    #  *  `:exactly_one` Exactly one flag in the group must be provided
+    #  *  `:at_least_one` At least one flag in the group must be provided
+    #  *  `:at_most_one` At most one flag in the group must be provided
     #
     # @param type [Symbol] The type of group. Default is `:optional`.
     # @param desc [String,Array<String>,Toys::WrappableString] Short

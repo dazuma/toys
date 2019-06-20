@@ -87,7 +87,7 @@ module Toys
 
     ##
     # The effective acceptor.
-    # @return [Tool::Acceptor::Base]
+    # @return [Toys::Acceptor::Base]
     #
     attr_accessor :acceptor
 
@@ -109,10 +109,10 @@ module Toys
     # When reading, this is always returned as a {Toys::WrappableString}.
     #
     # When setting, the description may be provided as any of the following:
-    # *   A {Toys::WrappableString}.
-    # *   A normal String, which will be transformed into a
+    #  *  A {Toys::WrappableString}.
+    #  *  A normal String, which will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String, which will be transformed into a
+    #  *  An Array of String, which will be transformed into a
     #     {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #
@@ -128,10 +128,10 @@ module Toys
     #
     # When setting, the description must be provided as an Array where *each
     # element* may be any of the following:
-    # *   A {Toys::WrappableString} representing one line.
-    # *   A normal String representing a line. This will be transformed into a
+    #  *  A {Toys::WrappableString} representing one line.
+    #  *  A normal String representing a line. This will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String representing a line. This will be transformed into
+    #  *  An Array of String representing a line. This will be transformed into
     #     a {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #

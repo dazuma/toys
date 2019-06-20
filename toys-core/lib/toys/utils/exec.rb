@@ -40,36 +40,36 @@ module Toys
     #
     # A variety of options can be used to control subprocesses. These include:
     #
-    # *  **:name** (Object) An optional object that can be used to identify
-    #    this subprocess. It is available in the controller and result objects.
-    # *  **:env** (Hash) Environment variables to pass to the subprocess
-    # *  **:logger** (Logger) Logger to use for logging the actual command.
-    #     If not present, the command is not logged.
-    # *  **:log_level** (Integer,false) Level for logging the actual command.
-    #    Defaults to Logger::INFO if not present. You may also pass `false` to
-    #    disable logging of the command.
-    # *  **:log_cmd** (String) The string logged for the actual command.
-    #    Defaults to the `inspect` representation of the command.
-    # *  **:background** (Boolean) Runs the process in the background,
-    #    returning a controller object instead of a result object.
-    # *  **:result_callback** (Proc) Called and passed the result object when
-    #    a subprocess exits.
-    # *  **:in** Connects the input stream of the subprocess. See the section
-    #    on stream handling.
-    # *  **:out** Connects the standard output stream of the subprocess. See
-    #    the section on stream handling.
-    # *  **:err** Connects the standard error stream of the subprocess. See the
-    #    section on stream handling.
+    #  *  `:name` (Object) An optional object that can be used to identify this
+    #     subprocess. It is available in the controller and result objects.
+    #  *  `:env` (Hash) Environment variables to pass to the subprocess
+    #  *  `:logger` (Logger) Logger to use for logging the actual command. If
+    #     not present, the command is not logged.
+    #  *  `:log_level` (Integer,false) Level for logging the actual command.
+    #     Defaults to Logger::INFO if not present. You may also pass `false` to
+    #     disable logging of the command.
+    #  *  `:log_cmd` (String) The string logged for the actual command.
+    #     Defaults to the `inspect` representation of the command.
+    #  *  `:background` (Boolean) Runs the process in the background, returning
+    #     a controller object instead of a result object.
+    #  *  `:result_callback` (Proc) Called and passed the result object when a
+    #     subprocess exits.
+    #  *  `:in` Connects the input stream of the subprocess. See the section on
+    #     stream handling.
+    #  *  `:out` Connects the standard output stream of the subprocess. See the
+    #     section on stream handling.
+    #  *  `:err` Connects the standard error stream of the subprocess. See the
+    #     section on stream handling.
     #
     # In addition, the following options recognized by `Process#spawn` are
     # supported.
     #
-    # *  `:chdir`
-    # *  `:close_others`
-    # *  `:new_pgroup`
-    # *  `:pgroup`
-    # *  `:umask`
-    # *  `:unsetenv_others`
+    #  *  `:chdir`
+    #  *  `:close_others`
+    #  *  `:new_pgroup`
+    #  *  `:pgroup`
+    #  *  `:umask`
+    #  *  `:unsetenv_others`
     #
     # Any other options are ignored.
     #
@@ -94,42 +94,44 @@ module Toys
     # Following is a full list of the stream handling options, along with how
     # to specify them using the `:in`, `:out`, and `:err` options.
     #
-    # *  **Close the stream:** You may close the stream by passing `:close` as
-    #    the option value. This is the same as passing `:close` to
-    #    `Process#spawn`.
-    # *  **Redirect to null:** You may redirect to a null stream by passing
-    #    `:null` as the option value. This connects to a stream that is not
-    #    closed but contains no data, i.e. `/dev/null` on unix systems. This is
-    #    the default if the subprocess is run in the background.
-    # *  **Inherit parent stream:** You may inherit the corresponding stream in
-    #    the parent process by passing `:inherit` as the option value. This is
-    #    the default if the subprocess is *not* run in the background.
-    # *  **Redirect to a file:** You may redirect to a file. This reads from an
-    #    existing file when connected to `:in`, and creates or appends to a
-    #    file when connected to `:out` or `:err`. To specify a file, use the
-    #    setting `[:file, "/path/to/file"]`. You may also, when writing a file,
-    #    append an optional mode and permission code to the array. For
-    #    example, `[:file, "/path/to/file", "a", 0644]`.
-    # *  **Redirect to an IO object:** You may redirect to an IO object in the
-    #    parent process, by passing the IO object as the option value. You may
-    #    use any IO object. For example, you could connect the child's output
-    #    to the parent's error using `out: $stderr`, or you could connect to an
-    #    existing File stream. Unlike `Process#spawn`, this works for IO
-    #    objects that do not have a corresponding file descriptor (such as
-    #    StringIO objects). In such a case, a thread will be spawned to pipe
-    #    the IO data through to the child process.
-    # *  **Combine with another child stream:** You may redirect one child
-    #    output stream to another, to combine them. To merge the child's error
-    #    stream into its output stream, use `err: [:child, :out]`.
-    # *  **Read from a string:** You may pass a string to the input stream by
-    #    setting `[:string, "the string"]`. This works only for `:in`.
-    # *  **Capture output stream:** You may capture a stream and make it
-    #    available on the {Toys::Utils::Exec::Result} object, using the setting
-    #    `:capture`. This works only for the `:out` and `:err` streams.
-    # *  **Use the controller:** You may hook a stream to the controller using
-    #    the setting `:controller`. You can then manipulate the stream via the
-    #    controller. If you pass a block to {Toys::Utils::Exec#exec}, it yields
-    #    the {Toys::Utils::Exec::Controller}, giving you access to streams.
+    #  *  **Close the stream:** You may close the stream by passing `:close` as
+    #     the option value. This is the same as passing `:close` to
+    #     `Process#spawn`.
+    #  *  **Redirect to null:** You may redirect to a null stream by passing
+    #     `:null` as the option value. This connects to a stream that is not
+    #     closed but contains no data, i.e. `/dev/null` on unix systems. This
+    #     is the default if the subprocess is run in the background.
+    #  *  **Inherit parent stream:** You may inherit the corresponding stream
+    #     in the parent process by passing `:inherit` as the option value. This
+    #     is the default if the subprocess is *not* run in the background.
+    #  *  **Redirect to a file:** You may redirect to a file. This reads from
+    #     an existing file when connected to `:in`, and creates or appends to a
+    #     file when connected to `:out` or `:err`. To specify a file, use the
+    #     setting `[:file, "/path/to/file"]`. You may also, when writing a
+    #     file, append an optional mode and permission code to the array. For
+    #     example, `[:file, "/path/to/file", "a", 0644]`.
+    #  *  **Redirect to an IO object:** You may redirect to an IO object in the
+    #     parent process, by passing the IO object as the option value. You may
+    #     use any IO object. For example, you could connect the child's output
+    #     to the parent's error using `out: $stderr`, or you could connect to
+    #     an existing File stream. Unlike `Process#spawn`, this works for IO
+    #     objects that do not have a corresponding file descriptor (such as
+    #     StringIO objects). In such a case, a thread will be spawned to pipe
+    #     the IO data through to the child process.
+    #  *  **Combine with another child stream:** You may redirect one child
+    #     output stream to another, to combine them. To merge the child's error
+    #     stream into its output stream, use `err: [:child, :out]`.
+    #  *  **Read from a string:** You may pass a string to the input stream by
+    #     setting `[:string, "the string"]`. This works only for `:in`.
+    #  *  **Capture output stream:** You may capture a stream and make it
+    #     available on the {Toys::Utils::Exec::Result} object, using the
+    #     setting `:capture`. This works only for the `:out` and `:err`
+    #     streams.
+    #  *  **Use the controller:** You may hook a stream to the controller using
+    #     the setting `:controller`. You can then manipulate the stream via the
+    #     controller. If you pass a block to {Toys::Utils::Exec#exec}, it
+    #     yields the {Toys::Utils::Exec::Controller}, giving you access to
+    #     streams.
     #
     class Exec
       ##

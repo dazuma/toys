@@ -66,7 +66,8 @@ module Toys
       end
 
       ##
-      # A tool-wide highline instance
+      # A tool-wide [HighLine](https://www.rubydoc.info/gems/highline/HighLine)
+      # instance
       # @return [::HighLine]
       #
       def highline
@@ -74,84 +75,84 @@ module Toys
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:agree HighLine#agree
+      # Calls [HighLine#agree](https://www.rubydoc.info/gems/highline/HighLine:agree)
       #
       def agree(*args, &block)
         highline.agree(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:ask HighLine#ask
+      # Calls [HighLine#ask](https://www.rubydoc.info/gems/highline/HighLine:ask)
       #
       def ask(*args, &block)
         highline.ask(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:choose HighLine#choose
+      # Calls [HighLine#choose](https://www.rubydoc.info/gems/highline/HighLine:choose)
       #
       def choose(*args, &block)
         highline.choose(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:list HighLine#list
+      # Calls [HighLine#list](https://www.rubydoc.info/gems/highline/HighLine:list)
       #
       def list(*args, &block)
         highline.list(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:say HighLine#say
+      # Calls [HighLine#say](https://www.rubydoc.info/gems/highline/HighLine:say)
       #
       def say(*args, &block)
         highline.say(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:indent HighLine#indent
+      # Calls [HighLine#indent](https://www.rubydoc.info/gems/highline/HighLine:indent)
       #
       def indent(*args, &block)
         highline.indent(*args, &block)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:newline HighLine#newline
+      # Calls [HighLine#newline](https://www.rubydoc.info/gems/highline/HighLine:newline)
       #
       def newline
         highline.newline
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:puts HighLine#puts
+      # Calls [HighLine#puts](https://www.rubydoc.info/gems/highline/HighLine:puts)
       #
       def puts(*args)
         highline.puts(*args)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:color HighLine#color
+      # Calls [HighLine#color](https://www.rubydoc.info/gems/highline/HighLine:color)
       #
       def color(*args)
         highline.color(*args)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:color_code HighLine#color_code
+      # Calls [HighLine#color_code](https://www.rubydoc.info/gems/highline/HighLine:color_code)
       #
       def color_code(*args)
         highline.color_code(*args)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:uncolor HighLine#uncolor
+      # Calls [HighLine#uncolor](https://www.rubydoc.info/gems/highline/HighLine:uncolor)
       #
       def uncolor(*args)
         highline.uncolor(*args)
       end
 
       ##
-      # @see https://www.rubydoc.info/gems/highline/HighLine:new_scope HighLine#new_scope
+      # Calls [HighLine#new_scope](https://www.rubydoc.info/gems/highline/HighLine:new_scope)
       #
       def new_scope
         highline.new_scope

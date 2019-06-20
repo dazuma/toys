@@ -40,11 +40,11 @@ module Toys
     # This class supports ANSI styled output where supported.
     #
     # Styles may be specified in any of the following forms:
-    # *   A symbol indicating the name of a well-known style, or the name of
+    #  *  A symbol indicating the name of a well-known style, or the name of
     #     a defined style.
-    # *   An rgb string in hex "rgb" or "rrggbb" form.
-    # *   An ANSI code string in `\e[XXm` form.
-    # *   An array of ANSI codes as integers.
+    #  *  An rgb string in hex "rgb" or "rrggbb" form.
+    #  *  An ANSI code string in `\e[XXm` form.
+    #  *  An array of ANSI codes as integers.
     #
     class Terminal
       ##

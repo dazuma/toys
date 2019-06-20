@@ -112,8 +112,8 @@ tool "bash-completion" do
     def run
       require "toys/utils/completion_engine"
       result = ::Toys::Utils::CompletionEngine::Bash.new(cli).run
-      if result.negative?
-        logger.error("This tool must be invoked as a bash completion command.")
+      if result > 1
+        logger.fatal("This tool must be invoked as a bash completion command.")
       end
       exit(result)
     end

@@ -30,9 +30,9 @@ module Toys
   # can be called by your tool (such as {#logger} and {#exit}.)
   #
   # This class also manages the "data" available to your tool when it runs.
-  # This data is a hash of key-value pairs. This data consists of values set by
-  # flags and arguments defined by the tool, along with a few "well-known"
-  # values such as the logger and verbosity level.
+  # This data is a hash of key-value pairs. It consists of values set by flags
+  # and arguments defined by the tool, plus some "well-known" values such as
+  # the logger and verbosity level.
   #
   # You can obtain a value from the data using the {Toys::Context#get} method.
   # Additionally, convenience methods are provided for many of the well-known
@@ -43,8 +43,9 @@ module Toys
   # add a method called `abc` that you can call to get the value.
   #
   # By convention, flags and arguments defined by your tool should use strings
-  # or symbols as keys. Any other keys should correspond either to well-known
-  # data, or private information used internally by middleware and mixins. The
+  # or symbols as keys. Keys that are not strings or symbols should either be
+  # well-known keys such as {Toys::Context::Key::VERBOSITY}, or should be used
+  # for internal private information needed by middleware and mixins. The
   # module {Toys::Context::Key} defines a number of well-known keys as
   # constants.
   #
@@ -73,14 +74,14 @@ module Toys
       ARGS = ::Object.new.freeze
 
       ##
-      # Context key for the currently running {Toys::CLI}. You can use this
-      # object to run other tools from your tool by calling {Toys::CLI#run}.
+      # Context key for the currently running {Toys::CLI}. You can use the
+      # value to run other tools from your tool by calling {Toys::CLI#run}.
       # @return [Object]
       #
       CLI = ::Object.new.freeze
 
       ##
-      # Context key for the context directory.
+      # Context key for the context directory path. The value is a string
       # @return [Object]
       #
       CONTEXT_DIRECTORY = ::Object.new.freeze
@@ -92,7 +93,7 @@ module Toys
       LOGGER = ::Object.new.freeze
 
       ##
-      # Context key for the `Toys::Tool` object being executed.
+      # Context key for the {Toys::Tool} object being executed.
       # @return [Object]
       #
       TOOL = ::Object.new.freeze
@@ -105,40 +106,43 @@ module Toys
       TOOL_NAME = ::Object.new.freeze
 
       ##
-      # Context key for the `Toys::SourceInfo` describing the
-      # source of this tool.
+      # Context key for the {Toys::SourceInfo} describing the source of this
+      # tool.
       # @return [Object]
       #
       TOOL_SOURCE = ::Object.new.freeze
 
       ##
-      # Context key for all unmatched args in order.
+      # Context key for all unmatched args in order. The value is an array of
+      # strings.
       # @return [Object]
       #
       UNMATCHED_ARGS = ::Object.new.freeze
 
       ##
-      # Context key for unmatched flags.
+      # Context key for unmatched flags. The value is an array of strings.
       # @return [Object]
       #
       UNMATCHED_FLAGS = ::Object.new.freeze
 
       ##
-      # Context key for unmatched positional args.
+      # Context key for unmatched positional args. The value is an array of
+      # strings.
       # @return [Object]
       #
       UNMATCHED_POSITIONAL = ::Object.new.freeze
 
       ##
-      # Context key for the list of usage errors raised. Value is an array
+      # Context key for the list of usage errors raised. The value is an array
       # of {Toys::ArgParser::UsageError}.
       # @return [Object]
       #
       USAGE_ERRORS = ::Object.new.freeze
 
       ##
-      # Context key for the verbosity value. Verbosity is an integer defaulting
-      # to 0, with higher values meaning more verbose and lower meaning quieter.
+      # Context key for the verbosity value. The value is an integer defaulting
+      # to 0, with higher values meaning more verbose and lower meaning more
+      # quiet.
       # @return [Object]
       #
       VERBOSITY = ::Object.new.freeze

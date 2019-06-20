@@ -343,18 +343,18 @@ module Toys
     # not provide a converter, a default converter will be provided depending
     # on the types of objects serving as the range limits. Specifically:
     #
-    # *   If the range beginning and end are both `Integer`, then input strings
+    #  *  If the range beginning and end are both `Integer`, then input strings
     #     are likewise converted to `Integer` when matched against the range.
     #     Accepted values are returned as integers.
-    # *   If the range beginning and end are both `Float`, then input strings
+    #  *  If the range beginning and end are both `Float`, then input strings
     #     are likewise converted to `Float`.
-    # *   If the range beginning and end are both `Rational`, then input
+    #  *  If the range beginning and end are both `Rational`, then input
     #     strings are likewise converted to `Rational`.
-    # *   If the range beginning and end are both `Numeric` types but different
+    #  *  If the range beginning and end are both `Numeric` types but different
     #     subtypes (e.g. an `Integer` and a `Float`), then any type of numeric
     #     input (integer, float, rational) is accepted and matched against the
     #     range.
-    # *   If the range beginning and/or end are not numeric types, then no
+    #  *  If the range beginning and/or end are not numeric types, then no
     #     conversion is done by default.
     #
     class Range < Simple
@@ -468,11 +468,11 @@ module Toys
       #
       # Recognized specs include:
       #
-      # *   Any well-known acceptor recognized by OptionParser, such as
+      #  *  Any well-known acceptor recognized by OptionParser, such as
       #     `Integer`, `Array`, or `OptionParser::DecimalInteger`. Any block
       #     and type description you provide are ignored.
       #
-      # *   Any **regular expression**. The returned acceptor validates only if
+      #  *  Any **regular expression**. The returned acceptor validates only if
       #     the regex matches the *entire string parameter*.
       #
       #     You can also provide an optional conversion function as a block. If
@@ -482,7 +482,7 @@ module Toys
       #     that will be stored in the context data. If you do not provide a
       #     block, no conversion takes place, and the original string is used.
       #
-      # *   An **array** of possible values. The acceptor validates if the
+      #  *  An **array** of possible values. The acceptor validates if the
       #     string parameter matches the *string form* of one of the array
       #     elements (i.e. the results of calling `to_s` on the element.)
       #
@@ -492,14 +492,14 @@ module Toys
       #     and then store the symbol `:foo` in the tool data. You may not
       #     further customize the conversion function; any block is ignored.
       #
-      # *   A **range** of possible values. The acceptor validates if the
+      #  *  A **range** of possible values. The acceptor validates if the
       #     string parameter, after conversion to the range type, lies within
       #     the range. The final value stored in context data is the converted
       #     value. For numeric ranges, conversion is provided, but if the range
       #     has a different type, you must provide the conversion function as
       #     a block.
       #
-      # *   A **function** as a Proc (where the block is ignored) or a block
+      #  *  A **function** as a Proc (where the block is ignored) or a block
       #     (if the spec is nil). This function performs *both* validation and
       #     conversion. It should take the string parameter as its argument,
       #     and it must either return the object that should be stored in the
@@ -508,7 +508,7 @@ module Toys
       #     return the sentinel value {Toys::Acceptor::REJECT} to indicate that
       #     the string is invalid.
       #
-      # *   The value `nil` or `:default` with no block, to indicate the
+      #  *  The value `nil` or `:default` with no block, to indicate the
       #     default pass-through acceptor {Toys::Acceptor::DEFAULT}. Any type
       #     description you provide is ignored.
       #

@@ -70,26 +70,26 @@ module Toys
     # paths) are set as options passed to the constructor. These options fall
     # roughly into four categories:
     #
-    # * Options affecting output behavior:
-    #   * `logger`: The logger
-    #   * `base_level`: The default log level
-    #   * `error_handler`: Callback for handling exceptions
-    #   * `executable_name`: The name of the executable
-    # * Options affecting tool specification
-    #   * `extra_delimibers`: Tool name delimiters besides space
-    #   * `completion`: Tab completion handler
-    # * Options affecting tool definition
-    #   * `middleware_stack`: The middleware applied to all tools
-    #   * `mixin_lookup`: Where to find well-known mixins
-    #   * `middleware_lookup`: Where to find well-known middleware
-    #   * `template_lookup`: Where to find well-known templates
-    # * Options affecting tool files and directories
-    #   * `config_dir_name`: Directory name containing tool files
-    #   * `config_file_name`: File name for tools
-    #   * `index_file_name`: Name of index files in tool directories
-    #   * `preload_file_name`: Name of preload files in tool directories
-    #   * `preload_dir_name`: Name of preload directories in tool directories
-    #   * `data_dir_name`: Name of data directories in tool directories
+    #  *  Options affecting output behavior:
+    #      *  `logger`: The logger
+    #      *  `base_level`: The default log level
+    #      *  `error_handler`: Callback for handling exceptions
+    #      *  `executable_name`: The name of the executable
+    #  *  Options affecting tool specification
+    #      *  `extra_delimibers`: Tool name delimiters besides space
+    #      *  `completion`: Tab completion handler
+    #  *  Options affecting tool definition
+    #      *  `middleware_stack`: The middleware applied to all tools
+    #      *  `mixin_lookup`: Where to find well-known mixins
+    #      *  `middleware_lookup`: Where to find well-known middleware
+    #      *  `template_lookup`: Where to find well-known templates
+    #  *  Options affecting tool files and directories
+    #      *  `config_dir_name`: Directory name containing tool files
+    #      *  `config_file_name`: File name for tools
+    #      *  `index_file_name`: Name of index files in tool directories
+    #      *  `preload_file_name`: Name of preload files in tool directories
+    #      *  `preload_dir_name`: Name of preload directories in tool directories
+    #      *  `data_dir_name`: Name of data directories in tool directories
     #
     # @param logger [Logger] The logger to use.
     #     Optional. If not provided, will use a default logger that writes
@@ -462,7 +462,7 @@ module Toys
     def handle_usage_errors(context, tool)
       usage_errors = context[Context::Key::USAGE_ERRORS]
       handler = tool.usage_error_handler
-      raise UsageError, usage_errors if handler.nil?
+      raise ArgParsingError, usage_errors if handler.nil?
       handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
       if handler.arity.zero?
         context.instance_exec(&handler)
@@ -529,7 +529,7 @@ module Toys
 
       def exit_code_for(error)
         case error
-        when UsageError
+        when ArgParsingError
           2
         when NotRunnableError
           126
@@ -589,13 +589,12 @@ module Toys
       # point for a typical CLI. This set includes the following in order:
       #
       # *  {Toys::StandardMiddleware::SetDefaultDescriptions} providing
-      #    defaults for description fields
-      # *  {Toys::StandardMiddleware::ShowHelp} adding the `--help` flag
+      #    defaults for description fields.
+      # *  {Toys::StandardMiddleware::ShowHelp} adding the `--help` flag and
+      #    providing default behavior for namespaces.
       # *  {Toys::StandardMiddleware::HandleUsageErrors}
-      # *  {Toys::StandardMiddleware::ShowHelp} providing default behavior for
-      #    namespaces
       # *  {Toys::StandardMiddleware::AddVerbosityFlags} adding the `--verbose`
-      #    and `--quiet` flags for managing the logger level
+      #    and `--quiet` flags for managing the logger level.
       #
       # @return [Array<Toys::Middleware>]
       #

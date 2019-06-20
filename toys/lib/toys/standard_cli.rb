@@ -135,12 +135,12 @@ module Toys
     # Add paths for a toys standard CLI. Paths added, in order from high to
     # low priority, are:
     #
-    # *  Search the current directory and all ancestors for config files and
-    #    directories.
-    # *  Read the `TOYS_PATH` environment variable and search for config files
-    #    and directories in the given paths. If this variable is empty, use
-    #    `$HOME:/etc` by default.
-    # *  The builtins for the standard toys executable.
+    #  *  Search the current directory and all ancestors for config files and
+    #     directories.
+    #  *  Read the `TOYS_PATH` environment variable and search for config files
+    #     and directories in the given paths. If this variable is empty, use
+    #     `$HOME:/etc` by default.
+    #  *  The builtins for the standard toys executable.
     #
     # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.

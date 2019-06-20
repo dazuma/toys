@@ -137,13 +137,13 @@ module Toys
 
     ##
     # Returns an array of Flag::Syntax for the flags.
-    # @return [Array<Flag::Syntax>]
+    # @return [Array<Toys::Flag::Syntax>]
     #
     attr_reader :flag_syntax
 
     ##
     # Returns the effective acceptor.
-    # @return [Tool::Acceptor::Base]
+    # @return [Toys::Acceptor::Base]
     #
     attr_reader :acceptor
 
@@ -159,10 +159,10 @@ module Toys
     # When reading, this is always returned as a {Toys::WrappableString}.
     #
     # When setting, the description may be provided as any of the following:
-    # *   A {Toys::WrappableString}.
-    # *   A normal String, which will be transformed into a
+    #  *  A {Toys::WrappableString}.
+    #  *  A normal String, which will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String, which will be transformed into a
+    #  *  An Array of String, which will be transformed into a
     #     {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #
@@ -178,10 +178,10 @@ module Toys
     #
     # When setting, the description must be provided as an Array where *each
     # element* may be any of the following:
-    # *   A {Toys::WrappableString} representing one line.
-    # *   A normal String representing a line. This will be transformed into a
+    #  *  A {Toys::WrappableString} representing one line.
+    #  *  A normal String representing a line. This will be transformed into a
     #     {Toys::WrappableString} using spaces as word delimiters.
-    # *   An Array of String representing a line. This will be transformed into
+    #  *  An Array of String representing a line. This will be transformed into
     #     a {Toys::WrappableString} where each array element represents an
     #     individual word for wrapping.
     #
@@ -499,17 +499,92 @@ module Toys
 
       # rubocop:enable Style/PerlBackrefs
 
+      ##
+      # The original string that was parsed to produce this syntax.
+      # @return [String]
+      #
       attr_reader :original_str
+
+      ##
+      # The flags (without values) corresponding to this syntax.
+      # @return [Array<String>]
+      #
       attr_reader :flags
+
+      ##
+      # The flag (without values) corresponding to the normal "positive" form
+      # of this flag.
+      # @return [String]
+      #
       attr_reader :positive_flag
+
+      ##
+      # The flag (without values) corresponding to the "negative" form of this
+      # flag, if any. i.e. if the original string was `"--[no-]abc"`, the
+      # negative flag is `"--no-abc"`.
+      # @return [String] The negative form.
+      # @return [nil] if the flag has no negative form.
+      #
       attr_reader :negative_flag
+
+      ##
+      # The original string with the value (if any) stripped, but retaining
+      # the `[no-]` prefix if present.
+      # @return [String]
+      #
       attr_reader :str_without_value
+
+      ##
+      # A string used to sort this flag compared with others.
+      # @return [String]
+      #
       attr_reader :sort_str
+
+      ##
+      # The style of flag (`:long` or `:short`).
+      # @return [:long] if this is a long flag (i.e. double hyphen)
+      # @return [:short] if this is a short flag (i.e. single hyphen with one
+      #     character).
+      #
       attr_reader :flag_style
+
+      ##
+      # The type of flag (`:boolean` or `:value`)
+      # @return [:boolean] if this is a boolean flag (i.e. no value)
+      # @return [:value] if this flag takes a value (even if optional)
+      #
       attr_reader :flag_type
+
+      ##
+      # The type of value (`:required` or `:optional`)
+      # @return [:required] if this flag takes a required value
+      # @return [:optional] if this flag takes an optional value
+      # @return [nil] if this flag is a boolean flag
+      #
       attr_reader :value_type
+
+      ##
+      # The default delimiter used for the value of this flag. This could be
+      # `""` or `" "` for a short flag, or `" "` or `"="` for a long flag.
+      # @return [String] delimiter
+      # @return [nil] if this flag is a boolean flag
+      #
       attr_reader :value_delim
+
+      ##
+      # The default "label" for the value. e.g. in `--abc=VAL` the label is
+      # `"VAL"`.
+      # @return [String] the label
+      # @return [nil] if this flag is a boolean flag
+      #
       attr_reader :value_label
+
+      ##
+      # A canonical string representing this flag's syntax, normalized to match
+      # the type, delimiters, etc. settings of other flag syntaxes. This is
+      # generally used in help strings to represent this flag.
+      # @return [String]
+      #
       attr_reader :canonical_str
 
       ## @private

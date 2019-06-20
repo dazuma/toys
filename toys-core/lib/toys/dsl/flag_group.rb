@@ -69,11 +69,11 @@ module Toys
       # The flags themselves should be provided in OptionParser form. Following
       # are examples of valid syntax.
       #
-      # *   `-a` : A short boolean switch. When this appears as an argument,
+      #  *  `-a` : A short boolean switch. When this appears as an argument,
       #     the value is set to `true`.
-      # *   `--abc` : A long boolean switch. When this appears as an argument,
+      #  *  `--abc` : A long boolean switch. When this appears as an argument,
       #     the value is set to `true`.
-      # *   `-aVAL` or `-a VAL` : A short flag that takes a required value.
+      #  *  `-aVAL` or `-a VAL` : A short flag that takes a required value.
       #     These two forms are treated identically. If this argument appears
       #     with a value attached (e.g. `-afoo`), the attached string (e.g.
       #     `"foo"`) is taken as the value. Otherwise, the following argument
@@ -81,12 +81,12 @@ module Toys
       #     `"foo"`.) The following argument is treated as the value even if it
       #     looks like a flag (e.g. `-a -a` causes the string `"-a"` to be
       #     taken as the value.)
-      # *   `-a[VAL]` : A short flag that takes an optional value. If this
+      #  *  `-a[VAL]` : A short flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `-afoo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the value
       #     is set to `true`. The following argument is never interpreted as
       #     the value. (Compare with `-a [VAL]`.)
-      # *   `-a [VAL]` : A short flag that takes an optional value. If this
+      #  *  `-a [VAL]` : A short flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `-afoo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, if the
       #     following argument does not look like a flag (i.e. it does not
@@ -94,7 +94,7 @@ module Toys
       #     causes the string `"foo"` to be taken as the value.). If there is
       #     no following argument, or the following argument looks like a flag,
       #     the value is set to `true`. (Compare with `-a[VAL]`.)
-      # *   `--abc=VAL` or `--abc VAL` : A long flag that takes a required
+      #  *  `--abc=VAL` or `--abc VAL` : A long flag that takes a required
       #     value. These two forms are treated identically. If this argument
       #     appears with a value attached (e.g. `--abc=foo`), the attached
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
@@ -102,12 +102,12 @@ module Toys
       #     value is set to `"foo"`.) The following argument is treated as the
       #     value even if it looks like a flag (e.g. `--abc --abc` causes the
       #     string `"--abc"` to be taken as the value.)
-      # *   `--abc[=VAL]` : A long flag that takes an optional value. If this
+      #  *  `--abc[=VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,
       #     the value is set to `true`. The following argument is never
       #     interpreted as the value. (Compare with `--abc [VAL]`.)
-      # *   `--abc [VAL]` : A long flag that takes an optional value. If this
+      #  *  `--abc [VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise, if
       #     the following argument does not look like a flag (i.e. it does not
@@ -115,7 +115,7 @@ module Toys
       #     causes the string `"foo"` to be taken as the value.). If there is
       #     no following argument, or the following argument looks like a flag,
       #     the value is set to `true`. (Compare with `--abc=[VAL]`.)
-      # *   `--[no-]abc` : A long boolean switch that can be turned either on
+      #  *  `--[no-]abc` : A long boolean switch that can be turned either on
       #     or off. This effectively creates two flags, `--abc` which sets the
       #     value to `true`, and `--no-abc` which sets the falue to `false`.
       #
@@ -234,10 +234,10 @@ module Toys
       # directly to this method, or you may pass any input that can be used to
       # construct a wrappable string:
       #
-      # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+      #  *  If you pass a String, its whitespace will be compacted (i.e. tabs,
       #     newlines, and multiple consecutive whitespace will be turned into a
       #     single space), and it will be word-wrapped on whitespace.
-      # *   If you pass an Array of Strings, each string will be considered a
+      #  *  If you pass an Array of Strings, each string will be considered a
       #     literal word that cannot be broken, and wrapping will be done
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.

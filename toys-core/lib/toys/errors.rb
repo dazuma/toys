@@ -35,11 +35,11 @@ module Toys
   end
 
   ##
-  # An exception indicating a usage error.
+  # An exception indicating problems parsing arguments.
   #
-  class UsageError < ::StandardError
+  class ArgParsingError < ::StandardError
     ##
-    # Create a UsageError given a set of error messages
+    # Create an ArgParsingError given a set of error messages
     # @param errors [Array<Toys::ArgParser::UsageError>]
     #
     def initialize(errors)
@@ -48,7 +48,7 @@ module Toys
     end
 
     ##
-    # The usage errors.
+    # The individual usage error messages.
     # @return [Array<Toys::ArgParser::UsageError>]
     #
     attr_reader :usage_errors

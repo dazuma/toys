@@ -120,10 +120,10 @@ module Toys
       # directly to this method, or you may pass any input that can be used to
       # construct a wrappable string:
       #
-      # *   If you pass a String, its whitespace will be compacted (i.e. tabs,
+      #  *  If you pass a String, its whitespace will be compacted (i.e. tabs,
       #     newlines, and multiple consecutive whitespace will be turned into a
       #     single space), and it will be word-wrapped on whitespace.
-      # *   If you pass an Array of Strings, each string will be considered a
+      #  *  If you pass an Array of Strings, each string will be considered a
       #     literal word that cannot be broken, and wrapping will be done
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.

@@ -40,9 +40,11 @@ module Toys
       # Create a UsageError given a message and common data
       #
       # @param message [String] The basic error message.
-      # @param name [String] The name of the element (normally flag or
-      #     positional argument) that reported the error.
-      # @param value [String] The value that was rejected.
+      # @param name [String,nil] The name of the element (normally flag or
+      #     positional argument) that reported the error, or nil if there is
+      #     no definite element.
+      # @param value [String,nil] The value that was rejected, or nil if not
+      #     applicable.
       # @param suggestions [Array<String>,nil] An array of suggestions from
       #     DidYouMean, or nil if not applicable.
       #
@@ -55,36 +57,42 @@ module Toys
 
       ##
       # The basic error message. Does not include suggestions, if any.
+      #
       # @return [String]
       #
       attr_reader :message
 
       ##
-      # The name of the element (normally flag or positional argument) that
+      # The name of the element (normally a flag or positional argument) that
       # reported the error.
-      # @return [String]
+      #
+      # @return [String] The element name.
+      # @return [nil] if there is no definite element source.
       #
       attr_reader :name
 
       ##
       # The value that was rejected.
-      # @return [String]
+      #
+      # @return [String] the value string
+      # @return [nil] if a value is not applicable to this error.
       #
       attr_reader :value
 
       ##
       # An array of suggestions from DidYouMean.
       #
-      # @return [Array<String>] array of suggestions
-      # @return [nil] if suggestions are not applicable to this error
+      # @return [Array<String>] array of suggestions.
+      # @return [nil] if suggestions are not applicable to this error.
       #
       attr_reader :suggestions
 
       ##
       # A fully formatted error message including suggestions.
+      #
       # @return [String]
       #
-      def to_s
+      def full_message
         if suggestions && !suggestions.empty?
           alts_str = suggestions.join("\n                 ")
           "#{message}\nDid you mean...  #{alts_str}"
@@ -92,6 +100,7 @@ module Toys
           message
         end
       end
+      alias to_s full_message
     end
 
     ##
@@ -382,27 +391,18 @@ module Toys
     end
 
     ##
-    # Incrementally parse an array of strings
+    # Incrementally parse a single string or an array of strings
     #
-    # @param args [Array<String>]
+    # @param args [String,Array<String>]
     # @return [self]
     #
     def parse(args)
-      args.each { |arg| add(arg) }
-      self
-    end
-
-    ##
-    # Incrementally parse a single string
-    #
-    # @param arg [String]
-    # @return [self]
-    #
-    def add(arg)
       raise "Parser has finished" if @finished
-      @parsed_args << arg
-      unless @tool.argument_parsing_disabled?
-        check_flag_value(arg) || check_flag(arg) || handle_positional(arg)
+      Array(args).each do |arg|
+        @parsed_args << arg
+        unless @tool.argument_parsing_disabled?
+          check_flag_value(arg) || check_flag(arg) || handle_positional(arg)
+        end
       end
       self
     end
@@ -411,11 +411,11 @@ module Toys
     # Complete parsing. This should be called after all arguments have been
     # processed. It does a final check for any errors, including:
     #
-    # *   The arguments ended with a flag that was expecting a value but wasn't
+    #  *  The arguments ended with a flag that was expecting a value but wasn't
     #     provided.
-    # *   One or more required arguments were never given a value.
-    # *   One or more extra arguments were provided.
-    # *   Restrictions defined in one or more flag groups were not fulfilled.
+    #  *  One or more required arguments were never given a value.
+    #  *  One or more extra arguments were provided.
+    #  *  Restrictions defined in one or more flag groups were not fulfilled.
     #
     # Any errors are added to the errors array. It also fills in final values
     # for `Context::Key::USAGE_ERRORS` and `Context::Key::ARGS`.

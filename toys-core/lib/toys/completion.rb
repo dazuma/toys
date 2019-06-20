@@ -26,8 +26,8 @@ module Toys
   # A Completion is a callable Proc that determines candidates for shell tab
   # completion. You pass a {Toys::Completion::Context} object (which includes
   # the current string fragment and other information) and it returns an array
-  # of candidates for completing the fragment, represented by
-  # {Toys::Completion::Candidate} objects.
+  # of candidates, represented by {Toys::Completion::Candidate} objects, for
+  # completing the fragment.
   #
   # A useful method here is the class method {Toys::Completion.create} which
   # takes a variety of inputs and returns a suitable completion Proc.
@@ -38,14 +38,14 @@ module Toys
     #
     class Context
       ##
-      # Create completion context
+      # Create a completion context
       #
       # @param cli [Toys::CLI] The CLI being run. Required.
       # @param previous_words [Array<String>] Array of complete strings that
       #     appeared prior to the fragment to complete.
-      # @param fragment_prefix [String] The non-completed prefix (e.g. "key=")
-      #     of the fragment.
-      # @param fragment [String] The string fragment to complete
+      # @param fragment_prefix [String] A prefix in the fragment that does not
+      #     participate in completion. (e.g. "key=")
+      # @param fragment [String] The string fragment to complete.
       # @param params [Hash] Miscellaneous context data
       #
       def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", **params)
@@ -392,24 +392,24 @@ module Toys
     #
     # Recognized specs include:
     #
-    # *   `:empty`: Returns the empty completion. Any block or options are
+    #  *  `:empty`: Returns the empty completion. Any block or options are
     #     ignored.
     #
-    # *   `:file_system`: Returns a completion that searches the current
+    #  *  `:file_system`: Returns a completion that searches the current
     #     directory for file and directory names. You may also pass any of the
     #     options recognized by {Toys::Completion::FileSystem#initialize}. The
     #     block is ignored.
     #
-    # *   An **Array** of strings. Returns a completion that uses those values
+    #  *  An **Array** of strings. Returns a completion that uses those values
     #     as candidates. You may also pass any of the options recognized by
     #     {Toys::Completion::Enum#initialize}. The block is ignored.
     #
-    # *   A **function**, either passed as a Proc (where the block is ignored)
+    #  *  A **function**, either passed as a Proc (where the block is ignored)
     #     or as a block (if the spec is nil). The function must behave as a
     #     completion object, taking {Toys::Completion::Context} as the sole
     #     argument, and returning an array of {Toys::Completion::Candidate}.
     #
-    # *   `:default` and `nil` indicate the **default completion**. For this
+    #  *  `:default` and `nil` indicate the **default completion**. For this
     #     method, the default is the empty completion (i.e. these are synonyms
     #     for `:empty`). However, other completion resolution methods might
     #     have a different default.

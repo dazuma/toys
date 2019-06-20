@@ -52,35 +52,35 @@ module Toys
     #
     # Two special options are also recognized by the mixin.
     #
-    # *  A **:result_callback** proc may take a second argument. If it does,
-    #    the context object is passed as the second argument. This is useful if
-    #    a `:result_callback` is applied to the entire tool by passing it to
-    #    the `include` directive. In that case, `self` is not set to the
-    #    context object as it normally would be in a tool's `run` method, so
-    #    you cannot access it otherwise. For example, here is how to log the
-    #    exit code for every subcommand:
+    #  *  A **:result_callback** proc may take a second argument. If it does,
+    #     the context object is passed as the second argument. This is useful
+    #     if a `:result_callback` is applied to the entire tool by passing it
+    #     to the `include` directive. In that case, `self` is not set to the
+    #     context object as it normally would be in a tool's `run` method, so
+    #     you cannot access it otherwise. For example, here is how to log the
+    #     exit code for every subcommand:
     #
-    #        tool "mytool" do
-    #          callback = proc do |result, context|
-    #            context.logger.info "Exit code: #{result.exit_code}"
-    #          end
-    #          include :exec, result_callback: callback
-    #          # ...
-    #        end
+    #         tool "mytool" do
+    #           callback = proc do |result, context|
+    #             context.logger.info "Exit code: #{result.exit_code}"
+    #           end
+    #           include :exec, result_callback: callback
+    #           # ...
+    #         end
     #
-    #    You may also pass a symbol as the `:result_callback`. The method with
-    #    that name is then called as the callback. The method must take one
-    #    argument, the result object.
+    #     You may also pass a symbol as the `:result_callback`. The method with
+    #     that name is then called as the callback. The method must take one
+    #     argument, the result object.
     #
-    # *  If **:exit_on_nonzero_status** is set to true, a nonzero exit code
-    #    returned by the subprocess will also cause the tool to exit
-    #    immediately with that same code.
+    #  *  If **:exit_on_nonzero_status** is set to true, a nonzero exit code
+    #     returned by the subprocess will also cause the tool to exit
+    #     immediately with that same code.
     #
-    #    This is particularly useful as an option to the `include` directive,
-    #    where it causes any subprocess failure to abort the tool, similar to
-    #    setting `set -e` in a bash script.
+    #     This is particularly useful as an option to the `include` directive,
+    #     where it causes any subprocess failure to abort the tool, similar to
+    #     setting `set -e` in a bash script.
     #
-    #        include :exec, exit_on_nonzero_status: true
+    #         include :exec, exit_on_nonzero_status: true
     #
     module Exec
       include Mixin
@@ -133,9 +133,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec(cmd, opts = {}, &block)
         self[KEY].exec(cmd, Exec._setup_exec_opts(opts, self), &block)
@@ -154,9 +155,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec_ruby(args, opts = {}, &block)
         self[KEY].exec_ruby(args, Exec._setup_exec_opts(opts, self), &block)
@@ -176,9 +178,10 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Toys::Utils::Exec::Controller,Toys::Utils::Exec::Result] The
-      #     subprocess controller or result, depending on whether the process
-      #     is running in the background or foreground.
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
       #
       def exec_proc(func, opts = {}, &block)
         self[KEY].exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
