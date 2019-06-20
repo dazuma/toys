@@ -25,7 +25,7 @@ Details:
 * ADDED: Tools can control whether their flags can be invoked by partial matches.
 * ADDED: Function and range based acceptors.
 * ADDED: Flag handlers can accept the symbolic names `:set` and `:push` for common cases.
-* ADDED: The `:gem_build` template includes an `:install_gem` option. It also allows customization of gem output.
+* ADDED: The `:gem_build` template includes an `:install_gem` option. It also allows customization of gem output path.
 * ADDED: The `acceptor` directive takes an optional `type_desc` argument.
 * ADDED: The `accept` directives under flag and positional arg blocks in the DSL can now take blocks and `type_desc` values.
 * ADDED: Context keys `UNMATCHED_ARGS`, `UNMATCHED_POSITIONAL`, and `UNMATCHED_FLAGS` that provide arguments that were not handled during arg parsing.

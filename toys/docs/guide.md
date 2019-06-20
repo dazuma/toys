@@ -72,7 +72,7 @@ tool to run, and interprets flags and other command line arguments.
 
 The general form of the `toys` command line is:
 
-    $ toys [TOOL...] [FLAGS...] [ARGS...]
+    toys [TOOL...] [FLAGS...] [ARGS...]
 
 ### Tools
 
@@ -307,9 +307,7 @@ and arguments can be highly customized, the completion implementation actually
 requires *executing Toys* so it can analyze your tool configurations. This
 unfortunately means paying some upfront latency as the Ruby interpreter starts
 up. So you can expect a slight pause when evaluating tab completion for Toys,
-at least in comparison with most other tab completions. (Additionally, while
-Toys does support JRuby, installing tab completion for Toys on JRuby is not
-recommended because of JRuby's startup latency.)
+at least in comparison with most other tab completions.
 
 ## Defining tools
 
