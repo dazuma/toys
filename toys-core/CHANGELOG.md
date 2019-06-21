@@ -1,6 +1,6 @@
 # Release History
 
-### 0.8.0 / Unreleased
+### 0.8.0 / 2019-06-20
 
 This is a major update with significant new features and a bunch of fixes. It also includes a significant amount of internal reorganization and cleanup, some of which resulted in backward incompatible changes. Basic use should not be affected. All signifiant features planned for beta are now implemented.
 
