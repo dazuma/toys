@@ -1,5 +1,7 @@
 # Release History
 
+### 0.8.1 / Unreleased
+
 ### 0.8.0 / 2019-06-20
 
 This is a major update with significant new features and a bunch of fixes.

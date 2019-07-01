@@ -2,9 +2,9 @@
 
 [![CircleCI](https://circleci.com/gh/dazuma/toys/tree/master.svg?style=svg)](https://circleci.com/gh/dazuma/toys/tree/master)
 
-Toys is a configurable command line tool. Write commands in config files using
-a simple DSL, and Toys will provide the command line executable and take care
-of all the details such as argument parsing, online help, and error reporting.
+Toys is a configurable command line tool. Write commands in Ruby using a simple
+DSL, and Toys will provide the command line executable and take care of all the
+details such as argument parsing, online help, and error reporting.
 
 Toys is designed for software developers, IT professionals, and other power
 users who want to write and organize scripts to automate their workflows. It
@@ -289,7 +289,7 @@ toys-core, see [its documentation](https://www.rubydoc.info/gems/toys-core).
 
 ## Why Toys?
 
-I originally wrote Toys because I was accumulating dozens of **ad hoc* Ruby
+I originally wrote Toys because I was accumulating dozens of *ad hoc* Ruby
 scripts I had written to automate various tasks in my workflow, everything from
 refreshing credentials, to displaying git history in my favorite format, to
 running builds and tests of complex multi-component projects. It was becoming

@@ -1,8 +1,8 @@
 # Toys-Core
 
-Toys is a configurable command line tool. Write commands in config files using
-a simple DSL, and Toys will provide the command line executable and take care
-of all the details such as argument parsing, online help, and error reporting.
+Toys is a configurable command line tool. Write commands in Ruby using a simple
+DSL, and Toys will provide the command line executable and take care of all the
+details such as argument parsing, online help, and error reporting.
 
 Toys-Core is the command line tool framework underlying Toys. It can be used
 to write command line executables using the Toys DSL and the power of the Toys

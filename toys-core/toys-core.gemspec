@@ -34,7 +34,7 @@ require "toys/core_version"
   spec.summary = "Framework for creating command line executables"
   spec.description =
     "Toys-Core is the command line tool framework underlying Toys. It can be" \
-    " used to create command line executables using the internal Toys APIs."
+    " used to create command line executables using the Toys DSL and classes."
   spec.license = "MIT"
   spec.homepage = "https://github.com/dazuma/toys"
 

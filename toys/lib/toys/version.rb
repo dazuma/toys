@@ -26,5 +26,5 @@ module Toys
   # Current version of the Toys command line executable.
   # @return [String]
   #
-  VERSION = "0.8.0"
+  VERSION = "0.8.1.dev"
 end
