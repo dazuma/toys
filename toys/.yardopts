@@ -1,7 +1,7 @@
 --no-private
 --title=Toys
 --markup=markdown
---markup-provider redcarpet
+--markup-provider kramdown
 --main=README.md
 ./lib/**/*.rb
 -

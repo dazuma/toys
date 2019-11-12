@@ -28,14 +28,14 @@
 
 include :gems, suppress_confirm: true
 gem "highline", "~> 2.0"
+gem "kramdown", "~> 2.1"
 gem "minitest", "~> 5.11"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
 gem "rake", "~> 12.0"
-gem "redcarpet", "~> 3.4"
 gem "rspec", "~> 3.8"
-gem "rubocop", "~> 0.71.0"
-gem "yard", "~> 0.9.19"
+gem "rubocop", "~> 0.74.0"
+gem "yard", "~> 0.9.20"
 
 tool "install" do
   desc "Build and install the current gems"

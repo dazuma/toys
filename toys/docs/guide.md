@@ -662,7 +662,7 @@ Inferred flags will convert underscores to hyphens. So the following two
 definitions are also equivalent:
 
     flag :call_out
-    flag :call_out, "--call-out
+    flag :call_out, "--call-out"
 
 #### Handling optional values
 

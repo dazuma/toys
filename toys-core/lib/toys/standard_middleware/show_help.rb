@@ -294,7 +294,7 @@ module Toys
           include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
           wrap_width: terminal.width
         )
-        if less_path
+        if RUBY_PLATFORM != "java" && less_path
           require "toys/utils/exec"
           Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
         else

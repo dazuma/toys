@@ -290,9 +290,9 @@ module Toys
       #           puts "Building staging"
       #         end
       #       end
-      #       tool "staging" do
+      #       tool "production" do
       #         def run
-      #           puts "Building staging"
+      #           puts "Building production"
       #         end
       #       end
       #     end
