@@ -548,7 +548,11 @@ module Toys
 
     def tool_hidden?(tool, next_tool)
       return true if tool.full_name.any? { |n| n.start_with?("_") }
-      return tool_hidden?(resolve_alias(tool), nil) if tool.is_a?(Alias)
+      if tool.is_a?(Alias)
+        original_tool = resolve_alias(tool)
+        return true if original_tool.nil?
+        return tool_hidden?(original_tool, nil)
+      end
       !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 

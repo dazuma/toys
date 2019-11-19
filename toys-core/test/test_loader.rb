@@ -518,5 +518,19 @@ describe Toys::Loader do
       assert_equal(["ns1", "tool1_alias"], subtools[1].full_name)
       assert_equal(["ns1_alias"], subtools[2].full_name)
     end
+
+    it "ignores unattached aliases" do
+      loader.add_block(name: "test block") do
+        tool "ns1" do
+          tool "tool1" do
+            desc "hi"
+          end
+          alias_tool "good_alias", "tool1"
+          alias_tool "bad_alias", "tool2"
+        end
+      end
+      subtools = loader.list_subtools(["ns1"], recursive: true)
+      assert_equal(2, subtools.size)
+    end
   end
 end
