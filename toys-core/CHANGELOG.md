@@ -1,8 +1,9 @@
 # Release History
 
-### 0.8.1 / Unreleased
+### 0.8.1 / 2019-11-19
 
 * FIXED: Listing subtools would crash if a broken alias was present.
+* DOCUMENTATION: Switched from redcarpet to kramdown, and tried to make some structural fixes.
 
 ### 0.8.0 / 2019-06-20
 

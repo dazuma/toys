@@ -13,6 +13,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 ## Ideas under investigation
 
 * Test framework for tools
+* Evaluate options for closer Rails integration
 * Evaluate use cases for thread safety
 * Should it be possible to set require_exact_flag_match per-flag?
 * Convenience methods for creating pipes/splits/joins in exec
