@@ -1,46 +1,46 @@
-version: 2
+version: 2.1
+executors:
+  ruby23:
+    docker:
+      - image: "circleci/ruby:2.3-stretch"
+  ruby24:
+    docker:
+      - image: "circleci/ruby:2.4-stretch"
+  ruby25:
+    docker:
+      - image: "circleci/ruby:2.5-stretch"
+  ruby26:
+    docker:
+      - image: "circleci/ruby:2.6-stretch"
+commands:
+  toys-ci:
+    steps:
+      - checkout
+      - run:
+          name: CI
+          command: ./toys-dev do ci init , ci
 jobs:
-  Test Ruby 2.3:
-    docker:
-       - image: circleci/ruby:2.3-stretch
-    working_directory: ~/repo
+  test-ruby23:
+    executor: ruby23
     steps:
-      - checkout
-      - run:
-          name: CI on Ruby 2.3
-          command: ./toys-dev do ci init , ci
-  Test Ruby 2.4:
-    docker:
-       - image: circleci/ruby:2.4-stretch
-    working_directory: ~/repo
+      - toys-ci
+  test-ruby24:
+    executor: ruby24
     steps:
-      - checkout
-      - run:
-          name: CI on Ruby 2.4
-          command: ./toys-dev do ci init , ci
-  Test Ruby 2.5:
-    docker:
-       - image: circleci/ruby:2.5-stretch
-    working_directory: ~/repo
+      - toys-ci
+  test-ruby25:
+    executor: ruby25
     steps:
-      - checkout
-      - run:
-          name: CI on Ruby 2.5
-          command: ./toys-dev do ci init , ci
-  Test Ruby 2.6:
-    docker:
-       - image: circleci/ruby:2.6-stretch
-    working_directory: ~/repo
+      - toys-ci
+  test-ruby26:
+    executor: ruby26
     steps:
-      - checkout
-      - run:
-          name: CI on Ruby 2.6
-          command: ./toys-dev do ci init , ci
+      - toys-ci
 workflows:
   version: 2
   tests:
     jobs:
-      - Test Ruby 2.3
-      - Test Ruby 2.4
-      - Test Ruby 2.5
-      - Test Ruby 2.6
+      - test-ruby23
+      - test-ruby24
+      - test-ruby25
+      - test-ruby26
