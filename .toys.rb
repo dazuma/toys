@@ -34,7 +34,7 @@ gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.8"
-gem "rubocop", "~> 0.74.0"
+gem "rubocop", "~> 0.76.0"
 gem "yard", "~> 0.9.20"
 
 tool "install" do

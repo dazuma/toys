@@ -147,23 +147,7 @@ module Toys
     # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
-      orig_prefix, args = find_orig_prefix(args)
-      cur_prefix = orig_prefix
-      loop do
-        load_for_prefix(cur_prefix)
-        prefix = orig_prefix
-        loop do
-          tool = get_active_tool(prefix, [])
-          if tool
-            finish_definitions_in_tree(tool.full_name)
-            return [tool, args.slice(prefix.length..-1)]
-          end
-          break if prefix.empty? || prefix.length <= cur_prefix.length
-          prefix = prefix.slice(0..-2)
-        end
-        raise "Unexpected error" if cur_prefix.empty?
-        cur_prefix = cur_prefix.slice(0..-2)
-      end
+      internal_lookup(args, [])
     end
 
     ##
@@ -212,6 +196,19 @@ module Toys
         end
       end
       false
+    end
+
+    ##
+    # Splits the given path using the delimiters configured in this Loader.
+    # You may pass in either an array of strings, or a single string possibly
+    # delimited by path separators. Always returns an array of strings.
+    #
+    # @param str [String,Array<String>] The path to split.
+    # @return [Array<String>]
+    #
+    def split_path(str)
+      return str if str.is_a?(::Array)
+      @extra_delimiters ? str.split(@extra_delimiters) : [str]
     end
 
     ##
@@ -373,40 +370,61 @@ module Toys
       [orig_prefix, args]
     end
 
+    def internal_lookup(args, looked_up)
+      orig_prefix, args = find_orig_prefix(args)
+      prefix = orig_prefix
+      loop do
+        load_for_prefix(prefix)
+        tool = get_active_tool(prefix)
+        if tool
+          finish_definitions_in_tree(prefix)
+          remaining_args = args.slice(prefix.length..-1)
+          if tool.is_a?(Alias)
+            if looked_up.include?(prefix)
+              raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
+            end
+            looked_up << prefix
+            target = resolve_alias(tool)
+            unless target
+              raise ToolDefinitionError, "Cannot find target for alias #{prefix.inspect}"
+            end
+            return internal_lookup(target.full_name + remaining_args, looked_up)
+          else
+            return [tool, remaining_args]
+          end
+        end
+        prefix = prefix.slice(0..-2)
+      end
+    end
+
     def get_tool_data(words)
       @tool_data[words] ||= ToolData.new({}, nil, nil)
     end
 
     ##
-    # Returns the current effective tool given a name. Resolves any aliases.
+    # Returns the current effective tool given a name.
     #
     # If there is an active tool, returns it; otherwise, returns the highest
     # priority tool that has been defined. If no tool has been defined with
-    # the given name, returns `nil`.
+    # the given name, returns `nil`. Does not resolve aliases.
     #
-    def get_active_tool(words, looked_up = [])
+    def get_active_tool(words)
       tool_data = get_tool_data(words)
-      result = tool_data.active_definition
-      case result
-      when Alias
-        resolve_alias(result, looked_up)
-      when Tool
-        result
-      else
-        tool_data.top_definition
-      end
+      tool_data.active_definition || tool_data.top_definition
     end
 
     ##
-    # Resolves the given alias
+    # Resolves the given alias recursively.
     #
     def resolve_alias(alias_tool, looked_up = [])
       words = alias_tool.target_name
       if looked_up.include?(words)
         raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
       end
+      result = get_active_tool(words)
+      return result unless result.is_a?(Alias)
       looked_up << words
-      get_active_tool(words, looked_up)
+      resolve_alias(result, looked_up)
     end
 
     def resolve_middleware(input)

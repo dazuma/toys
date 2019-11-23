@@ -333,10 +333,7 @@ module Toys
       alias name tool
 
       ##
-      # Create an alias in the current namespace.
-      #
-      # An alias is an alternate name for a tool. The referenced tool must be
-      # in the same namespace.
+      # Create an alias, representing an alternate name for a tool.
       #
       # ## Example
       #
@@ -350,12 +347,40 @@ module Toys
       #     end
       #     alias_tool "t", "test"
       #
-      # @param word [String] The name of the alias
-      # @param target [String] The target of the alias
-      # @return [self]
+      # @overload alias_tool(word, target)
+      #   Point an alias at a relative target
+      #   @param word [String] The name of the alias
+      #   @param target [String,Array<String>] The target of the alias as a
+      #       relative path. This may be given as an array of strings, or a
+      #       single string possibly delimited by path separators.
+      #   @return [self]
       #
-      def alias_tool(word, target)
-        @__loader.make_alias(@__words + [word.to_s], @__words + [target.to_s], @__priority)
+      # @overload alias_tool(word, relative:)
+      #   Point an alias at a relative target
+      #   @param word [String] The name of the alias
+      #   @param relative [String,Array<String>] The target of the alias as a
+      #       relative path. This may be given as an array of strings, or a
+      #       single string possibly delimited by path separators.
+      #   @return [self]
+      #
+      # @overload alias_tool(word, absolute:)
+      #   Point an alias at a relative target
+      #   @param word [String] The name of the alias
+      #   @param absolute [String,Array<String>] The target of the alias as an
+      #       absolute path. This may be given as an array of strings, or a
+      #       single string possibly delimited by path separators.
+      #   @return [self]
+      #
+      def alias_tool(word, target = nil, absolute: nil, relative: nil)
+        target =
+          if absolute
+            @__loader.split_path(absolute)
+          elsif relative
+            @__words + @__loader.split_path(relative)
+          else
+            @__words + @__loader.split_path(target)
+          end
+        @__loader.make_alias(@__words + [word.to_s], target, @__priority)
         self
       end
 
@@ -1121,8 +1146,6 @@ module Toys
       #       end
       #     end
       #
-      # @return [self]
-      #
       # @overload static(key, value)
       #   Set a single value by key.
       #   @param key [String,Symbol] The key to use to retrieve the value from
@@ -1161,8 +1184,6 @@ module Toys
       #         puts "#{get(:greeting)}, world!"
       #       end
       #     end
-      #
-      # @return [self]
       #
       # @overload set(key, value)
       #   Set a single value by key.

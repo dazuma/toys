@@ -25,7 +25,7 @@ require "helper"
 
 describe Toys::Loader do
   let(:loader) {
-    Toys::Loader.new(index_file_name: ".toys.rb")
+    Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ":")
   }
   let(:cases_dir) {
     File.join(__dir__, "lookup-cases")
@@ -324,6 +324,32 @@ describe Toys::Loader do
       tool, remaining = loader.lookup(["alias-2", "tool-blah"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal(["tool-blah"], remaining)
+    end
+
+    it "resolves an alias pointing at a subtool" do
+      tool, remaining = loader.lookup(["alias-4"])
+      assert_equal("file tool-2 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal([], remaining)
+    end
+
+    it "resolves an alias using an absolute path" do
+      tool, remaining = loader.lookup(["tool-1", "tool-2", "alias-5"])
+      assert_equal("file tool-3 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal([], remaining)
+    end
+
+    it "detects dangling references" do
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.lookup(["alias-3"])
+      end
+    end
+
+    it "detects circular references" do
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.lookup(["circular-2"])
+      end
     end
   end
 

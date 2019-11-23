@@ -1,5 +1,10 @@
 # Release History
 
+### 0.8.2 / unreleased
+
+* IMPROVED: Aliases can now point to namespaces, and will resolve subtools of their targets.
+* IMPROVED: Aliases can point to targets outside of their immediate namespace.
+
 ### 0.8.1 / 2019-11-19
 
 * FIXED: Listing subtools would crash if a broken alias was present.
