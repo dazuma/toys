@@ -31,6 +31,9 @@ module Toys
     CURRENT_VERSION = ::Gem::Version.new(::RUBY_VERSION)
 
     ## @private
+    IS_JRUBY = ::RUBY_PLATFORM == "java"
+
+    ## @private
     def self.check_minimum_version(version)
       CURRENT_VERSION >= ::Gem::Version.new(version)
     end

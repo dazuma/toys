@@ -216,7 +216,7 @@ module Toys
         @show_source_path = show_source_path
         @stream = stream
         @styled_output = styled_output
-        @use_less = use_less
+        @use_less = use_less && !Compat::IS_JRUBY
       end
 
       ##
@@ -294,7 +294,7 @@ module Toys
           include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
           wrap_width: terminal.width
         )
-        if RUBY_PLATFORM != "java" && less_path
+        if less_path
           require "toys/utils/exec"
           Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
         else

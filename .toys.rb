@@ -40,13 +40,13 @@ gem "yard", "~> 0.9.20"
 tool "install" do
   desc "Build and install the current gems"
 
-  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
     puts("**** Installing #{gem_name} from local build...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      exec_tool(["install", "-y"], cli: cli.child.add_config_path(".toys.rb"))
+      status = cli.child.add_config_path(".toys.rb").run("install", "-y")
+      exit(status) unless status.zero?
     end
   end
 
@@ -65,22 +65,18 @@ tool "ci" do
               " entrypoint for CI systems. Any failure will result in a" \
               " nonzero result code."
 
-  include :exec, result_callback: :handle_result
   include :terminal
-
-  def handle_result(result)
-    if result.success?
-      puts("**** #{result.name} GEM OK.", :bold, :cyan)
-    else
-      puts("**** #{result.name} GEM FAILED!", :red, :bold)
-      exit(1)
-    end
-  end
 
   def handle_gem(gem_name)
     puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      exec_tool(["ci"], name: gem_name.upcase, cli: cli.child.add_config_path(".toys.rb"))
+      status = cli.child.add_config_path(".toys.rb").run("ci")
+      if status.zero?
+        puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
+      else
+        puts("**** #{gem_name.upcase} GEM FAILED!", :red, :bold)
+        exit(1)
+      end
     end
   end
 
@@ -119,13 +115,13 @@ end
 tool "yardoc" do
   desc "Generates yardoc for both gems"
 
-  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
     puts("**** Generating Yardoc for #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      exec_tool(["yardoc"], cli: cli.child.add_config_path(".toys.rb"))
+      status = cli.child.add_config_path(".toys.rb").run("yardoc")
+      exit(status) unless status.zero?
     end
   end
 
@@ -138,13 +134,13 @@ end
 tool "clean" do
   desc "Cleans both gems"
 
-  include :exec, exit_on_nonzero_status: true
   include :terminal
 
   def handle_gem(gem_name)
     puts("**** Cleaning #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(::File.join(__dir__, gem_name)) do
-      exec_tool(["clean"], cli: cli.child.add_config_path(".toys.rb"))
+      status = cli.child.add_config_path(".toys.rb").run("clean")
+      exit(status) unless status.zero?
     end
   end
 
@@ -163,7 +159,8 @@ tool "release" do
   def handle_gem(gem_name)
     puts("**** Releasing #{gem_name}...", :bold, :cyan)
     ::Dir.chdir(gem_name) do
-      exec_tool(["release", "-y"], cli: cli.child.add_config_path(".toys.rb"))
+      status = cli.child.add_config_path(".toys.rb").run("release", "-y")
+      exit(status) unless status.zero?
     end
   end
 

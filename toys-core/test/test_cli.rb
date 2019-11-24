@@ -37,7 +37,7 @@ describe Toys::CLI do
     Toys::CLI.new(
       executable_name: executable_name, logger: logger, middleware_stack: [],
       error_handler: error_handler, index_file_name: ".toys.rb",
-      data_dir_name: ".data"
+      data_dir_name: ".data", extra_delimiters: ":"
     )
   }
 
@@ -183,6 +183,19 @@ describe Toys::CLI do
     it "accesses data from run" do
       cli.loader.add_path(File.join(__dir__, "lookup-cases", "data-finder"))
       assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
+    end
+
+    it "recognizes delimiters" do
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            def run
+              exit(3)
+            end
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo:bar"))
     end
   end
 

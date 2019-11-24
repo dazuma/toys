@@ -4,7 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Update documentation for aliases
 * Implement delegate_to
 
 ## Planned for next release

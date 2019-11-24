@@ -55,21 +55,21 @@ tool "ci" do
               " the entrypoint for CI systems. Any failure will result in a" \
               " nonzero result code."
 
-  include :exec, result_callback: :handle_result
   include :terminal
 
-  def handle_result(result)
-    if result.success?
-      puts("** #{result.name} passed\n\n", :green, :bold)
+  def run_stage(tool, name:)
+    status = cli.run(tool)
+    if status.zero?
+      puts("** #{name} passed\n\n", :green, :bold)
     else
-      puts("** CI terminated: #{result.name} failed!", :red, :bold)
+      puts("** CI terminated: #{name} failed!", :red, :bold)
       exit(1)
     end
   end
 
   def run
-    exec_tool(["test"], name: "Tests")
-    exec_tool(["rubocop"], name: "Style checker")
-    exec_tool(["yardoc"], name: "Docs generation")
+    run_stage("test", name: "Tests")
+    run_stage("rubocop", name: "Style checker")
+    run_stage("yardoc", name: "Docs generation")
   end
 end

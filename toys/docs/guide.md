@@ -2368,8 +2368,16 @@ To define an alias, use the `alias_tool` directive:
 
     alias_tool "t", "test"
 
-You may create an alias of a subtool, but the alias must have the same parent
-(namespace) as the target tool. For example:
+Aliases can point to tools or namespaces. For example, you can alias `sys` to
+point to the built-in namespace `system`:
+
+    alias_tool "sys", "system"
+
+That will let you run `toys sys version` (which will be the equivalent of
+`toys system version`).
+
+Normally, you will specify the target of an alias as a _relative path_. For
+example:
 
     tool "gem" do
       tool "test" do
@@ -2378,6 +2386,23 @@ You may create an alias of a subtool, but the alias must have the same parent
 
       # Allows you to invoke `toys gem t`
       alias_tool "t", "test"
+    end
+
+However, you can also specify a target as an _absolute path_ using the
+`absolute:` keyword argument:
+
+    tool "gem" do
+      tool "test" do
+        # Define gem test tool here...
+      end
+
+      # Makes `toys gem toplevel-test` an alias of `toys test`
+      # (not `toys gem test`)
+      alias_tool "toplevel-test", absolute: "test"
+    end
+
+    tool "test" do
+      # Define toplevel test tool here...
     end
 
 ### Custom acceptors
