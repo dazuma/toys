@@ -112,6 +112,25 @@ tool "ci" do
   end
 end
 
+tool "test" do
+  desc "Runs tests in both gems"
+
+  include :terminal
+
+  def handle_gem(gem_name)
+    puts("**** Testing #{gem_name}...", :bold, :cyan)
+    ::Dir.chdir(::File.join(__dir__, gem_name)) do
+      status = cli.child.add_config_path(".toys.rb").run("test")
+      exit(status) unless status.zero?
+    end
+  end
+
+  def run
+    handle_gem("toys-core")
+    handle_gem("toys")
+  end
+end
+
 tool "yardoc" do
   desc "Generates yardoc for both gems"
 

@@ -10,7 +10,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 * Write toys-core user guide
 * Native tab completion for zsh
-* JRuby compatibility
 
 ## Ideas under investigation
 

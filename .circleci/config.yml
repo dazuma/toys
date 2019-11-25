@@ -24,19 +24,25 @@ commands:
       - run:
           name: CI
           command: ./toys-dev do ci init , ci
+  toys-test:
+    steps:
+      - checkout
+      - run:
+          name: Test
+          command: ./toys-dev do ci init , test
 jobs:
   test-ruby23:
     executor: ruby23
     steps:
-      - toys-ci
+      - toys-test
   test-ruby24:
     executor: ruby24
     steps:
-      - toys-ci
+      - toys-test
   test-ruby25:
     executor: ruby25
     steps:
-      - toys-ci
+      - toys-test
   test-ruby26:
     executor: ruby26
     steps:
@@ -44,7 +50,7 @@ jobs:
   test-jruby:
     executor: jruby
     steps:
-      - toys-ci
+      - toys-test
 workflows:
   version: 2
   tests:
