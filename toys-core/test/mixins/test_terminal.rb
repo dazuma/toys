@@ -56,15 +56,10 @@ describe Toys::StandardMixins::Terminal do
           puts "hello", :bold
         end
       end
-      tool "bar" do
-        include :exec
-        def run
-          result = capture_tool(["foo"])
-          exit(result == "\e[1mhello\n\e[0m" ? 1 : 2)
-        end
-      end
     end
-    assert_equal(1, cli.run("bar"))
+    assert_output("\e[1mhello\n\e[0m") do
+      cli.run("foo")
+    end
   end
 
   it "supports unstyled puts by default when capturing" do
@@ -75,14 +70,9 @@ describe Toys::StandardMixins::Terminal do
           puts "hello", :bold
         end
       end
-      tool "bar" do
-        include :exec
-        def run
-          result = capture_tool(["foo"])
-          exit(result == "hello\n" ? 1 : 2)
-        end
-      end
     end
-    assert_equal(1, cli.run("bar"))
+    assert_output("hello\n") do
+      cli.run("foo")
+    end
   end
 end

@@ -82,6 +82,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a proc" do
+    skip unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -95,6 +96,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a toys tool" do
+    skip unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "bar" do
         def run
@@ -139,6 +141,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a proc" do
+    skip unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -152,6 +155,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a toys tool" do
+    skip unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "bar" do
         def run

@@ -34,6 +34,11 @@ module Toys
     IS_JRUBY = ::RUBY_PLATFORM == "java"
 
     ## @private
+    def self.allow_fork?
+      !IS_JRUBY
+    end
+
+    ## @private
     def self.check_minimum_version(version)
       CURRENT_VERSION >= ::Gem::Version.new(version)
     end

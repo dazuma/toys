@@ -50,9 +50,10 @@ describe "gem_build template" do
     Dir.chdir(toys_dir) do
       FileUtils.rm_rf("tmp")
       FileUtils.mkdir_p("tmp")
-      result = executor.exec_proc(proc { exit cli.run("build") })
-      assert(result.success?)
-      assert_match(/Successfully built RubyGem/, result.captured_out)
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("build"))
+      end
+      assert_match(/Successfully built RubyGem/, out)
       assert(File.file?("tmp/toys.gem"))
       FileUtils.rm_rf("tmp")
     end
@@ -65,9 +66,10 @@ describe "gem_build template" do
     Dir.chdir(toys_dir) do
       FileUtils.rm_rf("tmp")
       FileUtils.mkdir_p("tmp")
-      result = executor.exec_proc(proc { exit cli.run("build", "-o", "tmp/toys.gem") })
-      assert(result.success?)
-      assert_match(/Successfully built RubyGem/, result.captured_out)
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("build", "-o", "tmp/toys.gem"))
+      end
+      assert_match(/Successfully built RubyGem/, out)
       assert(File.file?("tmp/toys.gem"))
       FileUtils.rm_rf("tmp")
     end
@@ -80,9 +82,10 @@ describe "gem_build template" do
     Dir.chdir(toys_dir) do
       FileUtils.rm_rf("tmp")
       FileUtils.mkdir_p("tmp")
-      result = executor.exec_proc(proc { exit cli.run("build", "--outfile", "tmp/toys.gem") })
-      assert(result.success?)
-      assert_match(/Successfully built RubyGem/, result.captured_out)
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("build", "--outfile", "tmp/toys.gem"))
+      end
+      assert_match(/Successfully built RubyGem/, out)
       assert(File.file?("tmp/toys.gem"))
       FileUtils.rm_rf("tmp")
     end

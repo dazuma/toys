@@ -55,14 +55,9 @@ describe Toys::StandardMixins::Highline do
           say "hello"
         end
       end
-      tool "bar" do
-        include :exec
-        def run
-          result = capture_tool(["foo"])
-          exit(result == "hello\n" ? 1 : 2)
-        end
-      end
     end
-    assert_equal(1, cli.run("bar"))
+    assert_output("hello\n") do
+      cli.run("foo")
+    end
   end
 end

@@ -47,9 +47,10 @@ describe "rspec template" do
       expand :rspec, libs: File.join(__dir__, "rspec-cases", "lib1"),
                      pattern: File.join(__dir__, "rspec-cases", "spec", "*_spec.rb")
     end
-    result = executor.exec_proc(proc { exit cli.run("spec") })
-    assert(result.success?)
-    assert_match(/1 example, 0 failures/, result.captured_out)
+    out, _err = capture_subprocess_io do
+      assert_equal(0, cli.run("spec"))
+    end
+    assert_match(/1 example, 0 failures/, out)
   end
 
   it "executes an unsuccessful spec" do
@@ -57,8 +58,9 @@ describe "rspec template" do
       expand :rspec, libs: File.join(__dir__, "rspec-cases", "lib2"),
                      pattern: File.join(__dir__, "rspec-cases", "spec", "*_spec.rb")
     end
-    result = executor.exec_proc(proc { exit cli.run("spec") })
-    assert(result.error?)
-    assert_match(/1 example, 1 failure/, result.captured_out)
+    out, _err = capture_subprocess_io do
+      refute_equal(0, cli.run("spec"))
+    end
+    assert_match(/1 example, 1 failure/, out)
   end
 end
