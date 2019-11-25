@@ -27,14 +27,17 @@ be modified if you're running on Windows.
 
 ### Install Toys
 
-Toys requires Ruby 2.3 or later. (JRuby is not currently supported.)
-
 Install the **toys-core** gem using:
 
     $ gem install toys-core
 
 You may also install the **toys** gem, which brings in **toys-core** as a
 dependency.
+
+Toys-Core requires Ruby 2.3 or later.
+
+Most parts of Toys-Core work on JRuby. However, JRuby is not recommended for
+command line tools in general because of startup performance and other issues.
 
 ### Create a new executable
 

@@ -158,8 +158,8 @@ module Toys
           include :gems
 
           to_run do
-            gem "yard", *Array(template.gem_version)
-            require "yard"
+            gem_requirements = Array(template.gem_version)
+            gem "yard", *gem_requirements
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
@@ -191,13 +191,21 @@ module Toys
               end
               run_options.concat(files)
 
-              result = exec_proc(proc { ::YARD::CLI::Yardoc.run(*run_options) })
+              result = exec_ruby([], in: :controller) do |controller|
+                controller.in.puts("gem 'yard', *#{gem_requirements.inspect}")
+                controller.in.puts("require 'yard'")
+                controller.in.puts("::YARD::CLI::Yardoc.run(*#{run_options.inspect})")
+              end
               if result.error?
                 puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
                 exit(1)
               end
               unless stats_options.empty?
-                result = exec_proc(proc { ::YARD::CLI::Stats.run(*stats_options) }, out: :capture)
+                result = exec_ruby([], in: :controller, out: :capture) do |controller|
+                  controller.in.puts("gem 'yard', *#{gem_requirements.inspect}")
+                  controller.in.puts("require 'yard'")
+                  controller.in.puts("::YARD::CLI::Stats.run(*#{stats_options.inspect})")
+                end
                 puts result.captured_out
                 if result.error?
                   puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?

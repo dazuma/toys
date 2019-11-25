@@ -151,7 +151,8 @@ module Toys
                          desc: "Paths to the specs to run (defaults to all specs)"
 
           to_run do
-            gem "rspec", *Array(template.gem_version)
+            gem_requirements = Array(template.gem_version)
+            gem "rspec", *gem_requirements
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               ruby_args = []
@@ -171,6 +172,7 @@ module Toys
               ruby_args.concat(files)
 
               result = exec_ruby(ruby_args, in: :controller) do |controller|
+                controller.in.puts("gem 'rspec', *#{gem_requirements.inspect}")
                 controller.in.puts("require 'rspec/core'")
                 controller.in.puts("::RSpec::Core::Runner.invoke")
               end

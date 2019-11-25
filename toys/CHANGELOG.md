@@ -4,6 +4,7 @@
 
 * IMPROVED: Aliases can now point to namespaces, and will resolve subtools of their targets.
 * IMPROVED: Aliases can point to targets outside of their immediate namespace.
+* IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of startup performance and other issues.
 * FIXED: Tab completion now works on aliases
 
 ### 0.8.1 / 2019-11-19

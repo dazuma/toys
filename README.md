@@ -23,8 +23,6 @@ Here's a tutorial to help you get a feel of what Toys can do.
 
 ### Install Toys
 
-Toys requires Ruby 2.3 or later. (JRuby is not currently supported.)
-
 Install the **toys** gem using:
 
     $ gem install toys
@@ -53,6 +51,11 @@ following command in your shell, or add it to your bash configuration file
 Toys does not yet specially implement tab completion for zsh or other shells.
 However, if you are using zsh, installing bash completion using `bashcompinit`
 *mostly* works.
+
+Toys requires Ruby 2.3 or later.
+
+Most parts of Toys work on JRuby. However, JRuby is not recommended for command
+line tools such as Toys because of startup performance and other issues.
 
 ### Write your first tool
 

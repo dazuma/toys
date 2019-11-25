@@ -111,8 +111,8 @@ module Toys
           include :gems
 
           to_run do
-            gem "rdoc", *Array(template.gem_version)
-            require "rdoc"
+            gem_requirements = Array(template.gem_version)
+            gem "rdoc", *gem_requirements
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
@@ -131,7 +131,11 @@ module Toys
               args << "-T" << template.template if template.template
               args << "-f" << template.generator if template.generator
 
-              exec_proc(proc { RDoc::RDoc.new.document(args + files) })
+              exec_ruby([], in: :controller) do |controller|
+                controller.in.puts("gem 'rdoc', *#{gem_requirements.inspect}")
+                controller.in.puts("require 'rdoc'")
+                controller.in.puts("::RDoc::RDoc.new.document(*#{(args + files).inspect})")
+              end
             end
           end
         end

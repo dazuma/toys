@@ -12,6 +12,11 @@ executors:
   ruby26:
     docker:
       - image: "circleci/ruby:2.6-stretch"
+  jruby:
+    docker:
+      - image: "circleci/jruby:latest"
+    environment:
+      JRUBY_OPTS: "--debug"
 commands:
   toys-ci:
     steps:
@@ -36,6 +41,10 @@ jobs:
     executor: ruby26
     steps:
       - toys-ci
+  test-jruby:
+    executor: jruby
+    steps:
+      - toys-ci
 workflows:
   version: 2
   tests:
@@ -44,3 +53,4 @@ workflows:
       - test-ruby24
       - test-ruby25
       - test-ruby26
+      - test-jruby
