@@ -31,7 +31,8 @@ describe Toys::DSL::Tool do
   }
   let(:executable_name) { "toys" }
   let(:cli) {
-    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [])
+    Toys::CLI.new(executable_name: executable_name, logger: logger,
+                  middleware_stack: [], extra_delimiters: ":")
   }
   let(:loader) { cli.loader }
 
@@ -116,6 +117,20 @@ describe Toys::DSL::Tool do
       assert_equal(2, ld.size)
       assert_equal("hello", ld[0].to_s)
       assert_equal("world", ld[1].to_s)
+    end
+
+    it "recognizes delegate_to" do
+      loader.add_block do
+        tool "foo", delegate_to: "bar"
+        tool "bar" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal('(Delegates to "bar")', tool.desc.to_s)
+      assert_equal(3, cli.run(["foo"]))
     end
   end
 
@@ -1353,6 +1368,127 @@ describe Toys::DSL::Tool do
       assert_equal(2, tool.flags.size)
       flag = tool.flags[1]
       assert_equal(2, flag.flag_syntax.size)
+    end
+  end
+
+  describe "delegate_to directive" do
+    it "disables argument parsing" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(true, tool.argument_parsing_disabled?)
+    end
+
+    it "sets the description" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal('(Delegates to "bar")', tool.desc.to_s)
+    end
+
+    it "supports delimited string paths" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar:baz"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal('(Delegates to "bar baz")', tool.desc.to_s)
+    end
+
+    it "supports array paths" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to ["bar", "baz"]
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal('(Delegates to "bar baz")', tool.desc.to_s)
+    end
+
+    it "executes the delegate" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+        tool "bar" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      assert_equal(3, cli.run(["foo"]))
+    end
+
+    it "passes arguments to the delegate" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+        tool "bar" do
+          flag :hello
+          optional_arg :world
+          def run
+            if hello && world == "ruby"
+              exit(3)
+            end
+          end
+        end
+      end
+      assert_equal(3, cli.run(["foo", "--hello", "ruby"]))
+    end
+
+    it "delegates to a namespace" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+        tool "bar" do
+          tool "baz" do
+            def run
+              exit(3)
+            end
+          end
+        end
+      end
+      assert_equal(3, cli.run(["foo", "baz"]))
+    end
+
+    it "detects circular delegation during execution" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to "bar"
+        end
+        tool "bar" do
+          delegate_to "foo"
+        end
+      end
+      _out, err = capture_subprocess_io do
+        refute_equal(0, cli.run(["foo"]))
+      end
+      assert_match(/Delegation loop: \["foo"\] <- \["bar"\] <- \["foo"\]/, err)
+    end
+  end
+
+  describe "alias_tool directive" do
+    it "delegates using a relative path" do
+      loader.add_block do
+        tool "foo" do
+          tool "bar" do
+            def run
+              exit(3)
+            end
+          end
+          alias_tool "baz", "bar"
+        end
+      end
+      assert_equal(3, cli.run(["foo", "baz"]))
     end
   end
 end

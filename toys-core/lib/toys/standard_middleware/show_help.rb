@@ -333,7 +333,7 @@ module Toys
         dict = loader.list_subtools(tool_name).map(&:simple_name)
         suggestions = Compat.suggestions(next_word, dict)
         tool_name = (tool_name + [next_word]).join(" ")
-        message = "Tool not found: \"#{tool_name}\"."
+        message = "Tool not found: \"#{tool_name}\""
         unless suggestions.empty?
           suggestions_str = suggestions.join("\n                 ")
           message = "#{message}\nDid you mean...  #{suggestions_str}"

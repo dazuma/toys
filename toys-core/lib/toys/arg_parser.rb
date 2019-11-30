@@ -266,7 +266,7 @@ module Toys
       #     to the user. Optional.
       #
       def initialize(message = nil, value: nil, values: nil, suggestions: nil)
-        super(message || "Tool not found: \"#{Array(values).join(' ')}\".",
+        super(message || "Tool not found: \"#{Array(values).join(' ')}\"",
               value: value, suggestions: suggestions)
         @name = name
       end
@@ -291,14 +291,14 @@ module Toys
     #
     # @param cli [Toys::CLI] The CLI in effect.
     # @param tool [Toys::Tool] The tool defining the argument format.
-    # @param verbosity [Integer] The initial verbosity level (default is 0).
+    # @param default_data [Hash] Additional initial data (such as verbosity).
     # @param require_exact_flag_match [Boolean] Whether to require flag matches
     #     be exact (not partial). Default is false.
     #
-    def initialize(cli, tool, verbosity: 0, require_exact_flag_match: false)
+    def initialize(cli, tool, default_data: {}, require_exact_flag_match: false)
       @require_exact_flag_match = require_exact_flag_match
       @loader = cli.loader
-      @data = initial_data(cli, tool, verbosity)
+      @data = initial_data(cli, tool, default_data)
       @tool = tool
       @seen_flag_keys = []
       @errors = []
@@ -439,7 +439,7 @@ module Toys
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val, _prev) { val }
 
-    def initial_data(cli, tool, verbosity)
+    def initial_data(cli, tool, default_data)
       data = {
         Context::Key::ARGS => nil,
         Context::Key::CLI => cli,
@@ -451,7 +451,7 @@ module Toys
         Context::Key::USAGE_ERRORS => [],
       }
       Compat.merge_clones(data, tool.default_data)
-      data[Context::Key::VERBOSITY] ||= verbosity
+      default_data.each { |k, v| data[k] ||= v }
       data
     end
 

@@ -4,7 +4,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Implement delegate_to
+* Improve the error message on a dangling delegation
 
 ## Planned for next release
 

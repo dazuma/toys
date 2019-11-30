@@ -44,7 +44,7 @@ describe "toys" do
   if ::RUBY_VERSION >= "2.4"
     it "displays alternative suggestions for misspelled tool" do
       output = Toys::TestHelper.capture_toys("system", "versiom", stream: :err).split("\n")
-      assert_equal('Tool not found: "system versiom".', output[0])
+      assert_equal('Tool not found: "system versiom"', output[0])
       assert_equal("Did you mean...  version", output[1])
     end
 

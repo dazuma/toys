@@ -147,7 +147,17 @@ module Toys
     # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
-      internal_lookup(args, [])
+      orig_prefix, args = find_orig_prefix(args)
+      prefix = orig_prefix
+      loop do
+        load_for_prefix(prefix)
+        tool = get_active_tool(prefix)
+        if tool
+          finish_definitions_in_tree(prefix)
+          return [tool, args.slice(prefix.length..-1)]
+        end
+        prefix = prefix.slice(0..-2)
+      end
     end
 
     ##
@@ -159,8 +169,7 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param include_hidden [Boolean] If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::Tool,Toys::Alias>] An array of subtools, which may
-    #     be tools or aliases.
+    # @return [Array<Toys::Tool>] An array of subtools.
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -222,7 +231,6 @@ module Toys
     # @param priority [Integer] The priority of the request.
     #
     # @return [Toys::Tool] The tool found.
-    # @return [Toys::Alias] The alias found.
     # @return [nil] if the given priority is insufficient.
     #
     # @private
@@ -233,29 +241,6 @@ module Toys
       return nil if tool_data.active_priority && tool_data.active_priority > priority
       tool_data.active_priority = priority
       get_tool(words, priority)
-    end
-
-    ##
-    # Sets the given name as an alias to the given target.
-    #
-    # @param words [Array<String>] The alias name
-    # @param target [Array<String>] The alias target name
-    # @param priority [Integer] The priority of the request
-    #
-    # @return [Toys::Alias] The alias created
-    #
-    # @private
-    #
-    def make_alias(words, target, priority)
-      tool_data = get_tool_data(words)
-      if tool_data.definitions.key?(priority)
-        raise ToolDefinitionError,
-              "Cannot make #{words.inspect} an alias because it is already defined"
-      end
-      alias_def = Alias.new(self, words, target, priority)
-      tool_data.definitions[priority] = alias_def
-      activate_tool(words, priority)
-      alias_def
     end
 
     ##
@@ -279,10 +264,6 @@ module Toys
     #
     def get_tool(words, priority)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
-      if parent.is_a?(Alias)
-        raise ToolDefinitionError,
-              "Cannot create children of #{parent.display_name.inspect} because it is an alias"
-      end
       tool_data = get_tool_data(words)
       if tool_data.top_priority.nil? || tool_data.top_priority < priority
         tool_data.top_priority = priority
@@ -370,33 +351,6 @@ module Toys
       [orig_prefix, args]
     end
 
-    def internal_lookup(args, looked_up)
-      orig_prefix, args = find_orig_prefix(args)
-      prefix = orig_prefix
-      loop do
-        load_for_prefix(prefix)
-        tool = get_active_tool(prefix)
-        if tool
-          finish_definitions_in_tree(prefix)
-          remaining_args = args.slice(prefix.length..-1)
-          if tool.is_a?(Alias)
-            if looked_up.include?(prefix)
-              raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
-            end
-            looked_up << prefix
-            target = resolve_alias(tool)
-            unless target
-              raise ToolDefinitionError, "Cannot find target for alias #{prefix.inspect}"
-            end
-            return internal_lookup(target.full_name + remaining_args, looked_up)
-          else
-            return [tool, remaining_args]
-          end
-        end
-        prefix = prefix.slice(0..-2)
-      end
-    end
-
     def get_tool_data(words)
       @tool_data[words] ||= ToolData.new({}, nil, nil)
     end
@@ -411,20 +365,6 @@ module Toys
     def get_active_tool(words)
       tool_data = get_tool_data(words)
       tool_data.active_definition || tool_data.top_definition
-    end
-
-    ##
-    # Resolves the given alias recursively.
-    #
-    def resolve_alias(alias_tool, looked_up = [])
-      words = alias_tool.target_name
-      if looked_up.include?(words)
-        raise ToolDefinitionError, "Circular alias references: #{looked_up.inspect}"
-      end
-      result = get_active_tool(words)
-      return result unless result.is_a?(Alias)
-      looked_up << words
-      resolve_alias(result, looked_up)
     end
 
     def resolve_middleware(input)
@@ -566,11 +506,6 @@ module Toys
 
     def tool_hidden?(tool, next_tool)
       return true if tool.full_name.any? { |n| n.start_with?("_") }
-      if tool.is_a?(Alias)
-        original_tool = resolve_alias(tool)
-        return true if original_tool.nil?
-        return tool_hidden?(original_tool, nil)
-      end
       !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 

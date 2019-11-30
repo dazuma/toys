@@ -392,7 +392,7 @@ module Toys
     #
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
-    def run(*args, verbosity: 0)
+    def run(*args, verbosity: 0, delegated_from: nil)
       tool, remaining = ContextualError.capture("Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
@@ -400,7 +400,11 @@ module Toys
         "Error during tool execution!", tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
-        run_tool(tool, remaining, verbosity: verbosity)
+        default_data = {
+          Context::Key::VERBOSITY => verbosity,
+          Context::Key::DELEGATED_FROM => delegated_from,
+        }
+        run_tool(tool, remaining, default_data)
       end
     rescue ContextualError, ::Interrupt => e
       @error_handler.call(e).to_i
@@ -414,12 +418,12 @@ module Toys
     #
     # @param tool [Toys::Tool] The tool to run.
     # @param args [Array<String>] Command line arguments passed to the tool.
-    # @param verbosity [Integer] Initial verbosity. Default is 0.
+    # @param default_data [Hash] Initial tool context data.
     # @return [Integer] The resulting status code
     #
-    def run_tool(tool, args, verbosity: 0)
+    def run_tool(tool, args, default_data)
       arg_parser = ArgParser.new(self, tool,
-                                 verbosity: verbosity,
+                                 default_data: default_data,
                                  require_exact_flag_match: tool.exact_flag_match_required?)
       arg_parser.parse(args).finish
       context = tool.tool_class.new(arg_parser.data)

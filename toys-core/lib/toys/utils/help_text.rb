@@ -53,8 +53,14 @@ module Toys
       # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
+        orig_context = context
+        while (from = context[Context::Key::DELEGATED_FROM])
+          context = from
+        end
+        delegate_path = orig_context == context ? nil : orig_context[Context::Key::TOOL_NAME]
         cli = context[Context::Key::CLI]
-        new(context[Context::Key::TOOL], cli.loader, cli.executable_name)
+        new(context[Context::Key::TOOL], cli.loader, cli.executable_name,
+            delegate_path: delegate_path)
       end
 
       ##
@@ -64,13 +70,16 @@ module Toys
       # @param loader [Toys::Loader] A loader that can provide subcommands.
       # @param executable_name [String] The name of the executable.
       #     e.g. `"toys"`.
+      # @param delegate_path [Array<String>,nil] The full name of a tool this
+      #     tool will delegate to. Default is `nil` for no delegation.
       #
       # @return [Toys::Utils::HelpText]
       #
-      def initialize(tool, loader, executable_name)
+      def initialize(tool, loader, executable_name, delegate_path: nil)
         @tool = tool
         @loader = loader
         @executable_name = executable_name
+        @delegate_path = delegate_path
       end
 
       ##
@@ -264,13 +273,7 @@ module Toys
           @lines << "Tools:"
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc =
-              if subtool.is_a?(Alias)
-                ["(Alias of #{subtool.display_target})"]
-              else
-                wrap_desc(subtool.desc)
-              end
-            add_right_column_desc(tool_name, desc)
+            add_right_column_desc(tool_name, wrap_desc(subtool.desc))
           end
         end
 
@@ -532,13 +535,7 @@ module Toys
           name_len = @tool.full_name.length
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc =
-              if subtool.is_a?(Alias)
-                "(Alias of #{subtool.display_target})"
-              else
-                subtool.desc
-              end
-            add_prefix_with_desc(bold(tool_name), desc)
+            add_prefix_with_desc(bold(tool_name), subtool.desc)
           end
         end
 
@@ -642,13 +639,7 @@ module Toys
           name_len = @tool.full_name.length
           @subtools.each do |subtool|
             tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            desc =
-              if subtool.is_a?(Alias)
-                "(Alias of #{subtool.display_target})"
-              else
-                subtool.desc
-              end
-            add_prefix_with_desc(bold(tool_name), desc)
+            add_prefix_with_desc(bold(tool_name), subtool.desc)
           end
         end
 

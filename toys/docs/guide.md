@@ -1561,8 +1561,8 @@ any subtools defined in other files in that same directory.
 Sometimes a mixin will want to initialize some state before the tool executes.
 For example, the `:highline` mixin creates an instance of Highline during tool
 initialization. To do so, provide an `on_initialize` block in the mixin block.
-The initializer block is called within the context of the tool before it
-initializes, so it has access to the tool's built-in context and options.
+The initializer block is called within the context of the tool after arguments
+are parsed, so it has access to the tool's built-in context and options.
 
 If you provide extra arguments when you `include` a mixin, those are passed to
 the initializer block.
@@ -1603,6 +1603,16 @@ pass a value to the mixin's initializer:
         end
       end
     end
+
+#### Mixin inclusion hooks
+
+A mixin can also optionally provide directives to run when the mixin is
+included, by defining an `on_include` block. (This is functionally similar to
+defining an `included` method on a Ruby module.) The `on_include` block is
+called within the context of the tool DSL, so it can invoke any DSL directives.
+
+If you provide extra arguments when you `include` a mixin, those are passed to
+the inclusion block.
 
 ### Using constants
 
@@ -2354,56 +2364,59 @@ these features is very useful for certain types of tools, and it is good at
 least to know that you *can* do these things, even if you don't use them
 regularly.
 
-### Aliases
+### Delegating tools
 
-An **alias** is simply an alternate name for a tool. For example, suppose you
-have a tool called `test` that you run with `toys test`. You could define an
-alias `t` that points to `test`; then you can run the same tool with `toys t`.
+A tool may **delegate** to another tool, which means it uses the other tool's
+flags, arguments, and execution. Effectively, it becomes an "alias"---that is,
+an alternate name---for the target tool.
 
-To define an alias, use the `alias_tool` directive:
+For example, suppose you have a tool called `test` that can be invoked with
+`toys test`. You could define a tool `t` that delegates to `test`. Then,
+running `toys t` will have the same effect as `toys test`.
+
+To delegate a tool, pass the `:delegate_to` keyword argument to the `tool`
+directive. For example:
 
     tool "test" do
       # Define test tool here...
     end
 
-    alias_tool "t", "test"
+    tool "t", delegate_to: "test"
 
-Aliases can point to tools or namespaces. For example, you can alias `sys` to
-point to the built-in namespace `system`:
+Tools can delegate to tools or namespaces. For example, you can delegate `sys`
+to the built-in namespace `system`:
 
-    alias_tool "sys", "system"
+    tool "sys", delegate_to: "system"
 
 That will let you run `toys sys version` (which will be the equivalent of
 `toys system version`).
 
-Normally, you will specify the target of an alias as a _relative path_. For
-example:
+To delegate to a subtool, pass an array, or a string delimited by `":"` or
+`"."` characters, as the target:
 
     tool "gem" do
       tool "test" do
-        # Define test tool here...
+        # Define the tool here
       end
-
-      # Allows you to invoke `toys gem t`
-      alias_tool "t", "test"
     end
 
-However, you can also specify a target as an _absolute path_ using the
-`absolute:` keyword argument:
+    tool "test", delegate_to: ["gem", "test"]
 
-    tool "gem" do
-      tool "test" do
-        # Define gem test tool here...
+In most cases, if a tool delegates to another tool, you should not do anything
+else with it. For example, it should not have its own implementation or contain
+any subtools. However, there are a few exceptions. You might, for example, want
+a namespace to delegate to one of its subtools:
+
+    tool "test", delegate_to: ["test", "unit"] do
+      tool "unit" do
+        # Run unit tests
       end
-
-      # Makes `toys gem toplevel-test` an alias of `toys test`
-      # (not `toys gem test`)
-      alias_tool "toplevel-test", absolute: "test"
+      tool "integration" do
+        # Run integration tests
+      end
     end
 
-    tool "test" do
-      # Define toplevel test tool here...
-    end
+Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
 
 ### Custom acceptors
 

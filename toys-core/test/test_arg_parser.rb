@@ -716,7 +716,7 @@ describe Toys::ArgParser do
       tool.add_required_arg(:a)
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
-      assert_errors_include('Tool not found: "foo baz".', arg_parser.errors)
+      assert_errors_include('Tool not found: "foo baz"', arg_parser.errors)
       assert_equal(["baz"], arg_parser.unmatched_positional)
     end
 
@@ -724,7 +724,7 @@ describe Toys::ArgParser do
       tool
       root_arg_parser.parse(["fop"])
       root_arg_parser.finish
-      assert_errors_include('Tool not found: "fop".', root_arg_parser.errors)
+      assert_errors_include('Tool not found: "fop"', root_arg_parser.errors)
       assert_errors_include(["foo"], root_arg_parser.errors) if supports_suggestions?
     end
 

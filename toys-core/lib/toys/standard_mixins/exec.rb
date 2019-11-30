@@ -82,6 +82,10 @@ module Toys
     #
     #         include :exec, exit_on_nonzero_status: true
     #
+    #     **:e** can be used as a shortcut for **:exit_on_nonzero_status**
+    #
+    #         include :exec, e: true
+    #
     module Exec
       include Mixin
 
@@ -343,24 +347,37 @@ module Toys
 
       ## @private
       def self._setup_exec_opts(opts, context)
-        if opts.key?(:exit_on_nonzero_status)
-          result_callback =
-            if opts[:exit_on_nonzero_status]
-              proc { |r| context.exit(r.exit_code) if r.error? }
-            end
-          opts = opts.merge(result_callback: result_callback)
-          opts.delete(:exit_on_nonzero_status)
-        elsif opts.key?(:result_callback)
-          orig_callback = opts[:result_callback]
-          result_callback =
-            if orig_callback.is_a?(::Symbol)
-              context.method(orig_callback)
-            elsif orig_callback.respond_to?(:call)
-              proc { |r| orig_callback.call(r, context) }
-            end
-          opts = opts.merge(result_callback: result_callback)
+        if opts.key?(:result_callback)
+          opts = _setup_result_callback_option(opts, context)
+        end
+        if opts.key?(:exit_on_nonzero_status) || opts.key?(:e)
+          opts = _setup_e_option(opts, context)
         end
         opts
+      end
+
+      ## @private
+      def self._setup_e_option(opts, context)
+        result_callback =
+          if opts[:exit_on_nonzero_status] || opts[:e]
+            proc { |r| context.exit(r.exit_code) if r.error? }
+          end
+        opts = opts.merge(result_callback: result_callback)
+        opts.delete(:exit_on_nonzero_status)
+        opts.delete(:e)
+        opts
+      end
+
+      ## @private
+      def self._setup_result_callback_option(opts, context)
+        orig_callback = opts[:result_callback]
+        result_callback =
+          if orig_callback.is_a?(::Symbol)
+            context.method(orig_callback)
+          elsif orig_callback.respond_to?(:call)
+            proc { |r| orig_callback.call(r, context) }
+          end
+        opts.merge(result_callback: result_callback)
       end
     end
   end

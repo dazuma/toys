@@ -35,7 +35,7 @@ module Toys
 
     ## @private
     def self.allow_fork?
-      !IS_JRUBY
+      !IS_JRUBY && RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
     ## @private

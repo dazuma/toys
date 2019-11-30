@@ -87,6 +87,14 @@ module Toys
       CONTEXT_DIRECTORY = ::Object.new.freeze
 
       ##
+      # Context key for the context from which the current call was delegated.
+      # The value is either another context object, or `nil` if the current
+      # call is not delegated.
+      # @return [Object]
+      #
+      DELEGATED_FROM = ::Object.new.freeze
+
+      ##
       # Context key for the active `Logger` object.
       # @return [Object]
       #

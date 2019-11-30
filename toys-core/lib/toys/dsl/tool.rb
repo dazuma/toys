@@ -297,6 +297,16 @@ module Toys
       #       end
       #     end
       #
+      # The following example defines a tool that runs one of its subtools.
+      #
+      #     tool "test", runs: ["test", "unit"] do
+      #       tool "unit" do
+      #         def run
+      #           puts "Running unit tests"
+      #         end
+      #       end
+      #     end
+      #
       # @param words [String,Array<String>] The name of the subtool
       # @param if_defined [:combine,:reset,:ignore] What to do if a definition
       #     already exists for this tool. Possible values are `:combine` (the
@@ -304,10 +314,14 @@ module Toys
       #     existing definition, `:reset` indicating the earlier definition
       #     should be reset and the new definition applied instead, or
       #     `:ignore` indicating the new definition should be ignored.
+      # @param delegate_to [String,Array<String>] Optional. This tool should
+      #     delegate to another tool, specified by the full path. This path may
+      #     be given as an array of strings, or a single string possibly
+      #     delimited by path separators.
       # @param block [Proc] Defines the subtool.
       # @return [self]
       #
-      def tool(words, if_defined: :combine, &block)
+      def tool(words, if_defined: :combine, delegate_to: nil, &block)
         subtool_words = @__words
         next_remaining = @__remaining_words
         Array(words).each do |word|
@@ -326,14 +340,19 @@ module Toys
         end
         subtool_class = subtool.tool_class
         DSL::Tool.prepare(subtool_class, next_remaining, source_info) do
-          subtool_class.class_eval(&block)
+          subtool_class.delegate_to(delegate_to) if delegate_to
+          subtool_class.class_eval(&block) if block
         end
         self
       end
       alias name tool
 
       ##
-      # Create an alias, representing an alternate name for a tool.
+      # Create an alias, representing an "alternate name" for a tool.
+      #
+      # This is functionally equivalent to creating a subtool with the
+      # `delegate_to` option, except that `alias_tool` takes a _relative_ name
+      # for the delegate.
       #
       # ## Example
       #
@@ -347,40 +366,58 @@ module Toys
       #     end
       #     alias_tool "t", "test"
       #
-      # @overload alias_tool(word, target)
-      #   Point an alias at a relative target
-      #   @param word [String] The name of the alias
-      #   @param target [String,Array<String>] The target of the alias as a
-      #       relative path. This may be given as an array of strings, or a
-      #       single string possibly delimited by path separators.
-      #   @return [self]
+      # @param word [String] The name of the alias
+      # @param target [String,Array<String>] Relative path to the target of the
+      #     alias. This path may be given as an array of strings, or a single
+      #     string possibly delimited by path separators.
+      # @return [self]
       #
-      # @overload alias_tool(word, relative:)
-      #   Point an alias at a relative target
-      #   @param word [String] The name of the alias
-      #   @param relative [String,Array<String>] The target of the alias as a
-      #       relative path. This may be given as an array of strings, or a
-      #       single string possibly delimited by path separators.
-      #   @return [self]
+      def alias_tool(word, target)
+        tool(word, delegate_to: @__words + @__loader.split_path(target))
+        self
+      end
+
+      ##
+      # Causes the current tool simply to run another tool when executed.
       #
-      # @overload alias_tool(word, absolute:)
-      #   Point an alias at a relative target
-      #   @param word [String] The name of the alias
-      #   @param absolute [String,Array<String>] The target of the alias as an
-      #       absolute path. This may be given as an array of strings, or a
-      #       single string possibly delimited by path separators.
-      #   @return [self]
+      # ## Example
       #
-      def alias_tool(word, target = nil, absolute: nil, relative: nil)
-        target =
-          if absolute
-            @__loader.split_path(absolute)
-          elsif relative
-            @__words + @__loader.split_path(relative)
-          else
-            @__words + @__loader.split_path(target)
+      # This example defines a tool that runs one of its subtools. Running the
+      # `test` tool will have the same effect (and recognize the same args) as
+      # the subtool `test unit`.
+      #
+      #     tool "test" do
+      #       tool "unit" do
+      #         flag :faster
+      #         def run
+      #           puts "running tests..."
+      #         end
+      #       end
+      #       delegate_to "test:unit"
+      #     end
+      #
+      # @param target [String,Array<String>] The full path to the delegate
+      #     tool. This path may be given as an array of strings, or a single
+      #     string possibly delimited by path separators.
+      # @return [self]
+      #
+      def delegate_to(target)
+        target = @__loader.split_path(target)
+        disable_argument_parsing
+        desc "(Delegates to \"#{target.join(' ')}\")"
+        to_run do
+          context = self
+          path = [target.inspect]
+          until context.nil?
+            name = context[::Toys::Context::Key::TOOL_NAME]
+            path << name.inspect
+            if name == target
+              raise "Delegation loop: #{path.join(' <- ')}"
+            end
+            context = context[::Toys::Context::Key::DELEGATED_FROM]
           end
-        @__loader.make_alias(@__words + [word.to_s], target, @__priority)
+          exit(cli.run(target + self[::Toys::Context::Key::ARGS], delegated_from: self))
+        end
         self
       end
 
@@ -1527,6 +1564,16 @@ module Toys
       end
 
       ##
+      # Return the current tool object. This object can be queried to determine
+      # such information as the name, but it should not be altered.
+      #
+      # @return [Toys::Tool]
+      #
+      def current_tool
+        DSL::Tool.current_tool(self, false)
+      end
+
+      ##
       # Set a custom context directory for this tool.
       #
       # @param dir [String] Context directory
@@ -1566,10 +1613,6 @@ module Toys
             else
               loader.get_tool(words, priority)
             end
-          if cur_tool.is_a?(Alias)
-            raise ToolDefinitionError,
-                  "Cannot configure #{words.join(' ').inspect} because it is an alias"
-          end
           tool_class.instance_variable_set(memoize_var, cur_tool)
         end
         if cur_tool && activate

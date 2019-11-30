@@ -301,58 +301,6 @@ describe Toys::Loader do
     end
   end
 
-  describe "aliases" do
-    before do
-      loader.add_path(File.join(cases_dir, "aliases"))
-    end
-
-    it "finds a directly referenced alias" do
-      tool, remaining = loader.lookup(["alias-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_equal(true, tool.definition_finished?)
-      assert_equal([], remaining)
-    end
-
-    it "finds a recursively referenced alias" do
-      tool, remaining = loader.lookup(["alias-2"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_equal(true, tool.definition_finished?)
-      assert_equal([], remaining)
-    end
-
-    it "recognizes remaining args after an alias" do
-      tool, remaining = loader.lookup(["alias-2", "tool-blah"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_equal(["tool-blah"], remaining)
-    end
-
-    it "resolves an alias pointing at a subtool" do
-      tool, remaining = loader.lookup(["alias-4"])
-      assert_equal("file tool-2 short description", tool.desc.to_s)
-      assert_equal(true, tool.definition_finished?)
-      assert_equal([], remaining)
-    end
-
-    it "resolves an alias using an absolute path" do
-      tool, remaining = loader.lookup(["tool-1", "tool-2", "alias-5"])
-      assert_equal("file tool-3 short description", tool.desc.to_s)
-      assert_equal(true, tool.definition_finished?)
-      assert_equal([], remaining)
-    end
-
-    it "detects dangling references" do
-      assert_raises(Toys::ToolDefinitionError) do
-        loader.lookup(["alias-3"])
-      end
-    end
-
-    it "detects circular references" do
-      assert_raises(Toys::ToolDefinitionError) do
-        loader.lookup(["circular-2"])
-      end
-    end
-  end
-
   describe "preloads" do
     let(:preloading_loader) {
       Toys::Loader.new(index_file_name: ".toys.rb",
@@ -477,23 +425,6 @@ describe Toys::Loader do
       end
     }
 
-    let(:aliases_loader) {
-      loader.add_block(name: "test block") do
-        tool "ns1" do
-          tool "tool1" do
-            desc "hi"
-          end
-          alias_tool "tool1_alias", "tool1"
-          alias_tool "_tool1_alias", "tool1"
-        end
-        alias_tool "ns1_alias", "ns1"
-        alias_tool "_ns1_alias", "ns1"
-        tool "_tool2" do
-        end
-        alias_tool "tool2_alias", "_tool2"
-      end
-    }
-
     it "loads a list" do
       subtools = subtools_loader.list_subtools([])
       assert_equal(2, subtools.size)
@@ -528,35 +459,6 @@ describe Toys::Loader do
       assert_equal(["ns2", "tool3"], subtools[5].full_name)
       assert_equal(["ns3"], subtools[6].full_name)
       assert_equal(["ns3", "tool1"], subtools[7].full_name)
-    end
-
-    it "loads a list including aliases" do
-      subtools = aliases_loader.list_subtools(["ns1"])
-      assert_equal(2, subtools.size)
-      assert_equal(["ns1", "tool1"], subtools[0].full_name)
-      assert_equal(["ns1", "tool1_alias"], subtools[1].full_name)
-    end
-
-    it "loads a list omitting hidden aliases" do
-      subtools = aliases_loader.list_subtools([], recursive: true)
-      assert_equal(3, subtools.size)
-      assert_equal(["ns1", "tool1"], subtools[0].full_name)
-      assert_equal(["ns1", "tool1_alias"], subtools[1].full_name)
-      assert_equal(["ns1_alias"], subtools[2].full_name)
-    end
-
-    it "ignores unattached aliases" do
-      loader.add_block(name: "test block") do
-        tool "ns1" do
-          tool "tool1" do
-            desc "hi"
-          end
-          alias_tool "good_alias", "tool1"
-          alias_tool "bad_alias", "tool2"
-        end
-      end
-      subtools = loader.list_subtools(["ns1"], recursive: true)
-      assert_equal(2, subtools.size)
     end
   end
 end

@@ -1,11 +1,21 @@
 # Release History
 
-### 0.8.2 / unreleased
+### 0.9.0 / unreleased
 
-* IMPROVED: Aliases can now point to namespaces, and will resolve subtools of their targets.
-* IMPROVED: Aliases can point to targets outside of their immediate namespace.
+Functional changes:
+
+* ADDED: The `delegate_to` directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.
+* ADDED: The `delegate_to` argument to the `tool` directive causes the tool to delegate to another tool. (Note: the `alias_tool` directive is now just a shortcut for this, and is mildly deprecated.)
+* ADDED: The `current_tool` function can be called from the DSL to get the current `Toys::Tool` object.
+* ADDED: The `:e` option is now an alias for `:exit_on_nonzero_status`.
+* IMPROVED: `alias_tool` can now point to namespaces, and will resolve subtools of their targets.
 * IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of startup performance and other issues.
-* FIXED: Tab completion now works on aliases
+
+Internal interface changes:
+
+* REMOVED: The `Toys::Alias` class has been removed, along with relevant functionality in `Toys::Loader` including `Toys::Loader#make_alias`. Use tool delegation instead.
+* CHANGED: The `Toys::ArgParser` constructor takes a `default_data` argument instead of `verbosity`.
+* ADDED: The `Toys::Context::Key::DELEGATED_FROM` key provides the delegating context, if any.
 
 ### 0.8.1 / 2019-11-19
 
