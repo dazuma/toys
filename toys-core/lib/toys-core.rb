@@ -71,7 +71,6 @@ module Toys
 end
 
 require "toys/acceptor"
-require "toys/alias"
 require "toys/arg_parser"
 require "toys/cli"
 require "toys/compat"
