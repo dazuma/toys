@@ -208,7 +208,7 @@ module Toys
 
       ## @private
       def hash
-        string.hash
+        string.hash ^ (partial? ? 1 : 0)
       end
 
       ##

@@ -8,6 +8,7 @@
 * ADDED: The `:e` option is now an alias for `:exit_on_nonzero_status`.
 * IMPROVED: `alias_tool` can now point to namespaces, and will resolve subtools of their targets.
 * IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of startup performance and other issues.
+* FIXED: The the `tool` directive no longer crashes if not passed a block.
 
 ### 0.8.1 / 2019-11-19
 

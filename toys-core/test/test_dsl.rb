@@ -1372,26 +1372,6 @@ describe Toys::DSL::Tool do
   end
 
   describe "delegate_to directive" do
-    it "disables argument parsing" do
-      loader.add_block do
-        tool "foo" do
-          delegate_to "bar"
-        end
-      end
-      tool, _remaining = loader.lookup(["foo"])
-      assert_equal(true, tool.argument_parsing_disabled?)
-    end
-
-    it "sets the description" do
-      loader.add_block do
-        tool "foo" do
-          delegate_to "bar"
-        end
-      end
-      tool, _remaining = loader.lookup(["foo"])
-      assert_equal('(Delegates to "bar")', tool.desc.to_s)
-    end
-
     it "supports delimited string paths" do
       loader.add_block do
         tool "foo" do
@@ -1424,55 +1404,6 @@ describe Toys::DSL::Tool do
         end
       end
       assert_equal(3, cli.run(["foo"]))
-    end
-
-    it "passes arguments to the delegate" do
-      loader.add_block do
-        tool "foo" do
-          delegate_to "bar"
-        end
-        tool "bar" do
-          flag :hello
-          optional_arg :world
-          def run
-            if hello && world == "ruby"
-              exit(3)
-            end
-          end
-        end
-      end
-      assert_equal(3, cli.run(["foo", "--hello", "ruby"]))
-    end
-
-    it "delegates to a namespace" do
-      loader.add_block do
-        tool "foo" do
-          delegate_to "bar"
-        end
-        tool "bar" do
-          tool "baz" do
-            def run
-              exit(3)
-            end
-          end
-        end
-      end
-      assert_equal(3, cli.run(["foo", "baz"]))
-    end
-
-    it "detects circular delegation during execution" do
-      loader.add_block do
-        tool "foo" do
-          delegate_to "bar"
-        end
-        tool "bar" do
-          delegate_to "foo"
-        end
-      end
-      _out, err = capture_subprocess_io do
-        refute_equal(0, cli.run(["foo"]))
-      end
-      assert_match(/Delegation loop: \["foo"\] <- \["bar"\] <- \["foo"\]/, err)
     end
   end
 

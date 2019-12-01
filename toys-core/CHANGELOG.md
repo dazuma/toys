@@ -10,11 +10,13 @@ Functional changes:
 * ADDED: The `:e` option is now an alias for `:exit_on_nonzero_status`.
 * IMPROVED: `alias_tool` can now point to namespaces, and will resolve subtools of their targets.
 * IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of startup performance and other issues.
+* FIXED: The the `tool` directive no longer crashes if not passed a block.
 
 Internal interface changes:
 
 * REMOVED: The `Toys::Alias` class has been removed, along with relevant functionality in `Toys::Loader` including `Toys::Loader#make_alias`. Use tool delegation instead.
 * CHANGED: The `Toys::ArgParser` constructor takes a `default_data` argument instead of `verbosity`.
+* ADDED: `Toys::Tool#delegate_to` causes the tool to delegate to another tool.
 * ADDED: The `Toys::Context::Key::DELEGATED_FROM` key provides the delegating context, if any.
 
 ### 0.8.1 / 2019-11-19

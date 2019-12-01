@@ -134,8 +134,7 @@ module Toys
 
     ##
     # Given a list of command line arguments, find the appropriate tool to
-    # handle the command, loading it from the configuration if necessary, and
-    # following aliases.
+    # handle the command, loading it from the configuration if necessary.
     # This always returns a tool. If the specific tool path is not defined and
     # cannot be found in any configuration, it finds the nearest namespace that
     # *would* contain that tool, up to the root tool.
@@ -150,14 +149,31 @@ module Toys
       orig_prefix, args = find_orig_prefix(args)
       prefix = orig_prefix
       loop do
-        load_for_prefix(prefix)
-        tool = get_active_tool(prefix)
-        if tool
-          finish_definitions_in_tree(prefix)
-          return [tool, args.slice(prefix.length..-1)]
-        end
+        tool = lookup_specific(prefix)
+        return [tool, args.slice(prefix.length..-1)] if tool
         prefix = prefix.slice(0..-2)
       end
+    end
+
+    ##
+    # Given a tool name, looks up the specific tool, loading it from the
+    # configuration if necessary.
+    #
+    # If there is an active tool, returns it; otherwise, returns the highest
+    # priority tool that has been defined. If no tool has been defined with
+    # the given name, returns `nil`.
+    #
+    # @param words [Array<String>] The tool name
+    # @return [Toys::Tool] if the tool was found
+    # @return [nil] if no such tool exists
+    #
+    def lookup_specific(words)
+      words = split_path(words.first) if words.size == 1
+      load_for_prefix(words)
+      tool_data = get_tool_data(words)
+      tool = tool_data.active_definition || tool_data.top_definition
+      finish_definitions_in_tree(words) if tool
+      tool
     end
 
     ##
@@ -257,8 +273,31 @@ module Toys
     end
 
     ##
+    # Loads the subtree under the given prefix.
+    #
+    # @param prefix [Array<String>] The name prefix.
+    # @return [self]
+    #
+    # @private
+    #
+    def load_for_prefix(prefix)
+      cur_worklist = @worklist
+      @worklist = []
+      cur_worklist.each do |source, words, priority|
+        remaining_words = calc_remaining_words(prefix, words)
+        if source.source_proc
+          load_proc(source, words, remaining_words, priority)
+        elsif source.source_path
+          load_validated_path(source, words, remaining_words, priority)
+        end
+      end
+      self
+    end
+
+    ##
     # Get or create the tool definition for the given name and priority.
-    # May return either a tool or alias definition.
+    #
+    # @return [Toys::Tool]
     #
     # @private
     #
@@ -355,18 +394,6 @@ module Toys
       @tool_data[words] ||= ToolData.new({}, nil, nil)
     end
 
-    ##
-    # Returns the current effective tool given a name.
-    #
-    # If there is an active tool, returns it; otherwise, returns the highest
-    # priority tool that has been defined. If no tool has been defined with
-    # the given name, returns `nil`. Does not resolve aliases.
-    #
-    def get_active_tool(words)
-      tool_data = get_tool_data(words)
-      tool_data.active_definition || tool_data.top_definition
-    end
-
     def resolve_middleware(input)
       input = Array(input)
       cls = input.first
@@ -397,19 +424,6 @@ module Toys
         next if n.length < len || n.slice(0, len) != words
         tool = td.active_definition || td.top_definition
         tool.finish_definition(self) if tool.is_a?(Tool)
-      end
-    end
-
-    def load_for_prefix(prefix)
-      cur_worklist = @worklist
-      @worklist = []
-      cur_worklist.each do |source, words, priority|
-        remaining_words = calc_remaining_words(prefix, words)
-        if source.source_proc
-          load_proc(source, words, remaining_words, priority)
-        elsif source.source_path
-          load_validated_path(source, words, remaining_words, priority)
-        end
       end
     end
 

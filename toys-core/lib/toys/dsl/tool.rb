@@ -378,7 +378,8 @@ module Toys
       end
 
       ##
-      # Causes the current tool simply to run another tool when executed.
+      # Causes the current tool to delegate to another tool. When run, it
+      # simply invokes the target tool with the same arguments.
       #
       # ## Example
       #
@@ -402,22 +403,8 @@ module Toys
       # @return [self]
       #
       def delegate_to(target)
-        target = @__loader.split_path(target)
-        disable_argument_parsing
-        desc "(Delegates to \"#{target.join(' ')}\")"
-        to_run do
-          context = self
-          path = [target.inspect]
-          until context.nil?
-            name = context[::Toys::Context::Key::TOOL_NAME]
-            path << name.inspect
-            if name == target
-              raise "Delegation loop: #{path.join(' <- ')}"
-            end
-            context = context[::Toys::Context::Key::DELEGATED_FROM]
-          end
-          exit(cli.run(target + self[::Toys::Context::Key::ARGS], delegated_from: self))
-        end
+        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool.delegate_to(@__loader.split_path(target))
         self
       end
 

@@ -50,16 +50,16 @@ describe Toys::Tool do
   let(:loader) { cli.loader }
   let(:full_loader) { full_cli.loader }
   let(:tool_name) { "foo" }
+  let(:tool2_name) { "boo" }
   let(:full_tool_name) { "fool" }
   let(:subtool_name) { "bar" }
   let(:subtool2_name) { "baz" }
-  let(:alias_name) { "alz" }
   let(:root_tool) { loader.activate_tool([], 0) }
   let(:tool) { loader.activate_tool([tool_name], 0) }
+  let(:tool2) { loader.activate_tool([tool2_name], 0) }
   let(:subtool) { loader.activate_tool([tool_name, subtool_name], 0) }
   let(:subtool2) { loader.activate_tool([tool_name, subtool2_name], 0) }
   let(:full_tool) { full_loader.activate_tool([full_tool_name], 0) }
-  let(:alias_tool) { loader.activate_tool([tool_name, alias_name], 0) }
   def wrappable(str)
     Toys::WrappableString.new(str)
   end
@@ -910,6 +910,89 @@ describe Toys::Tool do
     it "can be set in an ancestor tool" do
       tool.custom_context_directory = "hi/there"
       assert_equal("hi/there", subtool.context_directory)
+    end
+  end
+
+  describe "delegation" do
+    it "disables argument parsing" do
+      tool.delegate_to(["bar"])
+      assert_equal(true, tool.argument_parsing_disabled?)
+    end
+
+    it "sets the description" do
+      tool.delegate_to(["bar"])
+      assert_equal('(Delegates to "bar")', tool.desc.to_s)
+    end
+
+    it "does not override an existing description" do
+      tool.desc = "Existing description"
+      tool.delegate_to(["bar"])
+      assert_equal("Existing description", tool.desc.to_s)
+    end
+
+    it "errors if there is already an argument" do
+      tool.add_required_arg(:foo)
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.delegate_to(["bar"])
+      end
+    end
+
+    it "errors if there is already a flag" do
+      tool.add_flag(:foo)
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.delegate_to(["bar"])
+      end
+    end
+
+    it "errors if the tool is already runnable" do
+      tool.run_handler = proc {}
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.delegate_to(["bar"])
+      end
+    end
+
+    it "executes the delegate" do
+      subtool.run_handler = proc do
+        exit(4)
+      end
+      tool.delegate_to([tool_name, subtool_name])
+      assert_equal(4, cli.run(tool_name))
+    end
+
+    it "passes arguments to the delegate" do
+      test = self
+      subtool.add_flag(:foo, ["--foo=VAL"])
+      subtool.run_handler = proc do
+        test.assert_equal("hello", get(:foo))
+        exit(4)
+      end
+      tool.delegate_to([tool_name, subtool_name])
+      assert_equal(4, cli.run(tool_name, "--foo", "hello"))
+    end
+
+    it "delegates to a namespace" do
+      subtool.run_handler = proc do
+        exit(4)
+      end
+      tool2.delegate_to([tool_name])
+      assert_equal(4, cli.run(tool2_name, subtool_name))
+    end
+
+    it "detects dangling references" do
+      tool.delegate_to([tool2_name])
+      _out, err = capture_subprocess_io do
+        refute_equal(0, cli.run(tool_name))
+      end
+      assert_match(/Delegate target not found: "#{tool2_name}"/, err)
+    end
+
+    it "detects circular references" do
+      tool.delegate_to([tool2_name])
+      tool2.delegate_to([tool_name])
+      _out, err = capture_subprocess_io do
+        refute_equal(0, cli.run(tool_name))
+      end
+      assert_match(/Delegation loop: "#{tool_name}" <- "#{tool2_name}" <- "#{tool_name}"/, err)
     end
   end
 end

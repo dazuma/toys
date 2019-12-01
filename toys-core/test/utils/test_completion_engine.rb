@@ -63,6 +63,10 @@ describe Toys::Utils::CompletionEngine do
           remaining_args :baz, complete: tester.context_capture
         end
       end
+      tool "five", delegate_to: ["one"] do
+        tool "six" do
+        end
+      end
     end
     cli
   }
@@ -80,7 +84,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes empty input" do
       result = completion.run_internal("toys ")
-      assert_equal(["one ", "three ", "two "], result)
+      assert_equal(["five ", "one ", "three ", "two "], result)
     end
 
     it "completes t" do
@@ -196,6 +200,11 @@ describe Toys::Utils::CompletionEngine do
     it "completes after flag ender" do
       result = completion.run_internal("toys one -- ")
       assert_equal(["lish ", "sball "], result)
+    end
+
+    it "completes for delegating tools" do
+      result = completion.run_internal("toys five ")
+      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball ", "six "], result)
     end
 
     it "recognizes closed single quotes" do

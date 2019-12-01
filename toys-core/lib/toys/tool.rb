@@ -1006,6 +1006,30 @@ module Toys
     end
 
     ##
+    # Causes this tool to delegate to another tool.
+    #
+    # @param target [Array<String>] The full path to the delegate tool.
+    # @return [self]
+    #
+    def delegate_to(target)
+      if includes_arguments?
+        raise ToolDefinitionError,
+              "Cannot delegate tool #{display_name.inspect} because" \
+              " arguments have already been defined."
+      end
+      if runnable?
+        raise ToolDefinitionError,
+              "Cannot delegate tool #{display_name.inspect} because" \
+              " the run method has already been defined."
+      end
+      disable_argument_parsing
+      self.desc = "(Delegates to \"#{target.join(' ')}\")" if desc.empty?
+      self.run_handler = make_delegation_run_handler(target)
+      self.completion = DefaultCompletion.new(delegation_target: target)
+      self
+    end
+
+    ##
     # Lookup the custom context directory in this tool and its ancestors.
     # @private
     #
@@ -1099,14 +1123,18 @@ module Toys
       # @param complete_args [Boolean] Whether to complete positional args
       # @param complete_flags [Boolean] Whether to complete flag names
       # @param complete_flag_values [Boolean] Whether to complete flag values
+      # @param delegation_target [Array<String>,nil] Delegation target, or
+      #     `nil` if none.
       #
       def initialize(complete_subtools: true, include_hidden_subtools: false,
-                     complete_args: true, complete_flags: true, complete_flag_values: true)
+                     complete_args: true, complete_flags: true, complete_flag_values: true,
+                     delegation_target: nil)
         @complete_subtools = complete_subtools
         @include_hidden_subtools = include_hidden_subtools
         @complete_flags = complete_flags
         @complete_args = complete_args
         @complete_flag_values = complete_flag_values
+        @delegation_target = delegation_target
       end
 
       ##
@@ -1150,6 +1178,13 @@ module Toys
       end
 
       ##
+      # Delegation target, or nil for none.
+      # @return [Array<String>] if there is a delegation target
+      # @return [nil] if there is no delegation target
+      #
+      attr_accessor :delegation_target
+
+      ##
       # Returns candidates for the current completion.
       #
       # @param context [Toys::Completion::Context] the current completion
@@ -1162,6 +1197,13 @@ module Toys
         candidates = subtool_or_arg_candidates(context)
         candidates += plain_flag_candidates(context)
         candidates += flag_value_candidates(context)
+        if delegation_target
+          delegate_tool = context.cli.loader.lookup_specific(delegation_target)
+          if delegate_tool
+            context = context.with(previous_words: delegation_target)
+            candidates += delegate_tool.completion.call(context)
+          end
+        end
         candidates
       end
 
@@ -1258,6 +1300,27 @@ module Toys
 
     def make_config_proc(middleware, loader, next_config)
       proc { middleware.config(self, loader, &next_config) }
+    end
+
+    def make_delegation_run_handler(target)
+      lambda do
+        path = [target.join(" ").inspect]
+        walk_context = self
+        until walk_context.nil?
+          name = walk_context[::Toys::Context::Key::TOOL_NAME]
+          path << name.join(" ").inspect
+          if name == target
+            raise "Delegation loop: #{path.join(' <- ')}"
+          end
+          walk_context = walk_context[::Toys::Context::Key::DELEGATED_FROM]
+        end
+        cli = self[::Toys::Context::Key::CLI]
+        cli.loader.load_for_prefix(target)
+        unless cli.loader.tool_defined?(target)
+          raise "Delegate target not found: \"#{target.join(' ')}\""
+        end
+        exit(cli.run(target + self[::Toys::Context::Key::ARGS], delegated_from: self))
+      end
     end
 
     def resolve_acceptor_name(name)
