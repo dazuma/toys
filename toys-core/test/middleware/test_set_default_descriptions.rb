@@ -63,6 +63,16 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
       assert_equal("(A namespace of tools)", tool.desc.to_s)
     end
 
+    it "is set for a delegate" do
+      cli = make_cli
+      cli.add_config_block do
+        tool "foo", delegate_to: "bar" do
+        end
+      end
+      tool, _remaining = cli.loader.lookup(["foo"])
+      assert_equal('(Delegates to "bar")', tool.desc.to_s)
+    end
+
     it "is set for the root" do
       cli = make_cli
       tool, _remaining = cli.loader.lookup([])

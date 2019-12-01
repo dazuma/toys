@@ -914,14 +914,14 @@ describe Toys::Tool do
   end
 
   describe "delegation" do
+    it "sets the target" do
+      tool.delegate_to(["bar"])
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
     it "disables argument parsing" do
       tool.delegate_to(["bar"])
       assert_equal(true, tool.argument_parsing_disabled?)
-    end
-
-    it "sets the description" do
-      tool.delegate_to(["bar"])
-      assert_equal('(Delegates to "bar")', tool.desc.to_s)
     end
 
     it "does not override an existing description" do

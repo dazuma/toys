@@ -41,6 +41,12 @@ module Toys
       DEFAULT_TOOL_DESC = "(No tool description available)"
 
       ##
+      # The default description for delegating tools.
+      # @return [String]
+      #
+      DEFAULT_DELEGATE_DESC = '(Delegates to "%<target>s")'
+
+      ##
       # The default description for namespaces.
       # @return [String]
       #
@@ -70,33 +76,39 @@ module Toys
       # @param default_tool_desc [String,nil] The default short description for
       #     runnable tools, or `nil` not to set one. Defaults to
       #     {DEFAULT_TOOL_DESC}.
-      # @param default_tool_long_desc [String,nil] The default long description
-      #     for runnable tools, or `nil` not to set one. Defaults to `nil`.
+      # @param default_tool_long_desc [Array<String>,nil] The default long
+      #     description for runnable tools, or `nil` not to set one. Defaults
+      #     to `nil`.
       # @param default_namespace_desc [String,nil] The default short
       #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to {DEFAULT_TOOL_DESC}.
-      # @param default_namespace_long_desc [String,nil] The default long
+      # @param default_namespace_long_desc [Array<String>,nil] The default long
       #     description for non-runnable tools, or `nil` not to set one.
       #     Defaults to `nil`.
       # @param default_root_desc [String,nil] The default short description for
       #     the root tool, or `nil` not to set one. Defaults to
       #     {DEFAULT_ROOT_DESC}.
-      # @param default_root_long_desc [String,nil] The default long description
-      #     for the root tool, or `nil` not to set one. Defaults to
+      # @param default_root_long_desc [Array<String>,nil] The default long
+      #     description for the root tool, or `nil` not to set one. Defaults to
       #     {DEFAULT_ROOT_LONG_DESC}.
+      # @param default_delegate_desc [String,nil] The default short description
+      #     for delegate tools, or `nil` not to set one. May include an sprintf
+      #     field for the `target` name. Defaults to {DEFAULT_DELEGATE_DESC}.
       #
       def initialize(default_tool_desc: DEFAULT_TOOL_DESC,
                      default_tool_long_desc: nil,
                      default_namespace_desc: DEFAULT_NAMESPACE_DESC,
                      default_namespace_long_desc: nil,
                      default_root_desc: DEFAULT_ROOT_DESC,
-                     default_root_long_desc: DEFAULT_ROOT_LONG_DESC)
+                     default_root_long_desc: DEFAULT_ROOT_LONG_DESC,
+                     default_delegate_desc: DEFAULT_DELEGATE_DESC)
         @default_tool_desc = default_tool_desc
         @default_tool_long_desc = default_tool_long_desc
         @default_namespace_desc = default_namespace_desc
         @default_namespace_long_desc = default_namespace_long_desc
         @default_root_desc = default_root_desc
         @default_root_long_desc = default_root_long_desc
+        @default_delegate_desc = default_delegate_desc
       end
 
       ##
@@ -137,6 +149,9 @@ module Toys
       def generate_tool_desc(tool, data)
         if tool.root?
           @default_root_desc
+        elsif tool.delegate_target
+          params = {target: tool.delegate_target.join(" ")}
+          format(@default_delegate_desc, params)
         elsif !tool.runnable? && data[:loader].has_subtools?(tool.full_name)
           @default_namespace_desc
         else

@@ -129,7 +129,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal('(Delegates to "bar")', tool.desc.to_s)
+      assert_equal(["bar"], tool.delegate_target)
       assert_equal(3, cli.run(["foo"]))
     end
   end
@@ -1379,7 +1379,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal('(Delegates to "bar baz")', tool.desc.to_s)
+      assert_equal(["bar", "baz"], tool.delegate_target)
     end
 
     it "supports array paths" do
@@ -1389,7 +1389,7 @@ describe Toys::DSL::Tool do
         end
       end
       tool, _remaining = loader.lookup(["foo"])
-      assert_equal('(Delegates to "bar baz")', tool.desc.to_s)
+      assert_equal(["bar", "baz"], tool.delegate_target)
     end
 
     it "executes the delegate" do

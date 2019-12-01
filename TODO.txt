@@ -4,8 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 
 ## Immediate tasks
 
-* Improve the error message on a dangling delegation
-
 ## Planned for next release
 
 * Write toys-core user guide
@@ -16,6 +14,7 @@ This is a dumping ground of possible ideas and future directions for Toys.
 * Test framework for tools
 * Evaluate options for closer Rails integration
 * Evaluate use cases for thread safety
+* Tool archives for sharing/installing tools
 * Should it be possible to set require_exact_flag_match per-flag?
 * Convenience methods for creating pipes/splits/joins in exec
 * Integrate with the "less" tool in exec.

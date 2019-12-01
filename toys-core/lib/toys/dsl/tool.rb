@@ -57,7 +57,7 @@ module Toys
     module Tool
       ## @private
       def method_added(_meth)
-        DSL::Tool.current_tool(self, true)&.check_definition_state
+        DSL::Tool.current_tool(self, true)&.check_definition_state(is_method: true)
       end
 
       ##

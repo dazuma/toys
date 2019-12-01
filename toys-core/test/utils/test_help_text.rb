@@ -28,6 +28,7 @@ describe Toys::Utils::HelpText do
   let(:executable_name) { "toys" }
   let(:long_tool_name) { "long-long-long-long-long-long-long-long" }
   let(:tool_name) { ["foo", "bar"] }
+  let(:tool2_name) { ["foo", "baz"] }
   let(:subtool_one_name) { tool_name + ["one"] }
   let(:subtool_two_name) { tool_name + ["two"] }
   let(:hidden_subtool_name) { tool_name + ["_three"] }
@@ -68,6 +69,12 @@ describe Toys::Utils::HelpText do
     loader.activate_tool(tool_name + [long_tool_name], 0).run_handler = runnable
     loader
   }
+  let(:delegation_loader) {
+    loader = Toys::Loader.new
+    loader.activate_tool(tool_name, 0).run_handler = runnable
+    loader.activate_tool(tool2_name, 0).delegate_to(tool_name)
+    loader
+  }
 
   let(:normal_tool) do
     single_loader.get_tool(tool_name, 0)
@@ -92,6 +99,9 @@ describe Toys::Utils::HelpText do
   end
   let(:subtool_long) do
     long_namespace_loader.get_tool(tool_name + [long_tool_name], 0)
+  end
+  let(:delegating_tool) do
+    delegation_loader.get_tool(tool2_name, 0)
   end
 
   describe "help text" do
@@ -152,8 +162,8 @@ describe Toys::Utils::HelpText do
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
-        assert_equal("    toys foo bar", help_array[index + 1])
-        assert_equal("    toys foo bar TOOL [ARGUMENTS...]", help_array[index + 2])
+        assert_equal("    toys foo bar TOOL [ARGUMENTS...]", help_array[index + 1])
+        assert_equal("    toys foo bar", help_array[index + 2])
         assert_equal("", help_array[index + 3])
       end
 
@@ -289,6 +299,59 @@ describe Toys::Utils::HelpText do
               " ( [-aVALUE | --aa=VALUE] [-bVALUE | --bb=VALUE] )",
           help_array[index + 1]
         )
+      end
+
+      it "is set for a delegating tool" do
+        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
+                                         delegate_target: tool_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("SYNOPSIS")
+        refute_nil(index)
+        assert_equal('    toys foo baz [ARGUMENTS FOR "foo bar"...]', help_array[index + 1])
+      end
+    end
+
+    describe "description section" do
+      it "renders with no long description" do
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, executable_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        assert_nil(index)
+      end
+
+      it "renders with a long description" do
+        normal_tool.long_desc = ["Hello world"]
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, executable_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        refute_nil(index)
+        assert_equal("    Hello world", help_array[index + 1])
+        assert_equal(index + 2, help_array.size)
+      end
+
+      it "renders a delegating tool with no long description" do
+        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
+                                         delegate_target: tool_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        refute_nil(index)
+        assert_equal("    Passes all arguments to \"#{tool_name.join(' ')}\" if invoked directly.",
+                     help_array[index + 1])
+        assert_equal(index + 2, help_array.size)
+      end
+
+      it "renders a delegating tool with a long description" do
+        delegating_tool.long_desc = ["Hello world"]
+        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
+                                         delegate_target: tool_name)
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        refute_nil(index)
+        assert_equal("    Hello world", help_array[index + 1])
+        assert_equal("    ", help_array[index + 2])
+        assert_equal("    Passes all arguments to \"#{tool_name.join(' ')}\" if invoked directly.",
+                     help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
       end
     end
 
@@ -612,8 +675,8 @@ describe Toys::Utils::HelpText do
         help = Toys::Utils::HelpText.new(runnable_namespace_tool, runnable_namespace_loader,
                                          executable_name)
         usage_array = help.usage_string.split("\n")
-        assert_equal("Usage:  toys foo bar", usage_array[0])
-        assert_equal("        toys foo bar TOOL [ARGUMENTS...]", usage_array[1])
+        assert_equal("Usage:  toys foo bar TOOL [ARGUMENTS...]", usage_array[0])
+        assert_equal("        toys foo bar", usage_array[1])
         assert_equal("", usage_array[2])
       end
 
@@ -670,6 +733,14 @@ describe Toys::Utils::HelpText do
         assert_equal("Usage:  toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
         assert_equal("", usage_array[1])
+      end
+
+      it "is set for a delegating tool" do
+        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
+                                         delegate_target: tool_name)
+        usage_array = help.usage_string.split("\n")
+        assert_equal('Usage:  toys foo baz [ARGUMENTS FOR "foo bar"...]', usage_array[0])
+        assert_equal(1, usage_array.size)
       end
     end
 

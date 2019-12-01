@@ -57,10 +57,10 @@ module Toys
         while (from = context[Context::Key::DELEGATED_FROM])
           context = from
         end
-        delegate_path = orig_context == context ? nil : orig_context[Context::Key::TOOL_NAME]
+        delegate_target = orig_context == context ? nil : orig_context[Context::Key::TOOL_NAME]
         cli = context[Context::Key::CLI]
         new(context[Context::Key::TOOL], cli.loader, cli.executable_name,
-            delegate_path: delegate_path)
+            delegate_target: delegate_target)
       end
 
       ##
@@ -70,16 +70,16 @@ module Toys
       # @param loader [Toys::Loader] A loader that can provide subcommands.
       # @param executable_name [String] The name of the executable.
       #     e.g. `"toys"`.
-      # @param delegate_path [Array<String>,nil] The full name of a tool this
+      # @param delegate_target [Array<String>,nil] The full name of a tool this
       #     tool will delegate to. Default is `nil` for no delegation.
       #
       # @return [Toys::Utils::HelpText]
       #
-      def initialize(tool, loader, executable_name, delegate_path: nil)
+      def initialize(tool, loader, executable_name, delegate_target: nil)
         @tool = tool
         @loader = loader
         @executable_name = executable_name
-        @delegate_path = delegate_path
+        @delegate_target = delegate_target
       end
 
       ##
@@ -108,8 +108,10 @@ module Toys
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, nil, include_hidden)
-        assembler = UsageStringAssembler.new(@tool, @executable_name, subtools,
-                                             indent, left_column_width, wrap_width)
+        assembler = UsageStringAssembler.new(
+          @tool, @executable_name, @delegate_target, subtools,
+          indent, left_column_width, wrap_width
+        )
         assembler.result
       end
 
@@ -139,8 +141,10 @@ module Toys
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search, include_hidden)
-        assembler = HelpStringAssembler.new(@tool, @executable_name, subtools, search,
-                                            show_source_path, indent, indent2, wrap_width, styled)
+        assembler = HelpStringAssembler.new(
+          @tool, @executable_name, @delegate_target, subtools, search, show_source_path,
+          indent, indent2, wrap_width, styled
+        )
         assembler.result
       end
 
@@ -183,10 +187,11 @@ module Toys
 
       ## @private
       class UsageStringAssembler
-        def initialize(tool, executable_name, subtools,
+        def initialize(tool, executable_name, delegate_target, subtools,
                        indent, left_column_width, wrap_width)
           @tool = tool
           @executable_name = executable_name
+          @delegate_target = delegate_target
           @subtools = subtools
           @indent = indent
           @left_column_width = left_column_width
@@ -210,9 +215,8 @@ module Toys
 
         def add_synopsis_section
           synopses = []
-          synopses << namespace_synopsis if !@subtools.empty? && !@tool.runnable?
-          synopses << tool_synopsis
-          synopses << namespace_synopsis if !@subtools.empty? && @tool.runnable?
+          synopses << namespace_synopsis unless @subtools.empty?
+          synopses << (@delegate_target ? delegate_synopsis : tool_synopsis)
           first = true
           synopses.each do |synopsis|
             @lines << (first ? "Usage:  #{synopsis}" : "        #{synopsis}")
@@ -229,8 +233,13 @@ module Toys
           synopsis.join(" ")
         end
 
+        def delegate_synopsis
+          target = @delegate_target.join(" ")
+          "#{@executable_name} #{@tool.display_name} [ARGUMENTS FOR \"#{target}\"...]"
+        end
+
         def namespace_synopsis
-          ([@executable_name] + @tool.full_name + ["TOOL", "[ARGUMENTS...]"]).join(" ")
+          "#{@executable_name} #{@tool.display_name} TOOL [ARGUMENTS...]"
         end
 
         def add_flag_group_sections
@@ -313,11 +322,12 @@ module Toys
 
       ## @private
       class HelpStringAssembler
-        def initialize(tool, executable_name, subtools, search_term, show_source_path,
-                       indent, indent2, wrap_width, styled)
+        def initialize(tool, executable_name, delegate_target, subtools, search_term,
+                       show_source_path, indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
           @tool = tool
           @executable_name = executable_name
+          @delegate_target = delegate_target
           @subtools = subtools
           @search_term = search_term
           @show_source_path = show_source_path
@@ -366,9 +376,8 @@ module Toys
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
-          add_synopsis_clause(namespace_synopsis) if !@subtools.empty? && !@tool.runnable?
-          add_synopsis_clause(tool_synopsis)
-          add_synopsis_clause(namespace_synopsis) if !@subtools.empty? && @tool.runnable?
+          add_synopsis_clause(namespace_synopsis) unless @subtools.empty?
+          add_synopsis_clause(@delegate_target ? delegate_synopsis : tool_synopsis)
         end
 
         def add_synopsis_clause(synopsis)
@@ -457,6 +466,13 @@ module Toys
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
+        def delegate_synopsis
+          target = @delegate_target.join(" ")
+          args_clause = underline("ARGUMENTS FOR \"#{target}\"")
+          synopsis = [full_executable_name, "[#{args_clause}...]"]
+          wrap_indent_indent2(WrappableString.new(synopsis))
+        end
+
         def full_executable_name
           bold(([@executable_name] + @tool.full_name).join(" "))
         end
@@ -469,7 +485,13 @@ module Toys
         end
 
         def add_description_section
-          desc = wrap_indent(@tool.long_desc)
+          desc = @tool.long_desc
+          if @delegate_target
+            delegate_clause =
+              "Passes all arguments to \"#{@delegate_target.join(' ')}\" if invoked directly."
+            desc = desc.empty? ? [delegate_clause] : desc + ["", delegate_clause]
+          end
+          desc = wrap_indent(desc)
           return if desc.empty?
           @lines << ""
           @lines << bold("DESCRIPTION")

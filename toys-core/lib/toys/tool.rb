@@ -87,6 +87,7 @@ module Toys
 
       @interrupt_handler = nil
       @usage_error_handler = nil
+      @delegate_target = nil
 
       @completion = DefaultCompletion.new
     end
@@ -258,6 +259,14 @@ module Toys
     # @return [nil] if there is no usage error handler
     #
     attr_reader :usage_error_handler
+
+    ##
+    # The full name of the delegate target, if any.
+    #
+    # @return [Array<String>] if this tool delegates
+    # @return [nil] if this tool does not delegate
+    #
+    attr_reader :delegate_target
 
     ##
     # The local name of this tool, i.e. the last element of the full name.
@@ -916,7 +925,7 @@ module Toys
     # @param proc [Proc] The runnable block
     #
     def run_handler=(proc)
-      check_definition_state
+      check_definition_state(is_method: true)
       @tool_class.to_run(&proc)
     end
 
@@ -926,7 +935,7 @@ module Toys
     # @param handler [Proc,Symbol] The interrupt handler
     #
     def interrupt_handler=(handler)
-      check_definition_state
+      check_definition_state(is_method: true)
       if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
         raise ToolDefinitionError, "Interrupt handler must be a proc or symbol"
       end
@@ -939,7 +948,7 @@ module Toys
     # @param handler [Proc,Symbol] The usage error handler
     #
     def usage_error_handler=(handler)
-      check_definition_state
+      check_definition_state(is_method: true)
       if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
         raise ToolDefinitionError, "Usage error handler must be a proc or symbol"
       end
@@ -1012,6 +1021,11 @@ module Toys
     # @return [self]
     #
     def delegate_to(target)
+      if @delegate_target
+        raise ToolDefinitionError,
+              "Cannot delegate tool #{display_name.inspect} because" \
+              " it already delegates to \"#{@delegate_target.join(' ')}\"."
+      end
       if includes_arguments?
         raise ToolDefinitionError,
               "Cannot delegate tool #{display_name.inspect} because" \
@@ -1023,9 +1037,9 @@ module Toys
               " the run method has already been defined."
       end
       disable_argument_parsing
-      self.desc = "(Delegates to \"#{target.join(' ')}\")" if desc.empty?
       self.run_handler = make_delegation_run_handler(target)
       self.completion = DefaultCompletion.new(delegation_target: target)
+      @delegate_target = target
       self
     end
 
@@ -1098,7 +1112,7 @@ module Toys
     # or from the DSL only.
     # @private
     #
-    def check_definition_state(is_arg: false)
+    def check_definition_state(is_arg: false, is_method: false)
       if @definition_finished
         raise ToolDefinitionError,
               "Defintion of tool #{display_name.inspect} is already finished"
@@ -1106,6 +1120,10 @@ module Toys
       if is_arg && argument_parsing_disabled?
         raise ToolDefinitionError,
               "Tool #{display_name.inspect} has disabled argument parsing"
+      end
+      if (is_arg || is_method) && delegate_target
+        raise ToolDefinitionError,
+              "Tool #{display_name.inspect} is already delegating to another tool"
       end
       self
     end
