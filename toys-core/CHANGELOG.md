@@ -35,6 +35,7 @@ This is a major update with significant new features and a bunch of fixes. It al
 Major changes and features:
 
 * CHANGED: Relicensed under the MIT License.
+* CHANGED: Requires Ruby 2.3 or later.
 * ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.
 * ADDED: The usage error screen displays suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler and a custom usage error handler. Added appropriate APIs and DSL methods.

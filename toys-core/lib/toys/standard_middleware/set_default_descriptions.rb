@@ -64,7 +64,7 @@ module Toys
       #
       DEFAULT_ROOT_LONG_DESC = [
         "This command line tool was built using the toys-core gem. See" \
-          " https://www.rubydoc.info/gems/toys-core for more info.",
+          " https://dazuma.github.io/toys/gems/toys-core for more info.",
         "To replace this message, set the description and long description" \
           " of the root tool, or configure the SetDefaultDescriptions" \
           " middleware.",

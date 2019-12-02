@@ -4,3 +4,4 @@
 /*/tmp/
 Gemfile.lock
 gems.locked
+.DS_Store

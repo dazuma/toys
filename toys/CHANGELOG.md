@@ -33,7 +33,7 @@ Highlights:
 Details:
 
 * CHANGED: Relicensed under the MIT License.
-* CHANGED: Toys now requires Ruby 2.4 or later.
+* CHANGED: Requires Ruby 2.3 or later.
 * ADDED: Tab completion for bash. Args and flags can provide their own completion information.
 * ADDED: The usage error screen displays alternative suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)
 * ADDED: Tools can provide an interrupt handler.

@@ -9,10 +9,10 @@ to write command line executables using the Toys DSL and the power of the Toys
 classes.
 
 For more detailed information about Toys-Core, see the
-[Toys-Core User's Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md).
+[Toys-Core User's Guide](https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html).
 For background information about Toys itself, see the
-[Toys README](https://www.rubydoc.info/gems/toys) and the
-[Toys User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+[Toys README](https://dazuma.github.io/toys/gems/toys/latest) and the
+[Toys User Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
 
 ## Introductory tutorial
 
@@ -21,9 +21,9 @@ executable using Toys-Core.
 
 It assumes basic familiarity with Toys, so, if you have not done so, I
 recommend first walking through the tutorial in the
-[Toys README](https://www.rubydoc.info/gems/toys). It also assumes you are
-running a unix-like system such as Linux or macOS. Some commands might need to
-be modified if you're running on Windows.
+[Toys README](https://dazuma.github.io/toys/gems/toys/latest). It also assumes
+you are running a unix-like system such as Linux or macOS. Some commands might
+need to be modified if you're running on Windows.
 
 ### Install Toys
 
@@ -330,11 +330,11 @@ deep framework with many more features. Learn about how to write tools using
 the Toys DSL, including validating and interpreting command line arguments,
 using templates and mixins, controlling subprocesses, and producing nice styled
 output, in the
-[Toys User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+[Toys User Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
 Learn more about how to customize and package your own executable, including
 handling errors, controlling log output, and providing your own mixins,
 templates, and middleware, in the
-[Toys-Core User Guide](https://www.rubydoc.info/gems/toys-core/file/docs/guide.md).
+[Toys-Core User Guide](https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html).
 
 ## License
 

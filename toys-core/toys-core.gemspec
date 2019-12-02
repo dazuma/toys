@@ -45,16 +45,16 @@ require "toys/core"
 
   spec.add_development_dependency "highline", "~> 2.0"
   spec.add_development_dependency "kramdown", "~> 2.1"
-  spec.add_development_dependency "minitest", "~> 5.11"
+  spec.add_development_dependency "minitest", "~> 5.13"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"
-  spec.add_development_dependency "rubocop", "~> 0.74.0"
+  spec.add_development_dependency "rubocop", "~> 0.77.0"
   spec.add_development_dependency "yard", "~> 0.9.20"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://github.com/dazuma/toys/blob/master/toys-core/CHANGELOG.md"
     spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
-    spec.metadata["documentation_uri"] = "https://www.rubydoc.info/gems/toys-core"
+    spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys-core/latest"
   end
 end

@@ -14,7 +14,7 @@ line executables in Ruby using the Toys-Core framework.
 This guide assumes you are already familiar with Toys itself, including how to
 define tools by writing Toys files, parsing arguments and flags, and how tools
 are executed. For background, please see the
-[Toys User's Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+[Toys User's Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
 
 **(This user's guide is still under construction.)**
 

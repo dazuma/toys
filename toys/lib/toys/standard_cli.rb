@@ -92,7 +92,7 @@ module Toys
       " and Toys will automatically organize them, parse arguments, and provide documentation." \
       " Tools can be global or scoped to specific directories. You can also use Toys instead of" \
       " Rake to provide build and maintenance scripts for your projects." \
-      " For detailed information, see https://www.rubydoc.info/gems/toys"
+      " For detailed information, see https://dazuma.github.io/toys"
 
     ##
     # Short description for the version flag.

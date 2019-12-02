@@ -19,7 +19,7 @@ your own custom command line executable using the related **toys-core**
 library.)
 
 If this is your first time using Toys, we recommend starting with the
-[README](https://www.rubydoc.info/gems/toys/file/README.md), which includes a
+[README](https://dazuma.github.io/toys/gems/toys/latest), which includes a
 tutorial that introduces how to install Toys, write and execute tools, and even
 use Toys to replace Rake. The tutorial will likely give you enough information
 to start using Toys effectively.
@@ -219,7 +219,7 @@ flag, but it has no additional effect.) Namespaces also support the following
 additional flags:
 
 *   `--all` which displays all subtools, including
-    [hidden subtools](#Hidden_tools) and namespaces.
+    [hidden subtools](#hidden-tools) and namespaces.
 *   `--no-recursive` which displays only immediate subtools, instead of the
     default behavior of showing all subtools recursively.
 *   `--search=TERM` which displays only subtools whose name or description
@@ -265,7 +265,7 @@ you could do this:
     $ toys do build --staging , test --help
 
 Each tool can choose which behavior it will support, whether or not to enforce
-[flags before positional args](#Enforcing_flags_before_args).
+[flags before positional args](#enforcing-flags-before-args).
 
 You can also, of course, stop recognizing flags on the command line by passing
 `--` as an argument.
@@ -273,7 +273,7 @@ You can also, of course, stop recognizing flags on the command line by passing
 ### Tab completion
 
 If you are using the Bash shell, Toys provides custom tab completion. See
-[this section](#Installing_tab_completion_for_Bash) for instructions on
+[this section](#installing-tab-completion-for-bash) for instructions on
 installing tab completion.
 
 Toys will complete tool and subtool names, flags, values passed to flags, and
@@ -325,7 +325,7 @@ directory and its subdirectories.
 
 The format of a Toys file is a Ruby DSL that includes directives, methods, and
 nested blocks. The actual DSL is specified in the
-[Toys::DSL::Tool class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/Tool).
+[Toys::DSL::Tool class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool).
 
 To create a tool, write a `tool` block, giving the tool a name. Within the
 block, use directives to set the properties of the tool, including descriptions
@@ -374,9 +374,9 @@ illustrates how to prevent a line from being word-wrapped. This is also a
 useful technique for preserving spaces and indentation.
 
 For more details, see the reference documentation for
-[Toys::DSL::Tool#desc](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:desc)
+[Toys::DSL::Tool#desc](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#desc-instance_method)
 and
-[Toys::DSL::Tool#long_desc](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:long_desc).
+[Toys::DSL::Tool#long_desc](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#long_desc-instance_method).
 
 ### Positional arguments
 
@@ -386,7 +386,7 @@ value at execution time. Arguments may also have various properties controlling
 how values are validated and expressed.
 
 The above example uses the directive
-[Toys::DSL::Tool#optional_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:optional_arg)
+[Toys::DSL::Tool#optional_arg](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#optional_arg-instance_method)
 to declare an **optional argument** named `:whom`. If the argument is provided
 on the command line e.g.
 
@@ -405,12 +405,12 @@ If the option name is a valid method name, Toys will provide a method that you
 can use to retrieve the value. In the above example, we retrieve the value for
 the option `:whom` by calling the method `whom`. If the option name cannot be
 made into a method, you can retrieve the value by calling
-[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get).
+[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method).
 
 An argument may also be **required**, which means it must be provided on the
 command line; otherwise the tool will report a usage error. You may declare a
 required argument using the directive
-[Toys::DSL::Tool#required_arg](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:required_arg).
+[Toys::DSL::Tool#required_arg](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#required_arg-instance_method).
 
 #### Parsing required and optional arguments
 
@@ -478,7 +478,7 @@ because it is not provided, will default to `"the-default"` instead of `nil`.
 Normally, unmatched arguments will result in an error message. However, you can
 provide an "argument" to match all **remaining** unmatched arguments at the
 end, using the directive
-[Toys::DSL::Tool#remaining_args](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:remaining_args).
+[Toys::DSL::Tool#remaining_args](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#remaining_args-instance_method).
 For example:
 
     tool "args-demo" do
@@ -516,7 +516,7 @@ an example:
                  long_desc: ["Long descriptions may have multiple lines.",
                              "This is the second line."]
 
-See the [above section on Descriptions](#Tool_descriptions) for more
+See the [above section on Descriptions](#tool-descriptions) for more
 information on how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -530,7 +530,7 @@ way, Toys provides an alternate syntax for defining arguments using a block.
     end
 
 For detailed info on configuring an argument using a block, see the
-[Toys::DSL::PositionalArg class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/PositionalArg).
+[Toys::DSL::PositionalArg class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/PositionalArg).
 
 #### Argument acceptors
 
@@ -561,7 +561,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#Custom_acceptors) for more information.
+[section below on Custom Acceptors](#custom-acceptors) for more information.
 
 #### Argument completions
 
@@ -604,7 +604,7 @@ As with arguments, Toys will provide a method that you can call to retrieve the
 option value set by a flag. In this case, a method called `shout` will be
 available, and will return either true or false. If the option name cannot be
 made into a method, you can retrieve the value by calling
-[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get).
+[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method).
 
 #### Flag types
 
@@ -772,7 +772,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#Custom_acceptors) for more information.
+[section below on Custom Acceptors](#custom-acceptors) for more information.
 
 #### Defaults and handlers
 
@@ -830,7 +830,7 @@ like this:
 Note that both flags affect the same option name, `VERBOSITY`. The first
 increments it each time it appears, and the second decrements it. A tool can
 query this option and get an integer telling the requested verbosity level, as
-you will see [below](#Logging_and_verbosity).
+you will see [below](#logging-and-verbosity).
 
 Toys provides a few built-in handlers that can be specified by name. We already
 discussed the default handler that can be specified by its name `:set` or by
@@ -858,7 +858,7 @@ directive. The `desc:` argument takes a single string description, while the
          long_desc: ["Long descriptions may have multiple lines.",
                      "This is the second line."]
 
-See the [above section on Descriptions](#Tool_descriptions) for more information on
+See the [above section on Descriptions](#tool-descriptions) for more information on
 how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -873,7 +873,7 @@ way, Toys provides an alternate syntax for defining flags using a block.
     end
 
 For detailed info on configuring an flag using a block, see the
-[Toys::DSL::Flag class](https://www.rubydoc.info/gems/toys-core/Toys/DSL/Flag).
+[Toys::DSL::Flag class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Flag).
 
 #### Flag completions
 
@@ -981,7 +981,7 @@ your tools.
 
 Note: If you do not define the `run` method for a tool, Toys provides a default
 implementation that displays the tool's help screen. This is typically used for
-namespaces, as we shall see [below](#Namespaces_and_subtools). Most tools,
+namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
 however, should define `run`.
 
 Let's revisit the "greet" example we covered earlier.
@@ -1008,7 +1008,7 @@ value. In the above example, `whom` and `shout` are such methods.
 
 If you create a flag or argument whose option name is not a symbol *or* is not
 a valid method name, you can still get the value by calling the
-[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
+[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
 method. For example:
 
     tool "greet" do
@@ -1027,7 +1027,7 @@ method. For example:
 If a tool's `run` method finishes normally, Toys will exit with a result code
 of 0, indicating success. You may exit immediately and/or provide a nonzero
 result by calling the
-[Toys::Context#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:exit)
+[Toys::Context#exit](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#exit-instance_method)
 method:
 
     def run
@@ -1149,7 +1149,7 @@ than two or three levels of hierarchy can be confusing to use.
 ## Understanding Toys files
 
 Toys commands are defined in Toys files. We covered the basic syntax for these
-files in the [above section on defining tools](#Defining_tools). In this
+files in the [above section on defining tools](#defining-tools). In this
 section, we will take a deeper look at what you can do with Toys files.
 
 ### Toys directories
@@ -1254,7 +1254,7 @@ in the separate file `.toys/test/unit.rb`.
 Toys also loads index files first before other files in the directory. This
 means they are convenient places to define shared code that can be used by all
 the subtools defined in that directory, as we shall see later in the
-[section on sharing code](#Sharing_code).
+[section on sharing code](#sharing-code).
 
 ### The Toys search path
 
@@ -1308,12 +1308,12 @@ This section describes the context and resources available to your tool when it
 is running; that is, what you can call from your tool's `run` method.
 
 Each tool is defined as a class that subclasses
-[Toys::Context](https://www.rubydoc.info/gems/toys-core/Toys/Context). The base
+[Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context). The base
 class defines a number of methods, and provides access to a variety of data and
 objects relevant to your tool. We have already seen earlier how to use the
-[Toys::Context#get](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
+[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
 method to retrieve option values, and how to use the
-[Toys::Context#exit](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:exit)
+[Toys::Context#exit](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#exit-instance_method)
 method to exit immediately and return an exit code. Now we will cover other
 resources available to your tool.
 
@@ -1321,7 +1321,7 @@ resources available to your tool.
 
 In addition to the options set by your tool's flags and command line arguments,
 a variety of other data and objects are also accessible using the
-[Toys::Context#get method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:get)
+[Toys::Context#get method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
 For example, you can get the full name of the tool being executed like this:
 
     def run
@@ -1331,7 +1331,7 @@ For example, you can get the full name of the tool being executed like this:
 The `TOOL_NAME` constant above is a well-known key that corresponds to the full
 name (as an array of strings) of the running tool. A variety of well-known keys
 are defined in the
-[Toys::Context::Key module](https://www.rubydoc.info/gems/toys-core/Toys/Context/Key).
+[Toys::Context::Key module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context/Key).
 They include information about the current execution, such as the tool name and
 the original command line arguments passed to it (before they were parsed).
 They also include some internal Toys objects, which can be used to do things
@@ -1339,7 +1339,7 @@ like write to the logger or look up and call other tools.
 
 Most of the important context also can be accessed from convenience methods.
 For example, the `TOOL_NAME` is also available from the
-[Toys::Context#tool_name method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:tool_name):
+[Toys::Context#tool_name method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#tool_name-instance_method):
 
     def run
       puts "Current tool is #{tool_name}"
@@ -1353,7 +1353,7 @@ access from built-in context.
 Toys provides a Logger (a simple instance of the Ruby standard library logger
 that writes to standard error) for your tool to use to report status
 information. You can access this logger via the `LOGGER` context key, or the
-[Toys::Context#logger method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:logger).
+[Toys::Context#logger method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#logger-instance_method).
 For example:
 
     def run
@@ -1363,10 +1363,10 @@ For example:
 The current logger level is controlled by the verbosity. Verbosity is an
 integer context value that you can retrieve using the `VERBOSITY` context key
 or the
-[Toys::Context#verbosity method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:verbosity).
+[Toys::Context#verbosity method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#verbosity-instance_method).
 The verbosity is set to 0 by default. This corresponds to a logger level of
 `WARN`. That is, warnings, errors, and fatals are displayed, while infos and
-debugs are not. However, [as we saw earlier](#Standard_flags), most tools
+debugs are not. However, [as we saw earlier](#standard-flags), most tools
 automatically respond to the `--verbose` and `--quiet` flags, (or `-v` and
 `-q`), which increment and decrement the verbosity value, respectively. If you
 run a tool with `-v`, the verbosity is incremented to 1, and the logger level
@@ -1378,11 +1378,11 @@ easily provide command line based control of the output verbosity.
 
 A common operation a tool might want to do is "call" another tool. This can be
 done via the CLI object, which you can retrieve using the `CLI` key or the
-[Toys::Context#cli method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:cli).
+[Toys::Context#cli method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#cli-instance_method).
 These return the current instance of
-[Toys::CLI](https://www.rubydoc.info/gems/toys-core/Toys/CLI) which is the
+[Toys::CLI](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI) which is the
 "main" interface to Toys. In particular, it provides the
-[Toys::CLI#run method](https://www.rubydoc.info/gems/toys-core/Toys%2FCLI:run)
+[Toys::CLI#run method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI#run-instance_method)
 which can be used to call another tool:
 
     def run
@@ -1395,15 +1395,15 @@ execute, and return a process status code (i.e. 0 for success, and nonzero for
 error). Make sure you handle the exit status. For example, in most cases, you
 should probably exit if the tool you are calling returns a nonzero code.
 
-You may also use the `exec` mixin [described below](#Executing_subprocesses) to
+You may also use the `exec` mixin [described below](#executing-subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
 capture or manipulate that tool's input or output stream.
 
 ### Helper methods and mixins
 
-The methods of [Toys::Context](https://www.rubydoc.info/gems/toys-core/Toys/Context)
+The methods of [Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context)
 are not the only methods available for your tool to call. We
-[saw earlier](#Tool_execution_basics) that a tool can define additional methods
+[saw earlier](#tool-execution-basics) that a tool can define additional methods
 that you can use as helpers.
 
 You can also include **mixins**, which are modules that bring in a whole set of
@@ -1423,12 +1423,12 @@ special `puts` method that lets you include style information such as `:bold`,
 which affects the display on ANSI-capable terminals.
 
 For details on the built-in mixins provided by Toys, see the modules under
-[Toys::StandardMixins](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins).
+[Toys::StandardMixins](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins).
 We will look at a few examples of the use of these mixins below. Built-in
 mixins have names that are symbols.
 
 You can also define your own mixins, as we will see in the
-[upcoming section on defining mixins](#Defining_mixins).
+[upcoming section on defining mixins](#defining-mixins).
 
 ### Executing subprocesses
 
@@ -1461,9 +1461,9 @@ subprocesses:
 *   A block run in a separate (forked) process.
 
 For more information, see the
-[Toys::StandardMixins::Exec mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Exec)
+[Toys::StandardMixins::Exec mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Exec)
 and the underyling library
-[Toys::Utils::Exec](https://www.rubydoc.info/gems/toys-core/Toys/Utils/Exec).
+[Toys::Utils::Exec](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec).
 
 ### Formatting output
 
@@ -1474,19 +1474,19 @@ can help create nicer interfaces.
 
 First, there is `:terminal`, which provides some basic terminal features such
 as styled output and simple spinners. For information, see the
-[Toys::StandardMixins::Terminal mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Terminal)
+[Toys::StandardMixins::Terminal mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Terminal)
 and the underyling library
-[Toys::Terminal](https://www.rubydoc.info/gems/toys-core/Toys/Terminal).
+[Toys::Terminal](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Terminal).
 
 If you prefer the venerable Highline library interface, Toys provides a mixin
 called `:highline` that automatically installs the highline gem (version 2.x)
 if it is not available, and makes a highline object available to the tool. For
 more information, see the
-[Toys::StandardMixins::Highline mixin module](https://www.rubydoc.info/gems/toys-core/Toys/StandardMixins/Highline).
+[Toys::StandardMixins::Highline mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Highline).
 
 You may also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
-[useful gems](#Useful_gems) provides some examples.
+[useful gems](#useful-gems) provides some examples.
 
 ## Sharing code
 
@@ -1499,7 +1499,7 @@ classes, and constants, that you might define in your tools.
 
 ### Defining mixins
 
-We [saw earlier](#Helper_methods_and_mixins) that you can mix a module (with
+We [saw earlier](#helper-methods-and-mixins) that you can mix a module (with
 all its methods) into your tool using the `include` directive. You can specify
 a module itself, or the name of a built-in mixin such as `:exec` or
 `:terminal`. But you can also define your own mixin using the `mixin`
@@ -1514,7 +1514,7 @@ includes the mixin, in the same way that you can include a Ruby module.
 
 (Note that, unlike full modules, mixins allow only methods to be shared. Mixins
 do not support constants. See the next section on
-[using constants](#Using_constants) to learn how Toys handles constants.)
+[using constants](#using-constants) to learn how Toys handles constants.)
 
 Here's an example. Suppose you had common setup code that you wanted to share
 among your testing tools.
@@ -1553,7 +1553,7 @@ descendant tools defined in that same directory, but not in a different `.toys`
 directory.
 
 A common technique, for example, would be to define a mixin in the
-[index file](#Index_files) in a Toys directory. You can then include it from
+[index file](#index-files) in a Toys directory. You can then include it from
 any subtools defined in other files in that same directory.
 
 #### Mixin initializers
@@ -1733,7 +1733,7 @@ development, including templates that generate build, test, and documentation
 tools. The `:minitest` template illustrated above is one of these built-in
 templates. Like built-in mixins, built-in template names are always symbols.
 You can read more about them in the next section on using
-[Toys as a Rake replacement](#Toys_as_a_Rake_replacement).
+[Toys as a Rake replacement](#toys-as-a-rake-replacement).
 
 You may also write your own templates. Here's how...
 
@@ -1799,7 +1799,7 @@ directive by setting properties on the template object.
 
 Finally, templates are classes, and you can create a template directly as a
 class by including the
-[Toys::Template](https://www.rubydoc.info/gems/toys-core/Toys/Template) module
+[Toys::Template](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Template) module
 in your class definition.
 
     class GreetTemplate
@@ -1852,7 +1852,7 @@ tools are defined. You can use such files to define Ruby classes, modules, and
 other code that may be used and shared by your tools.
 
 To use preloaded files, you must define your tools inside a
-[Toys directory](#Toys_directories). Before any tools inside a directory are
+[Toys directory](#toys-directories). Before any tools inside a directory are
 loaded, any file named `.preload.rb` in the directory is automatically
 required. Additionally, any Ruby files inside a subdirectory called `.preload`
 are also automatically required.
@@ -1949,7 +1949,7 @@ defined.
 
 Here's an example tool that just runs `rake`. Because it requires rake to be
 installed in order to *run* the tool, we call the
-[Toys::StandardMixins::Gems#gem](https://www.rubydoc.info/gems/toys-core/Toys%2FStandardMixins%2FGems:gem)
+[Toys::StandardMixins::Gems#gem](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Gems#gem-instance_method)
 method provided by the `:gems` mixin when running.
 
     tool "rake" do
@@ -1967,10 +1967,10 @@ exception is raised.
 
 If you are not in the Toys DSL context—for example from a class-based
 mixin—you should use
-[Toys::Utils::Gems.activate](https://www.rubydoc.info/gems/toys-core/Toys%2FUtils%2FGems.activate)
+[Toys::Utils::Gems.activate](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#activate-class_method)
 instead. (Note that you must `require "toys/utils/gems"` explicitly before
 invoking the
-[Toys::Utils::Gems](https://www.rubydoc.info/gems/toys-core/Toys/Utils/Gems)
+[Toys::Utils::Gems](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems)
 class because, like all classes under `Toys::Utils`, Toys does not load it
 automatically.) For example:
 
@@ -2449,7 +2449,7 @@ to accept integers from 1 to 5 is:
     acceptor("1to5", [1, 2, 3, 4, 5])
 
 There are various other options. See the reference documentation for
-[Toys::DSL::Tool#acceptor](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:acceptor).
+[Toys::DSL::Tool#acceptor](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#acceptor-instance_method).
 
 An acceptor is available to the tool in which it is defined, and any subtools
 and descendants defined at the same point in the Toys search path, but not from
@@ -2582,7 +2582,7 @@ To disable argument parsing, use the `disable_argument_parsing` directive. This
 directive disables parsing and validation of flags and positional arguments.
 (Thus, it is incompatible with specifying any flags or arguments for the tool.)
 Instead, you can retrieve the raw arguments using the
-[Toys::Context#args method](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:args).
+[Toys::Context#args method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#args-instance_method).
 
 Here is an example that wraps calls to git:
 
@@ -2669,7 +2669,7 @@ handler.
 
 If your handler block or method takes a parameter, Toys will pass it the array
 of usage errors. Otherwise, you can get the array by calling
-[Toys::Context#usage_errors](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:usage_errors).
+[Toys::Context#usage_errors](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#usage_errors-instance_method).
 This array will provide you with a list of the usage errors encountered.
 
 You can also get information about the arguments that could not be parsed from
@@ -2701,17 +2701,17 @@ provides a convenient place to put data files that can be looked up by tools
 either during definition or runtime.
 
 To use data files, you must define your tools inside a
-[Toys directory](#Toys_directories). Within the Toys directory, create a
+[Toys directory](#toys-directories). Within the Toys directory, create a
 directory named `.data` and copy your data files there.
 
 You may then "find" a data file by providing the relative path to the file from
 the `.data` directory. When defining a tool, use the
-[Toys::DSL::Tool#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FDSL%2FTool:find_data)
+[Toys::DSL::Tool#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#find_data-instance_method)
 directive in a Toys file. Or, at tool execution time, call
-[Toys::Context#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FContext:find_data)
+[Toys::Context#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#find_data-instance_method)
 (which is a convenience method for getting the tool source object using the
 `TOOL_SOURCE` key, and calling
-[Toys::SourceInfo#find_data](https://www.rubydoc.info/gems/toys-core/Toys%2FSourceInfo:find_data)
+[Toys::SourceInfo#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/SourceInfo#find_data-instance_method)
 on it). In either case, `find_data` locates a matching file (or directory)
 among the data files, and returns the full path to that file system object. You
 may then read the file or perform any other operation on it.
@@ -2858,7 +2858,7 @@ the entire toys directory structure. So if your tool definition is inside a
 
 This behavior is particularly useful for build tools. Indeed, all the build
 tools described in the section on
-[Toys as a Rake Replacement](#Toys_as_a_Rake_replacement) automatically move
+[Toys as a Rake Replacement](#toys-as-a-rake-replacement) automatically move
 into the context directory when they execute.
 
 #### Changing the context directory
@@ -3024,4 +3024,4 @@ line executable, simply by setting options or adding plugins. For example:
     many other features.
 
 For more information, see the
-[Toys-Core documentation](https://www.rubydoc.info/gems/toys-core/).
+[Toys-Core documentation](https://dazuma.github.io/toys/gems/toys-core/latest/).

@@ -271,7 +271,7 @@ the remaining tasks that haven't been ported explicitly.
 
 This introduction should be enough to get you started. However, Toys is a deep
 tool with many more features, all explained in detail in the
-[User Guide](https://www.rubydoc.info/gems/toys/file/docs/guide.md).
+[User Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
 
 For example, Toys lets you create tool namespaces and "subtools", and search
 for tools by name and description. There are various ways to validate and
@@ -288,7 +288,8 @@ you build and ship a custom command line executable written in Ruby. However,
 you *can* use it in that way with the "toys-core" API, available as a separate
 gem. You would effectively write your command line executable using the same
 Toys DSL that you use to write `.toys.rb` files. For more info on using
-toys-core, see [its documentation](https://www.rubydoc.info/gems/toys-core).
+toys-core, see
+[its documentation](https://dazuma.github.io/toys/gems/toys-core/latest).
 
 ## Why Toys?
 
