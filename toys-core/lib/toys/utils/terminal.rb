@@ -425,6 +425,7 @@ module Toys
         include ::MonitorMixin
 
         def initialize(terminal, frames, style, frame_length)
+          super()
           @terminal = terminal
           @frames = frames.map do |f|
             [@terminal.apply_styles(f, *style), Terminal.remove_style_escapes(f).size]
@@ -433,7 +434,6 @@ module Toys
           @cur_frame = 0
           @stopping = false
           @cond = new_cond
-          super()
           @thread = @terminal.output.tty? ? start_thread : nil
         end
 
