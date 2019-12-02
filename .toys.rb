@@ -196,3 +196,43 @@ tool "release" do
     end
   end
 end
+
+tool "push-docs" do
+  desc "Pushes docs to gh-pages"
+
+  flag :tmp_dir, default: "/tmp"
+  flag :default, "--[no-]default", default: true
+
+  include :exec, exit_on_nonzero_status: true
+  include :fileutils
+  include :terminal
+
+  def run
+    version = cd(context_directory) do
+      capture(["./toys-dev", "system", "version"]).strip
+    end
+    exit(1) unless confirm("Build and push yardocs for version #{version}? ")
+    exec_tool(["yardoc"])
+    cd(tmp_dir) do
+      rm_rf("toys")
+      exec(["git", "clone", "git@github.com:dazuma/toys.git"])
+    end
+    cd("#{tmp_dir}/toys") do
+      exec(["git", "checkout", "gh-pages"])
+      rm_rf("gems/toys/v#{version}")
+      rm_rf("gems/toys-core/v#{version}")
+      cp_r("#{context_directory}/toys/doc", "gems/toys/v#{version}")
+      cp_r("#{context_directory}/toys-core/doc", "gems/toys-core/v#{version}")
+      if default
+        content = ::IO.read("404.html")
+        content.sub!(/version = "[\w\.]+";/, "version = \"#{version}\";")
+        ::File.open("404.html", "w") do |file|
+          file.write(content)
+        end
+      end
+      exec(["git", "add", "."])
+      exec(["git", "commit", "-m", "Generate yardocs for version #{version} [ci skip]"])
+      exec(["git", "push", "origin", "gh-pages"])
+    end
+  end
+end
