@@ -2,7 +2,6 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="0; url=https://dazuma.github.io/toys/index.html">
   </head>
   <body>
     <p>
@@ -10,6 +9,19 @@
     </p>
   </body>
   <script>
-    window.location.replace("https://dazuma.github.io/toys/index.html");
+    var version = "v0.8.1";
+    if (window.location.href.includes("//dazuma.github.io/toys/gems/toys/latest")) {
+      var loc = window.location.href.replace(
+        "//dazuma.github.io/toys/gems/toys/latest",
+        "//dazuma.github.io/toys/gems/toys/" + version);
+      window.location.replace(loc);
+    } else if (window.location.href.includes("//dazuma.github.io/toys/gems/toys-core/latest")) {
+      var loc = window.location.href.replace(
+        "//dazuma.github.io/toys/gems/toys-core/latest",
+        "//dazuma.github.io/toys/gems/toys-core/" + version);
+      window.location.replace(loc);
+    } else {
+      window.location.replace("https://dazuma.github.io/toys/gems/toys/latest");
+    }
   </script>
 </html>
