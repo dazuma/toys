@@ -9,16 +9,16 @@
     </p>
   </body>
   <script>
-    var version = "v0.8.1";
+    var version = "0.8.1";
     if (window.location.href.includes("//dazuma.github.io/toys/gems/toys/latest")) {
       var loc = window.location.href.replace(
         "//dazuma.github.io/toys/gems/toys/latest",
-        "//dazuma.github.io/toys/gems/toys/" + version);
+        "//dazuma.github.io/toys/gems/toys/v" + version);
       window.location.replace(loc);
     } else if (window.location.href.includes("//dazuma.github.io/toys/gems/toys-core/latest")) {
       var loc = window.location.href.replace(
         "//dazuma.github.io/toys/gems/toys-core/latest",
-        "//dazuma.github.io/toys/gems/toys-core/" + version);
+        "//dazuma.github.io/toys/gems/toys-core/v" + version);
       window.location.replace(loc);
     } else {
       window.location.replace("https://dazuma.github.io/toys/gems/toys/latest");
