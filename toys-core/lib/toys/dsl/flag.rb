@@ -55,8 +55,8 @@ module Toys
         @long_desc = long_desc || []
         @display_name = display_name
         accept(acceptor)
-        complete_flags(flag_completion)
-        complete_values(value_completion)
+        complete_flags(flag_completion, **{})
+        complete_values(value_completion, **{})
       end
 
       ##
@@ -135,9 +135,7 @@ module Toys
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
-        @acceptor_spec = spec
-        @acceptor_options = options
-        @acceptor_block = block
+        @acceptor = Acceptor.scalarize_spec(spec, options, block)
         self
       end
 
@@ -186,9 +184,7 @@ module Toys
       # @return [self]
       #
       def complete_flags(spec = nil, **options, &block)
-        @flag_completion_spec = spec
-        @flag_completion_options = options
-        @flag_completion_block = block
+        @flag_completion = Completion.scalarize_spec(spec, options, block)
         self
       end
 
@@ -204,9 +200,7 @@ module Toys
       # @return [self]
       #
       def complete_values(spec = nil, **options, &block)
-        @value_completion_spec = spec
-        @value_completion_options = options
-        @value_completion_block = block
+        @value_completion = Completion.scalarize_spec(spec, options, block)
         self
       end
 
@@ -313,16 +307,9 @@ module Toys
 
       ## @private
       def _add_to(tool, key)
-        acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        flag_completion = tool.scalar_completion(
-          @flag_completion_spec, @flag_completion_options, &@flag_completion_block
-        )
-        value_completion = tool.scalar_completion(
-          @value_completion_spec, @value_completion_options, &@value_completion_block
-        )
         tool.add_flag(key, @flags,
-                      accept: acceptor, default: @default, handler: @handler,
-                      complete_flags: flag_completion, complete_values: value_completion,
+                      accept: @acceptor, default: @default, handler: @handler,
+                      complete_flags: @flag_completion, complete_values: @value_completion,
                       report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
       end

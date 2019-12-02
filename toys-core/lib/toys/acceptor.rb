@@ -512,35 +512,60 @@ module Toys
       #     default pass-through acceptor {Toys::Acceptor::DEFAULT}. Any type
       #     description you provide is ignored.
       #
-      # @param spec [Object] See the description for recognized values.
-      # @param type_desc [String] The type description for interpolating into
+      # Additional options:
+      #
+      #  *  `:type_desc` (String) The type description for interpolating into
       #     help text. Ignored if the spec indicates the default acceptor or a
       #     well-known acceptor.
+      #
+      # @param spec [Object] See the description for recognized values.
+      # @param options [Hash] Additional options to pass to the completion.
       # @param block [Proc] See the description for recognized forms.
       # @return [Toys::Acceptor::Base,Proc]
       #
-      def create(spec = nil, type_desc: nil, &block)
+      def create(spec = nil, **options, &block)
         well_known = lookup_well_known(spec)
         return well_known if well_known
-        case spec
-        when Base
+        if spec.is_a?(::Hash)
+          options = options.merge(spec)
+          spec = nil
+        end
+        spec ||= options.delete(:"")
+        internal_create(spec, options, block)
+      end
+
+      ## @private
+      def scalarize_spec(spec, options, block)
+        spec ||= block
+        if options.empty?
           spec
-        when ::Regexp
-          Pattern.new(spec, type_desc: type_desc, &block)
-        when ::Array
-          Enum.new(spec, type_desc: type_desc)
-        when ::Proc
-          Simple.new(spec, type_desc: type_desc)
-        when ::Range
-          Range.new(spec, type_desc: type_desc, &block)
-        when nil, :default
-          block ? Simple.new(type_desc: type_desc, &block) : DEFAULT
+        elsif spec
+          options.merge({"": spec})
         else
-          raise ToolDefinitionError, "Illegal acceptor spec: #{spec.inspect}"
+          options
         end
       end
 
       private
+
+      def internal_create(spec, options, block)
+        case spec
+        when Base
+          spec
+        when ::Regexp
+          Pattern.new(spec, **options, &block)
+        when ::Array
+          Enum.new(spec, **options)
+        when ::Proc
+          Simple.new(spec, **options)
+        when ::Range
+          Range.new(spec, **options, &block)
+        when nil, :default
+          block ? Simple.new(**options, &block) : DEFAULT
+        else
+          raise ToolDefinitionError, "Illegal acceptor spec: #{spec.inspect}"
+        end
+      end
 
       def standard_well_knowns
         @standard_well_knowns ||= {

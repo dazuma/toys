@@ -23,8 +23,16 @@
 
 module Toys
   ##
-  # Current version of Toys core.
-  # @return [String]
+  # The core Toys classes.
   #
-  CORE_VERSION = "0.9.0.dev"
+  module Core
+    ##
+    # Current version of Toys core.
+    # @return [String]
+    #
+    VERSION = "0.9.0.dev"
+  end
+
+  ## @private deprecated
+  CORE_VERSION = Core::VERSION
 end

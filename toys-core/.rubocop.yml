@@ -36,6 +36,8 @@ Naming/FileName:
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
+Style/BracesAroundHashParameters:
+  Enabled: false
 Style/CaseEquality:
   Enabled: false
 Style/Copyright:

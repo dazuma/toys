@@ -716,20 +716,22 @@ describe Toys::Tool do
 
       it "can be referenced by name in a flag" do
         tool.add_completion(completion_name, completion)
-        tool.add_flag(:a, ["-a VAL"], complete_flags: completion, complete_values: completion2)
+        tool.add_completion(completion_name2, completion2)
+        tool.add_flag(:a, ["-a VAL"], complete_flags: completion_name,
+                                      complete_values: completion_name2)
         assert_same(completion, tool.flags.first.flag_completion)
         assert_same(completion2, tool.flags.first.value_completion)
       end
 
       it "can be referenced by name in a positional arg" do
         tool.add_completion(completion_name, completion)
-        tool.add_required_arg(:a, complete: completion)
+        tool.add_required_arg(:a, complete: completion_name)
         assert_same(completion, tool.positional_args.first.completion)
       end
 
       it "can be referenced by name from a subtool" do
         tool.add_completion(completion_name, completion)
-        subtool.add_flag(:a, ["-a VAL"], complete_values: completion)
+        subtool.add_flag(:a, ["-a VAL"], complete_values: completion_name)
         assert_same(completion, subtool.flags.first.value_completion)
       end
 

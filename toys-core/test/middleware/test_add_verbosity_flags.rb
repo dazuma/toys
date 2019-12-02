@@ -31,7 +31,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
     end
   }
   let(:executable_name) { "toys" }
-  def make_cli(opts = {})
+  def make_cli(**opts)
     middleware = [[Toys::StandardMiddleware::AddVerbosityFlags, opts]]
     Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   end

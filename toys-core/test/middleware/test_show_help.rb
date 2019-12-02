@@ -33,7 +33,7 @@ describe Toys::StandardMiddleware::ShowHelp do
   }
   let(:executable_name) { "toys" }
   let(:string_io) { ::StringIO.new }
-  def make_cli(opts = {})
+  def make_cli(**opts)
     middleware = [[Toys::StandardMiddleware::ShowHelp, opts.merge(stream: string_io)]]
     Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   end

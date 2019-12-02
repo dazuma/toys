@@ -58,7 +58,7 @@ module Toys
 
       on_initialize do |opts = {}|
         require "toys/utils/terminal"
-        self[KEY] = Utils::Terminal.new(opts)
+        self[KEY] = Utils::Terminal.new(**opts)
       end
 
       ##

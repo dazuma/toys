@@ -87,7 +87,7 @@ module Toys
 
     class << self
       ## @private
-      def capture_path(banner, path, opts = {})
+      def capture_path(banner, path, **opts)
         yield
       rescue ContextualError => e
         add_fields_if_missing(e, opts)
@@ -107,13 +107,13 @@ module Toys
       end
 
       ## @private
-      def capture(banner, opts = {})
+      def capture(banner, **opts)
         yield
       rescue ContextualError => e
         add_fields_if_missing(e, opts)
         raise e
       rescue ::ScriptError, ::StandardError => e
-        raise ContextualError.new(e, banner, opts)
+        raise ContextualError.new(e, banner, **opts)
       end
 
       private

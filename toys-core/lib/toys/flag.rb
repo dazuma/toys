@@ -62,7 +62,7 @@ module Toys
       @long_desc = WrappableString.make_array(long_desc)
       @default = default
       @flag_completion = create_flag_completion(flag_completion)
-      @value_completion = Completion.create(value_completion)
+      @value_completion = Completion.create(value_completion, **{})
       create_default_flag if @flag_syntax.empty?
       remove_used_flags(used_flags, report_collisions)
       canonicalize
@@ -373,14 +373,16 @@ module Toys
     end
 
     def create_flag_completion(spec)
-      case spec
-      when nil, :default
-        DefaultCompletion.new(self)
-      when ::Hash
-        DefaultCompletion.new(self, spec)
-      else
-        Completion.create(spec)
-      end
+      spec =
+        case spec
+        when nil, :default
+          {"": DefaultCompletion, flag: self}
+        when ::Hash
+          spec[:""].nil? ? spec.merge({"": DefaultCompletion, flag: self}) : spec
+        else
+          spec
+        end
+      Completion.create(spec, **{})
     end
 
     def create_default_flag
@@ -749,7 +751,7 @@ module Toys
       # @param include_long [Boolean] Whether to include long flags.
       # @param include_negative [Boolean] Whether to include `--no-*` forms.
       #
-      def initialize(flag, include_short: true, include_long: true, include_negative: true)
+      def initialize(flag:, include_short: true, include_long: true, include_negative: true)
         @flag = flag
         @include_short = include_short
         @include_long = include_long

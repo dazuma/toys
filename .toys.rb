@@ -29,12 +29,12 @@
 include :gems, suppress_confirm: true
 gem "highline", "~> 2.0"
 gem "kramdown", "~> 2.1"
-gem "minitest", "~> 5.11"
+gem "minitest", "~> 5.13"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
-gem "rake", "~> 12.0"
-gem "rspec", "~> 3.8"
-gem "rubocop", "~> 0.76.0"
+gem "rake", "~> 13.0"
+gem "rspec", "~> 3.9"
+gem "rubocop", "~> 0.77.0"
 gem "yard", "~> 0.9.20"
 
 tool "install" do

@@ -49,8 +49,8 @@ module Toys
         @display_name = display_name
         @desc = desc
         @long_desc = long_desc || []
-        accept(acceptor)
-        complete(completion)
+        accept(acceptor, **{})
+        complete(completion, **{})
       end
 
       ##
@@ -65,9 +65,7 @@ module Toys
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
-        @acceptor_spec = spec
-        @acceptor_options = options
-        @acceptor_block = block
+        @acceptor = Acceptor.scalarize_spec(spec, options, block)
         self
       end
 
@@ -94,9 +92,7 @@ module Toys
       # @return [self]
       #
       def complete(spec = nil, **options, &block)
-        @completion_spec = spec
-        @completion_options = options
-        @completion_block = block
+        @completion = Completion.scalarize_spec(spec, options, block)
         self
       end
 
@@ -178,31 +174,22 @@ module Toys
 
       ## @private
       def _add_required_to(tool, key)
-        acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_completion(@completion_spec, @completion_options,
-                                            &@completion_block)
         tool.add_required_arg(key,
-                              accept: acceptor, complete: completion,
+                              accept: @acceptor, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _add_optional_to(tool, key)
-        acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_completion(@completion_spec, @completion_options,
-                                            &@completion_block)
         tool.add_optional_arg(key,
-                              accept: acceptor, default: @default, complete: completion,
+                              accept: @acceptor, default: @default, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
       ## @private
       def _set_remaining_on(tool, key)
-        acceptor = tool.scalar_acceptor(@acceptor_spec, @acceptor_options, &@acceptor_block)
-        completion = tool.scalar_completion(@completion_spec, @completion_options,
-                                            &@completion_block)
         tool.set_remaining_args(key,
-                                accept: acceptor, default: @default, complete: completion,
+                                accept: @acceptor, default: @default, complete: @completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
     end

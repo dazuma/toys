@@ -273,7 +273,7 @@ module Toys
       #
       def completion(name, spec = nil, **options, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_completion(name, spec, options, &block)
+        cur_tool&.add_completion(name, spec, **options, &block)
         self
       end
 
@@ -452,7 +452,7 @@ module Toys
       # @param args [Object...] Template arguments
       # @return [self]
       #
-      def expand(template_class, *args)
+      def expand(template_class, *args, **kwargs)
         cur_tool = DSL::Tool.current_tool(self, false)
         name = template_class.to_s
         if template_class.is_a?(::String)
@@ -463,7 +463,15 @@ module Toys
         if template_class.nil?
           raise ToolDefinitionError, "Template not found: #{name.inspect}"
         end
-        template = template_class.new(*args)
+        # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
+        # initialize will fail if there are no formal keyword args.
+        formals = template_class.instance_method(:initialize).parameters
+        template =
+          if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
+            template_class.new(*args)
+          else
+            template_class.new(*args, **kwargs)
+          end
         yield template if block_given?
         class_exec(template, &template_class.expansion)
         self
@@ -1340,7 +1348,7 @@ module Toys
       def complete_tool_args(spec = nil, **options, &block)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        cur_tool.completion = cur_tool.scalar_completion(spec, options, &block)
+        cur_tool.completion = Completion.scalarize_spec(spec, options, block)
         self
       end
 

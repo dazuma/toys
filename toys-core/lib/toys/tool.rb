@@ -596,7 +596,7 @@ module Toys
               "A completion named #{name.inspect} has already been defined in tool" \
               " #{display_name.inspect}."
       end
-      @completions[name] = Toys::Completion.create(completion, options, &block)
+      @completions[name] = Toys::Completion.create(completion, **options, &block)
       self
     end
 
@@ -988,15 +988,17 @@ module Toys
     # @param spec [Object]
     #
     def completion=(spec)
-      @completion =
+      spec = resolve_completion_name(spec)
+      spec =
         case spec
         when nil, :default
-          DefaultCompletion.new
+          DefaultCompletion
         when ::Hash
-          DefaultCompletion.new(spec)
+          spec[:""].nil? ? spec.merge({"": DefaultCompletion}) : spec
         else
-          Completion.create(spec)
+          spec
         end
+      @completion = Completion.create(spec, **{})
     end
 
     ##
@@ -1049,20 +1051,6 @@ module Toys
     #
     def lookup_custom_context_directory
       custom_context_directory || @parent&.lookup_custom_context_directory
-    end
-
-    ## @private
-    def scalar_acceptor(spec = nil, type_desc: nil, &block)
-      Acceptor.create(resolve_acceptor_name(spec), type_desc: type_desc, &block)
-    end
-
-    ## @private
-    def scalar_completion(spec = nil, **options, &block)
-      if spec.nil? && block.nil? || spec == :default
-        options
-      else
-        Completion.create(resolve_completion_name(spec), options, &block)
-      end
     end
 
     ##

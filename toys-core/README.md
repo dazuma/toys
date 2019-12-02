@@ -36,8 +36,8 @@ dependency.
 
 Toys-Core requires Ruby 2.3 or later.
 
-Most parts of Toys-Core work on JRuby. However, JRuby is not recommended for
-command line tools in general because of startup performance and other issues.
+Most parts of Toys-Core work on JRuby. However, JRuby is not recommended
+because of JVM boot latency, lack of support for Kernel#fork, and other issues.
 
 ### Create a new executable
 

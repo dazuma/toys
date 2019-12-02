@@ -23,11 +23,11 @@
 
 lib = ::File.expand_path("lib", __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "toys/core_version"
+require "toys/core"
 
 ::Gem::Specification.new do |spec|
   spec.name = "toys-core"
-  spec.version = ::Toys::CORE_VERSION
+  spec.version = ::Toys::Core::VERSION
   spec.authors = ["Daniel Azuma"]
   spec.email = ["dazuma@gmail.com"]
 

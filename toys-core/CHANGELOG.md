@@ -9,7 +9,7 @@ Functional changes:
 * ADDED: The `current_tool` function can be called from the DSL to get the current `Toys::Tool` object.
 * ADDED: The `:e` option is now an alias for `:exit_on_nonzero_status`.
 * IMPROVED: `alias_tool` can now point to namespaces, and will resolve subtools of their targets.
-* IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of startup performance and other issues.
+* IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of JVM boot latency, lack of Kernel#fork support, and other issues.
 * FIXED: The the `tool` directive no longer crashes if not passed a block.
 
 Internal interface changes:

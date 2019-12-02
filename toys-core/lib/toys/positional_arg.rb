@@ -37,7 +37,7 @@ module Toys
       @type = type
       @acceptor = Acceptor.create(acceptor)
       @default = default
-      @completion = Completion.create(completion)
+      @completion = Completion.create(completion, **{})
       @desc = WrappableString.make(desc)
       @long_desc = WrappableString.make_array(long_desc)
       @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase

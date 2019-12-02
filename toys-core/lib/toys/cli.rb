@@ -224,7 +224,7 @@ module Toys
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
-    def child(_opts = {})
+    def child(**_opts)
       cli = CLI.new(executable_name: @executable_name,
                     config_dir_name: @config_dir_name,
                     config_file_name: @config_file_name,

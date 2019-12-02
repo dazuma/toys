@@ -395,21 +395,43 @@ module Toys
     end
 
     def resolve_middleware(input)
-      input = Array(input)
-      cls = input.first
-      args = input[1..-1]
-      if cls.is_a?(::String) || cls.is_a?(::Symbol)
-        cls = @middleware_lookup.lookup(cls)
-        if cls.nil?
-          raise ::ArgumentError, "Unrecognized middleware name #{input.first.inspect}"
+      input = Array(input).dup
+      middleware = input.shift
+      if middleware.is_a?(::String) || middleware.is_a?(::Symbol)
+        middleware = @middleware_lookup.lookup(middleware)
+        if middleware.nil?
+          raise ::ArgumentError, "Unknown middleware name #{input.first.inspect}"
         end
       end
-      if cls.is_a?(::Class)
-        cls.new(*args)
-      elsif !args.empty?
-        raise ::ArgumentError, "Unrecognized middleware object of class #{cls.class}"
+      if middleware.is_a?(::Class)
+        middleware = build_middleware(middleware, input)
+      end
+      unless input.empty?
+        raise ::ArgumentError, "Unrecognized middleware arguments: #{input.inspect}"
+      end
+      middleware
+    end
+
+    def build_middleware(middleware_class, input)
+      args = input.first
+      if args.is_a?(::Array)
+        input.shift
       else
-        cls
+        args = []
+      end
+      kwargs = input.first
+      if kwargs.is_a?(::Hash)
+        input.shift
+      else
+        kwargs = {}
+      end
+      # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
+      # initialize will fail if there are no formal keyword args.
+      formals = middleware_class.instance_method(:initialize).parameters
+      if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
+        middleware_class.new(*args)
+      else
+        middleware_class.new(*args, **kwargs)
       end
     end
 

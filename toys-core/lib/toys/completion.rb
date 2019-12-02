@@ -70,7 +70,7 @@ module Toys
       # @return [Toys::Completion::Context]
       #
       def with(**delta_params)
-        Context.new(@params.merge(delta_params))
+        Context.new(**@params.merge(delta_params))
       end
 
       ##
@@ -306,7 +306,7 @@ module Toys
         dir = ::File.expand_path(prefix, @cwd)
         return [] unless ::File.directory?(dir)
         prefix = nil if [".", ""].include?(prefix)
-        omits = [".", ".."]
+        omits = [".", "..", ""]
         children = Compat.glob_in_dir(name, dir).find_all do |child|
           !omits.include?(child)
         end
@@ -420,22 +420,40 @@ module Toys
     # @return [Toys::Completion::Base,Proc]
     #
     def self.create(spec = nil, **options, &block)
-      spec ||= block
+      if spec.is_a?(::Hash)
+        options = options.merge(spec)
+        spec = nil
+      end
+      spec ||= options.delete(:"") || block
       case spec
       when nil, :empty, :default
         EMPTY
       when ::Proc, Base
         spec
       when ::Array
-        Enum.new(spec, options)
+        Enum.new(spec, **options)
       when :file_system
-        FileSystem.new(options)
+        FileSystem.new(**options)
+      when ::Class
+        spec.new(**options)
       else
         if spec.respond_to?(:call)
           spec
         else
           raise ToolDefinitionError, "Illegal completion spec: #{spec.inspect}"
         end
+      end
+    end
+
+    ## @private
+    def self.scalarize_spec(spec, options, block)
+      spec ||= block
+      if options.empty?
+        spec
+      elsif spec
+        options.merge({"": spec})
+      else
+        options
       end
     end
   end
