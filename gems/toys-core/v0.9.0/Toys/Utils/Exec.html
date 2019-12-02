@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Utils::Exec
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" charset="utf-8" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  pathId = "Toys::Utils::Exec";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (E)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Utils.html" title="Toys::Utils (module)">Utils</a></span></span>
+     &raquo; 
+    <span class="title">Exec</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Utils::Exec
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::Utils::Exec</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/utils/exec.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A service that executes subprocesses.</p>
+
+<p>This service provides a convenient interface for controlling spawned
+processes and their streams. It also provides shortcuts for common cases
+such as invoking Ruby in a subprocess or capturing output in a string.</p>
+
+<p>This class is not loaded by default. Before using it directly, you should
+<code>require "toys/utils/exec"</code></p>
+
+<h2 id="configuration-options">Configuration options</h2>
+
+<p>A variety of options can be used to control subprocesses. These include:</p>
+
+<ul>
+  <li><code>:name</code> (Object) An optional object that can be used to identify this
+subprocess. It is available in the controller and result objects.</li>
+  <li><code>:env</code> (Hash) Environment variables to pass to the subprocess</li>
+  <li><code>:logger</code> (Logger) Logger to use for logging the actual command. If
+not present, the command is not logged.</li>
+  <li><code>:log_level</code> (Integer,false) Level for logging the actual command.
+Defaults to Logger::INFO if not present. You may also pass <code>false</code> to
+disable logging of the command.</li>
+  <li><code>:log_cmd</code> (String) The string logged for the actual command.
+Defaults to the <code>inspect</code> representation of the command.</li>
+  <li><code>:background</code> (Boolean) Runs the process in the background, returning
+a controller object instead of a result object.</li>
+  <li><code>:result_callback</code> (Proc) Called and passed the result object when a
+subprocess exits.</li>
+  <li><code>:in</code> Connects the input stream of the subprocess. See the section on
+stream handling.</li>
+  <li><code>:out</code> Connects the standard output stream of the subprocess. See the
+section on stream handling.</li>
+  <li><code>:err</code> Connects the standard error stream of the subprocess. See the
+section on stream handling.</li>
+</ul>
+
+<p>In addition, the following options recognized by <code>Process#spawn</code> are
+supported.</p>
+
+<ul>
+  <li><code>:chdir</code></li>
+  <li><code>:close_others</code></li>
+  <li><code>:new_pgroup</code></li>
+  <li><code>:pgroup</code></li>
+  <li><code>:umask</code></li>
+  <li><code>:unsetenv_others</code></li>
+</ul>
+
+<p>Any other options are ignored.</p>
+
+<p>Configuration options may be provided to any method that starts a
+subprocess. You may also modify default values by calling
+<span class='object_link'><a href="#configure_defaults-instance_method" title="Toys::Utils::Exec#configure_defaults (method)">#configure_defaults</a></span>.</p>
+
+<h2 id="stream-handling">Stream handling</h2>
+
+<p>By default, subprocess streams are connected to the corresponding streams
+in the parent process. You can change this behavior, redirecting streams
+or providing ways to control them, using the <code>:in</code>, <code>:out</code>, and <code>:err</code>
+options.</p>
+
+<p>Three general strategies are available for custom stream handling. First,
+you may redirect to other streams such as files, IO objects, or Ruby
+strings. Some of these options map directly to options provided by the
+<code>Process#spawn</code> method. Second, you may use a controller to manipulate
+the streams programmatically. Third, you may capture output stream data
+and make it available in the result.</p>
+
+<p>Following is a full list of the stream handling options, along with how
+to specify them using the <code>:in</code>, <code>:out</code>, and <code>:err</code> options.</p>
+
+<ul>
+  <li><strong>Close the stream:</strong> You may close the stream by passing <code>:close</code> as
+the option value. This is the same as passing <code>:close</code> to
+<code>Process#spawn</code>.</li>
+  <li><strong>Redirect to null:</strong> You may redirect to a null stream by passing
+<code>:null</code> as the option value. This connects to a stream that is not
+closed but contains no data, i.e. <code>/dev/null</code> on unix systems. This
+is the default if the subprocess is run in the background.</li>
+  <li><strong>Inherit parent stream:</strong> You may inherit the corresponding stream
+in the parent process by passing <code>:inherit</code> as the option value. This
+is the default if the subprocess is <em>not</em> run in the background.</li>
+  <li><strong>Redirect to a file:</strong> You may redirect to a file. This reads from
+an existing file when connected to <code>:in</code>, and creates or appends to a
+file when connected to <code>:out</code> or <code>:err</code>. To specify a file, use the
+setting <code>[:file, "/path/to/file"]</code>. You may also, when writing a
+file, append an optional mode and permission code to the array. For
+example, <code>[:file, "/path/to/file", "a", 0644]</code>.</li>
+  <li><strong>Redirect to an IO object:</strong> You may redirect to an IO object in the
+parent process, by passing the IO object as the option value. You may
+use any IO object. For example, you could connect the child’s output
+to the parent’s error using <code>out: $stderr</code>, or you could connect to
+an existing File stream. Unlike <code>Process#spawn</code>, this works for IO
+objects that do not have a corresponding file descriptor (such as
+StringIO objects). In such a case, a thread will be spawned to pipe
+the IO data through to the child process.</li>
+  <li><strong>Combine with another child stream:</strong> You may redirect one child
+output stream to another, to combine them. To merge the child’s error
+stream into its output stream, use <code>err: [:child, :out]</code>.</li>
+  <li><strong>Read from a string:</strong> You may pass a string to the input stream by
+setting <code>[:string, "the string"]</code>. This works only for <code>:in</code>.</li>
+  <li><strong>Capture output stream:</strong> You may capture a stream and make it
+available on the <span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Result</a></span> object, using the
+setting <code>:capture</code>. This works only for the <code>:out</code> and <code>:err</code>
+streams.</li>
+  <li><strong>Use the controller:</strong> You may hook a stream to the controller using
+the setting <code>:controller</code>. You can then manipulate the stream via the
+controller. If you pass a block to <span class='object_link'><a href="#exec-instance_method" title="Toys::Utils::Exec#exec (method)">#exec</a></span>, it
+yields the <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span>, giving you access to
+streams.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span>, <span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Result</a></span>
+    
+  
+</p>
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture-instance_method" title="#capture (instance method)">#<strong>capture</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a command.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture_proc-instance_method" title="#capture_proc (instance method)">#<strong>capture_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a proc in a fork.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture_ruby-instance_method" title="#capture_ruby (instance method)">#<strong>capture_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Spawn a ruby process and pass the given arguments to it.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#configure_defaults-instance_method" title="#configure_defaults (instance method)">#<strong>configure_defaults</strong>(opts = {})  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set default options.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec-instance_method" title="#exec (instance method)">#<strong>exec</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a command.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec_proc-instance_method" title="#exec_proc (instance method)">#<strong>exec_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a proc in a fork.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec_ruby-instance_method" title="#exec_ruby (instance method)">#<strong>exec_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+      (also: #ruby)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Spawn a ruby process and pass the given arguments to it.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(opts = {}, &amp;block)  &#x21d2; Exec </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create an exec service.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sh-instance_method" title="#sh (instance method)">#<strong>sh</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute the given string in a shell.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(opts = {}, &amp;block)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Exec</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create an exec service.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A block that is called if a key is not found. It is
+passed the unknown key, and expected to return a default value
+(which can be nil).</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Initial default options.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+145
+146
+147</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 145</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='ivar'>@default_opts</span> <span class='op'>=</span> <span class='const'>Opts</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="capture-instance_method">
+  
+    #<strong>capture</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a command. The command may be given as a single string to pass
+to a shell, or an array of strings indicating a posix command.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+259
+260
+261</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 259</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture'>capture</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>out:</span> <span class='symbol'>:capture</span><span class='comma'>,</span> <span class='label'>background:</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_captured_out'>captured_out</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="capture_proc-instance_method">
+  
+    #<strong>capture_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a proc in a fork.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>func</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The proc to call.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+301
+302
+303</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 301</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture_proc'>capture_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>out:</span> <span class='symbol'>:capture</span><span class='comma'>,</span> <span class='label'>background:</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_captured_out'>captured_out</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="capture_ruby-instance_method">
+  
+    #<strong>capture_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Spawn a ruby process and pass the given arguments to it.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The arguments to ruby.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+280
+281
+282</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 280</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture_ruby'>capture_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_ruby'>ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>out:</span> <span class='symbol'>:capture</span><span class='comma'>,</span> <span class='label'>background:</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_captured_out'>captured_out</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="configure_defaults-instance_method">
+  
+    #<strong>configure_defaults</strong>(opts = {})  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set default options</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>New default options to set</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+155
+156
+157
+158</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 155</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_configure_defaults'>configure_defaults</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='ivar'>@default_opts</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec-instance_method">
+  
+    #<strong>exec</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a command. The command may be given as a single string to pass
+to a shell, or an array of strings indicating a posix command.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 178</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exec_opts'>exec_opts</span> <span class='op'>=</span> <span class='const'>Opts</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@default_opts</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_spawn_cmd'>spawn_cmd</span> <span class='op'>=</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Array</span><span class='rparen'>)</span>
+      <span class='kw'>if</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>==</span> <span class='int'>1</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span>
+        <span class='lbracket'>[</span><span class='lbracket'>[</span><span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='comma'>,</span> <span class='id identifier rubyid_exec_opts'>exec_opts</span><span class='period'>.</span><span class='id identifier rubyid_config_opts'>config_opts</span><span class='lbracket'>[</span><span class='symbol'>:argv0</span><span class='rbracket'>]</span> <span class='op'>||</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='rbracket'>]</span><span class='rbracket'>]</span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_cmd'>cmd</span>
+      <span class='kw'>end</span>
+    <span class='kw'>else</span>
+      <span class='lbracket'>[</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rbracket'>]</span>
+    <span class='kw'>end</span>
+  <span class='id identifier rubyid_executor'>executor</span> <span class='op'>=</span> <span class='const'>Executor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_exec_opts'>exec_opts</span><span class='comma'>,</span> <span class='id identifier rubyid_spawn_cmd'>spawn_cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_executor'>executor</span><span class='period'>.</span><span class='id identifier rubyid_execute'>execute</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec_proc-instance_method">
+  
+    #<strong>exec_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a proc in a fork.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>func</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The proc to call.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+235
+236
+237
+238
+239</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 235</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exec_opts'>exec_opts</span> <span class='op'>=</span> <span class='const'>Opts</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@default_opts</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_add'>add</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_executor'>executor</span> <span class='op'>=</span> <span class='const'>Executor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_exec_opts'>exec_opts</span><span class='comma'>,</span> <span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_executor'>executor</span><span class='period'>.</span><span class='id identifier rubyid_execute'>execute</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec_ruby-instance_method">
+  
+    #<strong>exec_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='ruby-instance_method'>ruby</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Spawn a ruby process and pass the given arguments to it.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The arguments to ruby.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+211
+212
+213
+214
+215</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 211</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec_ruby'>exec_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cmd'>cmd</span> <span class='op'>=</span> <span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Array</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='lbracket'>[</span><span class='op'>::</span><span class='const'>RbConfig</span><span class='period'>.</span><span class='id identifier rubyid_ruby'>ruby</span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_args'>args</span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='op'>::</span><span class='const'>RbConfig</span><span class='period'>.</span><span class='id identifier rubyid_ruby'>ruby</span><span class='embexpr_end'>}</span><span class='tstring_content'> </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_args'>args</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_log_cmd'>log_cmd</span> <span class='op'>=</span> <span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Array</span><span class='rparen'>)</span> <span class='op'>?</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ruby</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span> <span class='op'>+</span> <span class='id identifier rubyid_args'>args</span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ruby </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_args'>args</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='lbrace'>{</span><span class='label'>argv0:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ruby</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>log_cmd:</span> <span class='id identifier rubyid_log_cmd'>log_cmd</span><span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="sh-instance_method">
+  
+    #<strong>sh</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute the given string in a shell. Returns the exit code.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The shell command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. See the section on
+configuration options in the <span class='object_link'><a href="" title="Toys::Utils::Exec (class)">Toys::Utils::Exec</a></span> module docs.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The exit code</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+320
+321
+322</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 320</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sh'>sh</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='label'>background:</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_exit_code'>exit_code</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Mon Dec  2 13:54:05 2019 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.20 (ruby-2.6.5).
+</div>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Toys::StandardMixins::Exec
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" charset="utf-8" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  pathId = "Toys::StandardMixins::Exec";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (E)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../StandardMixins.html" title="Toys::StandardMixins (module)">StandardMixins</a></span></span>
+     &raquo; 
+    <span class="title">Exec</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Toys::StandardMixins::Exec
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Mixin.html" title="Toys::Mixin (module)">Mixin</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/standard_mixins/exec.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A set of helper methods for invoking subcommands. Provides shortcuts for
+common cases such as invoking Ruby in a subprocess or capturing output
+in a string. Also provides an interface for controlling a spawned
+process’s streams.</p>
+
+<p>You may make these methods available to your tool by including the
+following directive in your tool configuration:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span>
+</code></pre>
+
+<p>This is a frontend for <span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span>. More information is
+available in that class’s documentation.</p>
+
+<h2 id="configuration-options">Configuration Options</h2>
+
+<p>Subprocesses may be configured using the options in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> class. These include a variety of options supported
+by <code>Process#spawn</code>, and some options supported by <span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span>
+itself.</p>
+
+<p>You can set default configuration by passing options to the <code>include</code>
+directive. For example, to log commands at the debug level for all
+subprocesses spawned by this tool:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span><span class='comma'>,</span> <span class='label'>log_level:</span> <span class='const'>Logger</span><span class='op'>::</span><span class='const'>DEBUG</span>
+</code></pre>
+
+<p>Two special options are also recognized by the mixin.</p>
+
+<ul>
+  <li>
+    <p>A <strong>:result_callback</strong> proc may take a second argument. If it does,
+the context object is passed as the second argument. This is useful
+if a <code>:result_callback</code> is applied to the entire tool by passing it
+to the <code>include</code> directive. In that case, <code>self</code> is not set to the
+context object as it normally would be in a tool’s <code>run</code> method, so
+you cannot access it otherwise. For example, here is how to log the
+exit code for every subcommand:</p>
+
+    <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>mytool</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_callback'>callback</span> <span class='op'>=</span> <span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='op'>|</span>
+    <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Exit code: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_exit_code'>exit_code</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span><span class='comma'>,</span> <span class='label'>result_callback:</span> <span class='id identifier rubyid_callback'>callback</span>
+  <span class='comment'># ...
+</span><span class='kw'>end</span>
+</code></pre>
+
+    <p>You may also pass a symbol as the <code>:result_callback</code>. The method with
+that name is then called as the callback. The method must take one
+argument, the result object.</p>
+  </li>
+  <li>
+    <p>If <strong>:exit_on_nonzero_status</strong> is set to true, a nonzero exit code
+returned by the subprocess will also cause the tool to exit
+immediately with that same code.</p>
+
+    <p>This is particularly useful as an option to the <code>include</code> directive,
+where it causes any subprocess failure to abort the tool, similar to
+setting <code>set -e</code> in a bash script.</p>
+
+    <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span><span class='comma'>,</span> <span class='label'>exit_on_nonzero_status:</span> <span class='kw'>true</span>
+</code></pre>
+
+    <p><strong>:e</strong> can be used as a shortcut for <strong>:exit_on_nonzero_status</strong></p>
+
+    <pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span><span class='comma'>,</span> <span class='label'>e:</span> <span class='kw'>true</span>
+</code></pre>
+  </li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="KEY-constant" class="">KEY =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Context key for the executor object.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='op'>::</span><span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture-instance_method" title="#capture (instance method)">#<strong>capture</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a command.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture_proc-instance_method" title="#capture_proc (instance method)">#<strong>capture_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a proc in a subprocess.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture_ruby-instance_method" title="#capture_ruby (instance method)">#<strong>capture_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Spawn a ruby process and pass the given arguments to it.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#capture_tool-instance_method" title="#capture_tool (instance method)">#<strong>capture_tool</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#configure_exec-instance_method" title="#configure_exec (instance method)">#<strong>configure_exec</strong>(opts = {})  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set default configuration keys.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec-instance_method" title="#exec (instance method)">#<strong>exec</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a command.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec_proc-instance_method" title="#exec_proc (instance method)">#<strong>exec_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a proc in a subprocess.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec_ruby-instance_method" title="#exec_ruby (instance method)">#<strong>exec_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+      (also: #ruby)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Spawn a ruby process and pass the given arguments to it.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exec_tool-instance_method" title="#exec_tool (instance method)">#<strong>exec_tool</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; Toys::Utils::Exec::Controller, Toys::Utils::Exec::Result </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute a tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exit_on_nonzero_status-instance_method" title="#exit_on_nonzero_status (instance method)">#<strong>exit_on_nonzero_status</strong>(status)  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Exit if the given status code is nonzero.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#sh-instance_method" title="#sh (instance method)">#<strong>sh</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Execute the given string in a shell.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../Mixin.html" title="Toys::Mixin (module)">Mixin</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Mixin.html#create-class_method" title="Toys::Mixin.create (method)">create</a></span></p>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="capture-instance_method">
+  
+    #<strong>capture</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a command. The command may be given as a single string to pass
+to a shell, or an array of strings indicating a posix command.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. All options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+237
+238
+239</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 237</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture'>capture</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_capture'>capture</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="capture_proc-instance_method">
+  
+    #<strong>capture_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a proc in a subprocess.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>func</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The proc to call.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. Most options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+281
+282
+283</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 281</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture_proc'>capture_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_capture_proc'>capture_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="capture_ruby-instance_method">
+  
+    #<strong>capture_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Spawn a ruby process and pass the given arguments to it.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The arguments to ruby.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. All options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+259
+260
+261</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 259</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture_ruby'>capture_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_capture_ruby'>capture_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="capture_tool-instance_method">
+  
+    #<strong>capture_tool</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a tool. The command may be given as a single string or an array
+of strings, representing the tool to run and the arguments to pass.</p>
+
+<p>Captures standard out and returns it as a string.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The tool to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. Most options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>What was written to standard out.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+304
+305
+306
+307</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 304</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_capture_tool'>capture_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_func'>func</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__make_tool_caller'>_make_tool_caller</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_capture_proc'>capture_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="configure_exec-instance_method">
+  
+    #<strong>configure_exec</strong>(opts = {})  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set default configuration keys.</p>
+
+<p>All options listed in the <span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are
+supported, plus the <code>exit_on_nonzero_status</code> option.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The default options.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+121
+122
+123
+124</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 121</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_configure_exec'>configure_exec</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_configure_defaults'>configure_defaults</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec-instance_method">
+  
+    #<strong>exec</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a command. The command may be given as a single string to pass
+to a shell, or an array of strings indicating a posix command.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. All options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller for
+the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+145
+146
+147</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 145</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_exec'>exec</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec_proc-instance_method">
+  
+    #<strong>exec_proc</strong>(func, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a proc in a subprocess.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>func</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The proc to call.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. Most options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+190
+191
+192</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 190</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec_ruby-instance_method">
+  
+    #<strong>exec_ruby</strong>(args, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='ruby-instance_method'>ruby</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Spawn a ruby process and pass the given arguments to it.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The arguments to ruby.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. All options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller for
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+167
+168
+169</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 167</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec_ruby'>exec_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_exec_ruby'>exec_ruby</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exec_tool-instance_method">
+  
+    #<strong>exec_tool</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>, <tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute a tool. The command may be given as a single string or an array
+of strings, representing the tool to run and the arguments to pass.</p>
+
+<p>If the process is not set to run in the background, and a block is
+provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The tool to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. Most options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The subprocess controller, if
+the process is running in the background.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The result, if the process ran in
+the foreground.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+213
+214
+215
+216</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 213</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exec_tool'>exec_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_func'>func</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__make_tool_caller'>_make_tool_caller</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_func'>func</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exit_on_nonzero_status-instance_method">
+  
+    #<strong>exit_on_nonzero_status</strong>(status)  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Exit if the given status code is nonzero. Otherwise, returns 0.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>status</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>, <tt>Process::Status</tt>, <tt><span class='object_link'><a href="../Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+335
+336
+337
+338
+339
+340</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 335</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exit_on_nonzero_status'>exit_on_nonzero_status</span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_exit_code'>exit_code</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:exit_code</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_status'>status</span> <span class='op'>=</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_exitstatus'>exitstatus</span> <span class='kw'>if</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_respond_to?'>respond_to?</span><span class='lparen'>(</span><span class='symbol'>:exitstatus</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../Context.html" title="Toys::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exit'><span class='object_link'><a href="../Context.html#exit-class_method" title="Toys::Context.exit (method)">exit</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_status'>status</span><span class='rparen'>)</span> <span class='kw'>unless</span> <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_zero?'>zero?</span>
+  <span class='int'>0</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="sh-instance_method">
+  
+    #<strong>sh</strong>(cmd, opts = {}) {|controller| ... } &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Execute the given string in a shell. Returns the exit code.
+Cannot be run in the background.</p>
+
+<p>If a block is provided, a <span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> will be
+yielded to it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The shell command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>{}</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options. All options listed in the
+<span class='object_link'><a href="../Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> documentation are supported, plus the
+<code>exit_on_nonzero_status</code> option.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The exit code</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+325
+326
+327</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/exec.rb', line 325</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_sh'>sh</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Exec::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_sh'>sh</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='const'><span class='object_link'><a href="" title="Toys::StandardMixins::Exec (module)">Exec</a></span></span><span class='period'>.</span><span class='id identifier rubyid__setup_exec_opts'>_setup_exec_opts</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='kw'>self</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Mon Dec  2 13:54:01 2019 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.20 (ruby-2.6.5).
+</div>
+
+    </div>
+  </body>
+</html>
