@@ -1,6 +1,6 @@
 # Release History
 
-### 0.9.0 / unreleased
+### 0.9.0 / 2019-12-02
 
 * ADDED: The `delegate_to` directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.
 * ADDED: The `delegate_to` argument to the `tool` directive causes the tool to delegate to another tool. (Note: the `alias_tool` directive is now just shorthand for creating a tool with a delegate, and as such is mildly deprecated.)

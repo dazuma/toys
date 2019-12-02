@@ -212,6 +212,10 @@ tool "push-docs" do
       capture(["./toys-dev", "system", "version"]).strip
     end
     exit(1) unless confirm("Build and push yardocs for version #{version}? ")
+    rm_rf("toys/.yardoc")
+    rm_rf("toys/doc")
+    rm_rf("toys-core/.yardoc")
+    rm_rf("toys-core/doc")
     exec_tool(["yardoc"])
     cd(tmp_dir) do
       rm_rf("toys")
