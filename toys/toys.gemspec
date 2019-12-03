@@ -69,6 +69,6 @@ require "toys/version"
     spec.metadata["changelog_uri"] = "https://github.com/dazuma/toys/blob/master/toys/CHANGELOG.md"
     spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
-    spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys-core/latest"
+    spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys/latest"
   end
 end

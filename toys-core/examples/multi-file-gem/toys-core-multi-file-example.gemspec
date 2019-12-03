@@ -21,5 +21,5 @@
   spec.bindir = "bin"
   spec.executables = ["toys-core-multi-file-example"]
 
-  spec.add_dependency "toys-core", ">= 0.8.0"
+  spec.add_dependency "toys-core", ">= 0.9.0"
 end
