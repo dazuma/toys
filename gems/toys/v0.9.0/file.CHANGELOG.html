@@ -59,7 +59,7 @@
 
       <div id="content"><div id='filecontents'><h1 id="release-history">Release History</h1>
 
-<h3 id="unreleased">0.9.0 / unreleased</h3>
+<h3 id="section">0.9.0 / 2019-12-02</h3>
 
 <ul>
   <li>ADDED: The <code>delegate_to</code> directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.</li>
@@ -72,14 +72,14 @@
   <li>FIXED: The the <code>tool</code> directive no longer crashes if not passed a block.</li>
 </ul>
 
-<h3 id="section">0.8.1 / 2019-11-19</h3>
+<h3 id="section-1">0.8.1 / 2019-11-19</h3>
 
 <ul>
   <li>FIXED: Listing subtools would crash if a broken alias was present.</li>
   <li>DOCUMENTATION: Switched from redcarpet to kramdown, and tried to make some structural fixes.</li>
 </ul>
 
-<h3 id="section-1">0.8.0 / 2019-06-20</h3>
+<h3 id="section-2">0.8.0 / 2019-06-20</h3>
 
 <p>This is a major update with significant new features and a bunch of fixes.
 It does include a few minor backward-incompatible changes. All signifiant
@@ -137,7 +137,7 @@ features planned for beta are now implemented.</p>
 
 <p>Additionally, a significant amount of internal reorganization and cleanup happened in the toys-core gem. See the changelog for toys-core for more details.</p>
 
-<h3 id="section-2">0.7.0 / 2019-01-23</h3>
+<h3 id="section-3">0.7.0 / 2019-01-23</h3>
 
 <ul>
   <li>ADDED: A template for creating tools that invoke RSpec.</li>
@@ -146,13 +146,13 @@ features planned for beta are now implemented.</p>
   <li>IMPROVED: The minitest template now honors all standard minitest flags.</li>
 </ul>
 
-<h3 id="section-3">0.6.1 / 2019-01-07</h3>
+<h3 id="section-4">0.6.1 / 2019-01-07</h3>
 
 <ul>
   <li>FIXED: The presence of aliases caused subtool listing to crash.</li>
 </ul>
 
-<h3 id="section-4">0.6.0 / 2018-10-22</h3>
+<h3 id="section-5">0.6.0 / 2018-10-22</h3>
 
 <ul>
   <li>FIXED: Build tools cd into the context directory when running.</li>
@@ -166,7 +166,7 @@ screens unless the <code>--all</code> flag is given.</li>
 lists if their children are already displayed.</li>
 </ul>
 
-<h3 id="section-5">0.5.0 / 2018-10-07</h3>
+<h3 id="section-6">0.5.0 / 2018-10-07</h3>
 
 <ul>
   <li>ADDED: Period and colon are recognized as tool path delimiters.</li>
@@ -179,13 +179,13 @@ lists if their children are already displayed.</li>
   <li>FIXED: Template instantiation was failing if the hosting tool was priority-masked.</li>
 </ul>
 
-<h3 id="section-6">0.4.5 / 2018-08-05</h3>
+<h3 id="section-7">0.4.5 / 2018-08-05</h3>
 
 <ul>
   <li>CHANGED: Dropped preload file feature</li>
 </ul>
 
-<h3 id="section-7">0.4.4 / 2018-07-21</h3>
+<h3 id="section-8">0.4.4 / 2018-07-21</h3>
 
 <ul>
   <li>FIXED: Utils::Exec wasn’t closing streams after copying.</li>
@@ -193,27 +193,27 @@ lists if their children are already displayed.</li>
   <li>ADDED: Terminal#ask</li>
 </ul>
 
-<h3 id="section-8">0.4.3 / 2018-07-13</h3>
+<h3 id="section-9">0.4.3 / 2018-07-13</h3>
 
 <ul>
   <li>IMPROVED: Exec mixin methods can now spawn subprocesses in the background</li>
   <li>IMPROVED: Exec mixin capture methods can now yield a controller</li>
 </ul>
 
-<h3 id="section-9">0.4.2 / 2018-07-08</h3>
+<h3 id="section-10">0.4.2 / 2018-07-08</h3>
 
 <ul>
   <li>FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.</li>
   <li>IMPROVED: The <code>include?</code> method extended to support mixin names in a tool dsl.</li>
 </ul>
 
-<h3 id="section-10">0.4.1 / 2018-07-03</h3>
+<h3 id="section-11">0.4.1 / 2018-07-03</h3>
 
 <ul>
   <li>FIXED: Terminal#confirm uppercased “N” for the wrong default.</li>
 </ul>
 
-<h3 id="section-11">0.4.0 / 2018-07-03</h3>
+<h3 id="section-12">0.4.0 / 2018-07-03</h3>
 
 <p>Now declaring this alpha quality. Backward-incompatible changes are still
 possible from this point, but I’ll try to avoid them.</p>
@@ -225,7 +225,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>IMPROVED: Magic comments are now honored in toys files.</li>
 </ul>
 
-<h3 id="section-12">0.3.11 / 2018-07-02</h3>
+<h3 id="section-13">0.3.11 / 2018-07-02</h3>
 
 <ul>
   <li>CHANGED: Require Ruby 2.3 or later</li>
@@ -233,7 +233,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>ADDED: Convenience methods for getting option values</li>
 </ul>
 
-<h3 id="section-13">0.3.10 / 2018-06-30</h3>
+<h3 id="section-14">0.3.10 / 2018-06-30</h3>
 
 <ul>
   <li>CHANGED: Dropped Tool#option. Use Tool#get instead.</li>
@@ -242,13 +242,13 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>ADDED: Mixins can provide initializers</li>
 </ul>
 
-<h3 id="section-14">0.3.9.1 / 2018-06-24</h3>
+<h3 id="section-15">0.3.9.1 / 2018-06-24</h3>
 
 <ul>
   <li>FIXED: Built-in flags were interfering with disable_argument_parsing</li>
 </ul>
 
-<h3 id="section-15">0.3.9 / 2018-06-24</h3>
+<h3 id="section-16">0.3.9 / 2018-06-24</h3>
 
 <ul>
   <li>CHANGED: Removed alias_as directive since it’s incompatible with selective loading.</li>
@@ -260,7 +260,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>FIXED: Templates were not activating needed gems</li>
 </ul>
 
-<h3 id="section-16">0.3.8 / 2018-06-10</h3>
+<h3 id="section-17">0.3.8 / 2018-06-10</h3>
 
 <ul>
   <li>CHANGED: Renamed helpers to mixins.</li>
@@ -269,13 +269,13 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>IMPROVED: Exec now accepts nearly all the same stream specifications as Process#spawn.</li>
 </ul>
 
-<h3 id="section-17">0.3.7.1 / 2018-05-30</h3>
+<h3 id="section-18">0.3.7.1 / 2018-05-30</h3>
 
 <ul>
   <li>FIXED: Fix crash in system update.</li>
 </ul>
 
-<h3 id="section-18">0.3.7 / 2018-05-30</h3>
+<h3 id="section-19">0.3.7 / 2018-05-30</h3>
 
 <ul>
   <li>CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.</li>
@@ -286,7 +286,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>ADDED: Helper modules scoped to the tool hierarchy</li>
 </ul>
 
-<h3 id="section-19">0.3.6 / 2018-05-21</h3>
+<h3 id="section-20">0.3.6 / 2018-05-21</h3>
 
 <ul>
   <li>CHANGED: Removed Context#new_cli and exposed Context#cli instead.</li>
@@ -297,7 +297,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>IMPROVED: Highline helper automatically sets use_color based on the type of stdout.</li>
 </ul>
 
-<h3 id="section-20">0.3.5 / 2018-05-15</h3>
+<h3 id="section-21">0.3.5 / 2018-05-15</h3>
 
 <ul>
   <li>CHANGED: Flag and arg blocks in the DSL have an interface more similar to the rest of the DSL.</li>
@@ -305,7 +305,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>IMPROVED: Help display uses <code>less</code> if available.</li>
 </ul>
 
-<h3 id="section-21">0.3.4 / 2018-05-14</h3>
+<h3 id="section-22">0.3.4 / 2018-05-14</h3>
 
 <ul>
   <li>CHANGED: Renamed switch to flag</li>
@@ -324,7 +324,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>FIXED: Usage errors and show-help now interact in the right way</li>
 </ul>
 
-<h3 id="section-22">0.3.3 / 2018-05-09</h3>
+<h3 id="section-23">0.3.3 / 2018-05-09</h3>
 
 <ul>
   <li>CHANGED: Renamed file_utils helper to fileutils.</li>
@@ -336,7 +336,7 @@ possible from this point, but I’ll try to avoid them.</p>
   <li>IMPROVED: Descriptions can have multiple lines</li>
 </ul>
 
-<h3 id="section-23">0.3.2 / 2018-05-07</h3>
+<h3 id="section-24">0.3.2 / 2018-05-07</h3>
 
 <ul>
   <li>CHANGED: Split core engine out into separate “toys-core” gem. See the
@@ -349,7 +349,7 @@ it is now possible to create an alias using alias_tool.</li>
   <li>IMPROVED: You can now run a sub-instance of toys from an executor.</li>
 </ul>
 
-<h3 id="section-24">0.3.1 / 2018-05-02</h3>
+<h3 id="section-25">0.3.1 / 2018-05-02</h3>
 
 <ul>
   <li>CHANGED: Subcommand display is now recursive by default.</li>
@@ -360,7 +360,7 @@ it is now possible to create an alias using alias_tool.</li>
   <li>INTERNAL: Adjusted naming of switch-related methods.</li>
 </ul>
 
-<h3 id="section-25">0.3.0 / 2018-04-30</h3>
+<h3 id="section-26">0.3.0 / 2018-04-30</h3>
 
 <ul>
   <li>Initial generally usable release</li>
@@ -368,7 +368,7 @@ it is now possible to create an alias using alias_tool.</li>
 </div></div>
 
       <div id="footer">
-  Generated on Mon Dec  2 13:54:07 2019 by
+  Generated on Mon Dec  2 16:02:55 2019 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.20 (ruby-2.6.5).
 </div>
