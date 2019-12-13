@@ -228,11 +228,12 @@ module Toys
     # You may pass in either an array of strings, or a single string possibly
     # delimited by path separators. Always returns an array of strings.
     #
-    # @param str [String,Array<String>] The path to split.
+    # @param str [String,Symbol,Array<String,Symbol>] The path to split.
     # @return [Array<String>]
     #
     def split_path(str)
-      return str if str.is_a?(::Array)
+      return str.map(&:to_s) if str.is_a?(::Array)
+      str = str.to_s
       @extra_delimiters ? str.split(@extra_delimiters) : [str]
     end
 
