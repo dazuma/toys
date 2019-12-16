@@ -219,7 +219,7 @@ flag, but it has no additional effect.) Namespaces also support the following
 additional flags:
 
 *   `--all` which displays all subtools, including
-    [hidden subtools](#hidden-tools) and namespaces.
+    [hidden subtools](#Hidden_tools) and namespaces.
 *   `--no-recursive` which displays only immediate subtools, instead of the
     default behavior of showing all subtools recursively.
 *   `--search=TERM` which displays only subtools whose name or description
@@ -265,7 +265,7 @@ you could do this:
     $ toys do build --staging , test --help
 
 Each tool can choose which behavior it will support, whether or not to enforce
-[flags before positional args](#enforcing-flags-before-args).
+[flags before positional args](#Enforcing_flags_before_args).
 
 You can also, of course, stop recognizing flags on the command line by passing
 `--` as an argument.
@@ -273,7 +273,7 @@ You can also, of course, stop recognizing flags on the command line by passing
 ### Tab completion
 
 If you are using the Bash shell, Toys provides custom tab completion. See
-[this section](#installing-tab-completion-for-bash) for instructions on
+[this section](#Installing_tab_completion_for_Bash) for instructions on
 installing tab completion.
 
 Toys will complete tool and subtool names, flags, values passed to flags, and
@@ -516,7 +516,7 @@ an example:
                  long_desc: ["Long descriptions may have multiple lines.",
                              "This is the second line."]
 
-See the [above section on Descriptions](#tool-descriptions) for more
+See the [above section on Descriptions](#Tool_descriptions) for more
 information on how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -561,7 +561,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
+[section below on Custom Acceptors](#Custom_acceptors) for more information.
 
 #### Argument completions
 
@@ -772,7 +772,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You may also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
+[section below on Custom Acceptors](#Custom_acceptors) for more information.
 
 #### Defaults and handlers
 
@@ -830,7 +830,7 @@ like this:
 Note that both flags affect the same option name, `VERBOSITY`. The first
 increments it each time it appears, and the second decrements it. A tool can
 query this option and get an integer telling the requested verbosity level, as
-you will see [below](#logging-and-verbosity).
+you will see [below](#Logging_and_verbosity).
 
 Toys provides a few built-in handlers that can be specified by name. We already
 discussed the default handler that can be specified by its name `:set` or by
@@ -858,7 +858,7 @@ directive. The `desc:` argument takes a single string description, while the
          long_desc: ["Long descriptions may have multiple lines.",
                      "This is the second line."]
 
-See the [above section on Descriptions](#tool-descriptions) for more information on
+See the [above section on Descriptions](#Tool_descriptions) for more information on
 how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -981,7 +981,7 @@ your tools.
 
 Note: If you do not define the `run` method for a tool, Toys provides a default
 implementation that displays the tool's help screen. This is typically used for
-namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
+namespaces, as we shall see [below](#Namespaces_and_subtools). Most tools,
 however, should define `run`.
 
 Let's revisit the "greet" example we covered earlier.
@@ -1149,7 +1149,7 @@ than two or three levels of hierarchy can be confusing to use.
 ## Understanding Toys files
 
 Toys commands are defined in Toys files. We covered the basic syntax for these
-files in the [above section on defining tools](#defining-tools). In this
+files in the [above section on defining tools](#Defining_tools). In this
 section, we will take a deeper look at what you can do with Toys files.
 
 ### Toys directories
@@ -1254,7 +1254,7 @@ in the separate file `.toys/test/unit.rb`.
 Toys also loads index files first before other files in the directory. This
 means they are convenient places to define shared code that can be used by all
 the subtools defined in that directory, as we shall see later in the
-[section on sharing code](#sharing-code).
+[section on sharing code](#Sharing_code).
 
 ### The Toys search path
 
@@ -1366,7 +1366,7 @@ or the
 [Toys::Context#verbosity method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#verbosity-instance_method).
 The verbosity is set to 0 by default. This corresponds to a logger level of
 `WARN`. That is, warnings, errors, and fatals are displayed, while infos and
-debugs are not. However, [as we saw earlier](#standard-flags), most tools
+debugs are not. However, [as we saw earlier](#Standard_flags), most tools
 automatically respond to the `--verbose` and `--quiet` flags, (or `-v` and
 `-q`), which increment and decrement the verbosity value, respectively. If you
 run a tool with `-v`, the verbosity is incremented to 1, and the logger level
@@ -1395,7 +1395,7 @@ execute, and return a process status code (i.e. 0 for success, and nonzero for
 error). Make sure you handle the exit status. For example, in most cases, you
 should probably exit if the tool you are calling returns a nonzero code.
 
-You may also use the `exec` mixin [described below](#executing-subprocesses) to
+You may also use the `exec` mixin [described below](#Executing_subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
 capture or manipulate that tool's input or output stream.
 
@@ -1403,7 +1403,7 @@ capture or manipulate that tool's input or output stream.
 
 The methods of [Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context)
 are not the only methods available for your tool to call. We
-[saw earlier](#tool-execution-basics) that a tool can define additional methods
+[saw earlier](#Tool_execution_basics) that a tool can define additional methods
 that you can use as helpers.
 
 You can also include **mixins**, which are modules that bring in a whole set of
@@ -1428,7 +1428,7 @@ We will look at a few examples of the use of these mixins below. Built-in
 mixins have names that are symbols.
 
 You can also define your own mixins, as we will see in the
-[upcoming section on defining mixins](#defining-mixins).
+[upcoming section on defining mixins](#Defining_mixins).
 
 ### Executing subprocesses
 
@@ -1486,7 +1486,7 @@ more information, see the
 
 You may also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
-[useful gems](#useful-gems) provides some examples.
+[useful gems](#Useful_gems) provides some examples.
 
 ## Sharing code
 
@@ -1499,7 +1499,7 @@ classes, and constants, that you might define in your tools.
 
 ### Defining mixins
 
-We [saw earlier](#helper-methods-and-mixins) that you can mix a module (with
+We [saw earlier](#Helper_methods_and_mixins) that you can mix a module (with
 all its methods) into your tool using the `include` directive. You can specify
 a module itself, or the name of a built-in mixin such as `:exec` or
 `:terminal`. But you can also define your own mixin using the `mixin`
@@ -1514,7 +1514,7 @@ includes the mixin, in the same way that you can include a Ruby module.
 
 (Note that, unlike full modules, mixins allow only methods to be shared. Mixins
 do not support constants. See the next section on
-[using constants](#using-constants) to learn how Toys handles constants.)
+[using constants](#Using_constants) to learn how Toys handles constants.)
 
 Here's an example. Suppose you had common setup code that you wanted to share
 among your testing tools.
@@ -1553,7 +1553,7 @@ descendant tools defined in that same directory, but not in a different `.toys`
 directory.
 
 A common technique, for example, would be to define a mixin in the
-[index file](#index-files) in a Toys directory. You can then include it from
+[index file](#Index_files) in a Toys directory. You can then include it from
 any subtools defined in other files in that same directory.
 
 #### Mixin initializers
@@ -1733,7 +1733,7 @@ development, including templates that generate build, test, and documentation
 tools. The `:minitest` template illustrated above is one of these built-in
 templates. Like built-in mixins, built-in template names are always symbols.
 You can read more about them in the next section on using
-[Toys as a Rake replacement](#toys-as-a-rake-replacement).
+[Toys as a Rake replacement](#Toys_as_a_Rake_replacement).
 
 You may also write your own templates. Here's how...
 
@@ -1852,7 +1852,7 @@ tools are defined. You can use such files to define Ruby classes, modules, and
 other code that may be used and shared by your tools.
 
 To use preloaded files, you must define your tools inside a
-[Toys directory](#toys-directories). Before any tools inside a directory are
+[Toys directory](#Toys_directories). Before any tools inside a directory are
 loaded, any file named `.preload.rb` in the directory is automatically
 required. Additionally, any Ruby files inside a subdirectory called `.preload`
 are also automatically required.
@@ -2701,7 +2701,7 @@ provides a convenient place to put data files that can be looked up by tools
 either during definition or runtime.
 
 To use data files, you must define your tools inside a
-[Toys directory](#toys-directories). Within the Toys directory, create a
+[Toys directory](#Toys_directories). Within the Toys directory, create a
 directory named `.data` and copy your data files there.
 
 You may then "find" a data file by providing the relative path to the file from
@@ -2858,7 +2858,7 @@ the entire toys directory structure. So if your tool definition is inside a
 
 This behavior is particularly useful for build tools. Indeed, all the build
 tools described in the section on
-[Toys as a Rake Replacement](#toys-as-a-rake-replacement) automatically move
+[Toys as a Rake Replacement](#Toys_as_a_Rake_replacement) automatically move
 into the context directory when they execute.
 
 #### Changing the context directory
