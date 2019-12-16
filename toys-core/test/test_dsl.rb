@@ -30,9 +30,10 @@ describe Toys::DSL::Tool do
     end
   }
   let(:executable_name) { "toys" }
+  let(:extra_delimiters) { ":" }
   let(:cli) {
     Toys::CLI.new(executable_name: executable_name, logger: logger,
-                  middleware_stack: [], extra_delimiters: ":")
+                  middleware_stack: [], extra_delimiters: extra_delimiters)
   }
   let(:loader) { cli.loader }
 
@@ -1382,10 +1383,54 @@ describe Toys::DSL::Tool do
       assert_equal(["bar", "baz"], tool.delegate_target)
     end
 
-    it "supports array paths" do
+    it "supports array of strings paths" do
       loader.add_block do
         tool "foo" do
           delegate_to ["bar", "baz"]
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(["bar", "baz"], tool.delegate_target)
+    end
+
+    it "supports simple symbols paths" do
+      loader.add_block do
+        tool :foo do
+          delegate_to :bar
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "supports complex symbols paths" do
+      loader.add_block do
+        tool :foo do
+          delegate_to :'bar:baz'
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(["bar", "baz"], tool.delegate_target)
+    end
+
+    describe "without `extra_delimiters`" do
+      let(:extra_delimiters) { "" }
+
+      it "supports simple symbols paths" do
+        loader.add_block do
+          tool :foo do
+            delegate_to :bar
+          end
+        end
+        tool, _remaining = loader.lookup(["foo"])
+        assert_equal(["bar"], tool.delegate_target)
+      end
+    end
+
+    it "supports array of symbols paths" do
+      loader.add_block do
+        tool "foo" do
+          delegate_to [:bar, :baz]
         end
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -1417,6 +1462,20 @@ describe Toys::DSL::Tool do
             end
           end
           alias_tool "baz", "bar"
+        end
+      end
+      assert_equal(3, cli.run(["foo", "baz"]))
+    end
+
+    it "delegates using a symbols" do
+      loader.add_block do
+        tool :foo do
+          tool :bar do
+            def run
+              exit(3)
+            end
+          end
+          alias_tool :baz, :bar
         end
       end
       assert_equal(3, cli.run(["foo", "baz"]))
