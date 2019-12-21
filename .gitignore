@@ -1,7 +1,7 @@
 /*/.yardoc/
 /*/doc/
 /*/pkg/
-/*/tmp/
+/**/tmp/
 Gemfile.lock
 gems.locked
 .DS_Store
