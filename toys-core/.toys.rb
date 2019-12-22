@@ -24,7 +24,9 @@
 # Run this against local Toys code instead of installed Toys gems.
 # This is to support development of Toys itself. Most Toys files should not
 # include this.
-::Kernel.exec(::File.join(::File.dirname(__dir__), "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
+unless ::ENV["TOYS_DEV"]
+  ::Kernel.exec(::File.join(::File.dirname(context_directory), "toys-dev"), *::ARGV)
+end
 
 expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp"]
 

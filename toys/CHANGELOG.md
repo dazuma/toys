@@ -2,6 +2,9 @@
 
 ### 0.9.1 / unreleased
 
+* IMPROVED: `delegate_to` and `alias_tool` can take symbols as well as strings.
+* DOCS: Fixed user guide internal links on rubydoc.info.
+
 ### 0.9.0 / 2019-12-02
 
 * ADDED: The `delegate_to` directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.
