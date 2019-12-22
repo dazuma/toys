@@ -21,19 +21,19 @@
 # IN THE SOFTWARE.
 ;
 
-# Run this against local Toys code instead of installed Toys gems.
-# This is to support development of Toys itself. Most Toys files should not
-# include this.
-::Kernel.exec(::File.join(context_directory, "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
+desc "Runs rubocop in both gems"
 
-include :gems, suppress_confirm: true
-gem "highline", "~> 2.0"
-gem "minitest", "~> 5.13"
-gem "minitest-focus", "~> 1.1"
-gem "minitest-rg", "~> 5.2"
-gem "rake", "~> 13.0"
-gem "rdoc", "~> 6.2"
-gem "redcarpet", "~> 3.5" unless ::RUBY_PLATFORM == "java"
-gem "rspec", "~> 3.9"
-gem "rubocop", "~> 0.78.0"
-gem "yard", "~> 0.9.20"
+include :terminal
+
+def handle_gem(gem_name)
+  puts("**** Running rubocop on #{gem_name}...", :bold, :cyan)
+  ::Dir.chdir(::File.join(context_directory, gem_name)) do
+    status = cli.child.add_config_path(".toys.rb").run("rubocop")
+    exit(status) unless status.zero?
+  end
+end
+
+def run
+  handle_gem("toys-core")
+  handle_gem("toys")
+end

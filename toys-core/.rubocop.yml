@@ -3,6 +3,8 @@ AllCops:
 
 Layout/EmptyLineAfterGuardClause:
   Enabled: false
+Layout/LineLength:
+  Max: 100
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 Metrics/AbcSize:
@@ -18,8 +20,6 @@ Metrics/ClassLength:
   Max: 500
 Metrics/CyclomaticComplexity:
   Max: 10
-Metrics/LineLength:
-  Max: 100
 Metrics/MethodLength:
   Max: 25
 Metrics/ModuleLength:
