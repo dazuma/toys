@@ -32,7 +32,7 @@ describe Toys::Utils::Exec do
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
   let(:simple_exec_timeout) { 1 }
-  let(:ruby_exec_timeout) { Toys::Compat::IS_JRUBY ? 10 : simple_exec_timeout }
+  let(:ruby_exec_timeout) { Toys::Compat.jruby? ? 10 : simple_exec_timeout }
 
   describe "result object" do
     it "detects zero exit codes" do
@@ -122,7 +122,7 @@ describe Toys::Utils::Exec do
     end
 
     it "recongizes an array with argv0" do
-      skip if Toys::Compat::IS_JRUBY
+      skip if Toys::Compat.jruby?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)

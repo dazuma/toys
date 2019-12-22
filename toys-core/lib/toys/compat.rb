@@ -31,11 +31,13 @@ module Toys
     CURRENT_VERSION = ::Gem::Version.new(::RUBY_VERSION)
 
     ## @private
-    IS_JRUBY = ::RUBY_PLATFORM == "java"
+    def self.jruby?
+      ::RUBY_PLATFORM == "java"
+    end
 
     ## @private
     def self.allow_fork?
-      !IS_JRUBY && RbConfig::CONFIG["host_os"] !~ /mswin/
+      !jruby? && RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
     ## @private

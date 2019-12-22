@@ -216,7 +216,7 @@ module Toys
         @show_source_path = show_source_path
         @stream = stream
         @styled_output = styled_output
-        @use_less = use_less && !Compat::IS_JRUBY
+        @use_less = use_less && !Compat.jruby?
       end
 
       ##
