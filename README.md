@@ -1,5 +1,6 @@
 # Toys
 
+[![Gem Version](https://badge.fury.io/rb/toys.svg)](https://badge.fury.io/rb/toys)
 [![CircleCI](https://circleci.com/gh/dazuma/toys/tree/master.svg?style=svg)](https://circleci.com/gh/dazuma/toys/tree/master)
 
 Toys is a configurable command line tool. Write commands in Ruby using a simple
@@ -13,9 +14,11 @@ line interface for your project's build tasks.
 
 This repository includes the source for two gems:
 
-*   **toys** provides the Toys executable itself and all its capabilities.
-*   **toys-core** provides the underlying command line framework, and can be
-    used to build other command line executables.
+*   **[toys](https://rubygems.org/gems/toys)** provides the Toys executable
+    itself and all its capabilities.
+*   **[toys-core](https://rubygems.org/gems/toys-core)** provides the
+    underlying command line framework, and can be used to build other command
+    line executables.
 
 ## Introductory tutorial
 
