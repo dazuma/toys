@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::DSL::FlagGroup
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" charset="utf-8" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  pathId = "Toys::DSL::FlagGroup";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (F)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span>
+     &raquo; 
+    <span class="title">FlagGroup</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::DSL::FlagGroup
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::DSL::FlagGroup</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/dsl/flag_group.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>DSL for a flag group definition block. Lets you create flags in a group.</p>
+
+<p>These directives are available inside a block passed to
+<span class='object_link'><a href="Tool.html#flag_group-instance_method" title="Toys::DSL::Tool#flag_group (method)">Tool#flag_group</a></span>, <span class='object_link'><a href="Tool.html#all_required-instance_method" title="Toys::DSL::Tool#all_required (method)">Tool#all_required</a></span>,
+<span class='object_link'><a href="Tool.html#at_most_one-instance_method" title="Toys::DSL::Tool#at_most_one (method)">Tool#at_most_one</a></span>, <span class='object_link'><a href="Tool.html#at_least_one-instance_method" title="Toys::DSL::Tool#at_least_one (method)">Tool#at_least_one</a></span>, or
+<span class='object_link'><a href="Tool.html#exactly_one-instance_method" title="Toys::DSL::Tool#exactly_one (method)">Tool#exactly_one</a></span>.</p>
+
+<h2>Example</h2>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>login</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_all_required'>all_required</span> <span class='kw'>do</span>
+    <span class='comment'># The directives in here are defined by this class
+</span>    <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:username</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--username=VAL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Set username (required)</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:password</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--password=VAL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Set password (required)</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='comment'># ...
+</span><span class='kw'>end</span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#desc-instance_method" title="#desc (instance method)">#<strong>desc</strong>(desc)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the short description for the current flag group.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flag-instance_method" title="#flag (instance method)">#<strong>flag</strong>(key, *flags, accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil, report_collisions: true, desc: nil, long_desc: nil, display_name: nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a flag to the current group.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#long_desc-instance_method" title="#long_desc (instance method)">#<strong>long_desc</strong>(*long_desc)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add to the long description for the current flag group.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="desc-instance_method">
+  
+    #<strong>desc</strong>(desc)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the short description for the current flag group. The short
+description is displayed as the group title in online help.</p>
+
+<p>The description is a <span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>, which may be word-wrapped
+when displayed in a help screen. You may pass a <span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>
+directly to this method, or you may pass any input that can be used to
+construct a wrappable string:</p>
+
+<ul>
+<li> If you pass a String, its whitespace will be compacted (i.e. tabs,
+newlines, and multiple consecutive whitespace will be turned into a
+single space), and it will be word-wrapped on whitespace.</li>
+<li> If you pass an Array of Strings, each string will be considered a
+literal word that cannot be broken, and wrapping will be done
+across the strings in the array. In this case, whitespace is not
+compacted.</li>
+</ul>
+
+<h2>Examples</h2>
+
+<p>If you pass in a sentence as a simple string, it may be word wrapped
+when displayed:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This sentence may be wrapped.</span><span class='tstring_end'>&quot;</span></span>
+</code></pre>
+
+<p>To specify a sentence that should never be word-wrapped, pass it as the
+sole element of a string array:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_desc'>desc</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This sentence will not be wrapped.</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+260
+261
+262
+263</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/flag_group.rb', line 260</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_desc'>desc</span><span class='lparen'>(</span><span class='id identifier rubyid_desc'>desc</span><span class='rparen'>)</span>
+  <span class='ivar'>@flag_group</span><span class='period'>.</span><span class='id identifier rubyid_desc'>desc</span> <span class='op'>=</span> <span class='id identifier rubyid_desc'>desc</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="flag-instance_method">
+  
+    #<strong>flag</strong>(key, *flags, accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil, report_collisions: true, desc: nil, long_desc: nil, display_name: nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a flag to the current group. Each flag must specify a key which
+the script may use to obtain the flag value from the context.
+You may then provide the flags themselves in OptionParser form.</p>
+
+<p>If the given key is a symbol representing a valid method name, then a
+helper method is automatically added to retrieve the value. Otherwise,
+if the key is a string or does not represent a valid method name, the
+tool can retrieve the value by calling <span class='object_link'><a href="../Context.html#get-instance_method" title="Toys::Context#get (method)">Context#get</a></span>.</p>
+
+<p>Attributes of the flag may be passed in as arguments to this method, or
+set in a block passed to this method. If you provide a block, you can
+use directives in <span class='object_link'><a href="Flag.html" title="Toys::DSL::Flag (class)">Toys::DSL::Flag</a></span> within the block.</p>
+
+<h2>Flag syntax</h2>
+
+<p>The flags themselves should be provided in OptionParser form. Following
+are examples of valid syntax.</p>
+
+<ul>
+<li> <code>-a</code> : A short boolean switch. When this appears as an argument,
+the value is set to <code>true</code>.</li>
+<li> <code>--abc</code> : A long boolean switch. When this appears as an argument,
+the value is set to <code>true</code>.</li>
+<li> <code>-aVAL</code> or <code>-a VAL</code> : A short flag that takes a required value.
+These two forms are treated identically. If this argument appears
+with a value attached (e.g. <code>-afoo</code>), the attached string (e.g.
+<code>&quot;foo&quot;</code>) is taken as the value. Otherwise, the following argument
+is taken as the value (e.g. for <code>-a foo</code>, the value is set to
+<code>&quot;foo&quot;</code>.) The following argument is treated as the value even if it
+looks like a flag (e.g. <code>-a -a</code> causes the string <code>&quot;-a&quot;</code> to be
+taken as the value.)</li>
+<li> <code>-a[VAL]</code> : A short flag that takes an optional value. If this
+argument appears with a value attached (e.g. <code>-afoo</code>), the attached
+string (e.g. <code>&quot;foo&quot;</code>) is taken as the value. Otherwise, the value
+is set to <code>true</code>. The following argument is never interpreted as
+the value. (Compare with <code>-a [VAL]</code>.)</li>
+<li> <code>-a [VAL]</code> : A short flag that takes an optional value. If this
+argument appears with a value attached (e.g. <code>-afoo</code>), the attached
+string (e.g. <code>&quot;foo&quot;</code>) is taken as the value. Otherwise, if the
+following argument does not look like a flag (i.e. it does not
+begin with a hyphen), it is taken as the value. (e.g. <code>-a foo</code>
+causes the string <code>&quot;foo&quot;</code> to be taken as the value.). If there is
+no following argument, or the following argument looks like a flag,
+the value is set to <code>true</code>. (Compare with <code>-a[VAL]</code>.)</li>
+<li> <code>--abc=VAL</code> or <code>--abc VAL</code> : A long flag that takes a required
+value. These two forms are treated identically. If this argument
+appears with a value attached (e.g. <code>--abc=foo</code>), the attached
+string (e.g. <code>&quot;foo&quot;</code>) is taken as the value. Otherwise, the
+following argument is taken as the value (e.g. for <code>--abc foo</code>, the
+value is set to <code>&quot;foo&quot;</code>.) The following argument is treated as the
+value even if it looks like a flag (e.g. <code>--abc --abc</code> causes the
+string <code>&quot;--abc&quot;</code> to be taken as the value.)</li>
+<li> <code>--abc[=VAL]</code> : A long flag that takes an optional value. If this
+argument appears with a value attached (e.g. <code>--abc=foo</code>), the
+attached string (e.g. <code>&quot;foo&quot;</code>) is taken as the value. Otherwise,
+the value is set to <code>true</code>. The following argument is never
+interpreted as the value. (Compare with <code>--abc [VAL]</code>.)</li>
+<li> <code>--abc [VAL]</code> : A long flag that takes an optional value. If this
+argument appears with a value attached (e.g. <code>--abc=foo</code>), the
+attached string (e.g. <code>&quot;foo&quot;</code>) is taken as the value. Otherwise, if
+the following argument does not look like a flag (i.e. it does not
+begin with a hyphen), it is taken as the value. (e.g. <code>--abc foo</code>
+causes the string <code>&quot;foo&quot;</code> to be taken as the value.). If there is
+no following argument, or the following argument looks like a flag,
+the value is set to <code>true</code>. (Compare with <code>--abc=[VAL]</code>.)</li>
+<li> <code>--[no-]abc</code> : A long boolean switch that can be turned either on
+or off. This effectively creates two flags, <code>--abc</code> which sets the
+value to <code>true</code>, and <code>--no-abc</code> which sets the falue to <code>false</code>.</li>
+</ul>
+
+<h2>Default flag syntax</h2>
+
+<p>If no flag syntax strings are provided, a default syntax will be
+inferred based on the key and other options.</p>
+
+<p>Specifically, if the key has one character, then that character will be
+chosen as a short flag. If the key has multiple characters, a long flag
+will be generated.</p>
+
+<p>Furthermore, if a custom completion, a non-boolean acceptor, or a
+non-boolean default value is provided in the options, then the flag
+will be considered to take a value. Otherwise, it will be considered to
+be a boolean switch.</p>
+
+<p>For example, the following pairs of flags are identical:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:a</span>
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:a</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>-a</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:abc_def</span>
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:abc_def</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--abc-def</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:number</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='const'>Integer</span>
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:number</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--number=VAL</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='const'>Integer</span>
+</code></pre>
+
+<h2>More examples</h2>
+
+<p>A flag that sets its value to the number of times it appears on the
+command line:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:verbose</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>-v</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--verbose</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+     <span class='label'>default:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>handler:</span> <span class='tlambda'>-&gt;</span><span class='lparen'>(</span><span class='id identifier rubyid__val'>_val</span><span class='comma'>,</span> <span class='id identifier rubyid_count'>count</span><span class='rparen'>)</span> <span class='tlambeg'>{</span> <span class='id identifier rubyid_count'>count</span> <span class='op'>+</span> <span class='int'>1</span> <span class='rbrace'>}</span>
+</code></pre>
+
+<p>An example using block form:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:shout</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_flags'>flags</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>-s</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--shout</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_default'>default</span> <span class='kw'>false</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Say it louder</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_long_desc'>long_desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This flag says it lowder.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+            <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>You might use this when people can&#39;t hear you.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+            <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+            <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Example:</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+            <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>    toys say --shout hello</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The key to use to retrieve the value from
+the execution context.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flags</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The flags in OptionParser format.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>accept</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>An acceptor that validates and/or converts the
+value. You may provide either the name of an acceptor you have
+defined, or one of the default acceptors provided by OptionParser.
+Optional. If not specified, accepts any value as a string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The default value. This is the value that will
+be set in the context if this flag is not provided on the command
+line. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>handler</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>nil</tt>, <tt>:set</tt>, <tt>:push</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>An optional handler for
+setting/updating the value. A handler is a proc taking two
+arguments, the given value and the previous value, returning the
+new value that should be set. You may also specify a predefined
+named handler. The <code>:set</code> handler (the default) replaces the
+previous value (effectively <code>-&gt; (val, _prev) { val }</code>). The
+<code>:push</code> handler expects the previous value to be an array and
+pushes the given value onto it; it should be combined with setting
+<code>default: []</code> and is intended for &quot;multi-valued&quot; flags.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_flags</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion
+for flag names associated with this flag. By default, a
+<span class='object_link'><a href="../Flag/DefaultCompletion.html" title="Toys::Flag::DefaultCompletion (class)">Flag::DefaultCompletion</a></span> is used, which provides the flag&#39;s
+names as completion candidates. To customize completion, set this
+to the name of a previously defined completion, a hash of options
+to pass to the constructor for <span class='object_link'><a href="../Flag/DefaultCompletion.html" title="Toys::Flag::DefaultCompletion (class)">Flag::DefaultCompletion</a></span>, or
+any other spec recognized by <span class='object_link'><a href="../Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_values</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion
+for flag values associated with this flag. This is the empty
+completion by default. To customize completion, set this to the
+name of a previously defined completion, or any spec recognized by
+<span class='object_link'><a href="../Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>report_collisions</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Raise an exception if a flag is
+requested that is already in use or marked as unusable. Default is
+true.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the flag. See <span class='object_link'><a href="Tool.html#desc-instance_method" title="Toys::DSL::Tool#desc (method)">Tool#desc</a></span> for a
+description of the allowed formats. Defaults to the empty string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the flag. See <span class='object_link'><a href="Tool.html#long_desc-instance_method" title="Toys::DSL::Tool#long_desc (method)">Tool#long_desc</a></span> for
+a description of the allowed formats. (But note that this param
+takes an Array of description lines, rather than a series of
+arguments.) Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>display_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A display name for this flag, used in help
+text and error messages.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Configures the flag. See <span class='object_link'><a href="Flag.html" title="Toys::DSL::Flag (class)">Toys::DSL::Flag</a></span> for the
+directives that can be called in this block.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/flag_group.rb', line 216</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_flags'>flags</span><span class='comma'>,</span>
+         <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>handler:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete_flags:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete_values:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+         <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+         <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_dsl'>flag_dsl</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Flag.html" title="Toys::DSL::Flag (class)">Flag</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_flags'>flags</span><span class='comma'>,</span> <span class='id identifier rubyid_accept'>accept</span><span class='comma'>,</span> <span class='id identifier rubyid_default'>default</span><span class='comma'>,</span> <span class='id identifier rubyid_handler'>handler</span><span class='comma'>,</span> <span class='id identifier rubyid_complete_flags'>complete_flags</span><span class='comma'>,</span> <span class='id identifier rubyid_complete_values'>complete_values</span><span class='comma'>,</span>
+                           <span class='id identifier rubyid_report_collisions'>report_collisions</span><span class='comma'>,</span> <span class='ivar'>@flag_group</span><span class='comma'>,</span> <span class='id identifier rubyid_desc'>desc</span><span class='comma'>,</span> <span class='id identifier rubyid_long_desc'>long_desc</span><span class='comma'>,</span> <span class='id identifier rubyid_display_name'>display_name</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_flag_dsl'>flag_dsl</span><span class='period'>.</span><span class='id identifier rubyid_instance_exec'>instance_exec</span><span class='lparen'>(</span><span class='id identifier rubyid_flag_dsl'>flag_dsl</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_block'>block</span>
+  <span class='id identifier rubyid_flag_dsl'>flag_dsl</span><span class='period'>.</span><span class='id identifier rubyid__add_to'>_add_to</span><span class='lparen'>(</span><span class='ivar'>@tool</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Tool.html" title="Toys::DSL::Tool (module)">Tool</a></span></span><span class='period'>.</span><span class='id identifier rubyid_maybe_add_getter'>maybe_add_getter</span><span class='lparen'>(</span><span class='ivar'>@tool_dsl</span><span class='comma'>,</span> <span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="long_desc-instance_method">
+  
+    #<strong>long_desc</strong>(*long_desc)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add to the long description for the current flag group. The long
+description is displayed with the flag group in online help. This
+directive may be given multiple times, and the results are cumulative.</p>
+
+<p>A long description is a series of descriptions, which are generally
+displayed in a series of lines/paragraphs. Each individual description
+uses the form described in the <span class='object_link'><a href="#desc-instance_method" title="Toys::DSL::FlagGroup#desc (method)">#desc</a></span> documentation, and may be
+word-wrapped when displayed. To insert a blank line, include an empty
+string as one of the descriptions.</p>
+
+<h2>Example</h2>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_long_desc'>long_desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This initial paragraph might get word wrapped.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This next paragraph is followed by a blank line.</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+          <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This line will not be wrapped.</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+          <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>    This indent is preserved.</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span>
+<span class='id identifier rubyid_long_desc'>long_desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This line is appended to the description.</span><span class='tstring_end'>&quot;</span></span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="../WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>...</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+288
+289
+290
+291</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/flag_group.rb', line 288</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_long_desc'>long_desc</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_long_desc'>long_desc</span><span class='rparen'>)</span>
+  <span class='ivar'>@flag_group</span><span class='period'>.</span><span class='id identifier rubyid_append_long_desc'>append_long_desc</span><span class='lparen'>(</span><span class='id identifier rubyid_long_desc'>long_desc</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Sun Dec 22 17:15:09 2019 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.20 (ruby-2.6.5).
+</div>
+
+    </div>
+  </body>
+</html>
