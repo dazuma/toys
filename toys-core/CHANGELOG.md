@@ -1,5 +1,7 @@
 # Release History
 
+### 0.9.2 / unreleased
+
 ### 0.9.1 / 2019-12-22
 
 * IMPROVED: `delegate_to` and `alias_tool` can take symbols as well as strings.
