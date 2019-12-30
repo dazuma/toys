@@ -442,22 +442,42 @@ describe Toys::CLI do
     end
   end
 
-  it "creates a child" do
-    cli.add_config_block do
-      tool "foo" do
-        def run
-          exit(3)
+  describe "child" do
+    let(:logger2) {
+      Logger.new(logger_io).tap do |lgr|
+        lgr.level = Logger::DEBUG
+      end
+    }
+
+    it "resets tool blocks" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
         end
       end
-    end
-    child = cli.child
-    child.add_config_block do
-      tool "foo" do
-        def run
-          exit(4)
+      child = cli.child
+      child.add_config_block do
+        tool "foo" do
+          def run
+            exit(4)
+          end
         end
       end
+      assert_equal(4, child.run("foo"))
     end
-    assert_equal(4, child.run("foo"))
+
+    it "copies parameters" do
+      assert_same(logger, cli.logger)
+      child = cli.child
+      assert_same(logger, child.logger)
+    end
+
+    it "overrides parameters" do
+      assert_same(logger, cli.logger)
+      child = cli.child(logger: logger2)
+      assert_same(logger2, child.logger)
+    end
   end
 end

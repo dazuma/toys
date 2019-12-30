@@ -14,7 +14,7 @@ executors:
       - image: "circleci/ruby:2.6-buster"
   ruby27:
     docker:
-      - image: "circleci/ruby:2.7-rc-buster"
+      - image: "circleci/ruby:2.7-buster"
   jruby:
     docker:
       - image: "circleci/jruby:latest"

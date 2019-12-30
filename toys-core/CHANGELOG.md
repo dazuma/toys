@@ -2,6 +2,9 @@
 
 ### 0.9.2 / unreleased
 
+* IMPROVED: `Toys::CLI#clone` can be passed keyword arguments to modify the configuration.
+* IMPROVED: `Toys::Loader` is now thread-safe. This means it is now possible for a single `Toys::CLI` to run multiple tools in different threads.
+
 ### 0.9.1 / 2019-12-22
 
 * IMPROVED: `delegate_to` and `alias_tool` can take symbols as well as strings.
@@ -17,7 +20,7 @@ Functional changes:
 * IMPROVED: `alias_tool` is now just shorthand for delegating. This means, aliases can now point to namespaces and will resolve subtools of their targets, and they now support tab completion and online help.
 * IMPROVED: This release of Toys is now compatible with Ruby 2.7.0-preview3. It fixes some Ruby 2.7 specific bugs, and sanitizes keyword argument usage to eliminate Ruby 2.7 warnings.
 * IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of JVM boot latency, lack of Kernel#fork support, and other issues.
-* FIXED: The the `tool` directive no longer crashes if not passed a block.
+* FIXED: The `tool` directive no longer crashes if no block is provided.
 
 Internal interface changes:
 

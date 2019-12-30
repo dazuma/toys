@@ -215,32 +215,37 @@ module Toys
     end
 
     ##
-    # Make a clone with the same settings but no paths in the loader.
-    # This is sometimes useful for running sub-tools that have to be loaded
-    # from a different configuration.
+    # Make a clone with the same settings but no no config blocks and no paths
+    # in the loader. This is sometimes useful for calling another tool that has
+    # to be loaded from a different configuration.
     #
-    # @param _opts [Hash] Unused options that can be used by subclasses.
+    # @param opts [keywords] Any configuration arguments that should be
+    #     modified from the original. See {#initialize} for a list of
+    #     recognized keywords.
     # @return [Toys::CLI]
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
-    def child(**_opts)
-      cli = CLI.new(executable_name: @executable_name,
-                    config_dir_name: @config_dir_name,
-                    config_file_name: @config_file_name,
-                    index_file_name: @index_file_name,
-                    preload_dir_name: @preload_dir_name,
-                    preload_file_name: @preload_file_name,
-                    data_dir_name: @data_dir_name,
-                    middleware_stack: @middleware_stack,
-                    extra_delimiters: @extra_delimiters,
-                    mixin_lookup: @mixin_lookup,
-                    middleware_lookup: @middleware_lookup,
-                    template_lookup: @template_lookup,
-                    logger: @logger,
-                    base_level: @base_level,
-                    error_handler: @error_handler,
-                    completion: @completion)
+    def child(**opts)
+      args = {
+        executable_name: @executable_name,
+        config_dir_name: @config_dir_name,
+        config_file_name: @config_file_name,
+        index_file_name: @index_file_name,
+        preload_dir_name: @preload_dir_name,
+        preload_file_name: @preload_file_name,
+        data_dir_name: @data_dir_name,
+        middleware_stack: @middleware_stack,
+        extra_delimiters: @extra_delimiters,
+        mixin_lookup: @mixin_lookup,
+        middleware_lookup: @middleware_lookup,
+        template_lookup: @template_lookup,
+        logger: @logger,
+        base_level: @base_level,
+        error_handler: @error_handler,
+        completion: @completion,
+      }.merge(opts)
+      cli = CLI.new(**args)
       yield cli if block_given?
       cli
     end

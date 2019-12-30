@@ -21,6 +21,8 @@
 # IN THE SOFTWARE.
 ;
 
+require "monitor"
+
 module Toys
   ##
   # A helper module that provides methods to do module lookups. This is
@@ -71,11 +73,15 @@ module Toys
       end
     end
 
+    include ::MonitorMixin
+
     ##
     # Create an empty ModuleLookup
     #
     def initialize
+      super()
       @paths = []
+      @paths_locked = false
     end
 
     ##
@@ -90,10 +96,13 @@ module Toys
     #
     def add_path(path_base, module_base: nil, high_priority: false)
       module_base ||= ModuleLookup.path_to_module(path_base)
-      if high_priority
-        @paths.unshift([path_base, module_base])
-      else
-        @paths << [path_base, module_base]
+      synchronize do
+        raise "You cannot add a path after a lookup has already occurred." if @paths_locked
+        if high_priority
+          @paths.unshift([path_base, module_base])
+        else
+          @paths << [path_base, module_base]
+        end
       end
       self
     end
@@ -105,19 +114,22 @@ module Toys
     # @return [Module] The specified module
     #
     def lookup(name)
-      @paths.each do |path_base, module_base|
-        path = "#{path_base}/#{ModuleLookup.to_path_name(name)}"
-        begin
-          require path
-        rescue ::LoadError
-          next
+      synchronize do
+        @paths_locked = true
+        @paths.each do |path_base, module_base|
+          path = "#{path_base}/#{ModuleLookup.to_path_name(name)}"
+          begin
+            require path
+          rescue ::LoadError
+            next
+          end
+          mod_name = ModuleLookup.to_module_name(name)
+          unless module_base.constants.include?(mod_name)
+            raise ::NameError,
+                  "File #{path.inspect} did not define #{module_base.name}::#{mod_name}"
+          end
+          return module_base.const_get(mod_name)
         end
-        mod_name = ModuleLookup.to_module_name(name)
-        unless module_base.constants.include?(mod_name)
-          raise ::NameError,
-                "File #{path.inspect} did not define #{module_base.name}::#{mod_name}"
-        end
-        return module_base.const_get(mod_name)
       end
       nil
     end

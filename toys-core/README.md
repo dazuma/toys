@@ -64,8 +64,8 @@ happens when you run it:
 Just as with Toys itself, you get a help screen by default (since we haven't
 yet actually implemented any behavior.) As you can see, some of the same
 features from Toys are present already: online help, and `--verbose` and
-`--quiet` flags. These features can of course all be customized, but they're
-useful to have to start off.
+`--quiet` flags. These features can of course all be customized or disabled,
+but they're often useful to have to start off.
 
 ### Add some functionality
 
@@ -169,7 +169,7 @@ modifies error handling and delimiter parsing.
     #### Pass some additional options to the CLI constructor ...
     cli = Toys::CLI.new(
       extra_delimiters: ":",
-      error_handler: ->(e) {
+      error_handler: ->(_err) {
         puts "Dude, an error happened..."
         return 1
       }

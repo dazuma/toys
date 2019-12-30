@@ -21,6 +21,8 @@
 # IN THE SOFTWARE.
 ;
 
+require "monitor"
+
 module Toys
   ##
   # The Loader service loads tools from configuration files, and finds the
@@ -29,18 +31,7 @@ module Toys
   # This class is not thread-safe.
   #
   class Loader
-    ## @private
-    ToolData = ::Struct.new(:definitions, :top_priority, :active_priority) do
-      ## @private
-      def top_definition
-        top_priority ? definitions[top_priority] : nil
-      end
-
-      ## @private
-      def active_definition
-        active_priority ? definitions[active_priority] : nil
-      end
-    end
+    include ::MonitorMixin
 
     ##
     # Create a Loader
@@ -74,21 +65,22 @@ module Toys
     def initialize(index_file_name: nil, preload_dir_name: nil, preload_file_name: nil,
                    data_dir_name: nil, middleware_stack: [], extra_delimiters: "",
                    mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
+      super()
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
       @mixin_lookup = mixin_lookup || ModuleLookup.new
-      @middleware_lookup = middleware_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @preload_dir_name = preload_dir_name
       @data_dir_name = data_dir_name
-      @middleware_stack = middleware_stack
+      @loading_started = false
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
-      @extra_delimiters = process_extra_delimiters(extra_delimiters)
+      @middleware_builder = MiddlewareBuilder.new(middleware_lookup, middleware_stack)
+      @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       get_tool([], -999_999)
     end
 
@@ -103,10 +95,13 @@ module Toys
     #
     def add_path(paths, high_priority: false)
       paths = Array(paths)
-      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      paths.each do |path|
-        source = SourceInfo.create_path_root(path)
-        @worklist << [source, [], priority]
+      synchronize do
+        raise "Cannot add a path after tool loading has started" if @loading_started
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        paths.each do |path|
+          source = SourceInfo.create_path_root(path)
+          @worklist << [source, [], priority]
+        end
       end
       self
     end
@@ -126,9 +121,12 @@ module Toys
     #
     def add_block(high_priority: false, name: nil, &block)
       name ||= "(Code block #{block.object_id})"
-      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-      source = SourceInfo.create_proc_root(block, name)
-      @worklist << [source, [], priority]
+      synchronize do
+        raise "Cannot add a block after tool loading has started" if @loading_started
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        source = SourceInfo.create_proc_root(block, name)
+        @worklist << [source, [], priority]
+      end
       self
     end
 
@@ -146,7 +144,7 @@ module Toys
     # @return [Array(Toys::Tool,Array<String>)]
     #
     def lookup(args)
-      orig_prefix, args = find_orig_prefix(args)
+      orig_prefix, args = @delimiter_handler.find_orig_prefix(args)
       prefix = orig_prefix
       loop do
         tool = lookup_specific(prefix)
@@ -168,10 +166,9 @@ module Toys
     # @return [nil] if no such tool exists
     #
     def lookup_specific(words)
-      words = split_path(words.first) if words.size == 1
+      words = @delimiter_handler.split_path(words.first) if words.size == 1
       load_for_prefix(words)
-      tool_data = get_tool_data(words)
-      tool = tool_data.active_definition || tool_data.top_definition
+      tool = get_tool_data(words).cur_definition
       finish_definitions_in_tree(words) if tool
       tool
     end
@@ -191,14 +188,14 @@ module Toys
       load_for_prefix(words)
       found_tools = []
       len = words.length
-      @tool_data.each do |n, td|
+      tool_data_snapshot.each do |n, td|
         next if n.empty?
         if recursive
           next if n.length <= len || n.slice(0, len) != words
         else
           next unless n.slice(0..-2) == words
         end
-        tool = td.active_definition || td.top_definition
+        tool = td.cur_definition
         found_tools << tool unless tool.nil?
       end
       sort_tools_by_name(found_tools)
@@ -215,8 +212,8 @@ module Toys
     def has_subtools?(words) # rubocop:disable Naming/PredicateName
       load_for_prefix(words)
       len = words.length
-      @tool_data.each do |n, td|
-        if !n.empty? && n.length > len && n.slice(0, len) == words && !td.definitions.empty?
+      tool_data_snapshot.each do |n, td|
+        if !n.empty? && n.length > len && n.slice(0, len) == words && !td.empty?
           return true
         end
       end
@@ -233,8 +230,18 @@ module Toys
     #
     def split_path(str)
       return str.map(&:to_s) if str.is_a?(::Array)
-      str = str.to_s
-      @extra_delimiters ? str.split(@extra_delimiters) : [str]
+      @delimiter_handler.split_path(str.to_s)
+    end
+
+    ##
+    # Get or create the tool definition for the given name and priority.
+    #
+    # @return [Toys::Tool]
+    #
+    # @private
+    #
+    def get_tool(words, priority)
+      get_tool_data(words).get_tool(priority, self)
     end
 
     ##
@@ -253,11 +260,7 @@ module Toys
     # @private
     #
     def activate_tool(words, priority)
-      tool_data = get_tool_data(words)
-      return tool_data.active_definition if tool_data.active_priority == priority
-      return nil if tool_data.active_priority && tool_data.active_priority > priority
-      tool_data.active_priority = priority
-      get_tool(words, priority)
+      get_tool_data(words).activate_tool(priority, self)
     end
 
     ##
@@ -274,6 +277,22 @@ module Toys
     end
 
     ##
+    # Build a new tool.
+    # Called only from ToolData.
+    #
+    # @param words [Array<String>] The name of the tool.
+    # @param priority [Integer] The priority of the request.
+    #
+    # @return [Toys::Tool] A new tool object.
+    #
+    # @private
+    #
+    def build_tool(words, priority)
+      parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
+      Tool.new(self, parent, words, priority, @middleware_builder.build)
+    end
+
+    ##
     # Loads the subtree under the given prefix.
     #
     # @param prefix [Array<String>] The name prefix.
@@ -282,36 +301,20 @@ module Toys
     # @private
     #
     def load_for_prefix(prefix)
-      cur_worklist = @worklist
-      @worklist = []
-      cur_worklist.each do |source, words, priority|
-        remaining_words = calc_remaining_words(prefix, words)
-        if source.source_proc
-          load_proc(source, words, remaining_words, priority)
-        elsif source.source_path
-          load_validated_path(source, words, remaining_words, priority)
+      synchronize do
+        @loading_started = true
+        cur_worklist = @worklist
+        @worklist = []
+        cur_worklist.each do |source, words, priority|
+          remaining_words = calc_remaining_words(prefix, words)
+          if source.source_proc
+            load_proc(source, words, remaining_words, priority)
+          elsif source.source_path
+            load_validated_path(source, words, remaining_words, priority)
+          end
         end
       end
       self
-    end
-
-    ##
-    # Get or create the tool definition for the given name and priority.
-    #
-    # @return [Toys::Tool]
-    #
-    # @private
-    #
-    def get_tool(words, priority)
-      parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
-      tool_data = get_tool_data(words)
-      if tool_data.top_priority.nil? || tool_data.top_priority < priority
-        tool_data.top_priority = priority
-      end
-      tool_data.definitions[priority] ||= begin
-        middlewares = @middleware_stack.map { |m| resolve_middleware(m) }
-        Tool.new(self, parent, words, priority, middlewares)
-      end
     end
 
     ##
@@ -344,15 +347,27 @@ module Toys
     # Load configuration from the given path. This is called from the `load`
     # directive in the DSL.
     #
+    # @param parent_source [Toys::SourceInfo] The source of the caller.
+    # @param path [String] The file or directory to load.
+    # @param words [Array<String>] The name of the caller, i.e. the context in
+    #     which to load.
+    # @param remaining_words [Array<String>] The remaining words.
+    # @param priority [Integer] The priority.
+    #
     # @private
     #
     def load_path(parent_source, path, words, remaining_words, priority)
       source = parent_source.absolute_child(path)
-      load_validated_path(source, words, remaining_words, priority)
+      synchronize do
+        load_validated_path(source, words, remaining_words, priority)
+      end
     end
 
     ##
     # Determine the next setting for remaining_words, given a word.
+    #
+    # @param remaining_words [Array<String>] The remaining words.
+    # @param word [String] The next word to parse.
     #
     # @private
     #
@@ -368,72 +383,12 @@ module Toys
 
     private
 
-    ALLOWED_DELIMITERS = %r{^[\./:]*$}.freeze
-    private_constant :ALLOWED_DELIMITERS
-
-    def process_extra_delimiters(input)
-      unless ALLOWED_DELIMITERS =~ input
-        raise ::ArgumentError, "Illegal delimiters in #{input.inspect}"
-      end
-      chars = ::Regexp.escape(input.chars.uniq.join)
-      chars.empty? ? nil : ::Regexp.new("[#{chars}]")
-    end
-
-    def find_orig_prefix(args)
-      if @extra_delimiters
-        first_split = (args.first || "").split(@extra_delimiters)
-        if first_split.size > 1
-          args = first_split + args.slice(1..-1)
-          return [first_split, args]
-        end
-      end
-      orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
-      [orig_prefix, args]
+    def tool_data_snapshot
+      synchronize { @tool_data.dup }
     end
 
     def get_tool_data(words)
-      @tool_data[words] ||= ToolData.new({}, nil, nil)
-    end
-
-    def resolve_middleware(input)
-      input = Array(input).dup
-      middleware = input.shift
-      if middleware.is_a?(::String) || middleware.is_a?(::Symbol)
-        middleware = @middleware_lookup.lookup(middleware)
-        if middleware.nil?
-          raise ::ArgumentError, "Unknown middleware name #{input.first.inspect}"
-        end
-      end
-      if middleware.is_a?(::Class)
-        middleware = build_middleware(middleware, input)
-      end
-      unless input.empty?
-        raise ::ArgumentError, "Unrecognized middleware arguments: #{input.inspect}"
-      end
-      middleware
-    end
-
-    def build_middleware(middleware_class, input)
-      args = input.first
-      if args.is_a?(::Array)
-        input.shift
-      else
-        args = []
-      end
-      kwargs = input.first
-      if kwargs.is_a?(::Hash)
-        input.shift
-      else
-        kwargs = {}
-      end
-      # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
-      # initialize will fail if there are no formal keyword args.
-      formals = middleware_class.instance_method(:initialize).parameters
-      if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
-        middleware_class.new(*args)
-      else
-        middleware_class.new(*args, **kwargs)
-      end
+      synchronize { @tool_data[words] ||= ToolData.new(words) }
     end
 
     ##
@@ -443,10 +398,9 @@ module Toys
     def finish_definitions_in_tree(words)
       load_for_prefix(words)
       len = words.length
-      @tool_data.each do |n, td|
+      tool_data_snapshot.each do |n, td|
         next if n.length < len || n.slice(0, len) != words
-        tool = td.active_definition || td.top_definition
-        tool.finish_definition(self) if tool.is_a?(Tool)
+        td.cur_definition&.finish_definition(self)
       end
     end
 
@@ -553,6 +507,155 @@ module Toys
         return words1.slice(index..-1) if lengths.include?(index)
         return nil if words1[index] != words2[index]
         index += 1
+      end
+    end
+
+    ##
+    # Tool data
+    #
+    # @private
+    #
+    class ToolData
+      ## @private
+      def initialize(words)
+        @words = words
+        @definitions = {}
+        @top_priority = @active_priority = nil
+      end
+
+      ## @private
+      def cur_definition
+        active_definition || top_definition
+      end
+
+      ## @private
+      def empty?
+        @definitions.empty?
+      end
+
+      ## @private
+      def get_tool(priority, loader)
+        if @top_priority.nil? || @top_priority < priority
+          @top_priority = priority
+        end
+        @definitions[priority] ||= loader.build_tool(@words, priority)
+      end
+
+      ## @private
+      def activate_tool(priority, loader)
+        return active_definition if @active_priority == priority
+        return nil if @active_priority && @active_priority > priority
+        @active_priority = priority
+        get_tool(priority, loader)
+      end
+
+      private
+
+      def top_definition
+        @top_priority ? @definitions[@top_priority] : nil
+      end
+
+      def active_definition
+        @active_priority ? @definitions[@active_priority] : nil
+      end
+    end
+
+    ##
+    # An object that handles middleware resolution
+    #
+    # @private
+    #
+    class MiddlewareBuilder
+      ## @private
+      def initialize(middleware_lookup, middleware_stack)
+        @middleware_lookup = middleware_lookup
+        @middleware_stack = middleware_stack
+      end
+
+      ## @private
+      def build
+        @middleware_stack.map { |m| resolve_middleware(m) }
+      end
+
+      private
+
+      def resolve_middleware(input)
+        input = Array(input).dup
+        middleware = input.shift
+        if middleware.is_a?(::String) || middleware.is_a?(::Symbol)
+          middleware = @middleware_lookup.lookup(middleware)
+          if middleware.nil?
+            raise ::ArgumentError, "Unknown middleware name #{input.first.inspect}"
+          end
+        end
+        if middleware.is_a?(::Class)
+          middleware = build_one_middleware(middleware, input)
+        end
+        unless input.empty?
+          raise ::ArgumentError, "Unrecognized middleware arguments: #{input.inspect}"
+        end
+        middleware
+      end
+
+      def build_one_middleware(middleware_class, input)
+        args = input.first
+        if args.is_a?(::Array)
+          input.shift
+        else
+          args = []
+        end
+        kwargs = input.first
+        if kwargs.is_a?(::Hash)
+          input.shift
+        else
+          kwargs = {}
+        end
+        # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
+        # initialize will fail if there are no formal keyword args.
+        formals = middleware_class.instance_method(:initialize).parameters
+        if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
+          middleware_class.new(*args)
+        else
+          middleware_class.new(*args, **kwargs)
+        end
+      end
+    end
+
+    ##
+    # An object that handles name delimiting.
+    #
+    # @private
+    #
+    class DelimiterHandler
+      ## @private
+      ALLOWED_DELIMITERS = %r{^[\./:]*$}.freeze
+      private_constant :ALLOWED_DELIMITERS
+
+      ## @private
+      def initialize(extra_delimiters)
+        unless ALLOWED_DELIMITERS =~ extra_delimiters
+          raise ::ArgumentError, "Illegal delimiters in #{extra_delimiters.inspect}"
+        end
+        chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
+        @extra_delimiters = chars.empty? ? nil : ::Regexp.new("[#{chars}]")
+      end
+
+      ## @private
+      def split_path(str)
+        @extra_delimiters ? str.split(@extra_delimiters) : [str]
+      end
+
+      ## @private
+      def find_orig_prefix(args)
+        if @extra_delimiters
+          first_split = (args.first || "").split(@extra_delimiters)
+          if first_split.size > 1
+            args = first_split + args.slice(1..-1)
+            return [first_split, args]
+          end
+        end
+        orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
+        [orig_prefix, args]
       end
     end
   end

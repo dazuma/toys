@@ -461,4 +461,42 @@ describe Toys::Loader do
       assert_equal(["ns3", "tool1"], subtools[7].full_name)
     end
   end
+
+  describe "concurrency" do
+    it "serializes loading" do
+      loader.add_block(name: "test block") do
+        sleep(0.1)
+        tool "tool-1" do
+          desc "block tool-1 description"
+        end
+      end
+      tool1 = tool2 = nil
+      thread1 = Thread.new do
+        tool1, _remaining = loader.lookup(["tool-1"])
+      end
+      thread2 = Thread.new do
+        tool2, _remaining = loader.lookup(["tool-1"])
+      end
+      thread1.join
+      thread2.join
+      assert_equal("block tool-1 description", tool1.desc.to_s)
+      assert_same(tool2, tool1)
+    end
+
+    it "prevents adding sources after loading has started" do
+      loader.add_block(name: "test block") do
+        tool "tool-1" do
+          desc "block tool-1 description"
+        end
+      end
+      loader.lookup(["tool-1"])
+      assert_raises("Cannot add a path after tool loading has started") do
+        loader.add_block(name: "test block 2") do
+          tool "tool-2" do
+            desc "block tool-2 description"
+          end
+        end
+      end
+    end
+  end
 end
