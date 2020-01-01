@@ -960,11 +960,12 @@ module Toys
     #
     # @param proc [Proc] The initializer block
     # @param args [Object...] Arguments to pass to the initializer
+    # @param kwargs [keywords] Keyword arguments to pass to the initializer
     # @return [self]
     #
-    def add_initializer(proc, *args)
+    def add_initializer(proc, *args, **kwargs)
       check_definition_state
-      @initializers << [proc, args]
+      @initializers << [proc, args, kwargs]
       self
     end
 
@@ -1090,8 +1091,8 @@ module Toys
     # @private
     #
     def run_initializers(context)
-      @initializers.each do |func, args|
-        context.instance_exec(*args, &func)
+      @initializers.each do |func, args, kwargs|
+        context.instance_exec(*args, **kwargs, &func)
       end
     end
 

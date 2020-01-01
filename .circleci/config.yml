@@ -49,11 +49,11 @@ jobs:
   test-ruby26:
     executor: ruby26
     steps:
-      - toys-ci
+      - toys-test
   test-ruby27:
     executor: ruby27
     steps:
-      - toys-test
+      - toys-ci
   test-jruby:
     executor: jruby
     steps:

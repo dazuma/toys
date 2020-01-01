@@ -47,7 +47,7 @@ module Toys
     module Gems
       include Mixin
 
-      on_include do |opts = {}|
+      on_include do |**opts|
         @__gems_opts = opts
 
         ## @private

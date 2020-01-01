@@ -95,11 +95,11 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      on_initialize do |opts = {}|
+      on_initialize do |**opts|
         require "toys/utils/exec"
         context = self
         opts = Exec._setup_exec_opts(opts, context)
-        context[KEY] = Utils::Exec.new(opts) do |k|
+        context[KEY] = Utils::Exec.new(**opts) do |k|
           case k
           when :logger
             context[Context::Key::LOGGER]
@@ -115,11 +115,12 @@ module Toys
       # All options listed in the {Toys::Utils::Exec} documentation are
       # supported, plus the `exit_on_nonzero_status` option.
       #
-      # @param opts [Hash] The default options.
+      # @param opts [keywords] The default options.
       # @return [self]
       #
-      def configure_exec(opts = {})
-        self[KEY].configure_defaults(Exec._setup_exec_opts(opts, self))
+      def configure_exec(**opts)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].configure_defaults(**opts)
         self
       end
 
@@ -131,7 +132,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [Hash] The command options. All options listed in the
+      # @param opts [keywords] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
@@ -142,8 +143,9 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec(cmd, opts = {}, &block)
-        self[KEY].exec(cmd, Exec._setup_exec_opts(opts, self), &block)
+      def exec(cmd, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].exec(cmd, **opts, &block)
       end
 
       ##
@@ -153,7 +155,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [Hash] The command options. All options listed in the
+      # @param opts [keywords] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
@@ -164,8 +166,9 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec_ruby(args, opts = {}, &block)
-        self[KEY].exec_ruby(args, Exec._setup_exec_opts(opts, self), &block)
+      def exec_ruby(args, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].exec_ruby(args, **opts, &block)
       end
       alias ruby exec_ruby
 
@@ -176,7 +179,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param func [Proc] The proc to call.
-      # @param opts [Hash] The command options. Most options listed in the
+      # @param opts [keywords] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -187,8 +190,9 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec_proc(func, opts = {}, &block)
-        self[KEY].exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
+      def exec_proc(func, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].exec_proc(func, **opts, &block)
       end
 
       ##
@@ -199,7 +203,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [Hash] The command options. Most options listed in the
+      # @param opts [keywords] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -210,9 +214,10 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec_tool(cmd, opts = {}, &block)
+      def exec_tool(cmd, **opts, &block)
         func = Exec._make_tool_caller(cmd)
-        self[KEY].exec_proc(func, Exec._setup_exec_opts(opts, self), &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].exec_proc(func, **opts, &block)
       end
 
       ##
@@ -226,7 +231,7 @@ module Toys
       # yielded to it.
       #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [Hash] The command options. All options listed in the
+      # @param opts [keywords] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -234,8 +239,9 @@ module Toys
       #
       # @return [String] What was written to standard out.
       #
-      def capture(cmd, opts = {}, &block)
-        self[KEY].capture(cmd, Exec._setup_exec_opts(opts, self), &block)
+      def capture(cmd, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].capture(cmd, **opts, &block)
       end
 
       ##
@@ -248,7 +254,7 @@ module Toys
       # yielded to it.
       #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [Hash] The command options. All options listed in the
+      # @param opts [keywords] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -256,8 +262,9 @@ module Toys
       #
       # @return [String] What was written to standard out.
       #
-      def capture_ruby(args, opts = {}, &block)
-        self[KEY].capture_ruby(args, Exec._setup_exec_opts(opts, self), &block)
+      def capture_ruby(args, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].capture_ruby(args, **opts, &block)
       end
 
       ##
@@ -270,7 +277,7 @@ module Toys
       # yielded to it.
       #
       # @param func [Proc] The proc to call.
-      # @param opts [Hash] The command options. Most options listed in the
+      # @param opts [keywords] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -278,8 +285,9 @@ module Toys
       #
       # @return [String] What was written to standard out.
       #
-      def capture_proc(func, opts = {}, &block)
-        self[KEY].capture_proc(func, Exec._setup_exec_opts(opts, self), &block)
+      def capture_proc(func, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].capture_proc(func, **opts, &block)
       end
 
       ##
@@ -293,7 +301,7 @@ module Toys
       # yielded to it.
       #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [Hash] The command options. Most options listed in the
+      # @param opts [keywords] The command options. Most options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -301,9 +309,10 @@ module Toys
       #
       # @return [String] What was written to standard out.
       #
-      def capture_tool(cmd, opts = {}, &block)
+      def capture_tool(cmd, **opts, &block)
         func = Exec._make_tool_caller(cmd)
-        self[KEY].capture_proc(func, Exec._setup_exec_opts(opts, self), &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].capture_proc(func, **opts, &block)
       end
 
       ##
@@ -314,7 +323,7 @@ module Toys
       # yielded to it.
       #
       # @param cmd [String] The shell command to execute.
-      # @param opts [Hash] The command options. All options listed in the
+      # @param opts [keywords] The command options. All options listed in the
       #     {Toys::Utils::Exec} documentation are supported, plus the
       #     `exit_on_nonzero_status` option.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -322,8 +331,9 @@ module Toys
       #
       # @return [Integer] The exit code
       #
-      def sh(cmd, opts = {}, &block)
-        self[KEY].sh(cmd, Exec._setup_exec_opts(opts, self), &block)
+      def sh(cmd, **opts, &block)
+        opts = Exec._setup_exec_opts(opts, self)
+        self[KEY].sh(cmd, **opts, &block)
       end
 
       ##

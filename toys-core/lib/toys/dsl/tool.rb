@@ -1464,9 +1464,10 @@ module Toys
       #
       # @param mod [Module,Symbol,String] Module or module name.
       # @param args [Object...] Arguments to pass to the initializer
+      # @param kwargs [keywords] Keyword arguments to pass to the initializer
       # @return [self]
       #
-      def include(mod, *args)
+      def include(mod, *args, **kwargs)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
         mod = DSL::Tool.resolve_mixin(mod, cur_tool, @__loader)
@@ -1477,11 +1478,11 @@ module Toys
         super(mod)
         if mod.respond_to?(:initializer)
           callback = mod.initializer
-          cur_tool.add_initializer(callback, *args) if callback
+          cur_tool.add_initializer(callback, *args, **kwargs) if callback
         end
         if mod.respond_to?(:inclusion)
           callback = mod.inclusion
-          class_exec(*args, &callback) if callback
+          class_exec(*args, **kwargs, &callback) if callback
         end
         self
       end

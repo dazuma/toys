@@ -140,19 +140,19 @@ module Toys
       # @param block [Proc] A block that is called if a key is not found. It is
       #     passed the unknown key, and expected to return a default value
       #     (which can be nil).
-      # @param opts [Hash] Initial default options.
+      # @param opts [keywords] Initial default options.
       #
-      def initialize(opts = {}, &block)
+      def initialize(**opts, &block)
         @default_opts = Opts.new(&block).add(opts)
       end
 
       ##
       # Set default options
       #
-      # @param opts [Hash] New default options to set
+      # @param opts [keywords] New default options to set
       # @return [self]
       #
-      def configure_defaults(opts = {})
+      def configure_defaults(**opts)
         @default_opts.add(opts)
         self
       end
@@ -165,7 +165,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -175,7 +175,7 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec(cmd, opts = {}, &block)
+      def exec(cmd, **opts, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
         spawn_cmd =
           if cmd.is_a?(::Array)
@@ -198,7 +198,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -208,10 +208,11 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec_ruby(args, opts = {}, &block)
+      def exec_ruby(args, **opts, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
         log_cmd = args.is_a?(::Array) ? ["ruby"] + args : "ruby #{args}"
-        exec(cmd, {argv0: "ruby", log_cmd: log_cmd}.merge(opts), &block)
+        opts = {argv0: "ruby", log_cmd: log_cmd}.merge(opts)
+        exec(cmd, **opts, &block)
       end
       alias ruby exec_ruby
 
@@ -222,7 +223,7 @@ module Toys
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
       # @param func [Proc] The proc to call.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
@@ -232,7 +233,7 @@ module Toys
       # @return [Toys::Utils::Exec::Result] The result, if the process ran in
       #     the foreground.
       #
-      def exec_proc(func, opts = {}, &block)
+      def exec_proc(func, **opts, &block)
         exec_opts = Opts.new(@default_opts).add(opts)
         executor = Executor.new(exec_opts, func, block)
         executor.execute
@@ -249,15 +250,16 @@ module Toys
       # yielded to it.
       #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture(cmd, opts = {}, &block)
-        exec(cmd, opts.merge(out: :capture, background: false), &block).captured_out
+      def capture(cmd, **opts, &block)
+        opts = opts.merge(out: :capture, background: false)
+        exec(cmd, **opts, &block).captured_out
       end
 
       ##
@@ -270,15 +272,16 @@ module Toys
       # yielded to it.
       #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_ruby(args, opts = {}, &block)
-        ruby(args, opts.merge(out: :capture, background: false), &block).captured_out
+      def capture_ruby(args, **opts, &block)
+        opts = opts.merge(out: :capture, background: false)
+        ruby(args, **opts, &block).captured_out
       end
 
       ##
@@ -291,15 +294,16 @@ module Toys
       # yielded to it.
       #
       # @param func [Proc] The proc to call.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
       # @return [String] What was written to standard out.
       #
-      def capture_proc(func, opts = {}, &block)
-        exec_proc(func, opts.merge(out: :capture, background: false), &block).captured_out
+      def capture_proc(func, **opts, &block)
+        opts = opts.merge(out: :capture, background: false)
+        exec_proc(func, **opts, &block).captured_out
       end
 
       ##
@@ -310,15 +314,16 @@ module Toys
       # yielded to it.
       #
       # @param cmd [String] The shell command to execute.
-      # @param opts [Hash] The command options. See the section on
+      # @param opts [keywords] The command options. See the section on
       #     configuration options in the {Toys::Utils::Exec} module docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
       # @return [Integer] The exit code
       #
-      def sh(cmd, opts = {}, &block)
-        exec(cmd, opts.merge(background: false), &block).exit_code
+      def sh(cmd, **opts, &block)
+        opts = opts.merge(background: false)
+        exec(cmd, **opts, &block).exit_code
       end
 
       ##
