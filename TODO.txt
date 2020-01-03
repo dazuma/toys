@@ -1,18 +1,11 @@
 # TODO items
 
 This is a dumping ground of possible ideas and future directions for Toys.
-
-## Immediate tasks
-
-## Planned for next release
-
-* Write toys-core user guide
-* Native tab completion for zsh
-* Bundler integration
+These items are all tentative or under investigation. Finalized to-do items
+are covered in github issues (https://github.com/dazuma/toys/issues).
 
 ## Ideas under investigation
 
-* Test framework for tools
 * Evaluate options for closer Rails integration
 * Tool archives for sharing/installing tools
 * Should it be possible to set require_exact_flag_match per-flag?
@@ -23,7 +16,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 * Line length limit for Terminal
 * Something to generate output formats
 * Namespace clearing/locking
-* Figure out how/whether to support customizing middleware in toys files
 * Additional ways to find terminal size
 
 ## Other ideas we probably won't do
