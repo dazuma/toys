@@ -40,9 +40,10 @@ module Toys
   # replace it outright, or leave it unmodified.
   #
   # Generally, a middleware is a class that implements the two methods defined
-  # in this module: {Toys::Middleware#config} and {Toys::Middleware#run}. A
-  # middleware can include this module to get default implementations that do
-  # nothing, but this is not required.
+  # in this module: {Toys::Middleware#config} and {Toys::Middleware#run}. To
+  # get default implementations that do nothing, a middleware can
+  # `include Toys::Middleware` or subclass {Toys::Middleware::Base}, but this
+  # is not required.
   #
   module Middleware
     ##
@@ -88,6 +89,187 @@ module Toys
     #
     def run(context) # rubocop:disable Lint/UnusedMethodArgument
       yield
+    end
+
+    class << self
+      ##
+      # Create a middleware spec.
+      #
+      # @overload spec(middleware_object)
+      #   Create a spec wrapping an existing middleware object
+      #
+      #   @param middleware_object [Toys::Middleware] The middleware object
+      #   @return [Toys::Middleware::Spec] A spec
+      #
+      # @overload spec(name, *args, **kwargs, &block)
+      #   Create a spec indicating a given middleware name should be
+      #   instantiated with the given arguments.
+      #
+      #   @param name [String,Symbol,Class] The middleware name or class
+      #   @param args [Array] The arguments to pass to the constructor
+      #   @param kwargs [Hash] The keyword arguments to pass to the constructor
+      #   @param block [Proc,nil] The block to pass to the constructor
+      #   @return [Toys::Middleware::Spec] A spec
+      #
+      def spec(middleware, *args, **kwargs, &block)
+        if middleware.is_a?(::String) || middleware.is_a?(::Symbol) || middleware.is_a?(::Class)
+          Spec.new(nil, middleware, args, kwargs, block)
+        else
+          Spec.new(middleware, nil, nil, nil, nil)
+        end
+      end
+
+      ##
+      # Create a middleware spec from an array specification.
+      #
+      # The array must be 1-4 elements long. The first element must be the
+      # middleware name or class. The other three arguments may include any or
+      # all of the following optional elements, in any order:
+      #  *  An array for the positional arguments to pass to the constructor
+      #  *  A hash for the keyword arguments to pass to the constructor
+      #  *  A proc for the block to pass to the constructor
+      #
+      # @param array [Array] The array input
+      # @return [Toys::Middleware::Spec] A spec
+      #
+      def spec_from_array(array)
+        middleware = array.first
+        if !middleware.is_a?(::String) && !middleware.is_a?(::Symbol) && !middleware.is_a?(::Class)
+          raise ::ArgumentError, "Bad middleware name: #{middleware.inspect}"
+        end
+        args = []
+        kwargs = {}
+        block = nil
+        array.slice(1..-1).each do |param|
+          case param
+          when ::Array
+            args += param
+          when ::Hash
+            kwargs = kwargs.merge(param)
+          when ::Proc
+            block = param
+          else
+            raise ::ArgumentError, "Bad param: #{param.inspect}"
+          end
+        end
+        Spec.new(nil, middleware, args, kwargs, block)
+      end
+
+      ##
+      # Resolve all arguments into an array of middleware specs. Each argument
+      # may be one of the following:
+      #
+      #  *  A {Toys::Middleware} object
+      #  *  A {Toys::Middleware::Spec}
+      #  *  An array whose first element is a middleware name or class, and the
+      #     subsequent elements are params that define what to pass to the class
+      #     constructor (see {Toys::Middleware.spec_from_array})
+      #
+      # @param items [Array<Toys::Middleware,Toys::Middleware::Spec,Array>]
+      # @return [Array<Toys::Middleware::Spec>]
+      #
+      def resolve_specs(*items)
+        items.map do |item|
+          case item
+          when ::Array
+            spec_from_array(item)
+          when Spec
+            item
+          else
+            spec(item)
+          end
+        end
+      end
+    end
+
+    ##
+    # A base class that provides default NOP implementations of the middleware
+    # interface. This base class may optionally be subclassed by a middleware
+    # implementation.
+    #
+    class Base
+      include Middleware
+    end
+
+    ##
+    # A middleware specification, including the middleware class and the
+    # arguments to pass to the constructor.
+    #
+    # Use {Toys::Middleware.spec} to create a middleware spec.
+    #
+    class Spec
+      ##
+      # Builds a middleware for this spec, given a ModuleLookup for middleware.
+      #
+      # If this spec wraps an existing middleware object, returns that object.
+      # Otherwise, constructs a middleware object from the spec.
+      #
+      # @param lookup [Toys::ModuleLookup] A module lookup to resolve
+      #     middleware names
+      # @return [Toys::Middleware] The middleware
+      #
+      def build(lookup)
+        return @object unless @object.nil?
+        if @name.is_a?(::String) || @name.is_a?(::Symbol)
+          klass = lookup&.lookup(@name)
+          raise ::NameError, "Unknown middleware name #{@name.inspect}" if klass.nil?
+        else
+          klass = @name
+        end
+        # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
+        # initialize will fail if there are no formal keyword args.
+        formals = klass.instance_method(:initialize).parameters
+        if @kwargs.empty? && formals.all? { |arg| arg.first != :key && arg.first != :keyrest }
+          klass.new(*@args, &@block)
+        else
+          klass.new(*@args, **@kwargs, &@block)
+        end
+      end
+
+      ##
+      # @return [Toys::Middleware] if this spec wraps a middleware object
+      # @return [nil] if this spec represents a class to instantiate
+      #
+      attr_reader :object
+
+      ##
+      # @return [String,Symbol] if this spec represents a middleware name
+      # @return [Class] if this spec represents a middleware class
+      # @return [nil] if this spec wraps a middleware object
+      #
+      attr_reader :name
+
+      ##
+      # @return [Array] the positional arguments to be passed to a middleware
+      #     class constructor, or the empty array if there are no positional
+      #     arguments
+      # @return [nil] if this spec wraps a middleware object
+      #
+      attr_reader :args
+
+      ##
+      # @return [Hash] the keyword arguments to be passed to a middleware class
+      #     constructor, or the empty hash if there are no keyword arguments
+      # @return [nil] if this spec wraps a middleware object
+      #
+      attr_reader :kwargs
+
+      ##
+      # @return [Proc] if there is a block argument to be passed to a
+      #     middleware class constructor
+      # @return [nil] if there is no block argument, or this spec wraps a
+      #     middleware object
+      #
+      attr_reader :block
+
+      ## @private
+      def initialize(object, name, args, kwargs, block)
+        @object = object
+        @name = name
+        @args = args
+        @kwargs = kwargs
+        @block = block
+      end
     end
   end
 end

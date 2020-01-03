@@ -117,8 +117,8 @@ module Toys
     #     {Toys::CLI::DefaultCompletion}, which delegates completion to the
     #     relevant tool.
     #
-    # @param middleware_stack [Array] An array of middleware that will be used
-    #     by default for all tools loaded by this CLI.
+    # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
+    #     middleware that will be used by default for all tools.
     #     Optional. If not provided, uses a default set of middleware defined
     #     in {Toys::CLI.default_middleware_stack}. To include no middleware,
     #     pass the empty array explicitly.
@@ -605,14 +605,14 @@ module Toys
       # *  {Toys::StandardMiddleware::AddVerbosityFlags} adding the `--verbose`
       #    and `--quiet` flags for managing the logger level.
       #
-      # @return [Array<Toys::Middleware>]
+      # @return [Array<Toys::Middleware::Spec>]
       #
       def default_middleware_stack
         [
-          [:set_default_descriptions],
-          [:show_help, help_flags: true, fallback_execution: true],
-          [:handle_usage_errors],
-          [:add_verbosity_flags],
+          Middleware.spec(:set_default_descriptions),
+          Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
+          Middleware.spec(:handle_usage_errors),
+          Middleware.spec(:add_verbosity_flags),
         ]
       end
 

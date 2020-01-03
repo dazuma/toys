@@ -50,8 +50,9 @@ module Toys
     # @param data_dir_name [String,nil] A directory with this name that appears
     #     in any configuration directory is added to the data directory search
     #     path for any tool file in that directory.
-    # @param middleware_stack [Array] An array of middleware that will be used
-    #     by default for all tools loaded by this loader.
+    # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
+    #     middleware that will be used by default for all tools loaded by this
+    #     loader.
     # @param extra_delimiters [String] A string containing characters that can
     #     function as delimiters in a tool name. Defaults to empty. Allowed
     #     characters are period, colon, and slash.
@@ -71,6 +72,7 @@ module Toys
       end
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
+      @middleware_lookup = middleware_lookup || ModuleLookup.new
       @index_file_name = index_file_name
       @preload_file_name = preload_file_name
       @preload_dir_name = preload_dir_name
@@ -79,7 +81,7 @@ module Toys
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
-      @middleware_builder = MiddlewareBuilder.new(middleware_lookup, middleware_stack)
+      @middleware_stack = Middleware.resolve_specs(*middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       get_tool([], -999_999)
     end
@@ -289,7 +291,8 @@ module Toys
     #
     def build_tool(words, priority)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
-      Tool.new(self, parent, words, priority, @middleware_builder.build)
+      built_middleware_stack = @middleware_stack.map { |m| m.build(@middleware_lookup) }
+      Tool.new(self, parent, words, priority, built_middleware_stack)
     end
 
     ##
@@ -557,67 +560,6 @@ module Toys
 
       def active_definition
         @active_priority ? @definitions[@active_priority] : nil
-      end
-    end
-
-    ##
-    # An object that handles middleware resolution
-    #
-    # @private
-    #
-    class MiddlewareBuilder
-      ## @private
-      def initialize(middleware_lookup, middleware_stack)
-        @middleware_lookup = middleware_lookup
-        @middleware_stack = middleware_stack
-      end
-
-      ## @private
-      def build
-        @middleware_stack.map { |m| resolve_middleware(m) }
-      end
-
-      private
-
-      def resolve_middleware(input)
-        input = Array(input).dup
-        middleware = input.shift
-        if middleware.is_a?(::String) || middleware.is_a?(::Symbol)
-          middleware = @middleware_lookup.lookup(middleware)
-          if middleware.nil?
-            raise ::ArgumentError, "Unknown middleware name #{input.first.inspect}"
-          end
-        end
-        if middleware.is_a?(::Class)
-          middleware = build_one_middleware(middleware, input)
-        end
-        unless input.empty?
-          raise ::ArgumentError, "Unrecognized middleware arguments: #{input.inspect}"
-        end
-        middleware
-      end
-
-      def build_one_middleware(middleware_class, input)
-        args = input.first
-        if args.is_a?(::Array)
-          input.shift
-        else
-          args = []
-        end
-        kwargs = input.first
-        if kwargs.is_a?(::Hash)
-          input.shift
-        else
-          kwargs = {}
-        end
-        # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
-        # initialize will fail if there are no formal keyword args.
-        formals = middleware_class.instance_method(:initialize).parameters
-        if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
-          middleware_class.new(*args)
-        else
-          middleware_class.new(*args, **kwargs)
-        end
       end
     end
 

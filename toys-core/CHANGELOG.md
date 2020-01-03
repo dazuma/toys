@@ -6,6 +6,7 @@
 * CHANGED: `Toys::Utils::Exec` and the `:exec` mixin methods now take real keyword arguments rather than an `opts` hash. This means you should use keywords (or the double-splat operator) to avoid a deprecation warning on Ruby 2.7.
 * IMPROVED: `Toys::CLI#clone` can be passed keyword arguments to modify the configuration.
 * IMPROVED: `Toys::Loader` is now thread-safe. This means it is now possible for a single `Toys::CLI` to run multiple tools in different threads.
+* IMPROVED: There is now a class for middleware specs, making possible a nicer syntax for building a middleware stack.
 
 ### 0.9.1 / 2019-12-22
 

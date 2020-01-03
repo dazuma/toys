@@ -167,36 +167,26 @@ module Toys
     #
     def default_middleware_stack
       [
-        [
-          :set_default_descriptions,
-          default_root_desc: DEFAULT_ROOT_DESC,
-          default_root_long_desc: DEFAULT_ROOT_LONG_DESC,
-        ],
-        [
-          :show_help,
-          help_flags: true,
-          usage_flags: true,
-          list_flags: true,
-          recursive_flags: true,
-          search_flags: true,
-          show_all_subtools_flags: true,
-          default_recursive: true,
-          allow_root_args: true,
-          show_source_path: true,
-          use_less: true,
-          fallback_execution: true,
-        ],
-        [
-          :show_root_version,
-          version_string: ::Toys::VERSION,
-          version_flag_desc: DEFAULT_VERSION_FLAG_DESC,
-        ],
-        [
-          :handle_usage_errors,
-        ],
-        [
-          :add_verbosity_flags,
-        ],
+        Middleware.spec(:set_default_descriptions,
+                        default_root_desc: DEFAULT_ROOT_DESC,
+                        default_root_long_desc: DEFAULT_ROOT_LONG_DESC),
+        Middleware.spec(:show_help,
+                        help_flags: true,
+                        usage_flags: true,
+                        list_flags: true,
+                        recursive_flags: true,
+                        search_flags: true,
+                        show_all_subtools_flags: true,
+                        default_recursive: true,
+                        allow_root_args: true,
+                        show_source_path: true,
+                        use_less: true,
+                        fallback_execution: true),
+        Middleware.spec(:show_root_version,
+                        version_string: ::Toys::VERSION,
+                        version_flag_desc: DEFAULT_VERSION_FLAG_DESC),
+        Middleware.spec(:handle_usage_errors),
+        Middleware.spec(:add_verbosity_flags),
       ]
     end
 
