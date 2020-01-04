@@ -47,10 +47,10 @@ require "toys/core"
   spec.add_development_dependency "minitest", "~> 5.13"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
   spec.add_development_dependency "minitest-rg", "~> 5.2"
-  spec.add_development_dependency "rdoc", "~> 6.2"
+  spec.add_development_dependency "rdoc", "~> 6.1.2"
   spec.add_development_dependency "redcarpet", "~> 3.5"
   spec.add_development_dependency "rubocop", "~> 0.78.0"
-  spec.add_development_dependency "yard", "~> 0.9.20"
+  spec.add_development_dependency "yard", "~> 0.9.22"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] =
