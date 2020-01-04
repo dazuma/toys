@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Templates::Yardoc
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Templates::Yardoc";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (Y)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Templates.html" title="Toys::Templates (module)">Templates</a></span></span>
+     &raquo; 
+    <span class="title">Yardoc</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Templates::Yardoc
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::Templates::Yardoc</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd>Template</dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/templates/yardoc.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A template that generates yardoc tools.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="DEFAULT_GEM_VERSION_REQUIREMENTS-constant" class="">DEFAULT_GEM_VERSION_REQUIREMENTS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Default version requirements for the yard gem.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>~&gt; 0.9</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT_TOOL_NAME-constant" class="">DEFAULT_TOOL_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Default tool name</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>yardoc</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fail_on_undocumented_objects-instance_method" title="#fail_on_undocumented_objects (instance method)">#<strong>fail_on_undocumented_objects</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute fail_on_undocumented_objects.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fail_on_warning-instance_method" title="#fail_on_warning (instance method)">#<strong>fail_on_warning</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute fail_on_warning.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#files-instance_method" title="#files (instance method)">#<strong>files</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute files.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#format-instance_method" title="#format (instance method)">#<strong>format</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute format.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#gem_version-instance_method" title="#gem_version (instance method)">#<strong>gem_version</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute gem_version.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#generate_output-instance_method" title="#generate_output (instance method)">#<strong>generate_output</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute generate_output.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#generate_output_flag-instance_method" title="#generate_output_flag (instance method)">#<strong>generate_output_flag</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute generate_output_flag.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#hide_private_tag-instance_method" title="#hide_private_tag (instance method)">#<strong>hide_private_tag</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute hide_private_tag.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#markup-instance_method" title="#markup (instance method)">#<strong>markup</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute markup.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#name-instance_method" title="#name (instance method)">#<strong>name</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute name.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#options-instance_method" title="#options (instance method)">#<strong>options</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute options.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#output_dir-instance_method" title="#output_dir (instance method)">#<strong>output_dir</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute output_dir.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#readme-instance_method" title="#readme (instance method)">#<strong>readme</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute readme.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#show_private-instance_method" title="#show_private (instance method)">#<strong>show_private</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute show_private.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#show_protected-instance_method" title="#show_protected (instance method)">#<strong>show_protected</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute show_protected.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#show_public-instance_method" title="#show_public (instance method)">#<strong>show_public</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute show_public.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#stats_options-instance_method" title="#stats_options (instance method)">#<strong>stats_options</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute stats_options.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#template-instance_method" title="#template (instance method)">#<strong>template</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute template.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#template_path-instance_method" title="#template_path (instance method)">#<strong>template_path</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the value of attribute template_path.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(name: nil, gem_version: nil, files: [], generate_output: true, generate_output_flag: false, output_dir: nil, fail_on_warning: false, fail_on_undocumented_objects: false, show_public: true, show_protected: false, show_private: false, hide_private_tag: false, readme: nil, markup: nil, template: nil, template_path: nil, format: nil, options: [], stats_options: [])  &#x21d2; Yardoc </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create the template settings for the Yardoc template.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(name: nil, gem_version: nil, files: [], generate_output: true, generate_output_flag: false, output_dir: nil, fail_on_warning: false, fail_on_undocumented_objects: false, show_public: true, show_protected: false, show_private: false, hide_private_tag: false, readme: nil, markup: nil, template: nil, template_path: nil, format: nil, options: [], stats_options: [])  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::Templates::Yardoc (class)">Yardoc</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create the template settings for the Yardoc template.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Name of the tool to create. Defaults to
+<span class='object_link'><a href="#DEFAULT_TOOL_NAME-constant" title="Toys::Templates::Yardoc::DEFAULT_TOOL_NAME (constant)">DEFAULT_TOOL_NAME</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gem_version</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Version requirements for
+the yard gem. Defaults to <span class='object_link'><a href="#DEFAULT_GEM_VERSION_REQUIREMENTS-constant" title="Toys::Templates::Yardoc::DEFAULT_GEM_VERSION_REQUIREMENTS (constant)">DEFAULT_GEM_VERSION_REQUIREMENTS</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>files</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of globs indicating the files
+to document.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>generate_output</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to generate output. Setting to
+false causes yardoc to emit warnings/errors but not generate html.
+Defaults to true.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>generate_output_flag</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to create a flag
+<code>--[no-]output</code> that can control whether output is generated.
+Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>output_dir</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Output directory. Defaults to &quot;doc&quot;.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>fail_on_warning</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether the tool should return a
+nonzero error code if any warnings happen. Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>fail_on_undocumented_objects</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether the tool should
+return a nonzero error code if any objects remain undocumented.
+Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>show_public</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Show public methods. Defaults to true.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>show_protected</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Show protected methods. Defaults to
+false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>show_private</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Show private methods. Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>hide_private_tag</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Hide methods with the <code>@private</code> tag.
+Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>readme</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Name of the readme file used as the title
+page, or <code>nil</code> to use the default.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>markup</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Markup style used in documentation. Defaults
+to &quot;rdoc&quot;.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>template</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Template to use. Defaults to &quot;default&quot;.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>template_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The optional template path to look
+for templates in.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>format</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The output format for the template. Defaults
+to &quot;html&quot;.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Additional options passed to YARD</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>stats_options</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Additional options passed to YARD
+stats</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 84</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>gem_version:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>files:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+               <span class='label'>generate_output:</span> <span class='kw'>true</span><span class='comma'>,</span>
+               <span class='label'>generate_output_flag:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>output_dir:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>fail_on_warning:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>fail_on_undocumented_objects:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>show_public:</span> <span class='kw'>true</span><span class='comma'>,</span>
+               <span class='label'>show_protected:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>show_private:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>hide_private_tag:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>readme:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>markup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>template:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>template_path:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>format:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>options:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+               <span class='label'>stats_options:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span>
+  <span class='ivar'>@name</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="#DEFAULT_TOOL_NAME-constant" title="Toys::Templates::Yardoc::DEFAULT_TOOL_NAME (constant)">DEFAULT_TOOL_NAME</a></span></span>
+  <span class='ivar'>@gem_version</span> <span class='op'>=</span> <span class='id identifier rubyid_gem_version'>gem_version</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="#DEFAULT_GEM_VERSION_REQUIREMENTS-constant" title="Toys::Templates::Yardoc::DEFAULT_GEM_VERSION_REQUIREMENTS (constant)">DEFAULT_GEM_VERSION_REQUIREMENTS</a></span></span>
+  <span class='ivar'>@files</span> <span class='op'>=</span> <span class='id identifier rubyid_files'>files</span>
+  <span class='ivar'>@generate_output</span> <span class='op'>=</span> <span class='id identifier rubyid_generate_output'>generate_output</span>
+  <span class='ivar'>@generate_output_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_generate_output_flag'>generate_output_flag</span>
+  <span class='ivar'>@output_dir</span> <span class='op'>=</span> <span class='id identifier rubyid_output_dir'>output_dir</span>
+  <span class='ivar'>@fail_on_warning</span> <span class='op'>=</span> <span class='id identifier rubyid_fail_on_warning'>fail_on_warning</span>
+  <span class='ivar'>@fail_on_undocumented_objects</span> <span class='op'>=</span> <span class='id identifier rubyid_fail_on_undocumented_objects'>fail_on_undocumented_objects</span>
+  <span class='ivar'>@show_public</span> <span class='op'>=</span> <span class='id identifier rubyid_show_public'>show_public</span>
+  <span class='ivar'>@show_protected</span> <span class='op'>=</span> <span class='id identifier rubyid_show_protected'>show_protected</span>
+  <span class='ivar'>@show_private</span> <span class='op'>=</span> <span class='id identifier rubyid_show_private'>show_private</span>
+  <span class='ivar'>@hide_private_tag</span> <span class='op'>=</span> <span class='id identifier rubyid_hide_private_tag'>hide_private_tag</span>
+  <span class='ivar'>@readme</span> <span class='op'>=</span> <span class='id identifier rubyid_readme'>readme</span>
+  <span class='ivar'>@markup</span> <span class='op'>=</span> <span class='id identifier rubyid_markup'>markup</span>
+  <span class='ivar'>@template</span> <span class='op'>=</span> <span class='id identifier rubyid_template'>template</span>
+  <span class='ivar'>@template_path</span> <span class='op'>=</span> <span class='id identifier rubyid_template_path'>template_path</span>
+  <span class='ivar'>@format</span> <span class='op'>=</span> <span class='id identifier rubyid_format'>format</span>
+  <span class='ivar'>@options</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span>
+  <span class='ivar'>@stats_options</span> <span class='op'>=</span> <span class='id identifier rubyid_stats_options'>stats_options</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id="fail_on_undocumented_objects=-instance_method"></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="fail_on_undocumented_objects-instance_method">
+  
+    #<strong>fail_on_undocumented_objects</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute fail_on_undocumented_objects.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+131
+132
+133</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 131</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fail_on_undocumented_objects'>fail_on_undocumented_objects</span>
+  <span class='ivar'>@fail_on_undocumented_objects</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="fail_on_warning=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="fail_on_warning-instance_method">
+  
+    #<strong>fail_on_warning</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute fail_on_warning.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+130
+131
+132</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 130</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fail_on_warning'>fail_on_warning</span>
+  <span class='ivar'>@fail_on_warning</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="files=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="files-instance_method">
+  
+    #<strong>files</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute files.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+126
+127
+128</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 126</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_files'>files</span>
+  <span class='ivar'>@files</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="format=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="format-instance_method">
+  
+    #<strong>format</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute format.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+140
+141
+142</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 140</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_format'>format</span>
+  <span class='ivar'>@format</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="gem_version=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="gem_version-instance_method">
+  
+    #<strong>gem_version</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute gem_version.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+125
+126
+127</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 125</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_gem_version'>gem_version</span>
+  <span class='ivar'>@gem_version</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="generate_output=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="generate_output-instance_method">
+  
+    #<strong>generate_output</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute generate_output.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+127
+128
+129</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 127</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_generate_output'>generate_output</span>
+  <span class='ivar'>@generate_output</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="generate_output_flag=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="generate_output_flag-instance_method">
+  
+    #<strong>generate_output_flag</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute generate_output_flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+128
+129
+130</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 128</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_generate_output_flag'>generate_output_flag</span>
+  <span class='ivar'>@generate_output_flag</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="hide_private_tag=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="hide_private_tag-instance_method">
+  
+    #<strong>hide_private_tag</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute hide_private_tag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+135
+136
+137</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 135</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_hide_private_tag'>hide_private_tag</span>
+  <span class='ivar'>@hide_private_tag</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="markup=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="markup-instance_method">
+  
+    #<strong>markup</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute markup.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+137
+138
+139</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 137</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_markup'>markup</span>
+  <span class='ivar'>@markup</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="name=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="name-instance_method">
+  
+    #<strong>name</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+124
+125
+126</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 124</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_name'>name</span>
+  <span class='ivar'>@name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="options=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="options-instance_method">
+  
+    #<strong>options</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute options.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+141
+142
+143</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 141</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_options'>options</span>
+  <span class='ivar'>@options</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="output_dir=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="output_dir-instance_method">
+  
+    #<strong>output_dir</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute output_dir.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+129
+130
+131</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 129</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_output_dir'>output_dir</span>
+  <span class='ivar'>@output_dir</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="readme=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="readme-instance_method">
+  
+    #<strong>readme</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute readme.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+136
+137
+138</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 136</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_readme'>readme</span>
+  <span class='ivar'>@readme</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="show_private=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="show_private-instance_method">
+  
+    #<strong>show_private</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute show_private.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+134
+135
+136</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 134</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_show_private'>show_private</span>
+  <span class='ivar'>@show_private</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="show_protected=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="show_protected-instance_method">
+  
+    #<strong>show_protected</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute show_protected.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+133
+134
+135</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 133</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_show_protected'>show_protected</span>
+  <span class='ivar'>@show_protected</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="show_public=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="show_public-instance_method">
+  
+    #<strong>show_public</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute show_public.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+132
+133
+134</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 132</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_show_public'>show_public</span>
+  <span class='ivar'>@show_public</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="stats_options=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="stats_options-instance_method">
+  
+    #<strong>stats_options</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute stats_options.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+142
+143
+144</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 142</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_stats_options'>stats_options</span>
+  <span class='ivar'>@stats_options</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="template=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="template-instance_method">
+  
+    #<strong>template</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute template.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+138
+139
+140</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 138</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_template'>template</span>
+  <span class='ivar'>@template</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="template_path=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="template_path-instance_method">
+  
+    #<strong>template_path</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the value of attribute template_path.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+139
+140
+141</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/templates/yardoc.rb', line 139</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_template_path'>template_path</span>
+  <span class='ivar'>@template_path</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Fri Jan  3 16:13:52 2020 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.22 (ruby-2.7.0).
+</div>
+
+    </div>
+  </body>
+</html>
