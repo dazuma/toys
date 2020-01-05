@@ -227,23 +227,6 @@ describe Toys::Loader do
     end
   end
 
-  describe "collisions between definitions" do
-    before do
-      loader.add_path(File.join(cases_dir, "collision"))
-    end
-
-    it "allows loading if the collision isn't actually traversed" do
-      tool, _remaining = loader.lookup(["tool-2"])
-      assert_equal("index tool-2 short description", tool.desc.to_s)
-    end
-
-    it "reports error if a tool is defined multiple times" do
-      assert_raises(Toys::ContextualError) do
-        loader.lookup(["tool-1"])
-      end
-    end
-  end
-
   describe "priority between definitions" do
     it "chooses from the earlier path" do
       loader.add_path(File.join(cases_dir, "config-items", ".toys"))
@@ -497,6 +480,50 @@ describe Toys::Loader do
           end
         end
       end
+    end
+  end
+
+  describe "middleware stack" do
+    let(:default_middleware) {
+      [
+        Toys::Middleware.spec(:set_default_descriptions),
+        Toys::Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
+      ]
+    }
+    let(:middleware_lookup) { Toys::ModuleLookup.new.add_path("toys/standard_middleware") }
+    let(:middleware_loader) {
+      Toys::Loader.new(middleware_lookup: middleware_lookup, middleware_stack: default_middleware)
+    }
+
+    it "builds default middleware" do
+      middleware_loader.add_block(name: "test block") do
+        tool "tool-1" do
+          desc "hello"
+        end
+      end
+      tool, _remaining = middleware_loader.lookup(["tool-1"])
+      built_middleware = tool.built_middleware
+      assert_equal(2, built_middleware.size)
+      assert_instance_of(Toys::StandardMiddleware::SetDefaultDescriptions, built_middleware[0])
+      assert_instance_of(Toys::StandardMiddleware::ShowHelp, built_middleware[1])
+    end
+
+    it "gets middleware stack from parent" do
+      middleware_loader.add_block(name: "test block") do
+        tool "tool-1" do
+          desc "hello"
+          current_tool.subtool_middleware_stack.add(:add_verbosity_flags)
+          tool "tool-2" do
+            desc "hello"
+          end
+        end
+      end
+      tool, _remaining = middleware_loader.lookup(["tool-1", "tool-2"])
+      built_middleware = tool.built_middleware
+      assert_equal(3, built_middleware.size)
+      assert_instance_of(Toys::StandardMiddleware::AddVerbosityFlags, built_middleware[0])
+      assert_instance_of(Toys::StandardMiddleware::SetDefaultDescriptions, built_middleware[1])
+      assert_instance_of(Toys::StandardMiddleware::ShowHelp, built_middleware[2])
     end
   end
 end

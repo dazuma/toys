@@ -226,7 +226,8 @@ module Toys
       #
       def template(name, template_class = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_template(name, template_class, &block)
+        return self if cur_tool.nil?
+        cur_tool.add_template(name, template_class, &block)
         self
       end
 
@@ -273,7 +274,8 @@ module Toys
       #
       def completion(name, spec = nil, **options, &block)
         cur_tool = DSL::Tool.current_tool(self, false)
-        cur_tool&.add_completion(name, spec, **options, &block)
+        return self if cur_tool.nil?
+        cur_tool.add_completion(name, spec, **options, &block)
         self
       end
 
@@ -404,6 +406,7 @@ module Toys
       #
       def delegate_to(target)
         cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
         cur_tool.delegate_to(@__loader.split_path(target))
         self
       end
@@ -454,6 +457,7 @@ module Toys
       #
       def expand(template_class, *args, **kwargs)
         cur_tool = DSL::Tool.current_tool(self, false)
+        return self if cur_tool.nil?
         name = template_class.to_s
         if template_class.is_a?(::String)
           template_class = cur_tool.lookup_template(template_class)
@@ -463,15 +467,7 @@ module Toys
         if template_class.nil?
           raise ToolDefinitionError, "Template not found: #{name.inspect}"
         end
-        # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
-        # initialize will fail if there are no formal keyword args.
-        formals = template_class.instance_method(:initialize).parameters
-        template =
-          if kwargs.empty? && formals.all? { |(type, _name)| type != :key && type != :keyrest }
-            template_class.new(*args)
-          else
-            template_class.new(*args, **kwargs)
-          end
+        template = Compat.instantiate(template_class, args, kwargs, nil)
         yield template if block_given?
         class_exec(template, &template_class.expansion)
         self
@@ -512,7 +508,8 @@ module Toys
       #
       def desc(str)
         cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.desc = str if cur_tool
+        return self if cur_tool.nil?
+        cur_tool.desc = str
         self
       end
       alias short_desc desc
@@ -1404,7 +1401,8 @@ module Toys
       #
       def on_interrupt(handler = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.interrupt_handler = handler || block unless cur_tool.nil?
+        return self if cur_tool.nil?
+        cur_tool.interrupt_handler = handler || block
         self
       end
 
@@ -1435,7 +1433,8 @@ module Toys
       #
       def on_usage_error(handler = nil, &block)
         cur_tool = DSL::Tool.current_tool(self, true)
-        cur_tool.usage_error_handler = handler || block unless cur_tool.nil?
+        return self if cur_tool.nil?
+        cur_tool.usage_error_handler = handler || block
         self
       end
 
@@ -1577,8 +1576,47 @@ module Toys
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
         cur_tool = DSL::Tool.current_tool(self, false)
-        return if cur_tool.nil?
+        return self if cur_tool.nil?
         cur_tool.custom_context_directory = dir
+        self
+      end
+
+      ##
+      # Applies the given block to all subtools, recursively. Effectively, the
+      # given block is run at the *end* of every tool block. This can be used,
+      # for example, to provide some shared configuration for all tools.
+      #
+      # The block is applied only to subtools defined *after* the block
+      # appears. Subtools defined before the block appears are not affected.
+      #
+      # ## Example
+      #
+      # It is common for tools to use the `:exec` mixin to invoke external
+      # programs. This example automatically includes the exec mixin in all
+      # subtools, recursively, so you do not have to repeat the `include`
+      # directive in every tool.
+      #
+      #     # .toys.rb
+      #
+      #     subtool_apply do
+      #       # Include the mixin only if the tool hasn't already done so
+      #       unless include?(:exec)
+      #         include :exec, exit_on_nonzero_status: true
+      #       end
+      #     end
+      #
+      #     tool "foo" do
+      #       def run
+      #         # This tool has access to methods defined by the :exec mixin
+      #         # because the above block is applied to the tool.
+      #         sh "echo hello"
+      #       end
+      #     end
+      #
+      def subtool_apply(&block)
+        cur_tool = DSL::Tool.current_tool(self, false)
+        return self if cur_tool.nil?
+        cur_tool.subtool_middleware_stack.add(:apply_config, source_info, &block)
         self
       end
 

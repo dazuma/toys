@@ -30,8 +30,6 @@ module Toys
     # the short help string, and terminates execution with an error code.
     #
     class HandleUsageErrors
-      include Middleware
-
       ##
       # Exit code for usage error. (2 by convention)
       # @return [Integer]
@@ -49,9 +47,9 @@ module Toys
       #     a tty. Default is `nil`.
       #
       def initialize(exit_code: nil, stream: $stderr, styled_output: nil)
-        require "toys/utils/terminal"
         @exit_code = exit_code || USAGE_ERROR_EXIT_CODE
-        @terminal = Utils::Terminal.new(output: stream, styled: styled_output)
+        @stream = stream
+        @styled_output = styled_output
       end
 
       ##
@@ -61,11 +59,13 @@ module Toys
       def run(context)
         yield
       rescue ArgParsingError => e
+        require "toys/utils/terminal"
         require "toys/utils/help_text"
         help_text = Utils::HelpText.from_context(context)
-        @terminal.puts(e.usage_errors.join("\n"), :bright_red, :bold)
-        @terminal.puts("")
-        @terminal.puts(help_text.usage_string(wrap_width: @terminal.width))
+        terminal = Utils::Terminal.new(output: @stream, styled: @styled_output)
+        terminal.puts(e.usage_errors.join("\n"), :bright_red, :bold)
+        terminal.puts("")
+        terminal.puts(help_text.usage_string(wrap_width: terminal.width))
         Context.exit(@exit_code)
       end
     end

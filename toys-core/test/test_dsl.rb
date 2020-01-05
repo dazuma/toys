@@ -1481,4 +1481,37 @@ describe Toys::DSL::Tool do
       assert_equal(3, cli.run(["foo", "baz"]))
     end
   end
+
+  describe "subtool_apply directive" do
+    it "applies to subtools" do
+      loader.add_block do
+        tool "foo" do
+          subtool_apply do
+            desc "hello"
+          end
+          tool "bar" do
+          end
+          tool "baz" do
+            desc "ahoy"
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal("hello", tool.desc.to_s)
+      tool, _remaining = loader.lookup(["foo", "baz"])
+      assert_equal("hello", tool.desc.to_s)
+    end
+
+    it "does not affect the current tool" do
+      loader.add_block do
+        tool "foo" do
+          subtool_apply do
+            desc "hello"
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("", tool.desc.to_s)
+    end
+  end
 end

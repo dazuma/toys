@@ -81,7 +81,7 @@ module Toys
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
-      @middleware_stack = Middleware.resolve_specs(*middleware_stack)
+      @middleware_stack = Middleware.stack(middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       get_tool([], -999_999)
     end
@@ -291,8 +291,8 @@ module Toys
     #
     def build_tool(words, priority)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
-      built_middleware_stack = @middleware_stack.map { |m| m.build(@middleware_lookup) }
-      Tool.new(self, parent, words, priority, built_middleware_stack)
+      middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
+      Tool.new(self, parent, words, priority, middleware_stack, @middleware_lookup)
     end
 
     ##

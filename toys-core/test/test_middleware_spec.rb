@@ -112,41 +112,28 @@ describe Toys::Middleware do
     end
   end
 
-  describe ".resolve_specs" do
-    it "handles various arguments" do
-      specs = Toys::Middleware.resolve_specs(
-        [:hello, a: 1, b: 2],
-        1000,
-        Toys::Middleware.spec("foo") { :bar }
-      )
-      assert_equal(:hello, specs[0].name)
-      assert_equal({a: 1, b: 2}, specs[0].kwargs)
-      assert_equal(1000, specs[1].object)
-      assert_equal("foo", specs[2].name)
-      assert_equal(:bar, specs[2].block.call)
-    end
-  end
+  describe "::Spec" do
+    describe "#build" do
+      let(:standard_lookup) { Toys::CLI.default_middleware_lookup }
 
-  describe "#build" do
-    let(:standard_lookup) { Toys::CLI.default_middleware_lookup }
-
-    it "builds a standard middleware by name" do
-      spec = Toys::Middleware.spec(:show_root_version, version_string: "hi")
-      middleware = spec.build(standard_lookup)
-      assert_instance_of(Toys::StandardMiddleware::ShowRootVersion, middleware)
-    end
-
-    it "fails to build middleware by name when no lookup is provided" do
-      spec = Toys::Middleware.spec(:show_root_version, version_string: "hi")
-      assert_raises(NameError) do
-        spec.build(nil)
+      it "builds a standard middleware by name" do
+        spec = Toys::Middleware.spec(:show_root_version, version_string: "hi")
+        middleware = spec.build(standard_lookup)
+        assert_instance_of(Toys::StandardMiddleware::ShowRootVersion, middleware)
       end
-    end
 
-    it "builds base middleware by class even though there is no initialize method" do
-      spec = Toys::Middleware.spec(Toys::Middleware::Base)
-      middleware = spec.build(nil)
-      assert_instance_of(Toys::Middleware::Base, middleware)
+      it "fails to build middleware by name when no lookup is provided" do
+        spec = Toys::Middleware.spec(:show_root_version, version_string: "hi")
+        assert_raises(NameError) do
+          spec.build(nil)
+        end
+      end
+
+      it "builds base middleware by class even though there is no initialize method" do
+        spec = Toys::Middleware.spec(Toys::Middleware::Base)
+        middleware = spec.build(nil)
+        assert_instance_of(Toys::Middleware::Base, middleware)
+      end
     end
   end
 end

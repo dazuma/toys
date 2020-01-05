@@ -28,8 +28,6 @@ module Toys
     # `--version` flag is given.
     #
     class ShowRootVersion
-      include Middleware
-
       ##
       # Default version flags
       # @return [Array<String>]

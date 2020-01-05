@@ -31,8 +31,6 @@ module Toys
     # {Toys::Context::Key::VERBOSITY}, and, thus, the logger level.
     #
     class AddVerbosityFlags
-      include Middleware
-
       ##
       # Default verbose flags
       # @return [Array<String>]

@@ -34,8 +34,6 @@ module Toys
     # middleware can also search for keywords in its subtools.
     #
     class ShowHelp
-      include Middleware
-
       ##
       # Default help flags
       # @return [Array<String>]

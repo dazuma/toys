@@ -31,6 +31,11 @@ module Toys
     CURRENT_VERSION = ::Gem::Version.new(::RUBY_VERSION)
 
     ## @private
+    def self.check_minimum_version(version)
+      CURRENT_VERSION >= ::Gem::Version.new(version)
+    end
+
+    ## @private
     def self.jruby?
       ::RUBY_PLATFORM == "java"
     end
@@ -40,11 +45,7 @@ module Toys
       !jruby? && RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
-    ## @private
-    def self.check_minimum_version(version)
-      CURRENT_VERSION >= ::Gem::Version.new(version)
-    end
-
+    # DidYouMean::SpellChecker requires Ruby 2.4 or later.
     if check_minimum_version("2.4.0")
       ## @private
       def self.suggestions(word, list)
@@ -57,6 +58,7 @@ module Toys
       end
     end
 
+    # In Ruby < 2.4, some objects such as nil cannot be cloned.
     if check_minimum_version("2.4.0")
       ## @private
       def self.merge_clones(hash, orig)
@@ -78,6 +80,7 @@ module Toys
       end
     end
 
+    # The :base argument to Dir.glob requires Ruby 2.5 or later.
     if check_minimum_version("2.5.0")
       ## @private
       def self.glob_in_dir(glob, dir)
@@ -87,6 +90,25 @@ module Toys
       ## @private
       def self.glob_in_dir(glob, dir)
         ::Dir.chdir(dir) { ::Dir.glob(glob) }
+      end
+    end
+
+    # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
+    # initialize will fail if there are no formal keyword args.
+    if check_minimum_version("2.7.0")
+      ## @private
+      def self.instantiate(klass, args, kwargs, block)
+        klass.new(*args, **kwargs, &block)
+      end
+    else
+      ## @private
+      def self.instantiate(klass, args, kwargs, block)
+        formals = klass.instance_method(:initialize).parameters
+        if kwargs.empty? && formals.all? { |arg| arg.first != :key && arg.first != :keyrest }
+          klass.new(*args, &block)
+        else
+          klass.new(*args, **kwargs, &block)
+        end
       end
     end
   end

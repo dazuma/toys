@@ -96,7 +96,7 @@ module Toys
       rescue ::SyntaxError => e
         if (match = /#{::Regexp.escape(path)}:(\d+)/.match(e.message))
           opts = opts.merge(config_path: path, config_line: match[1].to_i)
-          e = ContextualError.new(e, banner, opts)
+          e = ContextualError.new(e, banner, **opts)
         end
         raise e
       rescue ::ScriptError, ::StandardError => e

@@ -773,17 +773,10 @@ describe Toys::Tool do
       assert_equal(source_path, tool.source_info.source_path)
     end
 
-    it "can be set repeatedly to the same value" do
+    it "takes only the first value" do
       tool.lock_source(source_info)
-      tool.lock_source(source_info)
+      tool.lock_source(source_info2)
       assert_equal(source_path, tool.source_info.source_path)
-    end
-
-    it "prevents defining from multiple paths" do
-      tool.lock_source(source_info)
-      assert_raises(Toys::ToolDefinitionError) do
-        tool.lock_source(source_info2)
-      end
     end
   end
 

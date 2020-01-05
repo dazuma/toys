@@ -32,8 +32,6 @@ module Toys
     # you can override methods to modify the description generation logic.
     #
     class SetDefaultDescriptions
-      include Middleware
-
       ##
       # The default description for tools.
       # @return [String]

@@ -1,5 +1,15 @@
 # Release History
 
+### 0.10.0 / unreleased
+
+* ADDED: `subtool_apply` directive which applies a block to all subtools.
+* ADDED: `Toys::Tool#subtool_middleware_stack` allowing a tool to modify the middleware stack for its subtools.
+* ADDED: The `Toys::Middleware::Stack` class represents a stack of middleware specs, and distinguishes the default set from those added afterward.
+* IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
+* CHANGED: `Toys::Tool#middleware_stack` renamed to `Toys::Tool#built_middleware` to clarify that it is an array of middleware objects rather than specs.
+* FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.
+* FIXED: A Ruby 2.7 warning when reporting a Toys file syntax error.
+
 ### 0.9.2 / 2020-01-03
 
 * IMPROVED: Mixins can now take real keyword arguments, and will pass them on properly to `on_initialize` and `on_include` blocks.

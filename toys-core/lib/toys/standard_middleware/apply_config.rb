@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2019 Daniel Azuma
+# Copyright 2020 Daniel Azuma
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,33 @@
 ;
 
 module Toys
-  ##
-  # Current version of the Toys command line executable.
-  # @return [String]
-  #
-  VERSION = "0.10.0.dev"
+  module StandardMiddleware
+    ##
+    # A middleware that applies the given block to all tool configurations.
+    #
+    class ApplyConfig
+      ##
+      # Create an ApplyConfig middleware
+      #
+      # @param source_info [Toys::SourceInfo] Info on the source of the block
+      # @param block [Proc] The configuration to apply.
+      #
+      def initialize(source_info, &block)
+        @source_info = source_info
+        @block = block
+      end
+
+      ##
+      # Appends the configuration block.
+      # @private
+      #
+      def config(tool, _loader)
+        tool_class = tool.tool_class
+        DSL::Tool.prepare(tool_class, nil, @source_info) do
+          tool_class.class_eval(&@block)
+        end
+        yield
+      end
+    end
+  end
 end

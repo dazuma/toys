@@ -438,13 +438,13 @@ module Toys
       original_level = cur_logger.level
       cur_logger.level = base_level - context[Context::Key::VERBOSITY]
       begin
-        perform_execution(context, tool)
+        execute_tool_in_context(context, tool)
       ensure
         cur_logger.level = original_level
       end
     end
 
-    def perform_execution(context, tool)
+    def execute_tool_in_context(context, tool)
       executor = proc do
         begin
           if !context[Context::Key::USAGE_ERRORS].empty?
@@ -459,7 +459,7 @@ module Toys
           handle_interrupt(context, tool.interrupt_handler, e)
         end
       end
-      tool.middleware_stack.reverse_each do |middleware|
+      tool.built_middleware.reverse_each do |middleware|
         executor = make_executor(middleware, context, executor)
       end
       catch(:result) do
@@ -493,7 +493,11 @@ module Toys
     end
 
     def make_executor(middleware, context, next_executor)
-      proc { middleware.run(context, &next_executor) }
+      if middleware.respond_to?(:run)
+        proc { middleware.run(context, &next_executor) }
+      else
+        next_executor
+      end
     end
 
     ##

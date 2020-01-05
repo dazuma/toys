@@ -37,11 +37,12 @@ module Toys
     # Should be created only from the DSL via the Loader.
     # @private
     #
-    def initialize(loader, parent, full_name, priority, middleware_stack)
+    def initialize(loader, parent, full_name, priority, middleware_stack, middleware_lookup)
       @parent = parent
       @full_name = full_name.dup.freeze
       @priority = priority
-      @middleware_stack = middleware_stack
+      @built_middleware = middleware_stack.build(middleware_lookup)
+      @subtool_middleware_stack = middleware_stack.dup
 
       @acceptors = {}
       @mixins = {}
@@ -201,11 +202,20 @@ module Toys
     attr_reader :default_data
 
     ##
-    # The middleware stack active for this tool.
+    # The stack of middleware specs used for subtools.
+    #
+    # This array may be modified in place.
+    #
+    # @return [Array<Toys::Middleware::Spec>]
+    #
+    attr_reader :subtool_middleware_stack
+
+    ##
+    # The stack of built middleware specs for this tool.
     #
     # @return [Array<Toys::Middleware>]
     #
-    attr_reader :middleware_stack
+    attr_reader :built_middleware
 
     ##
     # Info on the source of this tool.
@@ -473,18 +483,13 @@ module Toys
     ##
     # Sets the path to the file that defines this tool.
     # A tool may be defined from at most one path. If a different path is
-    # already set, raises {Toys::ToolDefinitionError}
+    # already set, it is left unchanged.
     #
     # @param source [Toys::SourceInfo] Source info
     # @return [self]
     #
     def lock_source(source)
-      if source_info && source_info.source != source.source
-        raise ToolDefinitionError,
-              "Cannot redefine tool #{display_name.inspect} in #{source.source_name}" \
-              " (already defined in #{source_info.source_name})"
-      end
-      @source_info = source
+      @source_info ||= source
       self
     end
 
@@ -1073,7 +1078,7 @@ module Toys
       unless @definition_finished
         ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
           config_proc = proc {}
-          middleware_stack.reverse_each do |middleware|
+          @built_middleware.reverse_each do |middleware|
             config_proc = make_config_proc(middleware, loader, config_proc)
           end
           config_proc.call
@@ -1306,7 +1311,11 @@ module Toys
     private
 
     def make_config_proc(middleware, loader, next_config)
-      proc { middleware.config(self, loader, &next_config) }
+      if middleware.respond_to?(:config)
+        proc { middleware.config(self, loader, &next_config) }
+      else
+        next_config
+      end
     end
 
     def make_delegation_run_handler(target)
