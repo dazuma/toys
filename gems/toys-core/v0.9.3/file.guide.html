@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: Toys-Core User Guide
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "guide";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: Toys-Core User Guide</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1>Toys-Core User Guide</h1>
+
+<p>Toys-Core is the command line framework underlying Toys. It implements most of
+the core functionality of Toys, including the tool DSL, argument parsing,
+loading Toys files, online help, subprocess control, and so forth. It can be
+used to create custom command line executables using the same facilities.</p>
+
+<p>If this is your first time using Toys-Core, we recommend starting with the
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest">README</a>, which includes a
+tutorial that introduces how to create simple command line executables using
+Toys-Core, customize the behavior, and package your executable in a gem. You
+should also be familiar with Toys itself, including how to define tools by
+writing Toys files, how to interpret arguments and flags, and how to use the
+Toys execution environment. For background, please see the
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys README</a> and
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">Toys User&#39;s Guide</a>.
+Together, those resources will likely give you enough information to begin
+creating your own basic command line executables.</p>
+
+<p>This user&#39;s guide covers all the features of Toys-Core in much more depth. Read
+it when you&#39;re ready to unlock all the capabilities of Toys-Core to create
+sophisticated command line tools.</p>
+
+<p><strong>(This user&#39;s guide is still under construction.)</strong></p>
+
+<h2>Conceptual overview</h2>
+
+<p>Toys-Core is a command line <em>framework</em> in the traditional sense. It is
+intended to be used to write custom command line executables in Ruby. The
+framework provides common facilities such as argumentparsing and online help,
+while your executable chooses and configures those facilities, and implements
+the actual behavior.</p>
+
+<p>The entry point for Toys-Core is the <strong>cli object</strong>. Typically your executable
+script instantiates a CLI, configures it with the desired tool implementations,
+and runs it.</p>
+
+<p>An executable defines its functionality using the <strong>Toys DSL</strong> which can be
+written in <strong>toys files</strong> or in <strong>blocks</strong> passed to the CLI. It uses the same
+DSL used by Toys itself, and supports tools, subtools, flags, arguments, help
+text, and all the other features of Toys.</p>
+
+<p>An executable may customize its own facilities for writing tools by providing
+<strong>built-in mixins</strong> and <strong>built-in templates</strong>, and can implement default
+behavior across all tools by providing <strong>middleware</strong>.</p>
+
+<p>Most executables will provide a set of <strong>static tools</strong>, but it is possible to
+support user-provided tools as Toys does. Executables can customize how tool
+definitions are searched and loaded from the file system.</p>
+
+<p>Finally, an executable may customize many aspects of its behavior, such as the
+<strong>logging output</strong>, <strong>error handling</strong>, and even shell <strong>tab completion</strong>.</p>
+
+<h2>Using the CLI object</h2>
+
+<p>The CLI object is the main entry point for Toys-Core. Most command line
+executables based on Toys-Core use it as follows:</p>
+
+<ul>
+<li> Instantiate a CLI object, passing configuration parameters to the
+constructor.</li>
+<li> Define the functionality of the CLI, either inline by passing it blocks, or
+by providing paths to tool files.</li>
+<li> Call the <span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span> method, passing it the command line arguments
+(e.g. from <code>ARGV</code>).</li>
+<li> Handle the result code, normally by passing it to <code>Kernel#exit</code>.</li>
+</ul>
+
+<p>Following is a simple &quot;hello world&quot; example using the CLI:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='comment'># Instantiate a CLI with the default options
+</span><span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'># Define the functionality
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Run the CLI, passing the command line arguments
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span>
+
+<span class='comment'># Handle the result code.
+</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3>CLI execution</h3>
+
+<p>This section provides some detail on how a CLI executes your code.</p>
+
+<p>(TODO)</p>
+
+<h3>Configuring the CLI</h3>
+
+<p>Generally, you control CLI features by passing arguments to its constructor.
+These features include:</p>
+
+<ul>
+<li> How to find toys files and related code and data. See the section on
+<a href="#Writing_tool_files">writing tool files</a>.</li>
+<li> Middleware, providing common behavior for all tools. See the section on
+<a href="#Customizing_default_behavior">customizing the middleware stack</a>.</li>
+<li> Common mixins and templates available to all tools. See the section on
+<a href="#Defining_mixins_and_templates">how to define mixins and templates</a>.</li>
+<li> How logs and errors are reported. See the section on
+<a href="#Customizing_tool_output">customizing tool output</a>.</li>
+<li> How the executable interacts with the shell, including setting up tab
+completion. See the
+<a href="#Shell_and_command_line_integration">corresponding section</a>.</li>
+</ul>
+
+<p>Each of the actual parameters is covered in detail in the documentation for
+<span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">Toys::CLI#initialize</a></span>. The configuration of a CLI cannot be changed once the
+CLI is constructed. If you need to a CLI with a modified configuration, use
+<span class='object_link'><a href="Toys/CLI.html#child-instance_method" title="Toys::CLI#child (method)">Toys::CLI#child</a></span>.</p>
+
+<h2>Defining functionality</h2>
+
+<h3>Writing tools in blocks</h3>
+
+<h3>Writing tool files</h3>
+
+<h3>Tool priority</h3>
+
+<h3>Defining mixins and templates</h3>
+
+<h2>Customizing tool output</h2>
+
+<h3>Logging and verbosity</h3>
+
+<h3>Handling errors</h3>
+
+<h2>Customizing default behavior</h2>
+
+<h3>Introducing middleware</h3>
+
+<h3>Built-in middlewares</h3>
+
+<h3>Writing your own middleware</h3>
+
+<h2>Shell and command line integration</h2>
+
+<h3>Interpreting tool names</h3>
+
+<h3>Tab completion</h3>
+
+<h2>Packaging your executable</h2>
+</div></div>
+
+      <div id="footer">
+  Generated on Sun Jan  5 18:47:08 2020 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.22 (ruby-2.7.0).
+</div>
+
+    </div>
+  </body>
+</html>
