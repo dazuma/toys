@@ -1,5 +1,10 @@
 # Release History
 
+### 0.9.3 / 2020-01-05
+
+* FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.
+* FIXED: A Ruby 2.7 warning when reporting a Toys file syntax error.
+
 ### 0.9.2 / 2020-01-03
 
 * IMPROVED: Mixins can now take real keyword arguments, and will pass them on properly to `on_initialize` and `on_include` blocks.

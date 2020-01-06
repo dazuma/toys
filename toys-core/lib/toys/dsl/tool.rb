@@ -404,6 +404,7 @@ module Toys
       #
       def delegate_to(target)
         cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
         cur_tool.delegate_to(@__loader.split_path(target))
         self
       end
