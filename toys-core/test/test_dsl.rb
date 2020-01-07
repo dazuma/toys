@@ -1513,5 +1513,21 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["foo"])
       assert_equal("", tool.desc.to_s)
     end
+
+    it "sets the source info within the block" do
+      test = self
+      loader.add_block do
+        tool "foo" do
+          parent_source = source_info
+          subtool_apply do
+            test.assert_equal(:proc, source_info.source_type)
+            test.assert_same(parent_source, source_info.parent)
+          end
+          tool "bar" do
+          end
+        end
+      end
+      loader.lookup(["foo", "bar"])
+    end
   end
 end

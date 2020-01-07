@@ -148,6 +148,15 @@ module Toys
     end
 
     ##
+    # Create a proc child SourceInfo
+    # @private
+    #
+    def proc_child(source_proc, source_name = nil)
+      source_name ||= self.source_name
+      SourceInfo.new(self, context_directory, source_proc, :proc, source_name, nil)
+    end
+
+    ##
     # Create a root source info for a file path.
     # @private
     #

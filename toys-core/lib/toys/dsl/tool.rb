@@ -1616,7 +1616,8 @@ module Toys
       def subtool_apply(&block)
         cur_tool = DSL::Tool.current_tool(self, false)
         return self if cur_tool.nil?
-        cur_tool.subtool_middleware_stack.add(:apply_config, source_info, &block)
+        cur_tool.subtool_middleware_stack.add(:apply_config,
+                                              parent_source: source_info, &block)
         self
       end
 

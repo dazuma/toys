@@ -30,11 +30,20 @@ module Toys
       ##
       # Create an ApplyConfig middleware
       #
-      # @param source_info [Toys::SourceInfo] Info on the source of the block
+      # @param parent_source [Toys::SourceInfo] The SourceInfo corresponding to
+      #     the source where this block is provided, or `nil` (the default) if
+      #     the block does not come from a Toys file.
+      # @param source_name [String] A user-visible name for the source, or
+      #     `nil` to use the default.
       # @param block [Proc] The configuration to apply.
       #
-      def initialize(source_info, &block)
-        @source_info = source_info
+      def initialize(parent_source: nil, source_name: nil, &block)
+        @source_info =
+          if parent_source
+            parent_source.proc_child(block, source_name)
+          else
+            SourceInfo.create_proc_root(block, source_name)
+          end
         @block = block
       end
 

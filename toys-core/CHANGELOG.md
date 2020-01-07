@@ -7,6 +7,9 @@
 * ADDED: The `Toys::Middleware::Stack` class represents a stack of middleware specs, and distinguishes the default set from those added afterward.
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
 * CHANGED: `Toys::Tool#middleware_stack` renamed to `Toys::Tool#built_middleware` to clarify that it is an array of middleware objects rather than specs.
+
+### 0.9.3 / 2020-01-05
+
 * FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.
 * FIXED: A Ruby 2.7 warning when reporting a Toys file syntax error.
 
