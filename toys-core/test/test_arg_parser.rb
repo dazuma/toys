@@ -24,7 +24,7 @@
 require "helper"
 
 describe Toys::ArgParser do
-  let(:supports_suggestions?) { ::RUBY_VERSION >= "2.4" }
+  let(:supports_suggestions?) { ::Toys::Compat.supports_suggestions? }
   let(:executable_name) { "toys" }
   let(:cli) {
     Toys::CLI.new(executable_name: executable_name, middleware_stack: [],

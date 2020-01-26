@@ -155,10 +155,9 @@ describe Toys::Acceptor::Enum do
     assert_nil(acceptor.convert(nil, nil))
   end
 
-  if ::RUBY_VERSION >= "2.4"
-    it "returns suggestions" do
-      assert_equal(["Robb"], acceptor.suggestions("robb"))
-    end
+  it "returns suggestions" do
+    skip unless ::Toys::Compat.supports_suggestions?
+    assert_equal(["Robb"], acceptor.suggestions("robb"))
   end
 end
 

@@ -45,8 +45,13 @@ module Toys
       !jruby? && RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
+    ## @private
+    def self.supports_suggestions?
+      defined?(::DidYouMean::SpellChecker)
+    end
+
     # Check for DidYouMean::SpellChecker
-    if defined?(::DidYouMean::SpellChecker)
+    if supports_suggestions?
       ## @private
       def self.suggestions(word, list)
         ::DidYouMean::SpellChecker.new(dictionary: list).correct(word)
