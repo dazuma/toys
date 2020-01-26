@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Tool::DefaultCompletion
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Tool::DefaultCompletion";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (D)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Tool.html" title="Toys::Tool (class)">Tool</a></span></span>
+     &raquo; 
+    <span class="title">DefaultCompletion</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Tool::DefaultCompletion
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName"><span class='object_link'><a href="../Completion/Base.html" title="Toys::Completion::Base (class)">Completion::Base</a></span></span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next"><span class='object_link'><a href="../Completion/Base.html" title="Toys::Completion::Base (class)">Completion::Base</a></span></li>
+          
+            <li class="next">Toys::Tool::DefaultCompletion</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/tool.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A Completion that implements the default algorithm for a tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#delegation_target-instance_method" title="#delegation_target (instance method)">#<strong>delegation_target</strong>  &#x21d2; Array&lt;String&gt;<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Delegation target, or nil for none.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#call-instance_method" title="#call (instance method)">#<strong>call</strong>(context)  &#x21d2; Array&lt;Toys::Completion::Candidate&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns candidates for the current completion.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#complete_args%3F-instance_method" title="#complete_args? (instance method)">#<strong>complete_args?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to complete positional args.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#complete_flag_values%3F-instance_method" title="#complete_flag_values? (instance method)">#<strong>complete_flag_values?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to complete flag values.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#complete_flags%3F-instance_method" title="#complete_flags? (instance method)">#<strong>complete_flags?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to complete flags.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#complete_subtools%3F-instance_method" title="#complete_subtools? (instance method)">#<strong>complete_subtools?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to complete subtool names.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#include_hidden_subtools%3F-instance_method" title="#include_hidden_subtools? (instance method)">#<strong>include_hidden_subtools?</strong>  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Whether to include hidden subtools.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(complete_subtools: true, include_hidden_subtools: false, complete_args: true, complete_flags: true, complete_flag_values: true, delegation_target: nil)  &#x21d2; DefaultCompletion </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a completion given configuration options.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  <div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(complete_subtools: true, include_hidden_subtools: false, complete_args: true, complete_flags: true, complete_flag_values: true, delegation_target: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::Tool::DefaultCompletion (class)">DefaultCompletion</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a completion given configuration options.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>complete_subtools</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to complete subtool names</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_hidden_subtools</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to include hidden
+subtools (i.e. those beginning with an underscore)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_args</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to complete positional args</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_flags</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to complete flag names</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_flag_values</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Whether to complete flag values</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>delegation_target</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Delegation target, or
+<code>nil</code> if none.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1136
+1137
+1138
+1139
+1140
+1141
+1142
+1143
+1144
+1145</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1136</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>complete_subtools:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>include_hidden_subtools:</span> <span class='kw'>false</span><span class='comma'>,</span>
+               <span class='label'>complete_args:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>complete_flags:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>complete_flag_values:</span> <span class='kw'>true</span><span class='comma'>,</span>
+               <span class='label'>delegation_target:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@complete_subtools</span> <span class='op'>=</span> <span class='id identifier rubyid_complete_subtools'>complete_subtools</span>
+  <span class='ivar'>@include_hidden_subtools</span> <span class='op'>=</span> <span class='id identifier rubyid_include_hidden_subtools'>include_hidden_subtools</span>
+  <span class='ivar'>@complete_flags</span> <span class='op'>=</span> <span class='id identifier rubyid_complete_flags'>complete_flags</span>
+  <span class='ivar'>@complete_args</span> <span class='op'>=</span> <span class='id identifier rubyid_complete_args'>complete_args</span>
+  <span class='ivar'>@complete_flag_values</span> <span class='op'>=</span> <span class='id identifier rubyid_complete_flag_values'>complete_flag_values</span>
+  <span class='ivar'>@delegation_target</span> <span class='op'>=</span> <span class='id identifier rubyid_delegation_target'>delegation_target</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id="delegation_target=-instance_method"></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="delegation_target-instance_method">
+  
+    #<strong>delegation_target</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Delegation target, or nil for none.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is a delegation target</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no delegation target</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1192
+1193
+1194</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1192</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_delegation_target'>delegation_target</span>
+  <span class='ivar'>@delegation_target</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="call-instance_method">
+  
+    #<strong>call</strong>(context)  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="../Completion/Candidate.html" title="Toys::Completion::Candidate (class)">Toys::Completion::Candidate</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns candidates for the current completion.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="../Completion/Context.html" title="Toys::Completion::Context (class)">Toys::Completion::Context</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>the current completion
+context including the string fragment.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="../Completion/Candidate.html" title="Toys::Completion::Candidate (class)">Toys::Completion::Candidate</a></span>&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>an array of candidates</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1201
+1202
+1203
+1204
+1205
+1206
+1207
+1208
+1209
+1210
+1211
+1212
+1213
+1214
+1215</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1201</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_candidates'>candidates</span> <span class='op'>=</span> <span class='id identifier rubyid_valued_flag_candidates'>valued_flag_candidates</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_candidates'>candidates</span> <span class='kw'>if</span> <span class='id identifier rubyid_candidates'>candidates</span>
+  <span class='id identifier rubyid_candidates'>candidates</span> <span class='op'>=</span> <span class='id identifier rubyid_subtool_or_arg_candidates'>subtool_or_arg_candidates</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_candidates'>candidates</span> <span class='op'>+=</span> <span class='id identifier rubyid_plain_flag_candidates'>plain_flag_candidates</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_candidates'>candidates</span> <span class='op'>+=</span> <span class='id identifier rubyid_flag_value_candidates'>flag_value_candidates</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_delegation_target'>delegation_target</span>
+    <span class='id identifier rubyid_delegate_tool'>delegate_tool</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_loader'>loader</span><span class='period'>.</span><span class='id identifier rubyid_lookup_specific'>lookup_specific</span><span class='lparen'>(</span><span class='id identifier rubyid_delegation_target'>delegation_target</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_delegate_tool'>delegate_tool</span>
+      <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_with'>with</span><span class='lparen'>(</span><span class='label'>previous_words:</span> <span class='id identifier rubyid_delegation_target'>delegation_target</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_candidates'>candidates</span> <span class='op'>+=</span> <span class='id identifier rubyid_delegate_tool'>delegate_tool</span><span class='period'>.</span><span class='id identifier rubyid_completion'>completion</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_candidates'>candidates</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="complete_args?-instance_method">
+  
+    #<strong>complete_args?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to complete positional args</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1175
+1176
+1177</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1175</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_complete_args?'>complete_args?</span>
+  <span class='ivar'>@complete_args</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="complete_flag_values?-instance_method">
+  
+    #<strong>complete_flag_values?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to complete flag values</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1183
+1184
+1185</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1183</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_complete_flag_values?'>complete_flag_values?</span>
+  <span class='ivar'>@complete_flag_values</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="complete_flags?-instance_method">
+  
+    #<strong>complete_flags?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to complete flags</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1167
+1168
+1169</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1167</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_complete_flags?'>complete_flags?</span>
+  <span class='ivar'>@complete_flags</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="complete_subtools?-instance_method">
+  
+    #<strong>complete_subtools?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to complete subtool names</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1151
+1152
+1153</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1151</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_complete_subtools?'>complete_subtools?</span>
+  <span class='ivar'>@complete_subtools</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="include_hidden_subtools?-instance_method">
+  
+    #<strong>include_hidden_subtools?</strong>  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Whether to include hidden subtools</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1159
+1160
+1161</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/tool.rb', line 1159</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_include_hidden_subtools?'>include_hidden_subtools?</span>
+  <span class='ivar'>@include_hidden_subtools</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Sat Jan 25 21:57:49 2020 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.24 (ruby-2.7.0).
+</div>
+
+    </div>
+  </body>
+</html>
