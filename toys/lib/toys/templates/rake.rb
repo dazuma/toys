@@ -47,21 +47,67 @@ module Toys
       # @param use_flags [Boolean] Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
+      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      #     enabled for Rake tools. If `true` or a Hash of options, bundler is
+      #     enabled. See the documentation for the
+      #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      #     for information on available options.
       #
       def initialize(gem_version: nil,
                      rakefile_path: nil,
                      only_described: false,
-                     use_flags: false)
+                     use_flags: false,
+                     bundler: nil)
         @gem_version = gem_version
         @rakefile_path = rakefile_path || DEFAULT_RAKEFILE_PATH
         @only_described = only_described
         @use_flags = use_flags
+        self.bundler = bundler
       end
 
       attr_accessor :gem_version
       attr_accessor :rakefile_path
       attr_accessor :only_described
       attr_accessor :use_flags
+
+      ##
+      # Activate bundler for all Rake tools.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
+      # @return [self]
+      #
+      def bundler(**opts)
+        @bundler_settings = opts
+        self
+      end
+
+      ##
+      # Set the bundler state and options for all Rake tools.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [true,false,Hash] Whether bundler should be enabled for
+      #     this tool.
+      # @return [self]
+      #
+      def bundler=(opts)
+        @bundler_settings =
+          if opts && !opts.is_a?(::Hash)
+            {}
+          else
+            opts
+          end
+      end
+
+      ## @private
+      attr_reader :bundler_settings
 
       on_expand do |template|
         gem "rake", *Array(template.gem_version)
@@ -74,6 +120,9 @@ module Toys
           comments = task.full_comment.to_s.split("\n")
           next if comments.empty? && template.only_described
           tool(task.name.split(":"), if_defined: :ignore) do
+            if template.bundler_settings
+              include :bundler, **template.bundler_settings
+            end
             unless comments.empty?
               desc(comments.first)
               comments << "" << "Defined as a Rake task in #{rakefile_path}"

@@ -78,6 +78,11 @@ module Toys
       #     Defaults to {DEFAULT_PATTERN}.
       # @param warnings [Boolean] If true, runs specs with Ruby warnings.
       #     Defaults to true.
+      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      #     enabled for this tool. If `true` or a Hash of options, bundler is
+      #     enabled. See the documentation for the
+      #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      #     for information on available options.
       #
       def initialize(name: nil,
                      gem_version: nil,
@@ -88,7 +93,8 @@ module Toys
                      out: nil,
                      backtrace: false,
                      pattern: nil,
-                     warnings: true)
+                     warnings: true,
+                     bundler: nil)
         @name = name || DEFAULT_TOOL_NAME
         @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @libs = libs || DEFAULT_LIBS
@@ -99,6 +105,7 @@ module Toys
         @backtrace = backtrace
         @pattern = pattern || DEFAULT_PATTERN
         @warnings = warnings
+        self.bundler = bundler
       end
 
       attr_accessor :name
@@ -112,12 +119,55 @@ module Toys
       attr_accessor :pattern
       attr_accessor :warnings
 
+      ##
+      # Activate bundler for this tool.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
+      # @return [self]
+      #
+      def bundler(**opts)
+        @bundler_settings = opts
+        self
+      end
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [true,false,Hash] Whether bundler should be enabled for
+      #     this tool.
+      # @return [self]
+      #
+      def bundler=(opts)
+        @bundler_settings =
+          if opts && !opts.is_a?(::Hash)
+            {}
+          else
+            opts
+          end
+      end
+
+      ## @private
+      attr_reader :bundler_settings
+
       on_expand do |template|
         tool(template.name) do
           desc "Run rspec on the current project."
 
           include :exec
           include :gems
+
+          if template.bundler_settings
+            include :bundler, **template.bundler_settings
+          end
 
           flag :order, "--order TYPE",
                default: template.order,

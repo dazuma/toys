@@ -39,10 +39,9 @@ module Toys
     # If you pass additional options to the include directive, those are used
     # to initialize settings for the gem install process. For example:
     #
-    #     include :gems, output: $stdout, default_confirm: false
+    #     include :gems, on_missing: :error
     #
-    # This is a frontend for {Toys::Utils::Gems}. More information is
-    # available in that class's documentation.
+    # See {Toys::Utils::Gems#initialize} for a list of supported options.
     #
     module Gems
       include Mixin

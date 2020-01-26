@@ -30,16 +30,17 @@ long_desc "The CI tool runs all CI checks for both gems, including unit" \
             " nonzero result code."
 
 include :terminal
+include :exec
 
 def handle_gem(gem_name)
   puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    status = cli.child.add_config_path(".toys.rb").run("ci")
-    if status.zero?
+    result = exec_separate_tool("ci")
+    if result.success?
       puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
     else
       puts("**** #{gem_name.upcase} GEM FAILED!", :red, :bold)
-      exit(1)
+      exit(result.exit_code)
     end
   end
 end

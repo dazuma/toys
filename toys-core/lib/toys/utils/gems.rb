@@ -21,10 +21,12 @@
 # IN THE SOFTWARE.
 ;
 
+require "monitor"
+
 module Toys
   module Utils
     ##
-    # A helper module that activates and installs gems.
+    # A helper class that activates and installs gems and sets up bundler.
     #
     # This class is not loaded by default. Before using it directly, you should
     # `require "toys/utils/gems"`
@@ -59,6 +61,30 @@ module Toys
       end
 
       ##
+      # Failed to run Bundler
+      #
+      class BundlerFailedError < ::StandardError
+      end
+
+      ##
+      # Could not find a Gemfile
+      #
+      class GemfileNotFoundError < BundlerFailedError
+      end
+
+      ##
+      # The bundle is not and could not be installed
+      #
+      class BundleNotInstalledError < BundlerFailedError
+      end
+
+      ##
+      # Bundler has already been run; cannot do so again
+      #
+      class AlreadyBundledError < BundlerFailedError
+      end
+
+      ##
       # Activate the given gem. If it is not present, attempt to install it (or
       # inform the user to update the bundle).
       #
@@ -73,24 +99,42 @@ module Toys
       ##
       # Create a new gem activator.
       #
-      # @param input [IO] Input IO
-      # @param output [IO] Output IO
-      # @param suppress_confirm [Boolean] Suppress the confirmation prompt and
-      #     just use the given `default_confirm` value. Default is false,
-      #     indicating the confirmation prompt appears by default.
-      # @param default_confirm [Boolean] Default response for the confirmation
-      #     prompt. Default is true.
+      # @param on_missing [:confirm,:error,:install] What to do if a needed gem
+      #     is not installed. Possible values:
+      #      *  `:confirm` - prompt the user on whether to install
+      #      *  `:error` - raise an exception
+      #      *  `:install` - just install the gem
+      #     The default is `:confirm`.
+      # @param on_conflict [:error,:warn,:ignore] What to do if bundler has
+      #     already been run with a different Gemfile. Possible values:
+      #      *  `:error` - raise an exception
+      #      *  `:ignore` - just silently proceed without bundling again
+      #      *  `:warn` - print a warning and proceed without bundling again
+      #     The default is `:error`.
+      # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
+      # @param input [IO] Input IO (optional, defaults to STDIN)
+      # @param output [IO] Output IO (optional, defaults to STDOUT)
+      # @param suppress_confirm [Boolean] Deprecated. Use `on_missing` instead.
+      # @param default_confirm [Boolean] Deprecated. Use `on_missing` instead.
       #
-      def initialize(input: $stdin,
-                     output: $stderr,
-                     suppress_confirm: false,
-                     default_confirm: true)
-        require "toys/utils/terminal"
-        require "toys/utils/exec"
-        @terminal = Utils::Terminal.new(input: input, output: output)
-        @exec = Utils::Exec.new
-        @suppress_confirm = suppress_confirm ? true : false
-        @default_confirm = default_confirm ? true : false
+      def initialize(on_missing: nil,
+                     on_conflict: nil,
+                     terminal: nil,
+                     input: nil,
+                     output: nil,
+                     suppress_confirm: nil,
+                     default_confirm: nil)
+        @default_confirm = default_confirm || default_confirm.nil? ? true : false
+        @on_missing = on_missing ||
+                      if suppress_confirm
+                        @default_confirm ? :install : :error
+                      else
+                        :confirm
+                      end
+        @on_conflict = on_conflict || :error
+        @terminal = terminal
+        @input = input || ::STDIN
+        @output = output || ::STDOUT
       end
 
       ##
@@ -102,12 +146,55 @@ module Toys
       # @return [void]
       #
       def activate(name, *requirements)
-        gem(name, *requirements)
-      rescue ::Gem::LoadError => e
-        handle_activation_error(e, name, requirements)
+        Gems.synchronize do
+          begin
+            gem(name, *requirements)
+          rescue ::Gem::LoadError => e
+            handle_activation_error(e, name, requirements)
+          end
+        end
+      end
+
+      ##
+      # Set up the bundle.
+      #
+      # @param groups [Array<String>] The groups to include in setup
+      # @param search_dirs [Array<String>] Directories to search for a Gemfile
+      # @return [void]
+      #
+      def bundle(groups: nil,
+                 search_dirs: nil)
+        Gems.synchronize do
+          gemfile_path = find_gemfile(Array(search_dirs))
+          activate("bundler", "~> 2.1")
+          if configure_gemfile(gemfile_path)
+            setup_bundle(gemfile_path, groups || [])
+          end
+        end
+      end
+
+      @global_mutex = ::Monitor.new
+
+      ## @private
+      def self.synchronize(&block)
+        @global_mutex.synchronize(&block)
       end
 
       private
+
+      def terminal
+        @terminal ||= begin
+          require "toys/utils/terminal"
+          Utils::Terminal.new(input: @input, output: @output)
+        end
+      end
+
+      def exec_util
+        @exec_util ||= begin
+          require "toys/utils/exec"
+          Utils::Exec.new
+        end
+      end
 
       def handle_activation_error(error, name, requirements)
         is_missing_spec =
@@ -116,11 +203,11 @@ module Toys
           else
             error.message.include?("Could not find")
           end
-        unless is_missing_spec
+        if !is_missing_spec || @on_missing == :error
           report_error(name, requirements, error)
           return
         end
-        install_gem(name, requirements)
+        confirm_and_install_gem(name, requirements)
         begin
           gem(name, *requirements)
         rescue ::Gem::LoadError => e
@@ -132,28 +219,16 @@ module Toys
         "#{name.inspect}, #{requirements.map(&:inspect).join(', ')}"
       end
 
-      def install_gem(name, requirements)
-        requirements_text = gem_requirements_text(name, requirements)
-        response =
-          if @suppress_confirm
-            @default_confirm
-          else
-            @terminal.confirm("Gem needed: #{requirements_text}. Install? ",
-                              default: @default_confirm)
+      def confirm_and_install_gem(name, requirements)
+        if @on_missing == :confirm
+          requirements_text = gem_requirements_text(name, requirements)
+          response = terminal.confirm("Gem needed: #{requirements_text}. Install? ",
+                                      default: @default_confirm)
+          unless response
+            raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"
           end
-        unless response
-          raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"
         end
-        perform_install(name, requirements)
-      end
-
-      def perform_install(name, requirements)
-        result = @terminal.spinner(leading_text: "Installing gem #{name}... ",
-                                   final_text: "Done.\n") do
-          @exec.exec(["gem", "install", name, "--version", requirements.join(",")],
-                     out: :capture, err: :capture)
-        end
-        @terminal.puts(result.captured_out + result.captured_err)
+        result = exec_util.exec(["gem", "install", name, "--version", requirements.join(",")])
         if result.error?
           raise InstallFailedError, "Failed to install gem #{name}"
         end
@@ -166,6 +241,70 @@ module Toys
                                              ::ENV["BUNDLE_GEMFILE"])
         end
         raise ActivationFailedError, err.message
+      end
+
+      def find_gemfile(search_dirs)
+        search_dirs.each do |dir|
+          gemfile_path = ::File.join(dir, "Gemfile")
+          return gemfile_path if ::File.readable?(gemfile_path)
+        end
+        raise GemfileNotFoundError, "Gemfile not found"
+      end
+
+      def configure_gemfile(gemfile_path)
+        old_path = ::ENV["BUNDLE_GEMFILE"]
+        if old_path && gemfile_path != old_path
+          case @on_conflict
+          when :warn
+            terminal.puts("Warning: could not set up bundler because it is already set up.", :red)
+          when :error
+            raise AlreadyBundledError, "Could not set up bundler because it is already set up"
+          end
+          return false
+        end
+        ::ENV["BUNDLE_GEMFILE"] = gemfile_path
+        true
+      end
+
+      def setup_bundle(gemfile_path, groups)
+        require "bundler"
+        begin
+          ::Bundler.setup(*groups)
+        rescue ::Bundler::GemNotFound
+          install_bundle(gemfile_path)
+          ::Bundler.reset!
+          begin
+            ::Bundler.setup(*groups)
+          rescue ::Bundler::GemNotFound
+            raise BundlerFailedError, "Could not set up bundle even after install"
+          end
+        end
+      end
+
+      def permission_to_bundle?
+        case @on_missing
+        when :install
+          true
+        when :error
+          false
+        else
+          terminal.confirm("Your bundle is not complete. Install? ", default: @default_confirm)
+        end
+      end
+
+      def install_bundle(gemfile_path)
+        gemfile_dir = ::File.dirname(gemfile_path)
+        unless permission_to_bundle?
+          raise BundleNotInstalledError,
+                "Your bundle is not installed. Consider running" \
+                  " `cd #{gemfile_dir} && bundle install`"
+        end
+        ::Dir.chdir(gemfile_dir) do
+          result = exec_util.exec(["bundle", "install"])
+          if result.error?
+            raise BundleNotInstalledError, "Bundle failed to install in #{gemfile_dir}"
+          end
+        end
       end
     end
   end

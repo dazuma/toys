@@ -24,12 +24,13 @@
 desc "Runs tests in both gems"
 
 include :terminal
+include :exec
 
 def handle_gem(gem_name)
   puts("**** Testing #{gem_name}...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    status = cli.child.add_config_path(".toys.rb").run("test")
-    exit(status) unless status.zero?
+    result = exec_separate_tool("test")
+    exit(result.exit_code) unless result.success?
   end
 end
 

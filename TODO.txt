@@ -4,6 +4,14 @@ This is a dumping ground of possible ideas and future directions for Toys.
 These items are all tentative or under investigation. Finalized to-do items
 are covered in github issues (https://github.com/dazuma/toys/issues).
 
+## In progress
+
+* CLI can't have a global logger if it can run multiple tools in parallel: change to logger factory
+* Consider making "tool" blocks just add worklist entries to the loader instead of evaluating immediately
+* Standard templates are missing yardocs for field accessors.
+* Add section in users guide on bundler integration
+* Bundler mixin should take terminal options
+
 ## Ideas under investigation
 
 * Evaluate options for closer Rails integration

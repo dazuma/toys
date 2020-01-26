@@ -69,6 +69,11 @@ module Toys
       # @param generator [String,nil] Name of the format generator. If `nil`,
       #     RDoc will use its default generator.
       # @param options [Array<String>] Additional options to pass to RDoc.
+      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      #     enabled for this tool. If `true` or a Hash of options, bundler is
+      #     enabled. See the documentation for the
+      #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      #     for information on available options.
       #
       def initialize(name: nil,
                      gem_version: nil,
@@ -79,7 +84,8 @@ module Toys
                      main: nil,
                      template: nil,
                      generator: nil,
-                     options: [])
+                     options: [],
+                     bundler: nil)
         @name = name || DEFAULT_TOOL_NAME
         @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @files = files
@@ -90,6 +96,7 @@ module Toys
         @template = template
         @generator = generator
         @options = options
+        self.bundler = bundler
       end
 
       attr_accessor :name
@@ -103,12 +110,55 @@ module Toys
       attr_accessor :generator
       attr_accessor :options
 
+      ##
+      # Activate bundler for this tool.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
+      # @return [self]
+      #
+      def bundler(**opts)
+        @bundler_settings = opts
+        self
+      end
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [true,false,Hash] Whether bundler should be enabled for
+      #     this tool.
+      # @return [self]
+      #
+      def bundler=(opts)
+        @bundler_settings =
+          if opts && !opts.is_a?(::Hash)
+            {}
+          else
+            opts
+          end
+      end
+
+      ## @private
+      attr_reader :bundler_settings
+
       on_expand do |template|
         tool(template.name) do
           desc "Run rdoc on the current project."
 
           include :exec, exit_on_nonzero_status: true
           include :gems
+
+          if template.bundler_settings
+            include :bundler, **template.bundler_settings
+          end
 
           to_run do
             gem_requirements = Array(template.gem_version)

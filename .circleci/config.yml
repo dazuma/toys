@@ -26,13 +26,13 @@ commands:
       - checkout
       - run:
           name: CI
-          command: ./toys-dev do ci init , ci
+          command: ./toys-dev do ci init , ci < /dev/null
   toys-test:
     steps:
       - checkout
       - run:
           name: Test
-          command: ./toys-dev do ci init , test
+          command: ./toys-dev do ci init , test < /dev/null
 jobs:
   test-ruby23:
     executor: ruby23

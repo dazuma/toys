@@ -25,6 +25,8 @@ require "helper"
 require "fileutils"
 require "English"
 
+require "bundler"
+
 describe "toys-core" do
   def assert_succeeds(cmd)
     system cmd
@@ -59,14 +61,16 @@ describe "toys-core" do
     assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{simple_gem_pkg} >/dev/null")
     assert_succeeds("gem install -i #{gems_dir} -n #{bin_dir} #{multi_file_gem_pkg} >/dev/null")
 
-    assert_equal("Hello, Toys!\n",
-                 `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-simple-example --whom=Toys`)
-    assert_equal("Hello, Toys!\n",
-                 `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example greet --whom=Toys`)
-    Dir.chdir(tmp_dir) do
-      assert_match(/Created repo in myrepo/,
-                   `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example new-repo myrepo`)
-      assert(File.directory?("myrepo/.git"))
+    Bundler.with_unbundled_env do
+      assert_equal("Hello, Toys!\n",
+                   `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-simple-example --whom=Toys`)
+      assert_equal("Hello, Toys!\n",
+                   `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example greet --whom=Toys`)
+      Dir.chdir(tmp_dir) do
+        assert_match(/Created repo in myrepo/,
+                     `GEM_HOME=#{gems_dir} #{bin_dir}/toys-core-multi-file-example new-repo myrepo`)
+        assert(File.directory?("myrepo/.git"))
+      end
     end
 
     FileUtils.rm_rf(tmp_dir)

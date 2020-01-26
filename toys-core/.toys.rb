@@ -28,19 +28,20 @@ unless ::ENV["TOYS_DEV"]
   ::Kernel.exec(::File.join(::File.dirname(context_directory), "toys-dev"), *::ARGV)
 end
 
-expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp"]
+expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp", "Gemfile.lock"]
 
-expand :minitest, libs: ["lib", "test"]
+expand :minitest, libs: ["lib", "test"], bundler: true
 
-expand :rubocop
+expand :rubocop, bundler: true
 
 expand :yardoc do |t|
   t.generate_output_flag = true
   t.fail_on_warning = true
   t.fail_on_undocumented_objects = true
+  t.bundler = true
 end
 
-expand :rdoc, output_dir: "doc"
+expand :rdoc, output_dir: "doc", bundler: true
 
 expand :gem_build
 

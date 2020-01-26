@@ -52,15 +52,22 @@ module Toys
       #     Rubocop fails. Defaults to true.
       # @param options [Array<String>] Additional options passed to the Rubocop
       #     CLI.
+      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      #     enabled for this tool. If `true` or a Hash of options, bundler is
+      #     enabled. See the documentation for the
+      #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      #     for information on available options.
       #
       def initialize(name: DEFAULT_TOOL_NAME,
                      gem_version: nil,
                      fail_on_error: true,
-                     options: [])
+                     options: [],
+                     bundler: nil)
         @name = name
         @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
         @fail_on_error = fail_on_error
         @options = options
+        self.bundler = bundler
       end
 
       attr_accessor :name
@@ -68,11 +75,54 @@ module Toys
       attr_accessor :fail_on_error
       attr_accessor :options
 
+      ##
+      # Activate bundler for this tool.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
+      # @return [self]
+      #
+      def bundler(**opts)
+        @bundler_settings = opts
+        self
+      end
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [true,false,Hash] Whether bundler should be enabled for
+      #     this tool.
+      # @return [self]
+      #
+      def bundler=(opts)
+        @bundler_settings =
+          if opts && !opts.is_a?(::Hash)
+            {}
+          else
+            opts
+          end
+      end
+
+      ## @private
+      attr_reader :bundler_settings
+
       on_expand do |template|
         tool(template.name) do
           desc "Run rubocop on the current project."
 
           include :gems
+
+          if template.bundler_settings
+            include :bundler, **template.bundler_settings
+          end
 
           to_run do
             gem "rubocop", *Array(template.gem_version)

@@ -5,6 +5,8 @@ Layout/EmptyLineAfterGuardClause:
   Enabled: false
 Layout/LineLength:
   Max: 100
+  Exclude:
+    - "*.gemspec"
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 Metrics/AbcSize:

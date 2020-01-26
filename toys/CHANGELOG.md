@@ -2,7 +2,11 @@
 
 ### 0.10.0 / unreleased
 
+* ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
+* ADDED: `bundler` options in the standard templates, to run those tools in a bundle
 * ADDED: `subtool_apply` directive which applies a block to all subtools.
+* ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
+* CHANGED: Added `on_missing` and `on_conflict` arguments to `Toys::Utils::Gems` constructor (which also affects the `:gems` mixin), and deprecated `suppress_confirm` and `default_confirm`.
 
 ### 0.9.4 / 2020-01-26
 

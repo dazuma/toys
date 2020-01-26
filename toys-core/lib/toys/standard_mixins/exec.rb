@@ -173,10 +173,13 @@ module Toys
       alias ruby exec_ruby
 
       ##
-      # Execute a proc in a subprocess.
+      # Execute a proc in a forked subprocess.
       #
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
+      #
+      # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
+      # do not support this method because they do not support fork.
       #
       # @param func [Proc] The proc to call.
       # @param opts [keywords] The command options. Most options listed in the
@@ -196,11 +199,16 @@ module Toys
       end
 
       ##
-      # Execute a tool. The command may be given as a single string or an array
-      # of strings, representing the tool to run and the arguments to pass.
+      # Execute a tool in the current CLI in a forked process.
+      #
+      # The command may be given as a single string or an array of strings,
+      # representing the tool to run and the arguments to pass.
       #
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
+      #
+      # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
+      # do not support this method because they do not support fork.
       #
       # @param cmd [String,Array<String>] The tool to execute.
       # @param opts [keywords] The command options. Most options listed in the
@@ -218,6 +226,46 @@ module Toys
         func = Exec._make_tool_caller(cmd)
         opts = Exec._setup_exec_opts(opts, self)
         self[KEY].exec_proc(func, **opts, &block)
+      end
+
+      ##
+      # Execute a tool in a separately spawned process.
+      #
+      # The command may be given as a single string or an array of strings,
+      # representing the tool to run and the arguments to pass.
+      #
+      # If the process is not set to run in the background, and a block is
+      # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
+      #
+      # An entirely separate spawned process is run for this tool, using the
+      # setting of {Toys.executable_path}. Thus, this method can be run only if
+      # that setting is present. The normal Toys gem does set it, but if you
+      # are writing your own executable using Toys-Core, you will need to set
+      # it explicitly for this method to work. Furthermore, Bundler, if
+      # present, is reset to its "unbundled" environment. Thus, the tool found,
+      # the behavior of the CLI, and the gem environment, might not be the same
+      # as those of the calling tool.
+      #
+      # This method is often used if you are already in a bundle and need to
+      # run a tool that uses a different bundle. It may also be necessary on
+      # environments without "fork" (such as JRuby or Ruby on Windows).
+      #
+      # @param cmd [String,Array<String>] The tool to execute.
+      # @param opts [keywords] The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
+      #
+      # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+      #     the process is running in the background.
+      # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+      #     the foreground.
+      #
+      def exec_separate_tool(cmd, **opts, &block)
+        Exec._setup_clean_process(cmd) do |clean_cmd|
+          exec(clean_cmd, **opts, &block)
+        end
       end
 
       ##
@@ -268,13 +316,16 @@ module Toys
       end
 
       ##
-      # Execute a proc in a subprocess.
+      # Execute a proc in a forked subprocess.
       #
       # Captures standard out and returns it as a string.
       # Cannot be run in the background.
       #
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
+      #
+      # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
+      # do not support this method because they do not support fork.
       #
       # @param func [Proc] The proc to call.
       # @param opts [keywords] The command options. Most options listed in the
@@ -291,14 +342,19 @@ module Toys
       end
 
       ##
-      # Execute a tool. The command may be given as a single string or an array
-      # of strings, representing the tool to run and the arguments to pass.
+      # Execute a tool in the current CLI in a forked process.
       #
       # Captures standard out and returns it as a string.
       # Cannot be run in the background.
       #
+      # The command may be given as a single string or an array of strings,
+      # representing the tool to run and the arguments to pass.
+      #
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
+      #
+      # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
+      # do not support this method because they do not support fork.
       #
       # @param cmd [String,Array<String>] The tool to execute.
       # @param opts [keywords] The command options. Most options listed in the
@@ -313,6 +369,46 @@ module Toys
         func = Exec._make_tool_caller(cmd)
         opts = Exec._setup_exec_opts(opts, self)
         self[KEY].capture_proc(func, **opts, &block)
+      end
+
+      ##
+      # Execute a tool in a separately spawned process.
+      #
+      # Captures standard out and returns it as a string.
+      # Cannot be run in the background.
+      #
+      # The command may be given as a single string or an array of strings,
+      # representing the tool to run and the arguments to pass.
+      #
+      # If a block is provided, a {Toys::Utils::Exec::Controller} will be
+      # yielded to it.
+      #
+      # An entirely separate spawned process is run for this tool, using the
+      # setting of {Toys.executable_path}. Thus, this method can be run only if
+      # that setting is present. The normal Toys gem does set it, but if you
+      # are writing your own executable using Toys-Core, you will need to set
+      # it explicitly for this method to work. Furthermore, Bundler, if
+      # present, is reset to its "unbundled" environment. Thus, the tool found,
+      # the behavior of the CLI, and the gem environment, might not be the same
+      # as those of the calling tool.
+      #
+      # This method is often used if you are already in a bundle and need to
+      # run a tool that uses a different bundle. It may also be necessary on
+      # environments without "fork" (such as JRuby or Ruby on Windows).
+      #
+      # @param cmd [String,Array<String>] The tool to execute.
+      # @param opts [keywords] The command options. Most options listed in the
+      #     {Toys::Utils::Exec} documentation are supported, plus the
+      #     `exit_on_nonzero_status` option.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+      #     for the subprocess streams.
+      #
+      # @return [String] What was written to standard out.
+      #
+      def capture_separate_tool(cmd, **opts, &block)
+        Exec._setup_clean_process(cmd) do |clean_cmd|
+          capture(clean_cmd, **opts, &block)
+        end
       end
 
       ##
@@ -368,14 +464,12 @@ module Toys
 
       ## @private
       def self._setup_e_option(opts, context)
-        result_callback =
-          if opts[:exit_on_nonzero_status] || opts[:e]
-            proc { |r| context.exit(r.exit_code) if r.error? }
-          end
-        opts = opts.merge(result_callback: result_callback)
-        opts.delete(:exit_on_nonzero_status)
-        opts.delete(:e)
-        opts
+        e_options = [:exit_on_nonzero_status, :e]
+        if e_options.any? { |k| opts[k] }
+          result_callback = proc { |r| context.exit(r.exit_code) if r.error? }
+          opts = opts.merge(result_callback: result_callback)
+        end
+        opts.reject { |k, _v| e_options.include?(k) }
       end
 
       ## @private
@@ -388,6 +482,22 @@ module Toys
             proc { |r| orig_callback.call(r, context) }
           end
         opts.merge(result_callback: result_callback)
+      end
+
+      ## @private
+      def self._setup_clean_process(cmd)
+        raise ::ArgumentError, "Toys process is unknown" unless ::Toys.executable_path
+        cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+        cmd = Array(::Toys.executable_path) + cmd
+        if defined?(::Bundler)
+          if ::Bundler.respond_to?(:with_unbundled_env)
+            ::Bundler.with_unbundled_env { yield(cmd) }
+          else
+            ::Bundler.with_clean_env { yield(cmd) }
+          end
+        else
+          yield(cmd)
+        end
       end
     end
   end

@@ -68,6 +68,17 @@ module Toys
   # `require "toys/utils/exec"`.
   #
   module Utils; end
+
+  class << self
+    ##
+    # Path to the executable. This can, for example, be invoked to run a subtool
+    # in a clean environment.
+    #
+    # @return [String] if there is an executable
+    # @return [nil] if there is no such executable
+    #
+    attr_accessor :executable_path
+  end
 end
 
 require "toys/acceptor"
