@@ -43,7 +43,7 @@ require "toys/core"
   spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "did_you_mean", "~> 1.3" if ::RUBY_PLATFORM == "java"
+  spec.add_development_dependency "did_you_mean", "~> 1.1" if ::RUBY_PLATFORM == "java"
   spec.add_development_dependency "highline", "~> 2.0"
   spec.add_development_dependency "minitest", "~> 5.14"
   spec.add_development_dependency "minitest-focus", "~> 1.1"
