@@ -45,8 +45,8 @@ module Toys
       !jruby? && RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
-    # DidYouMean::SpellChecker requires Ruby 2.4 or later.
-    if check_minimum_version("2.4.0")
+    # Check for DidYouMean::SpellChecker
+    if defined?(::DidYouMean::SpellChecker)
       ## @private
       def self.suggestions(word, list)
         ::DidYouMean::SpellChecker.new(dictionary: list).correct(word)
