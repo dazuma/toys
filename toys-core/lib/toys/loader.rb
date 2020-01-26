@@ -452,6 +452,7 @@ module Toys
                 child == @preload_file_name || child == @preload_dir_name ||
                 child == @data_dir_name
       child_source = source.relative_child(child, @data_dir_name)
+      return unless child_source
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
