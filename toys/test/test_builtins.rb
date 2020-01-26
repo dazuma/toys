@@ -41,18 +41,18 @@ describe "toys" do
     assert_equal("    toys system version - Print the current Toys version", output[1])
   end
 
-  if ::RUBY_VERSION >= "2.4"
-    it "displays alternative suggestions for misspelled tool" do
-      output = Toys::TestHelper.capture_toys("system", "versiom", stream: :err).split("\n")
-      assert_equal('Tool not found: "system versiom"', output[0])
-      assert_equal("Did you mean...  version", output[1])
-    end
+  it "displays alternative suggestions for misspelled tool" do
+    skip unless Toys::Compat.supports_suggestions?
+    output = Toys::TestHelper.capture_toys("system", "versiom", stream: :err).split("\n")
+    assert_equal('Tool not found: "system versiom"', output[0])
+    assert_equal("Did you mean...  version", output[1])
+  end
 
-    it "displays alternative suggestions for misspelled flag" do
-      output = Toys::TestHelper.capture_toys("--helf", stream: :err).split("\n")
-      assert_equal('Flag "--helf" is not recognized.', output[0])
-      assert_equal("Did you mean...  --help", output[1])
-    end
+  it "displays alternative suggestions for misspelled flag" do
+    skip unless Toys::Compat.supports_suggestions?
+    output = Toys::TestHelper.capture_toys("--helf", stream: :err).split("\n")
+    assert_equal('Flag "--helf" is not recognized.', output[0])
+    assert_equal("Did you mean...  --help", output[1])
   end
 
   describe "system" do

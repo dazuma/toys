@@ -156,7 +156,7 @@ describe Toys::Acceptor::Enum do
   end
 
   it "returns suggestions" do
-    skip unless ::Toys::Compat.supports_suggestions?
+    skip unless Toys::Compat.supports_suggestions?
     assert_equal(["Robb"], acceptor.suggestions("robb"))
   end
 end
