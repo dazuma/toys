@@ -4,6 +4,10 @@
 
 * ADDED: `subtool_apply` directive which applies a block to all subtools.
 
+### 0.9.4 / 2020-01-26
+
+* FIXED: Crash in the loader when a non-ruby file appears in a toys directory
+
 ### 0.9.3 / 2020-01-05
 
 * FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.

@@ -8,6 +8,10 @@
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
 * CHANGED: `Toys::Tool#middleware_stack` renamed to `Toys::Tool#built_middleware` to clarify that it is an array of middleware objects rather than specs.
 
+### 0.9.4 / 2020-01-26
+
+* FIXED: Crash in the loader when a non-ruby file appears in a toys directory
+
 ### 0.9.3 / 2020-01-05
 
 * FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.
