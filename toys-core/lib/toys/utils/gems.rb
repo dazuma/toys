@@ -273,11 +273,7 @@ module Toys
         rescue ::Bundler::GemNotFound
           install_bundle(gemfile_path)
           ::Bundler.reset!
-          begin
-            ::Bundler.setup(*groups)
-          rescue ::Bundler::GemNotFound
-            raise BundlerFailedError, "Could not set up bundle even after install"
-          end
+          ::Bundler.setup(*groups)
         end
       end
 
@@ -299,12 +295,8 @@ module Toys
                 "Your bundle is not installed. Consider running" \
                   " `cd #{gemfile_dir} && bundle install`"
         end
-        ::Dir.chdir(gemfile_dir) do
-          result = exec_util.exec(["bundle", "install"])
-          if result.error?
-            raise BundleNotInstalledError, "Bundle failed to install in #{gemfile_dir}"
-          end
-        end
+        require "bundler/cli"
+        ::Bundler::CLI.start(["install"])
       end
     end
   end
