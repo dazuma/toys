@@ -42,6 +42,18 @@ module Toys
       DEFAULT_TOOL_NAME = "yardoc"
 
       ##
+      # Default file globs
+      # @return [Array<String>]
+      #
+      DEFAULT_FILES = ["lib/**/*.rb"].freeze
+
+      ##
+      # Default output directory
+      # @return [String]
+      #
+      DEFAULT_OUTPUT_DIR = "doc"
+
+      ##
       # Create the template settings for the Yardoc template.
       #
       # @param name [String] Name of the tool to create. Defaults to
@@ -49,14 +61,15 @@ module Toys
       # @param gem_version [String,Array<String>] Version requirements for
       #     the yard gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param files [Array<String>] An array of globs indicating the files
-      #     to document.
+      #     to document. Defaults to {DEFAULT_FILES}.
       # @param generate_output [Boolean] Whether to generate output. Setting to
       #     false causes yardoc to emit warnings/errors but not generate html.
       #     Defaults to true.
       # @param generate_output_flag [Boolean] Whether to create a flag
       #     `--[no-]output` that can control whether output is generated.
       #     Defaults to false.
-      # @param output_dir [String,nil] Output directory. Defaults to "doc".
+      # @param output_dir [String,nil] Output directory. Defaults to
+      #     {DEFAULT_OUTPUT_DIR}.
       # @param fail_on_warning [Boolean] Whether the tool should return a
       #     nonzero error code if any warnings happen. Defaults to false.
       # @param fail_on_undocumented_objects [Boolean] Whether the tool should
@@ -69,17 +82,18 @@ module Toys
       # @param hide_private_tag [Boolean] Hide methods with the `@private` tag.
       #     Defaults to false.
       # @param readme [String,nil] Name of the readme file used as the title
-      #     page, or `nil` to use the default.
-      # @param markup [String,nil] Markup style used in documentation. Defaults
-      #     to "rdoc".
-      # @param template [String,nil] Template to use. Defaults to "default".
+      #     page. If not provided, YARD will choose a default.
+      # @param markup [String,nil] Markup style used in documentation. If not
+      #     provided, YARD will choose a default, likely "rdoc".
+      # @param template [String,nil] Template to use. If not provided, YARD
+      #     will choose a default.
       # @param template_path [String,nil] The optional template path to look
       #     for templates in.
-      # @param format [String,nil] The output format for the template. Defaults
-      #     to "html".
+      # @param format [String,nil] The output format for the template. If not
+      #     provided, YARD will choose a default, likely "html".
       # @param options [Array<String>] Additional options passed to YARD
-      # @param stats_options [Array<String>] Additional options passed to YARD
-      #     stats
+      # @param stats_options [Array<String>] Additional stats options passed to
+      #     YARD
       # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
       #     enabled for this tool. If `true` or a Hash of options, bundler is
       #     enabled. See the documentation for the
@@ -88,7 +102,7 @@ module Toys
       #
       def initialize(name: nil,
                      gem_version: nil,
-                     files: [],
+                     files: nil,
                      generate_output: true,
                      generate_output_flag: false,
                      output_dir: nil,
@@ -106,8 +120,8 @@ module Toys
                      options: [],
                      stats_options: [],
                      bundler: nil)
-        @name = name || DEFAULT_TOOL_NAME
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
+        @name = name
+        @gem_version = gem_version
         @files = files
         @generate_output = generate_output
         @generate_output_flag = generate_output_flag
@@ -125,28 +139,186 @@ module Toys
         @format = format
         @options = options
         @stats_options = stats_options
-        self.bundler = bundler
+        @bundler = bundler
       end
 
-      attr_accessor :name
-      attr_accessor :gem_version
-      attr_accessor :files
-      attr_accessor :generate_output
-      attr_accessor :generate_output_flag
-      attr_accessor :output_dir
-      attr_accessor :fail_on_warning
-      attr_accessor :fail_on_undocumented_objects
-      attr_accessor :show_public
-      attr_accessor :show_protected
-      attr_accessor :show_private
-      attr_accessor :hide_private_tag
-      attr_accessor :readme
-      attr_accessor :markup
-      attr_accessor :template
-      attr_accessor :template_path
-      attr_accessor :format
-      attr_accessor :options
-      attr_accessor :stats_options
+      ##
+      # Name of the tool to create.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :name
+
+      ##
+      # Version requirements for the rdoc gem.
+      # If set to `nil`, uses the bundled version if bundler is enabled, or
+      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
+      # enabled.
+      #
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :gem_version
+
+      ##
+      # An array of globs indicating which files to document.
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :files
+
+      ##
+      # Whether to generate output. Setting to false causes yardoc to emit
+      # warnings/errors but not generate html.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :generate_output
+
+      ##
+      # Whether to create a flag `--[no-]output` that can control whether
+      # output is generated.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :generate_output_flag
+
+      ##
+      # Name of directory to receive html output files.
+      # If set to `nil`, defaults to {DEFAULT_OUTPUT_DIR}.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :output_dir
+
+      ##
+      # Whether the tool should return a nonzero error code if any warnings
+      # happen.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :fail_on_warning
+
+      ##
+      # Whether the tool should return a nonzero error code if any objects
+      # remain undocumented.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :fail_on_undocumented_objects
+
+      ##
+      # Whether to document public methods.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :show_public
+
+      ##
+      # Whether to document protected methods.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :show_protected
+
+      ##
+      # Whether to document private methods.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :show_private
+
+      ##
+      # Whether to hide methods with the `@private` tag.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :hide_private_tag
+
+      ##
+      # Name of the readme file used as the title page.
+      # If set to `nil`, YARD will choose a default.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :readme
+
+      ##
+      # Markup style used in documentation.
+      # If set to `nil`, YARD will choose a default, likely "rdoc".
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :markup
+
+      ##
+      # Template to use.
+      # If set to `nil`, YARD will choose a default.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :template
+
+      ##
+      # Directory path to look for templates in.
+      # If set to `nil`, no additional template lookup paths will be used.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :template_path
+
+      ##
+      # Output format for the template.
+      # If set to `nil`, YARD will choose a default, likely "html".
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :format
+
+      ##
+      # Additional options to pass to YARD
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :options
+
+      ##
+      # Additional stats options to pass to YARD
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :stats_options
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
 
       ##
       # Activate bundler for this tool.
@@ -158,34 +330,71 @@ module Toys
       # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler(**opts)
-        @bundler_settings = opts
+      def use_bundler(**opts)
+        @bundler = opts
         self
       end
 
-      ##
-      # Set the bundler state and options for this tool.
-      #
-      # Pass `false` to disable bundler. Pass `true` or a hash of options to
-      # enable bundler. See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
-      #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
-      # @return [self]
-      #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      # @private
+      attr_reader :generate_output
+      # @private
+      attr_reader :generate_output_flag
+      # @private
+      attr_reader :fail_on_warning
+      # @private
+      attr_reader :fail_on_undocumented_objects
+      # @private
+      attr_reader :show_public
+      # @private
+      attr_reader :show_protected
+      # @private
+      attr_reader :show_private
+      # @private
+      attr_reader :hide_private_tag
+      # @private
+      attr_reader :readme
+      # @private
+      attr_reader :markup
+      # @private
+      attr_reader :template
+      # @private
+      attr_reader :template_path
+      # @private
+      attr_reader :format
+      # @private
+      attr_reader :options
+      # @private
+      attr_reader :stats_options
+
+      # @private
+      def name
+        @name || DEFAULT_TOOL_NAME
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      def gem_version
+        return Array(@gem_version) if @gem_version
+        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+      end
+
+      # @private
+      def files
+        @files ? Array(@files) : DEFAULT_FILES
+      end
+
+      # @private
+      def output_dir
+        @output_dir || DEFAULT_OUTPUT_DIR
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
         tool(template.name) do

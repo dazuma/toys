@@ -33,7 +33,7 @@ module Toys
       # Default version requirements for the rspec gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 3.1"
+      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 3.1"].freeze
 
       ##
       # Default tool name
@@ -54,6 +54,12 @@ module Toys
       DEFAULT_ORDER = "defined"
 
       ##
+      # Default format code
+      # @return [String]
+      #
+      DEFAULT_FORMAT = "p"
+
+      ##
       # Default spec file glob
       # @return [String]
       #
@@ -68,10 +74,10 @@ module Toys
       #     the rspec gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
-      # @param options [String] The path to a custom options file.
+      # @param options [String] The path to a custom options file, if any.
       # @param order [String] The order in which to run examples. Default is
       #     {DEFAULT_ORDER}.
-      # @param format [String] Choose a formatter code. Default is `p`.
+      # @param format [String] The formatter code. Default is {DEFAULT_FORMAT}.
       # @param out [String] Write output to a file instead of stdout.
       # @param backtrace [Boolean] Enable full backtrace (default is false).
       # @param pattern [String] A glob indicating the spec files to load.
@@ -95,29 +101,119 @@ module Toys
                      pattern: nil,
                      warnings: true,
                      bundler: nil)
-        @name = name || DEFAULT_TOOL_NAME
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
-        @libs = libs || DEFAULT_LIBS
+        @name = name
+        @gem_version = gem_version
+        @libs = libs
         @options = options
-        @order = order || DEFAULT_ORDER
-        @format = format || "p"
+        @order = order
+        @format = format
         @out = out
         @backtrace = backtrace
-        @pattern = pattern || DEFAULT_PATTERN
+        @pattern = pattern
         @warnings = warnings
-        self.bundler = bundler
+        @bundler = bundler
       end
 
-      attr_accessor :name
-      attr_accessor :gem_version
-      attr_accessor :libs
-      attr_accessor :options
-      attr_accessor :order
-      attr_accessor :format
-      attr_accessor :out
-      attr_accessor :backtrace
-      attr_accessor :pattern
-      attr_accessor :warnings
+      ##
+      # Name of the tool to create.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :name
+
+      ##
+      # Version requirements for the rspec gem.
+      # If set to `nil`, uses the bundled version if bundler is enabled, or
+      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
+      # enabled.
+      #
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :gem_version
+
+      ##
+      # An array of directories to add to the Ruby require path.
+      # If set to `nil`, defaults to {DEFAULT_LIBS}.
+      #
+      # @param value [Array<String>,nil]
+      # @return [Array<String>,nil]
+      #
+      attr_writer :libs
+
+      ##
+      # Path to the custom options file, or `nil` for none.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :options
+
+      ##
+      # The order in which to run examples.
+      # If set to `nil`, defaults to {DEFAULT_ORDER}.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :order
+
+      ##
+      # The formatter code.
+      # If set to `nil`, defaults to {DEFAULT_FORMAT}.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :format
+
+      ##
+      # Path to a file to write output to.
+      # If set to `nil`, writes output to standard out.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :out
+
+      ##
+      # Whether to enable full backtraces.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :backtrace
+
+      ##
+      # A glob indicating the spec files to load.
+      # If set to `nil`, defaults to {DEFAULT_PATTERN}.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :pattern
+
+      ##
+      # Whether to run with Ruby warnings.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :warnings
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
 
       ##
       # Activate bundler for this tool.
@@ -129,34 +225,59 @@ module Toys
       # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler(**opts)
-        @bundler_settings = opts
+      def use_bundler(**opts)
+        @bundler = opts
         self
       end
 
-      ##
-      # Set the bundler state and options for this tool.
-      #
-      # Pass `false` to disable bundler. Pass `true` or a hash of options to
-      # enable bundler. See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
-      #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
-      # @return [self]
-      #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      ## @private
+      attr_reader :options
+      ## @private
+      attr_reader :out
+      ## @private
+      attr_reader :backtrace
+      ## @private
+      attr_reader :warnings
+
+      # @private
+      def name
+        @name || DEFAULT_TOOL_NAME
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      def gem_version
+        return Array(@gem_version) if @gem_version
+        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+      end
+
+      # @private
+      def libs
+        @libs ? Array(@libs) : DEFAULT_LIBS
+      end
+
+      # @private
+      def order
+        @order || DEFAULT_ORDER
+      end
+
+      # @private
+      def format
+        @format || DEFAULT_FORMAT
+      end
+
+      # @private
+      def pattern
+        @pattern || DEFAULT_PATTERN
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
         tool(template.name) do

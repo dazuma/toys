@@ -64,16 +64,59 @@ module Toys
                      options: [],
                      bundler: nil)
         @name = name
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
+        @gem_version = gem_version
         @fail_on_error = fail_on_error
         @options = options
-        self.bundler = bundler
+        @bundler = bundler
       end
 
-      attr_accessor :name
-      attr_accessor :gem_version
-      attr_accessor :fail_on_error
-      attr_accessor :options
+      ##
+      # Name of the tool to create.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :name
+
+      ##
+      # Version requirements for the rdoc gem.
+      # If set to `nil`, uses the bundled version if bundler is enabled, or
+      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
+      # enabled.
+      #
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :gem_version
+
+      ##
+      # Whether to exit with a nonzero code if Rubocop fails.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :fail_on_error
+
+      ##
+      # Additional options to pass to Rubocop
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :options
+
+      ##
+      # Set the bundler state and options for this tool.
+      #
+      # Pass `false` to disable bundler. Pass `true` or a hash of options to
+      # enable bundler. See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
 
       ##
       # Activate bundler for this tool.
@@ -85,34 +128,35 @@ module Toys
       # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler(**opts)
-        @bundler_settings = opts
+      def use_bundler(**opts)
+        @bundler = opts
         self
       end
 
-      ##
-      # Set the bundler state and options for this tool.
-      #
-      # Pass `false` to disable bundler. Pass `true` or a hash of options to
-      # enable bundler. See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
-      #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
-      # @return [self]
-      #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      ## @private
+      attr_reader :fail_on_error
+      ## @private
+      attr_reader :options
+
+      # @private
+      def name
+        @name || DEFAULT_TOOL_NAME
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      def gem_version
+        return Array(@gem_version) if @gem_version
+        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
         tool(template.name) do
@@ -125,7 +169,7 @@ module Toys
           end
 
           to_run do
-            gem "rubocop", *Array(template.gem_version)
+            gem "rubocop", *template.gem_version
             require "rubocop"
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
