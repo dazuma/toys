@@ -59,31 +59,47 @@ module Toys
                      use_flags: false,
                      bundler: nil)
         @gem_version = gem_version
-        @rakefile_path = rakefile_path || DEFAULT_RAKEFILE_PATH
+        @rakefile_path = rakefile_path
         @only_described = only_described
         @use_flags = use_flags
-        self.bundler = bundler
+        @bundler = bundler
       end
-
-      attr_accessor :gem_version
-      attr_accessor :rakefile_path
-      attr_accessor :only_described
-      attr_accessor :use_flags
 
       ##
-      # Activate bundler for all Rake tools.
+      # Version requirements for the minitest gem.
+      # If set to `nil`, has no version requirement (unless one is specified in
+      # the bundle.)
       #
-      # See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
       #
-      # @param opts [keywords] Options for bundler
-      # @return [self]
+      attr_writer :gem_version
+
+      ##
+      # Path to the Rakefile.
+      # If set to `nil`, defaults to {DEFAULT_RAKEFILE_PATH}.
       #
-      def bundler(**opts)
-        @bundler_settings = opts
-        self
-      end
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :rakefile_path
+
+      ##
+      # Whether to generate tools only for rake tasks with descriptions.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :only_described
+
+      ##
+      # Whether generated tools should use flags instead of positional
+      # arguments to pass arguments to rake tasks.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :use_flags
 
       ##
       # Set the bundler state and options for all Rake tools.
@@ -93,24 +109,52 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
+
+      ##
+      # Use bundler for all Rake tools.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      def use_bundler(**opts)
+        @bundler = opts
+        self
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      attr_reader :only_described
+      # @private
+      attr_reader :use_flags
+
+      # @private
+      def gem_version
+        Array(@gem_version)
+      end
+
+      # @private
+      def rakefile_path
+        @rakefile_path || DEFAULT_RAKEFILE_PATH
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
-        gem "rake", *Array(template.gem_version)
+        gem "rake", *template.gem_version
         require "rake"
         rakefile_path = Templates::Rake.find_rakefile(template.rakefile_path, context_directory)
         raise "Cannot find #{template.rakefile_path}" unless rakefile_path
@@ -120,9 +164,8 @@ module Toys
           comments = task.full_comment.to_s.split("\n")
           next if comments.empty? && template.only_described
           tool(task.name.split(":"), if_defined: :ignore) do
-            if template.bundler_settings
-              include :bundler, **template.bundler_settings
-            end
+            bundler_settings = template.bundler_settings
+            include :bundler, **bundler_settings if bundler_settings
             unless comments.empty?
               desc(comments.first)
               comments << "" << "Defined as a Rake task in #{rakefile_path}"

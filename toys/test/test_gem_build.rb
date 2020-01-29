@@ -25,69 +25,87 @@ require "helper"
 require "toys/utils/exec"
 
 describe "gem_build template" do
-  let(:logger) {
-    Logger.new(StringIO.new).tap do |lgr|
-      lgr.level = Logger::WARN
-    end
-  }
-  let(:executable_name) { "toys" }
-  let(:cli) {
-    Toys::CLI.new(
-      executable_name: executable_name,
-      logger: logger,
-      middleware_stack: [],
-      template_lookup: Toys::ModuleLookup.new.add_path("toys/templates")
-    )
-  }
-  let(:loader) { cli.loader }
-  let(:executor) { Toys::Utils::Exec.new(out: :capture, err: :capture) }
-  let(:toys_dir) { File.dirname(__dir__) }
+  let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
-  it "builds toys into tmp directory" do
-    loader.add_block do
-      expand :gem_build, output: "tmp/toys.gem"
+  describe "unit functionality" do
+    let(:template) { template_lookup.lookup(:gem_build).new }
+
+    it "handles the name field" do
+      assert_equal("build", template.name)
+      template.name = "hi"
+      assert_equal("hi", template.name)
+      template.name = nil
+      assert_equal("build", template.name)
     end
-    Dir.chdir(toys_dir) do
-      FileUtils.rm_rf("tmp")
-      FileUtils.mkdir_p("tmp")
-      out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("build"))
-      end
-      assert_match(/Successfully built RubyGem/, out)
-      assert(File.file?("tmp/toys.gem"))
-      FileUtils.rm_rf("tmp")
-    end
+
+    # TODO
   end
 
-  it "supports default output flags" do
-    loader.add_block do
-      expand :gem_build, output_flags: true
-    end
-    Dir.chdir(toys_dir) do
-      FileUtils.rm_rf("tmp")
-      FileUtils.mkdir_p("tmp")
-      out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("build", "-o", "tmp/toys.gem"))
+  describe "integration functionality" do
+    let(:logger) {
+      Logger.new(StringIO.new).tap do |lgr|
+        lgr.level = Logger::WARN
       end
-      assert_match(/Successfully built RubyGem/, out)
-      assert(File.file?("tmp/toys.gem"))
-      FileUtils.rm_rf("tmp")
-    end
-  end
+    }
+    let(:executable_name) { "toys" }
+    let(:cli) {
+      Toys::CLI.new(
+        executable_name: executable_name,
+        logger: logger,
+        middleware_stack: [],
+        template_lookup: template_lookup
+      )
+    }
+    let(:loader) { cli.loader }
+    let(:executor) { Toys::Utils::Exec.new(out: :capture, err: :capture) }
+    let(:toys_dir) { File.dirname(__dir__) }
 
-  it "supports custom output flags" do
-    loader.add_block do
-      expand :gem_build, output_flags: ["--outfile"]
-    end
-    Dir.chdir(toys_dir) do
-      FileUtils.rm_rf("tmp")
-      FileUtils.mkdir_p("tmp")
-      out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("build", "--outfile", "tmp/toys.gem"))
+    it "builds toys into tmp directory" do
+      loader.add_block do
+        expand :gem_build, output: "tmp/toys.gem"
       end
-      assert_match(/Successfully built RubyGem/, out)
-      assert(File.file?("tmp/toys.gem"))
-      FileUtils.rm_rf("tmp")
+      Dir.chdir(toys_dir) do
+        FileUtils.rm_rf("tmp")
+        FileUtils.mkdir_p("tmp")
+        out, _err = capture_subprocess_io do
+          assert_equal(0, cli.run("build"))
+        end
+        assert_match(/Successfully built RubyGem/, out)
+        assert(File.file?("tmp/toys.gem"))
+        FileUtils.rm_rf("tmp")
+      end
+    end
+
+    it "supports default output flags" do
+      loader.add_block do
+        expand :gem_build, output_flags: true
+      end
+      Dir.chdir(toys_dir) do
+        FileUtils.rm_rf("tmp")
+        FileUtils.mkdir_p("tmp")
+        out, _err = capture_subprocess_io do
+          assert_equal(0, cli.run("build", "-o", "tmp/toys.gem"))
+        end
+        assert_match(/Successfully built RubyGem/, out)
+        assert(File.file?("tmp/toys.gem"))
+        FileUtils.rm_rf("tmp")
+      end
+    end
+
+    it "supports custom output flags" do
+      loader.add_block do
+        expand :gem_build, output_flags: ["--outfile"]
+      end
+      Dir.chdir(toys_dir) do
+        FileUtils.rm_rf("tmp")
+        FileUtils.mkdir_p("tmp")
+        out, _err = capture_subprocess_io do
+          assert_equal(0, cli.run("build", "--outfile", "tmp/toys.gem"))
+        end
+        assert_match(/Successfully built RubyGem/, out)
+        assert(File.file?("tmp/toys.gem"))
+        FileUtils.rm_rf("tmp")
+      end
     end
   end
 end

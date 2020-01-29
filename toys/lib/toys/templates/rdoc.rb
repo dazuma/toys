@@ -33,7 +33,7 @@ module Toys
       # Default version requirements for the rdoc gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ">= 5.0.0"
+      DEFAULT_GEM_VERSION_REQUIREMENTS = [">= 5.0.0"].freeze
 
       ##
       # Default tool name
@@ -48,6 +48,12 @@ module Toys
       DEFAULT_OUTPUT_DIR = "html"
 
       ##
+      # Default file globs
+      # @return [Array<String>]
+      #
+      DEFAULT_FILES = ["lib/**/*.rb"].freeze
+
+      ##
       # Create the template settings for the Rdoc template.
       #
       # @param name [String] Name of the tool to create. Defaults to
@@ -55,19 +61,20 @@ module Toys
       # @param gem_version [String,Array<String>] Version requirements for
       #     the rdoc gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param files [Array<String>] An array of globs indicating the files
-      #     to document.
+      #     to document. Defaults to {DEFAULT_FILES}.
       # @param output_dir [String] Name of directory to receive html output
       #     files. Defaults to {DEFAULT_OUTPUT_DIR}.
-      # @param markup [String,nil] Markup format. Allowed values include
-      #     "rdoc", "rd", and "tomdoc". Default is "rdoc".
-      # @param title [String,nil] Title of RDoc documentation. If `nil`, RDoc
-      #     will use a default title.
-      # @param main [String,nil] Name of the file to use as the main top level
+      # @param markup [String] Markup format. Allowed values include "rdoc",
+      #     "rd", and "tomdoc". If not specified, RDoc will use its default
+      #     markup, which is "rdoc".
+      # @param title [String] Title of RDoc documentation. If not specified,
+      #     RDoc will use a default title.
+      # @param main [String] Name of the file to use as the main top level
       #     document. Default is none.
-      # @param template [String,nil] Name of the template to use. If `nil`,
+      # @param template [String] Name of the template to use. If not specified,
       #     RDoc will use its default template.
-      # @param generator [String,nil] Name of the format generator. If `nil`,
-      #     RDoc will use its default generator.
+      # @param generator [String] Name of the format generator. If not
+      #     specified, RDoc will use its default generator.
       # @param options [Array<String>] Additional options to pass to RDoc.
       # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
       #     enabled for this tool. If `true` or a Hash of options, bundler is
@@ -77,7 +84,7 @@ module Toys
       #
       def initialize(name: nil,
                      gem_version: nil,
-                     files: [],
+                     files: nil,
                      output_dir: nil,
                      markup: nil,
                      title: nil,
@@ -86,44 +93,107 @@ module Toys
                      generator: nil,
                      options: [],
                      bundler: nil)
-        @name = name || DEFAULT_TOOL_NAME
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
+        @name = name
+        @gem_version = gem_version
         @files = files
-        @output_dir = output_dir || DEFAULT_OUTPUT_DIR
+        @output_dir = output_dir
         @markup = markup
         @title = title
         @main = main
         @template = template
         @generator = generator
         @options = options
-        self.bundler = bundler
+        @bundler = bundler
       end
-
-      attr_accessor :name
-      attr_accessor :gem_version
-      attr_accessor :files
-      attr_accessor :output_dir
-      attr_accessor :markup
-      attr_accessor :title
-      attr_accessor :main
-      attr_accessor :template
-      attr_accessor :generator
-      attr_accessor :options
 
       ##
-      # Activate bundler for this tool.
+      # Name of the tool to create.
       #
-      # See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
+      # @param value [String]
+      # @return [String]
       #
-      # @param opts [keywords] Options for bundler
-      # @return [self]
+      attr_writer :name
+
+      ##
+      # Version requirements for the rdoc gem.
+      # If set to `nil`, uses the bundled version if bundler is enabled, or
+      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
+      # enabled.
       #
-      def bundler(**opts)
-        @bundler_settings = opts
-        self
-      end
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :gem_version
+
+      ##
+      # An array of globs indicating which files to document.
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :files
+
+      ##
+      # Name of directory to receive html output files.
+      # If set to `nil`, defaults to {DEFAULT_OUTPUT_DIR}.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :output_dir
+
+      ##
+      # Markup format. Allowed values include "rdoc", "rd", and "tomdoc".
+      # If set to `nil`, RDoc will use its default markup, which is "rdoc".
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :markup
+
+      ##
+      # Title of RDoc documentation pages.
+      # If set to `nil`, RDoc will use a default title.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :title
+
+      ##
+      # Name of the file to use as the main top level document, or `nil` for
+      # no top level document.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :main
+
+      ##
+      # Name of the template to use.
+      # If set to `nil`, RDoc will choose a default template.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :template
+
+      ##
+      # Name of the format generator.
+      # If set to `nil`, RDoc will use its default generator.
+      #
+      # @param value [String,nil]
+      # @return [String,nil]
+      #
+      attr_writer :generator
+
+      ##
+      # Additional options to pass to RDoc
+      #
+      # @param value [Array<String>]
+      # @return [Array<String>]
+      #
+      attr_writer :options
 
       ##
       # Set the bundler state and options for this tool.
@@ -133,21 +203,68 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
+
+      ##
+      # Use bundler for this tool.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      def use_bundler(**opts)
+        @bundler = opts
+        self
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      attr_reader :markup
+      # @private
+      attr_reader :title
+      # @private
+      attr_reader :main
+      # @private
+      attr_reader :template
+      # @private
+      attr_reader :generator
+      # @private
+      attr_reader :options
+
+      # @private
+      def name
+        @name || DEFAULT_TOOL_NAME
+      end
+
+      # @private
+      def gem_version
+        return Array(@gem_version) if @gem_version
+        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+      end
+
+      # @private
+      def files
+        @files ? Array(@files) : DEFAULT_FILES
+      end
+
+      # @private
+      def output_dir
+        @output_dir || DEFAULT_OUTPUT_DIR
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
         tool(template.name) do
@@ -156,9 +273,8 @@ module Toys
           include :exec, exit_on_nonzero_status: true
           include :gems
 
-          if template.bundler_settings
-            include :bundler, **template.bundler_settings
-          end
+          bundler_settings = template.bundler_settings
+          include :bundler, **bundler_settings if bundler_settings
 
           to_run do
             gem_requirements = Array(template.gem_version)
@@ -166,9 +282,7 @@ module Toys
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
-              patterns = Array(template.files)
-              patterns = ["lib/**/*.rb"] if patterns.empty?
-              patterns.each do |pattern|
+              template.files.each do |pattern|
                 files.concat(::Dir.glob(pattern))
               end
               files.uniq!

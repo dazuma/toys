@@ -33,7 +33,7 @@ module Toys
       # Default version requirements for the minitest gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 5.0"
+      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 5.0"].freeze
 
       ##
       # Default tool name
@@ -59,11 +59,16 @@ module Toys
       # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
       # @param gem_version [String,Array<String>] Version requirements for
-      #     the minitest gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
+      #     the minitest gem. Optional. If not provided, uses the bundled
+      #     version if bundler is enabled, or defaults to
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not enabled.
       # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
       # @param files [Array<String>] An array of globs indicating the test
       #     files to load. Defaults to {DEFAULT_FILES}.
+      # @param seed [Integer] The random seed, if any. Optional.
+      # @param verbose [Boolean] Whether to produce verbose output. Defaults to
+      #     false.
       # @param warnings [Boolean] If true, runs tests with Ruby warnings.
       #     Defaults to true.
       # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
@@ -80,38 +85,76 @@ module Toys
                      verbose: false,
                      warnings: true,
                      bundler: nil)
-        @name = name || DEFAULT_TOOL_NAME
-        @gem_version = gem_version || DEFAULT_GEM_VERSION_REQUIREMENTS
-        @libs = libs || DEFAULT_LIBS
-        @files = files || DEFAULT_FILES
+        @name = name
+        @gem_version = gem_version
+        @libs = libs
+        @files = files
         @seed = seed
         @verbose = verbose
         @warnings = warnings
-        self.bundler = bundler
+        @bundler = bundler
       end
-
-      attr_accessor :name
-      attr_accessor :gem_version
-      attr_accessor :libs
-      attr_accessor :files
-      attr_accessor :seed
-      attr_accessor :verbose
-      attr_accessor :warnings
 
       ##
-      # Activate bundler for this tool.
+      # Name of the tool to create.
       #
-      # See the documentation for the
-      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      # for information on the options that can be passed.
+      # @param value [String]
+      # @return [String]
       #
-      # @param opts [keywords] Options for bundler
-      # @return [self]
+      attr_writer :name
+
+      ##
+      # Version requirements for the minitest gem.
+      # If set to `nil`, uses the bundled version if bundler is enabled, or
+      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
+      # enabled.
       #
-      def bundler(**opts)
-        @bundler_settings = opts
-        self
-      end
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :gem_version
+
+      ##
+      # An array of library paths to add to the ruby require path.
+      # If set to `nil`, defaults to {DEFAULT_LIBS}.
+      #
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :libs
+
+      ##
+      # An array of globs indicating the test files to load.
+      # If set to `nil`, defaults to {DEFAULT_FILES}.
+      #
+      # @param value [String,Array<String>,nil]
+      # @return [String,Array<String>,nil]
+      #
+      attr_writer :files
+
+      ##
+      # The random seed, or `nil` if not specified.
+      #
+      # @param value [Integer,nil]
+      # @return [Integer,nil]
+      #
+      attr_writer :seed
+
+      ##
+      # Whether to produce verbose output.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :verbose
+
+      ##
+      # Whether to run tests with Ruby warnings.
+      #
+      # @param value [Boolean]
+      # @return [Boolean]
+      #
+      attr_writer :warnings
 
       ##
       # Set the bundler state and options for this tool.
@@ -121,21 +164,62 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param opts [true,false,Hash] Whether bundler should be enabled for
-      #     this tool.
+      # @param value [Boolean,Hash]
+      # @return [Boolean,Hash]
+      #
+      attr_writer :bundler
+
+      ##
+      # Use bundler for this tool.
+      #
+      # See the documentation for the
+      # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+      # for information on the options that can be passed.
+      #
+      # @param opts [keywords] Options for bundler
       # @return [self]
       #
-      def bundler=(opts)
-        @bundler_settings =
-          if opts && !opts.is_a?(::Hash)
-            {}
-          else
-            opts
-          end
+      def use_bundler(**opts)
+        @bundler = opts
+        self
       end
 
-      ## @private
-      attr_reader :bundler_settings
+      # @private
+      attr_reader :seed
+      # @private
+      attr_reader :verbose
+      # @private
+      attr_reader :warnings
+
+      # @private
+      def name
+        @name || DEFAULT_TOOL_NAME
+      end
+
+      # @private
+      def libs
+        @libs ? Array(@libs) : DEFAULT_LIBS
+      end
+
+      # @private
+      def files
+        @files ? Array(@files) : DEFAULT_FILES
+      end
+
+      # @private
+      def gem_version
+        return Array(@gem_version) if @gem_version
+        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+      end
+
+      # @private
+      def bundler_settings
+        if @bundler && !@bundler.is_a?(::Hash)
+          {}
+        else
+          @bundler
+        end
+      end
 
       on_expand do |template|
         tool(template.name) do
@@ -144,9 +228,8 @@ module Toys
           include :exec
           include :gems
 
-          if template.bundler_settings
-            include :bundler, **template.bundler_settings
-          end
+          bundler_settings = template.bundler_settings
+          include :bundler, **bundler_settings if bundler_settings
 
           flag :seed, "-s", "--seed SEED",
                default: template.seed, desc: "Sets random seed."
@@ -163,7 +246,7 @@ module Toys
                          desc: "Paths to the tests to run (defaults to all tests)"
 
           to_run do
-            gem "minitest", *Array(template.gem_version)
+            gem "minitest", *template.gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               ruby_args = []
