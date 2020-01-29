@@ -412,19 +412,16 @@ module Toys
           include :terminal
           include :gems
 
-          if template.bundler_settings
-            include :bundler, **template.bundler_settings
-          end
+          bundler_settings = template.bundler_settings
+          include :bundler, **bundler_settings if bundler_settings
 
           to_run do
-            gem_requirements = Array(template.gem_version)
+            gem_requirements = template.gem_version
             gem "yard", *gem_requirements
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
-              patterns = Array(template.files)
-              patterns = ["lib/**/*.rb"] if patterns.empty?
-              patterns.each do |pattern|
+              template.files.each do |pattern|
                 files.concat(::Dir.glob(pattern))
               end
               files.uniq!

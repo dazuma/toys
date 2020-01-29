@@ -273,9 +273,8 @@ module Toys
           include :exec, exit_on_nonzero_status: true
           include :gems
 
-          if template.bundler_settings
-            include :bundler, **template.bundler_settings
-          end
+          bundler_settings = template.bundler_settings
+          include :bundler, **bundler_settings if bundler_settings
 
           to_run do
             gem_requirements = Array(template.gem_version)

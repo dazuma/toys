@@ -286,9 +286,8 @@ module Toys
           include :exec
           include :gems
 
-          if template.bundler_settings
-            include :bundler, **template.bundler_settings
-          end
+          bundler_settings = template.bundler_settings
+          include :bundler, **bundler_settings if bundler_settings
 
           flag :order, "--order TYPE",
                default: template.order,
