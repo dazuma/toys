@@ -452,15 +452,15 @@ module Toys
       context = tool.tool_class.new(arg_parser.data)
       tool.run_initializers(context)
 
-      logger = context[Context::Key::LOGGER]
-      if logger
-        original_level = logger.level
-        logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
+      cur_logger = context[Context::Key::LOGGER]
+      if cur_logger
+        original_level = cur_logger.level
+        cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
       end
       begin
         execute_tool_in_context(context, tool)
       ensure
-        logger.level = original_level if logger
+        cur_logger.level = original_level if cur_logger
       end
     end
 
