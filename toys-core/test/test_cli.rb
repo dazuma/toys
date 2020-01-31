@@ -469,15 +469,15 @@ describe Toys::CLI do
     end
 
     it "copies parameters" do
-      assert_same(logger, cli.logger)
+      assert_same(logger, cli.logger_factory.call)
       child = cli.child
-      assert_same(logger, child.logger)
+      assert_same(logger, child.logger_factory.call)
     end
 
     it "overrides parameters" do
-      assert_same(logger, cli.logger)
+      assert_same(logger, cli.logger_factory.call)
       child = cli.child(logger: logger2)
-      assert_same(logger2, child.logger)
+      assert_same(logger2, child.logger_factory.call)
     end
   end
 end

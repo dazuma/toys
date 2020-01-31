@@ -146,6 +146,8 @@ module Toys
             styled ? true : false
           end
         @named_styles = BUILTIN_STYLE_NAMES.dup
+        @output_mutex = ::Monitor.new
+        @input_mutex = ::Monitor.new
       end
 
       ##
@@ -164,7 +166,7 @@ module Toys
       # Whether output is styled
       # @return [Boolean]
       #
-      attr_accessor :styled
+      attr_reader :styled
 
       ##
       # Write a partial line without appending a newline.
@@ -175,9 +177,39 @@ module Toys
       # @return [self]
       #
       def write(str = "", *styles)
-        output&.write(apply_styles(str, *styles))
-        output&.flush
+        @output_mutex.synchronize do
+          begin
+            output&.write(apply_styles(str, *styles))
+            output&.flush
+          rescue ::IOError
+            nil
+          end
+        end
         self
+      end
+
+      ##
+      # Read a line, blocking until one is available.
+      #
+      # @return [String] the entire string including the temrinating newline
+      # @return [nil] if the input is closed or at eof, or there is no input
+      #
+      def readline
+        @input_mutex.synchronize do
+          begin
+            input&.gets
+          rescue ::IOError
+            nil
+          end
+        end
+      end
+
+      ##
+      # This method is defined so that `::Logger` will recognize a terminal as
+      # a log device target, but it does not actually close anything.
+      #
+      def close
+        nil
       end
 
       ##
@@ -233,7 +265,7 @@ module Toys
           prompt = "#{ptext} #{trailing_text}#{pspaces}"
         end
         write(prompt, *styles)
-        resp = input&.gets.to_s.chomp
+        resp = readline.to_s.chomp
         resp.empty? ? default.to_s : resp
       end
 
@@ -296,13 +328,13 @@ module Toys
         return nil unless block_given?
         frame_length ||= DEFAULT_SPINNER_FRAME_LENGTH
         frames ||= DEFAULT_SPINNER_FRAMES
-        output.write(leading_text) unless leading_text.empty?
+        write(leading_text) unless leading_text.empty?
         spin = SpinDriver.new(self, frames, Array(style), frame_length)
         begin
           yield
         ensure
           spin.stop
-          output.write(final_text) unless final_text.empty?
+          write(final_text) unless final_text.empty?
         end
       end
 
@@ -312,8 +344,8 @@ module Toys
       # @return [Array(Integer,Integer)]
       #
       def size
-        if @output.respond_to?(:tty?) && @output.tty? && @output.respond_to?(:winsize)
-          @output.winsize.reverse
+        if output.respond_to?(:tty?) && output.tty? && output.respond_to?(:winsize)
+          output.winsize.reverse
         else
           [80, 25]
         end
@@ -452,10 +484,10 @@ module Toys
           ::Thread.new do
             synchronize do
               until @stopping
-                @terminal.output.write(@frames[@cur_frame][0])
+                @terminal.write(@frames[@cur_frame][0])
                 @cond.wait(@frame_length)
                 size = @frames[@cur_frame][1]
-                @terminal.output.write("\b" * size + " " * size + "\b" * size)
+                @terminal.write("\b" * size + " " * size + "\b" * size)
                 @cur_frame += 1
                 @cur_frame = 0 if @cur_frame >= @frames.size
               end
