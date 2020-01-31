@@ -9,9 +9,13 @@
 * ADDED: The `Toys::Middleware::Stack` class represents a stack of middleware specs, and distinguishes the default set from those added afterward.
 * ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
 * ADDED: `Toys.executable_path` attribute allowing an executable to provide the executable for running tools separately.
+* ADDED: `Toys::CLI` now has a `logger_factory` property, to generate separate loggers per tool execution.
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
+* IMPROVED: `Toys::Utils::Terminal` is now thread-safe. 
 * CHANGED: Added `on_missing` and `on_conflict` arguments to `Toys::Utils::Gems` constructor (which also affects the `:gems` mixin), and deprecated `suppress_confirm` and `default_confirm`.
 * CHANGED: `Toys::Tool#middleware_stack` renamed to `Toys::Tool#built_middleware` to clarify that it is an array of middleware objects rather than specs.
+* CHANGED: `Toys::CLI.default_logger` removed and replaced with `Toys::CLI.default_logger_factory`. In general, global loggers for CLI are now discouraged because they are not thread-safe.
+* CHANGED: `Toys::Terminal#styled` is no longer mutable.
 
 ### 0.9.4 / 2020-01-26
 

@@ -444,7 +444,7 @@ module Toys
         Context::Key::ARGS => nil,
         Context::Key::CLI => cli,
         Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
-        Context::Key::LOGGER => cli.logger,
+        Context::Key::LOGGER => cli.logger_factory.call(tool),
         Context::Key::TOOL => tool,
         Context::Key::TOOL_SOURCE => tool.source_info,
         Context::Key::TOOL_NAME => tool.full_name,
