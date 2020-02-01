@@ -1621,6 +1621,37 @@ module Toys
         self
       end
 
+      ##
+      # Determines whether the current Toys version satisfies the given
+      # requirements.
+      #
+      # @return [Boolean] whether or not the requirements are satisfied
+      #
+      def toys_version?(*requirements)
+        version = ::Gem::Version.new(Core::VERSION)
+        requirement = ::Gem::Requirement.new(*requirements)
+        requirement.satisfied_by?(version)
+      end
+
+      ##
+      # Asserts that the current Toys version against the given requirements,
+      # raising an exception if not.
+      #
+      # @return [self]
+      #
+      # @raise [Toys::ToolDefinitionError] if the current Toys version does not
+      #     satisfy the requirements.
+      #
+      def toys_version!(*requirements)
+        version = ::Gem::Version.new(Core::VERSION)
+        requirement = ::Gem::Requirement.new(*requirements)
+        unless requirement.satisfied_by?(version)
+          raise Toys::ToolDefinitionError,
+                "Toys version requirements #{requirement} not satisfied by {version}"
+        end
+        self
+      end
+
       ## @private
       def self.new_class(words, priority, loader)
         tool_class = ::Class.new(::Toys::Context)

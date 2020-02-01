@@ -1530,4 +1530,26 @@ describe Toys::DSL::Tool do
       loader.lookup(["foo", "bar"])
     end
   end
+
+  describe "toys_version directives" do
+    it "checks versions" do
+      test = self
+      loader.add_block do
+        test.assert(toys_version?("> 0.9", "< 100.0"))
+        test.refute(toys_version?("< 0.9"))
+      end
+      loader.lookup([])
+    end
+
+    it "asserts versions" do
+      test = self
+      loader.add_block do
+        toys_version!("> 0.9", "< 100.0")
+        test.assert_raises(Toys::ToolDefinitionError) do
+          toys_version!("< 0.9")
+        end
+      end
+      loader.lookup([])
+    end
+  end
 end
