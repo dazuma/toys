@@ -7,6 +7,8 @@
 * ADDED: `subtool_apply` directive which applies a block to all subtools.
 * ADDED: `toys_version?` and `toys_version!` directives that check against version requirements.
 * ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
+* IMPROVED: The `tool` directive can take delimited strings as tool names.
+* IMPROVED: Subtool blocks aren't actually executed unless the tool is needed.
 * CHANGED: Added `on_missing` and `on_conflict` arguments to `Toys::Utils::Gems` constructor (which also affects the `:gems` mixin), and deprecated `suppress_confirm` and `default_confirm`.
 
 ### 0.9.4 / 2020-01-26

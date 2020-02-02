@@ -30,19 +30,16 @@ module Toys
     # Create a SourceInfo.
     # @private
     #
-    def initialize(parent, context_directory, source, source_type, source_name, data_dir_name)
+    def initialize(parent, context_directory, source_type, source_path, source_proc,
+                   source_name, data_dir)
       @parent = parent
       @context_directory = context_directory
-      @source = source
       @source_type = source_type
-      @source_path = source if source.is_a?(::String)
-      @source_proc = source if source.is_a?(::Proc)
+      @source = source_type == :proc ? source_proc : source_path
+      @source_path = source_path
+      @source_proc = source_proc
       @source_name = source_name
-      @data_dir =
-        if data_dir_name && @source_path
-          dir = ::File.join(::File.dirname(@source_path), data_dir_name)
-          dir if ::File.directory?(dir) && ::File.readable?(dir)
-        end
+      @data_dir = data_dir
     end
 
     ##
@@ -82,7 +79,7 @@ module Toys
     # The path of the current source file or directory.
     #
     # @return [String] The source path
-    # @return [nil] if this source is not a file system path.
+    # @return [nil] if this source has no file system path.
     #
     attr_reader :source_path
 
@@ -90,7 +87,7 @@ module Toys
     # The source proc.
     #
     # @return [Proc] The source proc
-    # @return [nil] if this source is not a proc.
+    # @return [nil] if this source has no proc.
     #
     attr_reader :source_proc
 
@@ -131,11 +128,12 @@ module Toys
     # @private
     #
     def relative_child(filename, data_dir_name)
-      raise "Cannot create relative child of a proc" unless source_path
+      raise "no parent path for relative_child" unless source_path
       child_path = ::File.join(source_path, filename)
       child_path, type = SourceInfo.check_path(child_path, true)
       return nil unless child_path
-      SourceInfo.new(self, context_directory, child_path, type, child_path, data_dir_name)
+      data_dir = SourceInfo.find_data_dir(type, child_path, data_dir_name)
+      SourceInfo.new(self, context_directory, type, child_path, source_proc, child_path, data_dir)
     end
 
     ##
@@ -144,16 +142,16 @@ module Toys
     #
     def absolute_child(child_path)
       child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, context_directory, child_path, type, child_path, nil)
+      SourceInfo.new(self, context_directory, type, child_path, source_proc, child_path, nil)
     end
 
     ##
     # Create a proc child SourceInfo
     # @private
     #
-    def proc_child(source_proc, source_name = nil)
+    def proc_child(child_proc, source_name = nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, context_directory, source_proc, :proc, source_name, nil)
+      SourceInfo.new(self, context_directory, :proc, source_path, child_proc, source_name, nil)
     end
 
     ##
@@ -163,7 +161,7 @@ module Toys
     def self.create_path_root(source_path)
       source_path, type = check_path(source_path, false)
       context_directory = ::File.dirname(source_path)
-      new(nil, context_directory, source_path, type, source_path, nil)
+      new(nil, context_directory, type, source_path, nil, source_path, nil)
     end
 
     ##
@@ -171,7 +169,7 @@ module Toys
     # @private
     #
     def self.create_proc_root(source_proc, source_name)
-      new(nil, nil, source_proc, :proc, source_name, nil)
+      new(nil, nil, :proc, nil, source_proc, source_name, nil)
     end
 
     ##
@@ -196,6 +194,17 @@ module Toys
         raise LoaderError, "Unknown type: #{path}" unless lenient
         [nil, nil]
       end
+    end
+
+    ##
+    # Determine the data directory path, if any.
+    # @private
+    #
+    def self.find_data_dir(type, source_path, data_dir_name)
+      return nil if source_path.nil? || data_dir_name.nil?
+      source_path = ::File.dirname(source_path) if type == :file
+      data_dir = ::File.join(source_path, data_dir_name)
+      data_dir if ::File.directory?(data_dir) && ::File.readable?(data_dir)
     end
   end
 end

@@ -324,11 +324,11 @@ module Toys
       # @return [self]
       #
       def tool(words, if_defined: :combine, delegate_to: nil, &block)
-        subtool_words = @__words
+        subtool_words = @__words.dup
         next_remaining = @__remaining_words
-        Array(words).each do |word|
+        @__loader.split_path(words).each do |word|
           word = word.to_s
-          subtool_words += [word]
+          subtool_words << word
           next_remaining = Loader.next_remaining_words(next_remaining, word)
         end
         subtool = @__loader.get_tool(subtool_words, @__priority)
@@ -340,10 +340,12 @@ module Toys
             subtool.reset_definition(@__loader)
           end
         end
-        subtool_class = subtool.tool_class
-        DSL::Tool.prepare(subtool_class, next_remaining, source_info) do
-          subtool_class.delegate_to(delegate_to) if delegate_to
-          subtool_class.class_eval(&block) if block
+        if delegate_to
+          delegator = proc { self.delegate_to(delegate_to) }
+          @__loader.load_block(source_info, delegator, subtool_words, next_remaining, @__priority)
+        end
+        if block
+          @__loader.load_block(source_info, block, subtool_words, next_remaining, @__priority)
         end
         self
       end
@@ -1668,7 +1670,7 @@ module Toys
       def self.current_tool(tool_class, activate)
         memoize_var = activate ? :@__active_tool : :@__cur_tool
         if tool_class.instance_variable_defined?(memoize_var)
-          cur_tool = tool_class.instance_variable_get(memoize_var)
+          tool_class.instance_variable_get(memoize_var)
         else
           loader = tool_class.instance_variable_get(:@__loader)
           words = tool_class.instance_variable_get(:@__words)
@@ -1679,13 +1681,12 @@ module Toys
             else
               loader.get_tool(words, priority)
             end
+          if cur_tool && activate
+            source = tool_class.instance_variable_get(:@__source).last
+            cur_tool.lock_source(source)
+          end
           tool_class.instance_variable_set(memoize_var, cur_tool)
         end
-        if cur_tool && activate
-          source = tool_class.instance_variable_get(:@__source).last
-          cur_tool.lock_source(source)
-        end
-        cur_tool
       end
 
       ## @private
