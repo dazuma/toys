@@ -70,6 +70,16 @@ describe Toys::DSL::Tool do
       assert_equal(["baz"], remaining)
     end
 
+    it "supports delimiters" do
+      loader.add_block do
+        tool "foo:bar" do
+        end
+      end
+      tool, remaining = loader.lookup(["foo", "bar", "baz"])
+      assert_equal(["foo", "bar"], tool.full_name)
+      assert_equal(["baz"], remaining)
+    end
+
     it "combines tool information" do
       loader.add_block do
         tool "foo" do
@@ -132,6 +142,21 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup(["foo"])
       assert_equal(["bar"], tool.delegate_target)
       assert_equal(3, cli.run(["foo"]))
+    end
+
+    it "doesn't execute the block if not needed" do
+      test = self
+      loader.add_block do
+        tool "foo" do
+          long_desc "hello", "world"
+        end
+        tool "bar" do
+          test.fail
+        end
+      end
+      tool, remaining = loader.lookup(["foo"])
+      assert_equal(["foo"], tool.full_name)
+      assert_equal([], remaining)
     end
   end
 

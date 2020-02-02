@@ -4,11 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 These items are all tentative or under investigation. Finalized to-do items
 are covered in github issues (https://github.com/dazuma/toys/issues).
 
-## In progress
-
-* Consider making "tool" blocks just add worklist entries to the loader instead of evaluating immediately
-* Add section in users guide on bundler integration
-
 ## Ideas under investigation
 
 * Evaluate options for closer Rails integration

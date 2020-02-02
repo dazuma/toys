@@ -28,8 +28,6 @@ module Toys
   # The Loader service loads tools from configuration files, and finds the
   # appropriate tool given a set of command line arguments.
   #
-  # This class is not thread-safe.
-  #
   class Loader
     include ::MonitorMixin
 
@@ -238,8 +236,6 @@ module Toys
     ##
     # Get or create the tool definition for the given name and priority.
     #
-    # @return [Toys::Tool]
-    #
     # @private
     #
     def get_tool(words, priority)
@@ -253,12 +249,6 @@ module Toys
     # the active priority, returns `nil`. If the given priority is higher than
     # the active priority, returns and activates a new tool.
     #
-    # @param words [Array<String>] The name of the tool.
-    # @param priority [Integer] The priority of the request.
-    #
-    # @return [Toys::Tool] The tool found.
-    # @return [nil] if the given priority is insufficient.
-    #
     # @private
     #
     def activate_tool(words, priority)
@@ -268,9 +258,6 @@ module Toys
     ##
     # Returns true if the given tool name currently exists in the loader.
     # Does not load the tool if not found.
-    #
-    # @param words [Array<String>] The name of the tool.
-    # @return [Boolean]
     #
     # @private
     #
@@ -282,11 +269,6 @@ module Toys
     # Build a new tool.
     # Called only from ToolData.
     #
-    # @param words [Array<String>] The name of the tool.
-    # @param priority [Integer] The priority of the request.
-    #
-    # @return [Toys::Tool] A new tool object.
-    #
     # @private
     #
     def build_tool(words, priority)
@@ -297,9 +279,6 @@ module Toys
 
     ##
     # Loads the subtree under the given prefix.
-    #
-    # @param prefix [Array<String>] The name prefix.
-    # @return [self]
     #
     # @private
     #
@@ -323,10 +302,6 @@ module Toys
     ##
     # Attempt to get a well-known mixin module for the given symbolic name.
     #
-    # @param name [Symbol] Mixin name
-    # @return [Module] The mixin
-    # @return [nil] if not found.
-    #
     # @private
     #
     def resolve_standard_mixin(name)
@@ -335,10 +310,6 @@ module Toys
 
     ##
     # Attempt to get a well-known template class for the given symbolic name.
-    #
-    # @param name [Symbol] Template name
-    # @return [Class] The template.
-    # @return [nil] if not found.
     #
     # @private
     #
@@ -350,13 +321,6 @@ module Toys
     # Load configuration from the given path. This is called from the `load`
     # directive in the DSL.
     #
-    # @param parent_source [Toys::SourceInfo] The source of the caller.
-    # @param path [String] The file or directory to load.
-    # @param words [Array<String>] The name of the caller, i.e. the context in
-    #     which to load.
-    # @param remaining_words [Array<String>] The remaining words.
-    # @param priority [Integer] The priority.
-    #
     # @private
     #
     def load_path(parent_source, path, words, remaining_words, priority)
@@ -367,10 +331,19 @@ module Toys
     end
 
     ##
-    # Determine the next setting for remaining_words, given a word.
+    # Load a subtool block. Called from the `tool` directive in the DSL.
     #
-    # @param remaining_words [Array<String>] The remaining words.
-    # @param word [String] The next word to parse.
+    # @private
+    #
+    def load_block(parent_source, block, words, remaining_words, priority)
+      source = parent_source.proc_child(block)
+      synchronize do
+        load_proc(source, words, remaining_words, priority)
+      end
+    end
+
+    ##
+    # Determine the next setting for remaining_words, given a word.
     #
     # @private
     #

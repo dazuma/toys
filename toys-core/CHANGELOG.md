@@ -11,6 +11,8 @@
 * ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
 * ADDED: `Toys.executable_path` attribute allowing an executable to provide the executable for running tools separately.
 * ADDED: `Toys::CLI` now has a `logger_factory` property, to generate separate loggers per tool execution.
+* IMPROVED: The `tool` directive can take delimited strings as tool names.
+* IMPROVED: Subtool blocks aren't actually executed unless the tool is needed.
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
 * IMPROVED: `Toys::Utils::Terminal` is now thread-safe.
 * CHANGED: Added `on_missing` and `on_conflict` arguments to `Toys::Utils::Gems` constructor (which also affects the `:gems` mixin), and deprecated `suppress_confirm` and `default_confirm`.
