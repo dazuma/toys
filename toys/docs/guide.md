@@ -1698,7 +1698,7 @@ the module.
 
 ### Templates
 
-One final way to share code is to expand a **template**.
+Another way to share code is to expand a **template**.
 
 A template is a class that inserts a bunch of lines into a Toys file. It is
 often used to "instantiate" prefabricated tools. For instance, Toys comes with
@@ -1899,40 +1899,203 @@ loaded first before the `.preload` directory contents.
 
 ## Using third-party gems
 
-The Ruby community has developed many resources for building command line
-tools, including a variety of gems that provide alternate command line parsing,
-control of the ANSI terminal, formatted output such as trees and tables, and
-effects such as hidden input, progress bars, various subprocess tools, and so
-forth.
-
-This section describes how to use a third-party gem in your tool.
-
-### Activating gems
-
 The toys executable itself uses only two gems: **toys** and **toys-core**. It
-has no other gem dependencies. However, if you want to use a third-party gem in
-your tool, Toys provides a convenient mechanism to ensure the gem is installed.
+has no other gem dependencies. However, the Ruby community has developed many
+resources for building command line tools, including a variety of gems that
+provide alternate command line parsing, control of the ANSI terminal, formatted
+output such as trees and tables, and effects such as hidden input, progress
+bars, various ways to spawn and control subprocesses, and so forth. You may
+find some of these gems useful when writing your tools. Additionally, if you
+are using Toys for your project's build scripts, it might be necessary to
+install your bundle when running some tools.
 
-(Note that you generally do not use bundler when running Toys; i.e. you do not
-normally run `bundle exec toys`. This is because Toys is intended as a
-general-purpose tool that can be run anywhere. It would be inconvenient to have
-to include Gemfiles in every directory where you might want to run it.)
+This section describes how to manage and use external gems with Toys. Note that
+running Toys with `bundle exec` is generally *not* recommended. We'll discuss
+the reasons for this, and what you can do instead.
 
-To access the gem services, include the `:gems` mixin. This mixin adds a `gem`
-directive to ensure a gem is installed and activated when you're defining a
-tool, and a `gem` method to ensure a gem is available when you're running a
-tool.
+### Why not "bundle exec toys"
 
-Both the `gem` directive and the `gem` method take the name of the gem, and an
-optional set of version requirements. If a gem matching the given version
-requirements is installed, it is activated. If not, the gem is installed (which
-the user can confirm or abort). Or, if Toys is being run in a bundle, a message
-is printed informing the user that they need to add the gem to their Gemfile.
+[Bundler](https://bundler.io) is often used when a command-line program depends
+on external gems. You specify the gem dependencies in a `Gemfile`, use bundler
+to resolve and install those dependencies, and then run the program prefixed by
+`bundle exec` to ensure those dependencies are in the Ruby load path. When
+running a Rake task, for example, it is almost automatic for many Ruby
+developers to run `bundle exec rake my-task`.
 
-For example, here's a way to configure a tool with flags for each of the
-HighLine styles. Because highline is needed to decide what flags to define, we
-use the `gem` directive to ensure highline is installed while the tool is being
-defined.
+So why not simply run `bundle exec toys my-tool`?
+
+In simple cases, this will work just fine. However, Toys is a much more
+flexible tool than Rake, and it covers two cases that are not well served by
+`bundle exec`.
+
+First, Toys lets you define *global tools* that are defined in your home
+directory or system config directory. (See the previous section on
+[the Toys search path](#The_Toys_search_path).) These tools are global, and can
+be called from anywhere. But if they have gem dependencies, it might not be
+feasible for their Gemfiles to be present in every directory from which you
+might want to run them.
+
+Second, it's possible for a variety of tools to be available together,
+including both locally and globally defined, with potentially different sets of
+dependencies. With `bundle exec`, you must choose beforehand which bundle to
+use.
+
+Although traditional `bundle exec` doesn't always work, Toys provides ways for
+individual tools to manage their own gem dependencies.
+
+### Using bundler with a tool
+
+The recommended way for a Toys tool to depend on third-party gems is for the
+tool to set up Bundler when it runs. The tool can load a bundle from an
+appropriate `Gemfile` at runtime, by including the `:bundler` mixin.
+
+Here's an example. Suppose you are writing a tool in a Rails app. It might, for
+example, load the Rails environment and populate some data into the database.
+Hence, it needs to run with your app's bundle, represented by your app's
+`Gemfile`.
+
+Simply `include :bundler` in your tool definition:
+
+    tool "populate-data" do
+      include :bundler
+
+      def run
+        # The bundle will be set up before the tool is run,
+        # so you can now run code that depends on rails:
+        require "./config/environment.rb"
+        # ... etc.
+      end
+    end
+
+When the `:bundler` mixin is included in a tool, it installs a
+[mixin initializer](#Mixin_initializers) that calls `Bundler.setup` when the
+tool is *executed*. This assumes the bundle is already installed, and brings
+the appropriate gems into the Ruby load path. That is, it's basically the same
+as `bundle exec`, but it applies only to the running tool.
+
+In many cases, you might find that bundler is needed for many or most of the
+tools you write for a particular project. In this case, you might find it
+convenient to use
+[Toys::DSL::Tool#subtool_apply](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#subtool_apply-instance_method)
+to include the bundle in all your tools. For example:
+
+    # Include bundler in every tool under this one
+    subtool_apply do
+      include :bundler
+    end
+
+    tool "one-tool" do
+      # This tool will run with the bundle
+      # ...
+    end
+    
+    tool "another-tool" do
+      # So will this tool
+      # ...
+    end
+
+See the section on
+[applying directives to multiple tools](#Applying_directives_to_multiple_tools)
+for more information on `subtool_apply`.
+
+#### Bundler options
+
+By default, the `:bundler` mixin will look for a `Gemfile` within the `.toys`
+directory (if your tool is defined in one), and if one is not found there,
+within the [context directory](#The_context_directory) (the directory
+containing your `.toys` directory or `.toys.rb`file), and if one still is not
+found, in the current working directory. You can change this behavior by
+passing an option to the `:bundler` mixin. For example, you can search only the
+current working directory by passing `search_dirs: :current` as such:
+
+    tool "populate-data" do
+      include :bundler, search_dirs: :current
+      # etc...
+    end
+
+You can also pass a specific directory path to this option.
+
+If the bundle is not installed, or is out of date, Toys will ask you whether
+you want it to install the bundle first before running the tool. A tool can
+also choose to install the bundle without prompting, or simply to raise an
+error, by passing another option to the `:bundler` mixin. For example, to
+simply install the bundle without asking for confirmation:
+
+    tool "populate-data" do
+      include :bundler, on_missing: :install
+      # etc...
+    end
+
+See the documentation for
+[Toys::StandardMixins::Bundler](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
+for more information about bundler options.
+
+#### Solving bundle conflicts
+
+It is important to understand that the `:bundler` mixin installs the bundle
+when the tool *executes*, rather than when the tool is defined. Gems in the
+bundle will not be available during tool definition, so for example you
+*cannot* reference bundled gems when you are setting up the tool's flags,
+description, or other directives. This is so that Toys can define tools with
+competing bundles. Your Rails app's tools can use that app's bundle, while your
+global tools can use a different bundle. They will not conflict because Toys
+will not actually load a bundle until one or the other tool is executed. (This
+is of course different from using `bundle exec`, which chooses and loads a
+bundle before even starting Toys.)
+
+If a *different* bundle (i.e. a different `Gemfile`) is already in effect when
+a tool is run, then the `:bundler` mixin will raise an error. Ruby will not let
+you set up two different bundles at the same time. This might happen, for
+example, if you use `bundle exec` to run Toys, but the tool you are running
+asks for a different bundle---one more reason not to use `bundle exec` with
+Toys.
+
+It might also happen if one tool that uses one bundle, *calls* a tool that uses
+a different bundle. If you need to do this, use the
+[Toys::StandardMixins::Exec#exec_separate_tool](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Exec#exec_separate_tool-instance_method)
+method from the `:exec` mixin, to call the tool. This method spawns a separate
+process with a clean Bundler setup for running the tool.
+
+### Activating gems directly
+
+Although we recommend the `:bundler` mixin for most cases, it is also possible
+for a tool to install individual gems, using the `:gems` mixin. This mixin
+provides a way for a tool to install individual gems without using Bundler.
+
+Here's an example tool that just runs `rake`. Because it requires rake to be
+installed in order to run the tool, we call the
+[Toys::StandardMixins::Gems#gem](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Gems#gem-instance_method)
+method (which is provided by the `:gems` mixin) at the beginning of the `run`
+method:
+
+    tool "rake" do
+      include :gems
+      remaining_args :rake_args
+      def run
+        gem "rake", "~> 12.0"
+        Kernel.exec(["rake"] + rake_args)
+      end
+    end
+
+The `gem` method takes the name of the gem, and an optional set of version
+requirements. If a gem matching the given version requirements is installed, it
+is activated. If not, the gem is installed (which the user can confirm or
+abort). Or, if Toys is being run in a bundle, a message is printed informing
+the user that they need to add the gem to their Gemfile.
+
+If a gem satisfying the given version constraints is already activated, it
+remains active. If a gem with a conflicting version is already activated, an
+exception is raised.
+
+The `:gems` mixin also provides a `gem` *directive* that ensures a gem is
+installed while the tool is being defined. In general, we recommend avoiding
+doing this, because it could make your tool incompatible with another tool that
+might need a competing gem during its definition. Toys would not be able to
+define both tools together. However, occasionally it might be useful.
+
+Here's an example tool with flags for each of the HighLine styles. Because
+highline is needed to decide what flags to define, we use the `gem` directive
+to ensure highline is installed while the tool is being defined.
 
     tool "highline-styles-demo" do
       include :gems
@@ -1946,24 +2109,6 @@ defined.
         # ...
       end
     end
-
-Here's an example tool that just runs `rake`. Because it requires rake to be
-installed in order to *run* the tool, we call the
-[Toys::StandardMixins::Gems#gem](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Gems#gem-instance_method)
-method provided by the `:gems` mixin when running.
-
-    tool "rake" do
-      include :gems
-      remaining_args :rake_args
-      def run
-        gem "rake", "~> 12.0"
-        Kernel.exec(["rake"] + rake_args)
-      end
-    end
-
-If a gem satisfying the given version constraints is already activated, it
-remains active. If a gem with a conflicting version is already activated, an
-exception is raised.
 
 If you are not in the Toys DSL context—for example from a class-based
 mixin—you should use
@@ -1984,8 +2129,9 @@ you, whereas Rubygems will just throw an exception.
 
 ### Useful gems
 
-Now that you know how to ensure a gem is installed, let's look at some third-
-party gems that you might find useful when writing tools.
+Now that you know how to ensure a gem is installed, either individually or as
+part of a bundle, let's look at some third-party gems that you might find
+useful when writing tools.
 
 We already saw how to use the **highline** gem. Highline generally provides two
 features: terminal styling, and prompts. For these capabilities and many more,
@@ -1998,7 +2144,6 @@ To produce styled output, consider
 
     tool "fancy-output" do
       def run
-        gem "pastel", "~> 0.7"
         require "pastel"
         pastel = Pastel.new
         puts pastel.red("Rubies!")
@@ -2010,7 +2155,6 @@ To create rich user prompts, consider
 
     tool "favorite-language" do
       def run
-        gem "tty-prompt", "~> 0.16"
         require "tty-prompt"
         prompt = TTY::Prompt.new
         lang = prompt.select("What is your favorite language?",
@@ -2024,7 +2168,6 @@ To create tabular output, consider
 
     tool "matrix" do
       def run
-        gem "tty-table", "~> 0.10"
         require "tty-table"
         table = TTY::Table.new(["Language", "Creator"],
                                [["Ruby", "Matz"],
@@ -2042,7 +2185,6 @@ non-deterministic.
 
     tool "waiting" do
       def run
-        gem "tty-progressbar", "~> 0.15"
         require "tty-progressbar"
         bar = TTY::ProgressBar.new("Waiting [:bar]", total: 30)
         30.times do
@@ -2417,6 +2559,52 @@ a namespace to delegate to one of its subtools:
     end
 
 Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
+
+### Applying directives to multiple tools
+
+Sometimes a group of tools are set up similarly or share a set of flags,
+mixins, or other directives. You can apply a set of directives to all subtools
+(recursively) of the current tool, using the 
+[Toys::DSL::Tool#subtool_apply](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#subtool_apply-instance_method)
+directive.
+
+For example, it is common for tools to use the `:exec` built-in mixin to invoke
+external programs. You can use `subtool_apply` to ensure that the mixin is
+included in all subtools, so that you do not need to repeat the `include`
+directive in every tool.
+
+    subtool_apply do
+      # Include the mixin only if the tool hasn't already done so
+      unless include?(:exec)
+        include :exec, exit_on_nonzero_status: true
+      end
+    end
+
+    tool "my-tool" do
+      def run
+        # This tool has access to methods defined by the :exec mixin
+        # because the above block is applied to the tool
+        sh "echo hello"
+      end
+    end
+
+Importantly, `subtool_apply` blocks are "applied" at the *end* of a tool's
+definition. Therefore, when using `subtool_apply`, you have the ability to look
+at the current definition of the tool to decide whether to apply further
+changes. The `subtool_apply` block in the above example uses this technique; it
+checks whether the `:exec` mixin has already been included before attempting to
+include it. Thus, it is possible for a tool to "override" the inclusion, say,
+to use a different configuration:
+
+    tool "another-tool" do
+      # Use a different configuration for the :exec mixin.
+      # This "overrides" the subtool_apply block above.
+      include :exec, exit_on_nonzero_status: false
+      def run
+        # This is run with exit_on_nonzero_status: false
+        sh "echo hello"
+      end
+    end
 
 ### Custom acceptors
 
@@ -2827,8 +3015,8 @@ subdirectory:
 
 Rake handles this by actually changing the current working directory to the
 directory containing the active Rakefile. Toys, however, does not change the
-working directory unless you tell it. You can make the `list-tests` tool work
-correctly by changing the directory to the context directory (which is the
+working directory unless you tell it to. You can make the `list-tests` tool
+work correctly by changing the directory to the context directory (which is the
 directory containing the `.toys.rb` file, i.e. the `my-project` directory.)
 
     tool "list-tests" do
@@ -2856,7 +3044,7 @@ the entire toys directory structure. So if your tool definition is inside a
     |
     etc...
 
-This behavior is particularly useful for build tools. Indeed, all the build
+This technique is particularly useful for build tools. Indeed, all the build
 tools described in the section on
 [Toys as a Rake Replacement](#Toys_as_a_Rake_replacement) automatically move
 into the context directory when they execute.
