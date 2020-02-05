@@ -33,9 +33,12 @@ module Toys
     #  *  `:search_dirs` (Array<String,Symbol>) Directories to search for a
     #     Gemfile.
     #
-    #     You can either pass a full directory path, or one of the following:
-    #      *  `:context` - the current context directory (default)
+    #     You can pass full directory paths, and/or any of the following:
+    #      *  `:context` - the current context directory
     #      *  `:current` - the current working directory
+    #      *  `:toys` - the Toys directory containing the tool definition
+    #
+    #     The default is to search `[:toys, :context, :current]` in that order.
     #
     #  *  `:on_missing` (Symbol) What to do if a needed gem is not installed.
     #
@@ -76,18 +79,31 @@ module Toys
 
       ## @private
       def self.resolve_search_dirs(search_dirs, context)
-        Array(search_dirs || :context).map do |dir|
+        search_dirs ||= [:toys, :context, :current]
+        Array(search_dirs).flat_map do |dir|
           case dir
           when :context
             context[::Toys::Context::Key::CONTEXT_DIRECTORY]
           when :current
             ::Dir.getwd
+          when :toys
+            toys_dir_stack(context[::Toys::Context::Key::TOOL_SOURCE])
           when ::String
             dir
           else
             raise ::ArgumentError, "Unrecognized search_dir: #{dir.inspect}"
           end
         end
+      end
+
+      ## @private
+      def self.toys_dir_stack(source_info)
+        dirs = []
+        while source_info
+          dirs << source_info.source_path if source_info.source_type == :directory
+          source_info = source_info.parent
+        end
+        dirs
       end
     end
   end
