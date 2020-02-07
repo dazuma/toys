@@ -1,0 +1,2 @@
+This is a bar line.
+ This is another bar line.
