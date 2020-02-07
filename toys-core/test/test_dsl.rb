@@ -33,9 +33,13 @@ describe Toys::DSL::Tool do
   let(:extra_delimiters) { ":" }
   let(:cli) {
     Toys::CLI.new(executable_name: executable_name, logger: logger,
-                  middleware_stack: [], extra_delimiters: extra_delimiters)
+                  middleware_stack: [], extra_delimiters: extra_delimiters,
+                  index_file_name: ".toys.rb", data_dir_name: ".data")
   }
   let(:loader) { cli.loader }
+  let(:cases_dir) {
+    File.join(__dir__, "lookup-cases")
+  }
 
   describe "tool directive" do
     it "creates a tool" do
@@ -594,6 +598,24 @@ describe Toys::DSL::Tool do
       assert_equal("this is a desc", ld[0].to_s)
       assert_equal("with multiple lines", ld[1].to_s)
       assert_equal("and an append", ld[2].to_s)
+    end
+
+    it "reads from a file" do
+      loader.add_path(File.join(cases_dir, "long-desc-files"))
+      tool, _remaining = loader.lookup(["foo"])
+      ld = tool.long_desc
+      assert_equal(2, ld.size)
+      assert_equal("This is a foo line.", ld[0].to_s)
+      assert_equal("This is another foo line.", ld[1].to_s)
+    end
+
+    it "reads from data" do
+      loader.add_path(File.join(cases_dir, "long-desc-files"))
+      tool, _remaining = loader.lookup(["bar"])
+      ld = tool.long_desc
+      assert_equal(2, ld.size)
+      assert_equal("This is a bar line.", ld[0].to_s)
+      assert_equal(" This is another bar line.", ld[1].to_s)
     end
   end
 

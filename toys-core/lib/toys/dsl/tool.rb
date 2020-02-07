@@ -537,10 +537,27 @@ module Toys
       #     long_desc "This line is appended to the description."
       #
       # @param strs [Toys::WrappableString,String,Array<String>...]
+      # @param file [String] Optional. Read the description from the given file
+      #     provided relative to the current toys file. The file must be a
+      #     plain text file whose suffix is `.txt`.
+      # @param data [String] Optional. Read the description from the given data
+      #     file. The file must be a plain text file whose suffix is `.txt`.
       # @return [self]
       #
-      def long_desc(*strs)
-        DSL::Tool.current_tool(self, true)&.append_long_desc(strs)
+      def long_desc(*strs, file: nil, data: nil)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
+        if file
+          unless source_info.source_path
+            raise ::Toys::ToolDefinitionError,
+                  "Cannot set long_desc from a file because the tool is not defined in a file"
+          end
+          file = ::File.join(::File.dirname(source_info.source_path), file)
+        elsif data
+          file = source_info.find_data(data, type: :file)
+        end
+        strs += DSL::Tool.load_long_desc_file(file) if file
+        cur_tool.append_long_desc(strs)
         self
       end
 
@@ -1723,6 +1740,22 @@ module Toys
           raise ToolDefinitionError, "Module not found: #{name.inspect}"
         end
         mod
+      end
+
+      ## @private
+      def self.load_long_desc_file(path)
+        if ::File.extname(path) == ".txt"
+          begin
+            ::File.readlines(path).map do |line|
+              line = line.chomp
+              line =~ /^\s/ ? [line] : line
+            end
+          rescue ::SystemCallError => e
+            raise Toys::ToolDefinitionError, e.to_s
+          end
+        else
+          raise Toys::ToolDefinitionError, "Cannot load long desc from file type: #{path}"
+        end
       end
     end
   end
