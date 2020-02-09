@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2019 Daniel Azuma
+# Copyright 2020 Daniel Azuma
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,18 @@
 
 require "helper"
 
-describe "rspec template" do
+describe "minitest template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:rspec).new }
+    let(:template) { template_lookup.lookup(:minitest).new }
 
     it "handles the name field" do
-      assert_equal("spec", template.name)
+      assert_equal("test", template.name)
       template.name = "hi"
       assert_equal("hi", template.name)
       template.name = nil
-      assert_equal("spec", template.name)
+      assert_equal("test", template.name)
     end
 
     it "handles the libs field" do
@@ -47,14 +47,24 @@ describe "rspec template" do
       assert_equal(["lib"], template.libs)
     end
 
+    it "handles the files field" do
+      assert_equal(["test/**/test*.rb"], template.files)
+      template.files = "test/**/*_test.rb"
+      assert_equal(["test/**/*_test.rb"], template.files)
+      template.files = ["test/**/test*.rb", "spec/**/test*.rb"]
+      assert_equal(["test/**/test*.rb", "spec/**/test*.rb"], template.files)
+      template.files = nil
+      assert_equal(["test/**/test*.rb"], template.files)
+    end
+
     it "handles the gem_version field without bundler" do
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal(["~> 5.0"], template.gem_version)
       template.gem_version = "~> 5.1"
       assert_equal(["~> 5.1"], template.gem_version)
       template.gem_version = ["~> 5.14.0", "< 6.0"]
       assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
       template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal(["~> 5.0"], template.gem_version)
     end
 
     it "handles the gem_version field with bundler" do
@@ -90,29 +100,30 @@ describe "rspec template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
+    let(:cases_dir) { File.join(__dir__, "minitest-cases") }
 
-    it "executes a successful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+    it "runs passing tests" do
+      dir = cases_dir
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib1"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory dir
+        expand :minitest, files: "passing/*.rb"
       end
       out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("spec"))
+        assert_equal(0, cli.run("test"))
       end
-      assert_match(/1 example, 0 failures/, out)
+      assert_match(/0 failures/, out)
     end
 
-    it "executes an unsuccessful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+    it "runs failing tests" do
+      dir = cases_dir
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib2"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory dir
+        expand :minitest, files: "failing/*.rb"
       end
       out, _err = capture_subprocess_io do
-        refute_equal(0, cli.run("spec"))
+        assert_equal(1, cli.run("test"))
       end
-      assert_match(/1 example, 1 failure/, out)
+      assert_match(/1 failure/, out)
     end
   end
 end

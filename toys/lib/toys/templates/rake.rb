@@ -57,7 +57,7 @@ module Toys
                      rakefile_path: nil,
                      only_described: false,
                      use_flags: false,
-                     bundler: nil)
+                     bundler: false)
         @gem_version = gem_version
         @rakefile_path = rakefile_path
         @only_described = only_described

@@ -62,7 +62,7 @@ module Toys
                      gem_version: nil,
                      fail_on_error: true,
                      options: [],
-                     bundler: nil)
+                     bundler: false)
         @name = name
         @gem_version = gem_version
         @fail_on_error = fail_on_error
@@ -163,19 +163,22 @@ module Toys
           desc "Run rubocop on the current project."
 
           include :gems
+          include :exec
 
           bundler_settings = template.bundler_settings
           include :bundler, **bundler_settings if bundler_settings
 
           to_run do
             gem "rubocop", *template.gem_version
-            require "rubocop"
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              rubocop = ::RuboCop::CLI.new
               logger.info "Running RuboCop..."
-              result = rubocop.run(template.options)
-              if result.nonzero?
+              result = exec_ruby([], in: :controller) do |controller|
+                controller.in.puts("gem 'rubocop', *#{template.gem_version.inspect}")
+                controller.in.puts("require 'rubocop'")
+                controller.in.puts("exit(::RuboCop::CLI.new.run(#{template.options.inspect}))")
+              end
+              if result.error?
                 logger.error "RuboCop failed!"
                 exit(1) if template.fail_on_error
               end

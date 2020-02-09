@@ -95,12 +95,12 @@ describe Toys::StandardMixins::Exec do
     assert_equal(1, cli.run("foo"))
   end
 
-  it "executes a toys tool" do
+  it "executes a toys tool in a fork" do
     skip unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "bar" do
         def run
-          puts "hello"
+          puts "hello" if defined?(::Minitest)
         end
       end
       tool "foo" do
@@ -112,6 +112,38 @@ describe Toys::StandardMixins::Exec do
       end
     end
     assert_equal(1, cli.run("foo"))
+  end
+
+  it "executes a toys tool in a spawned process" do
+    cli.add_config_block do
+      tool "foo" do
+        include :exec
+        def run
+          result = nil
+          Toys.stub(:executable_path, "toys-temp") do
+            my_spawn = proc do |*args|
+              if args.find_all { |a| a.is_a?(::String) } == ["toys-temp", "bar"]
+                nil
+              else
+                ::RuntimeError.new "Wrong args: #{args}"
+              end
+            end
+            Process.stub(:spawn, my_spawn) do
+              result = exec_separate_tool(["bar"])
+            end
+          end
+          if result.exception
+            puts result.exception.to_s
+            exit(1)
+          elsif result.status
+            exit(2)
+          else
+            exit(4)
+          end
+        end
+      end
+    end
+    assert_equal(4, cli.run("foo"))
   end
 
   it "captures a unix command" do

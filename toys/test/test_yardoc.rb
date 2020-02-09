@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2019 Daniel Azuma
+# Copyright 2020 Daniel Azuma
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,49 +23,57 @@
 
 require "helper"
 
-describe "rspec template" do
+describe "yardoc template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:rspec).new }
+    let(:template) { template_lookup.lookup(:yardoc).new }
 
     it "handles the name field" do
-      assert_equal("spec", template.name)
+      assert_equal("yardoc", template.name)
       template.name = "hi"
       assert_equal("hi", template.name)
       template.name = nil
-      assert_equal("spec", template.name)
+      assert_equal("yardoc", template.name)
     end
 
-    it "handles the libs field" do
-      assert_equal(["lib"], template.libs)
-      template.libs = "src"
-      assert_equal(["src"], template.libs)
-      template.libs = ["src", "lib"]
-      assert_equal(["src", "lib"], template.libs)
-      template.libs = nil
-      assert_equal(["lib"], template.libs)
+    it "handles the files field" do
+      assert_equal(["lib/**/*.rb"], template.files)
+      template.files = "src/**/*.rb"
+      assert_equal(["src/**/*.rb"], template.files)
+      template.files = ["lib/**/*.rb", "src/**/*.rb"]
+      assert_equal(["lib/**/*.rb", "src/**/*.rb"], template.files)
+      template.files = nil
+      assert_equal(["lib/**/*.rb"], template.files)
     end
 
     it "handles the gem_version field without bundler" do
-      assert_equal(["~> 3.1"], template.gem_version)
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      assert_equal(["~> 0.9"], template.gem_version)
+      template.gem_version = "~> 6.2"
+      assert_equal(["~> 6.2"], template.gem_version)
+      template.gem_version = ["~> 6.0", "< 6.2"]
+      assert_equal(["~> 6.0", "< 6.2"], template.gem_version)
       template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal(["~> 0.9"], template.gem_version)
     end
 
     it "handles the gem_version field with bundler" do
       template.use_bundler
       assert_equal([], template.gem_version)
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      template.gem_version = "~> 6.2"
+      assert_equal(["~> 6.2"], template.gem_version)
+      template.gem_version = ["~> 6.0", "< 6.2"]
+      assert_equal(["~> 6.0", "< 6.2"], template.gem_version)
       template.gem_version = nil
       assert_equal([], template.gem_version)
+    end
+
+    it "handles the output_dir field" do
+      assert_equal("doc", template.output_dir)
+      template.output_dir = "hi"
+      assert_equal("hi", template.output_dir)
+      template.output_dir = nil
+      assert_equal("doc", template.output_dir)
     end
 
     it "handles the bundler_settings field via the bundler writer" do
@@ -91,28 +99,18 @@ describe "rspec template" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
 
-    it "executes a successful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+    it "runs yardoc" do
+      input_dir = File.join(__dir__, "doc-case")
+      output_dir = File.join(File.dirname(__dir__), "tmp")
+      FileUtils.rm_rf(output_dir)
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib1"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory input_dir
+        expand :yardoc, output_dir: output_dir
       end
-      out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("spec"))
+      capture_subprocess_io do
+        assert_equal(0, cli.run("yardoc"))
       end
-      assert_match(/1 example, 0 failures/, out)
-    end
-
-    it "executes an unsuccessful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
-      loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib2"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
-      end
-      out, _err = capture_subprocess_io do
-        refute_equal(0, cli.run("spec"))
-      end
-      assert_match(/1 example, 1 failure/, out)
+      assert_path_exists(File.join(output_dir, "index.html"))
     end
   end
 end

@@ -100,7 +100,7 @@ module Toys
                      backtrace: false,
                      pattern: nil,
                      warnings: true,
-                     bundler: nil)
+                     bundler: false)
         @name = name
         @gem_version = gem_version
         @libs = libs

@@ -84,7 +84,7 @@ module Toys
                      seed: nil,
                      verbose: false,
                      warnings: true,
-                     bundler: nil)
+                     bundler: false)
         @name = name
         @gem_version = gem_version
         @libs = libs

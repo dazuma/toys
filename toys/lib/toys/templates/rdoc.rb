@@ -33,7 +33,7 @@ module Toys
       # Default version requirements for the rdoc gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = [">= 5.0.0"].freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 6.1.0"].freeze
 
       ##
       # Default tool name
@@ -92,7 +92,7 @@ module Toys
                      template: nil,
                      generator: nil,
                      options: [],
-                     bundler: nil)
+                     bundler: false)
         @name = name
         @gem_version = gem_version
         @files = files
@@ -298,7 +298,7 @@ module Toys
               exec_ruby([], in: :controller) do |controller|
                 controller.in.puts("gem 'rdoc', *#{gem_requirements.inspect}")
                 controller.in.puts("require 'rdoc'")
-                controller.in.puts("::RDoc::RDoc.new.document(*#{(args + files).inspect})")
+                controller.in.puts("::RDoc::RDoc.new.document(#{(args + files).inspect})")
               end
             end
           end
