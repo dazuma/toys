@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2019 Daniel Azuma
+# Copyright 2020 Daniel Azuma
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,47 +23,37 @@
 
 require "helper"
 
-describe "rspec template" do
+describe "rubocop template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:rspec).new }
+    let(:template) { template_lookup.lookup(:rubocop).new }
 
     it "handles the name field" do
-      assert_equal("spec", template.name)
+      assert_equal("rubocop", template.name)
       template.name = "hi"
       assert_equal("hi", template.name)
       template.name = nil
-      assert_equal("spec", template.name)
-    end
-
-    it "handles the libs field" do
-      assert_equal(["lib"], template.libs)
-      template.libs = "src"
-      assert_equal(["src"], template.libs)
-      template.libs = ["src", "lib"]
-      assert_equal(["src", "lib"], template.libs)
-      template.libs = nil
-      assert_equal(["lib"], template.libs)
+      assert_equal("rubocop", template.name)
     end
 
     it "handles the gem_version field without bundler" do
-      assert_equal(["~> 3.1"], template.gem_version)
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      assert_equal([], template.gem_version)
+      template.gem_version = "~> 6.2"
+      assert_equal(["~> 6.2"], template.gem_version)
+      template.gem_version = ["~> 6.0", "< 6.2"]
+      assert_equal(["~> 6.0", "< 6.2"], template.gem_version)
       template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal([], template.gem_version)
     end
 
     it "handles the gem_version field with bundler" do
       template.use_bundler
       assert_equal([], template.gem_version)
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      template.gem_version = "~> 6.2"
+      assert_equal(["~> 6.2"], template.gem_version)
+      template.gem_version = ["~> 6.0", "< 6.2"]
+      assert_equal(["~> 6.0", "< 6.2"], template.gem_version)
       template.gem_version = nil
       assert_equal([], template.gem_version)
     end
@@ -91,28 +81,26 @@ describe "rspec template" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
 
-    it "executes a successful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+    it "runs passing tests" do
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib1"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory File.join(__dir__, "rubocop-cases", "passing")
+        expand :rubocop, options: ["--config", "config.yml"]
       end
       out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("spec"))
+        assert_equal(0, cli.run("rubocop"))
       end
-      assert_match(/1 example, 0 failures/, out)
+      assert_match(/no offenses/, out)
     end
 
-    it "executes an unsuccessful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+    it "runs failing tests" do
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib2"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory File.join(__dir__, "rubocop-cases", "failing")
+        expand :rubocop, options: ["--config", "config.yml"]
       end
       out, _err = capture_subprocess_io do
-        refute_equal(0, cli.run("spec"))
+        assert_equal(1, cli.run("rubocop"))
       end
-      assert_match(/1 example, 1 failure/, out)
+      refute_match(/no offenses/, out)
     end
   end
 end

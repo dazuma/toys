@@ -33,7 +33,7 @@ module Toys
       # Default version requirements for the yard gem.
       # @return [String]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = "~> 0.9"
+      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 0.9"].freeze
 
       ##
       # Default tool name
@@ -119,7 +119,7 @@ module Toys
                      format: nil,
                      options: [],
                      stats_options: [],
-                     bundler: nil)
+                     bundler: false)
         @name = name
         @gem_version = gem_version
         @files = files

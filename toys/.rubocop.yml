@@ -1,5 +1,7 @@
 AllCops:
   TargetRubyVersion: 2.3
+  Exclude:
+    - "test/rubocop-cases/**/*"
 
 Layout/EmptyLineAfterGuardClause:
   Enabled: false
@@ -41,6 +43,8 @@ Style/BlockDelimiters:
 Style/Copyright:
   Enabled: true
   Exclude:
+    - "test/doc-case/**/*"
+    - "test/minitest-cases/**/*"
     - "test/rake-dirs/**/*"
     - "test/rspec-cases/**/*"
   Notice: 'Copyright \d{4} Daniel Azuma'
