@@ -189,13 +189,30 @@ module Toys
     #     path for any tool file in that directory.
     #     Optional. If not provided, data directories are disabled.
     #     Note: the standard toys executable sets this to `".data"`.
+    # @param lib_dir_name [String] A directory with this name that appears in
+    #     any configuration directory is added to the Ruby load path when
+    #     executing any tool file in that directory.
+    #     Optional. If not provided, lib directories are disabled.
+    #     Note: the standard toys executable sets this to `".lib"`.
     #
-    def initialize(
-      executable_name: nil, middleware_stack: nil, extra_delimiters: "",
-      config_dir_name: nil, config_file_name: nil, index_file_name: nil,
-      preload_file_name: nil, preload_dir_name: nil, data_dir_name: nil,
-      mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil,
-      logger_factory: nil, logger: nil, base_level: nil, error_handler: nil,
+    def initialize( # rubocop:disable Metrics/MethodLength
+      executable_name: nil,
+      middleware_stack: nil,
+      extra_delimiters: "",
+      config_dir_name: nil,
+      config_file_name: nil,
+      index_file_name: nil,
+      preload_file_name: nil,
+      preload_dir_name: nil,
+      data_dir_name: nil,
+      lib_dir_name: nil,
+      mixin_lookup: nil,
+      middleware_lookup: nil,
+      template_lookup: nil,
+      logger_factory: nil,
+      logger: nil,
+      base_level: nil,
+      error_handler: nil,
       completion: nil
     )
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
@@ -215,12 +232,18 @@ module Toys
       @preload_file_name = preload_file_name
       @preload_dir_name = preload_dir_name
       @data_dir_name = data_dir_name
+      @lib_dir_name = lib_dir_name
       @loader = Loader.new(
-        index_file_name: @index_file_name, extra_delimiters: @extra_delimiters,
-        preload_dir_name: @preload_dir_name, preload_file_name: @preload_file_name,
+        index_file_name: @index_file_name,
+        preload_dir_name: @preload_dir_name,
+        preload_file_name: @preload_file_name,
         data_dir_name: @data_dir_name,
-        mixin_lookup: @mixin_lookup, template_lookup: @template_lookup,
-        middleware_lookup: @middleware_lookup, middleware_stack: @middleware_stack
+        lib_dir_name: @lib_dir_name,
+        middleware_stack: @middleware_stack,
+        extra_delimiters: @extra_delimiters,
+        mixin_lookup: @mixin_lookup,
+        template_lookup: @template_lookup,
+        middleware_lookup: @middleware_lookup
       )
     end
 
@@ -245,6 +268,7 @@ module Toys
         preload_dir_name: @preload_dir_name,
         preload_file_name: @preload_file_name,
         data_dir_name: @data_dir_name,
+        lib_dir_name: @lib_dir_name,
         middleware_stack: @middleware_stack,
         extra_delimiters: @extra_delimiters,
         mixin_lookup: @mixin_lookup,
@@ -450,6 +474,7 @@ module Toys
                                  require_exact_flag_match: tool.exact_flag_match_required?)
       arg_parser.parse(args).finish
       context = tool.tool_class.new(arg_parser.data)
+      tool.source_info&.apply_lib_paths
       tool.run_initializers(context)
 
       cur_logger = context[Context::Key::LOGGER]

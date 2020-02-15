@@ -7,6 +7,7 @@ Functional changes:
 * ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
 * ADDED: `bundle` method to `Toys::Utils::Gems` that performs bundler install and setup
 * ADDED: `subtool_apply` directive which applies a block to all subtools.
+* ADDED: Add `.lib` directories to the Ruby load path when executing a tool.
 * ADDED: `toys_version?` and `toys_version!` directives that check against version requirements.
 * ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
 * IMPROVED: `long_desc` directive can now read the description from a text file.
@@ -20,11 +21,13 @@ Internal interface changes:
 * ADDED: The `Toys::Middleware::Stack` class represents a stack of middleware specs, and distinguishes the default set from those added afterward.
 * ADDED: `Toys.executable_path` attribute allowing an executable to provide the executable for running tools separately.
 * ADDED: `Toys::CLI` now has a `logger_factory` property, to generate separate loggers per tool execution.
+* ADDED: `Toys::CLI` and `Toys::Loader` now let you set `:lib_dir_name`.
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
 * IMPROVED: `Toys::Utils::Terminal` is now thread-safe.
 * CHANGED: `Toys::Utils::Terminal#styled` is no longer mutable.
 * CHANGED: `Toys::Tool#middleware_stack` renamed to `Toys::Tool#built_middleware` to clarify that it is an array of middleware objects rather than specs.
 * CHANGED: `Toys::CLI.default_logger` removed and replaced with `Toys::CLI.default_logger_factory`. In general, global loggers for CLI are now discouraged because they are not thread-safe.
+* CHANGED: `Toys::Loader` uses an internal monitor rather than including `MonitorMixin`.
 
 ### 0.9.4 / 2020-01-26
 

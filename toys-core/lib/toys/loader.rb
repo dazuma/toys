@@ -29,8 +29,6 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
-    include ::MonitorMixin
-
     ##
     # Create a Loader
     #
@@ -48,6 +46,9 @@ module Toys
     # @param data_dir_name [String,nil] A directory with this name that appears
     #     in any configuration directory is added to the data directory search
     #     path for any tool file in that directory.
+    # @param lib_dir_name [String,nil] A directory with this name that appears
+    #     in any configuration directory is added to the Ruby load path for any
+    #     tool file in that directory.
     # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
     #     middleware that will be used by default for all tools loaded by this
     #     loader.
@@ -61,13 +62,22 @@ module Toys
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil, preload_dir_name: nil, preload_file_name: nil,
-                   data_dir_name: nil, middleware_stack: [], extra_delimiters: "",
-                   mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil)
-      super()
+    def initialize(
+      index_file_name: nil,
+      preload_dir_name: nil,
+      preload_file_name: nil,
+      data_dir_name: nil,
+      lib_dir_name: nil,
+      middleware_stack: [],
+      extra_delimiters: "",
+      mixin_lookup: nil,
+      middleware_lookup: nil,
+      template_lookup: nil
+    )
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
+      @mutex = ::Monitor.new
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
       @middleware_lookup = middleware_lookup || ModuleLookup.new
@@ -75,6 +85,7 @@ module Toys
       @preload_file_name = preload_file_name
       @preload_dir_name = preload_dir_name
       @data_dir_name = data_dir_name
+      @lib_dir_name = lib_dir_name
       @loading_started = false
       @worklist = []
       @tool_data = {}
@@ -95,7 +106,7 @@ module Toys
     #
     def add_path(paths, high_priority: false)
       paths = Array(paths)
-      synchronize do
+      @mutex.synchronize do
         raise "Cannot add a path after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         paths.each do |path|
@@ -121,7 +132,7 @@ module Toys
     #
     def add_block(high_priority: false, name: nil, &block)
       name ||= "(Code block #{block.object_id})"
-      synchronize do
+      @mutex.synchronize do
         raise "Cannot add a block after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         source = SourceInfo.create_proc_root(block, name)
@@ -283,7 +294,7 @@ module Toys
     # @private
     #
     def load_for_prefix(prefix)
-      synchronize do
+      @mutex.synchronize do
         @loading_started = true
         cur_worklist = @worklist
         @worklist = []
@@ -325,7 +336,7 @@ module Toys
     #
     def load_path(parent_source, path, words, remaining_words, priority)
       source = parent_source.absolute_child(path)
-      synchronize do
+      @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
     end
@@ -337,7 +348,7 @@ module Toys
     #
     def load_block(parent_source, block, words, remaining_words, priority)
       source = parent_source.proc_child(block)
-      synchronize do
+      @mutex.synchronize do
         load_proc(source, words, remaining_words, priority)
       end
     end
@@ -360,11 +371,11 @@ module Toys
     private
 
     def tool_data_snapshot
-      synchronize { @tool_data.dup }
+      @mutex.synchronize { @tool_data.dup }
     end
 
     def get_tool_data(words)
-      synchronize { @tool_data[words] ||= ToolData.new(words) }
+      @mutex.synchronize { @tool_data[words] ||= ToolData.new(words) }
     end
 
     ##
@@ -416,15 +427,15 @@ module Toys
 
     def load_index_in(source, words, remaining_words, priority)
       return unless @index_file_name
-      index_source = source.relative_child(@index_file_name, @data_dir_name)
+      index_source = source.relative_child(@index_file_name, @data_dir_name, @lib_dir_name)
       load_relevant_path(index_source, words, remaining_words, priority) if index_source
     end
 
     def load_child_in(source, child, words, remaining_words, priority)
       return if child.start_with?(".") || child == @index_file_name ||
                 child == @preload_file_name || child == @preload_dir_name ||
-                child == @data_dir_name
-      child_source = source.relative_child(child, @data_dir_name)
+                child == @data_dir_name || child == @lib_dir_name
+      child_source = source.relative_child(child, @data_dir_name, @lib_dir_name)
       return unless child_source
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]

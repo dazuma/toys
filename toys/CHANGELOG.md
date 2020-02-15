@@ -5,6 +5,7 @@
 * ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
 * ADDED: `bundler` options in the standard templates, to run those tools in a bundle
 * ADDED: `subtool_apply` directive which applies a block to all subtools.
+* ADDED: Add `.lib` directories to the Ruby load path when executing a tool.
 * ADDED: `toys_version?` and `toys_version!` directives that check against version requirements.
 * ADDED: `exec_separate_tool` and `capture_separate_tool` methods in the `:exec` mixin, to support executing tools in a separate process without forking
 * IMPROVED: `long_desc` directive can now read the description from a text file.

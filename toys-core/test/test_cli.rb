@@ -37,7 +37,7 @@ describe Toys::CLI do
     Toys::CLI.new(
       executable_name: executable_name, logger: logger, middleware_stack: [],
       error_handler: error_handler, index_file_name: ".toys.rb",
-      data_dir_name: ".data", extra_delimiters: ":"
+      data_dir_name: ".data", lib_dir_name: ".lib", extra_delimiters: ":"
     )
   }
 
@@ -183,6 +183,26 @@ describe Toys::CLI do
     it "accesses data from run" do
       cli.loader.add_path(File.join(__dir__, "lookup-cases", "data-finder"))
       assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
+    end
+
+    it "accesses lib directory" do
+      skip unless Toys::Compat.allow_fork?
+      cli.loader.add_path(File.join(__dir__, "lookup-cases", "lib-dirs"))
+      func = proc do
+        puts cli.run("foo")
+      end
+      result = Toys::Utils::Exec.new.capture_proc(func)
+      assert_equal("7\n", result)
+    end
+
+    it "accesses lib directory with overrides" do
+      skip unless Toys::Compat.allow_fork?
+      cli.loader.add_path(File.join(__dir__, "lookup-cases", "lib-dirs"))
+      func = proc do
+        puts cli.run("ns", "bar")
+      end
+      result = Toys::Utils::Exec.new.capture_proc(func)
+      assert_equal("9\n", result)
     end
 
     it "recognizes delimiters" do
