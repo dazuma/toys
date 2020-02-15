@@ -221,6 +221,7 @@ module Toys
           include :terminal
 
           to_run do
+            require "rubygems"
             require "rubygems/package"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               gem_name = template.gem_name

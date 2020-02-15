@@ -1647,6 +1647,7 @@ module Toys
       # @return [Boolean] whether or not the requirements are satisfied
       #
       def toys_version?(*requirements)
+        require "rubygems"
         version = ::Gem::Version.new(Core::VERSION)
         requirement = ::Gem::Requirement.new(*requirements)
         requirement.satisfied_by?(version)
@@ -1662,6 +1663,7 @@ module Toys
       #     satisfy the requirements.
       #
       def toys_version!(*requirements)
+        require "rubygems"
         version = ::Gem::Version.new(Core::VERSION)
         requirement = ::Gem::Requirement.new(*requirements)
         unless requirement.satisfied_by?(version)

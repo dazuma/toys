@@ -67,6 +67,9 @@ Style/IfUnlessModifier:
   Enabled: false
 Style/Next:
   Enabled: false
+Style/NumericLiterals:
+  Exclude:
+    - "lib/toys/compat.rb"
 Style/Semicolon:
   Enabled: false
 Style/StringLiterals:

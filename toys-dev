@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/bin/sh
 
 # Copyright 2019 Daniel Azuma
 #
@@ -20,9 +19,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-;
 
-::ENV["TOYS_DEV"] = "true"
-::ENV["TOYS_CORE_LIB_PATH"] = ::File.absolute_path(::File.join(__dir__, "toys-core", "lib"))
-::ENV["TOYS_BIN_PATH"] = ::File.absolute_path(__FILE__)
-load ::File.join(__dir__, "toys", "bin", "toys")
+dir=$(cd `dirname $0` && pwd)
+export TOYS_DEV=true
+export TOYS_CORE_LIB_PATH="$dir/toys-core/lib"
+export TOYS_BIN_PATH="$dir/toys-dev"
+exec ruby --disable=gems "$dir/toys/bin/toys" "$@"

@@ -44,6 +44,7 @@ tool "update" do
   include :terminal
 
   def run
+    require "rubygems"
     configure_exec(exit_on_nonzero_status: true)
     version_info = spinner(leading_text: "Checking rubygems for the latest release... ",
                            final_text: "Done.\n") do
