@@ -1870,7 +1870,7 @@ The `greeting_helper.rb` file can contain any Ruby code.
     # .toys/.lib/greeting_helper.rb
 
     module GreetingHelper
-      def make_greeting(whom)
+      def self.make_greeting(whom)
         "Hello, #{whom}!"
       end
     end
