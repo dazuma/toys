@@ -1841,15 +1841,102 @@ following in their Toys file:
     require "my_analysis"
     expand MyAnalysis::ToysTemplate
 
-### Preloading Ruby files
+### Loading from a lib directory
 
 For more complicated tools, you might want to write normal Ruby modules and
 classes as helpers. Toys provides a way to write Ruby code outside of its DSL
-and incorporate it into your tool definitions, using "preloaded" files.
+and `require` the code from your tool, using `.lib` directories.
 
-A preloaded file is loaded using the standard Ruby `require` mechanism, before
-tools are defined. You can use such files to define Ruby classes, modules, and
-other code that may be used and shared by your tools.
+To use `.lib` directories, you must define your tools inside a
+[Toys directory](#Toys_directories). When a tool is executed, it looks for
+directories called `.lib` in the Toys directory, and adds them to the Ruby load
+path. Your tool can thus call `require` to load helpers from any Ruby files in
+a `.lib` directory.
+
+For example, take the following directory structure:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .lib/   <-- available when a tool is executed
+       |  |
+       |  +- greeting_helper.rb
+       |
+       +- greet.rb
+
+The `greeting_helper.rb` file can contain any Ruby code.
+
+    # .toys/.lib/greeting_helper.rb
+
+    module GreetingHelper
+      def self.make_greeting(whom)
+        "Hello, #{whom}!"
+      end
+    end
+
+Now you can `require "greeting_helper"` in your `greet` tool.
+
+    # .toys/greet.rb
+
+    tool "greet" do
+      optional_arg :whom, default: "world", desc: "Whom to greet."
+      def run
+        require "greeting_helper"
+        puts GreetingHelper.make_greeting(whom)
+      end
+    end
+
+Note that `.lib` directories are available only when your tool is being *run*,
+not when it is being defined. So any `require` statements should be located
+*inside* your `run` method.
+
+    tool "greet" do
+      # Do not try to require the file here. Toys will not find it because
+      # the tool is not yet being run.
+      # require "greeting_helper"  # ERRORS!
+
+      optional_arg :whom, default: "world", desc: "Whom to greet."
+      def run
+        # Require a helper file here, so it is loaded during tool execution.
+        require "greeting_helper"
+        # Now you can use classes defined in the helper
+        puts GreetingHelper.make_greeting(whom)
+      end
+    end
+
+If your Toys directory has subdirectories, lib directories will be prioritized
+by how close they are to the tool being executed. For example:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- .lib/   <-- available when any tool defined in this directory
+       |  |           is executed
+       |  |
+       |  +- helper.rb   <-- visible to "greet" but not "test unit"
+       |  |
+       |  +- helper2.rb   <-- visible to both "greet" and "test unit"
+       |
+       +- greet.rb
+       |
+       +- test/
+          |
+          +- .lib/   <-- available only when tools under "test" are executed
+          |  |
+          |  +- helper.rb   <-- overrides the other helper.rb when
+          |                     "test unit" is executed
+          |
+          +- unit.rb
+
+### Preloading Ruby files
+
+You may also provide Ruby files that are "preloaded" before tools are defined.
+This is useful if those Ruby files are required by the tool definitions
+themselves. Like files in the `.lib` directory, preloaded files can define Ruby
+classes, modules, and other code. But preloaded files *automatically* loaded
+(i.e. you do not `require` them explicitly) *before* your tools are defined.
 
 To use preloaded files, you must define your tools inside a
 [Toys directory](#Toys_directories). Before any tools inside a directory are

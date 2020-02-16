@@ -325,8 +325,7 @@ describe Toys::Loader do
 
   describe "with data directory" do
     let(:finding_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb",
-                       data_dir_name: ".data")
+      Toys::Loader.new(index_file_name: ".toys.rb", data_dir_name: ".data")
     }
 
     before do

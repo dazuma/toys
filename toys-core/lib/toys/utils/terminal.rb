@@ -457,7 +457,7 @@ module Toys
         include ::MonitorMixin
 
         def initialize(terminal, frames, style, frame_length)
-          super()
+          @mutex = ::Monitor.new
           @terminal = terminal
           @frames = frames.map do |f|
             [@terminal.apply_styles(f, *style), Terminal.remove_style_escapes(f).size]
@@ -470,7 +470,7 @@ module Toys
         end
 
         def stop
-          synchronize do
+          @mutex.synchronize do
             @stopping = true
             @cond.broadcast
           end
@@ -482,7 +482,7 @@ module Toys
 
         def start_thread
           ::Thread.new do
-            synchronize do
+            @mutex.synchronize do
               until @stopping
                 @terminal.write(@frames[@cur_frame][0])
                 @cond.wait(@frame_length)

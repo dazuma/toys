@@ -73,13 +73,11 @@ module Toys
       end
     end
 
-    include ::MonitorMixin
-
     ##
     # Create an empty ModuleLookup
     #
     def initialize
-      super()
+      @mutex = ::Monitor.new
       @paths = []
       @paths_locked = false
     end
@@ -96,7 +94,7 @@ module Toys
     #
     def add_path(path_base, module_base: nil, high_priority: false)
       module_base ||= ModuleLookup.path_to_module(path_base)
-      synchronize do
+      @mutex.synchronize do
         raise "You cannot add a path after a lookup has already occurred." if @paths_locked
         if high_priority
           @paths.unshift([path_base, module_base])
@@ -114,7 +112,7 @@ module Toys
     # @return [Module] The specified module
     #
     def lookup(name)
-      synchronize do
+      @mutex.synchronize do
         @paths_locked = true
         @paths.each do |path_base, module_base|
           path = "#{path_base}/#{ModuleLookup.to_path_name(name)}"
