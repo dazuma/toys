@@ -21,6 +21,8 @@
 # IN THE SOFTWARE.
 ;
 
+require "rbconfig"
+
 module Toys
   ##
   # Compatibility wrappers for older Ruby versions.
@@ -42,9 +44,16 @@ module Toys
 
     # @private
     def self.supports_suggestions?
-      require "rubygems"
-      require "did_you_mean" rescue nil # rubocop:disable Style/RescueModifier
-      defined?(::DidYouMean::SpellChecker)
+      unless defined?(@supports_suggestions)
+        require "rubygems"
+        begin
+          require "did_you_mean"
+          @supports_suggestions = defined?(::DidYouMean::SpellChecker)
+        rescue ::LoadError
+          @supports_suggestions = false
+        end
+      end
+      @supports_suggestions
     end
 
     # @private

@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "logger"
-
 module Toys
   ##
   # This is the base class for tool execution. It represents `self` when your

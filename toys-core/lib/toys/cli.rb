@@ -21,6 +21,7 @@
 # IN THE SOFTWARE.
 ;
 
+require "rbconfig"
 require "logger"
 require "toys/completion"
 
