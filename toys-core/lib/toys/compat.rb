@@ -21,57 +21,59 @@
 # IN THE SOFTWARE.
 ;
 
+require "rbconfig"
+
 module Toys
   ##
   # Compatibility wrappers for older Ruby versions.
   # @private
   #
   module Compat
-    ## @private
-    CURRENT_VERSION = ::Gem::Version.new(::RUBY_VERSION)
+    parts = ::RUBY_VERSION.split(".")
+    ruby_version = parts[0].to_i * 10000 + parts[1].to_i * 100 + parts[2].to_i
 
-    ## @private
-    def self.check_minimum_version(version)
-      CURRENT_VERSION >= ::Gem::Version.new(version)
-    end
-
-    ## @private
+    # @private
     def self.jruby?
       ::RUBY_PLATFORM == "java"
     end
 
-    ## @private
+    # @private
     def self.allow_fork?
-      !jruby? && RbConfig::CONFIG["host_os"] !~ /mswin/
+      !jruby? && ::RbConfig::CONFIG["host_os"] !~ /mswin/
     end
 
-    ## @private
+    # @private
     def self.supports_suggestions?
-      defined?(::DidYouMean::SpellChecker)
+      unless defined?(@supports_suggestions)
+        require "rubygems"
+        begin
+          require "did_you_mean"
+          @supports_suggestions = defined?(::DidYouMean::SpellChecker)
+        rescue ::LoadError
+          @supports_suggestions = false
+        end
+      end
+      @supports_suggestions
     end
 
-    # Check for DidYouMean::SpellChecker
-    if supports_suggestions?
-      ## @private
-      def self.suggestions(word, list)
+    # @private
+    def self.suggestions(word, list)
+      if supports_suggestions?
         ::DidYouMean::SpellChecker.new(dictionary: list).correct(word)
-      end
-    else
-      ## @private
-      def self.suggestions(_word, _list)
+      else
         []
       end
     end
 
     # In Ruby < 2.4, some objects such as nil cannot be cloned.
-    if check_minimum_version("2.4.0")
-      ## @private
+    if ruby_version >= 20400
+      # @private
       def self.merge_clones(hash, orig)
         orig.each { |k, v| hash[k] = v.clone }
         hash
       end
     else
-      ## @private
+      # @private
       def self.merge_clones(hash, orig)
         orig.each do |k, v|
           hash[k] =
@@ -86,13 +88,13 @@ module Toys
     end
 
     # The :base argument to Dir.glob requires Ruby 2.5 or later.
-    if check_minimum_version("2.5.0")
-      ## @private
+    if ruby_version >= 20500
+      # @private
       def self.glob_in_dir(glob, dir)
         ::Dir.glob(glob, base: dir)
       end
     else
-      ## @private
+      # @private
       def self.glob_in_dir(glob, dir)
         ::Dir.chdir(dir) { ::Dir.glob(glob) }
       end
@@ -100,13 +102,13 @@ module Toys
 
     # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
     # initialize will fail if there are no formal keyword args.
-    if check_minimum_version("2.7.0")
-      ## @private
+    if ruby_version >= 20700
+      # @private
       def self.instantiate(klass, args, kwargs, block)
         klass.new(*args, **kwargs, &block)
       end
     else
-      ## @private
+      # @private
       def self.instantiate(klass, args, kwargs, block)
         formals = klass.instance_method(:initialize).parameters
         if kwargs.empty? && formals.all? { |arg| arg.first != :key && arg.first != :keyrest }

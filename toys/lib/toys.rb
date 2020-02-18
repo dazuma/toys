@@ -28,8 +28,14 @@ require "toys/version"
 # We prepend to $LOAD_PATH directly rather than calling Kernel.gem, so that we
 # don't get clobbered in case someone sets up bundler later.
 ::ENV["TOYS_CORE_LIB_PATH"] ||= begin
-  dep = Gem::Dependency.new("toys-core", "= #{::Toys::VERSION}")
-  dep.to_spec.full_require_paths.first
+  path = ::File.expand_path("../../toys-core-#{::Toys::VERSION}/lib", __dir__)
+  unless path && ::File.directory?(path)
+    require "rubygems"
+    dep = ::Gem::Dependency.new("toys-core", "= #{::Toys::VERSION}")
+    path = dep.to_spec.full_require_paths.first
+  end
+  abort "Unable to find toys-core gem!" unless path && ::File.directory?(path)
+  path
 end
 $LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
 

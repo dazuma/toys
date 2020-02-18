@@ -23,6 +23,8 @@
 
 require "helper"
 
+require "toys/utils/exec"
+
 describe Toys::CLI do
   let(:logger_io) { ::StringIO.new }
   let(:logger) {

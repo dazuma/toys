@@ -22,6 +22,7 @@
 ;
 
 require "monitor"
+require "rubygems"
 
 module Toys
   module Utils

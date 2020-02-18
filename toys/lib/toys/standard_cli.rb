@@ -21,8 +21,6 @@
 # IN THE SOFTWARE.
 ;
 
-require "logger"
-
 module Toys
   ##
   # Subclass of `Toys::CLI` configured for the behavior of the standard Toys
