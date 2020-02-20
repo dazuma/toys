@@ -454,8 +454,6 @@ module Toys
 
       ## @private
       class SpinDriver
-        include ::MonitorMixin
-
         def initialize(terminal, frames, style, frame_length)
           @mutex = ::Monitor.new
           @terminal = terminal
@@ -465,7 +463,7 @@ module Toys
           @frame_length = frame_length
           @cur_frame = 0
           @stopping = false
-          @cond = new_cond
+          @cond = @mutex.new_cond
           @thread = @terminal.output.tty? ? start_thread : nil
         end
 
