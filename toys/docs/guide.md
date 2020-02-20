@@ -2075,7 +2075,7 @@ to include the bundle in all your tools. For example:
       # This tool will run with the bundle
       # ...
     end
-    
+
     tool "another-tool" do
       # So will this tool
       # ...
@@ -2651,7 +2651,7 @@ Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
 
 Sometimes a group of tools are set up similarly or share a set of flags,
 mixins, or other directives. You can apply a set of directives to all subtools
-(recursively) of the current tool, using the 
+(recursively) of the current tool, using the
 [Toys::DSL::Tool#subtool_apply](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#subtool_apply-instance_method)
 directive.
 

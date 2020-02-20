@@ -96,7 +96,7 @@ automatically generates a full help screen, which you can view using the
 Toys searches up the directory hierarchy for Toys files. So it will find this
 `.toys.rb` if you are located in this directory or any subdirectory. It will
 also read multiple files if it finds them, so you can "scope" your tools more
-specifically or generally by locating them in your directory hierarchy. 
+specifically or generally by locating them in your directory hierarchy.
 
 If you want to define "global" tools that apply anywhere, write a Toys file
 either in your home directory, or in the system configuration directory
@@ -209,7 +209,7 @@ You'll notice some diagnostic log output. Toys provides a standard Ruby Logger
 for each tool, and you can use it to emit diagnostic logs directly as
 demonstrated in the example. Some other Toys features might also emit log
 entries: the `:exec` mixin, for example, by default logs every external command
-it runs (although this can be customized). 
+it runs (although this can be customized).
 
 By default, only warnings and higher severity logs are displayed, but you can
 change that by applying the `--verbose` or `--quiet` flags as we have done
