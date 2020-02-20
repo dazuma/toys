@@ -74,7 +74,7 @@ use to write Toys files. You could point your executable at a directory
 containing actual Toys files, but the simplest option is to provide the
 information to the Toys CLI object in a block.
 
-Let's add some functionality. 
+Let's add some functionality.
 
     #!/usr/bin/env ruby
 
@@ -150,7 +150,7 @@ available tools.
     $ ./mycmd
 
 Notice that the description set at the "root" of the config block (outside the
-tool blocks) shows up here.     
+tool blocks) shows up here.
 
 ### Configuring the CLI
 
