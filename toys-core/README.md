@@ -338,7 +338,7 @@ templates, and middleware, in the
 
 ## License
 
-Copyright 2019 Daniel Azuma
+Copyright 2019-2020 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -42,12 +42,6 @@ Style/BracesAroundHashParameters:
   Enabled: false
 Style/CaseEquality:
   Enabled: false
-Style/Copyright:
-  Enabled: true
-  Exclude:
-    - "test/lookup-cases/**/*"
-    - "examples/**/*"
-  Notice: 'Copyright \d{4} Daniel Azuma'
 Style/Documentation:
   Exclude:
     - "test/**/*"
@@ -70,8 +64,6 @@ Style/Next:
 Style/NumericLiterals:
   Exclude:
     - "lib/toys/compat.rb"
-Style/Semicolon:
-  Enabled: false
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 Style/SymbolArray:
