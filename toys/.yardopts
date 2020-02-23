@@ -3,7 +3,8 @@
 --markup=markdown
 --markup-provider redcarpet
 --main=README.md
-./lib/**/*.rb
+./lib/toys/**/*.rb
+./lib/toys.rb
 -
 README.md
 LICENSE.md

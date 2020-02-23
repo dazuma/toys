@@ -40,14 +40,6 @@ Metrics/PerceivedComplexity:
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
-Style/Copyright:
-  Enabled: true
-  Exclude:
-    - "test/doc-case/**/*"
-    - "test/minitest-cases/**/*"
-    - "test/rake-dirs/**/*"
-    - "test/rspec-cases/**/*"
-  Notice: 'Copyright \d{4} Daniel Azuma'
 Style/Documentation:
   Exclude:
     - "test/**/*"
@@ -60,8 +52,6 @@ Style/DocumentationMethod:
 Style/GuardClause:
   Enabled: false
 Style/IfUnlessModifier:
-  Enabled: false
-Style/Semicolon:
   Enabled: false
 Style/StringLiterals:
   EnforcedStyle: double_quotes
