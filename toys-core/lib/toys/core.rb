@@ -9,7 +9,7 @@ module Toys
     # Current version of Toys core.
     # @return [String]
     #
-    VERSION = "0.10.0"
+    VERSION = "0.11.0.dev"
   end
 
   ## @private deprecated

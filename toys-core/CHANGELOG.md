@@ -1,5 +1,7 @@
 # Release History
 
+### master
+
 ### 0.10.0 / 2020-02-24
 
 Functional changes:
