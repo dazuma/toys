@@ -1,6 +1,6 @@
 # Release History
 
-### 0.10.0 / unreleased
+### 0.10.0 / 2020-02-24
 
 Functional changes:
 
@@ -22,6 +22,7 @@ Internal interface changes:
 * ADDED: `Toys.executable_path` attribute allowing an executable to provide the executable for running tools separately.
 * ADDED: `Toys::CLI` now has a `logger_factory` property, to generate separate loggers per tool execution.
 * ADDED: `Toys::CLI` and `Toys::Loader` now let you set `:lib_dir_name`.
+* IMPROVED: Toys-core no longer has a general dependency on rubygems. (Parts that do depend on rubygems, such as the `:gems` mixin, do an explicit `require "rubygems"`.) This makes it possible to write an executable with `ruby --disable=gems` which improves startup time.
 * IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.
 * IMPROVED: `Toys::Utils::Terminal` is now thread-safe.
 * CHANGED: `Toys::Utils::Terminal#styled` is no longer mutable.

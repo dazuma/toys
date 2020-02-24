@@ -1,6 +1,6 @@
 # Release History
 
-### 0.10.0 / unreleased
+### 0.10.0 / 2020-02-24
 
 * ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
 * ADDED: `bundler` options in the standard templates, to run those tools in a bundle
