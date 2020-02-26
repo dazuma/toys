@@ -66,7 +66,7 @@ def push_docs(version)
     exec(["git", "config", "user.email", user_email]) if user_email
     exec(["git", "config", "user.name", user_name]) if user_name
     exec(["git", "add", "."])
-    exec(["git", "commit", "-m", "Generate yardocs for version #{version} [ci skip]"])
+    exec(["git", "commit", "-m", "Generate yardocs for version #{version}"])
     exec(["git", "push", "origin", "gh-pages"])
   end
   puts("SUCCESS: Pushed docs for version #{version}.", :green, :bold)
