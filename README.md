@@ -1,7 +1,7 @@
 # Toys
 
 [![Gem Version](https://badge.fury.io/rb/toys.svg)](https://badge.fury.io/rb/toys)
-[![CircleCI](https://circleci.com/gh/dazuma/toys/tree/master.svg?style=svg)](https://circleci.com/gh/dazuma/toys/tree/master)
+[![Documentation](https://img.shields.io/badge/docs-Toys-red.svg)](https://dazuma.github.io/toys/gems/toys/latest)
 
 Toys is a configurable command line tool. Write commands in Ruby using a simple
 DSL, and Toys will provide the command line executable and take care of all the

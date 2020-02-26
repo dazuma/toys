@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-desc "Pushes docs to gh-pages"
+desc "Pushes docs to gh-pages from the local checkout"
 
 flag :tmp_dir, default: "tmp"
 flag :default, "--[no-]default", default: true

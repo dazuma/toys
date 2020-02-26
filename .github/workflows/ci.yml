@@ -1,0 +1,63 @@
+name: Toys CI
+
+on:
+  push:
+    branches:
+      - master
+      - "stable-[0-9]+.[0-9]+"
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - master
+      - "stable-[0-9]+.[0-9]+"
+
+jobs:
+
+  test:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", jruby ]
+        include:
+          - os: ubuntu-latest
+            ruby: "2.7"
+            tool: "ci"
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Ruby ${{ matrix.ruby }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Run ${{ matrix.tool || 'test' }}
+        run: "./toys-dev do ci init , ${{ matrix.tool || 'test' }} < /dev/null"
+
+  release:
+    env:
+      ruby_version: "2.7"
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Ruby ${{ env.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.ruby_version }}
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: "gh-pages"
+          path: "tmp"
+      - name: Perform release
+        run: |
+          ./toys-dev _perform_release \
+            --enable-releases="${{ secrets.ENABLE_RELEASES }}" \
+            --api-key="${{ secrets.RUBYGEMS_API_KEY }}" \
+            --user-name="${{ secrets.GIT_USER_NAME }}" \
+            --user-email="${{ secrets.GIT_USER_EMAIL }}" \
+            --gh-pages-dir=tmp
