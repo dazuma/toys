@@ -2,6 +2,8 @@
 
 ### master
 
+* FIXED: Setting `:exit_on_nonzero_status` explicitly to false now works as expected.
+
 ### 0.10.0 / 2020-02-24
 
 * ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
