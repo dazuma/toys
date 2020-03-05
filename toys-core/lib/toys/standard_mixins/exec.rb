@@ -432,35 +432,43 @@ module Toys
 
       ## @private
       def self._setup_exec_opts(opts, context)
+        count = 0
+        result_callback = nil
         if opts.key?(:result_callback)
-          opts = _setup_result_callback_option(opts, context)
+          result_callback = _interpret_result_callback(opts[:result_callback], context)
+          count += 1
         end
-        if opts.key?(:exit_on_nonzero_status) || opts.key?(:e)
-          opts = _setup_e_option(opts, context)
+        [:exit_on_nonzero_status, :e].each do |sym|
+          if opts.key?(sym)
+            result_callback = _interpret_e(opts[sym], context)
+            count += 1
+            opts = opts.reject { |k, _v| k == sym }
+          end
         end
+        if count > 1
+          raise ::ArgumentError,
+                "You can provide at most one of: result_callback, exit_on_nonzero_status, e"
+        end
+        opts = opts.merge(result_callback: result_callback) if count == 1
         opts
       end
 
       ## @private
-      def self._setup_e_option(opts, context)
-        e_options = [:exit_on_nonzero_status, :e]
-        if e_options.any? { |k| opts[k] }
-          result_callback = proc { |r| context.exit(r.exit_code) if r.error? }
-          opts = opts.merge(result_callback: result_callback)
-        end
-        opts.reject { |k, _v| e_options.include?(k) }
+      def self._interpret_e(value, context)
+        value ? proc { |r| context.exit(r.exit_code) if r.error? } : nil
       end
 
       ## @private
-      def self._setup_result_callback_option(opts, context)
-        orig_callback = opts[:result_callback]
-        result_callback =
-          if orig_callback.is_a?(::Symbol)
-            context.method(orig_callback)
-          elsif orig_callback.respond_to?(:call)
-            proc { |r| orig_callback.call(r, context) }
-          end
-        opts.merge(result_callback: result_callback)
+      def self._interpret_result_callback(value, context)
+        if value.is_a?(::Symbol)
+          context.method(value)
+        elsif value.respond_to?(:call)
+          proc { |r| value.call(r, context) }
+        elsif value.nil?
+          nil
+        else
+          raise ::ArgumentError, "Bad value for result_callback"
+        end
       end
 
       ## @private

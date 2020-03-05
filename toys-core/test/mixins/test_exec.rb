@@ -211,6 +211,20 @@ describe Toys::StandardMixins::Exec do
     refute_equal(0, cli.run("foo"))
   end
 
+  it "configures e" do
+    cli.add_config_block do
+      tool "foo" do
+        include :exec
+        def run
+          configure_exec(e: true)
+          exec(["false"])
+          exit(0)
+        end
+      end
+    end
+    refute_equal(0, cli.run("foo"))
+  end
+
   it "handles a proc as a result callback" do
     cli.add_config_block do
       tool "foo" do
@@ -272,6 +286,18 @@ describe Toys::StandardMixins::Exec do
         end
       end
       refute_equal(0, cli.run("foo"))
+    end
+
+    it "supports override of exit_on_nonzero_status" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          def run
+            exec(["false"], exit_on_nonzero_status: false)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
     end
 
     it "supports a proc as a result_callback" do
