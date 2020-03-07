@@ -16,48 +16,39 @@ module Toys
     # This class is not loaded by default. Before using it directly, you should
     # `require "toys/utils/exec"`
     #
-    # ## Configuration options
+    # ## Features
     #
-    # A variety of options can be used to control subprocesses. These include:
+    # ### Controlling processes
     #
-    #  *  `:name` (Object) An optional object that can be used to identify this
-    #     subprocess. It is available in the controller and result objects.
-    #  *  `:env` (Hash) Environment variables to pass to the subprocess
-    #  *  `:logger` (Logger) Logger to use for logging the actual command. If
-    #     not present, the command is not logged.
-    #  *  `:log_level` (Integer,false) Level for logging the actual command.
-    #     Defaults to Logger::INFO if not present. You may also pass `false` to
-    #     disable logging of the command.
-    #  *  `:log_cmd` (String) The string logged for the actual command.
-    #     Defaults to the `inspect` representation of the command.
-    #  *  `:background` (Boolean) Runs the process in the background, returning
-    #     a controller object instead of a result object.
-    #  *  `:result_callback` (Proc) Called and passed the result object when a
-    #     subprocess exits.
-    #  *  `:in` Connects the input stream of the subprocess. See the section on
-    #     stream handling.
-    #  *  `:out` Connects the standard output stream of the subprocess. See the
-    #     section on stream handling.
-    #  *  `:err` Connects the standard error stream of the subprocess. See the
-    #     section on stream handling.
+    # A process can be started in the *foreground* or the *background*. If you
+    # start a foreground process, it will "take over" your standard input and
+    # output streams by default, and it will keep control until it completes.
+    # If you start a background process, its streams will be redirected to null
+    # by default, and control will be returned to you immediately.
     #
-    # In addition, the following options recognized by `Process#spawn` are
-    # supported.
+    # When a process is running, you can control it using a
+    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
+    # the process's input and output streams, send it signals, or wait for it
+    # to complete.
     #
-    #  *  `:chdir`
-    #  *  `:close_others`
-    #  *  `:new_pgroup`
-    #  *  `:pgroup`
-    #  *  `:umask`
-    #  *  `:unsetenv_others`
+    # When running a process in the foreground, the controller will be yielded
+    # to an optional block. For example, the following code starts a process in
+    # the foreground and passes its output stream to a controller.
     #
-    # Any other options are ignored.
+    #     exec_service.exec(["git", "init"], out: :controller) do |controller|
+    #       loop do
+    #         line = controller.out.gets
+    #         break if line.nil?
+    #         puts "Got line: #{line}"
+    #       end
+    #     end
     #
-    # Configuration options may be provided to any method that starts a
-    # subprocess. You may also modify default values by calling
-    # {Toys::Utils::Exec#configure_defaults}.
+    # When running a process in the background, the controller is returned from
+    # the method that starts the process:
     #
-    # ## Stream handling
+    #     controller = exec_service.exec(["git", "init"], background: true)
+    #
+    # ### Stream handling
     #
     # By default, subprocess streams are connected to the corresponding streams
     # in the parent process. You can change this behavior, redirecting streams
@@ -74,16 +65,16 @@ module Toys
     # Following is a full list of the stream handling options, along with how
     # to specify them using the `:in`, `:out`, and `:err` options.
     #
-    #  *  **Close the stream:** You may close the stream by passing `:close` as
-    #     the option value. This is the same as passing `:close` to
-    #     `Process#spawn`.
+    #  *  **Inherit parent stream:** You may inherit the corresponding stream
+    #     in the parent process by passing `:inherit` as the option value. This
+    #     is the default if the subprocess is *not* run in the background.
     #  *  **Redirect to null:** You may redirect to a null stream by passing
     #     `:null` as the option value. This connects to a stream that is not
     #     closed but contains no data, i.e. `/dev/null` on unix systems. This
     #     is the default if the subprocess is run in the background.
-    #  *  **Inherit parent stream:** You may inherit the corresponding stream
-    #     in the parent process by passing `:inherit` as the option value. This
-    #     is the default if the subprocess is *not* run in the background.
+    #  *  **Close the stream:** You may close the stream by passing `:close` as
+    #     the option value. This is the same as passing `:close` to
+    #     `Process#spawn`.
     #  *  **Redirect to a file:** You may redirect to a file. This reads from
     #     an existing file when connected to `:in`, and creates or appends to a
     #     file when connected to `:out` or `:err`. To specify a file, use the
@@ -113,6 +104,104 @@ module Toys
     #     yields the {Toys::Utils::Exec::Controller}, giving you access to
     #     streams.
     #
+    # ### Result handling
+    #
+    # A subprocess result is represented by a {Toys::Utils::Exec::Result}
+    # object, which includes the exit code, the content of any captured output
+    # streams, and any exeption raised when attempting to run the process.
+    # When you run a process in the foreground, the method will return a result
+    # object. When you run a process in the background, you can obtain the
+    # result from the controller once the process completes.
+    #
+    # The following example demonstrates running a process in the foreground
+    # and getting the exit code:
+    #
+    #     result = exec_service.exec(["git", "init"])
+    #     puts "exit code: #{result.exit_code}"
+    #
+    # The following example demonstrates starting a process in the background,
+    # waiting for it to complete, and getting its exit code:
+    #
+    #     controller = exec_service.exec(["git", "init"], background: true)
+    #     result = controller.result(timeout: 1.0)
+    #     if result
+    #       puts "exit code: #{result.exit_code}"
+    #     else
+    #       puts "timed out"
+    #     end
+    #
+    # You can also provide a callback that is executed once a process
+    # completes. For example:
+    #
+    #     my_callback = proc do |result|
+    #       puts "exit code: #{result.exit_code}"
+    #     end
+    #     exec_service.exec(["git", "init"], result_callback: my_callback)
+    #
+    # ## Configuration options
+    #
+    # A variety of options can be used to control subprocesses. These can be
+    # provided to any method that starts a subprocess. Youc an also set
+    # defaults by calling {Toys::Utils::Exec#configure_defaults}.
+    #
+    # Options that affect the behavior of subprocesses:
+    #
+    #  *  `:env` (Hash) Environment variables to pass to the subprocess.
+    #     Keys represent variable names and should be strings. Values should be
+    #     either strings or `nil`, which unsets the variable.
+    #
+    #  *  `:background` (Boolean) Runs the process in the background if `true`.
+    #
+    #  *  `:result_callback` (Proc) Called and passed the result object when
+    #     the subprocess exits.
+    #
+    # Options for connecting input and output streams. See the section above on
+    # stream handling for info on the values that can be passed.
+    #
+    #  *  `:in` Connects the input stream of the subprocess. See the section on
+    #     stream handling.
+    #
+    #  *  `:out` Connects the standard output stream of the subprocess. See the
+    #     section on stream handling.
+    #
+    #  *  `:err` Connects the standard error stream of the subprocess. See the
+    #     section on stream handling.
+    #
+    # Options related to logging and reporting:
+    #
+    #  *  `:logger` (Logger) Logger to use for logging the actual command. If
+    #     not present, the command is not logged.
+    #
+    #  *  `:log_level` (Integer,false) Level for logging the actual command.
+    #     Defaults to Logger::INFO if not present. You may also pass `false` to
+    #     disable logging of the command.
+    #
+    #  *  `:log_cmd` (String) The string logged for the actual command.
+    #     Defaults to the `inspect` representation of the command.
+    #
+    #  *  `:name` (Object) An optional object that can be used to identify this
+    #     subprocess. It is available in the controller and result objects.
+    #
+    # In addition, the following options recognized by
+    # [`Process#spawn`](https://ruby-doc.org/core/Process.html#method-c-spawn)
+    # are supported.
+    #
+    #  *  `:chdir` (String) Set the working directory for the command.
+    #
+    #  *  `:close_others` (Boolean) Whether to close non-redirected
+    #     non-standard file descriptors.
+    #
+    #  *  `:new_pgroup` (Boolean) Create new process group (Windows only).
+    #
+    #  *  `:pgroup` (Integer,true,nil) The process group setting.
+    #
+    #  *  `:umask` (Integer) Umask setting for the new process.
+    #
+    #  *  `:unsetenv_others` (Boolean) Clear environment variables except those
+    #     explicitly set.
+    #
+    # Any other option key will result in an `ArgumentError`.
+    #
     class Exec
       ##
       # Create an exec service.
@@ -120,14 +209,16 @@ module Toys
       # @param block [Proc] A block that is called if a key is not found. It is
       #     passed the unknown key, and expected to return a default value
       #     (which can be nil).
-      # @param opts [keywords] Initial default options.
+      # @param opts [keywords] Initial default options. See {Toys::Utils::Exec}
+      #     for a description of the options.
       #
       def initialize(**opts, &block)
         @default_opts = Opts.new(&block).add(opts)
       end
 
       ##
-      # Set default options
+      # Set default options. See {Toys::Utils::Exec} for a description of the
+      # options.
       #
       # @param opts [keywords] New default options to set
       # @return [self]
@@ -146,7 +237,7 @@ module Toys
       #
       # @param cmd [String,Array<String>] The command to execute.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -179,7 +270,7 @@ module Toys
       #
       # @param args [String,Array<String>] The arguments to ruby.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -204,7 +295,7 @@ module Toys
       #
       # @param func [Proc] The proc to call.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -231,7 +322,7 @@ module Toys
       #
       # @param cmd [String,Array<String>] The command to execute.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -253,7 +344,7 @@ module Toys
       #
       # @param args [String,Array<String>] The arguments to ruby.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -275,7 +366,7 @@ module Toys
       #
       # @param func [Proc] The proc to call.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
@@ -295,7 +386,7 @@ module Toys
       #
       # @param cmd [String] The shell command to execute.
       # @param opts [keywords] The command options. See the section on
-      #     configuration options in the {Toys::Utils::Exec} module docs.
+      #     configuration options in the {Toys::Utils::Exec} class docs.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
