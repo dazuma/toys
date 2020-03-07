@@ -16,54 +16,211 @@ module Toys
     # This is a frontend for {Toys::Utils::Exec}. More information is
     # available in that class's documentation.
     #
+    # ## Features
+    #
+    # ### Controlling processes
+    #
+    # A process can be started in the *foreground* or the *background*. If you
+    # start a foreground process, it will "take over" your standard input and
+    # output streams by default, and it will keep control until it completes.
+    # If you start a background process, its streams will be redirected to null
+    # by default, and control will be returned to you immediately.
+    #
+    # When a process is running, you can control it using a
+    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
+    # the process's input and output streams, send it signals, or wait for it
+    # to complete.
+    #
+    # When running a process in the foreground, the controller will be yielded
+    # to an optional block. For example, the following code starts a process in
+    # the foreground and passes its output stream to a controller.
+    #
+    #     exec(["git", "init"], out: :controller) do |controller|
+    #       loop do
+    #         line = controller.out.gets
+    #         break if line.nil?
+    #         puts "Got line: #{line}"
+    #       end
+    #     end
+    #
+    # When running a process in the background, the controller is returned from
+    # the method that starts the process:
+    #
+    #     controller = exec_service.exec(["git", "init"], background: true)
+    #
+    # ### Stream handling
+    #
+    # By default, subprocess streams are connected to the corresponding streams
+    # in the parent process. You can change this behavior, redirecting streams
+    # or providing ways to control them, using the `:in`, `:out`, and `:err`
+    # options.
+    #
+    # Three general strategies are available for custom stream handling. First,
+    # you may redirect to other streams such as files, IO objects, or Ruby
+    # strings. Some of these options map directly to options provided by the
+    # `Process#spawn` method. Second, you may use a controller to manipulate
+    # the streams programmatically. Third, you may capture output stream data
+    # and make it available in the result.
+    #
+    # Following is a full list of the stream handling options, along with how
+    # to specify them using the `:in`, `:out`, and `:err` options.
+    #
+    #  *  **Inherit parent stream:** You may inherit the corresponding stream
+    #     in the parent process by passing `:inherit` as the option value. This
+    #     is the default if the subprocess is *not* run in the background.
+    #  *  **Redirect to null:** You may redirect to a null stream by passing
+    #     `:null` as the option value. This connects to a stream that is not
+    #     closed but contains no data, i.e. `/dev/null` on unix systems. This
+    #     is the default if the subprocess is run in the background.
+    #  *  **Close the stream:** You may close the stream by passing `:close` as
+    #     the option value. This is the same as passing `:close` to
+    #     `Process#spawn`.
+    #  *  **Redirect to a file:** You may redirect to a file. This reads from
+    #     an existing file when connected to `:in`, and creates or appends to a
+    #     file when connected to `:out` or `:err`. To specify a file, use the
+    #     setting `[:file, "/path/to/file"]`. You may also, when writing a
+    #     file, append an optional mode and permission code to the array. For
+    #     example, `[:file, "/path/to/file", "a", 0644]`.
+    #  *  **Redirect to an IO object:** You may redirect to an IO object in the
+    #     parent process, by passing the IO object as the option value. You may
+    #     use any IO object. For example, you could connect the child's output
+    #     to the parent's error using `out: $stderr`, or you could connect to
+    #     an existing File stream. Unlike `Process#spawn`, this works for IO
+    #     objects that do not have a corresponding file descriptor (such as
+    #     StringIO objects). In such a case, a thread will be spawned to pipe
+    #     the IO data through to the child process.
+    #  *  **Combine with another child stream:** You may redirect one child
+    #     output stream to another, to combine them. To merge the child's error
+    #     stream into its output stream, use `err: [:child, :out]`.
+    #  *  **Read from a string:** You may pass a string to the input stream by
+    #     setting `[:string, "the string"]`. This works only for `:in`.
+    #  *  **Capture output stream:** You may capture a stream and make it
+    #     available on the {Toys::Utils::Exec::Result} object, using the
+    #     setting `:capture`. This works only for the `:out` and `:err`
+    #     streams.
+    #  *  **Use the controller:** You may hook a stream to the controller using
+    #     the setting `:controller`. You can then manipulate the stream via the
+    #     controller. If you pass a block to {Toys::StandardMixins::Exec#exec},
+    #     it yields the {Toys::Utils::Exec::Controller}, giving you access to
+    #     streams.
+    #
+    # ### Result handling
+    #
+    # A subprocess result is represented by a {Toys::Utils::Exec::Result}
+    # object, which includes the exit code, the content of any captured output
+    # streams, and any exeption raised when attempting to run the process.
+    # When you run a process in the foreground, the method will return a result
+    # object. When you run a process in the background, you can obtain the
+    # result from the controller once the process completes.
+    #
+    # The following example demonstrates running a process in the foreground
+    # and getting the exit code:
+    #
+    #     result = exec(["git", "init"])
+    #     puts "exit code: #{result.exit_code}"
+    #
+    # The following example demonstrates starting a process in the background,
+    # waiting for it to complete, and getting its exit code:
+    #
+    #     controller = exec(["git", "init"], background: true)
+    #     result = controller.result(timeout: 1.0)
+    #     if result
+    #       puts "exit code: #{result.exit_code}"
+    #     else
+    #       puts "timed out"
+    #     end
+    #
+    # You can also provide a callback that is executed once a process
+    # completes. This callback can be specified as a method name or a `Proc`
+    # object, and will be passed the result object. For example:
+    #
+    #     def run
+    #       exec(["git", "init"], result_callback: :handle_result)
+    #     end
+    #     def handle_result(result)
+    #       puts "exit code: #{result.exit_code}"
+    #     end
+    #
+    # Finally, you can force your tool to exit if a subprocess fails, similar
+    # to setting the `set -e` option in bash, by setting the
+    # `:exit_on_nonzero_status` option. This is often set as a default
+    # configuration for all subprocesses run in a tool, by passing it as an
+    # argument to the `include` directive:
+    #
+    #     include :exec, exit_on_nonzero_status: true
+    #
     # ## Configuration Options
     #
-    # Subprocesses may be configured using the options in the
-    # {Toys::Utils::Exec} class. These include a variety of options supported
-    # by `Process#spawn`, and some options supported by {Toys::Utils::Exec}
-    # itself.
+    # A variety of options can be used to control subprocesses. These can be
+    # provided to any method that starts a subprocess. You can also set
+    # defaults by passing them as keyword arguments when you `include` the
+    # mixin.
     #
-    # You can set default configuration by passing options to the `include`
-    # directive. For example, to log commands at the debug level for all
-    # subprocesses spawned by this tool:
+    # Options that affect the behavior of subprocesses:
     #
-    #     include :exec, log_level: Logger::DEBUG
+    #  *  `:env` (Hash) Environment variables to pass to the subprocess.
+    #     Keys represent variable names and should be strings. Values should be
+    #     either strings or `nil`, which unsets the variable.
     #
-    # Two special options are also recognized by the mixin.
+    #  *  `:background` (Boolean) Runs the process in the background if `true`.
     #
-    #  *  A **:result_callback** proc may take a second argument. If it does,
-    #     the context object is passed as the second argument. This is useful
-    #     if a `:result_callback` is applied to the entire tool by passing it
-    #     to the `include` directive. In that case, `self` is not set to the
-    #     context object as it normally would be in a tool's `run` method, so
-    #     you cannot access it otherwise. For example, here is how to log the
-    #     exit code for every subcommand:
+    # Options related to handling results
     #
-    #         tool "mytool" do
-    #           callback = proc do |result, context|
-    #             context.logger.info "Exit code: #{result.exit_code}"
-    #           end
-    #           include :exec, result_callback: callback
-    #           # ...
-    #         end
+    #  *  `:result_callback` (Proc,Symbol) A procedure that is called, and
+    #     passed the result object, when the subprocess exits. You can provide
+    #     a `Proc` object, or the name of a method as a `Symbol`.
     #
-    #     You may also pass a symbol as the `:result_callback`. The method with
-    #     that name is then called as the callback. The method must take one
-    #     argument, the result object.
+    #  *  `:exit_on_nonzero_status` (Boolean) If set to true, a nonzero exit
+    #     code will cause the tool to exit immediately with that same code.
     #
-    #  *  If **:exit_on_nonzero_status** is set to true, a nonzero exit code
-    #     returned by the subprocess will also cause the tool to exit
-    #     immediately with that same code.
+    #  *  `:e` (Boolean) A short name for `:exit_on_nonzero_status`.
     #
-    #     This is particularly useful as an option to the `include` directive,
-    #     where it causes any subprocess failure to abort the tool, similar to
-    #     setting `set -e` in a bash script.
+    # Options for connecting input and output streams. See the section above on
+    # stream handling for info on the values that can be passed.
     #
-    #         include :exec, exit_on_nonzero_status: true
+    #  *  `:in` Connects the input stream of the subprocess. See the section on
+    #     stream handling.
     #
-    #     **:e** can be used as a shortcut for **:exit_on_nonzero_status**
+    #  *  `:out` Connects the standard output stream of the subprocess. See the
+    #     section on stream handling.
     #
-    #         include :exec, e: true
+    #  *  `:err` Connects the standard error stream of the subprocess. See the
+    #     section on stream handling.
+    #
+    # Options related to logging and reporting:
+    #
+    #  *  `:logger` (Logger) Logger to use for logging the actual command. If
+    #     not present, the command is not logged.
+    #
+    #  *  `:log_level` (Integer,false) Level for logging the actual command.
+    #     Defaults to Logger::INFO if not present. You may also pass `false` to
+    #     disable logging of the command.
+    #
+    #  *  `:log_cmd` (String) The string logged for the actual command.
+    #     Defaults to the `inspect` representation of the command.
+    #
+    #  *  `:name` (Object) An optional object that can be used to identify this
+    #     subprocess. It is available in the controller and result objects.
+    #
+    # In addition, the following options recognized by
+    # [`Process#spawn`](https://ruby-doc.org/core/Process.html#method-c-spawn)
+    # are supported.
+    #
+    #  *  `:chdir` (String) Set the working directory for the command.
+    #
+    #  *  `:close_others` (Boolean) Whether to close non-redirected
+    #     non-standard file descriptors.
+    #
+    #  *  `:new_pgroup` (Boolean) Create new process group (Windows only).
+    #
+    #  *  `:pgroup` (Integer,true,nil) The process group setting.
+    #
+    #  *  `:umask` (Integer) Umask setting for the new process.
+    #
+    #  *  `:unsetenv_others` (Boolean) Clear environment variables except those
+    #     explicitly set.
+    #
+    # Any other option key will result in an `ArgumentError`.
     #
     module Exec
       include Mixin
@@ -89,10 +246,10 @@ module Toys
       end
 
       ##
-      # Set default configuration keys.
+      # Set default configuration options.
       #
-      # All options listed in the {Toys::Utils::Exec} documentation are
-      # supported, plus the `exit_on_nonzero_status` option.
+      # See the {Toys::StandardMixins::Exec} module documentation for a
+      # description of the options.
       #
       # @param opts [keywords] The default options.
       # @return [self]
@@ -110,12 +267,25 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
+      # ## Examples
+      #
+      # Run a command without a shell, and print the exit code (0 for success):
+      #
+      #     result = exec(["git", "init"])
+      #     puts "exit code: #{result.exit_code}"
+      #
+      # Run a shell command:
+      #
+      #     result = exec("cd mydir && git init")
+      #     puts "exit code: #{result.exit_code}"
+      #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [keywords] The command options. All options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
-      #     the subprocess streams.
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
       #     the process is running in the background.
@@ -133,12 +303,19 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
+      # ## Example
+      #
+      # Execute a small script with warnings
+      #
+      #     exec_ruby("-w", "-e", "(1..10).each { |i| puts i }")
+      #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [keywords] The command options. All options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
-      #     for the subprocess streams.
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
       #     the process is running in the background.
@@ -160,12 +337,23 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
+      # ## Example
+      #
+      # Run a proc in a forked process.
+      #
+      #     code = proc do
+      #       puts "Spawned process ID is #{Process.pid}"
+      #     end
+      #     puts "Main process ID is #{Process.pid}"
+      #     exec_proc(code)
+      #
       # @param func [Proc] The proc to call.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
       #     the process is running in the background.
@@ -189,12 +377,19 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
+      # ## Example
+      #
+      # Run the "system update" tool and pass it an argument.
+      #
+      #     exec_tool(["system", "update", "--verbose"])
+      #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
       #     the process is running in the background.
@@ -229,12 +424,19 @@ module Toys
       # run a tool that uses a different bundle. It may also be necessary on
       # environments without "fork" (such as JRuby or Ruby on Windows).
       #
+      # ## Example
+      #
+      # Run the "system update" tool and pass it an argument.
+      #
+      #     exec_separate_tool(["system", "update", "--verbose"])
+      #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
       #     the process is running in the background.
@@ -257,12 +459,20 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
+      # ## Example
+      #
+      # Capture the output of an echo command
+      #
+      #     str = capture(["echo", "hello"])
+      #     assert_equal("hello\n", str)
+      #
       # @param cmd [String,Array<String>] The command to execute.
-      # @param opts [keywords] The command options. All options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [String] What was written to standard out.
       #
@@ -280,12 +490,20 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
+      # ## Example
+      #
+      # Capture the output of a ruby script.
+      #
+      #     str = capture_ruby("-e", "(1..3).each { |i| puts i }")
+      #     assert_equal "1\n2\n3\n", str
+      #
       # @param args [String,Array<String>] The arguments to ruby.
-      # @param opts [keywords] The command options. All options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [String] What was written to standard out.
       #
@@ -306,12 +524,23 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
+      # ## Example
+      #
+      # Run a proc in a forked process and capture its output:
+      #
+      #     code = proc do
+      #       puts Process.pid
+      #     end
+      #     forked_pid = capture_proc(code).chomp
+      #     puts "I forked PID #{forked_pid}"
+      #
       # @param func [Proc] The proc to call.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [String] What was written to standard out.
       #
@@ -335,12 +564,20 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
+      # ## Example
+      #
+      # Run the "system version" tool and capture its output.
+      #
+      #     str = capture_tool(["system", "version"]).chomp
+      #     puts "Version was #{str}"
+      #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [String] What was written to standard out.
       #
@@ -375,12 +612,20 @@ module Toys
       # run a tool that uses a different bundle. It may also be necessary on
       # environments without "fork" (such as JRuby or Ruby on Windows).
       #
+      # ## Example
+      #
+      # Run the "system version" tool and capture its output.
+      #
+      #     str = capture_separate_tool(["system", "version"]).chomp
+      #     puts "Version was #{str}"
+      #
       # @param cmd [String,Array<String>] The tool to execute.
-      # @param opts [keywords] The command options. Most options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [String] What was written to standard out.
       #
@@ -397,12 +642,20 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
+      # ## Example
+      #
+      # Run a shell script
+      #
+      #     exit_code = sh("cd mydir && git init")
+      #     puts exit_code == 0 ? "Success!" : "Failed!"
+      #
       # @param cmd [String] The shell command to execute.
-      # @param opts [keywords] The command options. All options listed in the
-      #     {Toys::Utils::Exec} documentation are supported, plus the
-      #     `exit_on_nonzero_status` option.
-      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-      #     for the subprocess streams.
+      # @param opts [keywords] The command options. See the section on
+      #     Configuration Options in the {Toys::StandardMixins::Exec} module
+      #     documentation.
+      # @yieldparam controller [Toys::Utils::Exec::Controller] A controller for
+      #     the subprocess. See the section on Controlling Processes in the
+      #     {Toys::StandardMixins::Exec} module documentation.
       #
       # @return [Integer] The exit code
       #
@@ -463,7 +716,7 @@ module Toys
         if value.is_a?(::Symbol)
           context.method(value)
         elsif value.respond_to?(:call)
-          proc { |r| value.call(r, context) }
+          proc { |r| context.instance_eval { value.call(r, context) } }
         elsif value.nil?
           nil
         else
