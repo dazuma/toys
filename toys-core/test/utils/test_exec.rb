@@ -170,8 +170,7 @@ describe Toys::Utils::Exec do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
         exec.ruby(["-e", 'puts(gets + "world\n")'], in: input, out: output)
-        expected = "hello#{$INPUT_RECORD_SEPARATOR}world#{$INPUT_RECORD_SEPARATOR}"
-        assert_equal(expected, output.string)
+        assert_match(/hello\r?\nworld\r?\n/, output.string)
       end
     end
 
@@ -564,7 +563,7 @@ describe Toys::Utils::Exec do
                                background: true, out: :capture)
         assert_nil(controller.result(timeout: 0.1))
         assert_equal(true, controller.executing?)
-        result = controller.result(timeout: 0.5)
+        result = controller.result
         assert_equal(1, result.exit_code)
         assert_equal("hi\n", result.captured_out)
         assert_equal(false, controller.executing?)
