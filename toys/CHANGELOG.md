@@ -1,5 +1,9 @@
 # Release History
 
+### 0.10.2 / 2020-07-03
+
+* FIXED: The load path no longer loses the toys and toys-core directories after a bundle install.
+
 ### 0.10.1 / 2020-03-07
 
 * FIXED: Setting `:exit_on_nonzero_status` explicitly to false now works as expected.
