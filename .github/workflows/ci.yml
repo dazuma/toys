@@ -25,6 +25,8 @@ jobs:
             tool: "ci"
           - os: "macos-latest"
             ruby: "2.7"
+          - os: "windows-latest"
+            ruby: "2.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
