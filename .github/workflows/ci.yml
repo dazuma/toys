@@ -17,12 +17,14 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", jruby ]
+        os: [ "ubuntu-latest" ]
+        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", "jruby" ]
         include:
-          - os: ubuntu-latest
+          - os: "ubuntu-latest"
             ruby: "2.7"
             tool: "ci"
+          - os: "macos-latest"
+            ruby: "2.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -54,10 +56,11 @@ jobs:
           ref: "gh-pages"
           path: "tmp"
       - name: Perform release
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
         run: |
           ./toys-dev _perform_release \
             --enable-releases="${{ secrets.ENABLE_RELEASES }}" \
-            --api-key="${{ secrets.RUBYGEMS_API_KEY }}" \
-            --user-name="${{ secrets.GIT_USER_NAME }}" \
-            --user-email="${{ secrets.GIT_USER_EMAIL }}" \
             --gh-pages-dir=tmp
