@@ -58,6 +58,9 @@ module Toys
     #
     attr_accessor :executable_path
   end
+
+  # @private
+  CORE_LIB_PATH = __dir__
 end
 
 require "toys/acceptor"

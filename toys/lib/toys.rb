@@ -16,8 +16,9 @@ require "toys/version"
   abort "Unable to find toys-core gem!" unless path && ::File.directory?(path)
   path
 end
-$LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
 
+$LOAD_PATH.delete(::ENV["TOYS_CORE_LIB_PATH"])
+$LOAD_PATH.unshift(::ENV["TOYS_CORE_LIB_PATH"])
 require "toys-core"
 
 ##
@@ -37,6 +38,9 @@ module Toys
   # @return [nil] if the Toys executable is not running.
   #
   EXECUTABLE_PATH = ::ENV["TOYS_BIN_PATH"]
+
+  # @private
+  LIB_PATH = __dir__
 
   ##
   # Namespace for standard template classes.
