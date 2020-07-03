@@ -251,10 +251,17 @@ module Toys
         begin
           ::Bundler.setup(*groups)
         rescue ::Bundler::GemNotFound
+          restore_toys_libs
           install_bundle(gemfile_path)
           ::Bundler.reset!
           ::Bundler.setup(*groups)
         end
+        restore_toys_libs
+      end
+
+      def restore_toys_libs
+        $LOAD_PATH.unshift(::Toys::CORE_LIB_PATH)
+        $LOAD_PATH.unshift(::Toys::LIB_PATH) if ::Toys.const_defined?(:LIB_PATH)
       end
 
       def permission_to_bundle?
