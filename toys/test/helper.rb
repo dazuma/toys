@@ -13,14 +13,17 @@ module Toys
   #
   module TestHelper
     ## Name of the local dev executable
-    TOYS_EXECUTABLE = ::File.join(::File.dirname(::File.dirname(__dir__)), "toys-dev")
+    TOYS_EXECUTABLE = ::File.join(::File.dirname(__dir__), "bin", "toys")
 
     ##
     # Execute toys and capture the result
     #
     def self.capture_toys(*args, stream: :out)
       executor = Toys::Utils::Exec.new
-      result = executor.exec([TOYS_EXECUTABLE] + args, out: :capture, err: :capture)
+      executable = ::File.join(::File.dirname(__dir__), "bin", "toys")
+      cmd = [::RbConfig.ruby, "--disable=gems", executable] + args
+      env = { "TOYS_DEV" => "true" }
+      result = executor.exec(cmd, out: :capture, err: :capture, env: env)
       str = stream == :err ? result.captured_err : result.captured_out
       str.to_s
     end
@@ -30,8 +33,10 @@ module Toys
     #
     def self.capture_completion(line)
       executor = Toys::Utils::Exec.new
-      str = executor.capture([TOYS_EXECUTABLE, "system", "bash-completion", "eval"],
-                             env: {"COMP_LINE" => line, "COMP_POINT" => "-1"})
+      executable = ::File.join(::File.dirname(__dir__), "bin", "toys")
+      cmd = [::RbConfig.ruby, "--disable=gems", executable, "system", "bash-completion", "eval"]
+      env = { "COMP_LINE" => line, "COMP_POINT" => "-1", "TOYS_DEV" => "true" }
+      str = executor.capture(cmd, env: env)
       str.split("\n")
     end
   end
