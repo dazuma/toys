@@ -3,6 +3,7 @@
 require "helper"
 require "timeout"
 require "fileutils"
+require "English"
 require "toys/utils/exec"
 
 describe Toys::Utils::Exec do
@@ -169,9 +170,8 @@ describe Toys::Utils::Exec do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
         exec.ruby(["-e", 'puts(gets + "world\n")'], in: input, out: output)
-        expected = ::StringIO.new
-        expected.puts("hello\nworld\n")
-        assert_equal(expected.string, output.string)
+        expected = "hello#{$INPUT_RECORD_SEPARATOR}world#{$INPUT_RECORD_SEPARATOR}"
+        assert_equal(expected, output.string)
       end
     end
 
