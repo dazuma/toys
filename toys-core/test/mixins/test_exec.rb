@@ -22,6 +22,7 @@ describe Toys::StandardMixins::Exec do
   }
 
   it "executes a shell command" do
+    skip if Toys::Compat.windows?
     cli.add_config_block do
       tool "foo" do
         include :exec

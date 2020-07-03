@@ -88,20 +88,26 @@ describe Toys::Utils::Exec do
 
     it "handles a single element array" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec(["echo"], out: :capture)
-        assert_equal("\n", result.captured_out)
+        list = Toys::Compat.windows? ? "dir" : "ls"
+        result = exec.exec([list], out: :capture)
+        assert_match(/README\.md/, result.captured_out)
       end
     end
 
     it "recongizes strings as shell commands" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
-        assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+        if Toys::Compat.windows?
+          result = exec.exec("dir *.md", out: :capture)
+          assert_match(/README\.md/, result.captured_out)
+        else
+          result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
+          assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+        end
       end
     end
 
     it "recongizes an array with argv0" do
-      skip if Toys::Compat.jruby?
+      skip if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)
@@ -135,7 +141,8 @@ describe Toys::Utils::Exec do
 
     it "captures stdout and stderr" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world", out: :capture, err: :capture)
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
+                           out: :capture, err: :capture)
         assert_equal("hello\n", result.captured_out)
         assert_equal("world\n", result.captured_err)
       end
@@ -150,7 +157,8 @@ describe Toys::Utils::Exec do
 
     it "combines err into out" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world", out: :capture, err: [:child, :out])
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
+                           out: :capture, err: [:child, :out])
         assert_match(/hello/, result.captured_out)
         assert_match(/world/, result.captured_out)
       end
