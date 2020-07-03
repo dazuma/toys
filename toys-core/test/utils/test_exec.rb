@@ -169,7 +169,9 @@ describe Toys::Utils::Exec do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
         exec.ruby(["-e", 'puts(gets + "world\n")'], in: input, out: output)
-        assert_equal("hello\nworld\n", output.string)
+        expected = ::StringIO.new
+        expected.puts("hello\nworld\n")
+        assert_equal(expected.string, output.string)
       end
     end
 
@@ -496,7 +498,7 @@ describe Toys::Utils::Exec do
 
     it "captures streams" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world",
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
                            out: :controller, err: :controller) do |controller|
           controller.capture_out
           controller.capture_err
@@ -540,8 +542,10 @@ describe Toys::Utils::Exec do
 
     it "waits for results and captures output" do
       ::Timeout.timeout(simple_exec_timeout) do
-        controller1 = exec.exec("sleep 0.4 ; echo hi1 ; exit 1", background: true, out: :capture)
-        controller2 = exec.exec("sleep 0.2 ; echo hi2 ; exit 2", background: true, out: :capture)
+        controller1 = exec.ruby(["-e", 'sleep 0.4; puts "hi1"; exit 1'],
+                                background: true, out: :capture)
+        controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
+                                background: true, out: :capture)
         result2 = controller2.result
         assert_equal(2, result2.exit_code)
         assert_equal("hi2\n", result2.captured_out)
@@ -556,7 +560,7 @@ describe Toys::Utils::Exec do
 
     it "times out waiting for results" do
       ::Timeout.timeout(simple_exec_timeout) do
-        controller = exec.exec("sleep 0.2 ; echo hi ; exit 1",
+        controller = exec.ruby(["-e", 'sleep 0.2; puts "hi"; exit 1'],
                                background: true, out: :capture)
         assert_nil(controller.result(timeout: 0.1))
         assert_equal(true, controller.executing?)
@@ -570,7 +574,7 @@ describe Toys::Utils::Exec do
 
   describe "environment setting" do
     it "is passed into the subprocess" do
-      result = exec.exec("echo $FOOBAR", out: :capture, env: {"FOOBAR" => "hello"})
+      result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'], out: :capture, env: {"FOOBAR" => "hello"})
       assert_equal("hello\n", result.captured_out)
     end
   end

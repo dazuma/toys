@@ -17,8 +17,6 @@ def handle_gem(gem_name)
 end
 
 def run
-  require "rbconfig"
-  puts RbConfig::CONFIG.inspect
   handle_gem("toys-core")
   handle_gem("toys")
 end
