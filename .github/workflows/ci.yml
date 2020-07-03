@@ -17,12 +17,14 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", jruby ]
+        os: [ "ubuntu-latest" ]
+        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", "jruby" ]
         include:
-          - os: ubuntu-latest
+          - os: "ubuntu-latest"
             ruby: "2.7"
             tool: "ci"
+          - os: "macos-latest"
+            ruby: "2.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
