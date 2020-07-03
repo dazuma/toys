@@ -8,11 +8,13 @@ require "bundler"
 require "toys/utils/exec"
 
 describe "toys-core" do
-  let(:exec) { Toys::Utils::Exec.new(out: :capture, err: :null) }
+  let(:exec) { Toys::Utils::Exec.new(out: :capture, err: :capture) }
 
   def capture(cmd, env = {})
     result = exec.exec(cmd, env: env)
-    assert(result.success?, "Command failed: #{cmd}")
+    unless result.success?
+      flunk("Command failed: #{cmd}\nOut:\n#{result.captured_out}\nErr:\n#{result.captured_err}")
+    end
     result.captured_out
   end
 
