@@ -8,11 +8,11 @@ long_desc(
     " expected."
 )
 
-flag :release_ref, "--release-ref=REF", default: ::ENV["GITHUB_REF"]
-flag :api_key, "--api-key=KEY"
 flag :enable_releases, "--enable-releases=BOOL"
-flag :user_name, "--user-name=NAME"
-flag :user_email, "--user-email=EMAIL"
+flag :release_ref, "--release-ref=REF", default: ::ENV["GITHUB_REF"]
+flag :api_key, "--api-key=KEY", default: ::ENV["RUBYGEMS_API_KEY"]
+flag :user_name, "--user-name=NAME", default: ::ENV["GIT_USER_NAME"]
+flag :user_email, "--user-email=EMAIL", default: ::ENV["GIT_USER_EMAIL"]
 flag :gh_pages_dir, "--gh-pages-dir=DIR", default: "tmp"
 
 include :fileutils
