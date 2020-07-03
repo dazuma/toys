@@ -6,6 +6,7 @@ include :terminal
 include :exec
 
 def handle_gem(gem_name)
+  $stderr.puts "to stderr"
   puts("**** Testing #{gem_name}...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
     result = exec_separate_tool("test")
