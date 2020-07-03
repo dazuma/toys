@@ -2,8 +2,10 @@
 # frozen_string_literal: true
 
 ::ENV["TOYS_BIN_PATH"] ||= ::File.absolute_path(__FILE__)
+::ENV["TOYS_LIB_PATH"] ||= ::File.absolute_path(::File.join(::File.dirname(__dir__), "lib"))
 
-$LOAD_PATH.unshift(::File.absolute_path(::File.join(::File.dirname(__dir__), "lib")))
+$LOAD_PATH.delete(::ENV["TOYS_LIB_PATH"])
+$LOAD_PATH.unshift(::ENV["TOYS_LIB_PATH"])
 require "toys"
 
 exit(::Toys::StandardCLI.new.run(::ARGV))
