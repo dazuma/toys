@@ -3,5 +3,5 @@
 desc "Display a simple greeting"
 flag :whom, default: "world"
 def run
-  puts "Hello, #{whom}!"
+  puts("Hello, #{whom}!")
 end
