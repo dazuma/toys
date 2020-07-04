@@ -141,7 +141,7 @@ describe Toys::Utils::Exec do
     end
 
     it "captures stdout and stderr" do
-      ::Timeout.timeout(simple_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
                            out: :capture, err: :capture)
         assert_equal("hello\n", result.captured_out)
@@ -157,7 +157,7 @@ describe Toys::Utils::Exec do
     end
 
     it "combines err into out" do
-      ::Timeout.timeout(simple_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
                            out: :capture, err: [:child, :out])
         assert_match(/hello/, result.captured_out)
@@ -496,7 +496,7 @@ describe Toys::Utils::Exec do
     end
 
     it "captures streams" do
-      ::Timeout.timeout(simple_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
                            out: :controller, err: :controller) do |controller|
           controller.capture_out
@@ -540,7 +540,7 @@ describe Toys::Utils::Exec do
     end
 
     it "waits for results and captures output" do
-      ::Timeout.timeout(3) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         controller1 = exec.ruby(["-e", 'sleep 0.4; puts "hi1"; exit 1'],
                                 background: true, out: :capture)
         controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
@@ -558,7 +558,7 @@ describe Toys::Utils::Exec do
     end
 
     it "times out waiting for results" do
-      ::Timeout.timeout(simple_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         controller = exec.ruby(["-e", 'sleep 0.2; puts "hi"; exit 1'],
                                background: true, out: :capture)
         assert_nil(controller.result(timeout: 0.1))
@@ -573,24 +573,30 @@ describe Toys::Utils::Exec do
 
   describe "environment setting" do
     it "is passed into the subprocess" do
-      result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'], out: :capture, env: {"FOOBAR" => "hello"})
-      assert_equal("hello\n", result.captured_out)
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'], out: :capture, env: {"FOOBAR" => "hello"})
+        assert_equal("hello\n", result.captured_out)
+      end
     end
   end
 
   describe "default options" do
     it "is reflected in spawned processes" do
-      exec.configure_defaults(out: :capture)
-      result = exec.exec("echo hello")
-      assert_equal("hello\n", result.captured_out)
+      ::Timeout.timeout(simple_exec_timeout) do
+        exec.configure_defaults(out: :capture)
+        result = exec.exec("echo hello")
+        assert_equal("hello\n", result.captured_out)
+      end
     end
 
     it "can be overridden in spawned processes" do
-      exec.configure_defaults(out: :capture)
-      result = exec.exec("echo hello", out: :controller) do |c|
-        assert_equal("hello\n", c.out.gets)
+      ::Timeout.timeout(simple_exec_timeout) do
+        exec.configure_defaults(out: :capture)
+        result = exec.exec("echo hello", out: :controller) do |c|
+          assert_equal("hello\n", c.out.gets)
+        end
+        assert_nil(result.captured_out)
       end
-      assert_nil(result.captured_out)
     end
   end
 end
