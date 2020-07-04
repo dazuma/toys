@@ -14,11 +14,10 @@ def handle_gem(gem_name)
 end
 
 def run
-  ::Dir.chdir(context_directory) do
-    version = capture(["./toys-dev", "system", "version"]).strip
-    exit(1) unless confirm("Release toys #{version}? ")
-    handle_gem("toys-core")
-    handle_gem("toys")
-    puts("**** Release complete!", :bold, :green)
-  end
+  ::Dir.chdir(context_directory)
+  version = capture(["./toys-dev", "system", "version"]).strip
+  exit(1) unless confirm("Release toys #{version}? ")
+  handle_gem("toys-core")
+  handle_gem("toys")
+  puts("**** Release complete!", :bold, :green)
 end
