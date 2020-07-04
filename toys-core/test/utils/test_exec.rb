@@ -541,7 +541,7 @@ describe Toys::Utils::Exec do
 
     it "waits for results and captures output" do
       ::Timeout.timeout(ruby_exec_timeout) do
-        controller1 = exec.ruby(["-e", 'sleep 0.4; puts "hi1"; exit 1'],
+        controller1 = exec.ruby(["-e", 'sleep 0.8; puts "hi1"; exit 1'],
                                 background: true, out: :capture)
         controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
                                 background: true, out: :capture)
