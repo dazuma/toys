@@ -27,11 +27,8 @@ end
 
 def create_repo
   exec(["git", "init"])
-  File.write(".gitignore", <<~CONTENT)
-    tmp
-    .DS_STORE
-  CONTENT
+  File.write("hello.txt", "Hello, world!\n")
   # You can add additional files here.
   exec(["git", "add", "."])
-  exec(["git", "commit", "-m", "Initial commit"])
+  exec(["git", "commit", "-m", "Initial"])
 end
