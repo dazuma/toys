@@ -12,13 +12,15 @@ flag :yes
 flag :git_remote, "--git-remote=NAME", default: "origin"
 
 def run
-  puts("Running prechecks...")
   cd(context_directory)
+
+  puts("Running prechecks...", :bold)
   verify_git_clean()
   verify_library_versions(version)
   changelog_core = verify_changelog_content("toys-core", version)
   changelog_toys = verify_changelog_content("toys", version)
   verify_github_checks()
+
   puts("Changelog for toys:", :bold)
   puts(changelog_toys)
   puts("Changelog for toys-core:", :bold)
@@ -26,6 +28,7 @@ def run
   if !yes && !confirm("Release Toys #{version}?", :bold, default: true)
     error("Release aborted")
   end
+
   tag = "v#{version}"
   exec(["git", "tag", tag])
   exec(["git", "push", git_remote, tag])

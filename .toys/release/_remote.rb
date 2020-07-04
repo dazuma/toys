@@ -23,24 +23,38 @@ include "release-tools"
 def run
   cd(context_directory)
   version = parse_ref(release_ref)
-  puts("Release of toys #{version} requested.", :yellow, :bold)
+  logger.info("Release of toys #{version} requested.", :yellow, :bold)
+
   verify_library_versions(version)
   verify_changelog_content("toys-core", version)
   verify_changelog_content("toys", version)
   verify_github_checks()
+
+  build_gem("toys-core", version)
+  build_gem("toys", version)
   build_docs("toys-core", version, gh_pages_dir)
   build_docs("toys", version, gh_pages_dir)
-  push_docs(version, gh_pages_dir, releases_enabled?)
+  set_default_docs(version, gh_pages_dir)
+
+  setup_git_config(gh_pages_dir)
   using_api_key(api_key) do
-    perform_release("toys-core", version)
-    perform_release("toys", version)
+    push_gem("toys-core", version, live_release: releases_enabled?)
+    push_gem("toys", version, live_release: releases_enabled?)
+    push_docs(version, gh_pages_dir, live_release: releases_enabled?)
   end
 end
 
 def parse_ref(ref)
-  match = %r{^refs/tags/v(\d+\.\d+\.\d+)$}.match(ref)
+  match = %r{^refs/tags/v(\d+\.\d+\.\d+(?:\.(?:\d+|[a-zA-Z][\w]*))*)$}.match(ref)
   error("Illegal release ref: #{ref}") unless match
   match[1]
+end
+
+def setup_git_config(dir)
+  cd(dir) do
+    exec(["git", "config", "user.email", user_email]) if user_email
+    exec(["git", "config", "user.name", user_name]) if user_name
+  end
 end
 
 def using_api_key(key)
@@ -48,7 +62,7 @@ def using_api_key(key)
   creds_path = "#{home_dir}/.gem/credentials"
   creds_exist = ::File.exist?(creds_path)
   if creds_exist && !key
-    puts("Using existing Rubygems credentials")
+    logger.info("Using existing Rubygems credentials")
     yield
     return
   end
@@ -59,26 +73,10 @@ def using_api_key(key)
     ::File.open(creds_path, "w", 0o600) do |file|
       file.puts("---\n:rubygems_api_key: #{api_key}")
     end
-    puts("Using provided Rubygems credentials")
+    logger.info("Using provided Rubygems credentials")
     yield
   ensure
     exec(["shred", "-u", creds_path])
-  end
-end
-
-def perform_release(name, version)
-  puts("Building and pushing #{name} #{version} gem...", :yellow, :bold)
-  cd(name) do
-    mkdir_p("pkg")
-    built_file = "pkg/#{name}-#{version}.gem"
-    exec(["gem", "build", "#{name}.gemspec", "-o", built_file])
-    if releases_enabled?
-      exec(["gem", "push", built_file])
-      puts("SUCCESS: Released #{name} #{version}", :green, :bold)
-    else
-      error("#{built_file} didn't get built.") unless ::File.file?(built_file)
-      puts("SUCCESS: Mock release of #{name} #{version}", :green, :bold)
-    end
   end
 end
 
