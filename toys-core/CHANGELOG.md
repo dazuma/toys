@@ -1,5 +1,9 @@
 # Release History
 
+### 0.10.3 / 2020-07-04
+
+* FIXED: The `exec_separate_tool` method in the `:exec` mixin no longer throws ENOEXEC on Windows.
+
 ### 0.10.2 / 2020-07-03
 
 * FIXED: The load path no longer loses the toys and toys-core directories after a bundle install.
