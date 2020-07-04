@@ -27,9 +27,10 @@ def run
   verify_library_versions(version)
   verify_changelog_content("toys-core", version)
   verify_changelog_content("toys", version)
-  build_docs("toys-core", version)
-  build_docs("toys", version)
-  push_docs(version)
+  verify_github_checks()
+  build_docs("toys-core", version, gh_pages_dir)
+  build_docs("toys", version, gh_pages_dir)
+  push_docs(version, gh_pages_dir, releases_enabled?)
   using_api_key(api_key) do
     perform_release("toys-core", version)
     perform_release("toys", version)
@@ -40,36 +41,6 @@ def parse_ref(ref)
   match = %r{^refs/tags/v(\d+\.\d+\.\d+)$}.match(ref)
   error("Illegal release ref: #{ref}") unless match
   match[1]
-end
-
-def build_docs(name, version)
-  puts("Building #{name} #{version} docs...", :yellow, :bold)
-  cd(name) do
-    rm_rf(".yardoc")
-    rm_rf("doc")
-    exec_tool(["yardoc"])
-  end
-  rm_rf("#{gh_pages_dir}/gems/#{name}/v#{version}")
-  cp_r("#{name}/doc", "#{gh_pages_dir}/gems/#{name}/v#{version}")
-end
-
-def push_docs(version)
-  puts("Pushing docs to gh-pages...", :yellow, :bold)
-  cd(gh_pages_dir) do
-    if releases_enabled?
-      content = ::IO.read("404.html")
-      content.sub!(/version = "[\w\.]+";/, "version = \"#{version}\";")
-      ::File.open("404.html", "w") do |file|
-        file.write(content)
-      end
-    end
-    exec(["git", "config", "user.email", user_email]) if user_email
-    exec(["git", "config", "user.name", user_name]) if user_name
-    exec(["git", "add", "."])
-    exec(["git", "commit", "-m", "Generate yardocs for version #{version}"])
-    exec(["git", "push", "origin", "gh-pages"])
-  end
-  puts("SUCCESS: Pushed docs for version #{version}.", :green, :bold)
 end
 
 def using_api_key(key)
