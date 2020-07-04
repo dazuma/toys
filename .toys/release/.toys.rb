@@ -90,7 +90,7 @@ mixin "release-tools" do
     built_file
   end
 
-  def push_gem(name, version, live_release: true)
+  def push_gem(name, version, live_release: false)
     logger.info("Pushing #{name} #{version} gem...")
     cd(name) do
       built_file = "pkg/#{name}-#{version}.gem"
@@ -109,7 +109,7 @@ mixin "release-tools" do
     cd(name) do
       rm_rf(".yardoc")
       rm_rf("doc")
-      exec_tool(["yardoc"])
+      exec_separate_tool(["yardoc"])
     end
     rm_rf("#{dir}/gems/#{name}/v#{version}")
     cp_r("#{name}/doc", "#{dir}/gems/#{name}/v#{version}")
@@ -126,13 +126,13 @@ mixin "release-tools" do
     end
   end
   
-  def push_docs(version, dir, live_release: false, remote: "origin")
+  def push_docs(version, dir, live_release: false, git_remote: "origin")
     logger.info("Pushing docs to gh-pages...")
     cd(dir) do
       exec(["git", "add", "."])
       exec(["git", "commit", "-m", "Generate yardocs for version #{version}"])
       if live_release
-        exec(["git", "push", remote, "gh-pages"])
+        exec(["git", "push", git_remote, "gh-pages"])
         puts("SUCCESS: Pushed docs for version #{version}.", :green, :bold)
       else
         puts("SUCCESS: Mock docs push for version #{version}.", :green, :bold)

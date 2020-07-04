@@ -5,7 +5,7 @@ desc "Pushes docs to gh-pages from the local checkout"
 flag :tmp_dir, default: "tmp"
 flag :default, "--[no-]default", default: true
 flag :dry_run, "--[no-]dry-run", default: true
-flag :remote, "--remote=NAME", default: "origin"
+flag :git_remote, "--git-remote=NAME", default: "origin"
 
 include :exec, exit_on_nonzero_status: true
 include :fileutils
@@ -31,5 +31,5 @@ def run
   build_docs("toys", version, gh_pages_dir)
   set_default_docs(version, gh_pages_dir) if default
 
-  push_docs(version, gh_pages_dir, live_release: !dry_run, remote: remote)
+  push_docs(version, gh_pages_dir, live_release: !dry_run, git_remote: git_remote)
 end
