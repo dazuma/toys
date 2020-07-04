@@ -22,6 +22,7 @@ describe Toys::StandardMixins::Exec do
   }
 
   it "executes a shell command" do
+    skip if Toys::Compat.windows?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -101,7 +102,8 @@ describe Toys::StandardMixins::Exec do
           result = nil
           Toys.stub(:executable_path, "toys-temp") do
             my_spawn = proc do |*args|
-              if args.find_all { |a| a.is_a?(::String) } == ["toys-temp", "bar"]
+              cmd = args.find_all { |a| a.is_a?(::String) }
+              if cmd[1..-1] == ["--disable=gems", "toys-temp", "bar"]
                 nil
               else
                 ::RuntimeError.new "Wrong args: #{args}"

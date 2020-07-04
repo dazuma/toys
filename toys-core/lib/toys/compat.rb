@@ -17,20 +17,25 @@ module Toys
     end
 
     # @private
+    def self.windows?
+      ::RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+    end
+
+    # @private
     def self.allow_fork?
-      !jruby? && ::RbConfig::CONFIG["host_os"] !~ /mswin/
+      !jruby? && !windows?
     end
 
     # @private
     def self.supports_suggestions?
       unless defined?(@supports_suggestions)
-        require "rubygems"
         begin
           require "did_you_mean"
-          @supports_suggestions = defined?(::DidYouMean::SpellChecker)
         rescue ::LoadError
-          @supports_suggestions = false
+          require "rubygems"
+          require "did_you_mean" rescue nil # rubocop:disable Style/RescueModifier
         end
+        @supports_suggestions = defined?(::DidYouMean::SpellChecker)
       end
       @supports_suggestions
     end

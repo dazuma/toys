@@ -3,6 +3,7 @@
 require "helper"
 require "timeout"
 require "fileutils"
+require "English"
 require "toys/utils/exec"
 
 describe Toys::Utils::Exec do
@@ -10,7 +11,7 @@ describe Toys::Utils::Exec do
   let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
-  let(:simple_exec_timeout) { 1 }
+  let(:simple_exec_timeout) { 2 }
   let(:ruby_exec_timeout) { Toys::Compat.jruby? ? 10 : simple_exec_timeout }
 
   describe "result object" do
@@ -88,20 +89,26 @@ describe Toys::Utils::Exec do
 
     it "handles a single element array" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec(["echo"], out: :capture)
-        assert_equal("\n", result.captured_out)
+        list = Toys::Compat.windows? ? "dir" : "ls"
+        result = exec.exec([list], out: :capture)
+        assert_match(/README\.md/, result.captured_out)
       end
     end
 
     it "recongizes strings as shell commands" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
-        assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+        if Toys::Compat.windows?
+          result = exec.exec("dir *.md", out: :capture)
+          assert_match(/README\.md/, result.captured_out)
+        else
+          result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
+          assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+        end
       end
     end
 
     it "recongizes an array with argv0" do
-      skip if Toys::Compat.jruby?
+      skip if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)
@@ -134,8 +141,9 @@ describe Toys::Utils::Exec do
     end
 
     it "captures stdout and stderr" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world", out: :capture, err: :capture)
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
+                           out: :capture, err: :capture)
         assert_equal("hello\n", result.captured_out)
         assert_equal("world\n", result.captured_err)
       end
@@ -149,8 +157,9 @@ describe Toys::Utils::Exec do
     end
 
     it "combines err into out" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world", out: :capture, err: [:child, :out])
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
+                           out: :capture, err: [:child, :out])
         assert_match(/hello/, result.captured_out)
         assert_match(/world/, result.captured_out)
       end
@@ -161,7 +170,7 @@ describe Toys::Utils::Exec do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
         exec.ruby(["-e", 'puts(gets + "world\n")'], in: input, out: output)
-        assert_equal("hello\nworld\n", output.string)
+        assert_match(/hello\r?\nworld\r?\n/, output.string)
       end
     end
 
@@ -487,8 +496,8 @@ describe Toys::Utils::Exec do
     end
 
     it "captures streams" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("echo hello ; >&2 echo world",
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.ruby(["-e", 'STDOUT.puts "hello"; STDERR.puts "world"'],
                            out: :controller, err: :controller) do |controller|
           controller.capture_out
           controller.capture_err
@@ -515,25 +524,27 @@ describe Toys::Utils::Exec do
 
   describe "backgrounding" do
     it "determines whether processes are executing" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        controller1 = exec.exec("sleep 0.4", background: true)
-        controller2 = exec.exec("sleep 0.2", background: true)
-        sleep(0.1)
+      ::Timeout.timeout(3) do
+        controller1 = exec.exec("sleep 0.8", background: true)
+        controller2 = exec.exec("sleep 0.4", background: true)
+        sleep(0.3)
         assert_equal(true, controller1.executing?)
         assert_equal(true, controller2.executing?)
-        sleep(0.2)
+        sleep(0.4)
         assert_equal(true, controller1.executing?)
         assert_equal(false, controller2.executing?)
-        sleep(0.2)
+        sleep(0.4)
         assert_equal(false, controller1.executing?)
         assert_equal(false, controller2.executing?)
       end
     end
 
     it "waits for results and captures output" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        controller1 = exec.exec("sleep 0.4 ; echo hi1 ; exit 1", background: true, out: :capture)
-        controller2 = exec.exec("sleep 0.2 ; echo hi2 ; exit 2", background: true, out: :capture)
+      ::Timeout.timeout(ruby_exec_timeout) do
+        controller1 = exec.ruby(["-e", 'sleep 0.4; puts "hi1"; exit 1'],
+                                background: true, out: :capture)
+        controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
+                                background: true, out: :capture)
         result2 = controller2.result
         assert_equal(2, result2.exit_code)
         assert_equal("hi2\n", result2.captured_out)
@@ -547,12 +558,12 @@ describe Toys::Utils::Exec do
     end
 
     it "times out waiting for results" do
-      ::Timeout.timeout(simple_exec_timeout) do
-        controller = exec.exec("sleep 0.2 ; echo hi ; exit 1",
+      ::Timeout.timeout(ruby_exec_timeout) do
+        controller = exec.ruby(["-e", 'sleep 0.2; puts "hi"; exit 1'],
                                background: true, out: :capture)
         assert_nil(controller.result(timeout: 0.1))
         assert_equal(true, controller.executing?)
-        result = controller.result(timeout: 0.4)
+        result = controller.result
         assert_equal(1, result.exit_code)
         assert_equal("hi\n", result.captured_out)
         assert_equal(false, controller.executing?)
@@ -562,24 +573,30 @@ describe Toys::Utils::Exec do
 
   describe "environment setting" do
     it "is passed into the subprocess" do
-      result = exec.exec("echo $FOOBAR", out: :capture, env: {"FOOBAR" => "hello"})
-      assert_equal("hello\n", result.captured_out)
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'], out: :capture, env: {"FOOBAR" => "hello"})
+        assert_equal("hello\n", result.captured_out)
+      end
     end
   end
 
   describe "default options" do
     it "is reflected in spawned processes" do
-      exec.configure_defaults(out: :capture)
-      result = exec.exec("echo hello")
-      assert_equal("hello\n", result.captured_out)
+      ::Timeout.timeout(simple_exec_timeout) do
+        exec.configure_defaults(out: :capture)
+        result = exec.exec("echo hello")
+        assert_equal("hello\n", result.captured_out)
+      end
     end
 
     it "can be overridden in spawned processes" do
-      exec.configure_defaults(out: :capture)
-      result = exec.exec("echo hello", out: :controller) do |c|
-        assert_equal("hello\n", c.out.gets)
+      ::Timeout.timeout(simple_exec_timeout) do
+        exec.configure_defaults(out: :capture)
+        result = exec.exec("echo hello", out: :controller) do |c|
+          assert_equal("hello\n", c.out.gets)
+        end
+        assert_nil(result.captured_out)
       end
-      assert_nil(result.captured_out)
     end
   end
 end
