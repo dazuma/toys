@@ -82,25 +82,21 @@ mixin "release-tools" do
 
   def build_gem(name, version)
     logger.info("Building #{name} #{version} gem...")
-    built_file = "pkg/#{name}-#{version}.gem"
     cd(name) do
       mkdir_p("pkg")
       exec(["gem", "build", "#{name}.gemspec", "-o", "pkg/#{name}-#{version}.gem"])
     end
-    built_file
   end
 
   def push_gem(name, version, live_release: false)
     logger.info("Pushing #{name} #{version} gem...")
-    cd(name) do
-      built_file = "pkg/#{name}-#{version}.gem"
-      if live_release
-        exec(["gem", "push", built_file])
-        puts("SUCCESS: Released #{name} #{version}", :green, :bold)
-      else
-        error("#{built_file} didn't get built.") unless ::File.file?(built_file)
-        puts("SUCCESS: Mock release of #{name} #{version}", :green, :bold)
-      end
+    built_file = "#{name}/pkg/#{name}-#{version}.gem"
+    if live_release
+      exec(["gem", "push", built_file])
+      puts("SUCCESS: Released #{name} #{version}", :green, :bold)
+    else
+      error("#{built_file} didn't get built.") unless ::File.file?(built_file)
+      puts("SUCCESS: Mock release of #{name} #{version}", :green, :bold)
     end
   end
 
@@ -117,12 +113,11 @@ mixin "release-tools" do
 
   def set_default_docs(version, dir)
     logger.info("Changing default docs version to #{version}...")
-    cd(dir) do
-      content = ::IO.read("404.html")
-      content.sub!(/version = "[\w\.]+";/, "version = \"#{version}\";")
-      ::File.open("404.html", "w") do |file|
-        file.write(content)
-      end
+    path = "#{dir}/404.html"
+    content = ::IO.read(path)
+    content.sub!(/version = "[\w\.]+";/, "version = \"#{version}\";")
+    ::File.open(path, "w") do |file|
+      file.write(content)
     end
   end
   
