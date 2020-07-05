@@ -2,6 +2,7 @@
 
 desc "Builds and releases both gems from the local checkout"
 
+required_arg :version
 flag :dry_run, "--[no-]dry-run", default: false
 
 include :exec, exit_on_nonzero_status: true
@@ -10,8 +11,16 @@ include "release-tools"
 
 def run
   ::Dir.chdir(context_directory)
-  version = capture(["./toys-dev", "system", "version"]).strip
-  exit(1) unless confirm("Build and push gems for version #{version}? ")
+
+  verify_git_clean(warn_only: true)
+  verify_library_versions(version, warn_only: true)
+  verify_changelog_content("toys-core", version, warn_only: true)
+  verify_changelog_content("toys", version, warn_only: true)
+  verify_github_checks(warn_only: true)
+
+  unless confirm("Build and push gems for version #{version}? ", :bold)
+    error("Release aborted")
+  end
 
   build_gem("toys-core", version)
   build_gem("toys", version)

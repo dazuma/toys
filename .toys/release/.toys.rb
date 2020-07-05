@@ -9,20 +9,22 @@ mixin "release-tools" do
     include(:terminal) unless include?(:terminal)
   end
 
-  def verify_library_versions(vers)
+  def verify_library_versions(vers, warn_only: false)
     logger.info("Verifying library versions...")
     lib_vers = ::Toys::VERSION
     unless vers == lib_vers
-      error("Tagged version #{vers.inspect} doesn't match toys version #{lib_vers.inspect}.")
+      error("Tagged version #{vers.inspect} doesn't match toys version #{lib_vers.inspect}.",
+            warn_only: warn_only)
     end
     lib_vers = ::Toys::Core::VERSION
     unless vers == lib_vers
-      error("Tagged version #{vers.inspect} doesn't match toys-core version #{lib_vers.inspect}.")
+      error("Tagged version #{vers.inspect} doesn't match toys-core version #{lib_vers.inspect}.",
+            warn_only: warn_only)
     end
     vers
   end
 
-  def verify_changelog_content(name, vers)
+  def verify_changelog_content(name, vers, warn_only: false)
     logger.info("Verifying changelog content for #{name}...")
     today = ::Time.now.strftime("%Y-%m-%d")
     entry = []
@@ -39,7 +41,9 @@ mixin "release-tools" do
                 "It should start with:",
                 "### #{vers} / #{today}",
                 "But it actually starts with:",
-                line)
+                line,
+                warn_only: warn_only)
+          return ""
         end
       when :during
         if line =~ /^### /
@@ -52,31 +56,40 @@ mixin "release-tools" do
     if entry.empty?
       error("The #{name} changelog doesn't have any entries.",
             "The first changelog entry should start with:",
-            "### #{vers} / #{today}")
+            "### #{vers} / #{today}",
+            warn_only: warn_only)
     end
     entry.join
   end
 
-  def verify_git_clean
+  def verify_git_clean(warn_only: false)
     logger.info("Verifying git clean...")
     output = capture(["git", "status", "-s"]).strip
-    error("There are local git changes that are not committed.") unless output.empty?
+    unless output.empty?
+      error("There are local git changes that are not committed.", warn_only: warn_only)
+    end
   end
 
-  def verify_github_checks
+  def verify_github_checks(warn_only: false)
     logger.info("Verifying GitHub checks...")
     ref = capture(["git", "rev-parse", "HEAD"]).strip
     data = capture(["gh", "api", "repos/dazuma/toys/commits/#{ref}/check-runs",
                     "-H", "Accept: application/vnd.github.antiope-preview+json"])
     results = ::JSON.parse(data)
     checks = results["check_runs"]
-    error("No checks found for #{ref}") if checks.empty?
-    error("Check count mismatch for #{ref}") unless checks.size == results["total_count"]
+    error("No GitHub checks found for #{ref}", warn_only: warn_only) if checks.empty?
+    unless checks.size == results["total_count"]
+      error("GitHub check count mismatch for #{ref}", warn_only: warn_only)
+    end
     checks.each do |check|
       name = check["name"]
       next unless name.start_with?("test")
-      error("Check #{name.inspect} is not complete") unless check["status"] == "completed"
-      error("Check #{name.inspect} was not successful") unless check["conclusion"] == "success"
+      unless check["status"] == "completed"
+        error("GitHub check #{name.inspect} is not complete", warn_only: warn_only)
+      end
+      unless check["conclusion"] == "success"
+        error("GitHub check #{name.inspect} was not successful", warn_only: warn_only)
+      end
     end
   end
 
@@ -135,9 +148,9 @@ mixin "release-tools" do
     end
   end
 
-  def error(message, *more_messages)
+  def error(message, *more_messages, warn_only: false)
     puts(message, :red, :bold)
     more_messages.each { |m| puts(m) }
-    exit(1)
+    exit(1) unless warn_only
   end
 end

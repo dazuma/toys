@@ -2,6 +2,7 @@
 
 desc "Pushes docs to gh-pages from the local checkout"
 
+required_arg :version
 flag :tmp_dir, default: "tmp"
 flag :set_default_version, "--[no-]set-default-version", default: true
 flag :dry_run, "--[no-]dry-run", default: false
@@ -14,8 +15,16 @@ include "release-tools"
 
 def run
   cd(context_directory)
-  version = capture(["./toys-dev", "system", "version"]).strip
-  exit(1) unless confirm("Build and push yardocs for version #{version}? ")
+
+  verify_git_clean(warn_only: true)
+  verify_library_versions(version, warn_only: true)
+  verify_changelog_content("toys-core", version, warn_only: true)
+  verify_changelog_content("toys", version, warn_only: true)
+  verify_github_checks(warn_only: true)
+
+  unless confirm("Build and push yardocs for version #{version}? ", :bold)
+    error("Release aborted")
+  end
 
   mkdir_p(tmp_dir)
   cd(tmp_dir) do
