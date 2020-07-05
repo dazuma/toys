@@ -25,7 +25,7 @@ def run
   puts(changelog_toys)
   puts("Changelog for toys-core:", :bold)
   puts(changelog_core)
-  if !yes && !confirm("Release Toys #{version}?", :bold, default: true)
+  if !yes && !confirm("Release Toys #{version}? ", :bold, default: true)
     error("Release aborted")
   end
 
