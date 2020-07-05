@@ -24,52 +24,37 @@ def run
   cd(context_directory)
   version = parse_ref(release_ref)
   puts("Release of toys #{version} requested.", :yellow, :bold)
+
   verify_library_versions(version)
   verify_changelog_content("toys-core", version)
   verify_changelog_content("toys", version)
-  build_docs("toys-core", version)
-  build_docs("toys", version)
-  push_docs(version)
+  verify_github_checks()
+
+  build_gem("toys-core", version)
+  build_gem("toys", version)
+  build_docs("toys-core", version, gh_pages_dir)
+  build_docs("toys", version, gh_pages_dir)
+  set_default_docs(version, gh_pages_dir) if version =~ /^\d+\.\d+\.\d+$/
+
+  setup_git_config(gh_pages_dir)
   using_api_key(api_key) do
-    perform_release("toys-core", version)
-    perform_release("toys", version)
+    push_gem("toys-core", version, dry_run: dry_run?)
+    push_gem("toys", version, dry_run: dry_run?)
+    push_docs(version, gh_pages_dir, dry_run: dry_run?)
   end
 end
 
 def parse_ref(ref)
-  match = %r{^refs/tags/v(\d+\.\d+\.\d+)$}.match(ref)
+  match = %r{^refs/tags/v(\d+\.\d+\.\d+(?:\.(?:\d+|[a-zA-Z][\w]*))*)$}.match(ref)
   error("Illegal release ref: #{ref}") unless match
   match[1]
 end
 
-def build_docs(name, version)
-  puts("Building #{name} #{version} docs...", :yellow, :bold)
-  cd(name) do
-    rm_rf(".yardoc")
-    rm_rf("doc")
-    exec_tool(["yardoc"])
-  end
-  rm_rf("#{gh_pages_dir}/gems/#{name}/v#{version}")
-  cp_r("#{name}/doc", "#{gh_pages_dir}/gems/#{name}/v#{version}")
-end
-
-def push_docs(version)
-  puts("Pushing docs to gh-pages...", :yellow, :bold)
-  cd(gh_pages_dir) do
-    if releases_enabled?
-      content = ::IO.read("404.html")
-      content.sub!(/version = "[\w\.]+";/, "version = \"#{version}\";")
-      ::File.open("404.html", "w") do |file|
-        file.write(content)
-      end
-    end
+def setup_git_config(dir)
+  cd(dir) do
     exec(["git", "config", "user.email", user_email]) if user_email
     exec(["git", "config", "user.name", user_name]) if user_name
-    exec(["git", "add", "."])
-    exec(["git", "commit", "-m", "Generate yardocs for version #{version}"])
-    exec(["git", "push", "origin", "gh-pages"])
   end
-  puts("SUCCESS: Pushed docs for version #{version}.", :green, :bold)
 end
 
 def using_api_key(key)
@@ -77,7 +62,7 @@ def using_api_key(key)
   creds_path = "#{home_dir}/.gem/credentials"
   creds_exist = ::File.exist?(creds_path)
   if creds_exist && !key
-    puts("Using existing Rubygems credentials")
+    logger.info("Using existing Rubygems credentials")
     yield
     return
   end
@@ -88,29 +73,13 @@ def using_api_key(key)
     ::File.open(creds_path, "w", 0o600) do |file|
       file.puts("---\n:rubygems_api_key: #{api_key}")
     end
-    puts("Using provided Rubygems credentials")
+    logger.info("Using provided Rubygems credentials")
     yield
   ensure
     exec(["shred", "-u", creds_path])
   end
 end
 
-def perform_release(name, version)
-  puts("Building and pushing #{name} #{version} gem...", :yellow, :bold)
-  cd(name) do
-    mkdir_p("pkg")
-    built_file = "pkg/#{name}-#{version}.gem"
-    exec(["gem", "build", "#{name}.gemspec", "-o", built_file])
-    if releases_enabled?
-      exec(["gem", "push", built_file])
-      puts("SUCCESS: Released #{name} #{version}", :green, :bold)
-    else
-      error("#{built_file} didn't get built.") unless ::File.file?(built_file)
-      puts("SUCCESS: Mock release of #{name} #{version}", :green, :bold)
-    end
-  end
-end
-
-def releases_enabled?
-  /^t/i =~ enable_releases.to_s ? true : false
+def dry_run?
+  /^t/i !~ enable_releases.to_s ? true : false
 end
