@@ -73,9 +73,14 @@ mixin "release-tools" do
   def verify_github_checks(warn_only: false)
     logger.info("Verifying GitHub checks...")
     ref = capture(["git", "rev-parse", "HEAD"]).strip
-    data = capture(["gh", "api", "repos/dazuma/toys/commits/#{ref}/check-runs",
-                    "-H", "Accept: application/vnd.github.antiope-preview+json"])
-    results = ::JSON.parse(data)
+    result = exec(["gh", "api", "repos/dazuma/toys/commits/#{ref}/check-runs",
+                   "-H", "Accept: application/vnd.github.antiope-preview+json"],
+                  out: :capture, e: false)
+    unless result.success?
+      error("Failed to obtain GitHub check results for #{ref}", warn_only: warn_only)
+      return
+    end
+    results = ::JSON.parse(result.captured_out)
     checks = results["check_runs"]
     error("No GitHub checks found for #{ref}", warn_only: warn_only) if checks.empty?
     unless checks.size == results["total_count"]
