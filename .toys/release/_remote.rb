@@ -34,13 +34,13 @@ def run
   build_gem("toys", version)
   build_docs("toys-core", version, gh_pages_dir)
   build_docs("toys", version, gh_pages_dir)
-  set_default_docs(version, gh_pages_dir)
+  set_default_docs(version, gh_pages_dir) if version =~ /^\d+\.\d+\.\d+$/
 
   setup_git_config(gh_pages_dir)
   using_api_key(api_key) do
-    push_gem("toys-core", version, live_release: releases_enabled?)
-    push_gem("toys", version, live_release: releases_enabled?)
-    push_docs(version, gh_pages_dir, live_release: releases_enabled?)
+    push_gem("toys-core", version, dry_run: dry_run?)
+    push_gem("toys", version, dry_run: dry_run?)
+    push_docs(version, gh_pages_dir, dry_run: dry_run?)
   end
 end
 
@@ -80,6 +80,6 @@ def using_api_key(key)
   end
 end
 
-def releases_enabled?
-  /^t/i =~ enable_releases.to_s ? true : false
+def dry_run?
+  /^t/i !~ enable_releases.to_s ? true : false
 end

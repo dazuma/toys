@@ -2,7 +2,7 @@
 
 desc "Builds and releases both gems from the local checkout"
 
-flag :dry_run, "--[no-]dry-run", default: true
+flag :dry_run, "--[no-]dry-run", default: false
 
 include :exec, exit_on_nonzero_status: true
 include :terminal
@@ -16,6 +16,6 @@ def run
   build_gem("toys-core", version)
   build_gem("toys", version)
 
-  push_gem("toys-core", version, live_release: !dry_run)
-  push_gem("toys", version, live_release: !dry_run)
+  push_gem("toys-core", version, dry_run: dry_run)
+  push_gem("toys", version, dry_run: dry_run)
 end

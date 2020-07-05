@@ -88,15 +88,15 @@ mixin "release-tools" do
     end
   end
 
-  def push_gem(name, version, live_release: false)
+  def push_gem(name, version, dry_run: false)
     logger.info("Pushing #{name} #{version} gem...")
     built_file = "#{name}/pkg/#{name}-#{version}.gem"
-    if live_release
-      exec(["gem", "push", built_file])
-      puts("SUCCESS: Released #{name} #{version}", :green, :bold)
-    else
+    if dry_run
       error("#{built_file} didn't get built.") unless ::File.file?(built_file)
       puts("SUCCESS: Mock release of #{name} #{version}", :green, :bold)
+    else
+      exec(["gem", "push", built_file])
+      puts("SUCCESS: Released #{name} #{version}", :green, :bold)
     end
   end
 
@@ -121,16 +121,16 @@ mixin "release-tools" do
     end
   end
   
-  def push_docs(version, dir, live_release: false, git_remote: "origin")
+  def push_docs(version, dir, dry_run: false, git_remote: "origin")
     logger.info("Pushing docs to gh-pages...")
     cd(dir) do
       exec(["git", "add", "."])
       exec(["git", "commit", "-m", "Generate yardocs for version #{version}"])
-      if live_release
+      if dry_run
+        puts("SUCCESS: Mock docs push for version #{version}.", :green, :bold)
+      else
         exec(["git", "push", git_remote, "gh-pages"])
         puts("SUCCESS: Pushed docs for version #{version}.", :green, :bold)
-      else
-        puts("SUCCESS: Mock docs push for version #{version}.", :green, :bold)
       end
     end
   end
