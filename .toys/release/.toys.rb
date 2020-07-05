@@ -13,13 +13,11 @@ mixin "release-tools" do
     logger.info("Verifying library versions...")
     lib_vers = ::Toys::VERSION
     unless vers == lib_vers
-      error("Tagged version #{vers.inspect} doesn't match toys version #{lib_vers.inspect}.",
-            warn_only: warn_only)
+      error("Tagged version #{vers.inspect} doesn't match toys version #{lib_vers.inspect}.")
     end
     lib_vers = ::Toys::Core::VERSION
     unless vers == lib_vers
-      error("Tagged version #{vers.inspect} doesn't match toys-core version #{lib_vers.inspect}.",
-            warn_only: warn_only)
+      error("Tagged version #{vers.inspect} doesn't match toys-core version #{lib_vers.inspect}.")
     end
     vers
   end
