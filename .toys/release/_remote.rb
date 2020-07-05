@@ -23,7 +23,7 @@ include "release-tools"
 def run
   cd(context_directory)
   version = parse_ref(release_ref)
-  logger.info("Release of toys #{version} requested.", :yellow, :bold)
+  puts("Release of toys #{version} requested.", :yellow, :bold)
 
   verify_library_versions(version)
   verify_changelog_content("toys-core", version)
