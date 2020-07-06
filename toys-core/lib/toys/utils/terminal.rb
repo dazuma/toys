@@ -5,7 +5,7 @@ require "monitor"
 
 begin
   require "io/console"
-rescue ::LoadError # rubocop:disable Lint/SuppressedException
+rescue ::LoadError
   # TODO: alternate methods of getting terminal size
 end
 

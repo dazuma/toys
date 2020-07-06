@@ -11,6 +11,10 @@ Layout/LineLength:
     - "*.gemspec"
 Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
+Lint/RaiseException:
+  Enabled: true
+Lint/StructNewOverride:
+  Enabled: true
 Metrics/AbcSize:
   Exclude:
     - "builtins/**/*"
@@ -50,6 +54,12 @@ Style/DocumentationMethod:
     - "builtins/**/*"
     - "test/**/*"
 Style/GuardClause:
+  Enabled: false
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: false
+Style/HashTransformValues:
   Enabled: false
 Style/IfUnlessModifier:
   Enabled: false
