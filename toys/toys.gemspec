@@ -28,23 +28,10 @@ require "toys/version"
                ::Dir.glob("bin/*") + ::Dir.glob("share/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.3.0"
   spec.require_paths = ["lib"]
-
   spec.bindir = "bin"
   spec.executables = ["toys"]
 
   spec.add_dependency "toys-core", "= #{::Toys::VERSION}"
-
-  spec.add_development_dependency "did_you_mean", "~> 1.0"
-  spec.add_development_dependency "highline", "~> 2.0"
-  spec.add_development_dependency "minitest", "~> 5.14"
-  spec.add_development_dependency "minitest-focus", "~> 1.1"
-  spec.add_development_dependency "minitest-rg", "~> 5.2"
-  spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rdoc", "~> 6.1.2"
-  spec.add_development_dependency "redcarpet", "~> 3.5" unless ::RUBY_PLATFORM == "java"
-  spec.add_development_dependency "rspec", "~> 3.9"
-  spec.add_development_dependency "rubocop", "~> 0.79.0"
-  spec.add_development_dependency "yard", "~> 0.9.24"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://github.com/dazuma/toys/blob/master/toys/CHANGELOG.md"
