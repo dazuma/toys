@@ -2,6 +2,8 @@
 
 require "json"
 
+delegate_to ["toys", "trigger"]
+
 mixin "release-tools" do
   on_include do
     include(:exec, e: true) unless include?(:exec)
