@@ -249,7 +249,21 @@ module Toys
         true
       end
 
-      def define_bundle(gemfile_path)
+      def setup_bundle(gemfile_path, groups)
+        begin
+          modify_bundle_definition(gemfile_path)
+          ::Bundler.setup(*groups)
+        rescue ::Bundler::GemNotFound
+          restore_toys_libs
+          install_bundle(gemfile_path)
+          ::Bundler.reset!
+          modify_bundle_definition(gemfile_path)
+          ::Bundler.setup(*groups)
+        end
+        restore_toys_libs
+      end
+
+      def modify_bundle_definition(gemfile_path)
         builder = ::Bundler::Dsl.new
         builder.eval_gemfile(gemfile_path)
         begin
@@ -268,20 +282,6 @@ module Toys
         toys_gems << "toys" if ::Toys.const_defined?(:VERSION)
         definition = builder.to_definition(gemfile_path + ".lock", { gems: toys_gems })
         ::Bundler.instance_variable_set(:@definition, definition)
-      end
-
-      def setup_bundle(gemfile_path, groups)
-        begin
-          define_bundle(gemfile_path)
-          ::Bundler.setup(*groups)
-        rescue ::Bundler::GemNotFound
-          restore_toys_libs
-          install_bundle(gemfile_path)
-          ::Bundler.reset!
-          define_bundle(gemfile_path)
-          ::Bundler.setup(*groups)
-        end
-        restore_toys_libs
       end
 
       def restore_toys_libs
