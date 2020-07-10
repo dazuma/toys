@@ -81,16 +81,22 @@ module Toys
       #
       # @param on_missing [:confirm,:error,:install] What to do if a needed gem
       #     is not installed. Possible values:
+      #
       #      *  `:confirm` - prompt the user on whether to install
       #      *  `:error` - raise an exception
       #      *  `:install` - just install the gem
+      #
       #     The default is `:confirm`.
+      #
       # @param on_conflict [:error,:warn,:ignore] What to do if bundler has
       #     already been run with a different Gemfile. Possible values:
+      #
       #      *  `:error` - raise an exception
       #      *  `:ignore` - just silently proceed without bundling again
       #      *  `:warn` - print a warning and proceed without bundling again
+      #
       #     The default is `:error`.
+      #
       # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
       # @param input [IO] Input IO (optional, defaults to STDIN)
       # @param output [IO] Output IO (optional, defaults to STDOUT)
@@ -300,7 +306,8 @@ module Toys
         when :error
           false
         else
-          terminal.confirm("Your bundle is not complete. Install? ", default: @default_confirm)
+          terminal.confirm("Your bundle requires additional gems. Install? ",
+                           default: @default_confirm)
         end
       end
 
