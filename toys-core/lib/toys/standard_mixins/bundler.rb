@@ -7,6 +7,10 @@ module Toys
     #
     # The following parameters can be passed when including this mixin:
     #
+    #  *  `:static` (Boolean) If `true`, installs the bundle immediately, when
+    #     defining the tool. If `false` (the default), installs the bundle just
+    #     before the tool runs.
+    #
     #  *  `:groups` (Array<String>) The groups to include in setup
     #
     #  *  `:search_dirs` (Array<String,Symbol>) Directories to search for a
@@ -41,32 +45,39 @@ module Toys
     module Bundler
       include Mixin
 
-      on_initialize do
-        |groups: nil,
-         search_dirs: nil,
-         on_missing: nil,
-         on_conflict: nil,
-         terminal: nil,
-         input: nil,
-         output: nil|
-        require "toys/utils/gems"
-        search_dirs = ::Toys::StandardMixins::Bundler.resolve_search_dirs(search_dirs, self)
-        gems = ::Toys::Utils::Gems.new(on_missing: on_missing, on_conflict: on_conflict,
-                                       terminal: terminal, input: input, output: output)
-        gems.bundle(groups: groups, search_dirs: search_dirs)
+      on_initialize do |static: false, search_dirs: nil, **kwargs|
+        unless static
+          require "toys/utils/gems"
+          search_dirs = ::Toys::StandardMixins::Bundler.resolve_search_dirs(
+            search_dirs,
+            self[::Toys::Context::Key::CONTEXT_DIRECTORY],
+            self[::Toys::Context::Key::TOOL_SOURCE]
+          )
+          ::Toys::StandardMixins::Bundler.setup_bundle(search_dirs, **kwargs)
+        end
+      end
+
+      on_include do |static: false, search_dirs: nil, **kwargs|
+        if static
+          require "toys/utils/gems"
+          search_dirs = ::Toys::StandardMixins::Bundler.resolve_search_dirs(
+            search_dirs, context_directory, source_info
+          )
+          ::Toys::StandardMixins::Bundler.setup_bundle(search_dirs, **kwargs)
+        end
       end
 
       ## @private
-      def self.resolve_search_dirs(search_dirs, context)
+      def self.resolve_search_dirs(search_dirs, context_dir, source_info)
         search_dirs ||= [:toys, :context, :current]
         Array(search_dirs).flat_map do |dir|
           case dir
           when :context
-            context[::Toys::Context::Key::CONTEXT_DIRECTORY]
+            context_dir
           when :current
             ::Dir.getwd
           when :toys
-            toys_dir_stack(context[::Toys::Context::Key::TOOL_SOURCE])
+            toys_dir_stack(source_info)
           when ::String
             dir
           else
@@ -83,6 +94,19 @@ module Toys
           source_info = source_info.parent
         end
         dirs
+      end
+
+      ## @private
+      def self.setup_bundle(search_dirs,
+                            groups: nil,
+                            on_missing: nil,
+                            on_conflict: nil,
+                            terminal: nil,
+                            input: nil,
+                            output: nil)
+        gems = ::Toys::Utils::Gems.new(on_missing: on_missing, on_conflict: on_conflict,
+                                       terminal: terminal, input: input, output: output)
+        gems.bundle(groups: groups, search_dirs: search_dirs)
       end
     end
   end
