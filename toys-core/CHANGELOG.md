@@ -1,5 +1,10 @@
 # Release History
 
+### 0.10.4 / 2020-07-11
+
+* IMPROVED: Bundler integration can now handle Toys itself being in the bundle, as long as the version requirements cover the running Toys version.
+* IMPROVED: Passing `static: true` to the `:bundler` mixin installs the bundle at definition rather than execution time.
+
 ### 0.10.3 / 2020-07-04
 
 * FIXED: The `exec_separate_tool` method in the `:exec` mixin no longer throws ENOEXEC on Windows.
