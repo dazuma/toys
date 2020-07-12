@@ -258,7 +258,7 @@ itself. However, the `toys-core` gem is a dependency, and your users will need
 to have it installed. You could alleviate this by wrapping your executable in a
 gem that can declare `toys-core` as a dependency explicitly.
 
-The [examples directory](https://github.com/dazuma/toys/tree/master/toys-core/examples)
+The [examples directory](https://github.com/dazuma/toys/tree/main/toys-core/examples)
 includes a few simple examples that you can use as a starting point.
 
 To experiment with the examples, clone the Toys repo from GitHub:
@@ -272,7 +272,7 @@ Navigate to the simple-gem example:
 
 This example wraps the simple "greet" executable that we
 [covered earlier](#Add_some_functionality) in a gem. You can see the
-[executable file](https://github.com/dazuma/toys/tree/master/toys-core/examples/simple-gem/bin/toys-core-simple-example)
+[executable file](https://github.com/dazuma/toys/tree/main/toys-core/examples/simple-gem/bin/toys-core-simple-example)
 in the bin directory.
 
 Try it out by building and installing the gem. From the `examples/simple-gem`
@@ -297,16 +297,16 @@ break it up into multiple files. The multi-file gem example demonstrates this.
     $ cd ../multi-file-gem
 
 This executable's implementation resides in its
-[lib directory](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/lib),
+[lib directory](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/lib),
 a technique that may be familiar to writers of command line executables. More
 interestingly, the tools themselves are no longer defined in a block passed to
 the CLI object, but have been moved into a separate
-["tools" directory](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/tools).
+["tools" directory](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/tools).
 This directory has the same structure and supports the same features that are
 available when writing complex sets of tools in a `.toys` directory. You then
 configure the CLI object to look in this directory for its tools definitions,
 as you can see in
-[the code](https://github.com/dazuma/toys/tree/master/toys-core/examples/multi-file-gem/lib/toys-core-multi-gem-example.rb).
+[the code](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/lib/toys-core-multi-gem-example.rb).
 
 Try it out now. From the `examples/multi-file-gem` directory, run:
 
