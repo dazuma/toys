@@ -3,11 +3,11 @@ name: Toys CI
 on:
   push:
     branches:
-      - master
+      - main
       - "stable-[0-9]+.[0-9]+"
   pull_request:
     branches:
-      - master
+      - main
       - "stable-[0-9]+.[0-9]+"
 
 jobs:

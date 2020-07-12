@@ -34,7 +34,7 @@ require "toys/version"
   spec.add_dependency "toys-core", "= #{::Toys::VERSION}"
 
   if spec.respond_to?(:metadata)
-    spec.metadata["changelog_uri"] = "https://github.com/dazuma/toys/blob/master/toys/CHANGELOG.md"
+    spec.metadata["changelog_uri"] = "https://dazuma.github.io/toys/gems/toys/v#{::Toys::VERSION}/file.CHANGELOG.html"
     spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
     spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys/v#{::Toys::VERSION}"
