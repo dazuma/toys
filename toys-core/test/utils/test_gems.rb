@@ -3,6 +3,7 @@
 require "helper"
 require "fileutils"
 require "timeout"
+require "toys/utils/gems"
 
 describe Toys::Utils::Gems do
   let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
