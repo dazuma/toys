@@ -11,3 +11,6 @@ require "highline"
 
 # Make sure toys-core is still accessible.
 require "toys/utils/help_text"
+
+# Make sure supports_suggestions doesn't crash
+Toys::Compat.supports_suggestions?
