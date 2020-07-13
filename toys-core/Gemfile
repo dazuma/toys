@@ -13,5 +13,3 @@ gem "rdoc", "~> 6.1.2"
 gem "redcarpet", "~> 3.5" unless ::RUBY_PLATFORM == "java"
 gem "rubocop", "~> 0.81.0"
 gem "yard", "~> 0.9.25"
-
-@__toys_dev_gemspec = true
