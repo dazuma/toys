@@ -33,7 +33,11 @@ module Toys
           require "did_you_mean"
         rescue ::LoadError
           require "rubygems"
-          require "did_you_mean" rescue nil # rubocop:disable Style/RescueModifier
+          begin
+            require "did_you_mean"
+          rescue ::LoadError
+            # Oh well, it's not available
+          end
         end
         @supports_suggestions = defined?(::DidYouMean::SpellChecker)
       end

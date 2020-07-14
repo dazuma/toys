@@ -16,5 +16,3 @@ gem "redcarpet", "~> 3.5" unless ::RUBY_PLATFORM == "java"
 gem "rspec", "~> 3.9"
 gem "rubocop", "~> 0.81.0"
 gem "yard", "~> 0.9.25"
-
-@__toys_dev_gemspec = true
