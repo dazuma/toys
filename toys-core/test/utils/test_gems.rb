@@ -7,24 +7,24 @@ require "toys/utils/gems"
 
 describe Toys::Utils::Gems do
   let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
-  describe "#bundle" do
-    let(:exec_service) { Toys::Utils::Exec.new }
+  let(:exec_service) { Toys::Utils::Exec.new }
 
-    def setup_case(name)
-      ::Bundler.with_unbundled_env do
-        Dir.chdir(File.join(gems_cases_dir, name)) do
-          ::Timeout.timeout(20) do
-            yield
-          end
+  def setup_case(name)
+    ::Bundler.with_unbundled_env do
+      Dir.chdir(File.join(gems_cases_dir, name)) do
+        ::Timeout.timeout(30) do
+          yield
         end
       end
     end
+  end
 
-    def run_script(name = "run_test.rb", *args)
-      exec_service.exec_ruby(["-I#{Toys::CORE_LIB_PATH}", name, *args],
-                             out: :capture, err: :capture, in: :null)
-    end
+  def run_script(name = "run_test.rb", *args)
+    exec_service.exec_ruby(["-I#{Toys::CORE_LIB_PATH}", name, *args],
+                           out: :capture, err: :capture, in: :null)
+  end
 
+  describe "#bundle" do
     it "sets up a bundle without toys" do
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
@@ -35,7 +35,7 @@ describe Toys::Utils::Gems do
       end
     end
 
-    it "sets up a bundle with compatible toys-core" do
+    it "sets up a bundle with compatible toys" do
       setup_case("bundle-with-compatible-toys") do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
@@ -45,7 +45,7 @@ describe Toys::Utils::Gems do
       end
     end
 
-    it "fails to set up a bundle with incompatible toys-core" do
+    it "fails to set up a bundle with incompatible toys" do
       setup_case("bundle-with-incompatible-toys") do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
@@ -62,9 +62,14 @@ describe Toys::Utils::Gems do
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
         result = run_script
         assert(result.success?)
+        assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
         result = run_script
         assert(result.success?)
+        assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        result = run_script
+        assert(result.success?)
+        refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
       end
     end
 
@@ -75,9 +80,28 @@ describe Toys::Utils::Gems do
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
         result = run_script
         assert(result.success?)
+        assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
         result = run_script
         assert(result.success?)
+        assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        result = run_script
+        assert(result.success?)
+        refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+      end
+    end
+  end
+
+  describe "#activate" do
+    it "installs and activates a gem" do
+      setup_case("activate-highline") do
+        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
+        result = run_script
+        assert(result.success?)
+        assert_match(/Gem needed: .* Install\?/, result.captured_out)
+        result = run_script
+        assert(result.success?)
+        refute_match(/Gem needed: .* Install\?/, result.captured_out)
       end
     end
   end
