@@ -65,6 +65,13 @@ module Toys
       end
 
       ##
+      # The bundle contained a toys or toys-core dependency that is
+      # incompatible with the currently running version.
+      #
+      class IncompatibleToysError < BundlerFailedError
+      end
+
+      ##
       # Activate the given gem. If it is not present, attempt to install it (or
       # inform the user to update the bundle).
       #
@@ -258,13 +265,13 @@ module Toys
       def setup_bundle(gemfile_path, groups)
         begin
           modify_bundle_definition(gemfile_path)
-          ::Bundler.setup(*groups)
-        rescue ::Bundler::GemNotFound
+          ::Bundler.ui.silence { ::Bundler.setup(*groups) }
+        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
           restore_toys_libs
           install_bundle(gemfile_path)
           ::Bundler.reset!
           modify_bundle_definition(gemfile_path)
-          ::Bundler.setup(*groups)
+          ::Bundler.ui.silence { ::Bundler.setup(*groups) }
         end
         restore_toys_libs
       end
@@ -272,22 +279,36 @@ module Toys
       def modify_bundle_definition(gemfile_path)
         builder = ::Bundler::Dsl.new
         builder.eval_gemfile(gemfile_path)
-        begin
-          builder.eval_gemfile(::File.join(__dir__, "gems", "gemfile.rb"))
-        rescue ::Bundler::Dsl::DSLError
-          terminal.puts(
-            "WARNING: Unable to integrate your Gemfile into the Toys runtime.\n" \
-            "When using the Toys Bundler integration features, do NOT list\n" \
-            "the toys or toys-core gems directly in your Gemfile. They can be\n" \
-            "dependencies of another gem, but cannot be listed directly.",
-            :red
-          )
-          return
-        end
         toys_gems = ["toys-core"]
-        toys_gems << "toys" if ::Toys.const_defined?(:VERSION)
+        remove_gem_from_definition(builder, "toys-core")
+        removed_toys = remove_gem_from_definition(builder, "toys")
+        add_gem_to_definition(builder, "toys-core")
+        if removed_toys || ::Toys.const_defined?(:VERSION)
+          add_gem_to_definition(builder, "toys")
+          toys_gems << "toys"
+        end
         definition = builder.to_definition(gemfile_path + ".lock", { gems: toys_gems })
         ::Bundler.instance_variable_set(:@definition, definition)
+      end
+
+      def remove_gem_from_definition(builder, name)
+        existing_dep = builder.dependencies.find { |dep| dep.name == name }
+        return false unless existing_dep
+        unless existing_dep.requirement.satisfied_by?(::Gem::Version.new(::Toys::Core::VERSION))
+          raise IncompatibleToysError,
+                "The bundle lists #{name} #{existing_dep.requirement} as a dependency, which is" \
+                " incompatible with the current version #{::Toys::Core::VERSION}."
+        end
+        builder.dependencies.delete(existing_dep)
+        true
+      end
+
+      def add_gem_to_definition(builder, name)
+        if ::ENV["TOYS_DEV"] == "true"
+          path = ::File.join(::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH)), name)
+        end
+        command = "gem #{name.inspect}, #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}\n"
+        builder.eval_gemfile("current #{name}", command)
       end
 
       def restore_toys_libs
