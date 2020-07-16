@@ -63,10 +63,12 @@ describe Toys::Utils::Gems do
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Bundle complete!/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Bundle complete!/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
@@ -81,10 +83,28 @@ describe Toys::Utils::Gems do
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Bundle complete!/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Bundle complete!/, result.captured_out)
+        result = run_script
+        assert(result.success?)
+        refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+      end
+    end
+
+    it "updates the bundle if install fails due to conflicts" do
+      skip if Toys::Compat.jruby?
+      setup_case("bundle-update-required") do
+        FileUtils.rm_f("Gemfile.lock")
+        FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
+        result = run_script
+        assert(result.success?)
+        assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+        assert_match(/Failed to install\. Trying update\.\.\./, result.captured_out)
+        assert_match(/Bundle updated!/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
