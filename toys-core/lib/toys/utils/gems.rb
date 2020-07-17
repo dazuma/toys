@@ -266,7 +266,7 @@ module Toys
         begin
           modify_bundle_definition(gemfile_path)
           ::Bundler.ui.silence { ::Bundler.setup(*groups) }
-        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
+        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict, ::Gem::LoadError
           restore_toys_libs
           install_bundle(gemfile_path)
           ::Bundler.reset!
@@ -342,7 +342,7 @@ module Toys
         require "bundler/cli"
         begin
           ::Bundler::CLI.start(["install"])
-        rescue ::Bundler::GemNotFound
+        rescue ::Bundler::GemNotFound, ::Bundler::InstallError
           terminal.puts("Failed to install. Trying update...")
           ::Bundler::CLI.start(["update"])
         end
