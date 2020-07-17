@@ -266,7 +266,7 @@ module Toys
         begin
           modify_bundle_definition(gemfile_path)
           ::Bundler.ui.silence { ::Bundler.setup(*groups) }
-        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict, ::Gem::LoadError
+        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
           restore_toys_libs
           install_bundle(gemfile_path)
           ::Bundler.reset!
