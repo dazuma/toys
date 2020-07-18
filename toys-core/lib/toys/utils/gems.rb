@@ -340,7 +340,12 @@ module Toys
                   " `cd #{gemfile_dir} && bundle install`"
         end
         require "bundler/cli"
-        ::Bundler::CLI.start(["install"])
+        begin
+          ::Bundler::CLI.start(["install"])
+        rescue ::Bundler::GemNotFound, ::Bundler::InstallError
+          terminal.puts("Failed to install. Trying update...")
+          ::Bundler::CLI.start(["update"])
+        end
       end
     end
   end
