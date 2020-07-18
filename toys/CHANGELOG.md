@@ -1,5 +1,13 @@
 # Release History
 
+### 0.10.5 / 2020-07-18
+
+* IMPROVED: The bundler mixin silences bundler output during bundle setup.
+* IMPROVED: The bundler mixin allows toys and toys-core to be in the Gemfile. It checks their version requirements against the running Toys version, and either adds the corret version to the bundle or raises IncompatibleToysError.
+* IMPROVED: The bundler mixin utomatically updates the bundle if install fails (typically because a transitive dependency has been explicitly updated.)
+* FIXED: Some cases of transitive dependency handling by the bundler mixin.
+* FIXED: Fixed a crash when computing suggestions, when running with a bundle on Ruby 2.6 or earlier.
+
 ### 0.10.4 / 2020-07-11
 
 * IMPROVED: Bundler integration can now handle Toys itself being in the bundle, as long as the version requirements cover the running Toys version.
