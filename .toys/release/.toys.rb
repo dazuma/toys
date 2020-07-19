@@ -2,7 +2,7 @@
 
 require "json"
 
-delegate_to ["toys", "trigger"]
+delegate_to ["release", "trigger"]
 
 mixin "release-tools" do
   on_include do
