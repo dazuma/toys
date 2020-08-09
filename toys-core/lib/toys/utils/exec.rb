@@ -547,7 +547,7 @@ module Toys
         ##
         # The process ID.
         #
-        # Exactly one of `exception` and `pid` will be non-nil.
+        # Exactly one of {#exception} and {#pid} will be non-nil.
         #
         # @return [Integer] if the process start was successful
         # @return [nil] if the process could not be started.
@@ -557,7 +557,7 @@ module Toys
         ##
         # The exception raised when the process failed to start.
         #
-        # Exactly one of `exception` and `pid` will be non-nil.
+        # Exactly one of {#exception} and {#pid} will be non-nil.
         #
         # @return [Exception] if the process failed to start.
         # @return [nil] if the process start was successful.
@@ -773,7 +773,21 @@ module Toys
       end
 
       ##
-      # The result returned from a subcommand execution.
+      # The result returned from a subcommand execution. This includes the
+      # identifying name of the execution (if any), the result status of the
+      # execution, and any captured stream output.
+      #
+      # Possible result statuses are:
+      #
+      #  *  The process failed to start. {Result#failed?} will return true, and
+      #     {Result#exception} will return an exception describing the failure
+      #     (often an errno).
+      #  *  The process executed and exited with a normal exit code. Either
+      #     {Result#success?} or {Result#error?} will return true, and
+      #     {Result.exit_code} will return the numeric exit code.
+      #  *  The process executed but was terminated by an uncaught signal.
+      #     {Result#signaled?} will return true, and {Result#term_signal} will
+      #     return the numeric signal code.
       #
       class Result
         ## @private
@@ -809,11 +823,13 @@ module Toys
         attr_reader :captured_err
 
         ##
-        # The status code object.
+        # The Ruby process status object, providing various information about
+        # the ending state of the process.
         #
-        # Exactly one of `exception` and `status` will be non-nil.
+        # Exactly one of {#exception} and {#status} will be non-nil.
         #
-        # @return [Process::Status] The status code.
+        # @return [Process::Status] The status, if the process was successfully
+        #     spanwed and terminated.
         # @return [nil] if the process could not be started.
         #
         attr_reader :status
@@ -821,7 +837,7 @@ module Toys
         ##
         # The exception raised if a process couldn't be started.
         #
-        # Exactly one of `exception` and `status` will be non-nil.
+        # Exactly one of {#exception} and {#status} will be non-nil.
         #
         # @return [Exception] The exception raised from process start.
         # @return [nil] if the process started successfully.
@@ -829,33 +845,76 @@ module Toys
         attr_reader :exception
 
         ##
-        # The numeric status code.
+        # The numeric status code for a process that exited normally,
         #
-        # This will be a nonzero integer if the process failed to start. That
-        # is, `exit_code` will never be `nil`, even if `status` is `nil`.
+        # Exactly one of {#exception}, {#exit_code}, and {#term_signal} will be
+        # non-nil.
         #
-        # @return [Integer]
+        # @return [Integer] the numeric status code, if the process started
+        #     successfully and exited normally.
+        # @return [nil] if the process did not start successfully, or was
+        #     terminated by an uncaught signal.
         #
         def exit_code
-          status ? status.exitstatus : 127
+          status&.exitstatus
         end
 
         ##
-        # Returns true if the subprocess terminated with a zero status.
+        # The numeric signal code that caused process termination.
+        #
+        # Exactly one of {#exception}, {#exit_code}, and {#term_signal} will be
+        # non-nil.
+        #
+        # @return [Integer] The signal that caused the process to terminate.
+        # @return [nil] if the process did not start successfully, or executed
+        #     and exited with a normal exit code.
+        #
+        def term_signal
+          status&.termsig
+        end
+
+        ##
+        # Returns true if the subprocess failed to start, or false if the
+        # process was able to execute.
+        #
+        # @return [Boolean]
+        #
+        def failed?
+          status.nil?
+        end
+
+        ##
+        # Returns true if the subprocess terminated due to an unhandled signal,
+        # or false if the process failed to start or exited normally.
+        #
+        # @return [Boolean]
+        #
+        def signaled?
+          !term_signal.nil?
+        end
+
+        ##
+        # Returns true if the subprocess terminated with a zero status, or
+        # false if the process failed to start, terminated due to a signal, or
+        # returned a nonzero status.
         #
         # @return [Boolean]
         #
         def success?
-          exit_code.zero?
+          code = exit_code
+          !code.nil? && code.zero?
         end
 
         ##
-        # Returns true if the subprocess terminated with a nonzero status.
+        # Returns true if the subprocess terminated with a nonzero status, or
+        # false if the process failed to start, terminated due to a signal, or
+        # returned a zero status.
         #
         # @return [Boolean]
         #
         def error?
-          !exit_code.zero?
+          code = exit_code
+          !code.nil? && !code.zero?
         end
       end
 
