@@ -138,7 +138,7 @@ mixin "release-tools" do
       file.write(content)
     end
   end
-  
+
   def push_docs(version, dir, dry_run: false, git_remote: "origin")
     logger.info("Pushing docs to gh-pages...")
     cd(dir) do

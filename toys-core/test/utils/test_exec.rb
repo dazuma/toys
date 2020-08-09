@@ -19,9 +19,13 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("exit 0")
         assert_nil(result.exception)
+        assert_instance_of(::Process::Status, result.status)
         assert_equal(0, result.exit_code)
+        assert_nil(result.term_signal)
         assert_equal(true, result.success?)
         assert_equal(false, result.error?)
+        assert_equal(false, result.signaled?)
+        assert_equal(false, result.failed?)
       end
     end
 
@@ -29,9 +33,13 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("exit 3")
         assert_nil(result.exception)
+        assert_instance_of(::Process::Status, result.status)
         assert_equal(3, result.exit_code)
+        assert_nil(result.term_signal)
         assert_equal(false, result.success?)
         assert_equal(true, result.error?)
+        assert_equal(false, result.signaled?)
+        assert_equal(false, result.failed?)
       end
     end
 
@@ -39,9 +47,30 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["hohohohohohoho"])
         assert_instance_of(::Errno::ENOENT, result.exception)
-        assert_equal(127, result.exit_code)
+        assert_nil(result.exit_code)
+        assert_nil(result.exit_code)
+        assert_nil(result.term_signal)
         assert_equal(false, result.success?)
-        assert_equal(true, result.error?)
+        assert_equal(false, result.error?)
+        assert_equal(false, result.signaled?)
+        assert_equal(true, result.failed?)
+      end
+    end
+
+    it "detects signaled" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        result = exec.exec("sleep 5") do |controller|
+          sleep(0.1)
+          controller.kill("SIGTERM")
+        end
+        assert_nil(result.exception)
+        assert_instance_of(::Process::Status, result.status)
+        assert_nil(result.exit_code)
+        assert_equal(15, result.term_signal)
+        assert_equal(false, result.success?)
+        assert_equal(false, result.error?)
+        assert_equal(true, result.signaled?)
+        assert_equal(false, result.failed?)
       end
     end
 
