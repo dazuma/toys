@@ -58,15 +58,16 @@ describe Toys::Utils::Exec do
     end
 
     it "detects termination due to signal" do
+      skip if Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("sleep 5") do |controller|
           sleep(0.5)
-          controller.kill("INT")
+          controller.kill("TERM")
         end
         assert_nil(result.exception)
         assert_instance_of(::Process::Status, result.status)
         assert_nil(result.exit_code)
-        assert_equal(2, result.term_signal)
+        assert_equal(15, result.term_signal)
         assert_equal(false, result.success?)
         assert_equal(false, result.error?)
         assert_equal(true, result.signaled?)
