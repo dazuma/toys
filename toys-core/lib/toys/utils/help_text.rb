@@ -32,14 +32,13 @@ module Toys
       # @return [Toys::Utils::HelpText]
       #
       def self.from_context(context)
-        orig_context = context
-        while (from = context[Context::Key::DELEGATED_FROM])
-          context = from
+        delegates = []
+        cur = context
+        while (cur = cur[Context::Key::DELEGATED_FROM])
+          delegates << cur[Context::Key::TOOL]
         end
-        delegate_target = orig_context == context ? nil : orig_context[Context::Key::TOOL_NAME]
         cli = context[Context::Key::CLI]
-        new(context[Context::Key::TOOL], cli.loader, cli.executable_name,
-            delegate_target: delegate_target)
+        new(context[Context::Key::TOOL], cli.loader, cli.executable_name, delegates: delegates)
       end
 
       ##
@@ -49,16 +48,15 @@ module Toys
       # @param loader [Toys::Loader] A loader that can provide subcommands.
       # @param executable_name [String] The name of the executable.
       #     e.g. `"toys"`.
-      # @param delegate_target [Array<String>,nil] The full name of a tool this
-      #     tool will delegate to. Default is `nil` for no delegation.
+      # @param delegates [Array<Toys::Tool>] The delegation path to the tool.
       #
       # @return [Toys::Utils::HelpText]
       #
-      def initialize(tool, loader, executable_name, delegate_target: nil)
+      def initialize(tool, loader, executable_name, delegates: [])
         @tool = tool
         @loader = loader
         @executable_name = executable_name
-        @delegate_target = delegate_target
+        @delegates = delegates
       end
 
       ##
@@ -88,8 +86,7 @@ module Toys
         indent ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, nil, include_hidden)
         assembler = UsageStringAssembler.new(
-          @tool, @executable_name, @delegate_target, subtools,
-          indent, left_column_width, wrap_width
+          @tool, @executable_name, subtools, indent, left_column_width, wrap_width
         )
         assembler.result
       end
@@ -121,7 +118,7 @@ module Toys
         indent2 ||= DEFAULT_INDENT
         subtools = find_subtools(recursive, search, include_hidden)
         assembler = HelpStringAssembler.new(
-          @tool, @executable_name, @delegate_target, subtools, search, show_source_path,
+          @tool, @executable_name, @delegates, subtools, search, show_source_path,
           indent, indent2, wrap_width, styled
         )
         assembler.result
@@ -155,22 +152,29 @@ module Toys
       private
 
       def find_subtools(recursive, search, include_hidden)
-        subtools = @loader.list_subtools(@tool.full_name,
-                                         recursive: recursive, include_hidden: include_hidden)
-        return subtools if search.nil? || search.empty?
+        subtools_by_name = {}
+        ([@tool] + @delegates).each do |tool|
+          name_len = tool.full_name.length
+          subtools = @loader.list_subtools(tool.full_name,
+                                           recursive: recursive, include_hidden: include_hidden)
+          subtools.each do |subtool|
+            local_name = subtool.full_name.slice(name_len..-1).join(" ")
+            subtools_by_name[local_name] = subtool
+          end
+        end
+        subtool_list = subtools_by_name.sort_by { |(local_name, _tool)| local_name }
+        return subtool_list if search.nil? || search.empty?
         regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
-        subtools.find_all do |tool|
-          regex =~ tool.display_name || regex =~ tool.desc.to_s
+        subtool_list.find_all do |local_name, tool|
+          regex =~ local_name || regex =~ tool.desc.to_s
         end
       end
 
       ## @private
       class UsageStringAssembler
-        def initialize(tool, executable_name, delegate_target, subtools,
-                       indent, left_column_width, wrap_width)
+        def initialize(tool, executable_name, subtools, indent, left_column_width, wrap_width)
           @tool = tool
           @executable_name = executable_name
-          @delegate_target = delegate_target
           @subtools = subtools
           @indent = indent
           @left_column_width = left_column_width
@@ -195,7 +199,7 @@ module Toys
         def add_synopsis_section
           synopses = []
           synopses << namespace_synopsis unless @subtools.empty?
-          synopses << (@delegate_target ? delegate_synopsis : tool_synopsis)
+          synopses << tool_synopsis
           first = true
           synopses.each do |synopsis|
             @lines << (first ? "Usage:  #{synopsis}" : "        #{synopsis}")
@@ -210,11 +214,6 @@ module Toys
             synopsis << arg_name(arg_info)
           end
           synopsis.join(" ")
-        end
-
-        def delegate_synopsis
-          target = @delegate_target.join(" ")
-          "#{@executable_name} #{@tool.display_name} [ARGUMENTS FOR \"#{target}\"...]"
         end
 
         def namespace_synopsis
@@ -256,12 +255,10 @@ module Toys
 
         def add_subtool_list_section
           return if @subtools.empty?
-          name_len = @tool.full_name.length
           @lines << ""
           @lines << "Tools:"
-          @subtools.each do |subtool|
-            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            add_right_column_desc(tool_name, wrap_desc(subtool.desc))
+          @subtools.each do |local_name, subtool|
+            add_right_column_desc(local_name, wrap_desc(subtool.desc))
           end
         end
 
@@ -301,12 +298,12 @@ module Toys
 
       ## @private
       class HelpStringAssembler
-        def initialize(tool, executable_name, delegate_target, subtools, search_term,
+        def initialize(tool, executable_name, delegates, subtools, search_term,
                        show_source_path, indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
           @tool = tool
           @executable_name = executable_name
-          @delegate_target = delegate_target
+          @delegates = delegates
           @subtools = subtools
           @search_term = search_term
           @show_source_path = show_source_path
@@ -356,7 +353,7 @@ module Toys
           @lines << ""
           @lines << bold("SYNOPSIS")
           add_synopsis_clause(namespace_synopsis) unless @subtools.empty?
-          add_synopsis_clause(@delegate_target ? delegate_synopsis : tool_synopsis)
+          add_synopsis_clause(tool_synopsis(@tool))
         end
 
         def add_synopsis_clause(synopsis)
@@ -367,8 +364,8 @@ module Toys
           end
         end
 
-        def tool_synopsis
-          synopsis = [full_executable_name]
+        def tool_synopsis(tool_for_name)
+          synopsis = [full_executable_name(tool_for_name)]
           @tool.flag_groups.each do |flag_group|
             case flag_group
             when FlagGroup::Required
@@ -441,19 +438,14 @@ module Toys
         end
 
         def namespace_synopsis
-          synopsis = [full_executable_name, underline("TOOL"), "[#{underline('ARGUMENTS')}...]"]
+          synopsis = [full_executable_name(@tool),
+                      underline("TOOL"),
+                      "[#{underline('ARGUMENTS')}...]"]
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
-        def delegate_synopsis
-          target = @delegate_target.join(" ")
-          args_clause = underline("ARGUMENTS FOR \"#{target}\"")
-          synopsis = [full_executable_name, "[#{args_clause}...]"]
-          wrap_indent_indent2(WrappableString.new(synopsis))
-        end
-
-        def full_executable_name
-          bold(([@executable_name] + @tool.full_name).join(" "))
+        def full_executable_name(tool_for_name)
+          bold(([@executable_name] + tool_for_name.full_name).join(" "))
         end
 
         def add_source_section
@@ -461,15 +453,22 @@ module Toys
           @lines << ""
           @lines << bold("SOURCE")
           @lines << indent_str("Defined in #{@tool.source_info.source_name}")
+          @delegates.each do |delegate|
+            @lines << indent_str("Delegated from \"#{delegate.display_name}\"" \
+                                 " defined in #{delegate.source_info.source_name}")
+          end
         end
 
         def add_description_section
-          desc = @tool.long_desc
-          if @delegate_target
-            delegate_clause =
-              "Passes all arguments to \"#{@delegate_target.join(' ')}\" if invoked directly."
-            desc = desc.empty? ? [delegate_clause] : desc + ["", delegate_clause]
+          desc = @tool.long_desc.dup
+          @delegates.each do |delegate|
+            desc << "" << "Delegated from \"#{delegate.display_name}\""
+            unless delegate.long_desc.empty?
+              desc << ""
+              desc += delegate.long_desc
+            end
           end
+          desc = desc[1..-1] if desc.first == ""
           desc = wrap_indent(desc)
           return if desc.empty?
           @lines << ""
@@ -533,10 +532,8 @@ module Toys
             @lines << indent_str("Showing search results for \"#{@search_term}\"")
             @lines << ""
           end
-          name_len = @tool.full_name.length
-          @subtools.each do |subtool|
-            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            add_prefix_with_desc(bold(tool_name), subtool.desc)
+          @subtools.each do |local_name, subtool|
+            add_prefix_with_desc(bold(local_name), subtool.desc)
           end
         end
 
@@ -637,10 +634,8 @@ module Toys
         end
 
         def add_list
-          name_len = @tool.full_name.length
-          @subtools.each do |subtool|
-            tool_name = subtool.full_name.slice(name_len..-1).join(" ")
-            add_prefix_with_desc(bold(tool_name), subtool.desc)
+          @subtools.each do |local_name, subtool|
+            add_prefix_with_desc(bold(local_name), subtool.desc)
           end
         end
 

@@ -226,8 +226,7 @@ describe Toys::Utils::HelpText do
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
         assert_equal(
-          "    toys foo bar [-cVALUE | --cc=VALUE]" \
-              " (-aVALUE | --aa=VALUE) (-bVALUE | --bb=VALUE)",
+          "    toys foo bar [-cVALUE | --cc=VALUE] (-aVALUE | --aa=VALUE) (-bVALUE | --bb=VALUE)",
           help_array[index + 1]
         )
       end
@@ -242,8 +241,7 @@ describe Toys::Utils::HelpText do
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
         assert_equal(
-          "    toys foo bar [-cVALUE | --cc=VALUE]" \
-              " ( -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE )",
+          "    toys foo bar [-cVALUE | --cc=VALUE] ( -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE )",
           help_array[index + 1]
         )
       end
@@ -258,8 +256,7 @@ describe Toys::Utils::HelpText do
         index = help_array.index("SYNOPSIS")
         refute_nil(index)
         assert_equal(
-          "    toys foo bar [-cVALUE | --cc=VALUE]" \
-              " [ -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE ]",
+          "    toys foo bar [-cVALUE | --cc=VALUE] [ -aVALUE | --aa=VALUE | -bVALUE | --bb=VALUE ]",
           help_array[index + 1]
         )
       end
@@ -278,15 +275,6 @@ describe Toys::Utils::HelpText do
               " ( [-aVALUE | --aa=VALUE] [-bVALUE | --bb=VALUE] )",
           help_array[index + 1]
         )
-      end
-
-      it "is set for a delegating tool" do
-        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
-                                         delegate_target: tool_name)
-        help_array = help.help_string(styled: false).split("\n")
-        index = help_array.index("SYNOPSIS")
-        refute_nil(index)
-        assert_equal('    toys foo baz [ARGUMENTS FOR "foo bar"...]', help_array[index + 1])
       end
     end
 
@@ -308,29 +296,56 @@ describe Toys::Utils::HelpText do
         assert_equal(index + 2, help_array.size)
       end
 
-      it "renders a delegating tool with no long description" do
-        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
-                                         delegate_target: tool_name)
+      it "renders with a delegator and no long descriptions" do
+        help = Toys::Utils::HelpText.new(normal_tool, delegation_loader, executable_name,
+                                         delegates: [delegating_tool])
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("DESCRIPTION")
         refute_nil(index)
-        assert_equal("    Passes all arguments to \"#{tool_name.join(' ')}\" if invoked directly.",
-                     help_array[index + 1])
+        assert_equal("    Delegated from \"#{tool2_name.join(' ')}\"", help_array[index + 1])
         assert_equal(index + 2, help_array.size)
       end
 
-      it "renders a delegating tool with a long description" do
-        delegating_tool.long_desc = ["Hello world"]
-        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
-                                         delegate_target: tool_name)
+      it "renders with a delegator and a long description for the delegate" do
+        normal_tool.long_desc = ["Hello world"]
+        help = Toys::Utils::HelpText.new(normal_tool, delegation_loader, executable_name,
+                                         delegates: [delegating_tool])
         help_array = help.help_string(styled: false).split("\n")
         index = help_array.index("DESCRIPTION")
         refute_nil(index)
         assert_equal("    Hello world", help_array[index + 1])
         assert_equal("    ", help_array[index + 2])
-        assert_equal("    Passes all arguments to \"#{tool_name.join(' ')}\" if invoked directly.",
-                     help_array[index + 3])
+        assert_equal("    Delegated from \"#{tool2_name.join(' ')}\"", help_array[index + 3])
         assert_equal(index + 4, help_array.size)
+      end
+
+      it "renders with a delegator and a long description for the delegator" do
+        delegating_tool.long_desc = ["Hello delegator"]
+        help = Toys::Utils::HelpText.new(normal_tool, delegation_loader, executable_name,
+                                         delegates: [delegating_tool])
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        refute_nil(index)
+        assert_equal("    Delegated from \"#{tool2_name.join(' ')}\"", help_array[index + 1])
+        assert_equal("    ", help_array[index + 2])
+        assert_equal("    Hello delegator", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
+      end
+
+      it "renders with a delegator and a long description for both tools" do
+        normal_tool.long_desc = ["Hello world"]
+        delegating_tool.long_desc = ["Hello delegator"]
+        help = Toys::Utils::HelpText.new(normal_tool, delegation_loader, executable_name,
+                                         delegates: [delegating_tool])
+        help_array = help.help_string(styled: false).split("\n")
+        index = help_array.index("DESCRIPTION")
+        refute_nil(index)
+        assert_equal("    Hello world", help_array[index + 1])
+        assert_equal("    ", help_array[index + 2])
+        assert_equal("    Delegated from \"#{tool2_name.join(' ')}\"", help_array[index + 3])
+        assert_equal("    ", help_array[index + 4])
+        assert_equal("    Hello delegator", help_array[index + 5])
+        assert_equal(index + 6, help_array.size)
       end
     end
 
@@ -712,14 +727,6 @@ describe Toys::Utils::HelpText do
         assert_equal("Usage:  toys foo bar [FLAGS...] CC DD [EE] [FF] [GG...]",
                      usage_array[0])
         assert_equal("", usage_array[1])
-      end
-
-      it "is set for a delegating tool" do
-        help = Toys::Utils::HelpText.new(delegating_tool, delegation_loader, executable_name,
-                                         delegate_target: tool_name)
-        usage_array = help.usage_string.split("\n")
-        assert_equal('Usage:  toys foo baz [ARGUMENTS FOR "foo bar"...]', usage_array[0])
-        assert_equal(1, usage_array.size)
       end
     end
 
