@@ -2143,6 +2143,47 @@ a different bundle. If you need to do this, use the
 method from the `:exec` mixin, to call the tool. This method spawns a separate
 process with a clean Bundler setup for running the tool.
 
+#### When a bundle is needed to define a tool
+
+Usually, the `:bundler` mixin sets up your bundle when the tool is *executed*.
+However, occasionally, you need the gems in the bundle to *define* a tool. This
+might happen, for instance, if your bundle includes gesm that define mixins or
+templates used by your tool.
+
+If you need the bundle set up immediately because its gems are needed by the
+tool definition, pass the `static: true` option when including the `:bundler`
+mixin. For example, if you are using the
+[flame_server_toys](https://github.com/AlexWayfer/flame_server_toys) gem, which
+provides a template that generates tools for the
+[Flame](https://github.com/AlexWayfer/flame) web framework, you could include
+the `flame_server_toys` gem in your Gemfile, and make it available for defining
+tools:
+
+    # Set up the bundle immediately.
+    include :bundler, static: true
+
+    # Now you can use the gems in the bundle when defining tools.
+    require "flame_server_toys"
+    expand FlameServerToys::Template
+
+There is a big caveat to using `static: true`, which is that you are setting up
+a bundle immediately, and as a result any subsequent attempt to set up or use a
+different bundle will fail. (See the section on
+[bundle conflicts](#Solving_bundle_conflicts) for a discussion of other reasons
+this can happen.) As a result, it's best not to use `static: true` unless you
+*really* need it to define tools. If you do run into this problem, here are two
+things you could try:
+
+ 1. "Scope" the bundle to the tool or the namespace where you need it. Toys
+    makes an effort not to define a tool unless you actually need to execute it
+    or one of its subtools, so if you can locate `include :bundler` inside just
+    the tool or namespace that needs it, you might be able to avoid conflicts.
+
+ 2. Failing that, you could consider activating the gem directly rather than as
+    part of a bundle. See the following section on
+    [Activating gems directly](#Activating_gems_directly) for details on this
+    technique.
+
 ### Activating gems directly
 
 Although we recommend the `:bundler` mixin for most cases, it is also possible
@@ -2319,7 +2360,7 @@ than declarative.
 The Toys approach to build tools simply embraces the fact that our build
 processes already tend to be imperative. So unlike Rake, Toys does not provide
 syntax for describing targets and dependencies, since we generally don't have
-them in Ruby programs. Instead, it is optimized for writing tools.
+them in Ruby programs. Instead, it is optimized for writing imperative tools.
 
 For example, Rake provides a primitive mechanism for passing arguments to a
 task, but it is clumsy and quite different from most unix programs. However, to
