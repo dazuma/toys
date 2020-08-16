@@ -240,8 +240,9 @@ Note that if you normally run Rake with Bundler (e.g. `bundle exec rake test`),
 you may need to add Toys to your Gemfile and use Bundler to invoke Toys (i.e.
 `bundle exec toys test`). This is because Toys is just calling the Rake API to
 run your task, and the Rake task might require the bundle. However, when Toys
-is not wrapping Rake, typical practice is actually *not* to use Bundler. Toys
-provides its own mechanisms to activate and even install needed gems for you.
+is not wrapping Rake, typical practice is actually *not* to use `bundle exec`.
+Toys provides its own mechanisms to setup a bundle, or to activate and even
+install individual gems.
 
 So far, we've made Toys a front-end for your Rake tasks. This may be useful by
 itself. Toys lets you pass command line arguments "normally" to tools, whereas
