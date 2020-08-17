@@ -183,7 +183,8 @@ module Toys
       load_for_prefix(words)
       found_tools = []
       len = words.length
-      all_cur_definitions.each do |name, tool|
+      all_cur_definitions.each do |tool|
+        name = tool.full_name
         next if name.empty?
         if recursive
           next if name.length <= len || name.slice(0, len) != words
@@ -206,7 +207,8 @@ module Toys
     def has_subtools?(words) # rubocop:disable Naming/PredicateName
       load_for_prefix(words)
       len = words.length
-      all_cur_definitions.each do |name, _tool|
+      all_cur_definitions.each do |tool|
+        name = tool.full_name
         if !name.empty? && name.length > len && name.slice(0, len) == words
           return true
         end
@@ -371,9 +373,9 @@ module Toys
     def all_cur_definitions
       result = []
       @mutex.synchronize do
-        @tool_data.map do |n, td|
-          cur_def = td.cur_definition
-          result << [n, cur_def] unless cur_def.nil?
+        @tool_data.map do |_name, td|
+          tool = td.cur_definition
+          result << tool unless tool.nil?
         end
       end
       result
@@ -390,7 +392,8 @@ module Toys
     def finish_definitions_in_tree(words)
       load_for_prefix(words)
       len = words.length
-      all_cur_definitions.each do |name, tool|
+      all_cur_definitions.each do |tool|
+        name = tool.full_name
         next if name.length < len || name.slice(0, len) != words
         tool.finish_definition(self)
       end
