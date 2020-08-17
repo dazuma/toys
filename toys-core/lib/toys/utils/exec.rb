@@ -722,15 +722,20 @@ module Toys
         ##
         # Wait for the subcommand to complete, and return a result object.
         #
+        # Closes the control streams if present. The stdin stream is always
+        # closed, even if the call times out. The stdout and stderr streams are
+        # closed only after the command terminates.
+        #
         # @param timeout [Numeric,nil] The timeout in seconds, or `nil` to
         #     wait indefinitely.
         # @return [Toys::Utils::Exec::Result] The result object
         # @return [nil] if a timeout occurred.
         #
         def result(timeout: nil)
+          close_streams(:in)
           return nil if @wait_thread && !@wait_thread.join(timeout)
           @result ||= begin
-            close_streams
+            close_streams(:out)
             @join_threads.each(&:join)
             Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
                   .tap { |result| @result_callback&.call(result) }
@@ -738,13 +743,13 @@ module Toys
         end
 
         ##
-        # Close all the controller's streams.
+        # Close the controller's streams.
         # @private
         #
-        def close_streams
-          @in.close if @in && !@in.closed?
-          @out.close if @out && !@out.closed?
-          @err.close if @err && !@err.closed?
+        def close_streams(which)
+          @in.close if which != :out && @in && !@in.closed?
+          @out.close if which != :in && @out && !@out.closed?
+          @err.close if which != :in && @err && !@err.closed?
           self
         end
 
@@ -946,10 +951,10 @@ module Toys
           return controller if @config_opts[:background]
           begin
             @block&.call(controller)
+            controller.result
           ensure
-            controller.close_streams
+            controller.close_streams(:both)
           end
-          controller.result
         end
 
         private
