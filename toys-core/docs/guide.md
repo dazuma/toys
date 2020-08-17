@@ -1,4 +1,6 @@
+<!--
 # @title Toys-Core User Guide
+-->
 
 # Toys-Core User Guide
 

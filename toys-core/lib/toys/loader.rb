@@ -8,6 +8,9 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
+    # @private
+    BASE_PRIORITY = -999_999
+
     ##
     # Create a Loader
     #
@@ -69,9 +72,11 @@ module Toys
       @worklist = []
       @tool_data = {}
       @max_priority = @min_priority = 0
+      @stop_priority = BASE_PRIORITY
+      @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
-      get_tool([], -999_999)
+      get_tool([], BASE_PRIORITY)
     end
 
     ##
@@ -178,15 +183,14 @@ module Toys
       load_for_prefix(words)
       found_tools = []
       len = words.length
-      tool_data_snapshot.each do |n, td|
-        next if n.empty?
+      all_cur_definitions.each do |name, tool|
+        next if name.empty?
         if recursive
-          next if n.length <= len || n.slice(0, len) != words
+          next if name.length <= len || name.slice(0, len) != words
         else
-          next unless n.slice(0..-2) == words
+          next unless name.slice(0..-2) == words
         end
-        tool = td.cur_definition
-        found_tools << tool unless tool.nil?
+        found_tools << tool
       end
       sort_tools_by_name(found_tools)
       include_hidden ? found_tools : filter_hidden_subtools(found_tools)
@@ -202,8 +206,8 @@ module Toys
     def has_subtools?(words) # rubocop:disable Naming/PredicateName
       load_for_prefix(words)
       len = words.length
-      tool_data_snapshot.each do |n, td|
-        if !n.empty? && n.length > len && n.slice(0, len) == words && !td.empty?
+      all_cur_definitions.each do |name, _tool|
+        if !name.empty? && name.length > len && name.slice(0, len) == words
           return true
         end
       end
@@ -268,6 +272,20 @@ module Toys
     end
 
     ##
+    # Stop search at the given priority. Returns true if successful.
+    # Called only from the DSL.
+    #
+    # @private
+    #
+    def stop_loading_at_priority(priority)
+      @mutex.synchronize do
+        return false if priority > @min_loaded_priority || priority < @stop_priority
+        @stop_priority = priority
+        true
+      end
+    end
+
+    ##
     # Loads the subtree under the given prefix.
     #
     # @private
@@ -278,6 +296,7 @@ module Toys
         cur_worklist = @worklist
         @worklist = []
         cur_worklist.each do |source, words, priority|
+          next if priority < @stop_priority
           remaining_words = calc_remaining_words(prefix, words)
           if source.source_proc
             load_proc(source, words, remaining_words, priority)
@@ -349,8 +368,15 @@ module Toys
 
     private
 
-    def tool_data_snapshot
-      @mutex.synchronize { @tool_data.dup }
+    def all_cur_definitions
+      result = []
+      @mutex.synchronize do
+        @tool_data.map do |n, td|
+          cur_def = td.cur_definition
+          result << [n, cur_def] unless cur_def.nil?
+        end
+      end
+      result
     end
 
     def get_tool_data(words)
@@ -364,14 +390,15 @@ module Toys
     def finish_definitions_in_tree(words)
       load_for_prefix(words)
       len = words.length
-      tool_data_snapshot.each do |n, td|
-        next if n.length < len || n.slice(0, len) != words
-        td.cur_definition&.finish_definition(self)
+      all_cur_definitions.each do |name, tool|
+        next if name.length < len || name.slice(0, len) != words
+        tool.finish_definition(self)
       end
     end
 
     def load_proc(source, words, remaining_words, priority)
       if remaining_words
+        update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
         DSL::Tool.prepare(tool_class, remaining_words, source) do
           ContextualError.capture("Error while loading Toys config!") do
@@ -393,6 +420,7 @@ module Toys
 
     def load_relevant_path(source, words, remaining_words, priority)
       if source.source_type == :file
+        update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
         InputFile.evaluate(tool_class, remaining_words, source)
       else
@@ -420,6 +448,10 @@ module Toys
       next_words = words + [child_word]
       next_remaining = Loader.next_remaining_words(remaining_words, child_word)
       load_validated_path(child_source, next_words, next_remaining, priority)
+    end
+
+    def update_min_loaded_priority(priority)
+      @min_loaded_priority = priority if @min_loaded_priority > priority
     end
 
     def do_preload(path)
@@ -483,37 +515,42 @@ module Toys
     # @private
     #
     class ToolData
-      ## @private
+      # @private
       def initialize(words)
         @words = words
         @definitions = {}
         @top_priority = @active_priority = nil
+        @mutex = ::Monitor.new
       end
 
-      ## @private
+      # @private
       def cur_definition
-        active_definition || top_definition
+        @mutex.synchronize { active_definition || top_definition }
       end
 
-      ## @private
+      # @private
       def empty?
         @definitions.empty?
       end
 
-      ## @private
+      # @private
       def get_tool(priority, loader)
-        if @top_priority.nil? || @top_priority < priority
-          @top_priority = priority
+        @mutex.synchronize do
+          if @top_priority.nil? || @top_priority < priority
+            @top_priority = priority
+          end
+          @definitions[priority] ||= loader.build_tool(@words, priority)
         end
-        @definitions[priority] ||= loader.build_tool(@words, priority)
       end
 
-      ## @private
+      # @private
       def activate_tool(priority, loader)
-        return active_definition if @active_priority == priority
-        return nil if @active_priority && @active_priority > priority
-        @active_priority = priority
-        get_tool(priority, loader)
+        @mutex.synchronize do
+          return active_definition if @active_priority == priority
+          return nil if @active_priority && @active_priority > priority
+          @active_priority = priority
+          get_tool(priority, loader)
+        end
       end
 
       private

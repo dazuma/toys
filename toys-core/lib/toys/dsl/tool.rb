@@ -1620,6 +1620,23 @@ module Toys
       end
 
       ##
+      # Remove lower-priority sources from the load path. This prevents lower-
+      # priority sources (such as Toys files from parent or global directories)
+      # from executing or defining tools.
+      #
+      # This works only if no such sources have already loaded yet.
+      #
+      # @raise [Toys::ToolDefinitionError] if any lower-priority tools have
+      #     already been loaded.
+      #
+      def truncate_load_path!
+        unless @__loader.stop_loading_at_priority(@__priority)
+          raise ToolDefinitionError,
+                "Cannot truncate load path because tools have already been loaded"
+        end
+      end
+
+      ##
       # Determines whether the current Toys version satisfies the given
       # requirements.
       #

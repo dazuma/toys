@@ -1,4 +1,6 @@
+<!--
 # @title Toys User Guide
+-->
 
 # Toys User Guide
 
@@ -1300,7 +1302,29 @@ the same point (the current directory) in the search path.
 Note that in the search path above, steps (1) and (2) are *context-dependent*.
 That is, they may be different depending on what directory you are in. However,
 step (3) is *not* context-dependent, and is searched regardless of where you
-are located. Tools defined here are **global**, available everywhere.
+are located. Tools defined here are *global*, available everywhere.
+
+#### Stopping search
+
+Though it is uncommon practice, it is possible to stop the search process and
+prevent Toys from loading tools further down in the search path (e.g. prevent
+tools from being defined from parent directories or global directories). To do
+so, use the directive
+[Toys::DSL::Tool#truncate_load_path!](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#truncate_load_path!-instance_method). This directive removes all
+directories further down the search path. It can be used, for example, to
+disable global tools when you run Toys from the current directory. It can also
+be useful if you are using [Bundler integration](#Using_bundler_with_a_tool) to
+prevent bundle conflicts with parent directories, by disabling tools from
+parent directories.
+
+The `truncate_load_path!` directive works only if no tools from further down
+the search path have been loaded yet. It will raise
+[Toys::ToolDefinitionError](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/ToolDefinitionError)
+if it fails to truncate the load path. In most cases, Toys is very smart about
+loading tools only when needed, but there are exceptions. To minimize the
+chance of problems, if you need to use `truncate_load_path!`, locate it as
+early as possible in your Toys files, typically at the top of the
+[index file](#Index_files).
 
 ## The execution environment
 
@@ -1308,9 +1332,9 @@ This section describes the context and resources available to your tool when it
 is running; that is, what you can call from your tool's `run` method.
 
 Each tool is defined as a class that subclasses
-[Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context). The base
-class defines a number of methods, and provides access to a variety of data and
-objects relevant to your tool. We have already seen earlier how to use the
+[Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context).
+The base class defines helper methods, and provides access to a variety of data
+and objects relevant to your tool. We have already seen earlier how to use the
 [Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
 method to retrieve option values, and how to use the
 [Toys::Context#exit](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#exit-instance_method)
@@ -1380,8 +1404,8 @@ A common operation a tool might want to do is "call" another tool. This can be
 done via the CLI object, which you can retrieve using the `CLI` key or the
 [Toys::Context#cli method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#cli-instance_method).
 These return the current instance of
-[Toys::CLI](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI) which is the
-"main" interface to Toys. In particular, it provides the
+[Toys::CLI](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI) which
+is the "main" interface to Toys. In particular, it provides the
 [Toys::CLI#run method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI#run-instance_method)
 which can be used to call another tool:
 
@@ -1799,8 +1823,8 @@ directive by setting properties on the template object.
 
 Finally, templates are classes, and you can create a template directly as a
 class by including the
-[Toys::Template](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Template) module
-in your class definition.
+[Toys::Template](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Template)
+module in your class definition.
 
     class GreetTemplate
       include Toys::Template

@@ -1557,6 +1557,38 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "truncate_load_path! directive" do
+    it "removes lower-priority load paths" do
+      test = self
+      loader.add_block do
+        truncate_load_path!
+      end
+      loader.add_block do
+        test.flunk("Search was not stopped!")
+      end
+
+      loader.lookup(["tool-1"])
+    end
+
+    it "fails if a lower-priority tool is already loaded" do
+      loader.add_block do
+        tool "tool-2" do
+          truncate_load_path!
+        end
+      end
+      loader.add_block do
+        tool "tool-1" do
+          desc "hello"
+        end
+      end
+
+      loader.lookup(["tool-1"])
+      assert_raises("Cannot truncate load path because tools have already been loaded") do
+        loader.lookup(["tool-2"])
+      end
+    end
+  end
+
   describe "toys_version directives" do
     it "checks versions" do
       test = self
