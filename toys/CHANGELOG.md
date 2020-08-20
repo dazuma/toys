@@ -1,10 +1,22 @@
 # Release History
 
+### 0.11.0 / 2020-08-21
+
+* ADDED: The toys search path can be truncated using the `truncate_load_path!` directive.
+* ADDED: The `:clean` template recognizes `:gitignore` as a path indicating all gitignored files.
+* IMPROVED: Generated help for delegates now includes the information for the target tool, plus subtools of the delegate.
+* IMPROVED: The `:bundler` mixin searches for `gems.rb` and `.gems.rb` in addition to `Gemfile`.
+* IMPROVED: The `:budnler` mixin can load a specific Gemfile path.
+* FIXED: The loader can now find `.data` and `.lib` directories at the root level of a `.toys` directory.
+* FIXED: Exec::Result correctly reports processes that terminated due to signals.
+* FIXED: Fixed a rare Exec capture failure that resulted from a race condition when closing streams.
+* DOCS: The Toys user guide now covers static bundle loading and `truncate_load_path!`.
+
 ### 0.10.5 / 2020-07-18
 
 * IMPROVED: The bundler mixin silences bundler output during bundle setup.
 * IMPROVED: The bundler mixin allows toys and toys-core to be in the Gemfile. It checks their version requirements against the running Toys version, and either adds the corret version to the bundle or raises IncompatibleToysError.
-* IMPROVED: The bundler mixin utomatically updates the bundle if install fails (typically because a transitive dependency has been explicitly updated.)
+* IMPROVED: The bundler mixin automatically updates the bundle if install fails (typically because a transitive dependency has been explicitly updated.)
 * FIXED: Some cases of transitive dependency handling by the bundler mixin.
 * FIXED: Fixed a crash when computing suggestions, when running with a bundle on Ruby 2.6 or earlier.
 
