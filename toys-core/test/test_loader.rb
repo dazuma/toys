@@ -320,6 +320,14 @@ describe Toys::Loader do
       finding_loader.lookup(["ns-1", "ns-1a", "foo"])
     end
 
+    it "finds parent data during loading" do
+      finding_loader.lookup(["ns-1", "ns-1b", "foo"])
+    end
+
+    it "finds root data during loading" do
+      finding_loader.lookup(["ns-4", "foo"])
+    end
+
     it "reports lack of data during loading" do
       finding_loader.lookup(["ns-3", "foo"])
     end

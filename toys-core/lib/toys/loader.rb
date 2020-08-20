@@ -94,7 +94,7 @@ module Toys
         raise "Cannot add a path after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         paths.each do |path|
-          source = SourceInfo.create_path_root(path)
+          source = SourceInfo.create_path_root(path, @data_dir_name, @lib_dir_name)
           @worklist << [source, [], priority]
         end
       end
@@ -119,7 +119,7 @@ module Toys
       @mutex.synchronize do
         raise "Cannot add a block after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_proc_root(block, name)
+        source = SourceInfo.create_proc_root(block, name, @data_dir_name, @lib_dir_name)
         @worklist << [source, [], priority]
       end
       self
@@ -437,7 +437,7 @@ module Toys
 
     def load_index_in(source, words, remaining_words, priority)
       return unless @index_file_name
-      index_source = source.relative_child(@index_file_name, @data_dir_name, @lib_dir_name)
+      index_source = source.relative_child(@index_file_name)
       load_relevant_path(index_source, words, remaining_words, priority) if index_source
     end
 
@@ -445,7 +445,7 @@ module Toys
       return if child.start_with?(".") || child == @index_file_name ||
                 child == @preload_file_name || child == @preload_dir_name ||
                 child == @data_dir_name || child == @lib_dir_name
-      child_source = source.relative_child(child, @data_dir_name, @lib_dir_name)
+      child_source = source.relative_child(child)
       return unless child_source
       child_word = ::File.basename(child, ".rb")
       next_words = words + [child_word]

@@ -740,8 +740,8 @@ describe Toys::Tool do
   describe "source info" do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:source_path2) { File.expand_path(__dir__) }
-    let(:source_info) { Toys::SourceInfo.create_path_root(source_path) }
-    let(:source_info2) { Toys::SourceInfo.create_path_root(source_path2) }
+    let(:source_info) { Toys::SourceInfo.create_path_root(source_path, nil, nil) }
+    let(:source_info2) { Toys::SourceInfo.create_path_root(source_path2, nil, nil) }
 
     it "starts at nil" do
       assert_nil(tool.source_info)
@@ -865,7 +865,7 @@ describe Toys::Tool do
   describe "context directory" do
     let(:source_path) { File.expand_path(__FILE__) }
     let(:default_context_dir) { File.expand_path(__dir__) }
-    let(:source_info) { Toys::SourceInfo.create_path_root(source_path) }
+    let(:source_info) { Toys::SourceInfo.create_path_root(source_path, nil, nil) }
 
     it "defaults to nil" do
       assert_nil(tool.context_directory)
