@@ -10,7 +10,7 @@ module Toys
     # @private
     #
     def initialize(parent, context_directory, source_type, source_path, source_proc,
-                   source_name, data_dir, lib_dir)
+                   source_name, data_dir_name, lib_dir_name)
       @parent = parent
       @context_directory = context_directory
       @source_type = source_type
@@ -18,8 +18,10 @@ module Toys
       @source_path = source_path
       @source_proc = source_proc
       @source_name = source_name
-      @data_dir = data_dir
-      @lib_dir = lib_dir
+      @data_dir_name = data_dir_name
+      @lib_dir_name = lib_dir_name
+      @data_dir = find_special_dir(data_dir_name)
+      @lib_dir = find_special_dir(lib_dir_name)
     end
 
     ##
@@ -118,15 +120,13 @@ module Toys
     # Create a child SourceInfo relative to the parent path.
     # @private
     #
-    def relative_child(filename, data_dir_name, lib_dir_name)
-      raise "no parent path for relative_child" unless source_path
+    def relative_child(filename)
+      raise "relative_child is valid only on a directory source" unless source_type == :directory
       child_path = ::File.join(source_path, filename)
       child_path, type = SourceInfo.check_path(child_path, true)
       return nil unless child_path
-      data_dir = SourceInfo.find_special_dir(type, child_path, data_dir_name)
-      lib_dir = SourceInfo.find_special_dir(type, child_path, lib_dir_name)
-      SourceInfo.new(self, context_directory, type, child_path, source_proc, child_path,
-                     data_dir, lib_dir)
+      SourceInfo.new(self, context_directory, type, child_path, nil, child_path,
+                     @data_dir_name, @lib_dir_name)
     end
 
     ##
@@ -135,7 +135,8 @@ module Toys
     #
     def absolute_child(child_path)
       child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, context_directory, type, child_path, source_proc, child_path, nil, nil)
+      SourceInfo.new(self, context_directory, type, child_path, nil, child_path,
+                     @data_dir_name, @lib_dir_name)
     end
 
     ##
@@ -144,25 +145,26 @@ module Toys
     #
     def proc_child(child_proc, source_name = nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, context_directory, :proc, source_path, child_proc, source_name, nil, nil)
+      SourceInfo.new(self, context_directory, :proc, source_path, child_proc, source_name,
+                     @data_dir_name, @lib_dir_name)
     end
 
     ##
     # Create a root source info for a file path.
     # @private
     #
-    def self.create_path_root(source_path)
+    def self.create_path_root(source_path, data_dir_name, lib_dir_name)
       source_path, type = check_path(source_path, false)
       context_directory = ::File.dirname(source_path)
-      new(nil, context_directory, type, source_path, nil, source_path, nil, nil)
+      new(nil, context_directory, type, source_path, nil, source_path, data_dir_name, lib_dir_name)
     end
 
     ##
     # Create a root source info for a proc.
     # @private
     #
-    def self.create_proc_root(source_proc, source_name)
-      new(nil, nil, :proc, nil, source_proc, source_name, nil, nil)
+    def self.create_proc_root(source_proc, source_name, data_dir_name, lib_dir_name)
+      new(nil, nil, :proc, nil, source_proc, source_name, data_dir_name, lib_dir_name)
     end
 
     ##
@@ -189,14 +191,11 @@ module Toys
       end
     end
 
-    ##
-    # Determine the data directory path, if any.
-    # @private
-    #
-    def self.find_special_dir(type, source_path, dir_name)
-      return nil if source_path.nil? || dir_name.nil?
-      source_path = ::File.dirname(source_path) if type == :file
-      dir = ::File.join(source_path, dir_name)
+    private
+
+    def find_special_dir(dir_name)
+      return nil if @source_type != :directory || dir_name.nil?
+      dir = ::File.join(@source_path, dir_name)
       dir if ::File.directory?(dir) && ::File.readable?(dir)
     end
   end

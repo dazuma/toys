@@ -35,4 +35,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Run ${{ matrix.tool || 'test' }}
         shell: bash
-        run: "./toys-dev do ci init , ${{ matrix.tool || 'test' }} < /dev/null"
+        run: |
+          unset JAVA_TOOL_OPTIONS
+          ./toys-dev do ci init , ${{ matrix.tool || 'test' }} < /dev/null
