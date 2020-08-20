@@ -90,7 +90,9 @@ module Toys
       def self.toys_dir_stack(source_info)
         dirs = []
         while source_info
-          dirs << source_info.source_path if source_info.source_type == :directory
+          if source_info.source_type == :directory
+            dirs << [source_info.source_path, ".gems.rb", "Gemfile"]
+          end
           source_info = source_info.parent
         end
         dirs

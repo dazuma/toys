@@ -25,6 +25,10 @@ describe Toys::Utils::Gems do
   end
 
   describe "#bundle" do
+    let(:multi_test_clean_files) {
+      ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
+    }
+
     it "sets up a bundle without toys" do
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
@@ -52,6 +56,49 @@ describe Toys::Utils::Gems do
         refute(result.success?)
         assert_match(/Toys::Utils::Gems::IncompatibleToysError/, result.captured_err)
         refute_match(/should-not-get-here/, result.captured_out)
+      end
+    end
+
+    def clean_files_for_multi_tests
+      files = ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
+      files.each { |file| FileUtils.rm_f(file) }
+    end
+
+    it "chooses gems.rb over Gemfile" do
+      setup_case("bundle-with-multiple-gemfiles") do
+        clean_files_for_multi_tests
+        FileUtils.cp("gemfile1.rb", "gems.rb")
+        FileUtils.cp("gemfile2.rb", "Gemfile")
+        result = run_script
+        assert(result.success?)
+        assert(File.readable?("gems.locked"))
+        refute(File.readable?("Gemfile.lock"))
+      end
+      setup_case("bundle-with-multiple-gemfiles") do
+        clean_files_for_multi_tests
+        FileUtils.cp("gemfile2.rb", "gems.rb")
+        FileUtils.cp("gemfile1.rb", "Gemfile")
+        result = run_script
+        refute(result.success?)
+      end
+    end
+
+    it "chooses .gems.rb over gems.rb" do
+      setup_case("bundle-with-multiple-gemfiles") do
+        clean_files_for_multi_tests
+        FileUtils.cp("gemfile1.rb", ".gems.rb")
+        FileUtils.cp("gemfile2.rb", "gems.rb")
+        result = run_script
+        assert(result.success?)
+        assert(File.readable?(".gems.rb.lock"))
+        refute(File.readable?("gems.locked"))
+      end
+      setup_case("bundle-with-multiple-gemfiles") do
+        clean_files_for_multi_tests
+        FileUtils.cp("gemfile2.rb", ".gems.rb")
+        FileUtils.cp("gemfile1.rb", "gems.rb")
+        result = run_script
+        refute(result.success?)
       end
     end
 

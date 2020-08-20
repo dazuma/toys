@@ -238,9 +238,15 @@ module Toys
       end
 
       def find_gemfile(search_dirs)
-        search_dirs.each do |dir|
-          gemfile_path = ::File.join(dir, "Gemfile")
-          return gemfile_path if ::File.readable?(gemfile_path)
+        search_dirs.each do |dir_data|
+          dir_data = Array(dir_data)
+          dir = dir_data.first
+          files = dir_data[1..-1]
+          files = [".gems.rb", "gems.rb", "Gemfile"] if files.empty?
+          files.each do |file|
+            gemfile_path = ::File.join(dir, file)
+            return gemfile_path if ::File.readable?(gemfile_path)
+          end
         end
         raise GemfileNotFoundError, "Gemfile not found"
       end
