@@ -7,7 +7,7 @@ unless ::ENV["TOYS_DEV"]
   ::Kernel.exec(::File.join(::File.dirname(context_directory), "toys-dev"), *::ARGV)
 end
 
-expand :clean, paths: ["pkg", "doc", ".yardoc", "tmp", "Gemfile.lock"]
+expand :clean, paths: :gitignore
 
 expand :minitest, libs: ["lib", "test"], bundler: true
 
