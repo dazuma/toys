@@ -93,6 +93,7 @@ module Toys
       # @private
       def self.setup_bundle(context_directory,
                             source_info,
+                            gemfile_path: nil,
                             search_dirs: nil,
                             gemfile_names: nil,
                             toys_gemfile_names: nil,
@@ -103,9 +104,11 @@ module Toys
                             input: nil,
                             output: nil)
         require "toys/utils/gems"
-        gemfile_finder = GemfileFinder.new(context_directory, source_info,
-                                           gemfile_names, toys_gemfile_names)
-        gemfile_path = gemfile_finder.search(search_dirs || DEFAULT_SEARCH_DIRS)
+        gemfile_path ||= begin
+          gemfile_finder = GemfileFinder.new(context_directory, source_info,
+                                             gemfile_names, toys_gemfile_names)
+          gemfile_finder.search(search_dirs || DEFAULT_SEARCH_DIRS)
+        end
         gems = ::Toys::Utils::Gems.new(on_missing: on_missing, on_conflict: on_conflict,
                                        terminal: terminal, input: input, output: output)
         gems.bundle(groups: groups, gemfile_path: gemfile_path)
