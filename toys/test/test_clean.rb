@@ -61,6 +61,11 @@ describe "clean template" do
       dir = workspace_dir
       FileUtils.touch(File.join(dir, "foo.txt"))
       FileUtils.touch(File.join(dir, "Gemfile.lock"))
+      FileUtils.mkdir(File.join(dir, "tmp"))
+      FileUtils.touch(File.join(dir, "tmp", "bar.txt"))
+      FileUtils.mkdir(File.join(dir, "hello"))
+      FileUtils.touch(File.join(dir, "hello", "baz.txt"))
+      FileUtils.touch(File.join(dir, "hello", "Gemfile.lock"))
       loader.add_block do
         set_context_directory dir
         expand :clean, paths: :gitignore
@@ -68,9 +73,12 @@ describe "clean template" do
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("clean"))
       end
-      assert_equal("Cleaned: ./Gemfile.lock\n", out)
+      assert_equal("Cleaned: ./Gemfile.lock\nCleaned: ./tmp\nCleaned: ./hello/Gemfile.lock\n", out)
       assert(File.exist?(File.join(dir, "foo.txt")))
+      assert(File.exist?(File.join(dir, "hello", "baz.txt")))
       refute(File.exist?(File.join(dir, "Gemfile.lock")))
+      refute(File.exist?(File.join(dir, "tmp")))
+      refute(File.exist?(File.join(dir, "hello", "Gemfile.lock")))
     end
   end
 end
