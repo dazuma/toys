@@ -72,6 +72,12 @@ module Toys
       end
 
       ##
+      # The gemfile names that are searched by default.
+      # @return [Array<String>]
+      #
+      DEFAULT_GEMFILE_NAMES = [".gems.rb", "gems.rb", "Gemfile"].freeze
+
+      ##
       # Activate the given gem. If it is not present, attempt to install it (or
       # inform the user to update the bundle).
       #
@@ -149,16 +155,33 @@ module Toys
       end
 
       ##
-      # Set up the bundle.
+      # Search for an appropriate Gemfile, and set up the bundle.
       #
-      # @param groups [Array<String>] The groups to include in setup
-      # @param search_dirs [Array<String>] Directories to search for a Gemfile
+      # @param groups [Array<String>] The groups to include in setup.
+      #
+      # @param gemfile_path [String] The path to the Gemfile to use. If `nil`
+      #     or not given, the `:search_dirs` will be searched for a Gemfile.
+      #
+      # @param search_dirs [String,Array<String>] Directories in which to
+      #     search for a Gemfile, if gemfile_path is not given. You can provide
+      #     a single directory or an array of directories.
+      #
+      # @param gemfile_names [String,Array<String>] File names that are
+      #     recognized as Gemfiles, when searching because gemfile_path is not
+      #     given. Defaults to {DEFAULT_GEMFILE_NAMES}.
+      #
       # @return [void]
       #
       def bundle(groups: nil,
-                 search_dirs: nil)
+                 gemfile_path: nil,
+                 search_dirs: nil,
+                 gemfile_names: nil)
+        Array(search_dirs).each do |dir|
+          break if gemfile_path
+          gemfile_path = Gems.find_gemfile(dir, gemfile_names: gemfile_names)
+        end
+        raise GemfileNotFoundError, "Gemfile not found" unless gemfile_path
         Gems.synchronize do
-          gemfile_path = find_gemfile(Array(search_dirs))
           if configure_gemfile(gemfile_path)
             activate("bundler", "~> 2.1")
             require "bundler"
@@ -167,9 +190,19 @@ module Toys
         end
       end
 
+      # @private
+      def self.find_gemfile(search_dir, gemfile_names: nil)
+        gemfile_names ||= DEFAULT_GEMFILE_NAMES
+        Array(gemfile_names).each do |file|
+          gemfile_path = ::File.join(search_dir, file)
+          return gemfile_path if ::File.readable?(gemfile_path)
+        end
+        nil
+      end
+
       @global_mutex = ::Monitor.new
 
-      ## @private
+      # @private
       def self.synchronize(&block)
         @global_mutex.synchronize(&block)
       end
@@ -235,14 +268,6 @@ module Toys
                                              ::ENV["BUNDLE_GEMFILE"])
         end
         raise ActivationFailedError, err.message
-      end
-
-      def find_gemfile(search_dirs)
-        search_dirs.each do |dir|
-          gemfile_path = ::File.join(dir, "Gemfile")
-          return gemfile_path if ::File.readable?(gemfile_path)
-        end
-        raise GemfileNotFoundError, "Gemfile not found"
       end
 
       def configure_gemfile(gemfile_path)

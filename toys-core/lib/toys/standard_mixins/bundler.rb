@@ -11,32 +11,51 @@ module Toys
     #     defining the tool. If `false` (the default), installs the bundle just
     #     before the tool runs.
     #
-    #  *  `:groups` (Array<String>) The groups to include in setup
+    #  *  `:groups` (Array\<String\>) The groups to include in setup.
     #
-    #  *  `:search_dirs` (Array<String,Symbol>) Directories to search for a
-    #     Gemfile.
+    #  *  `:gemfile_path` (String) The path to the Gemfile to use. If `nil` or
+    #     not given, the `:search_dirs` will be searched for a Gemfile.
+    #
+    #  *  `:search_dirs` (String,Symbol,Array\<String,Symbol\>) Directories to
+    #     search for a Gemfile.
     #
     #     You can pass full directory paths, and/or any of the following:
-    #      *  `:context` - the current context directory
-    #      *  `:current` - the current working directory
-    #      *  `:toys` - the Toys directory containing the tool definition
+    #      *  `:context` - the current context directory.
+    #      *  `:current` - the current working directory.
+    #      *  `:toys` - the Toys directory containing the tool definition, and
+    #         any of its parents within the Toys directory hierarchy.
     #
     #     The default is to search `[:toys, :context, :current]` in that order.
+    #     See {DEFAULT_SEARCH_DIRS}.
+    #
+    #     For most directories, the bundler mixin will look for the files
+    #     ".gems.rb", "gems.rb", and "Gemfile", in that order. In `:toys`
+    #     directories, it will look only for ".gems.rb" and "Gemfile", in that
+    #     order. These can be overridden by setting the `:gemfile_names` and/or
+    #     `:toys_gemfile_names` arguments.
+    #
+    #  *  `:gemfile_names` (Array\<String\>) File names that are recognized as
+    #     Gemfiles when searching in directories other than Toys directories.
+    #     Defaults to {Toys::Utils::Gems::DEFAULT_GEMFILE_NAMES}.
+    #
+    #  *  `:toys_gemfile_names` (Array\<String\>) File names that are
+    #     recognized as Gemfiles when wearching in Toys directories.
+    #     Defaults to {DEFAULT_TOYS_GEMFILE_NAMES}.
     #
     #  *  `:on_missing` (Symbol) What to do if a needed gem is not installed.
     #
     #     Supported values:
-    #      *  `:confirm` - prompt the user on whether to install (default)
-    #      *  `:error` - raise an exception
-    #      *  `:install` - just install the gem
+    #      *  `:confirm` - prompt the user on whether to install (default).
+    #      *  `:error` - raise an exception.
+    #      *  `:install` - just install the gem.
     #
     #  *  `:on_conflict` (Symbol) What to do if bundler has already been run
     #     with a different Gemfile.
     #
     #     Supported values:
-    #      *  `:error` - raise an exception (default)
-    #      *  `:ignore` - just silently proceed without bundling again
-    #      *  `:warn` - print a warning and proceed without bundling again
+    #      *  `:error` - raise an exception (default).
+    #      *  `:ignore` - just silently proceed without bundling again.
+    #      *  `:warn` - print a warning and proceed without bundling again.
     #
     #  *  `:terminal` (Toys::Utils::Terminal) Terminal to use (optional)
     #  *  `:input` (IO) Input IO (optional, defaults to STDIN)
@@ -45,68 +64,103 @@ module Toys
     module Bundler
       include Mixin
 
-      on_initialize do |static: false, search_dirs: nil, **kwargs|
+      on_initialize do |static: false, **kwargs|
         unless static
-          require "toys/utils/gems"
-          search_dirs = ::Toys::StandardMixins::Bundler.resolve_search_dirs(
-            search_dirs,
-            self[::Toys::Context::Key::CONTEXT_DIRECTORY],
-            self[::Toys::Context::Key::TOOL_SOURCE]
-          )
-          ::Toys::StandardMixins::Bundler.setup_bundle(search_dirs, **kwargs)
+          context_directory = self[::Toys::Context::Key::CONTEXT_DIRECTORY]
+          source_info = self[::Toys::Context::Key::TOOL_SOURCE]
+          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
         end
       end
 
-      on_include do |static: false, search_dirs: nil, **kwargs|
+      on_include do |static: false, **kwargs|
         if static
-          require "toys/utils/gems"
-          search_dirs = ::Toys::StandardMixins::Bundler.resolve_search_dirs(
-            search_dirs, context_directory, source_info
-          )
-          ::Toys::StandardMixins::Bundler.setup_bundle(search_dirs, **kwargs)
+          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
         end
       end
 
-      ## @private
-      def self.resolve_search_dirs(search_dirs, context_dir, source_info)
-        search_dirs ||= [:toys, :context, :current]
-        Array(search_dirs).flat_map do |dir|
-          case dir
-          when :context
-            context_dir
-          when :current
-            ::Dir.getwd
-          when :toys
-            toys_dir_stack(source_info)
-          when ::String
-            dir
-          else
-            raise ::ArgumentError, "Unrecognized search_dir: #{dir.inspect}"
-          end
-        end
-      end
+      ##
+      # Default search directories for Gemfiles.
+      # @return [Array<String,Symbol>]
+      #
+      DEFAULT_SEARCH_DIRS = [:toys, :context, :current].freeze
 
-      ## @private
-      def self.toys_dir_stack(source_info)
-        dirs = []
-        while source_info
-          dirs << source_info.source_path if source_info.source_type == :directory
-          source_info = source_info.parent
-        end
-        dirs
-      end
+      ##
+      # The gemfile names that are searched by default in Toys directories.
+      # @return [Array<String>]
+      #
+      DEFAULT_TOYS_GEMFILE_NAMES = [".gems.rb", "Gemfile"].freeze
 
-      ## @private
-      def self.setup_bundle(search_dirs,
+      # @private
+      def self.setup_bundle(context_directory,
+                            source_info,
+                            search_dirs: nil,
+                            gemfile_names: nil,
+                            toys_gemfile_names: nil,
                             groups: nil,
                             on_missing: nil,
                             on_conflict: nil,
                             terminal: nil,
                             input: nil,
                             output: nil)
+        require "toys/utils/gems"
+        gemfile_finder = GemfileFinder.new(context_directory, source_info,
+                                           gemfile_names, toys_gemfile_names)
+        gemfile_path = gemfile_finder.search(search_dirs || DEFAULT_SEARCH_DIRS)
         gems = ::Toys::Utils::Gems.new(on_missing: on_missing, on_conflict: on_conflict,
                                        terminal: terminal, input: input, output: output)
-        gems.bundle(groups: groups, search_dirs: search_dirs)
+        gems.bundle(groups: groups, gemfile_path: gemfile_path)
+      end
+
+      # @private
+      class GemfileFinder
+        # @private
+        def initialize(context_directory, source_info, gemfile_names, toys_gemfile_names)
+          @context_directory = context_directory
+          @source_info = source_info
+          @gemfile_names = gemfile_names
+          @toys_gemfile_names = toys_gemfile_names || DEFAULT_TOYS_GEMFILE_NAMES
+        end
+
+        # @private
+        def search(search_dir)
+          case search_dir
+          when ::Array
+            search_array(search_dir)
+          when ::String
+            ::Toys::Utils::Gems.find_gemfile(search_dir, gemfile_names: @gemfile_names)
+          when :context
+            search(@context_directory)
+          when :current
+            search(::Dir.getwd)
+          when :toys
+            search_toys
+          else
+            raise ::ArgumentError, "Unrecognized search_dir: #{dir.inspect}"
+          end
+        end
+
+        private
+
+        def search_array(search_dirs)
+          search_dirs.each do |search_dir|
+            result = search(search_dir)
+            return result if result
+          end
+          nil
+        end
+
+        def search_toys
+          source_info = @source_info
+          while source_info
+            if source_info.source_type == :directory
+              result = ::Toys::Utils::Gems.find_gemfile(source_info.source_path,
+                                                        gemfile_names: @toys_gemfile_names)
+              return result if result
+            end
+            source_info = source_info.parent
+          end
+          nil
+        end
       end
     end
   end

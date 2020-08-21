@@ -2084,6 +2084,8 @@ tool is *executed*. This assumes the bundle is already installed, and brings
 the appropriate gems into the Ruby load path. That is, it's basically the same
 as `bundle exec`, but it applies only to the running tool.
 
+#### Applying bundler to all subtools
+
 In many cases, you might find that bundler is needed for many or most of the
 tools you write for a particular project. In this case, you might find it
 convenient to use
@@ -2114,7 +2116,7 @@ for more information on `subtool_apply`.
 By default, the `:bundler` mixin will look for a `Gemfile` within the `.toys`
 directory (if your tool is defined in one), and if one is not found there,
 within the [context directory](#The_context_directory) (the directory
-containing your `.toys` directory or `.toys.rb`file), and if one still is not
+containing your `.toys` directory or `.toys.rb` file), and if one still is not
 found, in the current working directory. You can change this behavior by
 passing an option to the `:bundler` mixin. For example, you can search only the
 current working directory by passing `search_dirs: :current` as such:
@@ -2124,7 +2126,24 @@ current working directory by passing `search_dirs: :current` as such:
       # etc...
     end
 
-You can also pass a specific directory path to this option.
+The `:search_dirs` option takes a either directory path (as a string) or a
+symbol indicating a "semantic" directory. You can also pass an array of
+directories that will be searched in order. For each directory, Toys will look
+for a file called `.gems.rb`, `gems.rb`, or `Gemfile` (in that order) and use
+the first one that it finds.
+
+The supported "semantic directory" symbols are `:current` indicating the
+current working directory, `:context` indicating the context directory, and
+`:toys` indicating the Toys directory in which the tool is defined.
+Furthermore, the semantic directory `:toys` is treated specially in that it
+looks up the `.toys` directory hierarchy. So if your tool is defined in
+`.toys/foo/bar.rb`, it will look for a Gemfile first in `.toys/foo/` and then
+in `.toys/`. Additionally, when looking for a Gemfile in `:toys`, it searches
+only for `.gems.rb` and `Gemfile`. A file called `gems.rb` is not treated as a
+Gemfile under the `:toys` directory, because it could be a tool.
+
+The default gemfile search path, if you do not provide the `search_dirs:`
+option, is equivalent to `[:toys, :context, :current]`.
 
 If the bundle is not installed, or is out of date, Toys will ask you whether
 you want it to install the bundle first before running the tool. A tool can
@@ -2203,8 +2222,9 @@ things you could try:
     or one of its subtools, so if you can locate `include :bundler` inside just
     the tool or namespace that needs it, you might be able to avoid conflicts.
 
- 2. Failing that, you could consider activating the gem directly rather than as
-    part of a bundle. See the following section on
+ 2. Failing that, if you need a particular gem in order to define a tool, you
+    could consider activating the gem directly rather than as part of a bundle.
+    See the following section on
     [Activating gems directly](#Activating_gems_directly) for details on this
     technique.
 
@@ -2262,22 +2282,35 @@ to ensure highline is installed while the tool is being defined.
       end
     end
 
-If you are not in the Toys DSL context—for example from a class-based
-mixin—you should use
-[Toys::Utils::Gems.activate](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#activate-class_method)
-instead. (Note that you must `require "toys/utils/gems"` explicitly before
-invoking the
+Note these methods are a bit different from the
+[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
+provided by Rubygems. The Toys version attempts to install a missing gem for
+you, whereas Rubygems will just throw an exception.
+
+### Activating gems outside the DSL
+
+The above techniques for installing a bundle or activating a gem directly, are
+all part of the tool definition DSL. However, the functionality is also
+available outside the DSL---for example, from a class-based mixin.
+
+To set up a bundle, call
+[Toys::Utils::Gems#bundle](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#bundle-instance_method).
+(Note that you must `require "toys/utils/gems"` explicitly before invoking the
 [Toys::Utils::Gems](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems)
 class because, like all classes under `Toys::Utils`, Toys does not load it
 automatically.) For example:
 
     require "toys/utils/gems"
-    Toys::Utils::Gems.activate("highline", "~> 2.0")
+    gem_utils = Toys::Utils::Gems.new
+    gem_utils.bundle(search_dirs: Dir.getwd)
 
-Note these methods are a bit different from the
-[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
-provided by Rubygems. The Toys version attempts to install a missing gem for
-you, whereas Rubygems will just throw an exception.
+To activate single gems explicitly, call
+[Toys::Utils::Gems#activate](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#activate-instance_method).
+For example:
+
+    require "toys/utils/gems"
+    gem_utils = Toys::Utils::Gems.new
+    gem_utils.activate("highline", "~> 2.0")
 
 ### Useful gems
 
