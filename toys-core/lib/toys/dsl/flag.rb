@@ -75,8 +75,8 @@ module Toys
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
       #     following argument is taken as the value (e.g. for `--abc foo`, the
       #     value is set to `"foo"`.) The following argument is treated as the
-      #     value even if it looks like a flag (e.g. `--abc --abc` causes the
-      #     string `"--abc"` to be taken as the value.)
+      #     value even if it looks like a flag (e.g. `--abc --def` causes the
+      #     string `"--def"` to be taken as the value.)
       #  *  `--abc[=VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,

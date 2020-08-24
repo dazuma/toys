@@ -43,6 +43,12 @@ module Toys
     DATA_DIR_NAME = ".data"
 
     ##
+    # Standard lib directory name in a toys configuration.
+    # @return [String]
+    #
+    LIB_DIR_NAME = ".lib"
+
+    ##
     # Name of the standard toys executable.
     # @return [String]
     #
@@ -99,6 +105,7 @@ module Toys
         preload_file_name: PRELOAD_FILE_NAME,
         preload_dir_name: PRELOAD_DIR_NAME,
         data_dir_name: DATA_DIR_NAME,
+        lib_dir_name: LIB_DIR_NAME,
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup

@@ -3,13 +3,12 @@
 desc "Runs tests in both gems"
 
 include :terminal
-include :exec
+include :exec, exit_on_nonzero_status: true
 
 def handle_gem(gem_name)
   puts("**** Testing #{gem_name}...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    result = exec_separate_tool("test")
-    exit(result.exit_code) unless result.success?
+    exec_separate_tool("test")
   end
 end
 
