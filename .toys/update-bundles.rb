@@ -3,13 +3,12 @@
 desc "Update bundles in both gems"
 
 include :terminal
-include :exec
+include :exec, exit_on_nonzero_status: true
 
 def handle_gem(gem_name)
   puts("**** Updating #{gem_name} bundle...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    result = exec(["bundle", "update"])
-    exit(result.exit_code) unless result.success?
+    exec(["bundle", "update"])
   end
 end
 

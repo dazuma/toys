@@ -814,8 +814,8 @@ module Toys
       #     string (e.g. `"foo"`) is taken as the value. Otherwise, the
       #     following argument is taken as the value (e.g. for `--abc foo`, the
       #     value is set to `"foo"`.) The following argument is treated as the
-      #     value even if it looks like a flag (e.g. `--abc --abc` causes the
-      #     string `"--abc"` to be taken as the value.)
+      #     value even if it looks like a flag (e.g. `--abc --def` causes the
+      #     string `"--def"` to be taken as the value.)
       #  *  `--abc[=VAL]` : A long flag that takes an optional value. If this
       #     argument appears with a value attached (e.g. `--abc=foo`), the
       #     attached string (e.g. `"foo"`) is taken as the value. Otherwise,
@@ -884,7 +884,8 @@ module Toys
       # @param flags [String...] The flags in OptionParser format.
       # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
-      #     defined, or one of the default acceptors provided by OptionParser.
+      #     defined, one of the default acceptors provided by OptionParser, or
+      #     any other specification recognized by {Toys::Acceptor.create}.
       #     Optional. If not specified, accepts any value as a string.
       # @param default [Object] The default value. This is the value that will
       #     be set in the context if this flag is not provided on the command
@@ -979,7 +980,8 @@ module Toys
       #     the execution context.
       # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
-      #     defined, or one of the default acceptors provided by OptionParser.
+      #     defined, one of the default acceptors provided by OptionParser, or
+      #     any other specification recognized by {Toys::Acceptor.create}.
       #     Optional. If not specified, accepts any value as a string.
       # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To
@@ -1050,7 +1052,8 @@ module Toys
       #     line. Defaults to `nil`.
       # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
-      #     defined, or one of the default acceptors provided by OptionParser.
+      #     defined, one of the default acceptors provided by OptionParser, or
+      #     any other specification recognized by {Toys::Acceptor.create}.
       #     Optional. If not specified, accepts any value as a string.
       # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To
@@ -1121,7 +1124,8 @@ module Toys
       #     command line. Defaults to the empty array `[]`.
       # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
-      #     defined, or one of the default acceptors provided by OptionParser.
+      #     defined, one of the default acceptors provided by OptionParser, or
+      #     any other specification recognized by {Toys::Acceptor.create}.
       #     Optional. If not specified, accepts any value as a string.
       # @param complete [Object] A specifier for shell tab completion for
       #     values of this arg. This is the empty completion by default. To

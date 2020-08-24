@@ -498,7 +498,7 @@ module Toys
       #     well-known acceptor.
       #
       # @param spec [Object] See the description for recognized values.
-      # @param options [Hash] Additional options to pass to the completion.
+      # @param options [Hash] Additional options to pass to the acceptor.
       # @param block [Proc] See the description for recognized forms.
       # @return [Toys::Acceptor::Base,Proc]
       #

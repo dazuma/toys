@@ -3,12 +3,12 @@
 desc "Build and install the current gems"
 
 include :terminal
+include :exec, exit_on_nonzero_status: true
 
 def handle_gem(gem_name)
   puts("**** Installing #{gem_name} from local build...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    status = cli.child.add_config_path(".toys.rb").run("install", "-y")
-    exit(status) unless status.zero?
+    exec_separate_tool(["install", "-y"])
   end
 end
 

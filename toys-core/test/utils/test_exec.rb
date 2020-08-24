@@ -11,7 +11,7 @@ describe Toys::Utils::Exec do
   let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
-  let(:simple_exec_timeout) { 2 }
+  let(:simple_exec_timeout) { 5 }
   let(:ruby_exec_timeout) { Toys::Compat.jruby? ? 10 : simple_exec_timeout }
 
   describe "result object" do
@@ -554,7 +554,7 @@ describe Toys::Utils::Exec do
 
   describe "backgrounding" do
     it "determines whether processes are executing" do
-      ::Timeout.timeout(3) do
+      ::Timeout.timeout(ruby_exec_timeout) do
         controller1 = exec.exec("sleep 1", background: true)
         controller2 = exec.exec("sleep 0.3", background: true)
         sleep(0.1)
