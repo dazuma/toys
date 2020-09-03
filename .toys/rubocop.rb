@@ -13,6 +13,15 @@ def handle_gem(gem_name)
 end
 
 def run
+  ::Dir.chdir(context_directory)
+  puts("**** Running rubocop on repo root...", :bold, :cyan)
+  exec_separate_tool(["rubocop", "_root"])
   handle_gem("toys-core")
   handle_gem("toys")
+end
+
+expand :rubocop do |t|
+  t.name = "_root"
+  t.use_bundler
+  t.options = ["--config=.root-rubocop.yml"]
 end

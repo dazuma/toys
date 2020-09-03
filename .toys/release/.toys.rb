@@ -11,7 +11,7 @@ mixin "release-tools" do
     include(:terminal) unless include?(:terminal)
   end
 
-  def verify_library_versions(vers, warn_only: false)
+  def verify_library_versions(vers)
     logger.info("Verifying library versions...")
     lib_vers = ::Toys::VERSION
     unless vers == lib_vers
@@ -24,7 +24,7 @@ mixin "release-tools" do
     vers
   end
 
-  def verify_changelog_content(name, vers, warn_only: false)
+  def verify_changelog_content(name, vers, warn_only: false) # rubocop:disable Metrics/MethodLength
     logger.info("Verifying changelog content for #{name}...")
     today = ::Time.now.strftime("%Y-%m-%d")
     entry = []
@@ -33,7 +33,7 @@ mixin "release-tools" do
     ::File.readlines(path).each do |line|
       case state
       when :start
-        if line =~ /^### #{::Regexp.escape(vers)} \/ \d\d\d\d-\d\d-\d\d\n$/
+        if line =~ %r{^### #{::Regexp.escape(vers)} / \d\d\d\d-\d\d-\d\d\n$}
           entry << line
           state = :during
         elsif line =~ /^### /
@@ -70,7 +70,7 @@ mixin "release-tools" do
     end
   end
 
-  def verify_github_checks(warn_only: false)
+  def verify_github_checks(warn_only: false) # rubocop:disable Metrics/MethodLength,Metrics/AbcSize
     logger.info("Verifying GitHub checks...")
     ref = capture(["git", "rev-parse", "HEAD"]).strip
     result = exec(["gh", "api", "repos/dazuma/toys/commits/#{ref}/check-runs",

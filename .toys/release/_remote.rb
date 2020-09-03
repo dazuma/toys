@@ -25,16 +25,9 @@ def run
   version = parse_ref(release_ref)
   puts("Release of toys #{version} requested.", :yellow, :bold)
 
-  verify_library_versions(version)
-  verify_changelog_content("toys-core", version)
-  verify_changelog_content("toys", version)
-  verify_github_checks()
+  do_verifications(version)
 
-  build_gem("toys-core", version)
-  build_gem("toys", version)
-  build_docs("toys-core", version, gh_pages_dir)
-  build_docs("toys", version, gh_pages_dir)
-  set_default_docs(version, gh_pages_dir) if version =~ /^\d+\.\d+\.\d+$/
+  do_builds(version)
 
   setup_git_config(gh_pages_dir)
   using_api_key(api_key) do
@@ -48,6 +41,21 @@ def parse_ref(ref)
   match = %r{^refs/tags/v(\d+\.\d+\.\d+(?:\.(?:\d+|[a-zA-Z][\w]*))*)$}.match(ref)
   error("Illegal release ref: #{ref}") unless match
   match[1]
+end
+
+def do_verifications(version)
+  verify_library_versions(version)
+  verify_changelog_content("toys-core", version)
+  verify_changelog_content("toys", version)
+  verify_github_checks
+end
+
+def do_builds(version)
+  build_gem("toys-core", version)
+  build_gem("toys", version)
+  build_docs("toys-core", version, gh_pages_dir)
+  build_docs("toys", version, gh_pages_dir)
+  set_default_docs(version, gh_pages_dir) if version =~ /^\d+\.\d+\.\d+$/
 end
 
 def setup_git_config(dir)

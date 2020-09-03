@@ -24,7 +24,20 @@ def handle_gem(gem_name)
   end
 end
 
+def root_rubocop
+  puts("**** RUNNING ROOT RUBOCOP...", :bold, :cyan)
+  result = exec_separate_tool(["rubocop", "_root"])
+  if result.success?
+    puts("**** ROOT RUBOCOP OK.", :bold, :cyan)
+  else
+    puts("**** ROOT RUBOCOP FAILED!", :red, :bold)
+    exit(result.exit_code)
+  end
+end
+
 def run
+  ::Dir.chdir(context_directory)
+  root_rubocop
   handle_gem("toys-core")
   handle_gem("toys")
 end
