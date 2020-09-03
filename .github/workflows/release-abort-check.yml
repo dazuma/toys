@@ -1,0 +1,26 @@
+name: "(check for aborted release)"
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  aborted-release-check:
+    if: ${{ github.repository == 'dazuma/toys' && !github.event.pull_request.merged_at }}
+    env:
+      ruby_version: "2.7"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Ruby ${{ env.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.ruby_version }}
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Aborted release check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./toys-dev release _on-pr-closed --verbose \
+            "--event-path=${{ github.event_path }}" \
+            < /dev/null

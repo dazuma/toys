@@ -1,0 +1,10 @@
+repo: dazuma/toys
+docs_builder_tool: [yardoc]
+gems:
+  - name: toys-core
+    version_rb_path: lib/toys/core.rb
+    gh_pages_directory: gems/toys-core
+    gh_pages_version_var: version
+  - name: toys
+    gh_pages_directory: gems/toys
+    gh_pages_version_var: version
