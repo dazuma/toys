@@ -16,15 +16,7 @@ include "release-tools"
 def run
   cd(context_directory)
 
-  verify_git_clean(warn_only: true)
-  verify_library_versions(version, warn_only: true)
-  verify_changelog_content("toys-core", version, warn_only: true)
-  verify_changelog_content("toys", version, warn_only: true)
-  verify_github_checks(warn_only: true)
-
-  unless confirm("Build and push yardocs for version #{version}? ", :bold)
-    error("Release aborted")
-  end
+  do_verifications
 
   mkdir_p(tmp_dir)
   cd(tmp_dir) do
@@ -41,4 +33,16 @@ def run
   set_default_docs(version, gh_pages_dir) if set_default_version
 
   push_docs(version, gh_pages_dir, dry_run: dry_run, git_remote: git_remote)
+end
+
+def do_verifications
+  verify_git_clean(warn_only: true)
+  verify_library_versions(version, warn_only: true)
+  verify_changelog_content("toys-core", version, warn_only: true)
+  verify_changelog_content("toys", version, warn_only: true)
+  verify_github_checks(warn_only: true)
+
+  unless confirm("Build and push yardocs for version #{version}? ", :bold)
+    error("Release aborted")
+  end
 end

@@ -1,0 +1,53 @@
+AllCops:
+  TargetRubyVersion: 2.3
+  Include:
+    - ".toys/**/*.rb"
+    - ".toys/**/.toys.rb"
+  Exclude:
+    - "toys/**/*"
+    - "toys-core/**/*"
+
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+Layout/LineLength:
+  Max: 100
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Lint/RaiseException:
+  Enabled: true
+Lint/StructNewOverride:
+  Enabled: true
+Metrics/AbcSize:
+  Max: 25
+Metrics/BlockLength:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/MethodLength:
+  Max: 20
+Metrics/ParameterLists:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Max: 10
+Naming/FileName:
+  Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/HashEachMethods:
+  Enabled: true
+Style/HashTransformKeys:
+  Enabled: false
+Style/HashTransformValues:
+  Enabled: false
+Style/IfUnlessModifier:
+  Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/SymbolArray:
+  EnforcedStyle: brackets
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+Style/WordArray:
+  EnforcedStyle: brackets
