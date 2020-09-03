@@ -29,6 +29,9 @@ long_desc \
     " the release script will run automatically when a release pull request" \
     " is merged."
 
+flag :coordinate_versions, "--coordinate-versions" do
+  desc "Cause all gems to release with the same version"
+end
 flag :gems, "--gems=VAL" do
   accept(/^([\w-]+(:[\w\.-]+)?([\s,]+[\w-]+(:[\w\.-]+)?)*)?$/)
   desc "Gems and versions to release"
@@ -85,50 +88,38 @@ def run
     set(key, nil) if get(key).to_s.empty?
   end
 
-  requested = false
-  build_instances.each do |instance|
-    next unless should_build(instance)
-    instance.request
-    requested = true
-    puts("PR ##{instance.pr_number} opened for #{instance.gem_name} #{instance.new_version}.",
-         :bold, :green)
+  @requester = populate_requester
+  @requester.finish_gems
+  if @requester.empty?
+    @utils.error("Did not find any gems ready to release based on commit history.",
+                 "You can force the release of a gem by listing it explicitly.")
   end
-  return if requested
-  @utils.error("Did not find any gems ready to release based on commit history.",
-               "You can force the release of a gem by listing it explicitly.")
+  confirmation_ui
+  @requester.create_pull_request
 end
 
-def build_instances
+def populate_requester
   requester = ReleaseRequester.new(@utils,
                                    release_ref: release_ref,
                                    git_remote: git_remote,
                                    git_user_name: git_user_name,
-                                   git_user_email: git_user_email)
+                                   git_user_email: git_user_email,
+                                   coordinate_versions: coordinate_versions,
+                                   prune_gems: gems.to_s.empty?)
   gem_list = gems.to_s.empty? ? @utils.all_gems : gems.split(/[\s,]+/)
-  gem_list.map do |gem_info|
-    gem_name, override_version = gem_info.split(":", 2)
-    requester.instance(gem_name, override_version: override_version)
+  gem_list.each do |entry|
+    gem_name, override_version = entry.split(":", 2)
+    requester.gem_info(gem_name, override_version: override_version)
   end
+  requester
 end
 
-def should_build(instance)
-  if gems.to_s.empty? && instance.changelog_entries.empty?
-    logger.info("Skipping #{instance.gem_name}")
-    return false
+def confirmation_ui
+  puts("Opening a request to release the following gems:", :bold)
+  @requester.gem_info_list.each do |info|
+    puts("* #{info.gem_name} version #{info.last_version} -> #{info.new_version}")
   end
-  unless yes
-    if instance.last_version
-      puts("Last #{instance.gem_name} version: #{instance.last_version}", :bold)
-    else
-      puts("No previous #{instance.gem_name} version.", :bold)
-    end
-    puts("New #{instance.gem_name} changelog:", :bold)
-    puts(instance.full_changelog)
-    puts
-    unless confirm("Create release PR? ", :bold, default: true)
-      logger.error("Release aborted")
-      return false
-    end
+  unless yes || confirm("Create release PR? ", :bold, default: true)
+    @utils.error("Release aborted")
   end
-  true
 end

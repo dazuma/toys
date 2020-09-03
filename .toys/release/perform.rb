@@ -129,25 +129,30 @@ def run
   end
   set(:release_sha, @utils.current_sha) if release_sha.to_s.empty?
 
-  instance = create_performer_instance
-  confirm_release
-  instance.perform
-  puts("SUCCESS", :bold, :green)
+  perform
 end
 
-def create_performer_instance
+def perform
+  performer = create_performer
+  confirm_release
+  performer.instance(gem_name, gem_version, only: only).perform
+  performer.report_results
+  puts("SUCCESS", :bold, :green) if performer.result
+end
+
+def create_performer
   dry_run = /^t/i =~ enable_releases.to_s ? false : true
-  performer = ReleasePerformer.new @utils,
-                                   release_sha: release_sha,
-                                   skip_checks: skip_checks,
-                                   rubygems_api_key: rubygems_api_key,
-                                   git_remote: git_remote,
-                                   git_user_name: git_user_name,
-                                   git_user_email: git_user_email,
-                                   gh_pages_dir: gh_pages_dir,
-                                   gh_token: ::ENV["GITHUB_TOKEN"],
-                                   dry_run: dry_run
-  performer.instance(gem_name, gem_version, pr_info: find_release_pr, only: only)
+  ReleasePerformer.new @utils,
+                       release_sha: release_sha,
+                       skip_checks: skip_checks,
+                       rubygems_api_key: rubygems_api_key,
+                       git_remote: git_remote,
+                       git_user_name: git_user_name,
+                       git_user_email: git_user_email,
+                       gh_pages_dir: gh_pages_dir,
+                       gh_token: ::ENV["GITHUB_TOKEN"],
+                       pr_info: find_release_pr,
+                       dry_run: dry_run
 end
 
 def confirm_release
