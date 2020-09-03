@@ -1,28 +1,24 @@
-name: Toys CI
+name: "(presubmit)"
 
 on:
-  push:
-    branches:
-      - main
-      - "stable-[0-9]+.[0-9]+"
   pull_request:
     branches:
       - main
-      - "stable-[0-9]+.[0-9]+"
 
 jobs:
-  test:
+  tests:
+    if: ${{ github.repository == 'dazuma/toys' }}
     strategy:
       matrix:
-        os: [ "ubuntu-latest" ]
-        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", "jruby" ]
+        os: [ ubuntu-latest ]
+        ruby: [ "2.4", "2.5", "2.6", "2.7", "jruby" ]
         include:
-          - os: "ubuntu-latest"
+          - os: ubuntu-latest
             ruby: "2.7"
-            tool: "ci"
-          - os: "macos-latest"
+            tool: ci
+          - os: macos-latest
             ruby: "2.7"
-          - os: "windows-latest"
+          - os: windows-latest
             ruby: "2.7"
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -37,4 +33,4 @@ jobs:
         shell: bash
         run: |
           unset JAVA_TOOL_OPTIONS
-          ./toys-dev do ci init , ${{ matrix.tool || 'test' }} < /dev/null
+          ./toys-dev do ci init , "${{ matrix.tool || 'test' }}" < /dev/null

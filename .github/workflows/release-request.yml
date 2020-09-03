@@ -1,0 +1,33 @@
+name: Request Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      gems:
+        description: Gems to release (leave blank to release all gems)
+        required: false
+        default: "toys-core,toys"
+
+jobs:
+  request-release:
+    if: ${{ github.repository == 'dazuma/toys' }}
+    env:
+      ruby_version: "2.7"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Ruby ${{ env.ruby_version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.ruby_version }}
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Open release pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./toys-dev release request --yes --verbose \
+            "--gems=${{ github.event.inputs.gems }}" \
+            "--git-user-email=${{ secrets.GIT_USER_EMAIL }}" \
+            "--git-user-name=${{ secrets.GIT_USER_NAME }}" \
+            "--release-ref=${{ github.ref }}" \
+            < /dev/null
