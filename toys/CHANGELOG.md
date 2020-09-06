@@ -3,6 +3,7 @@
 ### v0.11.2 / 2020-09-06
 
 * FIXED: Don't get confused when running toys from within a toys directory 
+* FIXED: Fix a JRuby-specific race condition when capturing exec streams
 
 ### v0.11.1 / 2020-08-24
 
