@@ -109,8 +109,10 @@ def handle_release_merged
   else
     performer.add_extra_errors(github_check_errors)
   end
-  unless performer.report_results
-    @utils.error("Reported release failure")
+  if performer.report_results
+    puts("All releases completed successfully", :bold, :green)
+  else
+    @utils.error("Releases reported failure")
   end
 end
 
