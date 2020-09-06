@@ -226,7 +226,7 @@ class ReleaseRequester
       path = @utils.gem_version_rb_path(@gem_name, from: :context)
       @utils.log("Modifying version file #{path}")
       content = ::File.read(path)
-      content.sub!(/  VERSION = "\d+\.\d+\.\d+"/,
+      content.sub!(/  VERSION = "\d+\.\d+\.\d+(?:\.\w+)*"/,
                    "  VERSION = \"#{@new_version}\"")
       ::File.open(path, "w") { |file| file.write(content) }
     end
