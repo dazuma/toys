@@ -18,9 +18,11 @@ jobs:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
         uses: actions/checkout@v2
+      - name: Install Toys
+        run: "gem install --no-document toys"
       - name: Update open releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./toys-dev release _onpush --verbose \
+          toys release _onpush --verbose \
             < /dev/null

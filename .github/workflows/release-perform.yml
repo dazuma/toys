@@ -27,11 +27,13 @@ jobs:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
         uses: actions/checkout@v2
+      - name: Install Toys
+        run: "gem install --no-document toys"
       - name: Perform release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./toys-dev release perform --yes --verbose \
+          toys release perform --yes --verbose \
             "--enable-releases=${{ secrets.ENABLE_RELEASES }}" \
             "--git-user-email=${{ secrets.GIT_USER_EMAIL }}" \
             "--git-user-name=${{ secrets.GIT_USER_NAME }}" \
