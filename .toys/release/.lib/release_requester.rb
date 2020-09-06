@@ -107,10 +107,11 @@ class ReleaseRequester
       commits = "#{@gem_name}/v#{@last_version}^..#{@release_ref}"
       shas = @utils.capture(["git", "log", commits, "--format=%H"]).split("\n").reverse
       dir = @utils.gem_directory(@gem_name)
+      dir = "#{dir}/" unless dir.end_with?("/")
       (0..(shas.length - 2)).each do |index|
         sha1 = shas[index]
         sha2 = shas[index + 1]
-        unless dir == "."
+        unless dir == "./"
           files = @utils.capture(["git", "diff", "--name-only", "#{sha1}..#{sha2}"])
           next unless files.split("\n").any? { |file| file.start_with?(dir) }
         end
@@ -415,7 +416,12 @@ class ReleaseRequester
   def build_pr_body_footer
     lines = ["The generated changelog entries have been copied below:"]
     @gem_info_list.each do |info|
-      lines << "" << "----" << "" << info.full_changelog.strip
+      lines << ""
+      lines << "----"
+      lines << ""
+      lines << "## #{info.gem_name}"
+      lines << ""
+      lines << info.full_changelog.strip
     end
     lines.join("\n")
   end
