@@ -22,6 +22,8 @@ Metrics/AbcSize:
   Max: 25
 Metrics/BlockLength:
   Enabled: false
+Metrics/ClassLength:
+  Enabled: false
 Metrics/CyclomaticComplexity:
   Max: 10
 Metrics/MethodLength:

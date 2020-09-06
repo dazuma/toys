@@ -1,121 +1,55 @@
 # frozen_string_literal: true
 
+require "forwardable"
 require "json"
 require "yaml"
-require "toys/utils/exec"
+require "repo_settings"
 
 # Utilities for release tools
-class ReleaseUtils # rubocop:disable Metrics/ClassLength
+class ReleaseUtils
+  # Exception raised on error
+  class ReleaseError < ::StandardError
+    def initialize(message, more_messages)
+      super(message)
+      @more_messages = more_messages
+    end
+
+    attr_reader :more_messages
+
+    def all_messages
+      [message] + more_messages
+    end
+  end
+
   def initialize(tool_context)
+    @raise_on_error = false
     @tool_context = tool_context
-    release_info_path = @tool_context.find_data("releases.yml")
-    load_release_info release_info_path
     @logger = @tool_context.logger
-    @error_proc = nil
+    load_repo_settings
     ensure_gh_binary
     ensure_git_binary
   end
 
-  attr_reader :repo_path
-  attr_reader :main_branch
-  attr_reader :default_gem
-  attr_reader :docs_builder
+  extend ::Forwardable
+
+  def_delegators :@repo_settings,
+                 :repo_path, :repo_owner, :main_branch, :default_gem,
+                 :required_checks_regexp, :release_jobs_regexp, :required_checks_timeout,
+                 :docs_builder_tool, :signoff_commits?, :enable_release_automation?
+  def_delegators :@repo_settings,
+                 :all_gems, :gem_info,
+                 :gem_directory, :gem_cd,
+                 :gem_changelog_path, :gem_version_rb_path, :gem_version_constant
+  def_delegators :@repo_settings,
+                 :release_pending_label, :release_error_label, :release_aborted_label,
+                 :release_complete_label, :release_related_label?,
+                 :release_branch_name, :multi_release_branch_name,
+                 :gem_name_from_release_branch, :release_related_branch?
+
   attr_reader :tool_context
   attr_reader :logger
-
-  def repo_owner
-    repo_path.split("/").first
-  end
-
-  def signoff_commits?
-    @signoff_commits
-  end
-
-  def enable_release_automation?
-    @enable_release_automation
-  end
-
-  def all_gems
-    @gems.keys
-  end
-
-  def gem_info(gem_name, key = nil)
-    info = @gems[gem_name]
-    key ? info[key] : info
-  end
-
-  def gem_directory(gem_name, from: :context)
-    path = gem_info(gem_name, "directory")
-    case from
-    when :context
-      path
-    when :absolute
-      ::File.expand_path(path, @tool_context.context_directory)
-    else
-      raise "Unknown from value: #{from.inspect}"
-    end
-  end
-
-  def gem_changelog_path(gem_name, from: :directory)
-    path = gem_info(gem_name, "changelog_path")
-    case from
-    when :directory
-      path
-    when :context
-      ::File.expand_path(path, gem_directory(gem_name))
-    when :absolute
-      ::File.expand_path(path, gem_directory(gem_name, from: :absolute))
-    else
-      raise "Unknown from value: #{from.inspect}"
-    end
-  end
-
-  def gem_version_rb_path(gem_name, from: :directory)
-    path = gem_info(gem_name, "version_rb_path")
-    case from
-    when :directory
-      path
-    when :context
-      ::File.expand_path(path, gem_directory(gem_name))
-    when :absolute
-      ::File.expand_path(path, gem_directory(gem_name, from: :absolute))
-    else
-      raise "Unknown from value: #{from.inspect}"
-    end
-  end
-
-  def gem_version_constant(gem_name)
-    gem_info(gem_name, "version_constant")
-  end
-
-  def gem_cd(gem_name, &block)
-    dir = gem_directory(gem_name, from: :absolute)
-    ::Dir.chdir(dir, &block)
-  end
-
-  def release_pending_label
-    "release: pending"
-  end
-
-  def release_error_label
-    "release: error"
-  end
-
-  def release_aborted_label
-    "release: aborted"
-  end
-
-  def release_complete_label
-    "release: complete"
-  end
-
-  def release_related_label?(name)
-    !(/^release:\s/ =~ name).nil?
-  end
-
-  def release_branch_name(gem_name)
-    "release/#{gem_name}"
-  end
+  attr_reader :repo_settings
+  attr_accessor :raise_on_error
 
   def current_sha(ref = nil)
     capture(["git", "rev-parse", ref || "HEAD"]).strip
@@ -131,11 +65,11 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
   end
 
   def exec(cmd, **opts, &block)
-    @tool_context.exec(cmd, **opts, &block)
+    tool_context.exec(cmd, **opts, &block)
   end
 
   def capture(cmd, **opts, &block)
-    @tool_context.capture(cmd, **opts, &block)
+    tool_context.capture(cmd, **opts, &block)
   end
 
   def ensure_gh_binary
@@ -151,7 +85,7 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
       error("gh version 0.10 or later required but #{version_str} found.",
             "See https://cli.github.com/manual/installation for installation instructions.")
     end
-    @logger.info("gh version #{version_str} found")
+    logger.info("gh version #{version_str} found")
     self
   end
 
@@ -168,7 +102,7 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
       error("git version 2.22 or later required but #{version_str} found.",
             "See https://git-scm.com/downloads for installation instructions.")
     end
-    @logger.info("git version #{version_str} found")
+    logger.info("git version #{version_str} found")
     self
   end
 
@@ -210,7 +144,7 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
 
   def update_release_pr(pr_number, label: nil, message: nil, state: nil, cur_pr: nil)
     update_pr_label(pr_number, label, cur_pr: cur_pr) if label
-    update_pr_state(pr_number, cur_pr: cur_pr) if state
+    update_pr_state(pr_number, state, cur_pr: cur_pr) if state
     add_pr_message(pr_number, message) if message
     self
   end
@@ -256,10 +190,10 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
   end
 
   def verify_library_version(gem_name, gem_vers)
-    @logger.info("Verifying #{gem_name} version file ...")
+    logger.info("Verifying #{gem_name} version file ...")
     lib_vers = current_library_version(gem_name)
     if gem_vers == lib_vers
-      @logger.info("Version file OK")
+      logger.info("Version file OK")
     else
       path = gem_version_rb_path(gem_name, from: :absolute)
       error("Requested version #{gem_vers} doesn't match #{gem_name} library version #{lib_vers}.",
@@ -269,7 +203,7 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
   end
 
   def verify_changelog_content(gem_name, gem_vers) # rubocop:disable Metrics/MethodLength
-    @logger.info("Verifying #{gem_name} changelog content...")
+    logger.info("Verifying #{gem_name} changelog content...")
     changelog_path = gem_changelog_path(gem_name, from: :context)
     today = ::Time.now.strftime("%Y-%m-%d")
     entry = []
@@ -300,13 +234,13 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
             "The first changelog entry should start with:",
             "### v#{gem_vers} / #{today}")
     else
-      @logger.info("Changelog OK")
+      logger.info("Changelog OK")
     end
     entry.join
   end
 
   def verify_repo_identity(git_remote: "origin")
-    @logger.info("Verifying git repo identity ...")
+    logger.info("Verifying git repo identity ...")
     url = git_remote_url(git_remote)
     cur_repo =
       case url
@@ -318,7 +252,7 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
         error("Unrecognized remote url: #{url.inspect}")
       end
     if cur_repo == repo_path
-      @logger.info("Git repo is correct.")
+      logger.info("Git repo is correct.")
     else
       error("Remmote repo is #{cur_repo}, expected #{repo_path}")
     end
@@ -326,10 +260,10 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
   end
 
   def verify_git_clean
-    @logger.info("Verifying git clean...")
+    logger.info("Verifying git clean...")
     output = capture(["git", "status", "-s"]).strip
     if output.empty?
-      @logger.info("Git working directory is clean.")
+      logger.info("Git working directory is clean.")
     else
       error("There are local git changes that are not committed.")
     end
@@ -337,117 +271,101 @@ class ReleaseUtils # rubocop:disable Metrics/ClassLength
   end
 
   def verify_github_checks(ref: nil)
-    @logger.info("Verifying GitHub checks ...")
+    if required_checks_regexp.nil?
+      logger.info("GitHub checks disabled")
+      return self
+    end
     ref = current_sha(ref)
+    logger.info("Verifying GitHub checks ...")
+    errors = github_check_errors(ref)
+    error(*errors) unless errors.empty?
+    logger.info("GitHub checks all passed.")
+    self
+  end
+
+  def wait_github_checks(ref: nil)
+    if required_checks_regexp.nil?
+      logger.info("GitHub checks disabled")
+      return self
+    end
+    wait_github_checks_internal(current_sha(ref), ::Time.now.to_i + required_checks_timeout)
+  end
+
+  def github_check_errors(ref)
     result = exec(["gh", "api", "repos/#{repo_path}/commits/#{ref}/check-runs",
                    "-H", "Accept: application/vnd.github.antiope-preview+json"],
                   out: :capture, e: false)
-    error("Failed to obtain GitHub check results for #{ref}") unless result.success?
-    results = ::JSON.parse(result.captured_out)
-    checks = results["check_runs"]
-    error("No GitHub checks found for #{ref}") if checks.empty?
+    return ["Failed to obtain GitHub check results for #{ref}"] unless result.success?
+    checks = ::JSON.parse(result.captured_out)["check_runs"]
+    results = []
+    results << "No GitHub checks found for #{ref}" if checks.empty?
     checks.each do |check|
       name = check["name"]
-      next unless name.start_with?("test")
-      unless check["status"] == "completed"
-        error("GitHub check #{name.inspect} is not complete")
-      end
-      unless check["conclusion"] == "success"
-        error("GitHub check #{name.inspect} was not successful")
+      next if release_jobs_regexp.match(name) || !required_checks_regexp.match(name)
+      if check["status"] != "completed"
+        results << "GitHub check #{name.inspect} is not complete"
+      elsif check["conclusion"] != "success"
+        results << "GitHub check #{name.inspect} was not successful"
       end
     end
-    @logger.info("GitHub checks all passed.")
-    self
+    results
+  end
+
+  def log(message)
+    logger.info(message)
   end
 
   def error(message, *more_messages)
     if ::ENV["GITHUB_ACTIONS"]
-      puts("::error::#{message}")
+      loc = caller_locations(1).first
+      puts("::error file=#{loc.path},line=#{loc.lineno}::#{message}")
     else
-      @tool_context.puts(message, :red, :bold)
+      tool_context.puts(message, :red, :bold)
     end
-    more_messages.each { |m| @tool_context.puts m }
-    if @error_proc
-      content = ([message] + more_messages).join("\n")
-      @error_proc.call(content)
-    end
+    more_messages.each { |m| tool_context.puts(m, :red) }
+    raise ReleaseError.new(message, more_messages) if raise_on_error
     sleep(1)
-    @tool_context.exit(1)
+    tool_context.exit(1)
   end
 
-  def warning(message)
+  def warning(message, *more_messages)
     if ::ENV["GITHUB_ACTIONS"]
-      puts("::warning::#{message}")
+      loc = caller_locations(1).first
+      puts("::warning file=#{loc.path},line=#{loc.lineno}::#{message}")
     else
-      @logger.warn(message)
+      tool_context.puts(message, :yellow, :bold)
     end
-  end
-
-  def on_error(&block)
-    @error_proc = block
-    self
-  end
-
-  def clear_error_proc
-    @error_proc = nil
+    more_messages.each { |m| tool_context.puts(m, :yellow) }
   end
 
   private
 
-  def load_release_info(file_path)
+  def load_repo_settings
+    file_path = tool_context.find_data("releases.yml")
     error("Unable to find releases.yml data file") unless file_path
     info = ::YAML.load_file(file_path)
-    read_global_info(info)
-    error("Repo key missing from releases.yml") unless @repo_path
-    read_gem_info(info)
-    error("No gems listed in releases.yml") unless @default_gem
+    @repo_settings = RepoSettings.new(info, @tool_context.context_directory)
+    error("Repo key missing from releases.yml") unless @repo_settings.repo_path
+    error("No gems listed in releases.yml") unless @repo_settings.default_gem
   end
 
-  def read_global_info(info)
-    @main_branch = info["main_branch"] || "main"
-    @repo_path = info["repo"]
-    @signoff_commits = info["signoff_commits"] ? true : false
-    @docs_builder = create_docs_builder(info["docs_builder_tool"])
-    @enable_release_automation = info.fetch("enable_release_automation", true) ? true : false
-  end
-
-  def create_docs_builder(docs_builder_tool)
-    docs_builder_tool = Array(docs_builder_tool)
-    return nil if docs_builder_tool.empty?
-    tool_context = @tool_context
-    proc { tool_context.exec_separate_tool(docs_builder_tool) }
-  end
-
-  def read_gem_info(info)
-    @gems = {}
-    @default_gem = nil
-    has_multiple_gems = info["gems"].size > 1
-    info["gems"].each do |gem_info|
-      name = gem_info["name"]
-      error("Name missing from gem in releases.yml") unless name
-      add_gem_defaults(gem_info, name, has_multiple_gems)
-      @gems[name] = gem_info
-      @default_gem ||= name
+  def wait_github_checks_internal(ref, deadline)
+    interval = 10
+    loop do
+      logger.info("Polling GitHub checks ...")
+      errors = github_check_errors(ref)
+      if errors.empty?
+        logger.info("GitHub checks all passed.")
+        return []
+      end
+      errors.each { |msg| logger.info(msg) }
+      if ::Time.now.to_i > deadline
+        results = ["GitHub checks still failing after #{required_checks_timeout} secs."]
+        return results + errors
+      end
+      logger.info("Sleeping for #{interval} secs ...")
+      sleep(interval)
+      interval += 10 unless interval >= 60
     end
-  end
-
-  def add_gem_defaults(gem_info, name, has_multiple_gems)
-    gem_info["directory"] ||= has_multiple_gems ? name : "."
-    segments = name.split("-")
-    name_path = segments.join("/")
-    gem_info["version_rb_path"] ||= "lib/#{name_path}/version.rb"
-    gem_info["changelog_path"] ||= "CHANGELOG.md"
-    gem_info["version_constant"] ||= segments.map { |seg| camelize(seg) } + ["VERSION"]
-    gem_info["gh_pages_directory"] ||= has_multiple_gems ? name : "."
-    gem_info["gh_pages_version_var"] ||=
-      has_multiple_gems ? "version_#{name}".tr("-", "_") : "version"
-  end
-
-  def camelize(str)
-    str.to_s
-       .sub(/^_/, "")
-       .sub(/_$/, "")
-       .gsub(/_+/, "_")
-       .gsub(/(?:^|_)([a-zA-Z])/) { ::Regexp.last_match(1).upcase }
   end
 end

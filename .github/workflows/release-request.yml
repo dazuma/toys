@@ -1,4 +1,4 @@
-name: Request Release
+name: Open release request
 
 on:
   workflow_dispatch:
@@ -6,10 +6,10 @@ on:
       gems:
         description: Gems to release (leave blank to release all gems)
         required: false
-        default: "toys-core,toys"
+        default: ""
 
 jobs:
-  request-release:
+  release-request:
     if: ${{ github.repository == 'dazuma/toys' }}
     env:
       ruby_version: "2.7"
@@ -26,6 +26,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./toys-dev release request --yes --verbose \
+            --coordinate-versions \
             "--gems=${{ github.event.inputs.gems }}" \
             "--git-user-email=${{ secrets.GIT_USER_EMAIL }}" \
             "--git-user-name=${{ secrets.GIT_USER_NAME }}" \

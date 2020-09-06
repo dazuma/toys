@@ -1,10 +1,10 @@
 # Release History
 
-### 0.11.1 / 2020-08-24
+### v0.11.1 / 2020-08-24
 
 * FIXED: The `.lib` directory actually works as advertised.
 
-### 0.11.0 / 2020-08-21
+### v0.11.0 / 2020-08-21
 
 * ADDED: The toys search path can be truncated using the `truncate_load_path!` directive.
 * ADDED: The `:clean` template recognizes `:gitignore` as a path indicating all gitignored files.
@@ -16,7 +16,7 @@
 * FIXED: Fixed a rare Exec capture failure that resulted from a race condition when closing streams.
 * DOCS: The Toys user guide now covers static bundle loading and `truncate_load_path!`.
 
-### 0.10.5 / 2020-07-18
+### v0.10.5 / 2020-07-18
 
 * IMPROVED: The bundler mixin silences bundler output during bundle setup.
 * IMPROVED: The bundler mixin allows toys and toys-core to be in the Gemfile. It checks their version requirements against the running Toys version, and either adds the corret version to the bundle or raises IncompatibleToysError.
@@ -24,24 +24,24 @@
 * FIXED: Some cases of transitive dependency handling by the bundler mixin.
 * FIXED: Fixed a crash when computing suggestions, when running with a bundle on Ruby 2.6 or earlier.
 
-### 0.10.4 / 2020-07-11
+### v0.10.4 / 2020-07-11
 
 * IMPROVED: Bundler integration can now handle Toys itself being in the bundle, as long as the version requirements cover the running Toys version.
 * IMPROVED: Passing `static: true` to the `:bundler` mixin installs the bundle at definition rather than execution time.
 
-### 0.10.3 / 2020-07-04
+### v0.10.3 / 2020-07-04
 
 * FIXED: The `exec_separate_tool` method in the `:exec` mixin no longer throws ENOEXEC on Windows.
 
-### 0.10.2 / 2020-07-03
+### v0.10.2 / 2020-07-03
 
 * FIXED: The load path no longer loses the toys and toys-core directories after a bundle install.
 
-### 0.10.1 / 2020-03-07
+### v0.10.1 / 2020-03-07
 
 * FIXED: Setting `:exit_on_nonzero_status` explicitly to false now works as expected.
 
-### 0.10.0 / 2020-02-24
+### v0.10.0 / 2020-02-24
 
 * ADDED: `:bundler` mixin that installs and sets up a bundle for the tool
 * ADDED: `bundler` options in the standard templates, to run those tools in a bundle
@@ -57,26 +57,26 @@
 * FIXED: `rdoc` template crashed if any nonstandard options were given.
 * FIXED: `rubocop` template would abort prematurely if standard streams were redirected.
 
-### 0.9.4 / 2020-01-26
+### v0.9.4 / 2020-01-26
 
 * FIXED: Crash in the loader when a non-ruby file appears in a toys directory
 
-### 0.9.3 / 2020-01-05
+### v0.9.3 / 2020-01-05
 
 * FIXED: `delegate_to` directive could crash if an overriding tool has already been defined.
 * FIXED: A Ruby 2.7 warning when reporting a Toys file syntax error.
 
-### 0.9.2 / 2020-01-03
+### v0.9.2 / 2020-01-03
 
 * IMPROVED: Mixins can now take real keyword arguments, and will pass them on properly to `on_initialize` and `on_include` blocks.
 * CHANGED: `Toys::Utils::Exec` and the `:exec` mixin methods now take real keyword arguments rather than an `opts` hash. This means you should use keywords (or the double-splat operator) to avoid a deprecation warning on Ruby 2.7.
 
-### 0.9.1 / 2019-12-22
+### v0.9.1 / 2019-12-22
 
 * IMPROVED: `delegate_to` and `alias_tool` can take symbols as well as strings.
 * DOCS: Fixed user guide internal links on rubydoc.info.
 
-### 0.9.0 / 2019-12-02
+### v0.9.0 / 2019-12-02
 
 * ADDED: The `delegate_to` directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.
 * ADDED: The `delegate_to` argument to the `tool` directive causes the tool to delegate to another tool. (Note: the `alias_tool` directive is now just shorthand for creating a tool with a delegate, and as such is mildly deprecated.)
@@ -87,12 +87,12 @@
 * IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of JVM boot latency, lack of Kernel#fork support, and other issues.
 * FIXED: The the `tool` directive no longer crashes if not passed a block.
 
-### 0.8.1 / 2019-11-19
+### v0.8.1 / 2019-11-19
 
 * FIXED: Listing subtools would crash if a broken alias was present.
 * DOCUMENTATION: Switched from redcarpet to kramdown, and tried to make some structural fixes.
 
-### 0.8.0 / 2019-06-20
+### v0.8.0 / 2019-06-20
 
 This is a major update with significant new features and a bunch of fixes.
 It does include a few minor backward-incompatible changes. All signifiant
@@ -146,18 +146,18 @@ Details:
 
 Additionally, a significant amount of internal reorganization and cleanup happened in the toys-core gem. See the changelog for toys-core for more details.
 
-### 0.7.0 / 2019-01-23
+### v0.7.0 / 2019-01-23
 
 * ADDED: A template for creating tools that invoke RSpec.
 * ADDED: Flag groups, which enforce policies around which flags are required.
 * CHANGED: Flags within a group are sorted in the help screens.
 * IMPROVED: The minitest template now honors all standard minitest flags.
 
-### 0.6.1 / 2019-01-07
+### v0.6.1 / 2019-01-07
 
 * FIXED: The presence of aliases caused subtool listing to crash.
 
-### 0.6.0 / 2018-10-22
+### v0.6.0 / 2018-10-22
 
 * FIXED: Build tools cd into the context directory when running.
 * FIXED: Rakefiles are evaluated and tasks are run in the Rakefile's directory.
@@ -169,7 +169,7 @@ Additionally, a significant amount of internal reorganization and cleanup happen
 * IMPROVED: Non-runnable namespaces are no longer displayed in recursive subtool
   lists if their children are already displayed.
 
-### 0.5.0 / 2018-10-07
+### v0.5.0 / 2018-10-07
 
 * ADDED: Period and colon are recognized as tool path delimiters.
 * ADDED: New rake template that supports loading rake tasks as tools.
@@ -180,31 +180,31 @@ Additionally, a significant amount of internal reorganization and cleanup happen
 * IMPROVED: The tool directive can now take an `if_defined` argument.
 * FIXED: Template instantiation was failing if the hosting tool was priority-masked.
 
-### 0.4.5 / 2018-08-05
+### v0.4.5 / 2018-08-05
 
 * CHANGED: Dropped preload file feature
 
-### 0.4.4 / 2018-07-21
+### v0.4.4 / 2018-07-21
 
 * FIXED: Utils::Exec wasn't closing streams after copying.
 * IMPROVED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.
 * ADDED: Terminal#ask
 
-### 0.4.3 / 2018-07-13
+### v0.4.3 / 2018-07-13
 
 * IMPROVED: Exec mixin methods can now spawn subprocesses in the background
 * IMPROVED: Exec mixin capture methods can now yield a controller
 
-### 0.4.2 / 2018-07-08
+### v0.4.2 / 2018-07-08
 
 * FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.
 * IMPROVED: The `include?` method extended to support mixin names in a tool dsl.
 
-### 0.4.1 / 2018-07-03
+### v0.4.1 / 2018-07-03
 
 * FIXED: Terminal#confirm uppercased "N" for the wrong default.
 
-### 0.4.0 / 2018-07-03
+### v0.4.0 / 2018-07-03
 
 Now declaring this alpha quality. Backward-incompatible changes are still
 possible from this point, but I'll try to avoid them.
@@ -214,24 +214,24 @@ possible from this point, but I'll try to avoid them.
 * IMPROVED: Toys::Utils::Gems can suppress the confirmation prompt
 * IMPROVED: Magic comments are now honored in toys files.
 
-### 0.3.11 / 2018-07-02
+### v0.3.11 / 2018-07-02
 
 * CHANGED: Require Ruby 2.3 or later
 * CHANGED: Renamed "set" directive to "static" to reduce confusion with Tool#set.
 * ADDED: Convenience methods for getting option values
 
-### 0.3.10 / 2018-06-30
+### v0.3.10 / 2018-06-30
 
 * CHANGED: Dropped Tool#option. Use Tool#get instead.
 * CHANGED: "run" directive renamed to "to_run"
 * CHANGED: Highline mixin now uses Highline 2.0
 * ADDED: Mixins can provide initializers
 
-### 0.3.9.1 / 2018-06-24
+### v0.3.9.1 / 2018-06-24
 
 * FIXED: Built-in flags were interfering with disable_argument_parsing
 
-### 0.3.9 / 2018-06-24
+### v0.3.9 / 2018-06-24
 
 * CHANGED: Removed alias_as directive since it's incompatible with selective loading.
 * ADDED: Ability to define named templates in Toys files
@@ -241,18 +241,18 @@ possible from this point, but I'll try to avoid them.
 * IMPROVED: Acceptors can be looked up recursively in the same way as mixins and templates
 * FIXED: Templates were not activating needed gems
 
-### 0.3.8 / 2018-06-10
+### v0.3.8 / 2018-06-10
 
 * CHANGED: Renamed helpers to mixins.
 * CHANGED: Renamed :in_from, :out_to, and :err_to exec options to :in, :out, :err
 * IMPROVED: Exec raises an error if passed an unknown option.
 * IMPROVED: Exec now accepts nearly all the same stream specifications as Process#spawn.
 
-### 0.3.7.1 / 2018-05-30
+### v0.3.7.1 / 2018-05-30
 
 * FIXED: Fix crash in system update.
 
-### 0.3.7 / 2018-05-30
+### v0.3.7 / 2018-05-30
 
 * CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.
 * CHANGED: Renamed "script" to "run", and allow setting of runnable by defining a "run" method
@@ -261,7 +261,7 @@ possible from this point, but I'll try to avoid them.
 * CHANGED: Removed spinner helper and added terminal helper.
 * ADDED: Helper modules scoped to the tool hierarchy
 
-### 0.3.6 / 2018-05-21
+### v0.3.6 / 2018-05-21
 
 * CHANGED: Removed Context#new_cli and exposed Context#cli instead.
 * CHANGED: Raises ToolDefinitionError if you declare a duplicate flag.
@@ -270,13 +270,13 @@ possible from this point, but I'll try to avoid them.
 * IMPROVED: Support custom acceptors.
 * IMPROVED: Highline helper automatically sets use_color based on the type of stdout.
 
-### 0.3.5 / 2018-05-15
+### v0.3.5 / 2018-05-15
 
 * CHANGED: Flag and arg blocks in the DSL have an interface more similar to the rest of the DSL.
 * CHANGED: Renamed `execute do` to `script do`.
 * IMPROVED: Help display uses `less` if available.
 
-### 0.3.4 / 2018-05-14
+### v0.3.4 / 2018-05-14
 
 * CHANGED: Renamed switch to flag
 * CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.
@@ -293,7 +293,7 @@ possible from this point, but I'll try to avoid them.
 * FIXED: Subtools with no desc now properly pick up the default
 * FIXED: Usage errors and show-help now interact in the right way
 
-### 0.3.3 / 2018-05-09
+### v0.3.3 / 2018-05-09
 
 * CHANGED: Renamed file_utils helper to fileutils.
 * CHANGED: Renamed doc: parameter to docs:
@@ -303,7 +303,7 @@ possible from this point, but I'll try to avoid them.
 * ADDED: WrappableString for descriptions and docs
 * IMPROVED: Descriptions can have multiple lines
 
-### 0.3.2 / 2018-05-07
+### v0.3.2 / 2018-05-07
 
 * CHANGED: Split core engine out into separate "toys-core" gem. See the
   toys-core changelog for additional changes in core.
@@ -314,7 +314,7 @@ possible from this point, but I'll try to avoid them.
 * IMPROVED: Help shows the config file path on "--verbose".
 * IMPROVED: You can now run a sub-instance of toys from an executor.
 
-### 0.3.1 / 2018-05-02
+### v0.3.1 / 2018-05-02
 
 * CHANGED: Subcommand display is now recursive by default.
 * IMPROVED: Improved error messaging for bad switch syntax.
@@ -323,6 +323,6 @@ possible from this point, but I'll try to avoid them.
 * DOCS: Completed a first pass on class and method documentation.
 * INTERNAL: Adjusted naming of switch-related methods.
 
-### 0.3.0 / 2018-04-30
+### v0.3.0 / 2018-04-30
 
 * Initial generally usable release

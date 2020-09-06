@@ -1,12 +1,13 @@
-name: "(check for aborted release)"
+name: "[release hook] Update open releases"
 
 on:
-  pull_request:
-    types: [closed]
+  push:
+    branches:
+      - main
 
 jobs:
-  aborted-release-check:
-    if: ${{ github.repository == 'dazuma/toys' && !github.event.pull_request.merged_at }}
+  release-update-open-requests:
+    if: ${{ github.repository == 'dazuma/toys' }}
     env:
       ruby_version: "2.7"
     runs-on: ubuntu-latest
@@ -17,10 +18,9 @@ jobs:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
         uses: actions/checkout@v2
-      - name: Aborted release check
+      - name: Update open releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./toys-dev release _on-pr-closed --verbose \
-            "--event-path=${{ github.event_path }}" \
+          ./toys-dev release _onpush --verbose \
             < /dev/null
