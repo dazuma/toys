@@ -492,7 +492,8 @@ module Toys
       #
       class Controller
         ## @private
-        def initialize(name, controller_streams, captures, pid, join_threads, result_callback)
+        def initialize(name, controller_streams, captures, pid, join_threads,
+                       result_callback, mutex)
           @name = name
           @in = controller_streams[:in]
           @out = controller_streams[:out]
@@ -508,6 +509,7 @@ module Toys
           end
           @join_threads = join_threads
           @result_callback = result_callback
+          @mutex = mutex
           @result = nil
         end
 
@@ -575,7 +577,10 @@ module Toys
           stream = stream_for(which)
           @join_threads << ::Thread.new do
             begin
-              @captures[which] = stream.read
+              data = stream.read
+              @mutex.synchronize do
+                @captures[which] = data
+              end
             ensure
               stream.close
             end
@@ -940,6 +945,7 @@ module Toys
           @parent_streams = []
           @block = block
           @default_stream = @config_opts[:background] ? :null : :inherit
+          @mutex = ::Mutex.new
         end
 
         def execute
@@ -977,7 +983,7 @@ module Toys
             end
           @child_streams.each(&:close)
           Controller.new(@config_opts[:name], @controller_streams, @captures, pid,
-                         @join_threads, @config_opts[:result_callback])
+                         @join_threads, @config_opts[:result_callback], @mutex)
         end
 
         def start_process
@@ -1284,7 +1290,10 @@ module Toys
           stream = make_out_pipe(key)
           @join_threads << ::Thread.new do
             begin
-              @captures[key] = stream.read
+              data = stream.read
+              @mutex.synchronize do
+                @captures[key] = data
+              end
             ensure
               stream.close
             end
