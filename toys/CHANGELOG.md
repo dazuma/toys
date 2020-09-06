@@ -1,5 +1,9 @@
 # Release History
 
+### v0.11.2 / 2020-09-06
+
+* FIXED: Don't get confused when running toys from within a toys directory 
+
 ### v0.11.1 / 2020-08-24
 
 * FIXED: The `.lib` directory actually works as advertised.
