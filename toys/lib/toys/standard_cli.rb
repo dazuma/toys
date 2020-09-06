@@ -110,7 +110,7 @@ module Toys
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup
       )
-      add_standard_paths(cur_dir: cur_dir)
+      add_standard_paths(cur_dir: cur_dir, toys_dir_name: CONFIG_DIR_NAME)
     end
 
     private
@@ -132,14 +132,29 @@ module Toys
     #     directories, or `nil` to use the defaults.
     # @return [self]
     #
-    def add_standard_paths(cur_dir: nil, global_dirs: nil)
+    def add_standard_paths(cur_dir: nil, global_dirs: nil, toys_dir_name: nil)
       cur_dir ||= ::Dir.pwd
+      cur_dir = skip_toys_dir(cur_dir, toys_dir_name) if toys_dir_name
       global_dirs ||= default_global_dirs
       add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
       global_dirs.each { |path| add_search_path(path) }
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
       add_config_path(builtins_path)
       self
+    end
+
+    # Step out of any toys dir
+    def skip_toys_dir(dir, toys_dir_name)
+      cur_dir = dir
+      loop do
+        parent = ::File.dirname(dir)
+        return cur_dir if parent == dir
+        if ::File.basename(dir) == toys_dir_name
+          cur_dir = dir = parent
+        else
+          dir = parent
+        end
+      end
     end
 
     # rubocop:disable Metrics/MethodLength
