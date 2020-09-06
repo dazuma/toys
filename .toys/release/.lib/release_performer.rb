@@ -71,6 +71,7 @@ class ReleasePerformer
     end
 
     def verify
+      @utils.error("Gem #{@gem_name} not known.") unless @utils.gem_info(@gem_name)
       @utils.verify_library_version(@gem_name, @gem_version)
       @changelog_content = @utils.verify_changelog_content(@gem_name, @gem_version)
       self

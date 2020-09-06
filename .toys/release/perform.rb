@@ -136,8 +136,11 @@ def perform
   performer = create_performer
   confirm_release
   performer.instance(gem_name, gem_version, only: only).perform
-  performer.report_results
-  puts("SUCCESS", :bold, :green) if performer.result
+  if performer.report_results
+    puts("All releases completed successfully", :bold, :green)
+  else
+    @utils.error("Releases reported failure")
+  end
 end
 
 def create_performer
