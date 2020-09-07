@@ -35,7 +35,8 @@ class ReleaseUtils
   def_delegators :@repo_settings,
                  :repo_path, :repo_owner, :main_branch, :default_gem,
                  :required_checks_regexp, :release_jobs_regexp, :required_checks_timeout,
-                 :docs_builder_tool, :signoff_commits?, :enable_release_automation?
+                 :docs_builder_tool, :signoff_commits?, :enable_release_automation?,
+                 :coordinate_versions?
   def_delegators :@repo_settings,
                  :all_gems, :gem_info,
                  :gem_directory, :gem_cd,
