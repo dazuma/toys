@@ -247,7 +247,7 @@ class ReleaseRequester
                  git_remote: nil,
                  git_user_name: nil,
                  git_user_email: nil,
-                 coordinate_versions: false,
+                 coordinate_versions: nil,
                  prune_gems: false)
     @utils = utils
     @release_ref = release_ref || @utils.current_branch || @utils.main_branch
@@ -255,6 +255,7 @@ class ReleaseRequester
     @git_user_name = git_user_name
     @git_user_email = git_user_email
     @coordinate_versions = coordinate_versions
+    @coordinate_versions = @utils.coordinate_versions? if @coordinate_versions.nil?
     @prune_gems = prune_gems
     @gem_info_list = []
     @performed_initial_setup = false

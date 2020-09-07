@@ -4,6 +4,7 @@
 class RepoSettings
   def initialize(info, context_directory)
     @context_directory = context_directory
+    @warnings = []
     read_global_info(info)
     read_gem_info(info)
   end
@@ -28,6 +29,10 @@ class RepoSettings
 
   def enable_release_automation?
     @enable_release_automation
+  end
+
+  def coordinate_versions?
+    @coordinate_versions
   end
 
   def all_gems
@@ -109,21 +114,21 @@ class RepoSettings
   end
 
   def release_branch_name(gem_name)
-    "release/#{gem_name}"
+    "#{@release_branch_prefix}/#{gem_name}"
   end
 
   def multi_release_branch_name
     timestamp = ::Time.now.strftime("%Y%m%d%H%M%S")
-    "release/multi/#{timestamp}"
+    "#{@release_branch_prefix}/multi/#{timestamp}"
   end
 
   def gem_name_from_release_branch(ref)
-    match = %r{^release/([^/]+)$}.match(ref)
+    match = %r{^#{@release_branch_prefix}/([^/]+)$}.match(ref)
     match ? match[1] : nil
   end
 
   def release_related_branch?(ref)
-    %r{^release/([^/]+|multi/\d+)$}.match(ref) ? true : false
+    %r{^#{@release_branch_prefix}/([^/]+|multi/\d+)$}.match(ref) ? true : false
   end
 
   private
@@ -132,12 +137,14 @@ class RepoSettings
     @main_branch = info["main_branch"] || "main"
     @repo_path = info["repo"]
     @signoff_commits = info["signoff_commits"] ? true : false
+    @coordinate_versions = info["coordinate_versions"] ? true : false
     @docs_builder_tool = info["docs_builder_tool"]
-    @enable_release_automation = info.fetch("enable_release_automation", true) ? true : false
+    @enable_release_automation = info["enable_release_automation"] != false
     required_checks = info["required_checks"]
     @required_checks_regexp = required_checks == false ? nil : ::Regexp.new(required_checks.to_s)
     @required_checks_timeout = info["required_checks_timeout"] || 900
     @release_jobs_regexp = ::Regexp.new(info["release_jobs_regexp"] || "^release-")
+    @release_branch_prefix = info["release_branch_prefix"] || "release"
   end
 
   def read_gem_info(info)
@@ -145,15 +152,15 @@ class RepoSettings
     @default_gem = nil
     has_multiple_gems = info["gems"].size > 1
     info["gems"].each do |gem_info|
-      name = gem_info["name"]
-      error("Name missing from gem in releases.yml") unless name
-      add_gem_defaults(gem_info, name, has_multiple_gems)
+      add_gem_defaults(gem_info, has_multiple_gems)
+      name = check_gem_info(gem_info)
       @gems[name] = gem_info
       @default_gem ||= name
     end
   end
 
-  def add_gem_defaults(gem_info, name, has_multiple_gems)
+  def add_gem_defaults(gem_info, has_multiple_gems)
+    name = gem_info["name"]
     gem_info["directory"] ||= has_multiple_gems ? name : "."
     segments = name.split("-")
     name_path = segments.join("/")
@@ -163,6 +170,20 @@ class RepoSettings
     gem_info["gh_pages_directory"] ||= has_multiple_gems ? name : "."
     gem_info["gh_pages_version_var"] ||=
       has_multiple_gems ? "version_#{name}".tr("-", "_") : "version"
+  end
+
+  def check_gem_info(gem_info)
+    name = gem_info["name"]
+    raise "Name missing from gem in releases.yml" unless name
+    dir = ::File.expand_path(gem_info["directory"], @context_directory)
+    raise "Missing directory #{dir} for gem #{name}" unless ::File.directory?(dir)
+    gemspec = ::File.expand_path("#{name}.gemspec", dir)
+    raise "Missing gemspec file #{gemspec}" unless ::File.file?(gemspec)
+    version_file = ::File.expand_path(gem_info["version_rb_path"], dir)
+    raise "Missing version file #{version_file} for gem #{name}" unless ::File.file?(version_file)
+    changelog = ::File.expand_path(gem_info["changelog_path"], dir)
+    raise "Missing changelog #{changelog} for gem #{name}" unless ::File.file?(changelog)
+    name
   end
 
   def camelize(str)

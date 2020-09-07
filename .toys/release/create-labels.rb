@@ -20,6 +20,13 @@ def run
 
   @utils = ReleaseUtils.new(self)
 
+  unless @utils.enable_release_automation?
+    puts "Release automation disabled in settings."
+    unless yes || confirm("Create labels anyway? ", default: false)
+      @utils.error("Aborted.")
+    end
+  end
+
   expected_labels = create_expected_labels
   cur_labels = load_existing_labels
   update_labels cur_labels, expected_labels

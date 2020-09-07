@@ -29,7 +29,7 @@ long_desc \
     " the release script will run automatically when a release pull request" \
     " is merged."
 
-flag :coordinate_versions, "--coordinate-versions" do
+flag :coordinate_versions, "--[no-]coordinate-versions" do
   desc "Cause all gems to release with the same version"
 end
 flag :gems, "--gems=VAL" do

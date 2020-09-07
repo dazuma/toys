@@ -1,5 +1,6 @@
 repo: dazuma/toys
 docs_builder_tool: [yardoc]
+coordinate_versions: true
 gems:
   - name: toys-core
     version_rb_path: lib/toys/core.rb
