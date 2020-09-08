@@ -34,6 +34,8 @@ Metrics/PerceivedComplexity:
   Max: 10
 Naming/FileName:
   Enabled: false
+Style/Documentation:
+  Enabled: false
 Style/GuardClause:
   Enabled: false
 Style/HashEachMethods:
