@@ -102,18 +102,15 @@ class ReleaseRequester
         return
       end
       @utils.log("Analyzing commit messages since last version ...")
-      commits = "#{@gem_name}/v#{@last_version}^..#{@release_ref}"
-      shas = @utils.capture(["git", "log", commits, "--format=%H"]).split("\n").reverse
       dir = @utils.gem_directory(@gem_name)
       dir = "#{dir}/" unless dir.end_with?("/")
-      (0..(shas.length - 2)).each do |index|
-        sha1 = shas[index]
-        sha2 = shas[index + 1]
+      commits = "#{@gem_name}/v#{@last_version}..#{@release_ref}"
+      @utils.capture(["git", "log", commits, "--format=%H"]).split("\n").reverse_each do |sha|
         unless dir == "./"
-          files = @utils.capture(["git", "diff", "--name-only", "#{sha1}..#{sha2}"])
+          files = @utils.capture(["git", "diff", "--name-only", "#{sha}^..#{sha}"])
           next unless files.split("\n").any? { |file| file.start_with?(dir) }
         end
-        message = @utils.capture(["git", "log", "#{sha1}..#{sha2}", "--format=%B"])
+        message = @utils.capture(["git", "log", "#{sha}^..#{sha}", "--format=%B"])
         analyze_message message
       end
     end
@@ -247,15 +244,11 @@ class ReleaseRequester
   def initialize(utils,
                  release_ref: nil,
                  git_remote: nil,
-                 git_user_name: nil,
-                 git_user_email: nil,
                  coordinate_versions: nil,
                  prune_gems: false)
     @utils = utils
     @release_ref = release_ref || @utils.current_branch || @utils.main_branch
     @git_remote = git_remote || "origin"
-    @git_user_name = git_user_name
-    @git_user_email = git_user_email
     @coordinate_versions = coordinate_versions
     @coordinate_versions = @utils.coordinate_versions? if @coordinate_versions.nil?
     @prune_gems = prune_gems
@@ -279,8 +272,7 @@ class ReleaseRequester
       @utils.exec(["git", "fetch", "--unshallow", @git_remote, @release_ref])
     end
     @utils.exec(["git", "fetch", @git_remote, "--tags"])
-    @utils.exec(["git", "config", "--local", "user.email", @git_user_email]) if @git_user_email
-    @utils.exec(["git", "config", "--local", "user.name", @git_user_name]) if @git_user_name
+    @utils.git_set_user_info
     @utils.exec(["git", "checkout", @release_ref])
     @performed_initial_setup = true
   end

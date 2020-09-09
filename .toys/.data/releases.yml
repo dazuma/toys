@@ -1,6 +1,11 @@
 repo: dazuma/toys
+git_user_name: Daniel Azuma
+git_user_email: dazuma@gmail.com
 docs_builder_tool: [yardoc]
 coordinate_versions: true
+commit_lint:
+  fail_checks: true
+  merge: squash
 gems:
   - name: toys-core
     version_rb_path: lib/toys/core.rb
