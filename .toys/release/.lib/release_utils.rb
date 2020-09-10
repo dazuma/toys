@@ -32,6 +32,7 @@ class ReleaseUtils
 
   def_delegators :@repo_settings,
                  :repo_path, :repo_owner, :main_branch, :default_gem,
+                 :git_user_name, :git_user_email,
                  :required_checks_regexp, :release_jobs_regexp, :required_checks_timeout,
                  :docs_builder_tool, :signoff_commits?, :enable_release_automation?,
                  :coordinate_versions?
@@ -315,12 +316,12 @@ class ReleaseUtils
 
   def git_set_user_info
     if git_user_name
-      unless exec(["git", "config", "--get", "user.name"], out: null, e: false).success?
+      unless exec(["git", "config", "--get", "user.name"], out: :null, e: false).success?
         exec(["git", "config", "--local", "user.name", git_user_name])
       end
     end
     if git_user_email
-      unless exec(["git", "config", "--get", "user.email"], out: null, e: false).success?
+      unless exec(["git", "config", "--get", "user.email"], out: :null, e: false).success?
         exec(["git", "config", "--local", "user.email", git_user_email])
       end
     end
