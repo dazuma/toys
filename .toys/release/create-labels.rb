@@ -93,7 +93,6 @@ def update_label(label)
   label_name = label["name"]
   return unless yes || confirm("Update fields of \"#{label_name}\"? ", default: true)
   body = ::JSON.dump(color: label["color"], description: label["description"])
-  label_name = ::CGI.escape(label_name)
   exec(["gh", "api", "-XPATCH", "repos/#{@utils.repo_path}/labels/#{label_name}",
         "--input", "-", "-H", "Accept: application/vnd.github.v3+json"],
        in: [:string, body], out: :null)
@@ -102,7 +101,6 @@ end
 def delete_label(label)
   label_name = label["name"]
   return unless yes || confirm("Label \"#{label_name}\" unrecognized. Delete? ", default: true)
-  label_name = ::CGI.escape(label_name)
   exec(["gh", "api", "-XDELETE", "repos/#{@utils.repo_path}/labels/#{label_name}",
         "-H", "Accept: application/vnd.github.v3+json"],
        out: :null)
