@@ -412,7 +412,9 @@ class ReleaseRequester
       "",
     ]
     @gem_info_list.each do |info|
-      lines << " *  **#{info.gem_name}** version #{info.last_version} -> **#{info.new_version}**"
+      gem_line = " *  **#{info.gem_name} #{info.new_version}**"
+      gem_line += info.last_version ? " (was #{info.last_version})" : " (initial release)"
+      lines << gem_line
     end
     lines << ""
     lines <<
