@@ -1,5 +1,9 @@
 # Release History
 
+### v0.11.3 / 2020-09-10
+
+* (No significant changes)
+
 ### v0.11.2 / 2020-09-06
 
 * FIXED: Don't get confused when running toys from within a toys directory 
