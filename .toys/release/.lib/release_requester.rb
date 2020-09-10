@@ -222,9 +222,14 @@ class ReleaseRequester
       path = @utils.gem_version_rb_path(@gem_name, from: :context)
       @utils.log("Modifying version file #{path}")
       content = ::File.read(path)
+      original_content = content.dup
       changed = content.sub!(/  VERSION\s*=\s*(["'])\d+\.\d+\.\d+(?:\.\w+)*["']/,
                              "  VERSION = \\1#{@new_version}\\1")
-      @utils.error("Could not find VERSION constant") unless changed
+      @utils.error("Could not find VERSION constant for #{@gem_name} in #{path}") unless changed
+      if content == original_content
+        @utils.warning("Version constant for #{@gem_name} is already #{@new_version}.")
+        return
+      end
       ::File.open(path, "w") { |file| file.write(content) }
     end
 
@@ -233,7 +238,7 @@ class ReleaseRequester
       @utils.log("Modifying changelog file #{path}")
       content = ::File.read(path)
       if content =~ %r{\n### v#{@new_version} / \d\d\d\d-\d\d-\d\d\n}
-        @utils.warning("Changelog entry for #{@new_version} already seems to exist.")
+        @utils.warning("Changelog entry for #{@gem_name} #{@new_version} already seems to exist.")
         return
       end
       changed = content.sub!(%r{\n### (v\d+\.\d+\.\d+ / \d\d\d\d-\d\d-\d\d)\n},
@@ -343,6 +348,9 @@ class ReleaseRequester
   end
 
   def create_release_commit
+    if @utils.capture(["git", "diff"]).strip.empty?
+      @utils.error("No changes to make. Are you sure the version to release is correct?")
+    end
     check_branch_cmd = ["git", "rev-parse", "--verify", "--quiet", @release_branch_name]
     if @utils.exec(check_branch_cmd, e: false).success?
       @utils.exec(["git", "branch", "-D", @release_branch_name])
