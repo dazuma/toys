@@ -554,7 +554,7 @@ describe Toys::Utils::Exec do
 
   describe "backgrounding" do
     it "determines whether processes are executing" do
-      ::Timeout.timeout(ruby_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout * 2) do
         controller1 = exec.exec("sleep 1", background: true)
         controller2 = exec.exec("sleep 0.3", background: true)
         sleep(0.1)
@@ -570,7 +570,7 @@ describe Toys::Utils::Exec do
     end
 
     it "waits for results and captures output" do
-      ::Timeout.timeout(ruby_exec_timeout) do
+      ::Timeout.timeout(ruby_exec_timeout * 2) do
         controller1 = exec.ruby(["-e", 'sleep 0.8; puts "hi1"; exit 1'],
                                 background: true, out: :capture)
         controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
