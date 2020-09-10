@@ -222,8 +222,9 @@ class ReleaseRequester
       path = @utils.gem_version_rb_path(@gem_name, from: :context)
       @utils.log("Modifying version file #{path}")
       content = ::File.read(path)
-      content.sub!(/  VERSION = "\d+\.\d+\.\d+(?:\.\w+)*"/,
-                   "  VERSION = \"#{@new_version}\"")
+      changed = content.sub!(/  VERSION\s*=\s*(["'])\d+\.\d+\.\d+(?:\.\w+)*["']/,
+                             "  VERSION = \\1#{@new_version}\\1")
+      @utils.error("Could not find VERSION constant") unless changed
       ::File.open(path, "w") { |file| file.write(content) }
     end
 
@@ -231,8 +232,12 @@ class ReleaseRequester
       path = @utils.gem_changelog_path(@gem_name, from: :context)
       @utils.log("Modifying changelog file #{path}")
       content = ::File.read(path)
-      changed = content.sub!(%r{\n### (v\d+\.\d+\.\d+ / \d\d\d\d-\d\d-\d\d)},
-                             "\n#{@full_changelog}\n\n### \\1")
+      if content =~ %r{\n### v#{@new_version} / \d\d\d\d-\d\d-\d\d\n}
+        @utils.warning("Changelog entry for #{@new_version} already seems to exist.")
+        return
+      end
+      changed = content.sub!(%r{\n### (v\d+\.\d+\.\d+ / \d\d\d\d-\d\d-\d\d)\n},
+                             "\n#{@full_changelog}\n\n### \\1\n")
       unless changed
         content << "\n" until content.end_with?("\n\n")
         content << @full_changelog << "\n"
