@@ -7,7 +7,9 @@ require "English"
 require "toys/utils/exec"
 
 describe Toys::Utils::Exec do
-  let(:exec) { Toys::Utils::Exec.new }
+  let(:logger_stringio) { ::StringIO.new }
+  let(:logger) { ::Logger.new(logger_stringio) }
+  let(:exec) { Toys::Utils::Exec.new(logger: logger) }
   let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
@@ -114,6 +116,15 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["echo", "hi"], out: :capture)
         assert_equal("hi\n", result.captured_out)
+        assert_match(/\["echo", "hi"\]\n/, logger_stringio.string)
+      end
+    end
+
+    it "converts non-strings to strings" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        result = exec.exec(["echo", 1, 2], out: :capture)
+        assert_equal("1 2\n", result.captured_out)
+        assert_match(/\["echo", "1", "2"\]\n/, logger_stringio.string)
       end
     end
 
@@ -122,6 +133,16 @@ describe Toys::Utils::Exec do
         list = Toys::Compat.windows? ? "dir" : "ls"
         result = exec.exec([list], out: :capture)
         assert_match(/README\.md/, result.captured_out)
+        assert_match(/\[#{list.inspect}\]\n/, logger_stringio.string)
+      end
+    end
+
+    it "handles a single element array with a single element array as the element" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        list = Toys::Compat.windows? ? "dir" : "ls"
+        result = exec.exec([[list]], out: :capture)
+        assert_match(/README\.md/, result.captured_out)
+        assert_match(/\[#{list.inspect}\]\n/, logger_stringio.string)
       end
     end
 
@@ -130,18 +151,55 @@ describe Toys::Utils::Exec do
         if Toys::Compat.windows?
           result = exec.exec("dir *.md", out: :capture)
           assert_match(/README\.md/, result.captured_out)
+          assert_match(/dir \*\.md\n/, logger_stringio.string)
         else
           result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
           assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
+          assert_match(/BLAHXYZBLAH=hi env \| grep BLAHXYZBLAH\n/, logger_stringio.string)
         end
       end
     end
 
-    it "recongizes an array with argv0" do
+    it "recongizes an array with array binary" do
       skip if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)
+        assert_match(/\["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
+      end
+    end
+
+    it "recongizes argv0 as an option" do
+      skip if Toys::Compat.jruby? || Toys::Compat.windows?
+      ::Timeout.timeout(simple_exec_timeout) do
+        result = exec.exec(["sh", "-c", "echo $0"], out: :capture, argv0: "meow")
+        assert_equal("meow\n", result.captured_out)
+        assert_match(/\["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
+      end
+    end
+  end
+
+  describe "logging" do
+    describe "with log_level" do
+      it "is disabled when log_level is set to false" do
+        ::Timeout.timeout(simple_exec_timeout) do
+          exec.exec(["echo", "hi"], out: :null, log_level: false)
+          assert_empty(logger_stringio.string)
+        end
+      end
+
+      it "honors log_level setting" do
+        ::Timeout.timeout(simple_exec_timeout) do
+          exec.exec(["echo", "hi"], out: :null, log_level: ::Logger::DEBUG)
+          assert_match(/DEBUG/, logger_stringio.string)
+        end
+      end
+
+      it "defaults to INFO level" do
+        ::Timeout.timeout(simple_exec_timeout) do
+          exec.exec(["echo", "hi"], out: :null)
+          assert_match(/INFO/, logger_stringio.string)
+        end
       end
     end
   end
