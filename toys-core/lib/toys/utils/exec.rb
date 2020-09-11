@@ -250,13 +250,14 @@ module Toys
         exec_opts = Opts.new(@default_opts).add(opts)
         spawn_cmd =
           if cmd.is_a?(::Array)
-            if cmd.size == 1 && cmd.first.is_a?(::String)
-              [[cmd.first, exec_opts.config_opts[:argv0] || cmd.first]]
+            if cmd.size > 1
+              binary = canonical_binary_spec(cmd.first, exec_opts)
+              [binary] + cmd[1..-1].map(&:to_s)
             else
-              cmd
+              [canonical_binary_spec(Array(cmd.first), exec_opts)]
             end
           else
-            [cmd]
+            [cmd.to_s]
           end
         executor = Executor.new(exec_opts, spawn_cmd, block)
         executor.execute
@@ -968,10 +969,17 @@ module Toys
         def log_command
           logger = @config_opts[:logger]
           if logger && @config_opts[:log_level] != false
-            cmd_str = @config_opts[:log_cmd]
-            cmd_str ||= @spawn_cmd.size == 1 ? @spawn_cmd.first : @spawn_cmd.inspect if @spawn_cmd
+            cmd_str = @config_opts[:log_cmd] || default_log_str(@spawn_cmd)
             logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str) if cmd_str
           end
+        end
+
+        def default_log_str(spawn_cmd)
+          return nil unless spawn_cmd
+          return spawn_cmd.first if spawn_cmd.size == 1 && spawn_cmd.first.is_a?(::String)
+          cmd_binary = spawn_cmd.first
+          cmd_binary = cmd_binary.first if cmd_binary.is_a?(::Array)
+          ([cmd_binary] + spawn_cmd[1..-1]).inspect
         end
 
         def start_with_controller
@@ -1299,6 +1307,17 @@ module Toys
             end
           end
         end
+      end
+
+      private
+
+      def canonical_binary_spec(cmd, exec_opts)
+        config_argv0 = exec_opts.config_opts[:argv0]
+        return cmd.to_s if !config_argv0 && !cmd.is_a?(::Array)
+        cmd = Array(cmd)
+        actual_cmd = cmd.first
+        argv0 = cmd[1] || config_argv0 || actual_cmd
+        [actual_cmd.to_s, argv0.to_s]
       end
     end
   end
