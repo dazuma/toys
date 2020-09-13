@@ -1,5 +1,9 @@
 # Release History
 
+### v0.11.3 / 2020-09-13
+
+* FIXED: The Exec library recognizes the argv0 option, and logs it appropriately 
+
 ### v0.11.2 / 2020-09-06
 
 * FIXED: Fix a JRuby-specific race condition when capturing exec streams 
