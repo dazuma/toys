@@ -2,7 +2,7 @@
 
 ### v0.11.3 / 2020-09-13
 
-* (No significant changes)
+* FIXED: The Exec mixin recognizes the argv0 option, and logs it appropriately 
 
 ### v0.11.2 / 2020-09-06
 
