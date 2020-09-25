@@ -12,7 +12,7 @@ module Toys
       # Default version requirements for the rdoc gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 6.1.0"].freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = [">= 6.1.0"].freeze
 
       ##
       # Default tool name
