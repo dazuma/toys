@@ -27,13 +27,13 @@ describe "rdoc template" do
     end
 
     it "handles the gem_version field without bundler" do
-      assert_equal(["~> 6.1.0"], template.gem_version)
+      assert_equal([">= 6.1.0"], template.gem_version)
       template.gem_version = "~> 6.2"
       assert_equal(["~> 6.2"], template.gem_version)
       template.gem_version = ["~> 6.0", "< 6.2"]
       assert_equal(["~> 6.0", "< 6.2"], template.gem_version)
       template.gem_version = nil
-      assert_equal(["~> 6.1.0"], template.gem_version)
+      assert_equal([">= 6.1.0"], template.gem_version)
     end
 
     it "handles the gem_version field with bundler" do
