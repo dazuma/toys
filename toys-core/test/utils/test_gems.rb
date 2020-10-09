@@ -59,6 +59,17 @@ describe Toys::Utils::Gems do
       end
     end
 
+    it "restores the original Gemfile.lock" do
+      setup_case("bundle-without-toys") do
+        FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
+        result = run_script
+        assert(result.success?)
+        cur_lockfile = File.read("Gemfile.lock")
+        orig_lockfile = File.read("Gemfile.lock.orig")
+        assert_equal(orig_lockfile, cur_lockfile)
+      end
+    end
+
     def clean_files_for_multi_tests
       files = ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
       files.each { |file| FileUtils.rm_f(file) }
