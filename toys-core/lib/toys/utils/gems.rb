@@ -185,7 +185,8 @@ module Toys
           if configure_gemfile(gemfile_path)
             activate("bundler", "~> 2.1")
             require "bundler"
-            setup_bundle(gemfile_path, groups || [])
+            lockfile_path = find_lockfile_path(gemfile_path)
+            setup_bundle(gemfile_path, lockfile_path, groups || [])
           end
         end
       end
@@ -287,21 +288,46 @@ module Toys
         true
       end
 
-      def setup_bundle(gemfile_path, groups)
+      def find_lockfile_path(gemfile_path)
+        if ::File.basename(gemfile_path) == "gems.rb"
+          ::File.join(::File.dirname(gemfile_path), "gems.locked")
+        else
+          gemfile_path + ".lock"
+        end
+      end
+
+      def setup_bundle(gemfile_path, lockfile_path, groups)
+        old_lockfile_contents = save_old_lockfile(lockfile_path)
         begin
-          modify_bundle_definition(gemfile_path)
+          modify_bundle_definition(gemfile_path, lockfile_path)
           ::Bundler.ui.silence { ::Bundler.setup(*groups) }
         rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
           restore_toys_libs
           install_bundle(gemfile_path)
+          old_lockfile_contents = save_old_lockfile(lockfile_path)
           ::Bundler.reset!
-          modify_bundle_definition(gemfile_path)
+          modify_bundle_definition(gemfile_path, lockfile_path)
           ::Bundler.ui.silence { ::Bundler.setup(*groups) }
         end
         restore_toys_libs
+      ensure
+        restore_old_lockfile(lockfile_path, old_lockfile_contents)
       end
 
-      def modify_bundle_definition(gemfile_path)
+      def save_old_lockfile(lockfile_path)
+        return nil unless ::File.readable?(lockfile_path) && ::File.writable?(lockfile_path)
+        ::File.read(lockfile_path)
+      end
+
+      def restore_old_lockfile(lockfile_path, contents)
+        if contents
+          ::File.open(lockfile_path, "w") do |file|
+            file.write(contents)
+          end
+        end
+      end
+
+      def modify_bundle_definition(gemfile_path, lockfile_path)
         builder = ::Bundler::Dsl.new
         builder.eval_gemfile(gemfile_path)
         toys_gems = ["toys-core"]
@@ -312,7 +338,7 @@ module Toys
           add_gem_to_definition(builder, "toys")
           toys_gems << "toys"
         end
-        definition = builder.to_definition(gemfile_path + ".lock", { gems: toys_gems })
+        definition = builder.to_definition(lockfile_path, { gems: toys_gems })
         ::Bundler.instance_variable_set(:@definition, definition)
       end
 
