@@ -61,6 +61,7 @@ describe Toys::Utils::Gems do
 
     it "restores the original Gemfile.lock" do
       setup_case("bundle-without-toys") do
+        system "bundle install"
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
         result = run_script
         assert(result.success?)
