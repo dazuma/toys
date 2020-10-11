@@ -1,5 +1,9 @@
 # Release History
 
+### v0.11.4 / 2020-10-11
+
+* FIXED: Rdoc template now works on Ruby 3 
+
 ### v0.11.3 / 2020-09-13
 
 * FIXED: The Exec mixin recognizes the argv0 option, and logs it appropriately 
