@@ -24,7 +24,7 @@ require "toys/core"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://dazuma.github.io/toys/gems/toys-core/v#{::Toys::Core::VERSION}/file.CHANGELOG.html"
-    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys"
+    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/main/toys-core"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
     spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys-core/v#{::Toys::Core::VERSION}"
   end
