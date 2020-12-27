@@ -14,12 +14,22 @@ jobs:
     if: ${{ github.repository == 'dazuma/toys' }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-        ruby: [ "2.3", "2.4", "2.5", "2.6", "2.7", "head", "jruby" ]
         include:
+          - os: ubuntu-latest
+            ruby: "2.3"
+          - os: ubuntu-latest
+            ruby: "2.4"
+          - os: ubuntu-latest
+            ruby: "2.5"
+          - os: ubuntu-latest
+            ruby: "2.6"
           - os: ubuntu-latest
             ruby: "2.7"
             tool: ci
+          - os: ubuntu-latest
+            ruby: "3.0"
+          - os: ubuntu-latest
+            ruby: "jruby"
           - os: macos-latest
             ruby: "2.7"
           - os: windows-latest
