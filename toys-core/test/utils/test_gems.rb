@@ -122,12 +122,12 @@ describe Toys::Utils::Gems do
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
-        assert_match(/Bundle complete!/, result.captured_out)
+        assert_match(/Bundle (complete|updated)!/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
-        assert_match(/Bundle complete!/, result.captured_out)
+        assert_match(/Bundle (complete|updated)!/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
@@ -142,12 +142,12 @@ describe Toys::Utils::Gems do
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
-        assert_match(/Bundle complete!/, result.captured_out)
+        assert_match(/Bundle (complete|updated)!/, result.captured_out)
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
-        assert_match(/Bundle complete!/, result.captured_out)
+        assert_match(/Bundle (complete|updated)!/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)

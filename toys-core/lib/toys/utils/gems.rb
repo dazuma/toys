@@ -393,7 +393,7 @@ module Toys
         require "bundler/cli"
         begin
           ::Bundler::CLI.start(["install"])
-        rescue ::Bundler::GemNotFound, ::Bundler::InstallError
+        rescue ::Bundler::GemNotFound, ::Bundler::InstallError, ::Bundler::VersionConflict
           terminal.puts("Failed to install. Trying update...")
           ::Bundler::CLI.start(["update"])
         end
