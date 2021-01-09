@@ -797,7 +797,7 @@ module Toys
       #     {Result#success?} or {Result#error?} will return true, and
       #     {Result.exit_code} will return the numeric exit code.
       #  *  The process executed but was terminated by an uncaught signal.
-      #     {Result#signaled?} will return true, and {Result#term_signal} will
+      #     {Result#signaled?} will return true, and {Result#signal_code} will
       #     return the numeric signal code.
       #
       class Result
@@ -849,6 +849,8 @@ module Toys
         # The exception raised if a process couldn't be started.
         #
         # Exactly one of {#exception} and {#status} will be non-nil.
+        # Exactly one of {#exception}, {#exit_code}, or {#signal_code} will be
+        # non-nil.
         #
         # @return [Exception] The exception raised from process start.
         # @return [nil] if the process started successfully.
@@ -858,7 +860,7 @@ module Toys
         ##
         # The numeric status code for a process that exited normally,
         #
-        # Exactly one of {#exception}, {#exit_code}, and {#term_signal} will be
+        # Exactly one of {#exception}, {#exit_code}, or {#signal_code} will be
         # non-nil.
         #
         # @return [Integer] the numeric status code, if the process started
@@ -873,16 +875,17 @@ module Toys
         ##
         # The numeric signal code that caused process termination.
         #
-        # Exactly one of {#exception}, {#exit_code}, and {#term_signal} will be
+        # Exactly one of {#exception}, {#exit_code}, or {#signal_code} will be
         # non-nil.
         #
         # @return [Integer] The signal that caused the process to terminate.
         # @return [nil] if the process did not start successfully, or executed
         #     and exited with a normal exit code.
         #
-        def term_signal
+        def signal_code
           status&.termsig
         end
+        alias term_signal signal_code
 
         ##
         # Returns true if the subprocess failed to start, or false if the
@@ -901,7 +904,7 @@ module Toys
         # @return [Boolean]
         #
         def signaled?
-          !term_signal.nil?
+          !signal_code.nil?
         end
 
         ##

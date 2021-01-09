@@ -278,30 +278,6 @@ describe Toys::StandardMixins::Exec do
       assert_equal(1, cli.run("foo"))
     end
 
-    it "supports exit_on_nonzero_status" do
-      cli.add_config_block do
-        tool "foo" do
-          include :exec, exit_on_nonzero_status: true
-          def run
-            exec(["false"])
-          end
-        end
-      end
-      refute_equal(0, cli.run("foo"))
-    end
-
-    it "supports override of exit_on_nonzero_status" do
-      cli.add_config_block do
-        tool "foo" do
-          include :exec, exit_on_nonzero_status: true
-          def run
-            exec(["false"], exit_on_nonzero_status: false)
-          end
-        end
-      end
-      assert_equal(0, cli.run("foo"))
-    end
-
     it "supports a proc as a result_callback" do
       cli.add_config_block do
         tool "foo" do
@@ -332,6 +308,71 @@ describe Toys::StandardMixins::Exec do
         end
       end
       refute_equal(0, cli.run("foo"))
+    end
+  end
+
+  describe "exit_on_nonzero_status option" do
+    it "exits on nonzero status" do
+      completed = false
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          to_run do
+            exec("exit 3")
+            completed = true
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo"))
+      refute(completed)
+    end
+
+    it "exits on failure to spawn" do
+      completed = false
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          to_run do
+            exec(["blahblahblah"])
+            completed = true
+          end
+        end
+      end
+      assert_equal(127, cli.run("foo"))
+      refute(completed)
+    end
+
+    it "exits on signal" do
+      completed = false
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          to_run do
+            exec("sleep 5") do |controller|
+              sleep(0.5)
+              controller.kill("TERM")
+            end
+            completed = true
+          end
+        end
+      end
+      assert_equal(143, cli.run("foo"))
+      refute(completed)
+    end
+
+    it "can be overridden to false" do
+      completed = false
+      cli.add_config_block do
+        tool "foo" do
+          include :exec, exit_on_nonzero_status: true
+          to_run do
+            exec(["false"], exit_on_nonzero_status: false)
+            completed = true
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+      assert(completed)
     end
   end
 
