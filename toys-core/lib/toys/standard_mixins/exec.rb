@@ -708,7 +708,16 @@ module Toys
 
       ## @private
       def self._interpret_e(value, context)
-        value ? proc { |r| context.exit(r.exit_code) if r.error? } : nil
+        return nil unless value
+        proc do |result|
+          if result.failed?
+            context.exit(127)
+          elsif result.signaled?
+            context.exit(result.signal_code + 128)
+          elsif result.error?
+            context.exit(result.exit_code)
+          end
+        end
       end
 
       ## @private

@@ -23,7 +23,7 @@ describe Toys::Utils::Exec do
         assert_nil(result.exception)
         assert_instance_of(::Process::Status, result.status)
         assert_equal(0, result.exit_code)
-        assert_nil(result.term_signal)
+        assert_nil(result.signal_code)
         assert_equal(true, result.success?)
         assert_equal(false, result.error?)
         assert_equal(false, result.signaled?)
@@ -37,7 +37,7 @@ describe Toys::Utils::Exec do
         assert_nil(result.exception)
         assert_instance_of(::Process::Status, result.status)
         assert_equal(3, result.exit_code)
-        assert_nil(result.term_signal)
+        assert_nil(result.signal_code)
         assert_equal(false, result.success?)
         assert_equal(true, result.error?)
         assert_equal(false, result.signaled?)
@@ -51,7 +51,7 @@ describe Toys::Utils::Exec do
         assert_instance_of(::Errno::ENOENT, result.exception)
         assert_nil(result.exit_code)
         assert_nil(result.exit_code)
-        assert_nil(result.term_signal)
+        assert_nil(result.signal_code)
         assert_equal(false, result.success?)
         assert_equal(false, result.error?)
         assert_equal(false, result.signaled?)
@@ -69,7 +69,7 @@ describe Toys::Utils::Exec do
         assert_nil(result.exception)
         assert_instance_of(::Process::Status, result.status)
         assert_nil(result.exit_code)
-        assert_equal(15, result.term_signal)
+        assert_equal(15, result.signal_code)
         assert_equal(false, result.success?)
         assert_equal(false, result.error?)
         assert_equal(true, result.signaled?)
@@ -106,6 +106,34 @@ describe Toys::Utils::Exec do
           was_called = true
         end
         exec.exec("exit 3", result_callback: callback)
+        assert_equal(true, was_called)
+      end
+    end
+
+    it "is called on spawn failures" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        was_called = false
+        callback = proc do |result|
+          assert(result.failed?)
+          was_called = true
+        end
+        exec.exec(["blahblahblah"], result_callback: callback)
+        assert_equal(true, was_called)
+      end
+    end
+
+    it "is called on signals" do
+      skip if Toys::Compat.windows?
+      ::Timeout.timeout(simple_exec_timeout) do
+        was_called = false
+        callback = proc do |result|
+          assert(result.signaled?)
+          was_called = true
+        end
+        exec.exec("sleep 5", result_callback: callback) do |controller|
+          sleep(0.5)
+          controller.kill("TERM")
+        end
         assert_equal(true, was_called)
       end
     end
