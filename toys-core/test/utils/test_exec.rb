@@ -123,6 +123,7 @@ describe Toys::Utils::Exec do
     end
 
     it "is called on signals" do
+      skip if Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         was_called = false
         callback = proc do |result|

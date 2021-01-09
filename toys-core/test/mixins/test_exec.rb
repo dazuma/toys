@@ -343,6 +343,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "exits on signal" do
+      skip if Toys::Compat.windows?
       completed = false
       cli.add_config_block do
         tool "foo" do
