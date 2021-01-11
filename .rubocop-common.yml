@@ -52,7 +52,7 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Enabled: false
 Metrics/CyclomaticComplexity:
-  Max: 10
+  Max: 12
 Metrics/MethodLength:
   Max: 25
 Metrics/ModuleLength:
@@ -60,7 +60,7 @@ Metrics/ModuleLength:
 Metrics/ParameterLists:
   Enabled: false
 Metrics/PerceivedComplexity:
-  Max: 10
+  Max: 12
 Style/AccessorGrouping:
   Enabled: false
 Style/ArgumentsForwarding:
