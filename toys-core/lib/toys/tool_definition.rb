@@ -19,6 +19,7 @@ module Toys
     def initialize(parent, full_name, priority, middleware_stack, middleware_lookup,
                    tool_class = nil)
       @parent = parent
+      @settings = Settings.new(parent: parent&.settings)
       @full_name = full_name.dup.freeze
       @priority = priority
       @built_middleware = middleware_stack.build(middleware_lookup)
@@ -41,7 +42,7 @@ module Toys
     # @private
     #
     def reset_definition
-      @tool_class = @precreated_class || ::Class.new(::Toys::Context)
+      @tool_class = @precreated_class || create_class
 
       @source_info = nil
       @definition_finished = false
@@ -74,6 +75,13 @@ module Toys
 
       @completion = DefaultCompletion.new
     end
+
+    ##
+    # Settings for this tool
+    #
+    # @return [Toys::Tool::Settings]
+    #
+    attr_reader :settings
 
     ##
     # The name of the tool as an array of strings.
@@ -1314,7 +1322,23 @@ module Toys
       end
     end
 
+    ##
+    # Tool-based settings class.
+    #
+    # The following settings are supported:
+    #
+    #  *  `inherit_helper_methods` (_Boolean_) - Whether subtools should
+    #     inherit methods defined by parent tools. Defaults to `false`.
+    #
+    class Settings < ::Toys::Settings
+      settings_attr :inherit_parent, default: false
+    end
+
     private
+
+    def create_class
+      ::Class.new(@parent&.settings&.inherit_parent ? @parent.tool_class : ::Toys::Context)
+    end
 
     def make_config_proc(middleware, loader, next_config)
       if middleware.respond_to?(:config)

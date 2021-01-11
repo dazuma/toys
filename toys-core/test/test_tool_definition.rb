@@ -970,4 +970,31 @@ describe Toys::ToolDefinition do
       assert_match(/Delegation loop: "#{tool_name}" <- "#{tool2_name}" <- "#{tool_name}"/, err)
     end
   end
+
+  describe "settings" do
+    it "honors inherit_parent false" do
+      tool.tool_class.class_eval do
+        def foo
+          5
+        end
+      end
+      assert_equal(Toys::Context, subtool.tool_class.superclass)
+      refute_includes(subtool.tool_class.public_instance_methods, :foo)
+    end
+
+    it "honors inherit_parent true" do
+      tool.settings.inherit_parent = true
+      tool.tool_class.class_eval do
+        def foo
+          5
+        end
+      end
+      assert_equal(tool.tool_class, subtool.tool_class.superclass)
+      assert_includes(subtool.tool_class.public_instance_methods, :foo)
+      subtool.run_handler = proc do
+        exit(foo)
+      end
+      assert_equal(5, cli.run(tool_name, subtool_name))
+    end
+  end
 end
