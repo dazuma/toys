@@ -11,7 +11,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   end
 
   ## @private
-  def self.evaluate(tool_class, remaining_words, source)
+  def self.evaluate(tool_class, words, priority, remaining_words, source, loader)
     namespace = ::Module.new
     namespace.module_eval do
       include ::Toys::Context::Key
@@ -23,7 +23,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     str = build_eval_string(name, ::IO.read(path))
     if str
       const_set(name, namespace)
-      ::Toys::DSL::Tool.prepare(tool_class, remaining_words, source) do
+      ::Toys::DSL::Tool.prepare(tool_class, words, priority, remaining_words, source, loader) do
         ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
           # rubocop:disable Security/Eval
           eval(str, __binding, path, -2)

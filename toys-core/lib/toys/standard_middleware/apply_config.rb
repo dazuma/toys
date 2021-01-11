@@ -30,9 +30,9 @@ module Toys
       # Appends the configuration block.
       # @private
       #
-      def config(tool, _loader)
+      def config(tool, loader)
         tool_class = tool.tool_class
-        DSL::Tool.prepare(tool_class, nil, @source_info) do
+        DSL::Tool.prepare(tool_class, tool.full_name, tool.priority, nil, @source_info, loader) do
           tool_class.class_eval(&@block)
         end
         yield

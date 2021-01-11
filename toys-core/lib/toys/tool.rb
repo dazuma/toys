@@ -16,7 +16,7 @@ module Toys
     # Should be created only from the DSL via the Loader.
     # @private
     #
-    def initialize(loader, parent, full_name, priority, middleware_stack, middleware_lookup)
+    def initialize(parent, full_name, priority, middleware_stack, middleware_lookup)
       @parent = parent
       @full_name = full_name.dup.freeze
       @priority = priority
@@ -28,7 +28,7 @@ module Toys
       @templates = {}
       @completions = {}
 
-      reset_definition(loader)
+      reset_definition
     end
 
     ##
@@ -37,8 +37,8 @@ module Toys
     # Should be called only from the DSL.
     # @private
     #
-    def reset_definition(loader)
-      @tool_class = DSL::Tool.new_class(@full_name, @priority, loader)
+    def reset_definition
+      @tool_class = ::Class.new(::Toys::Context)
 
       @source_info = nil
       @definition_finished = false
@@ -451,11 +451,31 @@ module Toys
     ##
     # Include the given mixin in the tool class.
     #
-    # @param name [String,Symbol,Module] The mixin name or module
+    # The mixin must be given as a module. You can use {#lookup_mixin} or
+    # {Loader#resolve_standard_mixin} to resolve named mixins.
+    #
+    # @param mod [Module] The mixin module
     # @return [self]
     #
-    def include_mixin(name)
-      tool_class.include(name)
+    def include_mixin(mod, *args, **kwargs)
+      check_definition_state
+      if tool_class.included_modules.include?(mod)
+        raise ToolDefinitionError, "Mixin already included: #{mod.name}"
+      end
+      @includes_modules = true
+      if tool_class.respond_to?(:super_include)
+        tool_class.super_include(mod)
+      else
+        tool_class.include(mod)
+      end
+      if mod.respond_to?(:initializer)
+        callback = mod.initializer
+        add_initializer(callback, *args, **kwargs) if callback
+      end
+      if mod.respond_to?(:inclusion)
+        callback = mod.inclusion
+        tool_class.class_exec(*args, **kwargs, &callback) if callback
+      end
       self
     end
 
@@ -910,7 +930,9 @@ module Toys
     #
     def run_handler=(proc)
       check_definition_state(is_method: true)
-      @tool_class.to_run(&proc)
+      tool_class.class_eval do
+        define_method(:run, &proc)
+      end
     end
 
     ##
