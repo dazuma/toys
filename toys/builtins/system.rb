@@ -28,7 +28,7 @@ tool "update" do
     configure_exec(exit_on_nonzero_status: true)
     version_info = spinner(leading_text: "Checking rubygems for the latest release... ",
                            final_text: "Done.\n") do
-      capture(["gem", "query", "-q", "-r", "-e", "toys"])
+      capture(["gem", "list", "-q", "-r", "-e", "toys"])
     end
     if version_info =~ /toys\s\((.+)\)/
       latest_version = ::Gem::Version.new(::Regexp.last_match(1))
