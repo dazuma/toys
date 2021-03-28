@@ -170,12 +170,16 @@ module Toys
       #     recognized as Gemfiles, when searching because gemfile_path is not
       #     given. Defaults to {DEFAULT_GEMFILE_NAMES}.
       #
+      # @param retries [Integer] Number of times to retry bundler operations.
+      #     Optional.
+      #
       # @return [void]
       #
       def bundle(groups: nil,
                  gemfile_path: nil,
                  search_dirs: nil,
-                 gemfile_names: nil)
+                 gemfile_names: nil,
+                 retries: nil)
         Array(search_dirs).each do |dir|
           break if gemfile_path
           gemfile_path = Gems.find_gemfile(dir, gemfile_names: gemfile_names)
@@ -186,7 +190,7 @@ module Toys
             activate("bundler", "~> 2.1")
             require "bundler"
             lockfile_path = find_lockfile_path(gemfile_path)
-            setup_bundle(gemfile_path, lockfile_path, groups || [])
+            setup_bundle(gemfile_path, lockfile_path, groups: groups, retries: retries)
           end
         end
       end
@@ -296,14 +300,15 @@ module Toys
         end
       end
 
-      def setup_bundle(gemfile_path, lockfile_path, groups)
+      def setup_bundle(gemfile_path, lockfile_path, groups: nil, retries: nil)
+        groups = Array(groups)
         old_lockfile_contents = save_old_lockfile(lockfile_path)
         begin
           modify_bundle_definition(gemfile_path, lockfile_path)
           ::Bundler.ui.silence { ::Bundler.setup(*groups) }
         rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
           restore_toys_libs
-          install_bundle(gemfile_path)
+          install_bundle(gemfile_path, retries: retries)
           old_lockfile_contents = save_old_lockfile(lockfile_path)
           ::Bundler.reset!
           modify_bundle_definition(gemfile_path, lockfile_path)
@@ -383,19 +388,21 @@ module Toys
         end
       end
 
-      def install_bundle(gemfile_path)
+      def install_bundle(gemfile_path, retries: nil)
         gemfile_dir = ::File.dirname(gemfile_path)
         unless permission_to_bundle?
           raise BundleNotInstalledError,
                 "Your bundle is not installed. Consider running" \
                   " `cd #{gemfile_dir} && bundle install`"
         end
+        retries = retries.to_i
+        args = retries.positive? ? ["--retry=#{retries}"] : []
         require "bundler/cli"
         begin
-          ::Bundler::CLI.start(["install"])
+          ::Bundler::CLI.start(["install"] + args)
         rescue ::Bundler::GemNotFound, ::Bundler::InstallError, ::Bundler::VersionConflict
           terminal.puts("Failed to install. Trying update...")
-          ::Bundler::CLI.start(["update"])
+          ::Bundler::CLI.start(["update"] + args)
         end
       end
     end
