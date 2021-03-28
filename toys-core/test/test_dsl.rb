@@ -24,6 +24,7 @@ describe Toys::DSL::Tool do
     it "creates a tool" do
       loader.add_block do
         tool "foo" do
+          # Empty tool
         end
       end
       tool, remaining = loader.lookup(["foo"])
@@ -35,6 +36,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         tool "foo" do
           tool "bar" do
+            # Empty tool
           end
         end
       end
@@ -46,6 +48,7 @@ describe Toys::DSL::Tool do
     it "supports arrays" do
       loader.add_block do
         tool ["foo", "bar"] do
+          # Empty tool
         end
       end
       tool, remaining = loader.lookup(["foo", "bar", "baz"])
@@ -56,6 +59,7 @@ describe Toys::DSL::Tool do
     it "supports delimiters" do
       loader.add_block do
         tool "foo:bar" do
+          # Empty tool
         end
       end
       tool, remaining = loader.lookup(["foo", "bar", "baz"])
@@ -147,6 +151,7 @@ describe Toys::DSL::Tool do
     it "defaults a tool to not runnable" do
       loader.add_block do
         tool "foo" do
+          # Empty tool
         end
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -177,6 +182,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         tool "foo" do
           to_run do
+            # Do nothing
           end
         end
       end
@@ -254,6 +260,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         completion("comp1", :file_system)
         tool "foo" do
+          # Empty tool
         end
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -297,6 +304,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         acceptor("acc1", &:upcase)
         tool "foo" do
+          # Empty tool
         end
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -315,6 +323,7 @@ describe Toys::DSL::Tool do
           desc "not the one"
           acceptor("acc1", &:upcase)
           tool "foo" do
+            # Empty tool
           end
         end
       end
@@ -431,6 +440,7 @@ describe Toys::DSL::Tool do
           end
         end
         tool "bar" do
+          # Empty tool
         end
       end
       tool, _remaining = loader.lookup(["bar"])
@@ -735,6 +745,7 @@ describe Toys::DSL::Tool do
           require_exact_flag_match
         end
         tool "bar" do
+          # Empty tool
         end
       end
       tool, _remaining = loader.lookup(["foo"])
@@ -1516,6 +1527,7 @@ describe Toys::DSL::Tool do
             desc "hello"
           end
           tool "bar" do
+            # Empty tool
           end
           tool "baz" do
             desc "ahoy"
@@ -1550,6 +1562,7 @@ describe Toys::DSL::Tool do
             test.assert_same(parent_source, source_info.parent)
           end
           tool "bar" do
+            # Empty tool
           end
         end
       end

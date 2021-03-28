@@ -261,7 +261,7 @@ module Toys
       # @param message [String] The message. Required.
       #
       def initialize(message)
-        super(message)
+        super(message, name: nil)
       end
     end
 
@@ -429,7 +429,7 @@ module Toys
         Context::Key::TOOL_NAME => tool.full_name,
         Context::Key::USAGE_ERRORS => [],
       }
-      Compat.merge_clones(data, tool.default_data)
+      tool.default_data.each { |k, v| data[k] = v.clone }
       default_data.each { |k, v| data[k] ||= v }
       data
     end
@@ -450,7 +450,7 @@ module Toys
       case arg
       when "--"
         @flags_allowed = false
-      when /\A(--\w[\?\w-]*)=(.*)\z/
+      when /\A(--\w[?\w-]*)=(.*)\z/
         handle_valued_flag(::Regexp.last_match(1), ::Regexp.last_match(2))
       when /\A--.+\z/
         handle_plain_flag(arg)
@@ -474,8 +474,7 @@ module Toys
       return "" unless flag_def
       @seen_flag_keys << flag_def.key
       if flag_def.flag_type == :boolean
-        add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?,
-                 :flag, name)
+        add_data(flag_def.key, flag_def.handler, nil, !flag_result.unique_flag_negative?, :flag, name)
       elsif following.empty?
         if flag_def.value_type == :required || flag_result.unique_flag_syntax.value_delim == " "
           @active_flag_def = flag_def

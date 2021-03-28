@@ -14,11 +14,11 @@
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("*.md") + ::Dir.glob("bin/*")
-  spec.required_ruby_version = ">= 2.3.0"
+  spec.required_ruby_version = ">= 2.4.0"
   spec.require_paths = ["lib"]
 
   spec.bindir = "bin"
   spec.executables = ["toys-core-simple-example"]
 
-  spec.add_dependency "toys-core", ">= 0.9.0"
+  spec.add_dependency "toys-core", ">= 0.11.4"
 end

@@ -33,7 +33,7 @@ flag :coordinate_versions, "--[no-]coordinate-versions" do
   desc "Cause all gems to release with the same version"
 end
 flag :gems, "--gems=VAL" do
-  accept(/^([\w-]+(:[\w\.-]+)?([\s,]+[\w-]+(:[\w\.-]+)?)*)?$/)
+  accept(/^([\w-]+(:[\w.-]+)?([\s,]+[\w-]+(:[\w.-]+)?)*)?$/)
   desc "Gems and versions to release"
   long_desc \
     "Specify a list of gems and optional versions. The format is a list of" \

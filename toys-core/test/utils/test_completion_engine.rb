@@ -32,6 +32,7 @@ describe Toys::Utils::CompletionEngine do
         remaining_args :baz, complete: ["aar", "ooka"]
       end
       tool "two" do
+        # Empty tool
       end
       tool "three" do
         tool "four" do
@@ -44,6 +45,7 @@ describe Toys::Utils::CompletionEngine do
       end
       tool "five", delegate_to: ["one"] do
         tool "six" do
+          # Empty tool
         end
       end
     end

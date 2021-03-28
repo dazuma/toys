@@ -169,6 +169,7 @@ describe Toys::Utils::Terminal do
   describe "spinner" do
     it "outputs leading and final text" do
       terminal.spinner(leading_text: "hello", final_text: "world") do
+        # Do nothing
       end
       assert_equal("helloworld", output.string)
     end

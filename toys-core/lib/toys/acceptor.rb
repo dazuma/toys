@@ -602,11 +602,11 @@ module Toys
         Simple.new(type_desc: "boolean", well_known_spec: spec) do |s|
           if s.nil?
             default
+          elsif s.empty?
+            REJECT
           else
             s = s.downcase
-            if s.empty?
-              REJECT
-            elsif TRUE_STRINGS.any? { |t| t.start_with?(s) }
+            if TRUE_STRINGS.any? { |t| t.start_with?(s) }
               true
             elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
               false

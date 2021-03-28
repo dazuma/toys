@@ -23,5 +23,5 @@ end
 expand :rubocop do |t|
   t.name = "_root"
   t.use_bundler
-  t.options = ["--config=.root-rubocop.yml"]
+  t.options = ["--config=.rubocop-root.yml"]
 end

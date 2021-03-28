@@ -1,24 +1,14 @@
+inherit_from: "../.rubocop-common.yml"
+
 AllCops:
-  TargetRubyVersion: 2.3
   Exclude:
     - "test/rubocop-cases/**/*"
-
-Layout/EmptyLineAfterGuardClause:
-  Enabled: false
 Layout/LineLength:
-  Max: 100
   Exclude:
     - "*.gemspec"
-Layout/SpaceInsideHashLiteralBraces:
-  Enabled: false
-Lint/RaiseException:
-  Enabled: true
-Lint/StructNewOverride:
-  Enabled: true
 Metrics/AbcSize:
   Exclude:
     - "builtins/**/*"
-  Max: 25
 Metrics/BlockLength:
   Exclude:
     - "lib/toys/templates/*"
@@ -29,18 +19,9 @@ Metrics/BlockNesting:
   Exclude:
     - "lib/toys/templates/*"
     - "test/**/*"
-Metrics/ClassLength:
-  Max: 250
-Metrics/CyclomaticComplexity:
-  Max: 10
 Metrics/MethodLength:
   Exclude:
     - "builtins/**/*"
-  Max: 20
-Metrics/ParameterLists:
-  Enabled: false
-Metrics/PerceivedComplexity:
-  Max: 10
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
@@ -48,28 +29,7 @@ Style/Documentation:
   Exclude:
     - "test/**/*"
 Style/DocumentationMethod:
-  Enabled: true
   Exclude:
     - ".toys.rb"
     - "builtins/**/*"
     - "test/**/*"
-Style/GuardClause:
-  Enabled: false
-Style/HashEachMethods:
-  Enabled: true
-Style/HashTransformKeys:
-  Enabled: false
-Style/HashTransformValues:
-  Enabled: false
-Style/IfUnlessModifier:
-  Enabled: false
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-Style/SymbolArray:
-  EnforcedStyle: brackets
-Style/TrailingCommaInArrayLiteral:
-  EnforcedStyleForMultiline: comma
-Style/TrailingCommaInHashLiteral:
-  EnforcedStyleForMultiline: comma
-Style/WordArray:
-  EnforcedStyle: brackets

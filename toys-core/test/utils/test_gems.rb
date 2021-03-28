@@ -9,12 +9,10 @@ describe Toys::Utils::Gems do
   let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
   let(:exec_service) { Toys::Utils::Exec.new }
 
-  def setup_case(name)
+  def setup_case(name, &block)
     ::Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
-        ::Timeout.timeout(30) do
-          yield
-        end
+        ::Timeout.timeout(30, &block)
       end
     end
   end

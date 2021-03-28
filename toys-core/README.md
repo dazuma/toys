@@ -34,7 +34,7 @@ Install the **toys-core** gem using:
 You may also install the **toys** gem, which brings in **toys-core** as a
 dependency.
 
-Toys-Core requires Ruby 2.3 or later.
+Toys-Core requires Ruby 2.4 or later.
 
 Most parts of Toys-Core work on JRuby. However, JRuby is not recommended
 because of JVM boot latency, lack of support for Kernel#fork, and other issues.

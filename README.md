@@ -55,7 +55,7 @@ Toys does not yet specially implement tab completion for zsh or other shells.
 However, if you are using zsh, installing bash completion using `bashcompinit`
 *mostly* works.
 
-Toys requires Ruby 2.3 or later.
+Toys requires Ruby 2.4 or later.
 
 Most parts of Toys work on JRuby. However, JRuby is not recommended because of
 JVM boot latency, lack of support for Kernel#fork, and other issues.

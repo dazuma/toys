@@ -193,7 +193,8 @@ module Toys
           add_flag_group_sections
           add_positional_arguments_section if @tool.runnable?
           add_subtool_list_section
-          @result = @lines.join("\n") + "\n"
+          joined_lines = @lines.join("\n")
+          @result = "#{joined_lines}\n"
         end
 
         def add_synopsis_section
@@ -226,7 +227,7 @@ module Toys
             @lines << ""
             desc_str = group.desc.to_s
             desc_str = "Flags" if desc_str.empty?
-            @lines << desc_str + ":"
+            @lines << "#{desc_str}:"
             group.flags.each do |flag|
               add_flag(flag)
             end

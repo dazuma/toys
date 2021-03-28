@@ -1,20 +1,11 @@
-AllCops:
-  TargetRubyVersion: 2.3
+inherit_from: "../.rubocop-common.yml"
 
-Layout/EmptyLineAfterGuardClause:
-  Enabled: false
+Layout/EmptyLinesAroundAttributeAccessor:
+  Exclude:
+    - "test/**/*.rb"
 Layout/LineLength:
-  Max: 100
   Exclude:
     - "*.gemspec"
-Layout/SpaceInsideHashLiteralBraces:
-  Enabled: false
-Lint/RaiseException:
-  Enabled: true
-Lint/StructNewOverride:
-  Enabled: true
-Metrics/AbcSize:
-  Max: 25
 Metrics/BlockLength:
   Exclude:
     - "test/**/*"
@@ -22,18 +13,6 @@ Metrics/BlockLength:
 Metrics/BlockNesting:
   Exclude:
     - "test/**/*"
-Metrics/ClassLength:
-  Max: 500
-Metrics/CyclomaticComplexity:
-  Max: 10
-Metrics/MethodLength:
-  Max: 25
-Metrics/ModuleLength:
-  Max: 500
-Metrics/ParameterLists:
-  Enabled: false
-Metrics/PerceivedComplexity:
-  Max: 10
 Naming/FileName:
   Exclude:
     - "test/lookup-cases/**/*"
@@ -42,13 +21,10 @@ Naming/FileName:
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
-Style/CaseEquality:
-  Enabled: false
 Style/Documentation:
   Exclude:
     - "test/**/*"
 Style/DocumentationMethod:
-  Enabled: true
   Exclude:
     - ".toys.rb"
     - "examples/**/*"
@@ -57,30 +33,6 @@ Style/GlobalVars:
   Exclude:
     - "test/lookup-cases/preloads/**/*.rb"
     - "test/test_loader.rb"
-Style/GuardClause:
-  Enabled: false
-Style/HashEachMethods:
-  Enabled: true
-Style/HashTransformKeys:
-  Enabled: false
-Style/HashTransformValues:
-  Enabled: false
-Style/IfUnlessModifier:
-  Enabled: false
-Style/Next:
-  Enabled: false
 Style/NumericLiterals:
   Exclude:
     - "lib/toys/compat.rb"
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-Style/SymbolArray:
-  EnforcedStyle: brackets
-Style/TrailingCommaInArrayLiteral:
-  EnforcedStyleForMultiline: comma
-Style/TrailingCommaInHashLiteral:
-  EnforcedStyleForMultiline: comma
-Style/WhileUntilModifier:
-  Enabled: false
-Style/WordArray:
-  EnforcedStyle: brackets

@@ -157,8 +157,6 @@ module Toys
       end
     end
 
-    # rubocop:disable Metrics/MethodLength
-
     ##
     # Returns the middleware for the standard Toys CLI.
     #
@@ -188,8 +186,6 @@ module Toys
         Middleware.spec(:add_verbosity_flags),
       ]
     end
-
-    # rubocop:enable Metrics/MethodLength
 
     ##
     # Returns the default set of global config directories.

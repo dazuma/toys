@@ -447,13 +447,11 @@ module Toys
                   exit(1)
                 end
                 exit_on_nonzero_status(result)
-                if template.fail_on_undocumented_objects
-                  if result.captured_out =~ /Undocumented\sObjects:/
-                    unless verbosity.negative?
-                      puts("Yardoc encountered undocumented objects", :red, :bold)
-                    end
-                    exit(1)
+                if template.fail_on_undocumented_objects && result.captured_out =~ /Undocumented\sObjects:/
+                  unless verbosity.negative?
+                    puts("Yardoc encountered undocumented objects", :red, :bold)
                   end
+                  exit(1)
                 end
               end
             end

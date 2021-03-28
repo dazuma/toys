@@ -236,6 +236,7 @@ module Toys
       #     prefix. Defaults to requiring the prefix be empty.
       #
       def initialize(cwd: nil, omit_files: false, omit_directories: false, prefix_constraint: "")
+        super()
         @cwd = cwd || ::Dir.pwd
         @include_files = !omit_files
         @include_directories = !omit_directories
@@ -328,6 +329,7 @@ module Toys
       #     prefix. Defaults to requiring the prefix be empty.
       #
       def initialize(values, prefix_constraint: "")
+        super()
         @values = values.flatten.map { |v| Candidate.new(v) }.sort
         @prefix_constraint = prefix_constraint
       end

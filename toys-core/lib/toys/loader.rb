@@ -467,13 +467,17 @@ module Toys
       if @preload_dir_name
         preload_dir = ::File.join(path, @preload_dir_name)
         if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
-          ::Dir.entries(preload_dir).each do |child|
-            next unless ::File.extname(child) == ".rb"
-            preload_file = ::File.join(preload_dir, child)
-            next if !::File.file?(preload_file) || !::File.readable?(preload_file)
-            require preload_file
-          end
+          preload_dir_contents(preload_dir)
         end
+      end
+    end
+
+    def preload_dir_contents(preload_dir)
+      ::Dir.entries(preload_dir).each do |child|
+        next unless ::File.extname(child) == ".rb"
+        preload_file = ::File.join(preload_dir, child)
+        next if !::File.file?(preload_file) || !::File.readable?(preload_file)
+        require preload_file
       end
     end
 
@@ -574,7 +578,7 @@ module Toys
     #
     class DelimiterHandler
       ## @private
-      ALLOWED_DELIMITERS = %r{^[\./:]*$}.freeze
+      ALLOWED_DELIMITERS = %r{^[./:]*$}.freeze
       private_constant :ALLOWED_DELIMITERS
 
       ## @private

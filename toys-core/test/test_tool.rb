@@ -12,6 +12,7 @@ end
 module MyTemplate
   include Toys::Template
   on_expand do |t|
+    # Do nothing
   end
 end
 
@@ -919,7 +920,7 @@ describe Toys::Tool do
     end
 
     it "errors if the tool is already runnable" do
-      tool.run_handler = proc {}
+      tool.run_handler = proc { nil }
       assert_raises(Toys::ToolDefinitionError) do
         tool.delegate_to(["bar"])
       end
