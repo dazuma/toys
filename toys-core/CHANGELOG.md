@@ -1,16 +1,22 @@
 # Release History
 
+### v0.11.5 / 2021-03-28
+
+* BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn, in addition to error codes.
+* ADDED: Support retries in the bundler integration.
+* FIXED: Fix a bundler 2.2 integration issue that fails install in certain cases when an update is needed.
+
 ### v0.11.4 / 2020-10-11
 
 * FIXED: Doesn't modify bundler lockfiles when adding Toys to a bundle
 
 ### v0.11.3 / 2020-09-13
 
-* FIXED: The Exec library recognizes the argv0 option, and logs it appropriately 
+* FIXED: The Exec library recognizes the argv0 option, and logs it appropriately
 
 ### v0.11.2 / 2020-09-06
 
-* FIXED: Fix a JRuby-specific race condition when capturing exec streams 
+* FIXED: Fix a JRuby-specific race condition when capturing exec streams
 
 ### v0.11.1 / 2020-08-24
 

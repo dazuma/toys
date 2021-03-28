@@ -1,17 +1,24 @@
 # Release History
 
+### v0.11.5 / 2021-03-28
+
+* BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn, in addition to error codes.
+* ADDED: Support retries in the bundler integration.
+* FIXED: Fix a bundler 2.2 integration issue that fails install in certain cases when an update is needed.
+* FIXED: Eliminate Rubygems warning on toys system update.
+
 ### v0.11.4 / 2020-10-11
 
 * FIXED: Doesn't modify bundler lockfiles when adding Toys to a bundle
-* FIXED: Rdoc template now works on Ruby 3 
+* FIXED: Rdoc template now works on Ruby 3
 
 ### v0.11.3 / 2020-09-13
 
-* FIXED: The Exec mixin recognizes the argv0 option, and logs it appropriately 
+* FIXED: The Exec mixin recognizes the argv0 option, and logs it appropriately
 
 ### v0.11.2 / 2020-09-06
 
-* FIXED: Don't get confused when running toys from within a toys directory 
+* FIXED: Don't get confused when running toys from within a toys directory
 * FIXED: Fix a JRuby-specific race condition when capturing exec streams
 
 ### v0.11.1 / 2020-08-24
