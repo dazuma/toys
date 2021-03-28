@@ -74,7 +74,7 @@ class ReleasePerformer
     def check_gem_exists
       return if !@parent.check_exists? || !@include_gem
       result = @utils.capture(["gem", "info", "-r", "-a", @gem_name])
-      if result =~ /#{@gem_name} \(([\w\., ]+)\)/
+      if result =~ /#{@gem_name} \(([\w., ]+)\)/
         if Regexp.last_match[1].split(/,\s+/).include?(@gem_version)
           @utils.logger.warn("Gem already pushed for #{@gem_name} #{@gem_version}. Skipping.")
           @include_gem = false
@@ -177,7 +177,7 @@ class ReleasePerformer
       path = "#{@parent.gh_pages_dir}/404.html"
       content = ::IO.read(path)
       var_name = @utils.gem_info(@gem_name, "gh_pages_version_var")
-      content.sub!(/#{var_name} = "[\w\.]+";/, "#{var_name} = \"#{@gem_version}\";")
+      content.sub!(/#{var_name} = "[\w.]+";/, "#{var_name} = \"#{@gem_version}\";")
       ::File.open(path, "w") do |file|
         file.write(content)
       end
@@ -271,10 +271,11 @@ class ReleasePerformer
   end
 
   def initial_setup
-    if @initial_setup_result == true
+    case @initial_setup_result
+    when true
       @utils.log("Skipping initial setup because it was done earlier.")
       return
-    elsif @initial_setup_result == false
+    when false
       @utils.error("Aborting because initial setup previously failed.")
     end
     @utils.log("Performing initial setup ...")

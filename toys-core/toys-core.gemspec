@@ -19,7 +19,7 @@ require "toys/core"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("*.md") +
                ::Dir.glob("docs/*.md") + [".yardopts"]
-  spec.required_ruby_version = ">= 2.3.0"
+  spec.required_ruby_version = ">= 2.4.0"
   spec.require_paths = ["lib"]
 
   if spec.respond_to?(:metadata)

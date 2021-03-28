@@ -115,7 +115,7 @@ end
 
 def lint_message(message)
   lines = message.split("\n")
-  matches = /^([\w-]+)(?:\(([^\(\)]+)\))?!?:\s(.+)$/.match(lines.first)
+  matches = /^([\w-]+)(?:\(([^()]+)\))?!?:\s(.+)$/.match(lines.first)
   unless matches
     yield "The first line should follow the form `<type>: <description>`."
     return

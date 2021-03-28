@@ -49,6 +49,7 @@ describe Toys::CLI do
     it "handles no script defined" do
       cli.add_config_block do
         tool "foo" do
+          # Empty tool
         end
       end
       assert_equal(126, cli.run("foo"))

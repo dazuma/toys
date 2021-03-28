@@ -1056,7 +1056,7 @@ module Toys
     def finish_definition(loader)
       unless @definition_finished
         ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
-          config_proc = proc {}
+          config_proc = proc { nil }
           @built_middleware.reverse_each do |middleware|
             config_proc = make_config_proc(middleware, loader, config_proc)
           end
@@ -1120,6 +1120,7 @@ module Toys
       def initialize(complete_subtools: true, include_hidden_subtools: false,
                      complete_args: true, complete_flags: true, complete_flag_values: true,
                      delegation_target: nil)
+        super()
         @complete_subtools = complete_subtools
         @include_hidden_subtools = include_hidden_subtools
         @complete_flags = complete_flags
@@ -1206,7 +1207,7 @@ module Toys
         return unless arg_parser.flags_allowed?
         active_flag_def = arg_parser.active_flag_def
         return if active_flag_def && active_flag_def.value_type == :required
-        match = /\A(--\w[\?\w-]*)=(.*)\z/.match(context.fragment_prefix)
+        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
         return unless match
         flag_value_context = context.with(fragment_prefix: match[2])
         flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag

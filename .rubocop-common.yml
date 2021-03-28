@@ -1,0 +1,115 @@
+AllCops:
+  NewCops: disable
+  SuggestExtensions: false
+  TargetRubyVersion: 2.4
+Gemspec/DateAssignment:
+  Enabled: true
+Layout/EmptyLineAfterGuardClause:
+  Enabled: false
+Layout/LineLength:
+  Max: 120
+Layout/SpaceBeforeBrackets:
+  Enabled: true
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+Lint/AmbiguousAssignment:
+  Enabled: true
+Lint/DeprecatedConstants:
+  Enabled: true
+Lint/DuplicateBranch:
+  Enabled: true
+Lint/DuplicateRegexpCharacterClassElement:
+  Enabled: true
+Lint/EmptyBlock:
+  Enabled: true
+Lint/EmptyClass:
+  AllowComments: true
+  Enabled: true
+Lint/LambdaWithoutLiteralBlock:
+  Enabled: true
+Lint/NoReturnInBeginEndBlocks:
+  Enabled: true
+Lint/NumberedParameterAssignment:
+  Enabled: true
+Lint/OrAssignmentToConstant:
+  Enabled: true
+Lint/RedundantDirGlobSort:
+  Enabled: true
+Lint/SymbolConversion:
+  Enabled: true
+Lint/ToEnumArguments:
+  Enabled: true
+Lint/TripleQuotes:
+  Enabled: true
+Lint/UnexpectedBlockArity:
+  Enabled: true
+Lint/UnmodifiedReduceAccumulator:
+  Enabled: true
+Metrics/AbcSize:
+  Max: 30
+Metrics/ClassLength:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Max: 10
+Metrics/MethodLength:
+  Max: 25
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/ParameterLists:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Max: 10
+Style/AccessorGrouping:
+  Enabled: false
+Style/ArgumentsForwarding:
+  Enabled: true
+Style/BisectedAttrAccessor:
+  Enabled: false
+Style/CaseEquality:
+  Enabled: false
+Style/CollectionCompact:
+  Enabled: true
+Style/DocumentDynamicEvalDefinition:
+  Enabled: true
+Style/DocumentationMethod:
+  Enabled: true
+Style/EndlessMethod:
+  Enabled: true
+Style/GuardClause:
+  Enabled: false
+Style/HashConversion:
+  Enabled: true
+Style/HashExcept:
+  Enabled: true
+Style/IfUnlessModifier:
+  Enabled: false
+Style/IfWithBooleanLiteralBranches:
+  Enabled: true
+Style/NegatedIfElseCondition:
+  Enabled: true
+Style/Next:
+  Enabled: false
+Style/NilLambda:
+  Enabled: true
+Style/OptionalBooleanParameter:
+  Enabled: false
+Style/RedundantArgument:
+  Enabled: true
+Style/SoleNestedConditional:
+  Enabled: false
+Style/StringChars:
+  Enabled: true
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/SwapValues:
+  Enabled: true
+Style/SymbolArray:
+  EnforcedStyle: brackets
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+Style/WhileUntilModifier:
+  Enabled: false
+Style/WordArray:
+  EnforcedStyle: brackets

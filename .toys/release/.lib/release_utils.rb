@@ -225,10 +225,11 @@ class ReleaseUtils
     ::File.readlines(changelog_path).each do |line|
       case state
       when :start
-        if line =~ %r{^### v#{::Regexp.escape(gem_vers)} / \d\d\d\d-\d\d-\d\d\n$}
+        case line
+        when %r{^### v#{::Regexp.escape(gem_vers)} / \d\d\d\d-\d\d-\d\d\n$}
           entry << line
           state = :during
-        elsif line =~ /^### /
+        when /^### /
           error("The first changelog entry in #{changelog_path} isn't for version #{gem_vers}.",
                 "It should start with:",
                 "### v#{gem_vers} / #{today}",
@@ -258,17 +259,17 @@ class ReleaseUtils
     url = git_remote_url(git_remote)
     cur_repo =
       case url
-      when %r{^git@github.com:([^/]+/[^/]+)\.git$}
-        ::Regexp.last_match(1)
-      when %r{^https://github.com/([^/]+/[^/]+)/?$}
-        ::Regexp.last_match(1)
+      when %r{^git@github.com:(?<git_repo>[^/]+/[^/]+)\.git$}
+        ::Regexp.last_match[:git_repo]
+      when %r{^https://github.com/(?<http_repo>[^/]+/[^/.]+)(?:/|\.git)?$}
+        ::Regexp.last_match[:http_repo]
       else
         error("Unrecognized remote url: #{url.inspect}")
       end
     if cur_repo == repo_path
       logger.info("Git repo is correct.")
     else
-      error("Remmote repo is #{cur_repo}, expected #{repo_path}")
+      error("Remote repo is #{cur_repo}, expected #{repo_path}")
     end
     cur_repo
   end

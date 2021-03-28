@@ -1093,9 +1093,10 @@ module Toys
 
         def interpret_out_array_within_fork(stream)
           if stream.first == :child
-            if stream[1] == :err
+            case stream[1]
+            when :err
               $stderr
-            elsif stream[1] == :out
+            when :out
               $stdout
             end
           else

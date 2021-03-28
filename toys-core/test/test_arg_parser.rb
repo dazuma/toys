@@ -683,7 +683,7 @@ describe Toys::ArgParser do
     it "errors on runnable tool if there are too many arguments" do
       tool.add_optional_arg(:b)
       tool.add_required_arg(:a)
-      tool.run_handler = proc {}
+      tool.run_handler = proc { nil }
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
       assert_errors_include('Extra arguments: "baz".', arg_parser.errors)

@@ -53,28 +53,6 @@ module Toys
       end
     end
 
-    # In Ruby < 2.4, some objects such as nil cannot be cloned.
-    if ruby_version >= 20400
-      # @private
-      def self.merge_clones(hash, orig)
-        orig.each { |k, v| hash[k] = v.clone }
-        hash
-      end
-    else
-      # @private
-      def self.merge_clones(hash, orig)
-        orig.each do |k, v|
-          hash[k] =
-            begin
-              v.clone
-            rescue ::TypeError
-              v
-            end
-        end
-        hash
-      end
-    end
-
     # The :base argument to Dir.glob requires Ruby 2.5 or later.
     if ruby_version >= 20500
       # @private

@@ -368,7 +368,7 @@ module Toys
       key_str = key.to_s
       flag_str =
         if key_str.length == 1
-          "-#{key_str}" if key_str =~ /[a-zA-Z0-9\?]/
+          "-#{key_str}" if key_str =~ /[a-zA-Z0-9?]/
         elsif key_str.length > 1
           key_str = key_str.downcase.tr("_", "-").gsub(/[^a-z0-9-]/, "").sub(/^-+/, "")
           "--#{key_str}" unless key_str.empty?
@@ -455,23 +455,19 @@ module Toys
       #
       def initialize(str)
         case str
-        when /\A(-([\?\w]))\z/
+        when /\A(-([?\w]))\z/
           setup(str, $1, nil, $1, $2, :short, nil, nil, nil, nil)
-        when /\A(-([\?\w]))( ?)\[(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
-        when /\A(-([\?\w]))\[( )(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3, $4)
-        when /\A(-([\?\w]))( ?)(\w+)\z/
+        when /\A(-([?\w]))(?:( ?)\[|\[( ))(\w+)\]\z/
+          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3 || $4, $5)
+        when /\A(-([?\w]))( ?)(\w+)\z/
           setup(str, $1, nil, $1, $2, :short, :value, :required, $3, $4)
-        when /\A--\[no-\](\w[\?\w-]*)\z/
+        when /\A--\[no-\](\w[?\w-]*)\z/
           setup(str, "--#{$1}", "--no-#{$1}", str, $1, :long, :boolean, nil, nil, nil)
-        when /\A(--(\w[\?\w-]*))\z/
+        when /\A(--(\w[?\w-]*))\z/
           setup(str, $1, nil, $1, $2, :long, nil, nil, nil, nil)
-        when /\A(--(\w[\?\w-]*))([= ])\[(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
-        when /\A(--(\w[\?\w-]*))\[([= ])(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3, $4)
-        when /\A(--(\w[\?\w-]*))([= ])(\w+)\z/
+        when /\A(--(\w[?\w-]*))(?:([= ])\[|\[([= ]))(\w+)\]\z/
+          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3 || $4, $5)
+        when /\A(--(\w[?\w-]*))([= ])(\w+)\z/
           setup(str, $1, nil, $1, $2, :long, :value, :required, $3, $4)
         else
           raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
@@ -731,6 +727,7 @@ module Toys
       # @param include_negative [Boolean] Whether to include `--no-*` forms.
       #
       def initialize(flag:, include_short: true, include_long: true, include_negative: true)
+        super()
         @flag = flag
         @include_short = include_short
         @include_long = include_long

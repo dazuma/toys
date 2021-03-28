@@ -36,6 +36,7 @@ module Toys
     module Tool
       ## @private
       def method_added(_meth)
+        super
         DSL::Tool.current_tool(self, true)&.check_definition_state(is_method: true)
       end
 
@@ -440,9 +441,10 @@ module Toys
         cur_tool = DSL::Tool.current_tool(self, false)
         return self if cur_tool.nil?
         name = template_class.to_s
-        if template_class.is_a?(::String)
+        case template_class
+        when ::String
           template_class = cur_tool.lookup_template(template_class)
-        elsif template_class.is_a?(::Symbol)
+        when ::Symbol
           template_class = @__loader.resolve_standard_template(name)
         end
         if template_class.nil?
@@ -1719,7 +1721,7 @@ module Toys
 
       ## @private
       def self.maybe_add_getter(tool_class, key)
-        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!\?]?$/ && key != :run
+        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!?]?$/ && key != :run
           unless tool_class.public_method_defined?(key)
             tool_class.class_eval do
               define_method(key) do
@@ -1733,9 +1735,10 @@ module Toys
       ## @private
       def self.resolve_mixin(mod, cur_tool, loader)
         name = mod.to_s
-        if mod.is_a?(::String)
+        case mod
+        when ::String
           mod = cur_tool.lookup_mixin(mod)
-        elsif mod.is_a?(::Symbol)
+        when ::Symbol
           mod = loader.resolve_standard_mixin(name)
         end
         unless mod.is_a?(::Module)

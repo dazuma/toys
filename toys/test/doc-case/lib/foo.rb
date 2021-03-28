@@ -2,4 +2,5 @@
 
 # Hello
 class Foo
+  # Empty class
 end

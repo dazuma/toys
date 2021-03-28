@@ -419,7 +419,7 @@ describe Toys::Utils::Exec do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
         func = proc do
-          puts(gets + "world\n")
+          puts("#{gets}world\n")
         end
         exec.exec_proc(func, in: input, out: output)
         assert_equal("hello\nworld\n", output.string)
@@ -432,7 +432,7 @@ describe Toys::Utils::Exec do
       ::FileUtils.rm_rf(output_path)
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
-          puts(gets + "world\n")
+          puts("#{gets}world\n")
         end
         exec.exec_proc(func, in: [:file, input_path], out: [:file, output_path])
         assert_equal("hello\nworld\n", ::File.read(output_path))

@@ -15,13 +15,14 @@ describe Toys::StandardMiddleware::ShowRootVersion do
   let(:string_io) { ::StringIO.new }
   let(:cli) {
     middleware = [[Toys::StandardMiddleware::ShowRootVersion,
-                   version_string: version_string, stream: string_io]]
+                   { version_string: version_string, stream: string_io }]]
     Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: middleware)
   }
 
   it "displays a version string for the root" do
     cli.add_config_block do
       tool "foo" do
+        # Empty tool
       end
     end
     assert_equal(0, cli.run("--version"))

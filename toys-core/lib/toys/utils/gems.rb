@@ -132,8 +132,8 @@ module Toys
                       end
         @on_conflict = on_conflict || :error
         @terminal = terminal
-        @input = input || ::STDIN
-        @output = output || ::STDOUT
+        @input = input || $stdin
+        @output = output || $stdout
       end
 
       ##
@@ -296,7 +296,7 @@ module Toys
         if ::File.basename(gemfile_path) == "gems.rb"
           ::File.join(::File.dirname(gemfile_path), "gems.locked")
         else
-          gemfile_path + ".lock"
+          "#{gemfile_path}.lock"
         end
       end
 

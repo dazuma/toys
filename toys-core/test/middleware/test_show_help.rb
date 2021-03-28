@@ -21,6 +21,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli = make_cli(help_flags: true)
     cli.add_config_block do
       tool "foo" do
+        # Empty tool
       end
     end
     cli.run("foo", "--help")
@@ -31,6 +32,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli = make_cli(usage_flags: true)
     cli.add_config_block do
       tool "foo" do
+        # Empty tool
       end
     end
     cli.run("foo", "--usage")
@@ -41,6 +43,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli = make_cli(list_flags: true)
     cli.add_config_block do
       tool "foo" do
+        # Empty tool
       end
     end
     cli.run("--tools")
@@ -51,6 +54,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli = make_cli(fallback_execution: true)
     cli.add_config_block do
       tool "foo" do
+        # Empty tool
       end
     end
     cli.run("foo")
@@ -62,6 +66,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli.add_config_block do
       tool "foo" do
         tool "bar" do
+          # Empty tool
         end
       end
     end

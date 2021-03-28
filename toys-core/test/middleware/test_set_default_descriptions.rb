@@ -46,6 +46,7 @@ describe Toys::StandardMiddleware::SetDefaultDescriptions do
       cli = make_cli
       cli.add_config_block do
         tool "foo", delegate_to: "bar" do
+          # Empty tool
         end
       end
       tool, _remaining = cli.loader.lookup(["foo"])
