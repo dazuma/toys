@@ -57,6 +57,9 @@ module Toys
     #      *  `:ignore` - just silently proceed without bundling again.
     #      *  `:warn` - print a warning and proceed without bundling again.
     #
+    #  *  `:retries` (Integer) Number of times to retry bundler operations
+    #     (optional)
+    #
     #  *  `:terminal` (Toys::Utils::Terminal) Terminal to use (optional)
     #  *  `:input` (IO) Input IO (optional, defaults to STDIN)
     #  *  `:output` (IO) Output IO (optional, defaults to STDOUT)
@@ -100,6 +103,7 @@ module Toys
                             groups: nil,
                             on_missing: nil,
                             on_conflict: nil,
+                            retries: nil,
                             terminal: nil,
                             input: nil,
                             output: nil)
@@ -111,7 +115,7 @@ module Toys
         end
         gems = ::Toys::Utils::Gems.new(on_missing: on_missing, on_conflict: on_conflict,
                                        terminal: terminal, input: input, output: output)
-        gems.bundle(groups: groups, gemfile_path: gemfile_path)
+        gems.bundle(groups: groups, gemfile_path: gemfile_path, retries: retries)
       end
 
       # @private

@@ -4,7 +4,7 @@ require "toys-core"
 require "toys/utils/gems"
 
 # Load the local bundle
-Toys::Utils::Gems.new.bundle(search_dirs: Dir.getwd)
+Toys::Utils::Gems.new.bundle(search_dirs: Dir.getwd, retries: 2)
 
 # Highline is in the local bundle. Make sure it is accessible.
 require "highline"
