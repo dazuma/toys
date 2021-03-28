@@ -1,5 +1,13 @@
 # Release History
 
+### v0.12.0 / 2021-03-28
+
+* BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn 
+
+* ADDED: Support retries in the bundler integration 
+* FIXED: Fix a bundler 2.2 integration issue that fails install in certain cases when an update is needed 
+* FIXED: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn 
+
 ### v0.11.4 / 2020-10-11
 
 * FIXED: Doesn't modify bundler lockfiles when adding Toys to a bundle
