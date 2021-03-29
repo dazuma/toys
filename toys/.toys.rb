@@ -56,3 +56,25 @@ tool "ci" do
     exec_tool(["build"], name: "Gem build")
   end
 end
+
+tool "yardoc-full" do
+  desc "Generate full yardoc including classes from toys-core"
+
+  include :exec, e: true
+  include :fileutils
+
+  def run
+    cd(context_directory)
+    rm_rf("tmp/docs-lib")
+    mkdir_p("tmp")
+    cp_r("../toys-core/lib", "tmp/docs-lib")
+    exec_tool(["yardoc-full", "_generate"])
+    rm_rf("tmp/docs-lib")
+  end
+
+  expand :yardoc do |t|
+    t.name = "_generate"
+    t.files = ["./tmp/docs-lib/**/*.rb"]
+    t.bundler = true
+  end
+end

@@ -56,3 +56,5 @@ tool "ci" do
     exec_tool(["build"], name: "Gem build")
   end
 end
+
+tool "yardoc-full", delegate_to: :yardoc

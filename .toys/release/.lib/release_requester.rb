@@ -175,7 +175,7 @@ class ReleaseRequester
     def normalize_line(line, delete_pr_number: false)
       match = /^([a-z])(.*)$/.match(line)
       line = match[1].upcase + match[2] if match
-      line = line.gsub(/\(#\d+\)$/, "") if delete_pr_number
+      line = line.gsub(/\s*\(#\d+\)$/, "") if delete_pr_number
       line
     end
 
