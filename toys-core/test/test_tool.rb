@@ -763,7 +763,7 @@ describe Toys::Tool do
   describe "mixin module" do
     it "can be looked up from standard mixins" do
       test = self
-      tool.include_mixin(:fileutils)
+      tool.include_mixin(loader.resolve_standard_mixin("fileutils"))
       tool.run_handler = proc do
         test.assert_equal(true, private_methods.include?(:rm_rf))
       end
@@ -787,7 +787,7 @@ describe Toys::Tool do
     it "mixes into the executable tool" do
       test = self
       tool.add_mixin("mymixin", MyMixin)
-      tool.include_mixin("mymixin")
+      tool.include_mixin(tool.lookup_mixin("mymixin"))
       tool.run_handler = proc do
         test.assert_equal(:mixin1, mixin1)
       end
@@ -801,7 +801,7 @@ describe Toys::Tool do
           :bar
         end
       end
-      tool.include_mixin("mymixin")
+      tool.include_mixin(tool.lookup_mixin("mymixin"))
       tool.run_handler = proc do
         test.assert_equal(:bar, foo)
       end

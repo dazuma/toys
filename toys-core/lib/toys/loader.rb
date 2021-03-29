@@ -270,7 +270,7 @@ module Toys
     def build_tool(words, priority)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      Tool.new(self, parent, words, priority, middleware_stack, @middleware_lookup)
+      Tool.new(parent, words, priority, middleware_stack, @middleware_lookup)
     end
 
     ##
@@ -403,7 +403,7 @@ module Toys
       if remaining_words
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
-        DSL::Tool.prepare(tool_class, remaining_words, source) do
+        DSL::Tool.prepare(tool_class, words, priority, remaining_words, source, self) do
           ContextualError.capture("Error while loading Toys config!") do
             tool_class.class_eval(&source.source_proc)
           end
@@ -425,7 +425,7 @@ module Toys
       if source.source_type == :file
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
-        InputFile.evaluate(tool_class, remaining_words, source)
+        InputFile.evaluate(tool_class, words, priority, remaining_words, source, self)
       else
         do_preload(source.source_path)
         load_index_in(source, words, remaining_words, priority)

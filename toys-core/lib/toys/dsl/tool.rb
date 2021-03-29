@@ -317,7 +317,7 @@ module Toys
           when :ignore
             return self
           when :reset
-            subtool.reset_definition(@__loader)
+            subtool.reset_definition
           end
         end
         if delegate_to
@@ -1375,7 +1375,9 @@ module Toys
       # @return [self]
       #
       def to_run(&block)
-        define_method(:run, &block)
+        cur_tool = DSL::Tool.current_tool(self, true)
+        return self if cur_tool.nil?
+        cur_tool.run_handler = block
         self
       end
       alias on_run to_run
@@ -1465,28 +1467,16 @@ module Toys
       #       end
       #     end
       #
-      # @param mod [Module,Symbol,String] Module or module name.
+      # @param mixin [Module,Symbol,String] Module or module name.
       # @param args [Object...] Arguments to pass to the initializer
       # @param kwargs [keywords] Keyword arguments to pass to the initializer
       # @return [self]
       #
-      def include(mod, *args, **kwargs)
+      def include(mixin, *args, **kwargs)
         cur_tool = DSL::Tool.current_tool(self, true)
         return self if cur_tool.nil?
-        mod = DSL::Tool.resolve_mixin(mod, cur_tool, @__loader)
-        if included_modules.include?(mod)
-          raise ToolDefinitionError, "Mixin already included: #{mod.name}"
-        end
-        cur_tool.mark_includes_modules
-        super(mod)
-        if mod.respond_to?(:initializer)
-          callback = mod.initializer
-          cur_tool.add_initializer(callback, *args, **kwargs) if callback
-        end
-        if mod.respond_to?(:inclusion)
-          callback = mod.inclusion
-          class_exec(*args, **kwargs, &callback) if callback
-        end
+        mod = DSL::Tool.resolve_mixin(mixin, cur_tool, @__loader)
+        cur_tool.include_mixin(mod, *args, **kwargs)
         self
       end
 
@@ -1676,18 +1666,6 @@ module Toys
       end
 
       ## @private
-      def self.new_class(words, priority, loader)
-        tool_class = ::Class.new(::Toys::Context)
-        tool_class.extend(DSL::Tool)
-        tool_class.instance_variable_set(:@__words, words)
-        tool_class.instance_variable_set(:@__priority, priority)
-        tool_class.instance_variable_set(:@__loader, loader)
-        tool_class.instance_variable_set(:@__remaining_words, nil)
-        tool_class.instance_variable_set(:@__source, [])
-        tool_class
-      end
-
-      ## @private
       def self.current_tool(tool_class, activate)
         memoize_var = activate ? :@__active_tool : :@__cur_tool
         if tool_class.instance_variable_defined?(memoize_var)
@@ -1711,12 +1689,26 @@ module Toys
       end
 
       ## @private
-      def self.prepare(tool_class, remaining_words, source)
+      def self.prepare(tool_class, words, priority, remaining_words, source, loader)
+        unless tool_class.is_a?(DSL::Tool)
+          class << tool_class
+            alias_method :super_include, :include
+          end
+          tool_class.extend(DSL::Tool)
+        end
+        unless tool_class.instance_variable_defined?(:@__words)
+          tool_class.instance_variable_set(:@__words, words)
+          tool_class.instance_variable_set(:@__priority, priority)
+          tool_class.instance_variable_set(:@__loader, loader)
+          tool_class.instance_variable_set(:@__source, [])
+        end
         tool_class.instance_variable_set(:@__remaining_words, remaining_words)
         tool_class.instance_variable_get(:@__source).push(source)
-        yield
-      ensure
-        tool_class.instance_variable_get(:@__source).pop
+        begin
+          yield
+        ensure
+          tool_class.instance_variable_get(:@__source).pop
+        end
       end
 
       ## @private
@@ -1733,17 +1725,17 @@ module Toys
       end
 
       ## @private
-      def self.resolve_mixin(mod, cur_tool, loader)
-        name = mod.to_s
-        case mod
-        when ::String
-          mod = cur_tool.lookup_mixin(mod)
-        when ::Symbol
-          mod = loader.resolve_standard_mixin(name)
-        end
-        unless mod.is_a?(::Module)
-          raise ToolDefinitionError, "Module not found: #{name.inspect}"
-        end
+      def self.resolve_mixin(mixin, cur_tool, loader)
+        mod =
+          case mixin
+          when ::String
+            cur_tool.lookup_mixin(mixin)
+          when ::Symbol
+            loader.resolve_standard_mixin(mixin.to_s)
+          when ::Module
+            mixin
+          end
+        raise ToolDefinitionError, "Mixin not found: #{mixin.inspect}" unless mod
         mod
       end
 
