@@ -6,6 +6,8 @@ Gemspec/DateAssignment:
   Enabled: true
 Layout/EmptyLineAfterGuardClause:
   Enabled: false
+Layout/HashAlignment:
+  Enabled: false
 Layout/LineLength:
   Max: 120
 Layout/SpaceBeforeBrackets:

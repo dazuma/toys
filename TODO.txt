@@ -6,6 +6,8 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 
 ## Ideas under investigation
 
+* Accept seems to be incompatible with flag optional values
+* Allow override when doing data lookup (for subdirectory-specific configuration)
 * Evaluate options for closer Rails integration
 * Tool archives for sharing/installing tools
 * Should it be possible to set require_exact_flag_match per-flag?
