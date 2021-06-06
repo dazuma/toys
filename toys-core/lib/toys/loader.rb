@@ -136,7 +136,7 @@ module Toys
     # that are not part of the tool name and should be passed as tool args.
     #
     # @param args [Array<String>] Command line arguments
-    # @return [Array(Toys::Tool,Array<String>)]
+    # @return [Array(Toys::ToolDefinition,Array<String>)]
     #
     def lookup(args)
       orig_prefix, args = @delimiter_handler.find_orig_prefix(args)
@@ -157,7 +157,7 @@ module Toys
     # the given name, returns `nil`.
     #
     # @param words [Array<String>] The tool name
-    # @return [Toys::Tool] if the tool was found
+    # @return [Toys::ToolDefinition] if the tool was found
     # @return [nil] if no such tool exists
     #
     def lookup_specific(words)
@@ -177,7 +177,7 @@ module Toys
     #     rather than just the immediate children (the default)
     # @param include_hidden [Boolean] If true, include hidden subtools,
     #     e.g. names beginning with underscores.
-    # @return [Array<Toys::Tool>] An array of subtools.
+    # @return [Array<Toys::ToolDefinition>] An array of subtools.
     #
     def list_subtools(words, recursive: false, include_hidden: false)
       load_for_prefix(words)
@@ -270,7 +270,7 @@ module Toys
     def build_tool(words, priority)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      Tool.new(parent, words, priority, middleware_stack, @middleware_lookup)
+      ToolDefinition.new(parent, words, priority, middleware_stack, @middleware_lookup)
     end
 
     ##

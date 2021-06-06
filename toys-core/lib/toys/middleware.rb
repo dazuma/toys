@@ -37,7 +37,7 @@ module Toys
     # This basic implementation does nothing and simply yields to the next
     # middleware.
     #
-    # @param tool [Toys::Tool] The tool definition to modify.
+    # @param tool [Toys::ToolDefinition] The tool definition to modify.
     # @param loader [Toys::Loader] The loader that loaded this tool.
     # @return [void]
     #

@@ -78,7 +78,7 @@ module Toys
       LOGGER = ::Object.new.freeze
 
       ##
-      # Context key for the {Toys::Tool} object being executed.
+      # Context key for the {Toys::ToolDefinition} object being executed.
       # @return [Object]
       #
       TOOL = ::Object.new.freeze

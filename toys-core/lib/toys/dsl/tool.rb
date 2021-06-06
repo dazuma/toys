@@ -564,11 +564,11 @@ module Toys
       #     `:optional`, `:exactly_one`, `:at_most_one`, `:at_least_one`.
       #     Default is `:optional`.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the group. See {Toys::Tool#desc=} for a description
-      #     of allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::DSL::Tool#desc} for a
+      #     description of allowed formats. Defaults to `"Flags"`.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
-      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     {Toys::DSL::Tool#long_desc} for a description of allowed formats.
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
@@ -611,11 +611,11 @@ module Toys
       #     end
       #
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the group. See {Toys::Tool#desc=} for a description
-      #     of allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::DSL::Tool#desc} for a
+      #     description of allowed formats. Defaults to `"Flags"`.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
-      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     {Toys::DSL::Tool#long_desc} for a description of allowed formats.
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
@@ -654,11 +654,11 @@ module Toys
       #     end
       #
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the group. See {Toys::Tool#desc=} for a description
-      #     of allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::DSL::Tool#desc} for a
+      #     description of allowed formats. Defaults to `"Flags"`.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
-      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     {Toys::DSL::Tool#long_desc} for a description of allowed formats.
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
@@ -698,11 +698,11 @@ module Toys
       #     end
       #
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the group. See {Toys::Tool#desc=} for a description
-      #     of allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::DSL::Tool#desc} for a
+      #     description of allowed formats. Defaults to `"Flags"`.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
-      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     {Toys::DSL::Tool#long_desc} for a description of allowed formats.
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
@@ -742,11 +742,11 @@ module Toys
       #     end
       #
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the group. See {Toys::Tool#desc=} for a description
-      #     of allowed formats. Defaults to `"Flags"`.
+      #     description for the group. See {Toys::DSL::Tool#desc} for a
+      #     description of allowed formats. Defaults to `"Flags"`.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
       #     Long description for the flag group. See
-      #     {Toys::Tool#long_desc=} for a description of allowed formats.
+      #     {Toys::DSL::Tool#long_desc} for a description of allowed formats.
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
@@ -952,9 +952,9 @@ module Toys
       end
 
       ##
-      # Add a required positional argument to the current tool. You must specify
-      # a key which the script may use to obtain the argument value from the
-      # context.
+      # Add a required positional argument to the current tool. You must
+      # specify a key which the script may use to obtain the argument value
+      # from the context.
       #
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
@@ -989,8 +989,8 @@ module Toys
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param display_name [String] A name to use for display (in help text and
-      #     error reports). Defaults to the key in upper case.
+      # @param display_name [String] A name to use for display (in help text
+      #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
@@ -1019,10 +1019,10 @@ module Toys
       alias required required_arg
 
       ##
-      # Add an optional positional argument to the current tool. You must specify
-      # a key which the script may use to obtain the argument value from the
-      # context. If an optional argument is not given on the command line, the
-      # value is set to the given default.
+      # Add an optional positional argument to the current tool. You must
+      # specify a key which the script may use to obtain the argument value
+      # from the context. If an optional argument is not given on the command
+      # line, the value is set to the given default.
       #
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
@@ -1050,8 +1050,8 @@ module Toys
       # @param key [String,Symbol] The key to use to retrieve the value from
       #     the execution context.
       # @param default [Object] The default value. This is the value that will
-      #     be set in the context if this argument is not provided on the command
-      #     line. Defaults to `nil`.
+      #     be set in the context if this argument is not provided on the
+      #     command line. Defaults to `nil`.
       # @param accept [Object] An acceptor that validates and/or converts the
       #     value. You may provide either the name of an acceptor you have
       #     defined, one of the default acceptors provided by OptionParser, or
@@ -1061,8 +1061,8 @@ module Toys
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param display_name [String] A name to use for display (in help text and
-      #     error reports). Defaults to the key in upper case.
+      # @param display_name [String] A name to use for display (in help text
+      #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
@@ -1091,9 +1091,9 @@ module Toys
       alias optional optional_arg
 
       ##
-      # Specify what should be done with unmatched positional arguments. You must
-      # specify a key which the script may use to obtain the remaining args from
-      # the context.
+      # Specify what should be done with unmatched positional arguments. You
+      # must specify a key which the script may use to obtain the remaining
+      # args from the context.
       #
       # If the given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
@@ -1133,8 +1133,8 @@ module Toys
       #     values of this arg. This is the empty completion by default. To
       #     customize completion, set this to the name of a previously defined
       #     completion, or any spec recognized by {Toys::Completion.create}.
-      # @param display_name [String] A name to use for display (in help text and
-      #     error reports). Defaults to the key in upper case.
+      # @param display_name [String] A name to use for display (in help text
+      #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
       #     description for the flag. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
@@ -1321,9 +1321,10 @@ module Toys
       #  *  The string name of a completion defined in this tool or any of its
       #     its ancestors.
       #  *  A hash of options to pass to the constructor of
-      #     {Toys::Tool::DefaultCompletion}.
+      #     {Toys::ToolDefinition::DefaultCompletion}.
       #  *  `nil` or `:default` to select the standard completion strategy
-      #     (which is {Toys::Tool::DefaultCompletion} with no extra options).
+      #     (which is {Toys::ToolDefinition::DefaultCompletion} with no extra
+      #     options).
       #  *  Any other specification recognized by {Toys::Completion.create}.
       #
       # ## Example
@@ -1553,10 +1554,10 @@ module Toys
       end
 
       ##
-      # Return the current tool object. This object can be queried to determine
+      # Return the current tool config. This object can be queried to determine
       # such information as the name, but it should not be altered.
       #
-      # @return [Toys::Tool]
+      # @return [Toys::ToolDefinition]
       #
       def current_tool
         DSL::Tool.current_tool(self, false)

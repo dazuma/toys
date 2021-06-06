@@ -88,7 +88,7 @@ module Toys
 
       ##
       # The tool being invoked, which should control the completion.
-      # @return [Toys::Tool]
+      # @return [Toys::ToolDefinition]
       #
       def tool
         lookup_tool

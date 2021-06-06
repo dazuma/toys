@@ -78,8 +78,8 @@ module Toys
     #     with different verbosity settings (since the logger cannot have
     #     multiple level settings simultaneously). In that case, do not set a
     #     global logger, but use the `logger_factory` parameter instead.
-    # @param logger_factory [Proc] A proc that takes a {Toys::Tool} as an
-    #     argument, and returns a `Logger` to use when running that tool.
+    # @param logger_factory [Proc] A proc that takes a {Toys::ToolDefinition}
+    #     as an argument, and returns a `Logger` to use when running that tool.
     #     Optional. If not provided (and no global logger is set), CLI will use
     #     a default factory that writes generates loggers writing formatted
     #     output to `STDERR`, as defined by {Toys::CLI.default_logger_factory}.
@@ -443,7 +443,7 @@ module Toys
     # Run the given tool with the given arguments.
     # Does not handle exceptions.
     #
-    # @param tool [Toys::Tool] The tool to run.
+    # @param tool [Toys::ToolDefinition] The tool to run.
     # @param args [Array<String>] Command line arguments passed to the tool.
     # @param default_data [Hash] Initial tool context data.
     # @return [Integer] The resulting status code

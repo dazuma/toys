@@ -115,12 +115,12 @@ module Toys
       # By default, it uses the parameters given to the middleware object.
       # Override this method to provide different logic.
       #
-      # @param tool [Toys::Tool] The tool to document.
+      # @param tool [Toys::ToolDefinition] The tool to document.
       # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Loader} is passed with key `:loader`. Future versions
       #     of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString] The default
-      #     description. See {Toys::Tool#desc=} for info on the format.
+      #     description. See {Toys::DSL::Tool#desc} for info on the format.
       # @return [nil] if this middleware should not set the description.
       #
       def generate_tool_desc(tool, data)
@@ -141,12 +141,12 @@ module Toys
       # By default, it uses the parameters given to the middleware object.
       # Override this method to provide different logic.
       #
-      # @param tool [Toys::Tool] The tool to document
+      # @param tool [Toys::ToolDefinition] The tool to document
       # @param data [Hash] Additional data that might be useful. Currently,
       #     the {Toys::Loader} is passed with key `:loader`. Future versions of
       #     Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>] The default
-      #     long description. See {Toys::Tool#long_desc=} for info on the
+      #     long description. See {Toys::DSL::Tool#long_desc} for info on the
       #     format.
       # @return [nil] if this middleware should not set the long description.
       #
@@ -166,10 +166,10 @@ module Toys
       #
       # @param flag [Toys::Flag] The flag to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
       #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString] The default
-      #     description. See {Toys::Tool#desc=} for info on the format.
+      #     description. See {Toys::DSL::Tool#desc} for info on the format.
       # @return [nil] if this middleware should not set the description.
       #
       def generate_flag_desc(flag, data) # rubocop:disable Lint/UnusedMethodArgument
@@ -185,10 +185,10 @@ module Toys
       #
       # @param flag [Toys::Flag] The flag to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
       #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>] The default
-      #     long description. See {Toys::Tool#long_desc=} for info on the
+      #     long description. See {Toys::DSL::Tool#long_desc} for info on the
       #     format.
       # @return [nil] if this middleware should not set the long description.
       #
@@ -202,10 +202,10 @@ module Toys
       #
       # @param arg [Toys::PositionalArg] The arg to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString] The default
-      #     description. See {Toys::Tool#desc=} for info on the format.
+      #     description. See {Toys::DSL::Tool#desc} for info on the format.
       # @return [nil] if this middleware should not set the description.
       #
       def generate_arg_desc(arg, data) # rubocop:disable Lint/UnusedMethodArgument
@@ -227,10 +227,10 @@ module Toys
       #
       # @param arg [Toys::PositionalArg] The arg to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future versions of
-      #     Toys may provide additional information.
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
+      #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>] The default
-      #     long description. See {Toys::Tool#long_desc=} for info on the
+      #     long description. See {Toys::DSL::Tool#long_desc} for info on the
       #     format.
       # @return [nil] if this middleware should not set the long description.
       #
@@ -244,10 +244,10 @@ module Toys
       #
       # @param group [Toys::FlagGroup] The flag group to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
       #     versions of Toys may provide additional information.
       # @return [String,Array<String>,Toys::WrappableString] The default
-      #     description. See {Toys::Tool#desc=} for info on the format.
+      #     description. See {Toys::DSL::Tool#desc} for info on the format.
       # @return [nil] if this middleware should not set the description.
       #
       def generate_flag_group_desc(group, data) # rubocop:disable Lint/UnusedMethodArgument
@@ -264,10 +264,10 @@ module Toys
       #
       # @param group [Toys::FlagGroup] The flag group to document
       # @param data [Hash] Additional data that might be useful. Currently,
-      #     the {Toys::Tool} is passed with key `:tool`. Future
+      #     the {Toys::ToolDefinition} is passed with key `:tool`. Future
       #     versions of Toys may provide additional information.
       # @return [Array<Toys::WrappableString,String,Array<String>>] The default
-      #     long description. See {Toys::Tool#long_desc=} for info on the
+      #     long description. See {Toys::DSL::Tool#long_desc} for info on the
       #     format.
       # @return [nil] if this middleware should not set the long description.
       #

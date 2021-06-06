@@ -85,11 +85,11 @@ module Toys
     #     true.
     # @param group [Toys::FlagGroup] Group containing this flag.
     # @param desc [String,Array<String>,Toys::WrappableString] Short
-    #     description for the flag. See {Toys::Tool#desc=} for a description of
-    #     allowed formats. Defaults to the empty string.
+    #     description for the flag. See {Toys::ToolDefinition#desc} for a
+    #     description of allowed formats. Defaults to the empty string.
     # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-    #     Long description for the flag. See {Toys::Tool#long_desc=} for a
-    #     description of allowed formats. Defaults to the empty array.
+    #     Long description for the flag. See {Toys::ToolDefinition#long_desc}
+    #     for a description of allowed formats. Defaults to the empty array.
     # @param display_name [String] A display name for this flag, used in help
     #     text and error messages.
     # @param used_flags [Array<String>] An array of flags already in use.

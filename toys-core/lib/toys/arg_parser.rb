@@ -269,7 +269,7 @@ module Toys
     # Create an argument parser for a particular tool.
     #
     # @param cli [Toys::CLI] The CLI in effect.
-    # @param tool [Toys::Tool] The tool defining the argument format.
+    # @param tool [Toys::ToolDefinition] The tool defining the argument format.
     # @param default_data [Hash] Additional initial data (such as verbosity).
     # @param require_exact_flag_match [Boolean] Whether to require flag matches
     #     be exact (not partial). Default is false.
@@ -295,7 +295,7 @@ module Toys
 
     ##
     # The tool definition governing this parser.
-    # @return [Toys::Tool]
+    # @return [Toys::ToolDefinition]
     #
     attr_reader :tool
 
