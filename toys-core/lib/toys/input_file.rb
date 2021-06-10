@@ -15,7 +15,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     namespace = ::Module.new
     namespace.module_eval do
       include ::Toys::Context::Key
-      @tool_class = tool_class
+      @__tool_class = tool_class
     end
     path = source.source_path
     basename = ::File.basename(path).tr(".-", "_").gsub(/\W/, "")
@@ -23,7 +23,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     str = build_eval_string(name, ::IO.read(path))
     if str
       const_set(name, namespace)
-      ::Toys::DSL::Tool.prepare(tool_class, words, priority, remaining_words, source, loader) do
+      ::Toys::DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, loader) do
         ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
           # rubocop:disable Security/Eval
           eval(str, __binding, path, -2)
@@ -39,7 +39,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     return nil if index.nil?
     "#{string[0, index]}\n" \
       "module #{module_name}\n" \
-      "@tool_class.class_eval do\n" \
+      "@__tool_class.class_eval do\n" \
       "#{string[index..-1]}\n" \
       "end\n" \
       "end\n"

@@ -37,7 +37,7 @@ module Toys
       ## @private
       def method_added(_meth)
         super
-        DSL::Tool.current_tool(self, true)&.check_definition_state(is_method: true)
+        DSL::Internal.current_tool(self, true)&.check_definition_state(is_method: true)
       end
 
       ##
@@ -106,7 +106,7 @@ module Toys
       # @return [self]
       #
       def acceptor(name, spec = nil, type_desc: nil, &block)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         cur_tool&.add_acceptor(name, spec, type_desc: type_desc || name.to_s, &block)
         self
       end
@@ -150,7 +150,7 @@ module Toys
       # @return [self]
       #
       def mixin(name, mixin_module = nil, &block)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         cur_tool&.add_mixin(name, mixin_module, &block)
         self
       end
@@ -205,7 +205,7 @@ module Toys
       # @return [self]
       #
       def template(name, template_class = nil, &block)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
         cur_tool.add_template(name, template_class, &block)
         self
@@ -253,7 +253,7 @@ module Toys
       # @return [self]
       #
       def completion(name, spec = nil, **options, &block)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
         cur_tool.add_completion(name, spec, **options, &block)
         self
@@ -281,7 +281,7 @@ module Toys
       #
       # The following example defines a tool that runs one of its subtools.
       #
-      #     tool "test", runs: ["test", "unit"] do
+      #     tool "test", delegate_to: ["test", "unit"] do
       #       tool "unit" do
       #         def run
       #           puts "Running unit tests"
@@ -387,7 +387,7 @@ module Toys
       # @return [self]
       #
       def delegate_to(target)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.delegate_to(@__loader.split_path(target))
         self
@@ -438,7 +438,7 @@ module Toys
       # @return [self]
       #
       def expand(template_class, *args, **kwargs)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
         name = template_class.to_s
         case template_class
@@ -490,7 +490,7 @@ module Toys
       # @return [self]
       #
       def desc(str)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.desc = str
         self
@@ -526,7 +526,7 @@ module Toys
       # @return [self]
       #
       def long_desc(*strs, file: nil, data: nil)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         if file
           unless source_info.source_path
@@ -537,7 +537,7 @@ module Toys
         elsif data
           file = source_info.find_data(data, type: :file)
         end
-        strs += DSL::Tool.load_long_desc_file(file) if file
+        strs += DSL::Internal.load_long_desc_file(file) if file
         cur_tool.append_long_desc(strs)
         self
       end
@@ -583,7 +583,7 @@ module Toys
       #
       def flag_group(type: :optional, desc: nil, long_desc: nil, name: nil,
                      report_collisions: true, prepend: false, &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.add_flag_group(type: type, desc: desc, long_desc: long_desc, name: name,
                                 report_collisions: report_collisions, prepend: prepend)
@@ -939,7 +939,7 @@ module Toys
                report_collisions: true, group: nil,
                desc: nil, long_desc: nil, display_name: nil,
                &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(
           flags.flatten, accept, default, handler, complete_flags, complete_values,
@@ -947,7 +947,7 @@ module Toys
         )
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
-        DSL::Tool.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key)
         self
       end
 
@@ -1008,12 +1008,12 @@ module Toys
                        accept: nil, complete: nil, display_name: nil,
                        desc: nil, long_desc: nil,
                        &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::PositionalArg.new(accept, nil, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
-        DSL::Tool.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key)
         self
       end
       alias required required_arg
@@ -1080,12 +1080,12 @@ module Toys
                        default: nil, accept: nil, complete: nil, display_name: nil,
                        desc: nil, long_desc: nil,
                        &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
-        DSL::Tool.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key)
         self
       end
       alias optional optional_arg
@@ -1152,12 +1152,12 @@ module Toys
                          default: [], accept: nil, complete: nil, display_name: nil,
                          desc: nil, long_desc: nil,
                          &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
-        DSL::Tool.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key)
         self
       end
       alias remaining remaining_args
@@ -1192,16 +1192,16 @@ module Toys
       #   @return [self]
       #
       def static(key, value = nil)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
           key.each_key do |k|
-            DSL::Tool.maybe_add_getter(self, k)
+            DSL::Internal.maybe_add_getter(self, k)
           end
         else
           cur_tool.default_data[key] = value
-          DSL::Tool.maybe_add_getter(self, key)
+          DSL::Internal.maybe_add_getter(self, key)
         end
         self
       end
@@ -1231,7 +1231,7 @@ module Toys
       #   @return [self]
       #
       def set(key, value = nil)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
@@ -1253,7 +1253,7 @@ module Toys
       # @return [self]
       #
       def enforce_flags_before_args(state = true)
-        DSL::Tool.current_tool(self, true)&.enforce_flags_before_args(state)
+        DSL::Internal.current_tool(self, true)&.enforce_flags_before_args(state)
         self
       end
 
@@ -1269,7 +1269,7 @@ module Toys
       # @return [self]
       #
       def require_exact_flag_match(state = true)
-        DSL::Tool.current_tool(self, true)&.require_exact_flag_match(state)
+        DSL::Internal.current_tool(self, true)&.require_exact_flag_match(state)
         self
       end
 
@@ -1284,7 +1284,7 @@ module Toys
       # @return [self]
       #
       def disable_argument_parsing
-        DSL::Tool.current_tool(self, true)&.disable_argument_parsing
+        DSL::Internal.current_tool(self, true)&.disable_argument_parsing
         self
       end
 
@@ -1310,7 +1310,7 @@ module Toys
       # @return [self]
       #
       def disable_flag(*flags)
-        DSL::Tool.current_tool(self, true)&.disable_flag(*flags)
+        DSL::Internal.current_tool(self, true)&.disable_flag(*flags)
         self
       end
 
@@ -1348,7 +1348,7 @@ module Toys
       # @return [self]
       #
       def complete_tool_args(spec = nil, **options, &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.completion = Completion.scalarize_spec(spec, options, block)
         self
@@ -1376,7 +1376,7 @@ module Toys
       # @return [self]
       #
       def to_run(&block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.run_handler = block
         self
@@ -1407,7 +1407,7 @@ module Toys
       # @return [self]
       #
       def on_interrupt(handler = nil, &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.interrupt_handler = handler || block
         self
@@ -1439,7 +1439,7 @@ module Toys
       # @return [self]
       #
       def on_usage_error(handler = nil, &block)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.usage_error_handler = handler || block
         self
@@ -1474,9 +1474,9 @@ module Toys
       # @return [self]
       #
       def include(mixin, *args, **kwargs)
-        cur_tool = DSL::Tool.current_tool(self, true)
+        cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        mod = DSL::Tool.resolve_mixin(mixin, cur_tool, @__loader)
+        mod = DSL::Internal.resolve_mixin(mixin, cur_tool, @__loader)
         cur_tool.include_mixin(mod, *args, **kwargs)
         self
       end
@@ -1494,9 +1494,9 @@ module Toys
       # @return [nil] if the current tool is not active.
       #
       def include?(mod)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return if cur_tool.nil?
-        super(DSL::Tool.resolve_mixin(mod, cur_tool, @__loader))
+        super(DSL::Internal.resolve_mixin(mod, cur_tool, @__loader))
       end
 
       ##
@@ -1550,7 +1550,7 @@ module Toys
       # @return [nil] if there is no context.
       #
       def context_directory
-        DSL::Tool.current_tool(self, false)&.context_directory || source_info.context_directory
+        DSL::Internal.current_tool(self, false)&.context_directory || source_info.context_directory
       end
 
       ##
@@ -1560,7 +1560,7 @@ module Toys
       # @return [Toys::ToolDefinition]
       #
       def current_tool
-        DSL::Tool.current_tool(self, false)
+        DSL::Internal.current_tool(self, false)
       end
 
       ##
@@ -1570,7 +1570,7 @@ module Toys
       # @return [self]
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
         cur_tool.custom_context_directory = dir
         self
@@ -1609,7 +1609,7 @@ module Toys
       #     end
       #
       def subtool_apply(&block)
-        cur_tool = DSL::Tool.current_tool(self, false)
+        cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
         cur_tool.subtool_middleware_stack.add(:apply_config,
                                               parent_source: source_info, &block)
@@ -1664,96 +1664,6 @@ module Toys
                 "Toys version requirements #{requirement} not satisfied by {version}"
         end
         self
-      end
-
-      ## @private
-      def self.current_tool(tool_class, activate)
-        memoize_var = activate ? :@__active_tool : :@__cur_tool
-        if tool_class.instance_variable_defined?(memoize_var)
-          tool_class.instance_variable_get(memoize_var)
-        else
-          loader = tool_class.instance_variable_get(:@__loader)
-          words = tool_class.instance_variable_get(:@__words)
-          priority = tool_class.instance_variable_get(:@__priority)
-          cur_tool =
-            if activate
-              loader.activate_tool(words, priority)
-            else
-              loader.get_tool(words, priority)
-            end
-          if cur_tool && activate
-            source = tool_class.instance_variable_get(:@__source).last
-            cur_tool.lock_source(source)
-          end
-          tool_class.instance_variable_set(memoize_var, cur_tool)
-        end
-      end
-
-      ## @private
-      def self.prepare(tool_class, words, priority, remaining_words, source, loader)
-        unless tool_class.is_a?(DSL::Tool)
-          class << tool_class
-            alias_method :super_include, :include
-          end
-          tool_class.extend(DSL::Tool)
-        end
-        unless tool_class.instance_variable_defined?(:@__words)
-          tool_class.instance_variable_set(:@__words, words)
-          tool_class.instance_variable_set(:@__priority, priority)
-          tool_class.instance_variable_set(:@__loader, loader)
-          tool_class.instance_variable_set(:@__source, [])
-        end
-        tool_class.instance_variable_set(:@__remaining_words, remaining_words)
-        tool_class.instance_variable_get(:@__source).push(source)
-        begin
-          yield
-        ensure
-          tool_class.instance_variable_get(:@__source).pop
-        end
-      end
-
-      ## @private
-      def self.maybe_add_getter(tool_class, key)
-        if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!?]?$/ && key != :run
-          unless tool_class.public_method_defined?(key)
-            tool_class.class_eval do
-              define_method(key) do
-                self[key]
-              end
-            end
-          end
-        end
-      end
-
-      ## @private
-      def self.resolve_mixin(mixin, cur_tool, loader)
-        mod =
-          case mixin
-          when ::String
-            cur_tool.lookup_mixin(mixin)
-          when ::Symbol
-            loader.resolve_standard_mixin(mixin.to_s)
-          when ::Module
-            mixin
-          end
-        raise ToolDefinitionError, "Mixin not found: #{mixin.inspect}" unless mod
-        mod
-      end
-
-      ## @private
-      def self.load_long_desc_file(path)
-        if ::File.extname(path) == ".txt"
-          begin
-            ::File.readlines(path).map do |line|
-              line = line.chomp
-              line =~ /^\s/ ? [line] : line
-            end
-          rescue ::SystemCallError => e
-            raise Toys::ToolDefinitionError, e.to_s
-          end
-        else
-          raise Toys::ToolDefinitionError, "Cannot load long desc from file type: #{path}"
-        end
       end
     end
   end

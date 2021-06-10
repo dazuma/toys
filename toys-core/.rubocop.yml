@@ -3,6 +3,9 @@ inherit_from: "../.rubocop-common.yml"
 Layout/EmptyLinesAroundAttributeAccessor:
   Exclude:
     - "test/**/*.rb"
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - "test/**/*.rb"
 Layout/LineLength:
   Exclude:
     - "*.gemspec"

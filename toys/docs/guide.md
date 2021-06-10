@@ -1118,8 +1118,8 @@ run Toys with no arguments:
 
 The root tool will display the overall help screen for Toys.
 
-Although it is a less common pattern, it is possible for a tool that has
-subtools to have its own `run` method:
+Although it is a less common pattern, it is possible for a tool to have its own
+`run` method even if it has subtools:
 
     tool "test" do
       def run
@@ -1142,11 +1142,99 @@ subtools to have its own `run` method:
 Now running `toys test` will run its own implementation.
 
 (Yes, it is even possible to write a `run` method for the root tool. I don't
-recommend doing so, because then you lose the root tool's useful default
+recommend doing so, because you would lose the root tool's useful default
 implementation that lists all your tools.)
 
 Toys allows subtools to be nested arbitrarily deep. In practice, however, more
 than two or three levels of hierarchy can be confusing to use.
+
+### Defining subtools using classes
+
+It is also possible to define subtools by subclassing `Toys::Tool`. The class
+will support the same DSL as a `tool` block would. For example, this is what
+our greet tool would look like as a class:
+
+    class Greet < Toys::Tool
+      optional_arg :whom, default: "world"
+      flag :shout, "-s", "--shout"
+
+      def run
+        greeting = "Hello, #{whom}!"
+        greeting = greeting.upcase if shout
+        puts greeting
+      end
+    end
+
+Defining tools as clases is useful if you want your Toys files to look a bit
+more like normal Ruby or you want to avoid long blocks. Additionally, they can
+be useful to scope constants, which otherwise would be visible throughout the
+entire file, as noted in the [section on using constants](#Using_constants).
+
+When you define a tool as a class, Toys infers the tool name by converting the
+class name to "kebab-case". For example, the `Greet` class above would define a
+tool called `greet`. If the class were called `GreetMany`, the tool would be
+called `greet-many`. If you need to override this behavior or set a tool name
+that is not possible from legal class names, pass the desired tool name to the
+`Toys.Tool` method like this:
+
+    class Greet < Toys.Tool("_my_greet")
+      optional_arg :whom, default: "world"
+      flag :shout, "-s", "--shout"
+
+      def run
+        greeting = "Hello, #{whom}!"
+        greeting = greeting.upcase if shout
+        puts greeting
+      end
+    end
+
+You can create subtools by nesting classes:
+
+    class Test < Toys::Tool
+      class Unit < Toys::Tool
+        def run
+          puts "run only unit tests here..."
+        end
+      end
+
+      class Integration < Toys::Tool
+        def run
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
+The above defines `test unit` and `test integration` tools as expected.
+
+Finally, you may not nest a class-based tool inside a block-based tool. (This
+is because Ruby's constant definition rules would put such a class in an
+unexpected namespace, leading to potential clashes that would be difficult to
+diagnose.) It is, however, permissible to nest a block-based tool inside a
+class-based tool.
+
+Hence, this is not allowed, and will result in an exception:
+
+    tool "test" do
+      # This will raise Toys::ToolDefinitionError...
+      class Unit < Toys::Tool
+        def run
+          puts "run unit tests..."
+        end
+      end
+    end
+
+But this is legal:
+
+    class Test < Toys::Tool
+      tool "unit" do
+        def run
+          puts "run unit tests..."
+        end
+      end
+    end
+
+In general, though, as a best practice, I recommend against mixing the two
+styles. Define tools either as classes or as blocks, not both.
 
 ## Understanding Toys files
 

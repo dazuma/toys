@@ -74,7 +74,7 @@ describe Toys::CLI do
       test = self
       cli.add_config_block do
         tool "foo" do
-          t = Toys::DSL::Tool.current_tool(self, true)
+          t = Toys::DSL::Internal.current_tool(self, true)
           t.add_initializer(proc { |a| set(:a, a) }, 123)
           to_run do
             test.assert_equal(123, get(:a))

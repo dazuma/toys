@@ -1623,4 +1623,55 @@ describe Toys::DSL::Tool do
       loader.lookup([])
     end
   end
+
+  describe "Toys::Tool subclassing" do
+    it "creates a tool" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("description of foo", tool.desc.to_s)
+    end
+
+    it "creates a tool with a hyphenated name" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo-bar"])
+      assert_equal("description of foo-bar", tool.desc.to_s)
+    end
+
+    it "creates a nested tool using a nested class" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo-bar", "baz"])
+      assert_equal("description of foo-bar baz", tool.desc.to_s)
+    end
+
+    it "creates a nested tool using a block" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo-bar", "qux"])
+      assert_equal("description of foo-bar qux", tool.desc.to_s)
+    end
+
+    it "is not allowed outside the DSL" do
+      ex = assert_raises(Toys::ToolDefinitionError) do
+        class Hello1 < Toys::Tool; end
+      end
+      assert_match(/Toys::Tool can be subclassed only from the Toys DSL/, ex.message)
+    end
+
+    it "is not allowed from a block" do
+      test = self
+      loader.add_block do
+        ex = test.assert_raises(Toys::ToolDefinitionError) do
+          class Hello1 < Toys::Tool; end
+        end
+        test.assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.message)
+      end
+    end
+
+    it "is not allowed from a tool block" do
+      loader.add_path(File.join(cases_dir, "tool-subclass-under-block"))
+      ex = assert_raises(Toys::ContextualError) do
+        loader.lookup(["foo"])
+      end
+      assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.cause.message)
+    end
+  end
 end
