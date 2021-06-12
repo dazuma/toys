@@ -37,11 +37,11 @@ module Toys
     # @param display_name [String] A name to use for display (in help text and
     #     error reports). Defaults to the key in upper case.
     # @param desc [String,Array<String>,Toys::WrappableString] Short
-    #     description for the flag. See {Toys::DSL::Tool#desc} for a
+    #     description for the flag. See {Toys::ToolDefintion#desc} for a
     #     description of the allowed formats. Defaults to the empty string.
     # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-    #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
-    #     a description of the allowed formats. (But note that this param
+    #     Long description for the flag. See {Toys::ToolDefintion#long_desc}
+    #     for a description of the allowed formats. (But note that this param
     #     takes an Array of description lines, rather than a series of
     #     arguments.) Defaults to the empty array.
     # @return [Toys::PositionalArg]

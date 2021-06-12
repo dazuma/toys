@@ -44,11 +44,12 @@ module Toys
       ##
       # Create a usage helper.
       #
-      # @param tool [Toys::Tool] The tool to document.
+      # @param tool [Toys::ToolDefinition] The tool to document.
       # @param loader [Toys::Loader] A loader that can provide subcommands.
       # @param executable_name [String] The name of the executable.
       #     e.g. `"toys"`.
-      # @param delegates [Array<Toys::Tool>] The delegation path to the tool.
+      # @param delegates [Array<Toys::ToolDefinition>] The delegation path to
+      #     the tool.
       #
       # @return [Toys::Utils::HelpText]
       #
@@ -60,8 +61,8 @@ module Toys
       end
 
       ##
-      # The Tool being documented.
-      # @return [Toys::Tool]
+      # The ToolDefinition being documented.
+      # @return [Toys::ToolDefinition]
       #
       attr_reader :tool
 

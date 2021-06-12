@@ -17,11 +17,12 @@ module Toys
     #
     # @param type [Symbol] The type of group. Default is `:optional`.
     # @param desc [String,Array<String>,Toys::WrappableString] Short
-    #     description for the group. See {Toys::Tool#desc=} for a description
-    #     of allowed formats. Defaults to `"Flags"`.
+    #     description for the group. See {Toys::ToolDefinition#desc} for a
+    #     description of allowed formats. Defaults to `"Flags"`.
     # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-    #     Long description for the flag group. See {Toys::Tool#long_desc=} for
-    #     a description of allowed formats. Defaults to the empty array.
+    #     Long description for the flag group. See
+    #     {Toys::ToolDefinition#long_desc} for a description of allowed
+    #     formats. Defaults to the empty array.
     # @param name [String,Symbol,nil] The name of the group, or nil for no
     #     name.
     # @return [Toys::FlagGroup::Base] A flag group of the correct subclass.
