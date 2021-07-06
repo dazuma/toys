@@ -16,7 +16,8 @@ module Toys
     # Should be created only from the DSL via the Loader.
     # @private
     #
-    def initialize(parent, full_name, priority, middleware_stack, middleware_lookup)
+    def initialize(parent, full_name, priority, middleware_stack, middleware_lookup,
+                   tool_class = nil)
       @parent = parent
       @full_name = full_name.dup.freeze
       @priority = priority
@@ -28,6 +29,8 @@ module Toys
       @templates = {}
       @completions = {}
 
+      @precreated_class = tool_class
+
       reset_definition
     end
 
@@ -38,7 +41,7 @@ module Toys
     # @private
     #
     def reset_definition
-      @tool_class = ::Class.new(::Toys::Context)
+      @tool_class = @precreated_class || ::Class.new(::Toys::Context)
 
       @source_info = nil
       @definition_finished = false

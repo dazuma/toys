@@ -234,8 +234,8 @@ module Toys
     #
     # @private
     #
-    def get_tool(words, priority)
-      get_tool_data(words).get_tool(priority, self)
+    def get_tool(words, priority, tool_class = nil)
+      get_tool_data(words).get_tool(priority, self, tool_class)
     end
 
     ##
@@ -267,10 +267,10 @@ module Toys
     #
     # @private
     #
-    def build_tool(words, priority)
+    def build_tool(words, priority, tool_class = nil)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      ToolDefinition.new(parent, words, priority, middleware_stack, @middleware_lookup)
+      ToolDefinition.new(parent, words, priority, middleware_stack, @middleware_lookup, tool_class)
     end
 
     ##
@@ -403,7 +403,7 @@ module Toys
       if remaining_words
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
-        DSL::Tool.prepare(tool_class, words, priority, remaining_words, source, self) do
+        DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, self) do
           ContextualError.capture("Error while loading Toys config!") do
             tool_class.class_eval(&source.source_proc)
           end
@@ -541,12 +541,15 @@ module Toys
       end
 
       # @private
-      def get_tool(priority, loader)
+      def get_tool(priority, loader, tool_class = nil)
         @mutex.synchronize do
           if @top_priority.nil? || @top_priority < priority
             @top_priority = priority
           end
-          @definitions[priority] ||= loader.build_tool(@words, priority)
+          if tool_class && @definitions.include?(priority)
+            raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
+          end
+          @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
         end
       end
 

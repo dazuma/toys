@@ -200,7 +200,7 @@ module Toys
                                  report_collisions, @flag_group, desc, long_desc, display_name)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(@tool, key)
-        DSL::Tool.maybe_add_getter(@tool_dsl, key)
+        DSL::Internal.maybe_add_getter(@tool_dsl, key)
         self
       end
 
