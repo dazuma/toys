@@ -1634,6 +1634,15 @@ module Toys
       end
 
       ##
+      # Get the settings for this tool.
+      #
+      # @return [Toys::Tool::Settings] Tool-specific preferences.
+      #
+      def settings
+        DSL::Tool.current_tool(self, false)&.settings
+      end
+
+      ##
       # Determines whether the current Toys version satisfies the given
       # requirements.
       #
