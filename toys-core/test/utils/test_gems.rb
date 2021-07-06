@@ -3,6 +3,7 @@
 require "helper"
 require "fileutils"
 require "timeout"
+require "toys/utils/exec"
 require "toys/utils/gems"
 
 describe Toys::Utils::Gems do
@@ -10,6 +11,7 @@ describe Toys::Utils::Gems do
   let(:exec_service) { Toys::Utils::Exec.new }
 
   def setup_case(name, &block)
+    skip unless ::ENV["TOYS_TEST_INTEGRATION"]
     ::Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
         ::Timeout.timeout(30, &block)
