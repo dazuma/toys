@@ -19,6 +19,8 @@ describe "toys-core" do
   end
 
   it "builds gems and runs examples" do
+    skip unless ENV["TOYS_TEST_INTEGRATION"]
+
     core_dir = File.dirname(__dir__)
     tmp_dir = File.join(core_dir, "tmp")
     gems_dir = File.join(tmp_dir, "gems")
