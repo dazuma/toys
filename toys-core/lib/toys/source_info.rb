@@ -10,13 +10,16 @@ module Toys
     # @private
     #
     def initialize(parent, context_directory, source_type, source_path, source_proc,
-                   source_name, data_dir_name, lib_dir_name)
+                   git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
       @parent = parent
       @context_directory = context_directory
       @source_type = source_type
       @source = source_type == :proc ? source_proc : source_path
       @source_path = source_path
       @source_proc = source_proc
+      @git_remote = git_remote
+      @git_path = git_path
+      @git_commit = git_commit
       @source_name = source_name
       @data_dir_name = data_dir_name
       @lib_dir_name = lib_dir_name
@@ -74,6 +77,30 @@ module Toys
     attr_reader :source_proc
 
     ##
+    # The git remote.
+    #
+    # @return [String] The git remote
+    # @return [nil] if this source is not fron git.
+    #
+    attr_reader :git_remote
+
+    ##
+    # The git path.
+    #
+    # @return [String] The git path. This could be the empty string.
+    # @return [nil] if this source is not fron git.
+    #
+    attr_reader :git_path
+
+    ##
+    # The git commit.
+    #
+    # @return [String] The git commit.
+    # @return [nil] if this source is not fron git.
+    #
+    attr_reader :git_commit
+
+    ##
     # The user-visible name of this source.
     #
     # @return [String]
@@ -121,12 +148,17 @@ module Toys
     # @private
     #
     def relative_child(filename)
-      raise "relative_child is valid only on a directory source" unless source_type == :directory
+      unless source_type == :directory
+        raise LoaderError, "relative_child is valid only on a directory source"
+      end
       child_path = ::File.join(source_path, filename)
       child_path, type = SourceInfo.check_path(child_path, true)
       return nil unless child_path
-      SourceInfo.new(self, context_directory, type, child_path, nil, child_path,
-                     @data_dir_name, @lib_dir_name)
+      child_git_path = ::File.join(git_path, filename) if git_path
+      child_name = git_path ? "#{git_remote}:#{child_git_path}:#{git_commit}" : child_path
+      SourceInfo.new(self, context_directory, type, child_path, nil,
+                     git_remote, child_git_path, git_commit,
+                     child_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
@@ -135,8 +167,20 @@ module Toys
     #
     def absolute_child(child_path)
       child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, context_directory, type, child_path, nil, child_path,
-                     @data_dir_name, @lib_dir_name)
+      SourceInfo.new(self, context_directory, type, child_path, nil, nil, nil, nil,
+                     child_path, @data_dir_name, @lib_dir_name)
+    end
+
+    ##
+    # Create a child SourceInfo with a git source.
+    # @private
+    #
+    def git_child(child_git_remote, child_git_path, child_git_commit, child_path)
+      child_path, type = SourceInfo.check_path(child_path, false)
+      child_name = "#{child_git_remote}:#{child_git_path}:#{child_git_commit}"
+      SourceInfo.new(self, context_directory, type, child_path, nil,
+                     child_git_remote, child_git_path, child_git_commit,
+                     child_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
@@ -145,8 +189,9 @@ module Toys
     #
     def proc_child(child_proc, source_name = nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, context_directory, :proc, source_path, child_proc, source_name,
-                     @data_dir_name, @lib_dir_name)
+      SourceInfo.new(self, context_directory, :proc, source_path, child_proc,
+                     git_remote, git_path, git_commit,
+                     source_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
@@ -156,7 +201,20 @@ module Toys
     def self.create_path_root(source_path, data_dir_name, lib_dir_name)
       source_path, type = check_path(source_path, false)
       context_directory = ::File.dirname(source_path)
-      new(nil, context_directory, type, source_path, nil, source_path, data_dir_name, lib_dir_name)
+      new(nil, context_directory, type, source_path, nil, nil, nil, nil,
+          source_path, data_dir_name, lib_dir_name)
+    end
+
+    ##
+    # Create a root source info for a cached git repo.
+    # @private
+    #
+    def self.create_git_root(git_remote, git_path, git_commit, source_path,
+                             data_dir_name, lib_dir_name)
+      source_path, type = check_path(source_path, false)
+      source_name = "#{git_remote}:#{git_path}:#{git_commit}"
+      new(nil, nil, type, source_path, nil, git_remote, git_path, git_commit,
+          source_name, data_dir_name, lib_dir_name)
     end
 
     ##
@@ -164,7 +222,8 @@ module Toys
     # @private
     #
     def self.create_proc_root(source_proc, source_name, data_dir_name, lib_dir_name)
-      new(nil, nil, :proc, nil, source_proc, source_name, data_dir_name, lib_dir_name)
+      new(nil, nil, :proc, nil, source_proc, nil, nil, nil,
+          source_name, data_dir_name, lib_dir_name)
     end
 
     ##
