@@ -22,6 +22,9 @@ Metrics/BlockNesting:
 Metrics/MethodLength:
   Exclude:
     - "builtins/**/*"
+Naming/FileName:
+  Exclude:
+    - "builtins/**/*"
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
