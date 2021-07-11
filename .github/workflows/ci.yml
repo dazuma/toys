@@ -34,13 +34,19 @@ jobs:
             ruby: "jruby"
             tool: test
           - os: macos-latest
-            ruby: "2.7"
+            ruby: "2.4"
+            tool: test
+          - os: macos-latest
+            ruby: "3.0"
             tool: test
           - os: windows-latest
-            ruby: "2.7"
+            ruby: "2.4"
+            tool: test
+          - os: windows-latest
+            ruby: "3.0"
             tool: test
           - os: ubuntu-latest
-            ruby: "2.7"
+            ruby: "3.0"
             tool: "rubocop , yardoc , build"
       fail-fast: false
     runs-on: ${{ matrix.os }}
