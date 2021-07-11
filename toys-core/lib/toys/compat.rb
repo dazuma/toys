@@ -84,5 +84,24 @@ module Toys
         end
       end
     end
+
+    # File.absolute_path? requires Ruby 2.7 or later. For earlier Rubies, use
+    # an ad-hoc mechanism.
+    if ruby_version >= 20700
+      # @private
+      def self.absolute_path?(path)
+        ::File.absolute_path?(path)
+      end
+    elsif ::Dir.getwd =~ /^[a-zA-Z]:/
+      # @private
+      def self.absolute_path?(path)
+        /^[a-zA-Z]:/.match?(path)
+      end
+    else
+      # @private
+      def self.absolute_path?(path)
+        path.start_with?("/")
+      end
+    end
   end
 end
