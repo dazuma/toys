@@ -1327,17 +1327,17 @@ module Toys
     #
     # The following settings are supported:
     #
-    #  *  `inherit_helper_methods` (_Boolean_) - Whether subtools should
+    #  *  `inherit_parent_methods` (_Boolean_) - Whether subtools should
     #     inherit methods defined by parent tools. Defaults to `false`.
     #
     class Settings < ::Toys::Settings
-      settings_attr :inherit_parent, default: false
+      settings_attr :inherit_parent_methods, default: false
     end
 
     private
 
     def create_class
-      ::Class.new(@parent&.settings&.inherit_parent ? @parent.tool_class : ::Toys::Context)
+      ::Class.new(@parent&.settings&.inherit_parent_methods ? @parent.tool_class : ::Toys::Context)
     end
 
     def make_config_proc(middleware, loader, next_config)
