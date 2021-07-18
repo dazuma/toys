@@ -59,6 +59,17 @@ describe Toys::Utils::Gems do
       end
     end
 
+    it "sets up a bundle installing to a local directory" do
+      setup_case("bundle-with-vendored-path") do
+        FileUtils.rm_f("Gemfile.lock")
+        FileUtils.rm_rf("vendor")
+        result = run_script
+        assert(result.success?)
+        result = run_script
+        assert(result.success?)
+      end
+    end
+
     it "restores the original Gemfile.lock" do
       setup_case("bundle-without-toys") do
         exec_service.exec(["bundle", "install"], out: :null, err: :null)

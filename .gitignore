@@ -1,5 +1,7 @@
 /**/.yardoc/
 /**/.bundle/
+!/toys-core/test/gems-cases/bundle-with-vendored-path/.bundle
+/toys-core/test/gems-cases/bundle-with-vendored-path/vendor
 /*/doc/
 /*/pkg/
 /**/tmp/

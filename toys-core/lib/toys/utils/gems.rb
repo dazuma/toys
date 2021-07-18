@@ -185,6 +185,7 @@ module Toys
           gemfile_path = Gems.find_gemfile(dir, gemfile_names: gemfile_names)
         end
         raise GemfileNotFoundError, "Gemfile not found" unless gemfile_path
+        gemfile_path = ::File.absolute_path(gemfile_path)
         Gems.synchronize do
           if configure_gemfile(gemfile_path)
             activate("bundler", "~> 2.1")
@@ -325,14 +326,14 @@ module Toys
       end
 
       def restore_old_lockfile(lockfile_path, contents)
-        if contents
-          ::File.open(lockfile_path, "w") do |file|
-            file.write(contents)
-          end
+        return unless contents
+        ::File.open(lockfile_path, "w") do |file|
+          file.write(contents)
         end
       end
 
       def modify_bundle_definition(gemfile_path, lockfile_path)
+        ::Bundler.configure
         builder = ::Bundler::Dsl.new
         builder.eval_gemfile(gemfile_path)
         toys_gems = ["toys-core"]
