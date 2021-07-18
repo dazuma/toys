@@ -1606,18 +1606,18 @@ describe Toys::DSL::Tool do
     it "returns the settings" do
       test = self
       loader.add_block do
-        test.assert_equal(false, settings.inherit_parent_methods)
-        settings.inherit_parent_methods = true
-        test.assert_equal(true, settings.inherit_parent_methods)
+        test.assert_equal(false, settings.propagate_helper_methods)
+        settings.propagate_helper_methods = true
+        test.assert_equal(true, settings.propagate_helper_methods)
       end
     end
 
     it "inherits settings of parent tool" do
       test = self
       loader.add_block do
-        settings.inherit_parent_methods = true
+        settings.propagate_helper_methods = true
         tool "tool-1" do
-          test.assert_equal(true, settings.inherit_parent_methods)
+          test.assert_equal(true, settings.propagate_helper_methods)
         end
       end
     end
@@ -1668,6 +1668,40 @@ describe Toys::DSL::Tool do
       loader.add_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar", "qux"])
       assert_equal("description of foo-bar qux", tool.desc.to_s)
+    end
+
+    it "creates a tool with a custom name" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["qu_ux"])
+      assert_equal("description of qu_ux", tool.desc.to_s)
+    end
+
+    it "creates a tool subclassing an existing tool" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo-child1"])
+      assert_equal("description of foo-child1", tool.desc.to_s)
+      assert_equal(9, cli.run(["foo-child1"]))
+    end
+
+    it "creates a custom-named tool subclassing an existing tool" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["foo_child2"])
+      assert_equal("description of foo_child2", tool.desc.to_s)
+      assert_equal(9, cli.run(["foo_child2"]))
+    end
+
+    it "creates a tool subclassing an existing custom-named tool" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["quux-child1"])
+      assert_equal("description of quux-child1", tool.desc.to_s)
+      assert_equal(8, cli.run(["quux-child1"]))
+    end
+
+    it "creates a custom-named tool subclassing an existing custom-named tool" do
+      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      tool, _remaining = loader.lookup(["quux_child2"])
+      assert_equal("description of quux_child2", tool.desc.to_s)
+      assert_equal(8, cli.run(["quux_child2"]))
     end
 
     it "is not allowed outside the DSL" do

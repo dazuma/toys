@@ -7,7 +7,7 @@
 # This is useful if the naming behavior of {Toys::Tool} is not adequate for
 # your tool.
 #
-# ## Example
+# ### Example
 #
 #     class FooBar < Toys.Tool("Foo_Bar")
 #       desc "This is a tool called Foo_Bar"
@@ -17,12 +17,38 @@
 #       end
 #     end
 #
-def Toys.Tool(given_name = nil) # rubocop:disable Naming/MethodName
-  return ::Toys::Tool if given_name.nil?
-  ::Class.new(::Toys::Context) do
+# @param name [String] Name of the tool. Defaults to a name inferred from the
+#     class name. (See {Toys::Tool}.)
+# @param base [Class] Use this tool class as the base class, and inherit helper
+#     methods from it.
+# @param args [String,Class] Any string-valued positional argument is
+#     interpreted as the name. Any class-valued positional argument is
+#     interpreted as the base class.
+#
+def Toys.Tool(*args, name: nil, base: nil) # rubocop:disable Naming/MethodName
+  args.each do |arg|
+    case arg
+    when ::Class
+      if base
+        raise ::ArgumentError, "Both base keyword argument and class-valud argument received"
+      end
+      base = arg
+    when ::String, ::Symbol
+      if name
+        raise ::ArgumentError, "Both name keyword argument and string-valud argument received"
+      end
+      name = arg
+    else
+      raise ::ArgumentError, "Unrecognized argument: #{arg}"
+    end
+  end
+  return base || ::Toys::Tool if name.nil?
+  ::Class.new(base || ::Toys::Context) do
+    base_class = self
     define_singleton_method(:inherited) do |tool_class|
+      ::Toys::DSL::Internal.configure_class(tool_class, base_class == self ? name.to_s : nil)
       super(tool_class)
-      ::Toys::DSL::Internal.create_class(tool_class, given_name)
+      ::Toys::DSL::Internal.setup_class_dsl(tool_class)
     end
   end
 end
@@ -52,8 +78,9 @@ module Toys
   class Tool < Context
     # @private
     def self.inherited(tool_class)
+      DSL::Internal.configure_class(tool_class)
       super
-      DSL::Internal.create_class(tool_class)
+      DSL::Internal.setup_class_dsl(tool_class)
     end
   end
 end
