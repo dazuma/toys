@@ -1602,6 +1602,27 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "settings directive" do
+    it "returns the settings" do
+      test = self
+      loader.add_block do
+        test.assert_equal(false, settings.inherit_parent_methods)
+        settings.inherit_parent_methods = true
+        test.assert_equal(true, settings.inherit_parent_methods)
+      end
+    end
+
+    it "inherits settings of parent tool" do
+      test = self
+      loader.add_block do
+        settings.inherit_parent_methods = true
+        tool "tool-1" do
+          test.assert_equal(true, settings.inherit_parent_methods)
+        end
+      end
+    end
+  end
+
   describe "toys_version directives" do
     it "checks versions" do
       test = self
