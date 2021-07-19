@@ -11,8 +11,9 @@ class FakeProcessStatus
 end
 
 describe Toys::StandardMixins::Exec do
+  let(:log_io) { StringIO.new }
   let(:logger) {
-    Logger.new(StringIO.new).tap do |lgr|
+    Logger.new(log_io).tap do |lgr|
       lgr.level = Logger::WARN
     end
   }
@@ -465,6 +466,71 @@ describe Toys::StandardMixins::Exec do
         end
       end
       assert_equal(2, cli.run("foo"))
+    end
+  end
+
+  describe "settings" do
+    it "uses the standard logger and log_level setting" do
+      logger.level = Logger::INFO
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            include :exec
+            to_run do
+              logger.info("foobar")
+              exec(["echo", "hello"])
+            end
+          end
+        end
+      end
+      capture_subprocess_io do
+        cli.run("foo", "bar")
+      end
+      assert_match(/foobar/, log_io.string)
+      assert_match(/\["echo", "hello"\]/, log_io.string)
+    end
+
+    it "uses a custom logger setting" do
+      logger.level = Logger::INFO
+      custom_io = StringIO.new
+      cli.add_config_block do
+        tool "foo" do
+          settings.exec.default_logger = Logger.new(custom_io)
+          tool "bar" do
+            include :exec
+            to_run do
+              logger.info("foobar")
+              exec(["echo", "hello"])
+            end
+          end
+        end
+      end
+      capture_subprocess_io do
+        cli.run("foo", "bar")
+      end
+      assert_match(/\["echo", "hello"\]/, custom_io.string)
+      refute_match(/\["echo", "hello"\]/, log_io.string)
+      assert_match(/foobar/, log_io.string)
+      refute_match(/foobar/, custom_io.string)
+    end
+
+    it "uses a custom log_level setting" do
+      logger.level = Logger::INFO
+      cli.add_config_block do
+        tool "foo" do
+          settings.exec.default_log_level = Logger::DEBUG
+          tool "bar" do
+            include :exec
+            to_run do
+              exec(["echo", "hello"])
+            end
+          end
+        end
+      end
+      capture_subprocess_io do
+        cli.run("foo", "bar")
+      end
+      refute_match(/\["echo", "hello"\]/, log_io.string)
     end
   end
 end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
+require "logger"
 
 module Toys
   ##
@@ -1330,8 +1331,21 @@ module Toys
     #  *  `propagate_helper_methods` (_Boolean_) - Whether subtools should
     #     inherit methods defined by parent tools. Defaults to `false`.
     #
+    #  *  `exec.default_logger` (_Logger, nil_) - The default logger to use for
+    #     logging commands. If `nil` (the default), uses the tool's logger. See
+    #     the `:logger` option in the {Toys::StandardMixins::Exec} mixin. You
+    #     can use this setting to override the logging behavior of all exec
+    #     commands in a tool hierarchy.
+    #  *  `exec.default_log_level` (_Integer, false_) - The default log level
+    #     for logging commands. See the `:log_level` option in the
+    #     {Toys::StandardMixins::Exec} mixin. Default is `Logger::INFO`.
+    #
     class Settings < ::Toys::Settings
       settings_attr :propagate_helper_methods, default: false
+      settings_group :exec do
+        settings_attr :default_logger, type: [::Logger, nil]
+        settings_attr :default_log_level, type: [::Integer, false], default: ::Logger::INFO
+      end
     end
 
     private

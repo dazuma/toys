@@ -238,7 +238,10 @@ module Toys
         context[KEY] = Utils::Exec.new(**opts) do |k|
           case k
           when :logger
-            context[Context::Key::LOGGER]
+            tool = context[Context::Key::TOOL]
+            tool.settings.exec.default_logger || context[Context::Key::LOGGER]
+          when :log_level
+            context[Context::Key::TOOL].settings.exec.default_log_level
           when :cli
             context[Context::Key::CLI]
           end
