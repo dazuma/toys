@@ -329,7 +329,6 @@ module Toys
         end
         self
       end
-      alias name tool
 
       ##
       # Create an alias, representing an "alternate name" for a tool.

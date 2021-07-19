@@ -972,7 +972,7 @@ describe Toys::ToolDefinition do
   end
 
   describe "settings" do
-    it "honors inherit_parent_methods false" do
+    it "honors propagate_helper_methods false" do
       tool.tool_class.class_eval do
         def foo
           5
@@ -982,8 +982,8 @@ describe Toys::ToolDefinition do
       refute_includes(subtool.tool_class.public_instance_methods, :foo)
     end
 
-    it "honors inherit_parent_methods true" do
-      tool.settings.inherit_parent_methods = true
+    it "honors propagate_helper_methods true" do
+      tool.settings.propagate_helper_methods = true
       tool.tool_class.class_eval do
         def foo
           5

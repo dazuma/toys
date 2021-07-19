@@ -126,11 +126,13 @@ module Toys
         end
 
         ##
-        # Called by the Tool base class to prepare a subclass.
+        # Called by the Tool base class to set config values for a subclass.
         #
         # @private
         #
-        def create_class(tool_class, given_name = nil)
+        def configure_class(tool_class, given_name = nil)
+          return if tool_class.name.nil? || tool_class.instance_variable_defined?(:@__loader)
+
           mod_names = tool_class.name.split("::")
           class_name = mod_names.pop
           parent = parent_from_mod_name_segments(mod_names)
@@ -140,21 +142,31 @@ module Toys
           priority = parent.instance_variable_get(:@__priority)
           words = parent.instance_variable_get(:@__words) + name
           subtool = loader.get_tool(words, priority, tool_class)
-          class << tool_class
-            alias_method :super_include, :include
-          end
+
           remaining_words = parent.instance_variable_get(:@__remaining_words)
           next_remaining = name.reduce(remaining_words) do |running_words, word|
             Loader.next_remaining_words(running_words, word)
           end
-          source = current_source_from_context
-          tool_class.extend(DSL::Tool)
+
           tool_class.instance_variable_set(:@__words, words)
           tool_class.instance_variable_set(:@__priority, priority)
           tool_class.instance_variable_set(:@__loader, loader)
-          tool_class.instance_variable_set(:@__source, [source])
+          tool_class.instance_variable_set(:@__source, [current_source_from_context])
           tool_class.instance_variable_set(:@__remaining_words, next_remaining)
           tool_class.instance_variable_set(:@__cur_tool, subtool)
+        end
+
+        ##
+        # Called by the Tool base class to add the DSL to a subclass.
+        #
+        # @private
+        #
+        def setup_class_dsl(tool_class)
+          return if tool_class.name.nil? || tool_class.is_a?(DSL::Tool)
+          class << tool_class
+            alias_method :super_include, :include
+          end
+          tool_class.extend(DSL::Tool)
         end
 
         private
