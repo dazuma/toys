@@ -1638,7 +1638,7 @@ module Toys
       # @return [Toys::ToolDefinition::Settings] Tool-specific settings.
       #
       def settings
-        DSL::Tool.current_tool(self, false)&.settings
+        DSL::Internal.current_tool(self, false)&.settings
       end
 
       ##
