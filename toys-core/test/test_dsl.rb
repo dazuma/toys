@@ -1610,6 +1610,7 @@ describe Toys::DSL::Tool do
         settings.propagate_helper_methods = true
         test.assert_equal(true, settings.propagate_helper_methods)
       end
+      loader.lookup(["blah"])
     end
 
     it "inherits settings of parent tool" do
@@ -1620,6 +1621,7 @@ describe Toys::DSL::Tool do
           test.assert_equal(true, settings.propagate_helper_methods)
         end
       end
+      loader.lookup(["blah"])
     end
   end
 
