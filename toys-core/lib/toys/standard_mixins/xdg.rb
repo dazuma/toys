@@ -47,5 +47,10 @@ module Toys
         self[KEY]
       end
     end
+
+    ##
+    # An alternate name for the {XDG} module
+    #
+    Xdg = XDG
   end
 end
