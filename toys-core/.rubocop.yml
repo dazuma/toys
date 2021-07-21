@@ -1,5 +1,8 @@
 inherit_from: "../.rubocop-common.yml"
 
+AllCops:
+  Exclude:
+    - "test/gems-cases/bundle-with-vendored-path/vendor/**/*"
 Layout/EmptyLinesAroundAttributeAccessor:
   Exclude:
     - "test/**/*.rb"
