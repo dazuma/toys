@@ -60,6 +60,8 @@ module Toys
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       #     for information on available options.
+      # @param context_directory [String] A custom context directory to use
+      #     when executing this tool.
       #
       def initialize(name: nil,
                      gem_version: nil,
@@ -71,7 +73,8 @@ module Toys
                      template: nil,
                      generator: nil,
                      options: [],
-                     bundler: false)
+                     bundler: false,
+                     context_directory: nil)
         @name = name
         @gem_version = gem_version
         @files = files
@@ -83,6 +86,7 @@ module Toys
         @generator = generator
         @options = options
         @bundler = bundler
+        @context_directory = context_directory
       end
 
       ##
@@ -175,6 +179,14 @@ module Toys
       attr_writer :options
 
       ##
+      # Custom context directory for this tool.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :context_directory
+
+      ##
       # Set the bundler state and options for this tool.
       #
       # Pass `false` to disable bundler. Pass `true` or a hash of options to
@@ -213,7 +225,7 @@ module Toys
       # @private
       attr_reader :generator
       # @private
-      attr_reader :options
+      attr_reader :context_directory
 
       # @private
       def name
@@ -237,6 +249,11 @@ module Toys
       end
 
       # @private
+      def options
+        Array(@options)
+      end
+
+      # @private
       def bundler_settings
         if @bundler && !@bundler.is_a?(::Hash)
           {}
@@ -249,6 +266,8 @@ module Toys
         tool(template.name) do
           desc "Run rdoc on the current project."
 
+          set_context_directory template.context_directory if template.context_directory
+
           include :exec, exit_on_nonzero_status: true
           include :gems
 
@@ -256,7 +275,7 @@ module Toys
           include :bundler, **bundler_settings if bundler_settings
 
           to_run do
-            gem_requirements = Array(template.gem_version)
+            gem_requirements = template.gem_version
             gem "rdoc", *gem_requirements
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do

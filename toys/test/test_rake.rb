@@ -6,7 +6,8 @@ describe "rake template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:rake).new }
+    let(:template_class) { template_lookup.lookup(:rake) }
+    let(:template) { template_class.new }
 
     it "handles the gem_version field" do
       assert_equal([], template.gem_version)
@@ -16,6 +17,26 @@ describe "rake template" do
       assert_equal(["~> 12.1.0", "< 13.0"], template.gem_version)
       template.gem_version = nil
       assert_equal([], template.gem_version)
+    end
+
+    it "handles the rakefile_path field" do
+      assert_equal("Rakefile", template.rakefile_path)
+      template.rakefile_path = "another/Rakefile"
+      assert_equal("another/Rakefile", template.rakefile_path)
+      template.rakefile_path = nil
+      assert_equal("Rakefile", template.rakefile_path)
+    end
+
+    it "handles the only_described field" do
+      assert_equal(false, template.only_described)
+      template.only_described = true
+      assert_equal(true, template.only_described)
+    end
+
+    it "handles the use_flags field" do
+      assert_equal(false, template.use_flags)
+      template.use_flags = true
+      assert_equal(true, template.use_flags)
     end
 
     it "handles the bundler_settings field via the bundler writer" do
@@ -34,6 +55,27 @@ describe "rake template" do
       assert_equal({}, template.bundler_settings)
       template.use_bundler(groups: ["production"])
       assert_equal({groups: ["production"]}, template.bundler_settings)
+    end
+
+    it "handles the context_directory field" do
+      assert_nil(template.context_directory)
+      template.context_directory = "/path/to/somewhere"
+      assert_equal("/path/to/somewhere", template.context_directory)
+      template.context_directory = nil
+      assert_nil(template.context_directory)
+    end
+
+    it "honors constructor args" do
+      template = template_class.new gem_version: "~> 5.1",
+                                    rakefile_path: "Rakefile1",
+                                    only_described: true,
+                                    use_flags: true,
+                                    context_directory: "/path/to/context"
+      assert_equal(["~> 5.1"], template.gem_version)
+      assert_equal("Rakefile1", template.rakefile_path)
+      assert_equal(true, template.only_described)
+      assert_equal(true, template.use_flags)
+      assert_equal("/path/to/context", template.context_directory)
     end
   end
 
@@ -182,6 +224,18 @@ describe "rake template" do
         assert_output("Found = true\n") do
           cli.run("foo1")
         end
+      end
+    end
+
+    it "honors context_directory argument" do
+      basedir = __dir__
+      subdir = File.join(basedir, "rake-dirs", "dir1", "dir2")
+      loader.add_block do
+        set_context_directory subdir
+        expand :rake, context_directory: basedir
+      end
+      Dir.chdir(subdir) do
+        loader.lookup(["foo1", "bar"])
       end
     end
   end
