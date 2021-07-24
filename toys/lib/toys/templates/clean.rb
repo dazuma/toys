@@ -23,10 +23,13 @@ module Toys
       #     to clean. You can also include the symbol `:gitignore` which will
       #     clean all items covered by `.gitignore` files, if contained in a
       #     git working tree.
+      # @param context_directory [String] A custom context directory to use
+      #     when executing this tool.
       #
-      def initialize(name: nil, paths: [])
+      def initialize(name: nil, paths: [], context_directory: nil)
         @name = name
         @paths = paths
+        @context_directory = context_directory
       end
 
       ##
@@ -45,6 +48,17 @@ module Toys
       #
       attr_writer :paths
 
+      ##
+      # Custom context directory for this tool.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :context_directory
+
+      # @private
+      attr_reader :context_directory
+
       # @private
       def paths
         Array(@paths)
@@ -58,6 +72,8 @@ module Toys
       on_expand do |template|
         tool(template.name) do
           desc "Clean built files and directories."
+
+          set_context_directory template.context_directory if template.context_directory
 
           static :template_paths, template.paths
 

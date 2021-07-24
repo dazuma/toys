@@ -31,17 +31,21 @@ module Toys
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       #     for information on available options.
+      # @param context_directory [String] A custom context directory to use
+      #     when executing this tool.
       #
       def initialize(gem_version: nil,
                      rakefile_path: nil,
                      only_described: false,
                      use_flags: false,
-                     bundler: false)
+                     bundler: false,
+                     context_directory: nil)
         @gem_version = gem_version
         @rakefile_path = rakefile_path
         @only_described = only_described
         @use_flags = use_flags
         @bundler = bundler
+        @context_directory = context_directory
       end
 
       ##
@@ -81,6 +85,14 @@ module Toys
       attr_writer :use_flags
 
       ##
+      # Custom context directory for this tool.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :context_directory
+
+      ##
       # Set the bundler state and options for all Rake tools.
       #
       # Pass `false` to disable bundler. Pass `true` or a hash of options to
@@ -112,6 +124,8 @@ module Toys
       attr_reader :only_described
       # @private
       attr_reader :use_flags
+      # @private
+      attr_reader :context_directory
 
       # @private
       def gem_version
@@ -135,7 +149,9 @@ module Toys
       on_expand do |template|
         gem "rake", *template.gem_version
         require "rake"
-        rakefile_path = Templates::Rake.find_rakefile(template.rakefile_path, context_directory)
+        rakefile_path = Templates::Rake.find_rakefile(
+          template.rakefile_path, template.context_directory || context_directory
+        )
         raise "Cannot find #{template.rakefile_path}" unless rakefile_path
         context_dir = ::File.dirname(rakefile_path)
         rake = Templates::Rake.prepare_rake(rakefile_path, context_dir)

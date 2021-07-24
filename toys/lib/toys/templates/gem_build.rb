@@ -49,6 +49,8 @@ module Toys
       #     a git remote. You may specify which remote by setting the value to
       #     a string. Otherwise, if the value is simply `true`, the "origin"
       #     remote is used by default.
+      # @param context_directory [String] A custom context directory to use
+      #     when executing this tool.
       #
       def initialize(name: nil,
                      gem_name: nil,
@@ -57,7 +59,8 @@ module Toys
                      push_gem: false,
                      install_gem: false,
                      tag: false,
-                     push_tag: false)
+                     push_tag: false,
+                     context_directory: nil)
         @name = name
         @gem_name = gem_name
         @output = output
@@ -66,6 +69,7 @@ module Toys
         @install_gem = install_gem
         @tag = tag
         @push_tag = push_tag
+        @context_directory = context_directory
       end
 
       ##
@@ -137,6 +141,14 @@ module Toys
       #
       attr_writer :push_tag
 
+      ##
+      # Custom context directory for this tool.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :context_directory
+
       # @private
       attr_reader :output
       # @private
@@ -145,6 +157,8 @@ module Toys
       attr_reader :install_gem
       # @private
       attr_reader :tag
+      # @private
+      attr_reader :context_directory
 
       # @private
       def name
@@ -152,9 +166,11 @@ module Toys
       end
 
       # @private
-      def gem_name
+      def gem_name(context_dir = nil)
         return @gem_name if @gem_name
-        candidates = ::Dir.glob("*.gemspec")
+        glob = "*.gemspec"
+        glob = ::File.join(context_dir, glob) if context_dir
+        candidates = ::Dir.glob(glob)
         if candidates.empty?
           raise ToolDefinitionError, "Could not find a gemspec"
         end
@@ -181,7 +197,9 @@ module Toys
 
       on_expand do |template|
         tool(template.name) do
-          desc "#{template.task_names} the gem: #{template.gem_name}"
+          set_context_directory template.context_directory if template.context_directory
+
+          desc "#{template.task_names} the gem: #{template.gem_name(context_directory)}"
 
           flag :yes, "-y", "--yes", desc: "Do not ask for interactive confirmation"
           if template.output_flags.empty?

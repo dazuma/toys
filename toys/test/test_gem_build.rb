@@ -8,7 +8,8 @@ describe "gem_build template" do
   let(:toys_dir) { File.dirname(__dir__) }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:gem_build).new }
+    let(:template_class) { template_lookup.lookup(:gem_build) }
+    let(:template) { template_class.new }
 
     it "handles the name field" do
       assert_equal("build", template.name)
@@ -24,6 +25,14 @@ describe "gem_build template" do
       assert_equal("toys-core", template.gem_name)
       template.gem_name = nil
       assert_equal("toys", template.gem_name)
+    end
+
+    it "handles the output field" do
+      assert_nil(template.output)
+      template.output = "/path/to/somewhere"
+      assert_equal("/path/to/somewhere", template.output)
+      template.output = nil
+      assert_nil(template.output)
     end
 
     it "handles the output_flags field" do
@@ -58,6 +67,32 @@ describe "gem_build template" do
       assert_equal("Release", template.task_names)
       template.push_gem = false
       assert_equal("Build", template.task_names)
+    end
+
+    it "handles the context_directory field" do
+      assert_nil(template.context_directory)
+      template.context_directory = "/path/to/somewhere"
+      assert_equal("/path/to/somewhere", template.context_directory)
+      template.context_directory = nil
+      assert_nil(template.context_directory)
+    end
+
+    it "honors constructor args" do
+      template = template_class.new name: "hi",
+                                    gem_name: "toys",
+                                    output: "/path/to/output",
+                                    output_flags: "--out",
+                                    push_tag: true,
+                                    install_gem: true,
+                                    push_gem: true,
+                                    context_directory: "/path/to/context"
+      assert_equal("hi", template.name)
+      assert_equal("toys", template.gem_name)
+      assert_equal("/path/to/output", template.output)
+      assert_equal(["--out"], template.output_flags)
+      assert_equal("origin", template.push_tag)
+      assert_equal("Install and Release", template.task_names)
+      assert_equal("/path/to/context", template.context_directory)
     end
   end
 
@@ -106,6 +141,25 @@ describe "gem_build template" do
         FileUtils.mkdir_p("tmp")
         out, _err = capture_subprocess_io do
           assert_equal(0, cli.run("build", "--outfile", "tmp/toys.gem"))
+        end
+        assert_match(/Successfully built RubyGem/, out)
+        assert(File.file?("tmp/toys.gem"))
+        FileUtils.rm_rf("tmp")
+      end
+    end
+
+    it "honors context_directory argument" do
+      dir = toys_dir
+      loader.add_block do
+        expand :gem_build, output: "tmp/toys.gem", context_directory: dir
+      end
+      Dir.chdir(toys_dir) do
+        FileUtils.rm_rf("tmp")
+        FileUtils.mkdir_p("tmp")
+        out, _err = capture_subprocess_io do
+          Dir.chdir("tmp") do
+            assert_equal(0, cli.run("build"))
+          end
         end
         assert_match(/Successfully built RubyGem/, out)
         assert(File.file?("tmp/toys.gem"))

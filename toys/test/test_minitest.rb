@@ -6,7 +6,8 @@ describe "minitest template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
 
   describe "unit functionality" do
-    let(:template) { template_lookup.lookup(:minitest).new }
+    let(:template_class) { template_lookup.lookup(:minitest) }
+    let(:template) { template_class.new }
 
     it "handles the name field" do
       assert_equal("test", template.name)
@@ -46,6 +47,26 @@ describe "minitest template" do
       assert_equal(["~> 5.0"], template.gem_version)
     end
 
+    it "handles the seed field" do
+      assert_nil(template.seed)
+      template.seed = 1234
+      assert_equal(1234, template.seed)
+      template.seed = nil
+      assert_nil(template.seed)
+    end
+
+    it "handles the verbpse field" do
+      assert_equal(false, template.verbose)
+      template.verbose = true
+      assert_equal(true, template.verbose)
+    end
+
+    it "handles the warnings field" do
+      assert_equal(true, template.warnings)
+      template.warnings = false
+      assert_equal(false, template.warnings)
+    end
+
     it "handles the gem_version field with bundler" do
       template.use_bundler
       assert_equal([], template.gem_version)
@@ -74,6 +95,33 @@ describe "minitest template" do
       template.use_bundler(groups: ["production"])
       assert_equal({groups: ["production"]}, template.bundler_settings)
     end
+
+    it "handles the context_directory field" do
+      assert_nil(template.context_directory)
+      template.context_directory = "/path/to/somewhere"
+      assert_equal("/path/to/somewhere", template.context_directory)
+      template.context_directory = nil
+      assert_nil(template.context_directory)
+    end
+
+    it "honors constructor args" do
+      template = template_class.new name: "hi",
+                                    gem_version: "~> 5.1",
+                                    libs: "src",
+                                    files: "test_files/**/*_test.rb",
+                                    seed: 1234,
+                                    verbose: true,
+                                    warnings: false,
+                                    context_directory: "/path/to/context"
+      assert_equal("hi", template.name)
+      assert_equal(["~> 5.1"], template.gem_version)
+      assert_equal(["src"], template.libs)
+      assert_equal(["test_files/**/*_test.rb"], template.files)
+      assert_equal(1234, template.seed)
+      assert_equal(true, template.verbose)
+      assert_equal(false, template.warnings)
+      assert_equal("/path/to/context", template.context_directory)
+    end
   end
 
   describe "integration functionality" do
@@ -98,6 +146,17 @@ describe "minitest template" do
       loader.add_block do
         set_context_directory dir
         expand :minitest, files: "failing/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(1, cli.run("test"))
+      end
+      assert_match(/1 failure/, out)
+    end
+
+    it "honors context_directory argument" do
+      dir = cases_dir
+      loader.add_block do
+        expand :minitest, files: "failing/*.rb", context_directory: dir
       end
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("test"))

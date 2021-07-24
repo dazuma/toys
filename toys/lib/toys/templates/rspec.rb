@@ -68,6 +68,8 @@ module Toys
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       #     for information on available options.
+      # @param context_directory [String] A custom context directory to use
+      #     when executing this tool.
       #
       def initialize(name: nil,
                      gem_version: nil,
@@ -79,7 +81,8 @@ module Toys
                      backtrace: false,
                      pattern: nil,
                      warnings: true,
-                     bundler: false)
+                     bundler: false,
+                     context_directory: nil)
         @name = name
         @gem_version = gem_version
         @libs = libs
@@ -91,6 +94,7 @@ module Toys
         @pattern = pattern
         @warnings = warnings
         @bundler = bundler
+        @context_directory = context_directory
       end
 
       ##
@@ -182,6 +186,14 @@ module Toys
       attr_writer :warnings
 
       ##
+      # Custom context directory for this tool.
+      #
+      # @param value [String]
+      # @return [String]
+      #
+      attr_writer :context_directory
+
+      ##
       # Set the bundler state and options for this tool.
       #
       # Pass `false` to disable bundler. Pass `true` or a hash of options to
@@ -217,6 +229,8 @@ module Toys
       attr_reader :backtrace
       ## @private
       attr_reader :warnings
+      # @private
+      attr_reader :context_directory
 
       # @private
       def name
@@ -261,6 +275,8 @@ module Toys
       on_expand do |template|
         tool(template.name) do
           desc "Run rspec on the current project."
+
+          set_context_directory template.context_directory if template.context_directory
 
           include :exec
           include :gems
