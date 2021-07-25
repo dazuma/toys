@@ -405,6 +405,29 @@ module Toys
       end
 
       ##
+      # Load configuration from a public git repository, as if its contents
+      # were inserted at the current location.
+      #
+      # @param remote [String] The URL of the git repository. Defaults to the
+      #     current repository if already loading from git.
+      # @param path [String] The path within the repo to the file or directory
+      #     to load. Defaults to the root of the repo.
+      # @param commit [String] The commit branch, tag, or sha. Defaults to the
+      #     current commit if already loading from git, or to `HEAD`.
+      #
+      # @return [self]
+      #
+      def load_git(remote: nil, path: nil, commit: nil)
+        remote ||= source_info.git_remote
+        raise ToolDefinitionError, "Git remote not specified" unless remote
+        path ||= ""
+        commit ||= source_info.git_commit || "HEAD"
+        @__loader.load_git(source_info, remote, path, commit,
+                           @__words, @__remaining_words, @__priority)
+        self
+      end
+
+      ##
       # Expand the given template in the current location.
       #
       # The template may be specified as a class or a well-known template name.

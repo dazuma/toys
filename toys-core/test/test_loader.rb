@@ -1,16 +1,27 @@
 # frozen_string_literal: true
 
 require "helper"
+require "fileutils"
+require "toys/utils/git_cache"
 
 describe Toys::Loader do
+  let(:git_cache_dir) { File.join(Dir.tmpdir, "toys_loader_git_cache_test") }
+  let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: git_cache_dir) }
   let(:loader) {
-    Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ":")
+    Toys::Loader.new(index_file_name: ".toys.rb",
+                     extra_delimiters: ":",
+                     git_cache: git_cache)
   }
-  let(:cases_dir) {
-    File.join(__dir__, "lookup-cases")
-  }
+  let(:cases_dir) { File.join(__dir__, "lookup-cases") }
+  let(:git_remote) { "https://github.com/dazuma/toys.git" }
+  let(:git_commit) { "main" }
+
   def wrappable(str)
     Toys::WrappableString.new(str)
+  end
+
+  before do
+    FileUtils.rm_rf(git_cache_dir)
   end
 
   describe "empty" do
@@ -106,6 +117,41 @@ describe Toys::Loader do
       assert_equal([], tool.full_name)
       assert_nil(tool.simple_name)
       assert_equal(["tool-blah"], remaining)
+    end
+  end
+
+  describe "config from git sources" do
+    before do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      loader.add_git(git_remote, "toys-core/test/lookup-cases/config-items/.toys", git_commit)
+      loader.add_git(git_remote, "toys-core/test/lookup-cases/config-items/.toys.rb", git_commit)
+    end
+
+    it "finds a tool directly defined in a config file" do
+      tool, remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal([], remaining)
+    end
+
+    it "finds a subtool directly defined in a config file" do
+      tool, remaining = loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal("file tool-1-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1", "tool-1-1"], tool.full_name)
+      assert_equal([], remaining)
+    end
+
+    it "finds a namespace directly defined in a config file" do
+      tool, remaining = loader.lookup(["namespace-1"])
+      assert_equal("file namespace-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1"], tool.full_name)
+      assert_equal([], remaining)
+    end
+
+    it "finds a tool defined in a file in a config directory" do
+      tool, remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal([], remaining)
     end
   end
 
@@ -226,9 +272,11 @@ describe Toys::Loader do
     end
   end
 
-  describe "includes" do
+  describe "includes with absolute path loads" do
+    let(:includes_cases_dir) { File.join(cases_dir, "items-with-includes") }
+
     before do
-      loader.add_path(File.join(cases_dir, "items-with-includes"))
+      loader.add_path(File.join(includes_cases_dir, "absolutes.rb"))
     end
 
     it "gets an item from a root-level directory include" do
@@ -239,13 +287,53 @@ describe Toys::Loader do
     it "gets an item from a root-level file include" do
       tool, _remaining = loader.lookup(["namespace-1", "tool-1-1"])
       assert_equal("file tool-1-1 short description", tool.desc.to_s)
-      assert_equal(cases_dir, tool.source_info.context_directory)
+      assert_equal(includes_cases_dir, tool.source_info.context_directory)
     end
 
     it "gets an item from non-root-level include" do
       tool, _remaining = loader.lookup(["namespace-0", "namespace-1", "tool-1-1"])
       assert_equal("normal tool-1-1 short description", tool.desc.to_s)
-      assert_equal(cases_dir, tool.source_info.context_directory)
+      assert_equal(includes_cases_dir, tool.source_info.context_directory)
+    end
+
+    it "does not load an include if not needed" do
+      loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal(true, loader.tool_defined?(["namespace-1", "tool-1-1"]))
+      assert_equal(false, loader.tool_defined?(["namespace-0", "tool-1"]))
+      loader.lookup(["namespace-0", "tool-1"])
+      assert_equal(true, loader.tool_defined?(["namespace-0", "tool-1"]))
+    end
+
+    it "loads includes that are descendants of a namespace query" do
+      assert_equal(false, loader.tool_defined?(["namespace-0", "namespace-1", "tool-1-1"]))
+      loader.lookup(["namespace-0"])
+      assert_equal(true, loader.tool_defined?(["namespace-0", "namespace-1", "tool-1-1"]))
+    end
+  end
+
+  describe "includes with github loads" do
+    let(:includes_cases_dir) { File.join(cases_dir, "items-with-includes") }
+
+    before do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      loader.add_path(File.join(includes_cases_dir, "github.rb"))
+    end
+
+    it "gets an item from a root-level directory include" do
+      tool, _remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+    end
+
+    it "gets an item from a root-level file include" do
+      tool, _remaining = loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal("file tool-1-1 short description", tool.desc.to_s)
+      assert_equal(includes_cases_dir, tool.source_info.context_directory)
+    end
+
+    it "gets an item from non-root-level include" do
+      tool, _remaining = loader.lookup(["namespace-0", "namespace-1", "tool-1-1"])
+      assert_equal("normal tool-1-1 short description", tool.desc.to_s)
+      assert_equal(includes_cases_dir, tool.source_info.context_directory)
     end
 
     it "does not load an include if not needed" do

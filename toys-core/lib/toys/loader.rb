@@ -54,7 +54,8 @@ module Toys
       extra_delimiters: "",
       mixin_lookup: nil,
       middleware_lookup: nil,
-      template_lookup: nil
+      template_lookup: nil,
+      git_cache: nil
     )
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
@@ -76,6 +77,7 @@ module Toys
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
+      @git_cache = git_cache
       get_tool([], BASE_PRIORITY)
     end
 
@@ -120,6 +122,33 @@ module Toys
         raise "Cannot add a block after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         source = SourceInfo.create_proc_root(block, name, @data_dir_name, @lib_dir_name)
+        @worklist << [source, [], priority]
+      end
+      self
+    end
+
+    ##
+    # Add a configuration git source to the loader.
+    #
+    # @param git_remote [String] The git repo URL
+    # @param git_path [String] The path to the relevant file or directory in
+    #     the repo. Specify the empty string to use the entire repo.
+    # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name)
+    # @param high_priority [Boolean] If true, add this path at the top of the
+    #     priority list. Defaults to false, indicating the new path should be
+    #     at the bottom of the priority list.
+    # @param update [Boolean] If the commit is not a SHA, pulls any updates
+    #     from the remote. Defaults to false, which uses a local cache and does
+    #     not update if the commit has been fetched previously.
+    # @return [self]
+    #
+    def add_git(git_remote, git_path, git_commit, high_priority: false, update: false)
+      @mutex.synchronize do
+        raise "Cannot add a git source after tool loading has started" if @loading_started
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        path = git_cache.find(git_remote, path: git_path, commit: git_commit, update: update)
+        source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path,
+                                            @data_dir_name, @lib_dir_name)
         @worklist << [source, [], priority]
       end
       self
@@ -335,7 +364,26 @@ module Toys
     # @private
     #
     def load_path(parent_source, path, words, remaining_words, priority)
+      if parent_source.git_remote
+        raise LoaderError,
+              "Git source #{parent_source.source_name} tried to load from the local file system"
+      end
       source = parent_source.absolute_child(path)
+      @mutex.synchronize do
+        load_validated_path(source, words, remaining_words, priority)
+      end
+    end
+
+    ##
+    # Load configuration from the given git remote. This is called from the
+    # `load_git` directive in the DSL.
+    #
+    # @private
+    #
+    def load_git(parent_source, git_remote, git_path, git_commit, words, remaining_words, priority,
+                 update: false)
+      path = git_cache.find(git_remote, path: git_path, commit: git_commit, update: update)
+      source = parent_source.git_child(git_remote, git_path, git_commit, path)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
@@ -350,6 +398,18 @@ module Toys
       source = parent_source.proc_child(block)
       @mutex.synchronize do
         load_proc(source, words, remaining_words, priority)
+      end
+    end
+
+    ##
+    # Get a GitCache.
+    #
+    # @private
+    #
+    def git_cache
+      @git_cache ||= begin
+        require "toys/utils/git_cache"
+        Utils::GitCache.new
       end
     end
 
