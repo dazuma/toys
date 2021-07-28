@@ -31,8 +31,12 @@ Style/BlockDelimiters:
 Style/Documentation:
   Exclude:
     - "test/**/*"
+    - ".toys.rb"
 Style/DocumentationMethod:
   Exclude:
     - ".toys.rb"
     - "builtins/**/*"
     - "test/**/*"
+Style/MixinGrouping:
+  Exclude:
+    - ".toys.rb"
