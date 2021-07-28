@@ -52,12 +52,14 @@ tool "ci" do
   def run
     exec_tool(["test"], name: "Tests")
     exec_tool(["rubocop"], name: "Style checker")
-    exec_tool(["yardoc"], name: "Docs generation")
+    exec_tool(["yardoc-full"], name: "Docs generation")
     exec_tool(["build"], name: "Gem build")
   end
 end
 
-tool "yardoc-full" do
+class YardocFull < Toys::Tool
+  STAGING_DIR = "toys-core"
+
   desc "Generate full yardoc including classes from toys-core"
 
   include :exec, e: true
@@ -65,16 +67,31 @@ tool "yardoc-full" do
 
   def run
     cd(context_directory)
-    rm_rf("tmp/docs-lib")
-    mkdir_p("tmp")
-    cp_r("../toys-core/lib", "tmp/docs-lib")
-    exec_tool(["yardoc-full", "_generate"])
-    rm_rf("tmp/docs-lib")
+    rm_rf(STAGING_DIR)
+    begin
+      mkdir_p(STAGING_DIR)
+      cp_r("../toys-core/lib", STAGING_DIR)
+      add_notice
+      exec_tool(["yardoc-full", "_generate"])
+    ensure
+      rm_rf(STAGING_DIR)
+    end
+  end
+
+  def add_notice
+    pat = /\n(?<in> *)##\n(?<def>(?:\k<in>#[^\n]*\n)+\k<in>(?:module|class) [A-Z]\w+)/
+    repl = "\n\\k<in>##\n\\k<in># **_Defined in the toys-core gem_**\n\\k<in>#\n\\k<def>"
+    Dir.glob("#{STAGING_DIR}/**/*.rb") do |path|
+      content = File.read(path)
+      if content.gsub!(pat, repl)
+        File.open(path, "w") { |file| file.write(content) }
+      end
+    end
   end
 
   expand :yardoc do |t|
     t.name = "_generate"
-    t.files = ["./tmp/docs-lib/**/*.rb"]
+    t.files = ["./#{STAGING_DIR}/**/*.rb"]
     t.bundler = true
   end
 end
