@@ -15,8 +15,8 @@ flag :exclude, "-e", "--exclude PATTERN",
      desc: "Exclude /regexp/ or string from run."
 flag :recursive, "--[no-]recursive", default: true,
      desc: "Recursively test subtools (default is true)"
-
-remaining_args :tool_path
+flag :tool, "-t TOOL", "--tool TOOL", default: "",
+     desc: "Run tests only for tools under the given path"
 
 include :exec
 include :gems
@@ -56,13 +56,13 @@ def find_test_files
 end
 
 def tool_dir
-  words = tool_path.size == 1 ? cli.loader.split_path(tool_path.first) : tool_path
+  words = cli.loader.split_path(tool)
   dir = base_dir
   unless words.empty?
     dir = ::File.join(dir, *words)
     unless ::File.directory?(dir)
-      logger.error("No such directory: #{dir}")
-      exit(1)
+      logger.warn("No such directory: #{dir}")
+      exit
     end
   end
   dir

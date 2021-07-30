@@ -72,6 +72,33 @@ describe Toys::Loader do
     end
   end
 
+  describe "tool names" do
+    it "raises if there's an asterisk in the name when defining a tool" do
+      loader.add_block(name: "test block 1") do
+        tool "tool*1" do
+          desc "whoops"
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        loader.lookup([])
+      end
+      cause = error.cause
+      assert_instance_of(Toys::ToolDefinitionError, cause)
+      assert_match(/Illegal characters in name "tool\*1"/, cause.message)
+    end
+
+    it "doesn't raise if looking up a name with an asterisk" do
+      loader.add_block(name: "test block 1") do
+        tool "tool-1" do
+          desc "block 1 tool-1 description"
+        end
+      end
+      tool, remaining = loader.lookup(["tool*1"])
+      assert_equal([], tool.full_name)
+      assert_equal(["tool*1"], remaining)
+    end
+  end
+
   describe "path with config items" do
     before do
       loader.add_path(File.join(cases_dir, "config-items", ".toys"))
@@ -224,14 +251,21 @@ describe Toys::Loader do
     end
 
     it "recognizes only specified delimiters" do
-      tool, remaining = delimiters_loader.lookup(["namespace-1;tool-1-3"])
+      tool, remaining = delimiters_loader.lookup(["namespace-1/tool-1-3"])
       assert_equal([], tool.full_name)
       assert_nil(tool.simple_name)
-      assert_equal(["namespace-1;tool-1-3"], remaining)
+      assert_equal(["namespace-1/tool-1-3"], remaining)
     end
 
-    it "finds a subtool" do
+    it "finds a subtool using a specified delimiter" do
       tool, remaining = delimiters_loader.lookup(["namespace-1.tool-1-3"])
+      assert_equal("normal tool-1-3 short description", tool.desc.to_s)
+      assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
+      assert_equal([], remaining)
+    end
+
+    it "finds a subtool using whitespace as a delimiter" do
+      tool, remaining = delimiters_loader.lookup(["namespace-1\ttool-1-3"])
       assert_equal("normal tool-1-3 short description", tool.desc.to_s)
       assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)

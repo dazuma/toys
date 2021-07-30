@@ -54,6 +54,7 @@ module Toys
       @config_line = config_line
       @tool_name = tool_name
       @tool_args = tool_args
+      set_backtrace(cause.backtrace)
     end
 
     attr_reader :cause
