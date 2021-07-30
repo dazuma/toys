@@ -26,10 +26,14 @@ module Toys
     # shared across the tests. If you need to isolate loading for a test,
     # create a separate CLI and pass it in using the `:cli` keyword argument.
     #
-    # All other keyword argument are the same as those defined by the
+    # All other keyword arguments are the same as those defined by the
     # `Toys::Utils::Exec` class. If a block is given, a
     # `Toys::Utils::Exec::Controller` is yielded to it. For more info, see the
     # documentation for `Toys::Utils::Exec#exec`.
+    #
+    # This method uses "fork" to isolate the run of the tool. On an environment
+    # without "fork" support, such as JRuby or Ruby on Windows, consider
+    # {#exec_separate_tool}.
     #
     # @param cmd [String,Array<String>] The command to execute.
     # @param opts [keywords] The command options.
@@ -50,10 +54,45 @@ module Toys
     end
 
     ##
+    # Runs the tool corresponding to the given command line, provided as an
+    # array of arguments, in a separately spawned process, and returns a
+    # {Toys::Exec::Result}.
+    #
+    # Unlike {#exec_tool}, this method does not use the shared CLI, but instead
+    # spawns a completely new Toys process for each run. It is thus slower than
+    # {#exec_tool}, but compatible with environments without "fork" support,
+    # such as JRuby or Ruby on Windows.
+    #
+    # Supported keyword arguments are the same as those defined by the
+    # `Toys::Utils::Exec` class. If a block is given, a
+    # `Toys::Utils::Exec::Controller` is yielded to it. For more info, see the
+    # documentation for `Toys::Utils::Exec#exec`.
+    #
+    # @param cmd [String,Array<String>] The command to execute.
+    # @param opts [keywords] The command options.
+    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+    #     for the subprocess streams.
+    #
+    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+    #     the process is running in the background.
+    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+    #     the foreground.
+    #
+    def exec_separate_tool(cmd, **opts, &block)
+      cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+      cmd = [::RbConfig.ruby, "--disable=gems", ::Toys.executable_path] + cmd
+      self.class.toys_exec.exec(cmd, **opts, &block)
+    end
+
+    ##
     # Runs the tool corresponding to the given command line, and returns the
     # data written to `STDOUT`. This is equivalent to calling {#exec_tool}
     # with the keyword arguments `out: :capture, background: false`, and
     # calling `#captured_out` on the result.
+    #
+    # Note: this method uses "fork" to execute the tool. If you are using an
+    # environment without "fork" support, such as JRuby oor Ruby on Windows,
+    # consider {#capture_separate_tool}.
     #
     # @param cmd [String,Array<String>] The command to execute.
     # @param opts [keywords] The command options.
@@ -68,6 +107,31 @@ module Toys
     def capture_tool(cmd, **opts, &block)
       opts = opts.merge(out: :capture, background: false)
       exec_tool(cmd, **opts, &block).captured_out
+    end
+
+    ##
+    # Runs the tool corresponding to the given command line, and returns the
+    # data written to `STDOUT`. This is equivalent to calling
+    # {#exec_separate_tool} with the keyword arguments
+    # `out: :capture, background: false`, and calling `#captured_out` on the
+    # result.
+    #
+    # Unlike {#capture_tool}, this method does not use "fork", and thus can be
+    # called in an environment such as JRuby or Ruby on Windows.
+    #
+    # @param cmd [String,Array<String>] The command to execute.
+    # @param opts [keywords] The command options.
+    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+    #     for the subprocess streams.
+    #
+    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+    #     the process is running in the background.
+    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+    #     the foreground.
+    #
+    def capture_separate_tool(cmd, **opts, &block)
+      opts = opts.merge(out: :capture, background: false)
+      exec_separate_tool(cmd, **opts, &block).captured_out
     end
 
     ##
