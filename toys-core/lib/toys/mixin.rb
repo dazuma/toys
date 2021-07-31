@@ -9,7 +9,7 @@ module Toys
   # class, so it has access to the same methods that can be called by the tool,
   # such as {Toys::Context#get}.
   #
-  # ## Usage
+  # ### Usage
   #
   # To create a mixin, define a module, and include this module. Then define
   # the methods you want to be available.
@@ -34,7 +34,7 @@ module Toys
   # methods specific to the mixin. Define the inclusion block by calling
   # {Toys::Mixin::ModuleMethods#on_include}.
   #
-  # ## Example
+  # ### Example
   #
   # This is an example that implements a simple counter. Whenever the counter
   # is incremented, a log message is emitted. The tool can also retrieve the

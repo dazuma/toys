@@ -14,7 +14,7 @@ module Toys
     ##
     # A simple terminal class.
     #
-    # ## Styles
+    # ### Styles
     #
     # This class supports ANSI styled output where supported.
     #

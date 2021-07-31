@@ -16,8 +16,6 @@ module Toys
     # This is a frontend for {Toys::Utils::Exec}. More information is
     # available in that class's documentation.
     #
-    # ## Features
-    #
     # ### Controlling processes
     #
     # A process can be started in the *foreground* or the *background*. If you
@@ -149,7 +147,7 @@ module Toys
     #
     #     include :exec, exit_on_nonzero_status: true
     #
-    # ## Configuration Options
+    # ### Configuration Options
     #
     # A variety of options can be used to control subprocesses. These can be
     # provided to any method that starts a subprocess. You can also set
@@ -267,7 +265,7 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # ## Examples
+      # ### Examples
       #
       # Run a command without a shell, and print the exit code (0 for success):
       #
@@ -303,7 +301,7 @@ module Toys
       # If the process is not set to run in the background, and a block is
       # provided, a {Toys::Utils::Exec::Controller} will be yielded to it.
       #
-      # ## Example
+      # ### Example
       #
       # Execute a small script with warnings
       #
@@ -337,7 +335,7 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
-      # ## Example
+      # ### Example
       #
       # Run a proc in a forked process.
       #
@@ -377,7 +375,7 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
-      # ## Example
+      # ### Example
       #
       # Run the "system update" tool and pass it an argument.
       #
@@ -424,7 +422,7 @@ module Toys
       # run a tool that uses a different bundle. It may also be necessary on
       # environments without "fork" (such as JRuby or Ruby on Windows).
       #
-      # ## Example
+      # ### Example
       #
       # Run the "system update" tool and pass it an argument.
       #
@@ -459,7 +457,7 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # ## Example
+      # ### Example
       #
       # Capture the output of an echo command
       #
@@ -490,7 +488,7 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # ## Example
+      # ### Example
       #
       # Capture the output of a ruby script.
       #
@@ -524,7 +522,7 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
-      # ## Example
+      # ### Example
       #
       # Run a proc in a forked process and capture its output:
       #
@@ -564,7 +562,7 @@ module Toys
       # Beware that some Ruby environments (e.g. JRuby, and Ruby on Windows)
       # do not support this method because they do not support fork.
       #
-      # ## Example
+      # ### Example
       #
       # Run the "system version" tool and capture its output.
       #
@@ -612,7 +610,7 @@ module Toys
       # run a tool that uses a different bundle. It may also be necessary on
       # environments without "fork" (such as JRuby or Ruby on Windows).
       #
-      # ## Example
+      # ### Example
       #
       # Run the "system version" tool and capture its output.
       #
@@ -642,7 +640,7 @@ module Toys
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
       #
-      # ## Example
+      # ### Example
       #
       # Run a shell script
       #

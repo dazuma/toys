@@ -33,7 +33,7 @@ module Toys
     # This module is mixed into the runtime context. This means you can
     # reference any of these constants directly from your run method.
     #
-    # ## Example
+    # ### Example
     #
     #     tool "my-name" do
     #       def run

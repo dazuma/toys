@@ -64,7 +64,7 @@ module Toys
   # of a configuration file, or within another class-defined tool. It cannot
   # be a subtool of a tool block.
   #
-  # ## Example
+  # ### Example
   #
   #     class FooBar < Toys::Tool
   #       desc "This is a tool called foo-bar"

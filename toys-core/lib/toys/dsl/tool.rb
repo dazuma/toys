@@ -10,7 +10,7 @@ module Toys
     # how to execute the tool, and requesting mixin modules and other services.
     # It also lets you define subtools, nested arbitrarily deep, using blocks.
     #
-    # ## Simple example
+    # ### Simple example
     #
     # Create a file called `.toys.rb` in the current directory, with the
     # following contents:
@@ -84,7 +84,7 @@ module Toys
       #     an exception (descended from `StandardError`) to indicate that the
       #     string parameter is invalid.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates an acceptor named "hex" that is defined
       # via a regular expression. It then uses it to validate values passed to
@@ -123,7 +123,7 @@ module Toys
       # block. Alternatively, you can create a module separately and pass it
       # directly to this directive.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a named mixin and uses it in a tool.
       #
@@ -176,7 +176,7 @@ module Toys
       # directly. See {Toys::Template} for details on creating a template
       # class.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates and uses a simple template.
       #
@@ -229,7 +229,7 @@ module Toys
       #  *  The symbol `:file_system` which indicates that paths in the file
       #     system should serve as completion candidates.
       #
-      # ## Example
+      # ### Example
       #
       # The following example defines a completion that uses only the immediate
       # files in the current directory as candidates. (This is different from
@@ -262,7 +262,7 @@ module Toys
       ##
       # Create a subtool. You must provide a block defining the subtool.
       #
-      # ## Example
+      # ### Example
       #
       # The following example defines a tool and two subtools within it.
       #
@@ -337,7 +337,7 @@ module Toys
       # `delegate_to` option, except that `alias_tool` takes a _relative_ name
       # for the delegate.
       #
-      # ## Example
+      # ### Example
       #
       # This example defines a tool and an alias pointing to it. Both the tool
       # name `test` and the alias `t` will then refer to the same tool.
@@ -364,7 +364,7 @@ module Toys
       # Causes the current tool to delegate to another tool. When run, it
       # simply invokes the target tool with the same arguments.
       #
-      # ## Example
+      # ### Example
       #
       # This example defines a tool that runs one of its subtools. Running the
       # `test` tool will have the same effect (and recognize the same args) as
@@ -454,7 +454,7 @@ module Toys
       # The template may be specified as a class or a well-known template name.
       # You may also provide arguments to pass to the template.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates and uses a simple template.
       #
@@ -517,7 +517,7 @@ module Toys
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.
       #
-      # ## Examples
+      # ### Examples
       #
       # If you pass in a sentence as a simple string, it may be word wrapped
       # when displayed:
@@ -551,7 +551,7 @@ module Toys
       # word-wrapped when displayed. To insert a blank line, include an empty
       # string as one of the descriptions.
       #
-      # ## Example
+      # ### Example
       #
       #     long_desc "This initial paragraph might get word wrapped.",
       #               "This next paragraph is followed by a blank line.",
@@ -590,7 +590,7 @@ module Toys
       # belong to the group. The flags in the group are listed together in
       # help screens.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a flag group in which all flags are
       # optional.
@@ -641,7 +641,7 @@ module Toys
       # defined in the block belong to the group. All flags in this group are
       # required.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a group of required flags.
       #
@@ -682,7 +682,7 @@ module Toys
       # defined in the block belong to the group. At most one flag in this
       # group must be provided on the command line.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a group of flags in which either one or
       # none may be set, but not more than one.
@@ -726,7 +726,7 @@ module Toys
       # defined in the block belong to the group. At least one flag in this
       # group must be provided on the command line.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a group of flags in which one or more
       # may be set.
@@ -770,7 +770,7 @@ module Toys
       # defined in the block belong to the group. Exactly one flag in this
       # group must be provided on the command line.
       #
-      # ## Example
+      # ### Example
       #
       # The following example creates a group of flags in which exactly one
       # must be set.
@@ -823,7 +823,7 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::Flag} within the block.
       #
-      # ## Flag syntax
+      # ### Flag syntax
       #
       # The flags themselves should be provided in OptionParser form. Following
       # are examples of valid syntax.
@@ -878,7 +878,7 @@ module Toys
       #     or off. This effectively creates two flags, `--abc` which sets the
       #     value to `true`, and `--no-abc` which sets the falue to `false`.
       #
-      # ## Default flag syntax
+      # ### Default flag syntax
       #
       # If no flag syntax strings are provided, a default syntax will be
       # inferred based on the key and other options.
@@ -903,7 +903,7 @@ module Toys
       #     flag :number, accept: Integer
       #     flag :number, "--number=VAL", accept: Integer
       #
-      # ## More examples
+      # ### More examples
       #
       # A flag that sets its value to the number of times it appears on the
       # command line:
@@ -1008,7 +1008,7 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
       #
-      # ## Example
+      # ### Example
       #
       # This tool "moves" something from a source to destination, and takes two
       # required arguments:
@@ -1076,7 +1076,7 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
       #
-      # ## Example
+      # ### Example
       #
       # This tool creates a "link" to a given target. The link location is
       # optional; if it is not given, it is inferred from the target.
@@ -1147,7 +1147,7 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
       #
-      # ## Example
+      # ### Example
       #
       # This tool displays a "list" of the given directories. If no directories
       # ar given, lists the current directory.
@@ -1213,7 +1213,7 @@ module Toys
       # if the key is a string or does not represent a valid method name, the
       # tool can retrieve the value by calling {Toys::Context#get}.
       #
-      # ## Example
+      # ### Example
       #
       #     tool "hello" do
       #       static :greeting, "Hi there"
@@ -1252,7 +1252,7 @@ module Toys
       ##
       # Set a option values statically without creating helper methods.
       #
-      # ## Example
+      # ### Example
       #
       #     tool "hello" do
       #       set :greeting, "Hi there"
@@ -1336,7 +1336,7 @@ module Toys
       # subsequent flag definition. This can be used to prevent middleware from
       # defining a particular flag.
       #
-      # ## Example
+      # ### Example
       #
       # This tool does not support the `-v` and `-q` short forms for the two
       # verbosity flags (although it still supports the long forms `--verbose`
@@ -1370,7 +1370,7 @@ module Toys
       #     options).
       #  *  Any other specification recognized by {Toys::Completion.create}.
       #
-      # ## Example
+      # ### Example
       #
       # The namespace "foo" supports completion only of subtool names. It does
       # not complete the standard flags (like --help).
@@ -1406,7 +1406,7 @@ module Toys
       # in the lexical scope. However, it is often more convenient to use
       # {#static} to set the value in the context.)
       #
-      # ## Example
+      # ### Example
       #
       #     tool "foo" do
       #       cur_time = Time.new
@@ -1433,7 +1433,7 @@ module Toys
       # either case, the block or method should take one argument, the
       # Interrupt exception that was raised.
       #
-      # ## Example
+      # ### Example
       #
       #     tool "foo" do
       #       def run
@@ -1463,7 +1463,7 @@ module Toys
       # either case, the block or method should take one argument, the array of
       # usage errors reported.
       #
-      # ## Example
+      # ### Example
       #
       # This tool runs even if a usage error is encountered. You can find info
       # on the errors from {Toys::Context::Key::USAGE_ERRORS},
@@ -1496,7 +1496,7 @@ module Toys
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
       #
-      # ## Example
+      # ### Example
       #
       # Include the well-known mixin `:terminal` and perform some terminal
       # magic.
@@ -1559,7 +1559,7 @@ module Toys
       # in a directory called `.data` inside a Toys directory. This directive
       # locates a data file during tool definition.
       #
-      # ## Example
+      # ### Example
       #
       # This tool reads its description from a text file in the `.data`
       # directory.
@@ -1627,7 +1627,7 @@ module Toys
       # The block is applied only to subtools defined *after* the block
       # appears. Subtools defined before the block appears are not affected.
       #
-      # ## Example
+      # ### Example
       #
       # It is common for tools to use the `:exec` mixin to invoke external
       # programs. This example automatically includes the exec mixin in all

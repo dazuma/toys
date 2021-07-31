@@ -4,8 +4,6 @@ require "date"
 
 module Toys
   ##
-  # ## Extensible settings object
-  #
   # A settings class defines the structure of application settings, i.e. the
   # various fields that can be set, and their types. You can define a settings
   # structure by subclassing this base class, and using the provided methods.

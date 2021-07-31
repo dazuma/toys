@@ -10,7 +10,7 @@ module Toys
   # Templates will often support configuration; for example the minitest
   # template lets you configure the paths to the test files.
   #
-  # ## Usage
+  # ### Usage
   #
   # To create a template, define a class and include this module.
   # The class defines the "configuration" of the template. If your template
@@ -25,7 +25,7 @@ module Toys
   # this block are "inserted" into the user's configuration. The template
   # object is passed to the block so you have access to the template options.
   #
-  # ## Example
+  # ### Example
   #
   # This is a simple template that generates a "hello" tool. The tool simply
   # prints a `"Hello, #{name}!"` greeting. The name is set as a template

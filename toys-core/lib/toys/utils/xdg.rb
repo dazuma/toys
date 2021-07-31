@@ -13,7 +13,7 @@ module Toys
     #
     # Tools can use the `:xdg` mixin for convenient access to this class.
     #
-    # Example usage:
+    # ### Example
     #
     #     require "toys/utils/xdg"
     #

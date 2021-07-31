@@ -9,7 +9,7 @@ module Toys
     # These directives are available inside a block passed to
     # {Toys::DSL::Tool#flag}.
     #
-    # ## Example
+    # ### Example
     #
     #     tool "mytool" do
     #       flag :value do
@@ -212,7 +212,7 @@ module Toys
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.
       #
-      # ## Examples
+      # ### Examples
       #
       # If you pass in a sentence as a simple string, it may be word wrapped
       # when displayed:
@@ -243,7 +243,7 @@ module Toys
       # word-wrapped when displayed. To insert a blank line, include an empty
       # string as one of the descriptions.
       #
-      # ## Example
+      # ### Example
       #
       #     long_desc "This initial paragraph might get word wrapped.",
       #               "This next paragraph is followed by a blank line.",
