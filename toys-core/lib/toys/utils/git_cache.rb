@@ -8,7 +8,13 @@ require "toys/utils/xdg"
 module Toys
   module Utils
     ##
-    # A file system cache of remote git data.
+    # This object provides cached access to remote git data. Given a remote
+    # repository, a path, and a commit, it makes the files availble in the
+    # local filesystem. Access is cached, so repeated requests do not hit the
+    # remote repository again.
+    #
+    # This class is used by the Loader to load tools from git. Tools can also
+    # use the `:git_cache` mixin for direct access to this class.
     #
     class GitCache
       ##

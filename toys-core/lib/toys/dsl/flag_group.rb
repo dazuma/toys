@@ -10,7 +10,7 @@ module Toys
     # {Toys::DSL::Tool#at_most_one}, {Toys::DSL::Tool#at_least_one}, or
     # {Toys::DSL::Tool#exactly_one}.
     #
-    # ## Example
+    # ### Example
     #
     #     tool "login" do
     #       all_required do
@@ -43,7 +43,7 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::Flag} within the block.
       #
-      # ## Flag syntax
+      # ### Flag syntax
       #
       # The flags themselves should be provided in OptionParser form. Following
       # are examples of valid syntax.
@@ -98,7 +98,7 @@ module Toys
       #     or off. This effectively creates two flags, `--abc` which sets the
       #     value to `true`, and `--no-abc` which sets the falue to `false`.
       #
-      # ## Default flag syntax
+      # ### Default flag syntax
       #
       # If no flag syntax strings are provided, a default syntax will be
       # inferred based on the key and other options.
@@ -123,7 +123,7 @@ module Toys
       #     flag :number, accept: Integer
       #     flag :number, "--number=VAL", accept: Integer
       #
-      # ## More examples
+      # ### More examples
       #
       # A flag that sets its value to the number of times it appears on the
       # command line:
@@ -221,7 +221,7 @@ module Toys
       #     across the strings in the array. In this case, whitespace is not
       #     compacted.
       #
-      # ## Examples
+      # ### Examples
       #
       # If you pass in a sentence as a simple string, it may be word wrapped
       # when displayed:
@@ -252,7 +252,7 @@ module Toys
       # word-wrapped when displayed. To insert a blank line, include an empty
       # string as one of the descriptions.
       #
-      # ## Example
+      # ### Example
       #
       #     long_desc "This initial paragraph might get word wrapped.",
       #               "This next paragraph is followed by a blank line.",

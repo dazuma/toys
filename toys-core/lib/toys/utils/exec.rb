@@ -16,8 +16,6 @@ module Toys
     # This class is not loaded by default. Before using it directly, you should
     # `require "toys/utils/exec"`
     #
-    # ## Features
-    #
     # ### Controlling processes
     #
     # A process can be started in the *foreground* or the *background*. If you
@@ -138,7 +136,7 @@ module Toys
     #     end
     #     exec_service.exec(["git", "init"], result_callback: my_callback)
     #
-    # ## Configuration options
+    # ### Configuration options
     #
     # A variety of options can be used to control subprocesses. These can be
     # provided to any method that starts a subprocess. Youc an also set
