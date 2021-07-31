@@ -19,7 +19,7 @@ include :exec, exit_on_nonzero_status: true
 include :terminal, styled: true
 
 def run
-  file_path = ::File.join(::File.dirname(__dir__), ".data", "releases.yml")
+  file_path = ::File.join(context_directory, ".toys", ".data", "releases.yml")
   if ::File.readable?(file_path)
     puts "Cannot overwrite existing file: #{file_path}", :red, :bold
     exit(1)

@@ -397,9 +397,18 @@ module Toys
       # at the current location.
       #
       # @param path [String] The file or directory to load.
+      # @param as [String] Load into the given tool/namespace. If omitted,
+      #     configuration will be loaded into the current namespace.
+      #
       # @return [self]
       #
-      def load(path)
+      def load(path, as: nil)
+        if as
+          tool(as) do
+            load(path)
+          end
+          return self
+        end
         @__loader.load_path(source_info, path, @__words, @__remaining_words, @__priority)
         self
       end
@@ -414,16 +423,28 @@ module Toys
       #     to load. Defaults to the root of the repo.
       # @param commit [String] The commit branch, tag, or sha. Defaults to the
       #     current commit if already loading from git, or to `HEAD`.
+      # @param as [String] Load into the given tool/namespace. If omitted,
+      #     configuration will be loaded into the current namespace.
+      # @param update [Boolean] Force-fetch from the remote (unless the commit
+      #     is a SHA). This will ensure that symbolic commits, such as branch
+      #     names, are up to date. Default is false.
       #
       # @return [self]
       #
-      def load_git(remote: nil, path: nil, commit: nil)
+      def load_git(remote: nil, path: nil, commit: nil, as: nil, update: false)
+        if as
+          tool(as) do
+            load_git(remote: remote, path: path, commit: commit)
+          end
+          return self
+        end
         remote ||= source_info.git_remote
         raise ToolDefinitionError, "Git remote not specified" unless remote
         path ||= ""
         commit ||= source_info.git_commit || "HEAD"
         @__loader.load_git(source_info, remote, path, commit,
-                           @__words, @__remaining_words, @__priority)
+                           @__words, @__remaining_words, @__priority,
+                           update: update)
         self
       end
 

@@ -1602,6 +1602,112 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "load directive" do
+    let(:config_items_dir) { File.join(cases_dir, "config-items") }
+
+    it "loads a file into the current namespace" do
+      file_to_load = File.join(config_items_dir, ".toys.rb")
+      loader.add_block do
+        tool "ns-1" do
+          load(file_to_load)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a directory into the current namespace" do
+      dir_to_load = File.join(config_items_dir, ".toys")
+      loader.add_block do
+        tool "ns-1" do
+          load(dir_to_load)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a file as a name" do
+      file_to_load = File.join(config_items_dir, ".toys.rb")
+      loader.add_block do
+        load(file_to_load, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a directory as a name" do
+      dir_to_load = File.join(config_items_dir, ".toys")
+      loader.add_block do
+        load(dir_to_load, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+  end
+
+  describe "load_git directive" do
+    before do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+    end
+
+    let(:git_remote) { "https://github.com/dazuma/toys.git" }
+    let(:git_file_path) { "toys-core/test/lookup-cases/config-items/.toys.rb" }
+    let(:git_dir_path) { "toys-core/test/lookup-cases/config-items/.toys" }
+
+    it "loads a file into the current namespace" do
+      remote = git_remote
+      path = git_file_path
+      loader.add_block do
+        tool "ns-1" do
+          load_git(remote: remote, path: path, update: true)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a directory into the current namespace" do
+      remote = git_remote
+      path = git_dir_path
+      loader.add_block do
+        tool "ns-1" do
+          load_git(remote: remote, path: path, update: true)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a file as a name" do
+      remote = git_remote
+      path = git_file_path
+      loader.add_block do
+        load_git(remote: remote, path: path, update: true, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+
+    it "loads a directory as a name" do
+      remote = git_remote
+      path = git_dir_path
+      loader.add_block do
+        load_git(remote: remote, path: path, update: true, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+    end
+  end
+
   describe "settings directive" do
     it "returns the settings" do
       test = self
