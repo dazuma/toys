@@ -24,6 +24,9 @@ Naming/FileName:
     - "test/lookup-cases/**/*"
     - "lib/toys-core.rb"
     - "examples/**/*"
+Naming/MethodParameterName:
+  Exclude:
+    - "lib/toys/dsl/tool.rb"
 Style/BlockDelimiters:
   Exclude:
     - "test/**/*"
