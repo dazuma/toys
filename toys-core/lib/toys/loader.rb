@@ -192,7 +192,7 @@ module Toys
     def lookup_specific(words)
       words = @delimiter_handler.split_path(words.first) if words.size == 1
       load_for_prefix(words)
-      tool = get_tool_data(words).cur_definition
+      tool = get_tool_data(words, false)&.cur_definition
       finish_definitions_in_tree(words) if tool
       tool
     end
@@ -264,7 +264,7 @@ module Toys
     # @private
     #
     def get_tool(words, priority, tool_class = nil)
-      get_tool_data(words).get_tool(priority, self, tool_class)
+      get_tool_data(words, true).get_tool(priority, self, tool_class)
     end
 
     ##
@@ -277,7 +277,7 @@ module Toys
     # @private
     #
     def activate_tool(words, priority)
-      get_tool_data(words).activate_tool(priority, self)
+      get_tool_data(words, true).activate_tool(priority, self)
     end
 
     ##
@@ -441,8 +441,10 @@ module Toys
       result
     end
 
-    def get_tool_data(words)
-      @mutex.synchronize { @tool_data[words] ||= ToolData.new(words) }
+    def get_tool_data(words, create)
+      @mutex.synchronize do
+        create ? (@tool_data[words] ||= ToolData.new(words)) : @tool_data[words]
+      end
     end
 
     ##
@@ -584,7 +586,7 @@ module Toys
     class ToolData
       # @private
       def initialize(words)
-        @words = words
+        @words = validate_words(words)
         @definitions = {}
         @top_priority = @active_priority = nil
         @mutex = ::Monitor.new
@@ -625,6 +627,14 @@ module Toys
 
       private
 
+      def validate_words(words)
+        words.each do |word|
+          if /[[:cntrl:] #"$&'()*;<>\[\\\]\^`{|}]/.match(word)
+            raise ToolDefinitionError, "Illegal characters in name #{word.inspect}"
+          end
+        end
+      end
+
       def top_definition
         @top_priority ? @definitions[@top_priority] : nil
       end
@@ -640,32 +650,23 @@ module Toys
     # @private
     #
     class DelimiterHandler
-      ## @private
-      ALLOWED_DELIMITERS = %r{^[./:]*$}.freeze
-      private_constant :ALLOWED_DELIMITERS
-
-      ## @private
       def initialize(extra_delimiters)
-        unless ALLOWED_DELIMITERS =~ extra_delimiters
+        unless %r{^[[:space:]./:]*$}.match?(extra_delimiters)
           raise ::ArgumentError, "Illegal delimiters in #{extra_delimiters.inspect}"
         end
         chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
-        @extra_delimiters = chars.empty? ? nil : ::Regexp.new("[#{chars}]")
+        @delimiters = ::Regexp.new("[[:space:]#{chars}]")
       end
 
-      ## @private
       def split_path(str)
-        @extra_delimiters ? str.split(@extra_delimiters) : [str]
+        str.split(@delimiters)
       end
 
-      ## @private
       def find_orig_prefix(args)
-        if @extra_delimiters
-          first_split = (args.first || "").split(@extra_delimiters)
-          if first_split.size > 1
-            args = first_split + args.slice(1..-1)
-            return [first_split, args]
-          end
+        first_split = (args.first || "").split(@delimiters)
+        if first_split.size > 1
+          args = first_split + args.slice(1..-1)
+          return [first_split, args]
         end
         orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
         [orig_prefix, args]

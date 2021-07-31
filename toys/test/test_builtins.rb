@@ -133,6 +133,41 @@ describe "toys" do
         end
       end
     end
+
+    describe "test" do
+      let(:builtins_dir) { File.join(File.dirname(__dir__), "builtins") }
+
+      it "runs for the given tool path" do
+        output = Toys::TestHelper.capture_toys("system", "test",
+                                               "-d", builtins_dir,
+                                               "--no-recursive",
+                                               "-t", "system")
+        assert_match(/0 failures, 0 errors, 0 skips/, output)
+      end
+
+      it "runs recursively" do
+        output = Toys::TestHelper.capture_toys("system", "test",
+                                               "-d", builtins_dir)
+        assert_match(/0 failures, 0 errors, 0 skips/, output)
+      end
+
+      it "honors --no-recursive" do
+        output = Toys::TestHelper.capture_toys("system", "test",
+                                               "-d", builtins_dir,
+                                               "--no-recursive",
+                                               stream: :err)
+        assert_match(/No test files found/, output)
+      end
+
+      it "reports that the given tool has no tests" do
+        output = Toys::TestHelper.capture_toys("system", "test",
+                                               "-d", builtins_dir,
+                                               "--no-recursive",
+                                               "-t", "do",
+                                               stream: :err)
+        assert_match(/No such directory/, output)
+      end
+    end
   end
 
   describe "do" do
