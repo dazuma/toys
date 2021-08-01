@@ -2,16 +2,19 @@
 
 module Toys
   ##
-  # Information about source toys directories and files.
+  # Information about the source of a tool, such as the file, git repository,
+  # or block that defined it.
   #
   class SourceInfo
     ##
     # Create a SourceInfo.
     # @private
     #
-    def initialize(parent, context_directory, source_type, source_path, source_proc,
+    def initialize(parent, priority, context_directory, source_type, source_path, source_proc,
                    git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
       @parent = parent
+      @root = parent&.root || self
+      @priority = priority
       @context_directory = context_directory
       @source_type = source_type
       @source = source_type == :proc ? source_proc : source_path
@@ -34,6 +37,21 @@ module Toys
     # @return [nil] if this SourceInfo is the root.
     #
     attr_reader :parent
+
+    ##
+    # The root ancestor of this SourceInfo.
+    #
+    # @return [Toys::SourceInfo] The root ancestor.
+    #
+    attr_reader :root
+
+    ##
+    # The priority of tools defined by this source. Higher values indicate a
+    # higher priority. Lower priority values could be negative.
+    #
+    # @return [Integer] The priority.
+    #
+    attr_reader :priority
 
     ##
     # The context directory path (normally the directory containing the
@@ -147,7 +165,7 @@ module Toys
     # Create a child SourceInfo relative to the parent path.
     # @private
     #
-    def relative_child(filename)
+    def relative_child(filename, source_name: nil)
       unless source_type == :directory
         raise LoaderError, "relative_child is valid only on a directory source"
       end
@@ -155,41 +173,49 @@ module Toys
       child_path, type = SourceInfo.check_path(child_path, true)
       return nil unless child_path
       child_git_path = ::File.join(git_path, filename) if git_path
-      child_name = git_path ? "#{git_remote}:#{child_git_path}:#{git_commit}" : child_path
-      SourceInfo.new(self, context_directory, type, child_path, nil,
+      source_name ||=
+        if git_path
+          "git(remote=#{git_remote} path=#{child_git_path} commit=#{git_commit})"
+        else
+          child_path
+        end
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
                      git_remote, child_git_path, git_commit,
-                     child_name, @data_dir_name, @lib_dir_name)
+                     source_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
     # Create a child SourceInfo with an absolute path.
     # @private
     #
-    def absolute_child(child_path)
+    def absolute_child(child_path, source_name: nil)
       child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, context_directory, type, child_path, nil, nil, nil, nil,
-                     child_path, @data_dir_name, @lib_dir_name)
+      source_name ||= child_path
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil, nil, nil, nil,
+                     source_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
     # Create a child SourceInfo with a git source.
     # @private
     #
-    def git_child(child_git_remote, child_git_path, child_git_commit, child_path)
+    def git_child(child_git_remote, child_git_path, child_git_commit, child_path,
+                  source_name: nil)
       child_path, type = SourceInfo.check_path(child_path, false)
-      child_name = "#{child_git_remote}:#{child_git_path}:#{child_git_commit}"
-      SourceInfo.new(self, context_directory, type, child_path, nil,
+      source_name ||=
+        "git(remote=#{child_git_remote} path=#{child_git_path} commit=#{child_git_commit})"
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
                      child_git_remote, child_git_path, child_git_commit,
-                     child_name, @data_dir_name, @lib_dir_name)
+                     source_name, @data_dir_name, @lib_dir_name)
     end
 
     ##
     # Create a proc child SourceInfo
     # @private
     #
-    def proc_child(child_proc, source_name = nil)
+    def proc_child(child_proc, source_name: nil)
       source_name ||= self.source_name
-      SourceInfo.new(self, context_directory, :proc, source_path, child_proc,
+      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc,
                      git_remote, git_path, git_commit,
                      source_name, @data_dir_name, @lib_dir_name)
     end
@@ -198,32 +224,50 @@ module Toys
     # Create a root source info for a file path.
     # @private
     #
-    def self.create_path_root(source_path, data_dir_name, lib_dir_name)
+    def self.create_path_root(source_path, priority,
+                              context_directory: nil,
+                              data_dir_name: nil,
+                              lib_dir_name: nil,
+                              source_name: nil)
       source_path, type = check_path(source_path, false)
-      context_directory = ::File.dirname(source_path)
-      new(nil, context_directory, type, source_path, nil, nil, nil, nil,
-          source_path, data_dir_name, lib_dir_name)
+      case context_directory
+      when :parent
+        context_directory = ::File.dirname(source_path)
+      when :path
+        context_directory = source_path
+      end
+      source_name ||= source_path
+      new(nil, priority, context_directory, type, source_path, nil, nil, nil, nil,
+          source_name, data_dir_name, lib_dir_name)
     end
 
     ##
     # Create a root source info for a cached git repo.
     # @private
     #
-    def self.create_git_root(git_remote, git_path, git_commit, source_path,
-                             data_dir_name, lib_dir_name)
+    def self.create_git_root(git_remote, git_path, git_commit, source_path, priority,
+                             context_directory: nil,
+                             data_dir_name: nil,
+                             lib_dir_name: nil,
+                             source_name: nil)
       source_path, type = check_path(source_path, false)
-      source_name = "#{git_remote}:#{git_path}:#{git_commit}"
-      new(nil, nil, type, source_path, nil, git_remote, git_path, git_commit,
-          source_name, data_dir_name, lib_dir_name)
+      source_name ||= "git(remote=#{git_remote} path=#{git_path} commit=#{git_commit})"
+      new(nil, priority, context_directory, type, source_path, nil, git_remote,
+          git_path, git_commit, source_name, data_dir_name, lib_dir_name)
     end
 
     ##
     # Create a root source info for a proc.
     # @private
     #
-    def self.create_proc_root(source_proc, source_name, data_dir_name, lib_dir_name)
-      new(nil, nil, :proc, nil, source_proc, nil, nil, nil,
-          source_name, data_dir_name, lib_dir_name)
+    def self.create_proc_root(source_proc, priority,
+                              context_directory: nil,
+                              data_dir_name: nil,
+                              lib_dir_name: nil,
+                              source_name: nil)
+      source_name ||= "(code block #{source_proc.object_id})"
+      new(nil, priority, context_directory, :proc, nil, source_proc, nil, nil,
+          nil, source_name, data_dir_name, lib_dir_name)
     end
 
     ##

@@ -73,6 +73,8 @@ module Toys
       #     display all subtools recursively. Defaults to false.
       # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
+      # @param separate_sources [Boolean] Split up tool list by source root.
+      #     Defaults to false.
       # @param left_column_width [Integer] Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
       # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
@@ -81,13 +83,14 @@ module Toys
       #
       # @return [String] A usage string.
       #
-      def usage_string(recursive: false, include_hidden: false,
+      def usage_string(recursive: false, include_hidden: false, separate_sources: false,
                        left_column_width: nil, indent: nil, wrap_width: nil)
         left_column_width ||= DEFAULT_LEFT_COLUMN_WIDTH
         indent ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, nil, include_hidden)
+        subtools = collect_subtool_info(recursive, nil, include_hidden, separate_sources)
         assembler = UsageStringAssembler.new(
-          @tool, @executable_name, subtools, indent, left_column_width, wrap_width
+          @tool, @executable_name, subtools, separate_sources,
+          indent, left_column_width, wrap_width
         )
         assembler.result
       end
@@ -103,6 +106,8 @@ module Toys
       #     names begin with underscore.) Default is false.
       # @param show_source_path [Boolean] If true, shows the source path
       #     section. Defaults to false.
+      # @param separate_sources [Boolean] Split up tool list by source root.
+      #     Defaults to false.
       # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
       # @param indent2 [Integer] Second indent width. Default is
       #     {DEFAULT_INDENT}.
@@ -113,13 +118,14 @@ module Toys
       # @return [String] A usage string.
       #
       def help_string(recursive: false, search: nil, include_hidden: false,
-                      show_source_path: false,
+                      show_source_path: false, separate_sources: false,
                       indent: nil, indent2: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
         indent2 ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, search, include_hidden)
+        subtools = collect_subtool_info(recursive, search, include_hidden, separate_sources)
         assembler = HelpStringAssembler.new(
-          @tool, @executable_name, @delegates, subtools, search, show_source_path,
+          @tool, @executable_name, @delegates, subtools, search,
+          show_source_path, separate_sources,
           indent, indent2, wrap_width, styled
         )
         assembler.result
@@ -134,6 +140,8 @@ module Toys
       #     listing subtools. Defaults to `nil` which finds all subtools.
       # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
+      # @param separate_sources [Boolean] Split up tool list by source root.
+      #     Defaults to false.
       # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
       # @param wrap_width [Integer,nil] Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
@@ -142,17 +150,23 @@ module Toys
       # @return [String] A usage string.
       #
       def list_string(recursive: false, search: nil, include_hidden: false,
-                      indent: nil, wrap_width: nil, styled: true)
+                      separate_sources: false, indent: nil, wrap_width: nil, styled: true)
         indent ||= DEFAULT_INDENT
-        subtools = find_subtools(recursive, search, include_hidden)
-        assembler = ListStringAssembler.new(@tool, subtools, recursive, search,
+        subtools = collect_subtool_info(recursive, search, include_hidden, separate_sources)
+        assembler = ListStringAssembler.new(@tool, subtools, recursive, search, separate_sources,
                                             indent, wrap_width, styled)
         assembler.result
       end
 
       private
 
-      def find_subtools(recursive, search, include_hidden)
+      def collect_subtool_info(recursive, search, include_hidden, separate_sources)
+        subtools_by_name = list_subtools(recursive, include_hidden)
+        filter_subtools(subtools_by_name, search)
+        arrange_subtools(subtools_by_name, separate_sources)
+      end
+
+      def list_subtools(recursive, include_hidden)
         subtools_by_name = {}
         ([@tool] + @delegates).each do |tool|
           name_len = tool.full_name.length
@@ -163,20 +177,37 @@ module Toys
             subtools_by_name[local_name] = subtool
           end
         end
-        subtool_list = subtools_by_name.sort_by { |(local_name, _tool)| local_name }
-        return subtool_list if search.nil? || search.empty?
-        regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
-        subtool_list.find_all do |local_name, tool|
-          regex =~ local_name || regex =~ tool.desc.to_s
+        subtools_by_name
+      end
+
+      def filter_subtools(subtools_by_name, search)
+        if !search.nil? && !search.empty?
+          regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
+          subtools_by_name.delete_if do |local_name, tool|
+            !regex.match?(local_name) && !regex.match?(tool.desc.to_s)
+          end
         end
+      end
+
+      def arrange_subtools(subtools_by_name, separate_sources)
+        subtool_list = subtools_by_name.sort_by { |(local_name, _tool)| local_name }
+        result = {}
+        subtool_list.each do |(local_name, subtool)|
+          key = separate_sources ? subtool.source_root : nil
+          (result[key] ||= []) << [local_name, subtool]
+        end
+        result.sort_by { |source, _subtools| -(source&.priority || -999_999) }
+              .map { |source, subtools| [source&.source_name || "unknown source", subtools] }
       end
 
       ## @private
       class UsageStringAssembler
-        def initialize(tool, executable_name, subtools, indent, left_column_width, wrap_width)
+        def initialize(tool, executable_name, subtools, separate_sources,
+                       indent, left_column_width, wrap_width)
           @tool = tool
           @executable_name = executable_name
           @subtools = subtools
+          @separate_sources = separate_sources
           @indent = indent
           @left_column_width = left_column_width
           @wrap_width = wrap_width
@@ -256,11 +287,12 @@ module Toys
         end
 
         def add_subtool_list_section
-          return if @subtools.empty?
-          @lines << ""
-          @lines << "Tools:"
-          @subtools.each do |local_name, subtool|
-            add_right_column_desc(local_name, wrap_desc(subtool.desc))
+          @subtools.each do |source_name, subtool_list|
+            @lines << ""
+            @lines << (@separate_sources ? "Tools from #{source_name}:" : "Tools:")
+            subtool_list.each do |local_name, subtool|
+              add_right_column_desc(local_name, wrap_desc(subtool.desc))
+            end
           end
         end
 
@@ -301,7 +333,7 @@ module Toys
       ## @private
       class HelpStringAssembler
         def initialize(tool, executable_name, delegates, subtools, search_term,
-                       show_source_path, indent, indent2, wrap_width, styled)
+                       show_source_path, separate_sources, indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
           @tool = tool
           @executable_name = executable_name
@@ -309,6 +341,7 @@ module Toys
           @subtools = subtools
           @search_term = search_term
           @show_source_path = show_source_path
+          @separate_sources = separate_sources
           @indent = indent
           @indent2 = indent2
           @wrap_width = wrap_width
@@ -534,8 +567,17 @@ module Toys
             @lines << indent_str("Showing search results for \"#{@search_term}\"")
             @lines << ""
           end
-          @subtools.each do |local_name, subtool|
-            add_prefix_with_desc(bold(local_name), subtool.desc)
+          first_section = true
+          @subtools.each do |source_name, subtool_list|
+            @lines << "" unless first_section
+            if @separate_sources
+              @lines << indent_str(underline("From #{source_name}"))
+              @lines << ""
+            end
+            subtool_list.each do |local_name, subtool|
+              add_prefix_with_desc(bold(local_name), subtool.desc)
+            end
+            first_section = false
           end
         end
 
@@ -598,12 +640,14 @@ module Toys
 
       ## @private
       class ListStringAssembler
-        def initialize(tool, subtools, recursive, search_term, indent, wrap_width, styled)
+        def initialize(tool, subtools, recursive, search_term, separate_sources,
+                       indent, wrap_width, styled)
           require "toys/utils/terminal"
           @tool = tool
           @subtools = subtools
           @recursive = recursive
           @search_term = search_term
+          @separate_sources = separate_sources
           @indent = indent
           @wrap_width = wrap_width
           assemble(styled)
@@ -628,16 +672,22 @@ module Toys
             else
               "#{top_line} under #{bold(@tool.display_name)}:"
             end
-          @lines << ""
           if @search_term
-            @lines << "Showing search results for \"#{@search_term}\""
             @lines << ""
+            @lines << "Showing search results for \"#{@search_term}\""
           end
         end
 
         def add_list
-          @subtools.each do |local_name, subtool|
-            add_prefix_with_desc(bold(local_name), subtool.desc)
+          @subtools.each do |source_name, subtool_list|
+            @lines << ""
+            if @separate_sources
+              @lines << underline("From: #{source_name}")
+              @lines << ""
+            end
+            subtool_list.each do |local_name, subtool|
+              add_prefix_with_desc(bold(local_name), subtool.desc)
+            end
           end
         end
 
@@ -662,6 +712,10 @@ module Toys
 
         def bold(str)
           @lines.apply_styles(str, :bold)
+        end
+
+        def underline(str)
+          @lines.apply_styles(str, :underline)
         end
 
         def indent_str(str)

@@ -72,6 +72,7 @@ module Toys
       @loading_started = false
       @worklist = []
       @tool_data = {}
+      @roots_by_priority = {}
       @max_priority = @min_priority = 0
       @stop_priority = BASE_PRIORITY
       @min_loaded_priority = 999_999
@@ -84,19 +85,69 @@ module Toys
     ##
     # Add a configuration file/directory to the loader.
     #
-    # @param paths [String,Array<String>] One or more paths to add.
+    # @param path [String] A single path to add.
     # @param high_priority [Boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given path, `:parent` to denote the
+    #     given path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:parent`.
     # @return [self]
     #
-    def add_path(paths, high_priority: false)
-      paths = Array(paths)
+    def add_path(path,
+                 high_priority: false,
+                 source_name: nil,
+                 context_directory: :parent)
       @mutex.synchronize do
         raise "Cannot add a path after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        paths.each do |path|
-          source = SourceInfo.create_path_root(path, @data_dir_name, @lib_dir_name)
+        source = SourceInfo.create_path_root(path, priority,
+                                             context_directory: context_directory,
+                                             data_dir_name: @data_dir_name,
+                                             lib_dir_name: @lib_dir_name,
+                                             source_name: source_name)
+        @roots_by_priority[priority] = source
+        @worklist << [source, [], priority]
+      end
+      self
+    end
+
+    ##
+    # Add a set of configuration files/directories from a common directory to
+    # the loader. The set of paths will be added at the same priority level and
+    # will share a root.
+    #
+    # @param root_path [String] A root path to be seen as the root source. This
+    #     should generally be a directory containing the paths to add.
+    # @param relative_paths [String,Array<String>] One or more paths to add, as
+    #     relative paths from the common root.
+    # @param high_priority [Boolean] If true, add the paths at the top of the
+    #     priority list. Defaults to false, indicating the new paths should be
+    #     at the bottom of the priority list.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given root path, `:parent` to denote
+    #     the given root path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:path`.
+    # @return [self]
+    #
+    def add_path_set(root_path, relative_paths,
+                     high_priority: false,
+                     context_directory: :path)
+      relative_paths = Array(relative_paths)
+      @mutex.synchronize do
+        raise "Cannot add a path after tool loading has started" if @loading_started
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        root_source = SourceInfo.create_path_root(root_path, priority,
+                                                  context_directory: context_directory,
+                                                  data_dir_name: @data_dir_name,
+                                                  lib_dir_name: @lib_dir_name)
+        @roots_by_priority[priority] = root_source
+        relative_paths.each do |path, individual_name|
+          source = root_source.relative_child(path, source_name: individual_name)
           @worklist << [source, [], priority]
         end
       end
@@ -109,19 +160,29 @@ module Toys
     # @param high_priority [Boolean] If true, add this block at the top of the
     #     priority list. Defaults to false, indicating the block should be at
     #     the bottom of the priority list.
-    # @param name [String] The source name that will be shown in documentation
-    #     for tools defined in this block. If omitted, a default unique string
-    #     will be generated.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools defined in this block. If omitted, a default
+    #     unique string will be generated.
     # @param block [Proc] The block of configuration, executed in the context
     #     of the tool DSL {Toys::DSL::Tool}.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this block. You can pass a directory path as a string, or
+    #     `nil` to denote no context. Defaults to `nil`.
     # @return [self]
     #
-    def add_block(high_priority: false, name: nil, &block)
-      name ||= "(Code block #{block.object_id})"
+    def add_block(high_priority: false,
+                  source_name: nil,
+                  context_directory: nil,
+                  &block)
       @mutex.synchronize do
         raise "Cannot add a block after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_proc_root(block, name, @data_dir_name, @lib_dir_name)
+        source = SourceInfo.create_proc_root(block, priority,
+                                             context_directory: context_directory,
+                                             source_name: source_name,
+                                             data_dir_name: @data_dir_name,
+                                             lib_dir_name: @lib_dir_name)
+        @roots_by_priority[priority] = source
         @worklist << [source, [], priority]
       end
       self
@@ -140,15 +201,24 @@ module Toys
     # @param update [Boolean] If the commit is not a SHA, pulls any updates
     #     from the remote. Defaults to false, which uses a local cache and does
     #     not update if the commit has been fetched previously.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this source. You can pass a directory path as a string,
+    #     or `nil` to denote no context. Defaults to `nil`.
     # @return [self]
     #
-    def add_git(git_remote, git_path, git_commit, high_priority: false, update: false)
+    def add_git(git_remote, git_path, git_commit,
+                high_priority: false,
+                update: false,
+                context_directory: nil)
       @mutex.synchronize do
         raise "Cannot add a git source after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         path = git_cache.find(git_remote, path: git_path, commit: git_commit, update: update)
-        source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path,
-                                            @data_dir_name, @lib_dir_name)
+        source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
+                                            context_directory: context_directory,
+                                            data_dir_name: @data_dir_name,
+                                            lib_dir_name: @lib_dir_name)
+        @roots_by_priority[priority] = source
         @worklist << [source, [], priority]
       end
       self
@@ -299,7 +369,8 @@ module Toys
     def build_tool(words, priority, tool_class = nil)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
       middleware_stack = parent ? parent.subtool_middleware_stack : @middleware_stack
-      ToolDefinition.new(parent, words, priority, middleware_stack, @middleware_lookup, tool_class)
+      ToolDefinition.new(parent, words, priority, @roots_by_priority[priority],
+                         middleware_stack, @middleware_lookup, tool_class)
     end
 
     ##

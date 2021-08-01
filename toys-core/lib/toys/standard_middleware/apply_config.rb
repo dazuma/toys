@@ -19,9 +19,9 @@ module Toys
       def initialize(parent_source: nil, source_name: nil, &block)
         @source_info =
           if parent_source
-            parent_source.proc_child(block, source_name)
+            parent_source.proc_child(block, source_name: source_name)
           else
-            SourceInfo.create_proc_root(block, source_name)
+            SourceInfo.create_proc_root(block, source_name: source_name)
           end
         @block = block
       end

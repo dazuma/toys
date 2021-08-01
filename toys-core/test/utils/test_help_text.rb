@@ -809,6 +809,38 @@ describe Toys::Utils::HelpText do
         assert_match(/^\s{37}two lines$/, usage_array[index + 3])
         assert_equal(index + 4, usage_array.size)
       end
+
+      it "show subtools separated by source" do
+        loader = Toys::Loader.new
+        loader.add_block(source_name: "block 1") do
+          tool "foo bar" do
+            tool "one" do
+              desc "one description"
+            end
+            tool "two" do
+              desc "two description"
+            end
+          end
+        end
+        loader.add_block(source_name: "block 2") do
+          tool "foo bar" do
+            tool "three" do
+              desc "three description"
+            end
+          end
+        end
+        base_tool, _remaining = loader.lookup(["foo", "bar"])
+        help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
+        usage_array = help.usage_string(separate_sources: true).split("\n")
+        index = usage_array.index("Tools from block 1:")
+        refute_nil(index)
+        assert_match(/^\s{4}one\s{30}one description$/, usage_array[index + 1])
+        assert_match(/^\s{4}two\s{30}two description$/, usage_array[index + 2])
+        index = usage_array.index("Tools from block 2:")
+        refute_nil(index)
+        assert_match(/^\s{4}three\s{28}three description$/, usage_array[index + 1])
+        assert_equal(index + 2, usage_array.size)
+      end
     end
 
     describe "positional args section" do
