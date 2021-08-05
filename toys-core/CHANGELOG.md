@@ -1,5 +1,36 @@
 # Release History
 
+### v0.12.0 / 2021-08-05
+
+Toys-Core 0.12.0 is a major release with significant new features and bug fixes, and a few breaking interface changes. Additionally, this release now requires Ruby 2.4 or later.
+
+Breaking interface changes:
+
+* The Toys::Tool class has been renamed Toys::ToolDefinition so that the old name can be used for class-based tool definition.
+* Tool definition now raises ToolDefinitionError if whitespace, control characters, or certain punctuation are used in a tool name.
+* Toys::Loader#add_path no longer supports multiple paths. Use add_path_set instead.
+* The "name" argument was renamed to "source_name" in Toys::Loader#add_block and Toys::CLI#add_config_block
+
+New functionality:
+
+* The DSL now supports a class-based tool definition syntax (in addition to the existing block-based syntax). Some users may prefer this new class-based style as more Ruby-like.
+* You can now load tools from a remote git repository using the load_git directive.
+* Whitespace is now automatically considered a name delimiter when defining tools.
+* There is now an extensible settings mechanism to activate less-common tool behavior. Currently there is one setting, which causes subtools to inherit their parent's methods by default.
+* The load directive can load into a new tool.
+* Added a new utility class and mixin that provides XDG Base Directory information.
+* Added a new utility class and mixin that provides cached access to remote git repos.
+* The help text generator now supports splitting the subtool list by source.
+* Loader and CLI methods that add tool configs now uniformly provide optional source_name and context_directory arguments.
+* Toys::SourceInfo now supports getting the root ancestor and priority of a source.
+* Toys::ToolDefinition now has a direct accessor for the source root. This is always set for a tool, even if it isn't marked as finished.
+
+Fixes:
+
+* Fixed some bundler integration issues that occurred when the bundle is being installed in a separate path such as a vendor directory.
+* Toys::ContextualError now includes the full backtrace of the cause.
+* Cleaned up some unused memory objects during tool loading and lookup.
+
 ### v0.11.5 / 2021-03-28
 
 * BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn, in addition to error codes.

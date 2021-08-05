@@ -1,5 +1,32 @@
 # Release History
 
+### v0.12.0 / 2021-08-05
+
+Toys 0.12.0 is a major release with significant new features and bug fixes, and a few minor breaking changes. Additionally, this release now requires Ruby 2.4 or later.
+
+Breaking changes:
+
+* Defining a tool with whitespace, control characters, or certain punctuation in the name, now raises ToolDefinitionError.
+* The Toys::Tool class (for the object returned by the Toys::Context::Key::TOOL attribute) has been renamed to Toys::ToolDefinition so that the old name can be used for class-based tool definition.
+
+New functionality:
+
+* The DSL now supports a class-based tool definition syntax (in addition to the existing block-based syntax). Some users may prefer this new class-based style as more Ruby-like.
+* The subtool list on help screens is now split into sections by source directory
+* You can now load tools from a remote git repository using the load_git directive.
+* Whitespace is now automatically considered a name delimiter when defining tools.
+* There is experimental support for providing tests for tools.
+* There is now an extensible settings mechanism to activate less-common tool behavior. Currently there is one setting, which causes subtools to inherit their parent's methods by default.
+* The load directive can load into a new tool.
+* You can now set the context directory individually for the standard build tools.
+* Added a new standard mixin that provides XDG Base Directory information.
+* Added a new standard mixin that provides cached access to remote git repos.
+
+Fixes:
+
+* Fixed some bundler integration issues that occurred when the bundle is being installed in a separate path such as a vendor directory.
+* Exceptions raised from internal classes now include the full backtrace.
+
 ### v0.11.5 / 2021-03-28
 
 * BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn, in addition to error codes.
