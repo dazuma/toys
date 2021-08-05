@@ -33,7 +33,7 @@ describe Toys::Loader do
 
   describe "configuration block" do
     it "loads tools" do
-      loader.add_block(name: "test block") do
+      loader.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "block tool-1 description"
         end
@@ -46,12 +46,12 @@ describe Toys::Loader do
     end
 
     it "loads multiple blocks" do
-      loader.add_block(name: "test block 1") do
+      loader.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
       end
-      loader.add_block(name: "test block 2") do
+      loader.add_block(source_name: "test block 2") do
         tool "tool-1" do
           desc "block 2 tool-1 description"
         end
@@ -74,7 +74,7 @@ describe Toys::Loader do
 
   describe "tool names" do
     it "raises if there's an asterisk in the name when defining a tool" do
-      loader.add_block(name: "test block 1") do
+      loader.add_block(source_name: "test block 1") do
         tool "tool*1" do
           desc "whoops"
         end
@@ -88,7 +88,7 @@ describe Toys::Loader do
     end
 
     it "doesn't raise if looking up a name with an asterisk" do
-      loader.add_block(name: "test block 1") do
+      loader.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
@@ -464,7 +464,7 @@ describe Toys::Loader do
 
     it "can be set" do
       dir = custom_dir
-      loader.add_block(name: "test block") do
+      loader.add_block(source_name: "test block") do
         desc "a description"
         tool "ns1" do
           set_context_directory(dir)
@@ -488,7 +488,7 @@ describe Toys::Loader do
 
   describe "subtool list" do
     let(:subtools_loader) {
-      loader.add_block(name: "test block") do
+      loader.add_block(source_name: "test block") do
         tool "ns3" do
           tool "tool1" do
             desc "hi"
@@ -555,7 +555,7 @@ describe Toys::Loader do
 
   describe "concurrency" do
     it "serializes loading" do
-      loader.add_block(name: "test block") do
+      loader.add_block(source_name: "test block") do
         sleep(0.1)
         tool "tool-1" do
           desc "block tool-1 description"
@@ -575,14 +575,14 @@ describe Toys::Loader do
     end
 
     it "prevents adding sources after loading has started" do
-      loader.add_block(name: "test block") do
+      loader.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "block tool-1 description"
         end
       end
       loader.lookup(["tool-1"])
       assert_raises("Cannot add a path after tool loading has started") do
-        loader.add_block(name: "test block 2") do
+        loader.add_block(source_name: "test block 2") do
           tool "tool-2" do
             desc "block tool-2 description"
           end
@@ -604,7 +604,7 @@ describe Toys::Loader do
     }
 
     it "builds default middleware" do
-      middleware_loader.add_block(name: "test block") do
+      middleware_loader.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "hello"
         end
@@ -617,7 +617,7 @@ describe Toys::Loader do
     end
 
     it "gets middleware stack from parent" do
-      middleware_loader.add_block(name: "test block") do
+      middleware_loader.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "hello"
           current_tool.subtool_middleware_stack.add(:add_verbosity_flags)

@@ -321,10 +321,22 @@ module Toys
     #     a Toys directory.
     # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given path, `:parent` to denote the
+    #     given path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:parent`.
     # @return [self]
     #
-    def add_config_path(path, high_priority: false)
-      @loader.add_path(path, high_priority: high_priority)
+    def add_config_path(path,
+                        high_priority: false,
+                        source_name: nil,
+                        context_directory: :parent)
+      @loader.add_path(path,
+                       high_priority: high_priority,
+                       source_name: source_name,
+                       context_directory: context_directory)
       self
     end
 
@@ -336,15 +348,24 @@ module Toys
     #
     # @param high_priority [Boolean] Add the config at the head of the priority
     #     list rather than the tail.
-    # @param name [String] The source name that will be shown in documentation
-    #     for tools defined in this block. If omitted, a default unique string
-    #     will be generated.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools defined in this block. If omitted, a default
+    #     unique string will be generated.
     # @param block [Proc] The block of configuration, executed in the context
     #     of the tool DSL {Toys::DSL::Tool}.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this block. You can pass a directory path as a string, or
+    #     `nil` to denote no context. Defaults to `nil`.
     # @return [self]
     #
-    def add_config_block(high_priority: false, name: nil, &block)
-      @loader.add_block(high_priority: high_priority, name: name, &block)
+    def add_config_block(high_priority: false,
+                         source_name: nil,
+                         context_directory: nil,
+                         &block)
+      @loader.add_block(high_priority: high_priority,
+                        source_name: source_name,
+                        context_directory: context_directory,
+                        &block)
       self
     end
 
@@ -358,19 +379,28 @@ module Toys
     # @param search_path [String] A path to search for configs.
     # @param high_priority [Boolean] Add the configs at the head of the
     #     priority list rather than the tail.
+    # @param context_directory [String,nil,:path,:parent] The context directory
+    #     for tools loaded from this path. You can pass a directory path as a
+    #     string, `:path` to denote the given path, `:parent` to denote the
+    #     given path's parent directory, or `nil` to denote no context.
+    #     Defaults to `:path`.
     # @return [self]
     #
-    def add_search_path(search_path, high_priority: false)
+    def add_search_path(search_path,
+                        high_priority: false,
+                        context_directory: :path)
       paths = []
       if @config_file_name
         file_path = ::File.join(search_path, @config_file_name)
-        paths << file_path if !::File.directory?(file_path) && ::File.readable?(file_path)
+        paths << @config_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
       end
       if @config_dir_name
         dir_path = ::File.join(search_path, @config_dir_name)
-        paths << dir_path if ::File.directory?(dir_path) && ::File.readable?(dir_path)
+        paths << @config_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
       end
-      @loader.add_path(paths, high_priority: high_priority)
+      @loader.add_path_set(search_path, paths,
+                           high_priority: high_priority,
+                           context_directory: context_directory)
       self
     end
 

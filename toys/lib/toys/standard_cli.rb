@@ -139,7 +139,7 @@ module Toys
       add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
       global_dirs.each { |path| add_search_path(path) }
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
-      add_config_path(builtins_path)
+      add_config_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
       self
     end
 
@@ -177,6 +177,7 @@ module Toys
                         default_recursive: true,
                         allow_root_args: true,
                         show_source_path: true,
+                        separate_sources: true,
                         use_less: true,
                         fallback_execution: true),
         Middleware.spec(:show_root_version,

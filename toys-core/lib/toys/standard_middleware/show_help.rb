@@ -159,6 +159,8 @@ module Toys
       #     that tool.
       # @param show_source_path [Boolean] Show the source path section. Default
       #     is `false`.
+      # @param separate_sources [Boolean] Split up tool list by source root.
+      #     Defaults to false.
       # @param use_less [Boolean] If the `less` tool is available, and the
       #     output stream is a tty, then use `less` to display help text.
       # @param stream [IO] Output stream to write to. Default is stdout.
@@ -177,6 +179,7 @@ module Toys
                      fallback_execution: false,
                      allow_root_args: false,
                      show_source_path: false,
+                     separate_sources: false,
                      use_less: false,
                      stream: $stdout,
                      styled_output: nil)
@@ -191,6 +194,7 @@ module Toys
         @fallback_execution = fallback_execution
         @allow_root_args = allow_root_args
         @show_source_path = show_source_path
+        @separate_sources = separate_sources
         @stream = stream
         @styled_output = styled_output
         @use_less = use_less && !Compat.jruby?
@@ -250,7 +254,9 @@ module Toys
         help_text = get_help_text(context, true)
         str = help_text.usage_string(
           recursive: context[RECURSIVE_SUBTOOLS_KEY],
-          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY],
+          separate_sources: @separate_sources,
+          wrap_width: terminal.width
         )
         terminal.puts(str)
       end
@@ -258,8 +264,11 @@ module Toys
       def show_list(context)
         help_text = get_help_text(context, true)
         str = help_text.list_string(
-          recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
-          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], wrap_width: terminal.width
+          recursive: context[RECURSIVE_SUBTOOLS_KEY],
+          search: context[SEARCH_STRING_KEY],
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY],
+          separate_sources: @separate_sources,
+          wrap_width: terminal.width
         )
         terminal.puts(str)
       end
@@ -267,8 +276,11 @@ module Toys
       def show_help(context, use_extra_args)
         help_text = get_help_text(context, use_extra_args)
         str = help_text.help_string(
-          recursive: context[RECURSIVE_SUBTOOLS_KEY], search: context[SEARCH_STRING_KEY],
-          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY], show_source_path: @show_source_path,
+          recursive: context[RECURSIVE_SUBTOOLS_KEY],
+          search: context[SEARCH_STRING_KEY],
+          include_hidden: context[SHOW_ALL_SUBTOOLS_KEY],
+          show_source_path: @show_source_path,
+          separate_sources: @separate_sources,
           wrap_width: terminal.width
         )
         if less_path

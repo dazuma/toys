@@ -16,12 +16,13 @@ module Toys
     # Should be created only from the DSL via the Loader.
     # @private
     #
-    def initialize(parent, full_name, priority, middleware_stack, middleware_lookup,
+    def initialize(parent, full_name, priority, source_root, middleware_stack, middleware_lookup,
                    tool_class = nil)
       @parent = parent
       @settings = Settings.new(parent: parent&.settings)
       @full_name = full_name.dup.freeze
       @priority = priority
+      @source_root = source_root
       @built_middleware = middleware_stack.build(middleware_lookup)
       @subtool_middleware_stack = middleware_stack.dup
 
@@ -97,6 +98,13 @@ module Toys
     # @return [Integer]
     #
     attr_reader :priority
+
+    ##
+    # The root source info defining this tool, or nil if there is no source.
+    #
+    # @return [Toys::SourceInfo,nil]
+    #
+    attr_reader :source_root
 
     ##
     # The tool class.
