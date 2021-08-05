@@ -58,7 +58,7 @@ tool "install" do
 
   def run
     require "shellwords"
-    path = ::File.join(::File.dirname(__dir__), "share", "bash-completion.sh")
+    path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "bash-completion.sh")
     exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
     puts Shellwords.join(["source", path] + exes)
   end
@@ -82,7 +82,7 @@ tool "remove" do
 
   def run
     require "shellwords"
-    path = ::File.join(::File.dirname(__dir__), "share", "bash-completion-remove.sh")
+    path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "bash-completion-remove.sh")
     exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
     puts Shellwords.join(["source", path] + exes)
   end
