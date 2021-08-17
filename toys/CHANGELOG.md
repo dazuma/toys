@@ -1,5 +1,9 @@
 # Release History
 
+### v0.12.1 / 2021-08-17
+
+* FIXED: Fixed a regression in 0.12.0 where bundler could use the wrong Gemfile if you set a custom context directory
+
 ### v0.12.0 / 2021-08-05
 
 Toys 0.12.0 is a major release with significant new features and bug fixes, and a few minor breaking changes. Additionally, this release now requires Ruby 2.4 or later.
