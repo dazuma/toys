@@ -2,7 +2,7 @@
 
 ### v0.12.1 / 2021-08-17
 
-* (No significant changes)
+* FIXED: Fixed a regression in 0.12.0 where bundler could use the wrong Gemfile if you set a custom context directory
 
 ### v0.12.0 / 2021-08-05
 
