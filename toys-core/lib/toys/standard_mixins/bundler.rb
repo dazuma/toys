@@ -159,7 +159,8 @@ module Toys
         def search_toys
           source_info = @source_info
           while source_info
-            if source_info.source_type == :directory
+            if source_info.source_type == :directory &&
+               source_info.source_path != source_info.context_directory
               result = ::Toys::Utils::Gems.find_gemfile(source_info.source_path,
                                                         gemfile_names: @toys_gemfile_names)
               return result if result
