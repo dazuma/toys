@@ -146,6 +146,13 @@ module Toys
       @__data = data
     end
 
+    # @private
+    def inspect
+      name = Array(@__data[Key::TOOL_NAME]).join(" ")
+      id = object_id.to_s(16)
+      "#<Toys::Context id=0x#{id} #{name}>"
+    end
+
     ##
     # The raw arguments passed to the tool, as an array of strings.
     # This does not include the tool name itself.
