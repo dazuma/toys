@@ -2,7 +2,8 @@
 
 ### v0.12.2 / 2021-08-30
 
-* (No significant changes)
+* FIXED: Tool context inspect string is no longer overwhelmingly long
+* FIXED: Fixed an exception in GitCache and load_git when updating a changed ref
 
 ### v0.12.1 / 2021-08-17
 
