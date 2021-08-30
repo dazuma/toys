@@ -1,5 +1,10 @@
 # Release History
 
+### v0.12.2 / 2021-08-30
+
+* FIXED: Tool context inspect string is no longer overwhelmingly long
+* FIXED: Fixed an exception in GitCache and load_git when updating a changed ref
+
 ### v0.12.1 / 2021-08-17
 
 * FIXED: Fixed a regression in 0.12.0 where bundler could use the wrong Gemfile if you set a custom context directory
