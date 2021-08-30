@@ -156,7 +156,7 @@ module Toys
         repo_dir = ::File.join(dir, repo_dir_name)
         is_sha = commit =~ /^[0-9a-f]{40}$/
         if update && !is_sha || !commit_exists?(repo_dir, local_commit)
-          git(repo_dir, ["fetch", "--depth=1", "origin", "#{commit}:#{local_commit}"],
+          git(repo_dir, ["fetch", "--depth=1", "--force", "origin", "#{commit}:#{local_commit}"],
               error_message: "Unable to to fetch commit: #{commit}")
         end
         result = git(repo_dir, ["rev-parse", local_commit],
