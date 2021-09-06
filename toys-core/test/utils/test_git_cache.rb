@@ -29,15 +29,16 @@ describe Toys::Utils::GitCache do
     git_cache
     FileUtils.mkdir_p(cache_dir)
     start1 = finish1 = start2 = finish2 = nil
+    timestamp = ::Time.now.to_i
     thread1 = Thread.new do
-      git_cache.send(:lock_repo, cache_dir) do
+      git_cache.send(:lock_repo, cache_dir, "foo", timestamp) do
         start1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         sleep(0.5)
         finish1 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
     end
     thread2 = Thread.new do
-      git_cache.send(:lock_repo, cache_dir) do
+      git_cache.send(:lock_repo, cache_dir, "bar", timestamp) do
         start2 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         sleep(0.5)
         finish2 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
@@ -64,6 +65,12 @@ describe Toys::Utils::GitCache do
         File.open(name, "w") { |file| file.puts(name) }
         exec_git("add", name)
         exec_git("commit", "-m", "Add file #{name}")
+      end
+    end
+
+    def create_branch(name)
+      Dir.chdir(git_repo_dir) do
+        exec_git("branch", name)
       end
     end
 
@@ -97,6 +104,42 @@ describe Toys::Utils::GitCache do
       assert(File.file?(File.join(dir3, file2_name)))
       content = File.read(File.join(dir3, file2_name))
       assert_equal(file2_name, content.strip)
+    end
+
+    it "updates based on cache age" do
+      file1_name = "file1.txt"
+      file2_name = "file2.txt"
+      commit_file(file1_name)
+      dir1 = git_cache.find(local_remote, timestamp: 1000)
+      refute(File.file?(File.join(dir1, file2_name)))
+      commit_file(file2_name)
+      dir2 = git_cache.find(local_remote, timestamp: 1001, update: 10)
+      refute(File.file?(File.join(dir2, file2_name)))
+      dir3 = git_cache.find(local_remote, timestamp: 1010, update: 10)
+      assert(File.file?(File.join(dir3, file2_name)))
+    end
+
+    it "reuses a git clone for the same remote" do
+      branch1 = "b1"
+      branch2 = "b2"
+      file1_name = "file1.txt"
+      file2_name = "file2.txt"
+      commit_file(file1_name)
+      create_branch(branch1)
+      commit_file(file2_name)
+      create_branch(branch2)
+
+      git_cache.find(local_remote, commit: branch1)
+      repo_path = git_cache.repo_dir_for(local_remote)
+      file_path = File.join(repo_path, "tmp.txt")
+      File.open(file_path, "w") do |file|
+        file.puts("hello")
+      end
+      sha1 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
+      git_cache.find(local_remote, commit: branch2)
+      assert_equal("hello\n", File.read(file_path))
+      sha2 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
+      refute_equal(sha1, sha2)
     end
   end
 
@@ -142,22 +185,6 @@ describe Toys::Utils::GitCache do
       expected_url = URI("https://raw.githubusercontent.com/#{toys_repo}/HEAD/#{toys_core_examples_path}/simple-gem/README.md")
       expected_content = Net::HTTP.get(expected_url)
       assert_equal(expected_content, readme_content)
-    end
-
-    it "reuses a git clone for the same remote" do
-      branch = "main"
-      tag = "toys-core/v0.11.5"
-      git_cache.find(toys_remote, path: toys_core_examples_path, commit: branch)
-      repo_path = git_cache.repo_dir_for(toys_remote)
-      file_path = File.join(repo_path, "tmp.txt")
-      File.open(file_path, "w") do |file|
-        file.puts("hello")
-      end
-      sha1 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
-      git_cache.find(toys_remote, path: toys_core_examples_path, commit: tag)
-      assert_equal("hello\n", File.read(file_path))
-      sha2 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
-      refute_equal(sha1, sha2)
     end
   end
 end
