@@ -11,8 +11,8 @@ module Toys
     ##
     # This object provides cached access to remote git data. Given a remote
     # repository, a path, and a commit, it makes the files availble in the
-    # local filesystem. Access is cached, so repeated requests do not hit the
-    # remote repository again.
+    # local filesystem. Access is cached, so repeated requests for the same
+    # commit and path in the same repo do not hit the remote repository again.
     #
     # This class is used by the Loader to load tools from git. Tools can also
     # use the `:git_cache` mixin for direct access to this class.
@@ -43,55 +43,203 @@ module Toys
         attr_reader :exec_result
       end
 
-      # @private
+      ##
+      # Information about a remote git repository in the cache.
+      #
+      # This object is returned from {GitCache#repo_info}.
+      #
       class RepoInfo
         # @private
-        def initialize(io, remote, timestamp)
-          @data = ::JSON.parse(io.read) rescue {} # rubocop:disable Style/RescueModifier
-          @data["remote"] = remote
-          @data["refs"] ||= {}
-          @data["sources"] ||= {}
-          @modified = false
-          @timestamp = timestamp
+        def initialize(base_dir, data)
+          @base_dir = base_dir
+          @remote = data["remote"]
+          accessed = data["accessed"]
+          @last_accessed = accessed ? ::Time.at(accessed).utc : nil
+          @refs = (data["refs"] || {}).map do |ref, ref_data|
+            RefInfo.new(ref, ref_data["sha"], ref_data["accessed"], ref_data["updated"])
+          end.sort_by(&:ref)
+          @sources = (data["sources"] || {}).flat_map do |sha, sha_data|
+            sha_data.map do |path, path_data|
+              SourceInfo.new(base_dir, sha, path, path_data["accessed"])
+            end
+          end
+          @sources.sort_by { |src| src.sha + src.git_path }
         end
 
-        # @private
-        def modified?
-          @modified
-        end
+        ##
+        # The base directory of this git repository's cache entry. This
+        # directory contains all cached data related to this repo. Deleting it
+        # effectively removes the repo from the cache.
+        #
+        # @return [String]
+        #
+        attr_reader :base_dir
 
-        # @private
-        def dump(io)
-          ::JSON.dump(@data, io)
-        end
+        ##
+        # The git remote, usually a file system path or URL.
+        #
+        # @return [String]
+        #
+        attr_reader :remote
 
-        # @private
-        def ref_stale?(ref, age)
-          ref_info = @data["refs"][ref]
-          last_updated = ref_info ? ref_info.fetch("updated", 0) : 0
-          @timestamp >= last_updated + age
-        end
+        ##
+        # The last time any cached data from this repo was accessed, or `nil`
+        # if the information is unavailable.
+        #
+        # @return [Time,nil]
+        #
+        attr_reader :last_accessed
 
-        # @private
-        def update_ref!(ref)
-          (@data["refs"][ref] ||= {})["updated"] = @timestamp
-          @modified = true
-        end
+        ##
+        # A list of git refs (branches, tags, shas) that have been accessed
+        # from this repo.
+        #
+        # @return [Array<RefInfo>]
+        #
+        attr_reader :refs
 
-        # @private
-        def access_ref!(ref, sha)
-          ref_info = @data["refs"][ref] ||= {}
-          ref_info["sha"] = sha
-          ref_info["accessed"] = @timestamp
-          @modified = true
-        end
+        ##
+        # A list of shared source files and directories accessed for this repo.
+        #
+        # @return [Array<SourceInfo>]
+        #
+        attr_reader :sources
 
-        # @private
-        def access_source!(sha, path)
-          ((@data["sources"][sha] ||= {})[path] ||= {})["accessed"] = @timestamp
-          @modified = true
+        ##
+        # Convert this RepoInfo to a hash suitable for JSON output
+        #
+        # @return [Hash]
+        #
+        def to_h
+          result = {
+            "remote" => remote,
+            "base_dir" => base_dir,
+          }
+          result["last_accessed"] = last_accessed.to_i if last_accessed
+          result["refs"] = refs.map(&:to_h)
+          result["sources"] = sources.map(&:to_h)
+          result
         end
       end
+
+      ##
+      # Information about a git ref used in a cache.
+      #
+      class RefInfo
+        # @private
+        def initialize(ref, sha, accessed, updated)
+          @ref = ref
+          @sha = sha
+          @last_accessed = accessed ? ::Time.at(accessed).utc : nil
+          @last_updated = updated ? ::Time.at(updated).utc : nil
+        end
+
+        ##
+        # The git ref
+        #
+        # @return [String]
+        #
+        attr_reader :ref
+
+        ##
+        # The git sha last associated with the ref
+        #
+        # @return [String]
+        #
+        attr_reader :sha
+
+        ##
+        # The timestamp when this ref was last accessed
+        #
+        # @return [Time]
+        #
+        attr_reader :last_accessed
+
+        ##
+        # The timestamp when this ref was last updated
+        #
+        # @return [Time]
+        #
+        attr_reader :last_updated
+
+        ##
+        # Convert this RefInfo to a hash suitable for JSON output
+        #
+        # @return [Hash]
+        #
+        def to_h
+          result = {
+            "ref" => ref,
+            "sha" => sha,
+          }
+          result["last_accessed"] = last_accessed.to_i if last_accessed
+          result["last_updated"] = last_updated.to_i if last_updated
+          result
+        end
+      end
+
+      ##
+      # Information about shared source files provided from the cache.
+      #
+      class SourceInfo
+        # @private
+        def initialize(base_dir, sha, git_path, accessed)
+          @sha = sha
+          @git_path = git_path
+          root_dir = ::File.join(base_dir, sha)
+          @source = git_path == "." ? root_dir : ::File.join(root_dir, git_path)
+          @last_accessed = accessed ? ::Time.at(accessed).utc : nil
+        end
+
+        ##
+        # The git sha the source comes from
+        #
+        # @return [String]
+        #
+        attr_reader :sha
+
+        ##
+        # The path within the git repo
+        #
+        # @return [String]
+        #
+        attr_reader :git_path
+
+        ##
+        # The path to the source file or directory
+        #
+        # @return [String]
+        #
+        attr_reader :source
+
+        ##
+        # The timestamp when this ref was last accessed
+        #
+        # @return [Time]
+        #
+        attr_reader :last_accessed
+
+        ##
+        # Convert this SourceInfo to a hash suitable for JSON output
+        #
+        # @return [Hash]
+        #
+        def to_h
+          result = {
+            "sha" => sha,
+            "git_path" => git_path,
+            "source" => source,
+          }
+          result["last_accessed"] = last_accessed.to_i if last_accessed
+          result
+        end
+      end
+
+      # @private
+      REPO_DIR_NAME = "repo"
+
+      # @private
+      LOCK_FILE_NAME = "repo.lock"
 
       ##
       # Access a git cache.
@@ -105,14 +253,33 @@ module Toys
       end
 
       ##
+      # The cache directory.
+      #
+      # @return [String]
+      #
+      attr_reader :cache_dir
+
+      ##
       # Find the given git-based files from the git cache, loading from the
       # remote repo if necessary.
+      #
+      # The resulting files are either copied into a directory you provide in
+      # the `:into` parameter, or populated into a _shared_ source directory if
+      # you omit the `:info` parameter. In the latter case, it is important
+      # that you do not modify the returned files or directories, nor add or
+      # remove any files from the directories returned, to avoid confusing
+      # callers that could be given the same directory. If you need to make any
+      # modifications to the returned files, use `:into` to provide your own
+      # private directory.
       #
       # @param remote [String] The URL of the git repo. Required.
       # @param path [String] The path to the file or directory within the repo.
       #     Optional. Defaults to the entire repo.
       # @param commit [String] The commit reference, which may be a SHA or any
       #     git ref such as a branch or tag. Optional. Defaults to `HEAD`.
+      # @param into [String] If provided, copies the specified files into the
+      #     given directory path. If omitted or `nil`, populates and returns a
+      #     shared source file or directory.
       # @param update [Boolean,Integer] Whether to update of non-SHA commit
       #     references if they were previously loaded. This is useful, for
       #     example, if the commit is `HEAD` or a branch name. Pass `true` or
@@ -120,45 +287,132 @@ module Toys
       #     last update was done at least that many seconds ago. Default is
       #     `false`.
       #
-      # @return [String] The full path to the cached files.
+      # @return [String] The full path to the cached files. The returned path
+      #     will correspod to the path given. For example, if you provide the
+      #     path `Gemfile` representing a single file in the repository, the
+      #     returned path will point directly to the cached copy of that file.
       #
-      def find(remote, path: nil, commit: nil, update: false, timestamp: nil)
-        path ||= ""
+      def find(remote, path: nil, commit: nil, into: nil, update: false, timestamp: nil)
+        path = GitCache.normalize_path(path)
         commit ||= "HEAD"
         timestamp ||= ::Time.now.to_i
         dir = ensure_dir(remote)
-        lock_repo(dir, remote, timestamp) do |repo_info|
+        lock_repo(dir, remote, timestamp) do |repo_lock|
           ensure_repo(dir, remote)
-          sha = ensure_commit(dir, commit, repo_info, update)
-          ensure_source(dir, sha, path.to_s, repo_info)
+          sha = ensure_commit(dir, commit, repo_lock, update)
+          if into
+            copy_files(dir, sha, path, repo_lock, into)
+          else
+            ensure_source(dir, sha, path, repo_lock)
+          end
         end
       end
 
       ##
-      # The cache directory.
+      # Returns an array of the known remote names.
       #
-      # @return [String]
+      # @return [Array<String>]
       #
-      attr_reader :cache_dir
+      def remote_names
+        names = []
+        return names unless ::File.directory?(cache_dir)
+        ::Dir.entries(cache_dir).each do |child|
+          next if child.start_with?(".")
+          dir = ::File.join(cache_dir, child)
+          if ::File.file?(::File.join(dir, LOCK_FILE_NAME))
+            name = lock_repo(dir, &:remote)
+            names << name if name
+          end
+        end
+        names.sort
+      end
 
-      # @private Used for testing
-      def repo_dir_for(remote)
-        ::File.join(@cache_dir, remote_dir_name(remote), "repo")
+      ##
+      # Returns a {RepoInfo} describing the cache for the given remote, or
+      # `nil` if the given remote has never been cached.
+      #
+      # @param remote [String] Remote name for a repo
+      # @return [RepoInfo,nil]
+      #
+      def repo_info(remote)
+        dir = repo_base_dir_for(remote)
+        return nil unless ::File.directory?(dir)
+        lock_repo(dir, remote) do |repo_lock|
+          RepoInfo.new(dir, repo_lock.data)
+        end
+      end
+
+      ##
+      # Deletes caches for the given repos, or all repos if specified.
+      #
+      # @param remotes [Array<String>,:all] A list of the remotes to delete, or
+      #     specify `:all` to delete all repos.
+      # @return [Array<String>] The remotes actually deleted.
+      #
+      def delete_repos(remotes)
+        remotes = remote_names if remotes.nil? || remotes == :all
+        Array(remotes).map do |remote|
+          dir = repo_base_dir_for(remote)
+          if ::File.directory?(dir)
+            ::FileUtils.rm_rf(dir)
+            remote
+          end
+        end.compact.sort
+      end
+
+      ##
+      # Remove records of the given refs from the given cache. The next time
+      # these refs are requested, they will be pulled from the remote repo.
+      #
+      # @param remote [String] The repository
+      # @param refs [Array<String>] The refs to delete, or `:all` to delete all.
+      # @return [Array<String>] A list of the refs actually deleted.
+      #
+      def delete_refs(remote, refs)
+        dir = repo_base_dir_for(remote)
+        return nil unless ::File.directory?(dir)
+        lock_repo(dir, remote) do |repo_lock|
+          refs = repo_lock.refs if refs.nil? || refs == :all
+          Array(refs).map { |ref| repo_lock.delete_ref!(ref) }.compact.sort
+        end
+      end
+
+      ##
+      # Remove shared sources for the given cache. Sources are selected by
+      # providing filters for refs and git paths. You can provide lists of
+      # speific refs and paths to delete, or omit a filter to delete all
+      # sources. For example, to delete all sources, for all refs, referencing
+      # the path `lib`, use `paths: ["lib"]` and omit the `:refs` argument. To
+      # delete all sources for the repo, omit both arguments.
+      #
+      # @param remote [String] The repository
+      # @param refs [Array<String>] Optional filter for refs
+      # @param paths [Array<String>] Optional filter for git paths
+      # @return [Array<Array(String,String)>] A list of the sources actually
+      #     deleted, as two-element (sha, path) arrays.
+      #
+      def delete_sources(remote, refs: nil, paths: nil)
+        dir = repo_base_dir_for(remote)
+        return nil unless ::File.directory?(dir)
+        paths = nil if paths == :all
+        refs = nil if refs == :all
+        paths = Array(paths).map { |path| GitCache.normalize_path(path) } if paths
+        lock_repo(dir, remote) do |repo_lock|
+          shas = Array(refs).map { |ref| repo_lock.lookup_ref(ref) }.compact.uniq if refs
+          deleted = repo_lock.delete_sources!(shas: shas, paths: paths)
+          deleted.map(&:first).uniq.each do |sha|
+            unless repo_lock.source_exists?(sha)
+              ::FileUtils.rm_rf(::File.join(dir, sha))
+            end
+          end
+          deleted
+        end
       end
 
       private
 
-      def remote_dir_name(remote)
-        ::Digest::MD5.hexdigest(remote)
-      end
-
-      def source_name(sha, path)
-        digest = ::Digest::MD5.hexdigest("#{sha}#{path}")
-        "#{digest}#{::File.extname(path)}"
-      end
-
-      def repo_dir_name
-        "repo"
+      def repo_base_dir_for(remote)
+        ::File.join(@cache_dir, GitCache.remote_dir_name(remote))
       end
 
       def default_cache_dir
@@ -180,30 +434,31 @@ module Toys
       end
 
       def ensure_dir(remote)
-        dir = ::File.join(@cache_dir, remote_dir_name(remote))
+        dir = repo_base_dir_for(remote)
         ::FileUtils.mkdir_p(dir)
         dir
       end
 
-      def lock_repo(dir, remote, timestamp)
-        lock_path = ::File.join(dir, "repo.lock")
+      def lock_repo(dir, remote = nil, timestamp = nil)
+        lock_path = ::File.join(dir, LOCK_FILE_NAME)
         ::File.open(lock_path, ::File::RDWR | ::File::CREAT) do |file|
           file.flock(::File::LOCK_EX)
-          repo_info = RepoInfo.new(file, remote, timestamp)
+          file.rewind
+          repo_lock = RepoLock.new(file, remote, timestamp)
           begin
-            yield repo_info
+            yield repo_lock
           ensure
-            if repo_info.modified?
+            if repo_lock.modified?
               file.rewind
               file.truncate(0)
-              repo_info.dump(file)
+              repo_lock.dump(file)
             end
           end
         end
       end
 
       def ensure_repo(dir, remote)
-        repo_dir = ::File.join(dir, repo_dir_name)
+        repo_dir = ::File.join(dir, REPO_DIR_NAME)
         ::FileUtils.mkdir_p(repo_dir)
         result = git(repo_dir, ["remote", "get-url", "origin"])
         unless result.success? && result.captured_out.strip == remote
@@ -216,22 +471,20 @@ module Toys
         end
       end
 
-      def ensure_commit(dir, commit, repo_info, update = false)
+      def ensure_commit(dir, commit, repo_lock, update = false)
         local_commit = "toys-git-cache/#{commit}"
-        repo_dir = ::File.join(dir, repo_dir_name)
+        repo_dir = ::File.join(dir, REPO_DIR_NAME)
         is_sha = commit =~ /^[0-9a-f]{40}$/
-        if update.is_a?(::Numeric) && !is_sha
-          update = repo_info.ref_stale?(commit, update)
-        end
+        update = repo_lock.ref_stale?(commit, update) unless is_sha
         if update && !is_sha || !commit_exists?(repo_dir, local_commit)
           git(repo_dir, ["fetch", "--depth=1", "--force", "origin", "#{commit}:#{local_commit}"],
               error_message: "Unable to to fetch commit: #{commit}")
-          repo_info.update_ref!(commit)
+          repo_lock.update_ref!(commit)
         end
         result = git(repo_dir, ["rev-parse", local_commit],
                      error_message: "Unable to retrieve commit: #{local_commit}")
         sha = result.captured_out.strip
-        repo_info.access_ref!(commit, sha)
+        repo_lock.access_ref!(commit, sha)
         sha
       end
 
@@ -240,16 +493,189 @@ module Toys
         result.success? && result.captured_out.strip == "commit"
       end
 
-      def ensure_source(dir, sha, path, repo_info)
-        source_path = ::File.join(dir, source_name(sha, path))
-        unless ::File.exist?(source_path)
-          repo_dir = ::File.join(dir, repo_dir_name)
-          git(repo_dir, ["checkout", sha])
-          from_path = ::File.join(repo_dir, path)
-          ::FileUtils.cp_r(from_path, source_path)
+      def ensure_source(dir, sha, path, repo_lock)
+        repo_path = ::File.join(dir, REPO_DIR_NAME)
+        source_path = ::File.join(dir, sha)
+        unless repo_lock.source_exists?(sha, path)
+          copy_from_repo(repo_path, source_path, sha, path)
         end
-        repo_info.access_source!(sha, path)
-        source_path
+        repo_lock.access_source!(sha, path)
+        path == "." ? source_path : ::File.join(source_path, path)
+      end
+
+      def copy_files(dir, sha, path, repo_lock, into)
+        repo_path = ::File.join(dir, REPO_DIR_NAME)
+        ::FileUtils.rm_rf(into)
+        result = copy_from_repo(repo_path, into, sha, path)
+        repo_lock.access_repo!
+        result
+      end
+
+      def copy_from_repo(repo_dir, into, sha, path)
+        git(repo_dir, ["checkout", sha])
+        if path == "."
+          ::FileUtils.mkdir_p(into)
+          omit_names = [".", "..", ".git"]
+          ::Dir.entries(repo_dir).each do |entry|
+            next if omit_names.include?(entry)
+            to_path = ::File.join(into, entry)
+            unless ::File.exist?(to_path)
+              from_path = ::File.join(repo_dir, entry)
+              ::FileUtils.cp_r(from_path, to_path)
+            end
+          end
+          into
+        else
+          to_path = ::File.join(into, path)
+          unless ::File.exist?(to_path)
+            from_path = ::File.join(repo_dir, path)
+            ::FileUtils.mkdir_p(::File.dirname(to_path))
+            ::FileUtils.cp_r(from_path, to_path)
+          end
+          to_path
+        end
+      end
+
+      # @private
+      class RepoLock
+        # @private
+        def initialize(io, remote, timestamp)
+          @data = ::JSON.parse(io.read) rescue {} # rubocop:disable Style/RescueModifier
+          @data["remote"] ||= remote
+          @data["refs"] ||= {}
+          @data["sources"] ||= {}
+          @modified = false
+          @timestamp = timestamp || ::Time.now.to_i
+        end
+
+        # @private
+        attr_reader :data
+
+        # @private
+        def remote
+          @data["remote"]
+        end
+
+        # @private
+        def refs
+          @data["refs"].keys
+        end
+
+        # @private
+        def lookup_ref(ref)
+          return ref if ref =~ /^[0-9a-f]{40}$/
+          @data["refs"][ref]&.fetch("sha", nil)
+        end
+
+        # @private
+        def modified?
+          @modified
+        end
+
+        # @private
+        def dump(io)
+          ::JSON.dump(@data, io)
+        end
+
+        # @private
+        def ref_stale?(ref, age)
+          ref_info = @data["refs"][ref]
+          last_updated = ref_info ? ref_info.fetch("updated", 0) : 0
+          return true if last_updated.zero?
+          return age unless age.is_a?(::Numeric)
+          @timestamp >= last_updated + age
+        end
+
+        # @private
+        def update_ref!(ref)
+          ref_info = @data["refs"][ref] ||= {}
+          is_first = !ref_info.key?("updated")
+          ref_info["updated"] = @timestamp
+          @modified = true
+          is_first
+        end
+
+        # @private
+        def delete_ref!(ref)
+          @modified = true
+          @data["refs"].delete(ref) ? ref : nil
+        end
+
+        # @private
+        def delete_sources!(paths: nil, shas: nil)
+          deleted = []
+          sources = @data["sources"]
+          sources.each_key do |sha|
+            next unless shas.nil? || shas.include?(sha)
+            sha_data = sources[sha]
+            sha_data.each_key do |path|
+              next unless paths.nil? || paths.include?(path)
+              sha_data.delete(path)
+              deleted << [sha, path]
+              @modified = true
+            end
+            sources.delete(sha) if sha_data.empty?
+          end
+          deleted
+        end
+
+        # @private
+        def access_ref!(ref, sha)
+          ref_info = @data["refs"][ref] ||= {}
+          ref_info["sha"] = sha
+          is_first = !ref_info.key?("accessed")
+          ref_info["accessed"] = @timestamp
+          @modified = true
+          is_first
+        end
+
+        # @private
+        def source_exists?(sha, path = nil)
+          sha_info = @data["sources"][sha]
+          path ? sha_info&.fetch(path, nil)&.key?("accessed") : !sha_info.nil?
+        end
+
+        # @private
+        def access_source!(sha, path)
+          @data["accessed"] = @timestamp
+          source_info = @data["sources"][sha] ||= {}
+          path_info = source_info[path] ||= {}
+          is_first = !path_info.key?("accessed")
+          path_info["accessed"] = @timestamp
+          @modified = true
+          is_first
+        end
+
+        # @private
+        def access_repo!
+          is_first = !@data.key?("accessed")
+          @data["accessed"] = @timestamp
+          @modified = true
+          is_first
+        end
+      end
+
+      class << self
+        # @private
+        def remote_dir_name(remote)
+          ::Digest::MD5.hexdigest(remote)
+        end
+
+        # @private
+        def normalize_path(orig_path)
+          segs = []
+          orig_segs = orig_path.to_s.sub(%r{^/+}, "").split(%r{/+})
+          raise ::ArgumentError, "Path #{orig_path.inspect} reads .git directory" if orig_segs.first == ".git"
+          orig_segs.each do |seg|
+            if seg == ".."
+              raise ::ArgumentError, "Path #{orig_path.inspect} references its parent" if segs.empty?
+              segs.pop
+            elsif seg != "."
+              segs.push(seg)
+            end
+          end
+          segs.empty? ? "." : segs.join("/")
+        end
       end
     end
   end

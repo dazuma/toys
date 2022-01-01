@@ -11,18 +11,19 @@ describe Toys::Utils::GitCache do
   let(:cache_dir) { File.join(Dir.tmpdir, "toys_git_cache_test") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: cache_dir) }
   let(:sample_remote) { "https://github.com/dazuma/toys.git" }
+  let(:target_dir) { File.join(Dir.tmpdir, "toys_git_cache_test2") }
 
   before do
     FileUtils.rm_rf(cache_dir)
+    FileUtils.rm_rf(target_dir)
   end
 
   it "uses the default cache dir" do
     git_cache = Toys::Utils::GitCache.new
     expected_cache_dir = File.join(Dir.home, ".cache", "toys", "git")
     assert_equal(expected_cache_dir, git_cache.cache_dir)
-    dir = git_cache.repo_dir_for(sample_remote)
-    digest = Digest::MD5.hexdigest(sample_remote)
-    assert_equal(File.join(expected_cache_dir, digest, "repo"), dir)
+    expected_remote_dir = Digest::MD5.hexdigest(sample_remote)
+    assert_equal(expected_remote_dir, Toys::Utils::GitCache.remote_dir_name(sample_remote))
   end
 
   it "prevents concurrent use of the repo" do
@@ -60,9 +61,11 @@ describe Toys::Utils::GitCache do
       result.captured_out
     end
 
-    def commit_file(name)
+    def commit_file(name, content: nil)
       Dir.chdir(git_repo_dir) do
-        File.open(name, "w") { |file| file.puts(name) }
+        dir = File.dirname(name)
+        FileUtils.mkdir_p(dir) unless dir == "."
+        File.open(name, "w") { |file| file.puts(content || name) }
         exec_git("add", name)
         exec_git("commit", "-m", "Add file #{name}")
       end
@@ -82,11 +85,29 @@ describe Toys::Utils::GitCache do
       end
     end
 
-    it "gets local file from HEAD" do
+    it "gets local repo content from HEAD" do
       file_name = "file1.txt"
       commit_file(file_name)
       dir = git_cache.find(local_remote)
       content = File.read(File.join(dir, file_name))
+      assert_equal(file_name, content.strip)
+    end
+
+    it "gets single local file from HEAD" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      found_path = git_cache.find(local_remote, path: file_name)
+      assert_equal(file_name, File.basename(found_path))
+      content = File.read(found_path)
+      assert_equal(file_name, content.strip)
+    end
+
+    it "gets a file into a specified directory" do
+      file_name = "foo/bar/file1.txt"
+      commit_file(file_name)
+      found_path = git_cache.find(local_remote, path: file_name, into: target_dir)
+      assert_equal(File.join(target_dir, file_name), found_path)
+      content = File.read(found_path)
       assert_equal(file_name, content.strip)
     end
 
@@ -130,7 +151,9 @@ describe Toys::Utils::GitCache do
       create_branch(branch2)
 
       git_cache.find(local_remote, commit: branch1)
-      repo_path = git_cache.repo_dir_for(local_remote)
+      repo_path = File.join(git_cache.cache_dir,
+                            Toys::Utils::GitCache.remote_dir_name(local_remote),
+                            Toys::Utils::GitCache::REPO_DIR_NAME)
       file_path = File.join(repo_path, "tmp.txt")
       File.open(file_path, "w") do |file|
         file.puts("hello")
@@ -140,6 +163,167 @@ describe Toys::Utils::GitCache do
       assert_equal("hello\n", File.read(file_path))
       sha2 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
       refute_equal(sha1, sha2)
+    end
+
+    it "reuses a source for the same sha" do
+      dir_name = "foo"
+      file_name = File.join(dir_name, "bar.txt")
+      commit_file(file_name)
+      found_file_path = git_cache.find(local_remote, path: file_name)
+      found_dir_path = git_cache.find(local_remote, path: dir_name)
+      assert_equal(found_dir_path, File.dirname(found_file_path))
+    end
+
+    it "does not reread the repo when a source can be reused" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      found_file_path = git_cache.find(local_remote, path: file_name)
+      FileUtils.rm_rf(File.join(git_cache.repo_info(local_remote).base_dir, "repo"))
+      found_file_path2 = git_cache.find(local_remote, path: file_name)
+      assert_equal(found_file_path, found_file_path2)
+    end
+
+    it "gets empty remote names list" do
+      assert_empty(git_cache.remote_names)
+    end
+
+    it "gets remote name for a local remote" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      git_cache.find(local_remote, path: file_name)
+      assert_equal([local_remote], git_cache.remote_names)
+    end
+
+    it "returns nil when asked for repo info for a nonexistent remote" do
+      assert_nil(git_cache.repo_info(local_remote))
+    end
+
+    it "gets repo info for a local remote" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+
+      time1 = Time.at(Time.now.to_i)
+      found_path = git_cache.find(local_remote, path: file_name)
+      time2 = Time.at(Time.now.to_i)
+
+      repo_info = git_cache.repo_info(local_remote)
+
+      assert(File.directory?(File.join(repo_info.base_dir, "repo")))
+      assert(File.file?(File.join(repo_info.base_dir, "repo.lock")))
+      assert_equal(local_remote, repo_info.remote)
+      assert(repo_info.last_accessed >= time1 && repo_info.last_accessed <= time2)
+
+      assert_equal(1, repo_info.refs.size)
+      ref_info = repo_info.refs.first
+      assert_equal("HEAD", ref_info.ref)
+      assert(ref_info.last_accessed >= time1 && ref_info.last_accessed <= time2)
+      assert(ref_info.last_updated >= time1 && ref_info.last_updated <= time2)
+
+      assert_equal(1, repo_info.sources.size)
+      source_info = repo_info.sources.first
+      assert_equal(ref_info.sha, source_info.sha)
+      assert_equal(file_name, source_info.git_path)
+      assert_equal(found_path, source_info.source)
+      assert(source_info.last_accessed >= time1 && source_info.last_accessed <= time2)
+    end
+
+    it "gets source info for multiple accesses" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+
+      time1 = Time.at(Time.now.to_i)
+      found_path1 = git_cache.find(local_remote, path: file_name)
+      found_path2 = git_cache.find(local_remote)
+      time2 = Time.at(Time.now.to_i)
+
+      repo_info = git_cache.repo_info(local_remote)
+
+      assert_equal(2, repo_info.sources.size)
+      source_info1, source_info2 = repo_info.sources
+      assert_equal(repo_info.refs.first.sha, source_info1.sha)
+      assert_equal(file_name, source_info1.git_path)
+      assert_equal(found_path1, source_info1.source)
+      assert(source_info1.last_accessed >= time1 && source_info1.last_accessed <= time2)
+      assert_equal(repo_info.refs.first.sha, source_info2.sha)
+      assert_equal(".", source_info2.git_path)
+      assert_equal(found_path2, source_info2.source)
+      assert(source_info2.last_accessed >= time1 && source_info2.last_accessed <= time2)
+    end
+
+    it "gets ref info for multiple accesses" do
+      branch1 = "b1"
+      branch2 = "b2"
+      file1_name = "file1.txt"
+      file2_name = "file2.txt"
+      commit_file(file1_name)
+      create_branch(branch1)
+      commit_file(file2_name)
+      create_branch(branch2)
+
+      time1 = Time.at(Time.now.to_i)
+      found_path1 = git_cache.find(local_remote, commit: branch1)
+      found_path2 = git_cache.find(local_remote, commit: branch2)
+      time2 = Time.at(Time.now.to_i)
+
+      repo_info = git_cache.repo_info(local_remote)
+
+      assert_equal(2, repo_info.refs.size)
+      ref_info1, ref_info2 = repo_info.refs
+      assert_equal(branch1, ref_info1.ref)
+      assert(ref_info1.last_accessed >= time1 && ref_info1.last_accessed <= time2)
+      assert(ref_info1.last_updated >= time1 && ref_info1.last_updated <= time2)
+      assert_includes(found_path1, ref_info1.sha)
+      assert_equal(branch2, ref_info2.ref)
+      assert(ref_info2.last_accessed >= time1 && ref_info2.last_accessed <= time2)
+      assert(ref_info2.last_updated >= time1 && ref_info2.last_updated <= time2)
+      assert_includes(found_path2, ref_info2.sha)
+    end
+
+    it "deletes a repo" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      git_cache.find(local_remote, path: file_name)
+      repo_info = git_cache.repo_info(local_remote)
+      assert(File.directory?(repo_info.base_dir))
+      git_cache.delete_repos(local_remote)
+      assert_nil(git_cache.repo_info(local_remote))
+      refute(File.directory?(repo_info.base_dir))
+    end
+
+    it "deletes a ref" do
+      file_name = "file1.txt"
+      updated_content = "updated"
+      commit_file(file_name)
+      found_path = git_cache.find(local_remote, path: file_name)
+      assert_equal(file_name, File.read(found_path).strip)
+
+      commit_file(file_name, content: updated_content)
+      found_path1 = git_cache.find(local_remote, path: file_name)
+      assert_equal(found_path, found_path1)
+      assert_equal(file_name, File.read(found_path1).strip)
+
+      git_cache.delete_refs(local_remote, "HEAD")
+      found_path2 = git_cache.find(local_remote, path: file_name)
+      refute_equal(found_path, found_path2)
+      assert_equal(updated_content, File.read(found_path2).strip)
+    end
+
+    it "deletes a source by ref" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      found_path = git_cache.find(local_remote, path: file_name)
+      assert(File.file?(found_path))
+      git_cache.delete_sources(local_remote, refs: "HEAD")
+      refute(File.file?(found_path))
+    end
+
+    it "deletes a source by path" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      found_path = git_cache.find(local_remote, path: file_name)
+      assert(File.file?(found_path))
+      git_cache.delete_sources(local_remote, paths: file_name)
+      refute(File.file?(found_path))
     end
   end
 
