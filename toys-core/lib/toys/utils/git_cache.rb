@@ -49,21 +49,22 @@ module Toys
       # This object is returned from {GitCache#repo_info}.
       #
       class RepoInfo
+        include ::Comparable
+
         # @private
         def initialize(base_dir, data)
           @base_dir = base_dir
           @remote = data["remote"]
           accessed = data["accessed"]
           @last_accessed = accessed ? ::Time.at(accessed).utc : nil
-          @refs = (data["refs"] || {}).map do |ref, ref_data|
-            RefInfo.new(ref, ref_data["sha"], ref_data["accessed"], ref_data["updated"])
-          end.sort_by(&:ref)
+          @refs = (data["refs"] || {}).map { |ref, ref_data| RefInfo.new(ref, ref_data) }
           @sources = (data["sources"] || {}).flat_map do |sha, sha_data|
             sha_data.map do |path, path_data|
-              SourceInfo.new(base_dir, sha, path, path_data["accessed"])
+              SourceInfo.new(base_dir, sha, path, path_data)
             end
           end
-          @sources.sort_by { |src| src.sha + src.git_path }
+          @refs.sort!
+          @sources.sort!
         end
 
         ##
@@ -120,18 +121,27 @@ module Toys
           result["sources"] = sources.map(&:to_h)
           result
         end
+
+        # @private
+        def <=>(other)
+          remote <=> other.remote
+        end
       end
 
       ##
       # Information about a git ref used in a cache.
       #
       class RefInfo
+        include ::Comparable
+
         # @private
-        def initialize(ref, sha, accessed, updated)
+        def initialize(ref, ref_data)
           @ref = ref
-          @sha = sha
-          @last_accessed = accessed ? ::Time.at(accessed).utc : nil
-          @last_updated = updated ? ::Time.at(updated).utc : nil
+          @sha = ref_data["sha"]
+          @last_accessed = ref_data["accessed"]
+          @last_accessed = ::Time.at(@last_accessed).utc if @last_accessed
+          @last_updated = ref_data["updated"]
+          @last_updated = ::Time.at(@last_updated).utc if @last_updated
         end
 
         ##
@@ -176,19 +186,27 @@ module Toys
           result["last_updated"] = last_updated.to_i if last_updated
           result
         end
+
+        # @private
+        def <=>(other)
+          ref <=> other.ref
+        end
       end
 
       ##
       # Information about shared source files provided from the cache.
       #
       class SourceInfo
+        include ::Comparable
+
         # @private
-        def initialize(base_dir, sha, git_path, accessed)
+        def initialize(base_dir, sha, git_path, path_data)
           @sha = sha
           @git_path = git_path
           root_dir = ::File.join(base_dir, sha)
           @source = git_path == "." ? root_dir : ::File.join(root_dir, git_path)
-          @last_accessed = accessed ? ::Time.at(accessed).utc : nil
+          @last_accessed = path_data["accessed"]
+          @last_accessed = @last_accessed ? ::Time.at(@last_accessed).utc : nil
         end
 
         ##
@@ -233,6 +251,12 @@ module Toys
           result["last_accessed"] = last_accessed.to_i if last_accessed
           result
         end
+
+        # @private
+        def <=>(other)
+          result = sha <=> other.sha
+          result.zero? ? git_path <=> other.git_path : result
+        end
       end
 
       # @private
@@ -260,7 +284,7 @@ module Toys
       attr_reader :cache_dir
 
       ##
-      # Find the given git-based files from the git cache, loading from the
+      # Get the given git-based files from the git cache, loading from the
       # remote repo if necessary.
       #
       # The resulting files are either copied into a directory you provide in
@@ -292,7 +316,7 @@ module Toys
       #     path `Gemfile` representing a single file in the repository, the
       #     returned path will point directly to the cached copy of that file.
       #
-      def find(remote, path: nil, commit: nil, into: nil, update: false, timestamp: nil)
+      def get(remote, path: nil, commit: nil, into: nil, update: false, timestamp: nil)
         path = GitCache.normalize_path(path)
         commit ||= "HEAD"
         timestamp ||= ::Time.now.to_i
@@ -307,24 +331,25 @@ module Toys
           end
         end
       end
+      alias find get
 
       ##
       # Returns an array of the known remote names.
       #
       # @return [Array<String>]
       #
-      def remote_names
-        names = []
-        return names unless ::File.directory?(cache_dir)
+      def remotes
+        result = []
+        return result unless ::File.directory?(cache_dir)
         ::Dir.entries(cache_dir).each do |child|
           next if child.start_with?(".")
           dir = ::File.join(cache_dir, child)
           if ::File.file?(::File.join(dir, LOCK_FILE_NAME))
-            name = lock_repo(dir, &:remote)
-            names << name if name
+            remote = lock_repo(dir, &:remote)
+            result << remote if remote
           end
         end
-        names.sort
+        result.sort
       end
 
       ##
@@ -343,14 +368,21 @@ module Toys
       end
 
       ##
-      # Deletes caches for the given repos, or all repos if specified.
+      # Removes caches for the given repos, or all repos if specified.
       #
-      # @param remotes [Array<String>,:all] A list of the remotes to delete, or
-      #     specify `:all` to delete all repos.
-      # @return [Array<String>] The remotes actually deleted.
+      # Removes all cache information for the specified repositories, including
+      # local clones and shared source directories. The next time these
+      # repositories are requested, they will be reloaded from the remote
+      # repository from scratch.
       #
-      def delete_repos(remotes)
-        remotes = remote_names if remotes.nil? || remotes == :all
+      # Be careful not to remove repos that are currently in use by other
+      # GitCache clients.
+      #
+      # @param remotes [Array<String>,:all] The remotes to remove.
+      # @return [Array<String>] The remotes actually removed.
+      #
+      def remove_repos(remotes)
+        remotes = self.remotes if remotes.nil? || remotes == :all
         Array(remotes).map do |remote|
           dir = repo_base_dir_for(remote)
           if ::File.directory?(dir)
@@ -361,52 +393,66 @@ module Toys
       end
 
       ##
-      # Remove records of the given refs from the given cache. The next time
-      # these refs are requested, they will be pulled from the remote repo.
+      # Remove records of the given refs (i.e. branches, tags, or `HEAD`) from
+      # the given repository's cache. The next time those refs are requested,
+      # they will be pulled from the remote repo.
+      #
+      # If you provide the `refs:` argument, only those refs are removed.
+      # Otherwise, all refs are removed.
       #
       # @param remote [String] The repository
-      # @param refs [Array<String>] The refs to delete, or `:all` to delete all.
-      # @return [Array<String>] A list of the refs actually deleted.
+      # @param refs [Array<String>] The refs to remove. Optional.
+      # @return [Array<RefInfo>,nil] The refs actually forgotten, or `nil` if
+      #     the given repo is not in the cache.
       #
-      def delete_refs(remote, refs)
+      def remove_refs(remote, refs: nil)
         dir = repo_base_dir_for(remote)
         return nil unless ::File.directory?(dir)
+        results = []
         lock_repo(dir, remote) do |repo_lock|
           refs = repo_lock.refs if refs.nil? || refs == :all
-          Array(refs).map { |ref| repo_lock.delete_ref!(ref) }.compact.sort
+          Array(refs).each do |ref|
+            ref_data = repo_lock.delete_ref!(ref)
+            results << RefInfo.new(ref, ref_data) if ref_data
+          end
         end
+        results.sort
       end
 
       ##
-      # Remove shared sources for the given cache. Sources are selected by
-      # providing filters for refs and git paths. You can provide lists of
-      # speific refs and paths to delete, or omit a filter to delete all
-      # sources. For example, to delete all sources, for all refs, referencing
-      # the path `lib`, use `paths: ["lib"]` and omit the `:refs` argument. To
-      # delete all sources for the repo, omit both arguments.
+      # Removes shared sources for the given cache. The next time a client
+      # requests them, the removed sources will be recopied from the repo.
+      #
+      # If you provide the `commits:` argument, only sources associated with
+      # those commits are removed. Otherwise, all sources are removed.
+      #
+      # Be careful not to remove sources that are currently in use by other
+      # GitCache clients.
       #
       # @param remote [String] The repository
-      # @param refs [Array<String>] Optional filter for refs
-      # @param paths [Array<String>] Optional filter for git paths
-      # @return [Array<Array(String,String)>] A list of the sources actually
-      #     deleted, as two-element (sha, path) arrays.
+      # @param commits [Array<String>] Remove only the sources for the given
+      #     commits. Optional.
+      # @return [Array<SourceInfo>,nil] The sources actually removed, or `nil`
+      #     if the given repo is not in the cache.
       #
-      def delete_sources(remote, refs: nil, paths: nil)
+      def remove_sources(remote, commits: nil)
         dir = repo_base_dir_for(remote)
         return nil unless ::File.directory?(dir)
-        paths = nil if paths == :all
-        refs = nil if refs == :all
-        paths = Array(paths).map { |path| GitCache.normalize_path(path) } if paths
+        results = []
         lock_repo(dir, remote) do |repo_lock|
-          shas = Array(refs).map { |ref| repo_lock.lookup_ref(ref) }.compact.uniq if refs
-          deleted = repo_lock.delete_sources!(shas: shas, paths: paths)
-          deleted.map(&:first).uniq.each do |sha|
+          commits = nil if commits == :all
+          shas = Array(commits).map { |ref| repo_lock.lookup_ref(ref) }.compact.uniq if commits
+          repo_lock.find_sources(shas: shas).each do |(sha, path)|
+            data = repo_lock.delete_source!(sha, path)
+            results << SourceInfo.new(dir, sha, path, data)
+          end
+          results.map(&:sha).uniq.each do |sha|
             unless repo_lock.source_exists?(sha)
               ::FileUtils.rm_rf(::File.join(dir, sha))
             end
           end
-          deleted
         end
+        results.sort
       end
 
       private
@@ -467,7 +513,7 @@ module Toys
           git(repo_dir, ["init"],
               error_message: "Unable to initialize git repository")
           git(repo_dir, ["remote", "add", "origin", remote],
-              error_message: "Unable to add git remote")
+              error_message: "Unable to add git remote: #{remote}")
         end
       end
 
@@ -478,7 +524,7 @@ module Toys
         update = repo_lock.ref_stale?(commit, update) unless is_sha
         if update && !is_sha || !commit_exists?(repo_dir, local_commit)
           git(repo_dir, ["fetch", "--depth=1", "--force", "origin", "#{commit}:#{local_commit}"],
-              error_message: "Unable to to fetch commit: #{commit}")
+              error_message: "Unable to fetch commit: #{commit}")
           repo_lock.update_ref!(commit)
         end
         result = git(repo_dir, ["rev-parse", local_commit],
@@ -552,6 +598,16 @@ module Toys
         attr_reader :data
 
         # @private
+        def modified?
+          @modified
+        end
+
+        # @private
+        def dump(io)
+          ::JSON.dump(@data, io)
+        end
+
+        # @private
         def remote
           @data["remote"]
         end
@@ -568,13 +624,8 @@ module Toys
         end
 
         # @private
-        def modified?
-          @modified
-        end
-
-        # @private
-        def dump(io)
-          ::JSON.dump(@data, io)
+        def ref_data(ref)
+          @data["refs"][ref]
         end
 
         # @private
@@ -597,26 +648,21 @@ module Toys
 
         # @private
         def delete_ref!(ref)
-          @modified = true
-          @data["refs"].delete(ref) ? ref : nil
+          ref_data = @data["refs"].delete(ref)
+          @modified = true if ref_data
+          ref_data
         end
 
         # @private
-        def delete_sources!(paths: nil, shas: nil)
-          deleted = []
-          sources = @data["sources"]
-          sources.each_key do |sha|
-            next unless shas.nil? || shas.include?(sha)
-            sha_data = sources[sha]
-            sha_data.each_key do |path|
-              next unless paths.nil? || paths.include?(path)
-              sha_data.delete(path)
-              deleted << [sha, path]
-              @modified = true
-            end
-            sources.delete(sha) if sha_data.empty?
+        def delete_source!(sha, path)
+          sha_data = @data["sources"][sha]
+          return nil if sha_data.nil?
+          source_data = sha_data.delete(path)
+          if source_data
+            @modified = true
+            @data["sources"].delete(sha) if sha_data.empty?
           end
-          deleted
+          source_data
         end
 
         # @private
@@ -633,6 +679,23 @@ module Toys
         def source_exists?(sha, path = nil)
           sha_info = @data["sources"][sha]
           path ? sha_info&.fetch(path, nil)&.key?("accessed") : !sha_info.nil?
+        end
+
+        # @private
+        def source_data(sha, path)
+          @data["sources"][sha]&.fetch(path, nil)
+        end
+
+        def find_sources(paths: nil, shas: nil)
+          results = []
+          @data["sources"].each do |sha, sha_data|
+            next unless shas.nil? || shas.include?(sha)
+            sha_data.each_key do |path|
+              next unless paths.nil? || paths.include?(path)
+              results << [sha, path]
+            end
+          end
+          results
         end
 
         # @private
