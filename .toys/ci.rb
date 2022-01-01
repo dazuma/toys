@@ -8,13 +8,17 @@ long_desc "The CI tool runs all CI checks for both gems, including unit" \
             " entrypoint for CI systems. Any failure will result in a" \
             " nonzero result code."
 
+flag :integration_tests, desc: "Enable integration tests"
+
 include :terminal
 include :exec
 
 def handle_gem(gem_name)
   puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
   ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    result = exec_separate_tool("ci")
+    env = {}
+    env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+    result = exec_separate_tool("ci", env: env)
     if result.success?
       puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
     else

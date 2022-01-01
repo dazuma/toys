@@ -4,12 +4,15 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "did_you_mean", "~> 1.0"
+# The bundler in Ruby < 3.1 triggers a deprecation warning in did_you_mean 1.6
+# resulting in test failures due to the unexpected output.
+did_you_mean_versions = ::RUBY_VERSION < "3.1" ? ["~> 1.0", "< 1.6"] : ["~> 1.0"]
+gem "did_you_mean", *did_you_mean_versions
 gem "highline", "~> 2.0"
 gem "minitest", "~> 5.14"
 gem "minitest-focus", "~> 1.1"
 gem "minitest-rg", "~> 5.2"
-gem "rdoc", "~> 6.2.1"
+gem "rdoc", "~> 6.3.3"
 gem "redcarpet", "~> 3.5" unless ::RUBY_PLATFORM == "java"
 gem "rubocop", "~> 1.12.1"
 gem "yard", "~> 0.9.25"

@@ -6,7 +6,7 @@ require "toys/version"
 # environment variable explicitly, but in production, we get it from rubygems.
 # We prepend to $LOAD_PATH directly rather than calling Kernel.gem, so that we
 # don't get clobbered in case someone sets up bundler later.
-::ENV["TOYS_CORE_LIB_PATH"] ||= begin
+unless ::ENV.key?("TOYS_CORE_LIB_PATH")
   path = ::File.expand_path("../../toys-core-#{::Toys::VERSION}/lib", __dir__)
   unless path && ::File.directory?(path)
     require "rubygems"
@@ -14,7 +14,7 @@ require "toys/version"
     path = dep.to_spec.full_require_paths.first
   end
   abort "Unable to find toys-core gem!" unless path && ::File.directory?(path)
-  path
+  ::ENV.store("TOYS_CORE_LIB_PATH", path)
 end
 
 $LOAD_PATH.delete(::ENV["TOYS_CORE_LIB_PATH"])
