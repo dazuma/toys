@@ -37,6 +37,8 @@ tool "ci" do
               " entrypoint for CI systems. Any failure will result in a" \
               " nonzero result code."
 
+  flag :integration_tests, desc: "Enable integration tests"
+
   include :exec, result_callback: :handle_result
   include :terminal
 
@@ -50,7 +52,9 @@ tool "ci" do
   end
 
   def run
-    exec_tool(["test"], name: "Tests")
+    env = {}
+    env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+    exec_tool(["test"], name: "Tests", env: env)
     exec_tool(["rubocop"], name: "Style checker")
     exec_tool(["yardoc-full"], name: "Docs generation")
     exec_tool(["build"], name: "Gem build")

@@ -170,11 +170,10 @@ describe Toys::Utils::Gems do
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
+        exec_service.exec(["gem", "uninstall", "rubocop", "--version=0.81.0"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
-        assert_match(/Failed to install\. Trying update\.\.\./, result.captured_out)
-        assert_match(/Bundle updated!/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
