@@ -94,8 +94,6 @@ describe Toys::Utils::Gems do
         FileUtils.cp("gemfile2.rb", "Gemfile")
         result = run_script
         assert(result.success?)
-        assert(File.readable?("gems.locked"))
-        refute(File.readable?("Gemfile.lock"))
       end
       setup_case("bundle-with-multiple-gemfiles") do
         clean_files_for_multi_tests
@@ -113,8 +111,6 @@ describe Toys::Utils::Gems do
         FileUtils.cp("gemfile2.rb", "gems.rb")
         result = run_script
         assert(result.success?)
-        assert(File.readable?(".gems.rb.lock"))
-        refute(File.readable?("gems.locked"))
       end
       setup_case("bundle-with-multiple-gemfiles") do
         clean_files_for_multi_tests

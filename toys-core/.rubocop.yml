@@ -3,6 +3,14 @@ inherit_from: "../.rubocop-common.yml"
 AllCops:
   Exclude:
     - "test/gems-cases/bundle-with-vendored-path/vendor/**/*"
+
+# Apparent Rubocop bug on Ruby 3.1
+Layout/BlockAlignment:
+  Exclude:
+    - "examples/**/*.gemspec"
+    - "test/**/*.gemspec"
+    - "test/**/*.rb"
+
 Layout/EmptyLinesAroundAttributeAccessor:
   Exclude:
     - "test/**/*.rb"
