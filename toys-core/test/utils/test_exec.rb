@@ -140,11 +140,11 @@ describe Toys::Utils::Exec do
   end
 
   describe "command form" do
-    it "recongizes arrays" do
+    it "recognizes arrays" do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["echo", "hi"], out: :capture)
         assert_equal("hi\n", result.captured_out)
-        assert_match(/\["echo", "hi"\]\n/, logger_stringio.string)
+        assert_match(/exec: \["echo", "hi"\]\n/, logger_stringio.string)
       end
     end
 
@@ -152,7 +152,7 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["echo", 1, 2], out: :capture)
         assert_equal("1 2\n", result.captured_out)
-        assert_match(/\["echo", "1", "2"\]\n/, logger_stringio.string)
+        assert_match(/exec: \["echo", "1", "2"\]\n/, logger_stringio.string)
       end
     end
 
@@ -161,7 +161,7 @@ describe Toys::Utils::Exec do
         list = Toys::Compat.windows? ? "dir" : "ls"
         result = exec.exec([list], out: :capture)
         assert_match(/README\.md/, result.captured_out)
-        assert_match(/\[#{list.inspect}\]\n/, logger_stringio.string)
+        assert_match(/exec: \[#{list.inspect}\]\n/, logger_stringio.string)
       end
     end
 
@@ -170,7 +170,7 @@ describe Toys::Utils::Exec do
         list = Toys::Compat.windows? ? "dir" : "ls"
         result = exec.exec([[list]], out: :capture)
         assert_match(/README\.md/, result.captured_out)
-        assert_match(/\[#{list.inspect}\]\n/, logger_stringio.string)
+        assert_match(/exec: \[#{list.inspect}\]\n/, logger_stringio.string)
       end
     end
 
@@ -179,11 +179,11 @@ describe Toys::Utils::Exec do
         if Toys::Compat.windows?
           result = exec.exec("dir *.md", out: :capture)
           assert_match(/README\.md/, result.captured_out)
-          assert_match(/dir \*\.md\n/, logger_stringio.string)
+          assert_match(/exec sh: "dir \*\.md"\n/, logger_stringio.string)
         else
           result = exec.exec("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :capture)
           assert_equal("BLAHXYZBLAH=hi\n", result.captured_out)
-          assert_match(/BLAHXYZBLAH=hi env \| grep BLAHXYZBLAH\n/, logger_stringio.string)
+          assert_match(/exec sh: "BLAHXYZBLAH=hi env \| grep BLAHXYZBLAH"/, logger_stringio.string)
         end
       end
     end
@@ -193,7 +193,7 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)
-        assert_match(/\["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
+        assert_match(/exec: \["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
       end
     end
 
@@ -202,7 +202,29 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["sh", "-c", "echo $0"], out: :capture, argv0: "meow")
         assert_equal("meow\n", result.captured_out)
-        assert_match(/\["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
+        assert_match(/exec: \["sh", "-c", "echo \$0"\]\n/, logger_stringio.string)
+      end
+    end
+
+    it "forks procs" do
+      skip unless Toys::Compat.allow_fork?
+      ::Timeout.timeout(simple_exec_timeout) do
+        func = proc do
+          puts "pid: #{::Process.pid}"
+        end
+        result = exec.exec_proc(func, out: :capture)
+        match = /pid: (\d+)/.match(result.captured_out)
+        refute_nil(match)
+        refute_equal(match[1].to_i, ::Process.pid)
+        assert_match(/exec proc:/, logger_stringio.string)
+      end
+    end
+
+    it "runs a ruby subprocess" do
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.exec_ruby(["-e", "puts 'hello, ' + 'world'"], out: :capture)
+        assert_equal("hello, world\n", result.captured_out)
+        assert_match(/exec ruby: \["-e", "puts 'hello, ' \+ 'world'"\]/, logger_stringio.string)
       end
     end
   end
