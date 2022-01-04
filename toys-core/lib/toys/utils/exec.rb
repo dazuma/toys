@@ -280,7 +280,7 @@ module Toys
       #
       def exec_ruby(args, **opts, &block)
         cmd = args.is_a?(::Array) ? [::RbConfig.ruby] + args : "#{::RbConfig.ruby} #{args}"
-        log_cmd = args.is_a?(::Array) ? ["ruby"] + args : "ruby #{args}"
+        log_cmd = "exec ruby: #{args.inspect}"
         opts = {argv0: "ruby", log_cmd: log_cmd}.merge(opts)
         exec(cmd, **opts, &block)
       end
@@ -970,17 +970,23 @@ module Toys
         def log_command
           logger = @config_opts[:logger]
           if logger && @config_opts[:log_level] != false
-            cmd_str = @config_opts[:log_cmd] || default_log_str(@spawn_cmd)
+            cmd_str = @config_opts[:log_cmd] || default_log_str
             logger.add(@config_opts[:log_level] || ::Logger::INFO, cmd_str) if cmd_str
           end
         end
 
-        def default_log_str(spawn_cmd)
-          return nil unless spawn_cmd
-          return spawn_cmd.first if spawn_cmd.size == 1 && spawn_cmd.first.is_a?(::String)
-          cmd_binary = spawn_cmd.first
-          cmd_binary = cmd_binary.first if cmd_binary.is_a?(::Array)
-          ([cmd_binary] + spawn_cmd[1..-1]).inspect
+        def default_log_str
+          if @fork_func
+            "exec proc: #{@fork_func.inspect}"
+          elsif @spawn_cmd
+            if @spawn_cmd.size == 1 && @spawn_cmd.first.is_a?(::String)
+              "exec sh: #{@spawn_cmd.first.inspect}"
+            else
+              cmd_binary = @spawn_cmd.first
+              cmd_binary = cmd_binary.first if cmd_binary.is_a?(::Array)
+              "exec: #{([cmd_binary] + @spawn_cmd[1..-1]).inspect}"
+            end
+          end
         end
 
         def start_with_controller

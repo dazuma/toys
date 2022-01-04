@@ -305,7 +305,7 @@ module Toys
       #
       # Execute a small script with warnings
       #
-      #     exec_ruby("-w", "-e", "(1..10).each { |i| puts i }")
+      #     exec_ruby(["-w", "-e", "(1..10).each { |i| puts i }"])
       #
       # @param args [String,Array<String>] The arguments to ruby.
       # @param opts [keywords] The command options. See the section on
@@ -397,6 +397,7 @@ module Toys
       def exec_tool(cmd, **opts, &block)
         func = Exec._make_tool_caller(cmd)
         opts = Exec._setup_exec_opts(opts, self)
+        opts = {log_cmd: "exec tool: #{cmd.inspect}"}.merge(opts)
         self[KEY].exec_proc(func, **opts, &block)
       end
 
