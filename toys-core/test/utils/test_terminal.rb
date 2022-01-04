@@ -85,6 +85,33 @@ describe Toys::Utils::Terminal do
     end
   end
 
+  describe "NO_COLOR integration" do
+    let(:output_with_tty) do
+      def output.tty?
+        true
+      end
+      output
+    end
+    let(:terminal) { Toys::Utils::Terminal.new(input: input, output: output_with_tty) }
+
+    before do
+      @save_no_color = ::ENV["NO_COLOR"]
+    end
+
+    after do
+      ::ENV["NO_COLOR"] = @save_no_color
+    end
+
+    it "uses tty when NO_COLOR is not set" do
+      assert(terminal.styled)
+    end
+
+    it "disables styling when NO_COLOR is set" do
+      ::ENV["NO_COLOR"] = "true"
+      refute(terminal.styled)
+    end
+  end
+
   describe "ask" do
     it "Displays a prompt and gets a result" do
       input = StringIO.new "hello\n"
