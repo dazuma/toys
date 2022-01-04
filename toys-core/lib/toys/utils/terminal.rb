@@ -120,7 +120,7 @@ module Toys
         @output = output
         @styled =
           if styled.nil?
-            output.respond_to?(:tty?) && output.tty?
+            output.respond_to?(:tty?) && output.tty? && !::ENV["NO_COLOR"]
           else
             styled ? true : false
           end
