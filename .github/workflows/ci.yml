@@ -31,6 +31,9 @@ jobs:
             ruby: "3.0"
             tool: test
           - os: ubuntu-latest
+            ruby: "3.1"
+            tool: test
+          - os: ubuntu-latest
             ruby: "jruby"
             tool: test
           - os: macos-latest
@@ -55,6 +58,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: none
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: Run ${{ matrix.tool || 'test' }}

@@ -188,10 +188,9 @@ module Toys
         gemfile_path = ::File.absolute_path(gemfile_path)
         Gems.synchronize do
           if configure_gemfile(gemfile_path)
-            activate("bundler", "~> 2.1")
+            activate("bundler", "~> 2.2")
             require "bundler"
-            lockfile_path = find_lockfile_path(gemfile_path)
-            setup_bundle(gemfile_path, lockfile_path, groups: groups, retries: retries)
+            setup_bundle(gemfile_path, groups: groups, retries: retries)
           end
         end
       end
@@ -255,8 +254,7 @@ module Toys
       def confirm_and_install_gem(name, requirements)
         if @on_missing == :confirm
           requirements_text = gem_requirements_text(name, requirements)
-          response = terminal.confirm("Gem needed: #{requirements_text}. Install? ",
-                                      default: @default_confirm)
+          response = terminal.confirm("Gem needed: #{requirements_text}. Install? ", default: @default_confirm)
           unless response
             raise InstallFailedError, "Canceled installation of needed gem: #{requirements_text}"
           end
@@ -301,71 +299,92 @@ module Toys
         end
       end
 
-      def setup_bundle(gemfile_path, lockfile_path, groups: nil, retries: nil)
+      def setup_bundle(gemfile_path, groups: nil, retries: nil)
+        check_gemfile_compatibility(gemfile_path)
         groups = Array(groups)
-        old_lockfile_contents = save_old_lockfile(lockfile_path)
+        modified_gemfile_path = create_modified_gemfile(gemfile_path)
         begin
-          modify_bundle_definition(gemfile_path, lockfile_path)
-          ::Bundler.ui.silence { ::Bundler.setup(*groups) }
+          attempt_setup_bundle(modified_gemfile_path, groups)
         rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
-          restore_toys_libs
-          install_bundle(gemfile_path, retries: retries)
-          old_lockfile_contents = save_old_lockfile(lockfile_path)
           ::Bundler.reset!
-          modify_bundle_definition(gemfile_path, lockfile_path)
-          ::Bundler.ui.silence { ::Bundler.setup(*groups) }
+          restore_toys_libs
+          install_bundle(modified_gemfile_path, retries: retries)
+          attempt_setup_bundle(modified_gemfile_path, groups)
+        ensure
+          delete_modified_gemfile(modified_gemfile_path)
+          ::ENV["BUNDLE_GEMFILE"] = gemfile_path
         end
         restore_toys_libs
-      ensure
-        restore_old_lockfile(lockfile_path, old_lockfile_contents)
       end
 
-      def save_old_lockfile(lockfile_path)
-        return nil unless ::File.readable?(lockfile_path) && ::File.writable?(lockfile_path)
-        ::File.read(lockfile_path)
-      end
-
-      def restore_old_lockfile(lockfile_path, contents)
-        return unless contents
-        ::File.open(lockfile_path, "w") do |file|
-          file.write(contents)
+      def attempt_setup_bundle(modified_gemfile_path, groups)
+        ::ENV["BUNDLE_GEMFILE"] = modified_gemfile_path
+        ::Bundler.configure
+        ::Bundler.settings.temporary({gemfile: modified_gemfile_path}) do
+          ::Bundler.ui.silence do
+            ::Bundler.setup(*groups)
+          end
         end
       end
 
-      def modify_bundle_definition(gemfile_path, lockfile_path)
+      def check_gemfile_compatibility(gemfile_path)
         ::Bundler.configure
         builder = ::Bundler::Dsl.new
         builder.eval_gemfile(gemfile_path)
-        toys_gems = ["toys-core"]
-        remove_gem_from_definition(builder, "toys-core")
-        removed_toys = remove_gem_from_definition(builder, "toys")
-        add_gem_to_definition(builder, "toys-core")
-        if removed_toys || ::Toys.const_defined?(:VERSION)
-          add_gem_to_definition(builder, "toys")
-          toys_gems << "toys"
-        end
-        definition = builder.to_definition(lockfile_path, { gems: toys_gems })
-        ::Bundler.instance_variable_set(:@definition, definition)
+        check_gemfile_gem_compatibility(builder, "toys-core")
+        check_gemfile_gem_compatibility(builder, "toys")
+        ::Bundler.reset!
       end
 
-      def remove_gem_from_definition(builder, name)
+      def check_gemfile_gem_compatibility(builder, name)
         existing_dep = builder.dependencies.find { |dep| dep.name == name }
-        return false unless existing_dep
-        unless existing_dep.requirement.satisfied_by?(::Gem::Version.new(::Toys::Core::VERSION))
+        if existing_dep && !existing_dep.requirement.satisfied_by?(::Gem::Version.new(::Toys::Core::VERSION))
           raise IncompatibleToysError,
                 "The bundle lists #{name} #{existing_dep.requirement} as a dependency, which is" \
-                " incompatible with the current version #{::Toys::Core::VERSION}."
+                " incompatible with the current toys version #{::Toys::Core::VERSION}."
         end
-        builder.dependencies.delete(existing_dep)
-        true
       end
 
-      def add_gem_to_definition(builder, name)
-        if ::ENV["TOYS_DEV"] == "true"
-          path = ::File.join(::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH)), name)
+      def create_modified_gemfile(gemfile_path)
+        dir = ::File.dirname(gemfile_path)
+        modified_gemfile_path = loop do
+          timestamp = ::Time.now.strftime("%Y%m%d%H%M%S")
+          uniquifier = rand(3_656_158_440_062_976).to_s(36) # 10 digits in base 36
+          path = ::File.join(dir, ".toys-tmp-gemfile-#{timestamp}-#{uniquifier}")
+          break path unless ::File.exist?(path)
         end
-        command = "gem #{name.inspect}, #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}\n"
-        builder.eval_gemfile("current #{name}", command)
+        ::File.open(modified_gemfile_path, "w") do |file|
+          modified_gemfile_content(gemfile_path).each do |line|
+            file.puts(line)
+          end
+        end
+        lockfile_path = find_lockfile_path(gemfile_path)
+        modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
+        if ::File.readable?(lockfile_path)
+          lockfile_content = ::File.read(lockfile_path)
+          ::File.open(modified_lockfile_path, "w") { |file| file.write(lockfile_content) }
+        end
+        modified_gemfile_path
+      end
+
+      def modified_gemfile_content(gemfile_path)
+        is_running_toys = ::Toys.const_defined?(:VERSION)
+        content = [::File.read(gemfile_path)]
+        content << "has_toys_dep = dependencies.any? { |dep| dep.name == 'toys' }" unless is_running_toys
+        content << "dependencies.delete_if { |dep| dep.name == 'toys-core' || dep.name == 'toys' }"
+        repo_root = ::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH)) if ::ENV["TOYS_DEV"]
+        path = repo_root ? ::File.join(repo_root, "toys-core") : nil
+        content << "gem 'toys-core', #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}"
+        path = repo_root ? ::File.join(repo_root, "toys") : nil
+        guard = is_running_toys ? "" : " if has_toys_dep"
+        content << "gem 'toys', #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}#{guard}"
+        content
+      end
+
+      def delete_modified_gemfile(modified_gemfile_path)
+        ::File.delete(modified_gemfile_path) if ::File.exist?(modified_gemfile_path)
+        modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
+        ::File.delete(modified_lockfile_path) if ::File.exist?(modified_lockfile_path)
       end
 
       def restore_toys_libs
@@ -384,8 +403,7 @@ module Toys
         when :error
           false
         else
-          terminal.confirm("Your bundle requires additional gems. Install? ",
-                           default: @default_confirm)
+          terminal.confirm("Your bundle requires additional gems. Install? ", default: @default_confirm)
         end
       end
 
@@ -393,17 +411,19 @@ module Toys
         gemfile_dir = ::File.dirname(gemfile_path)
         unless permission_to_bundle?
           raise BundleNotInstalledError,
-                "Your bundle is not installed. Consider running" \
-                  " `cd #{gemfile_dir} && bundle install`"
+                "Your bundle is not installed. Consider running `cd #{gemfile_dir} && bundle install`"
         end
         retries = retries.to_i
-        args = retries.positive? ? ["--retry=#{retries}"] : []
-        require "bundler/cli"
-        begin
-          ::Bundler::CLI.start(["install"] + args)
-        rescue ::Bundler::GemNotFound, ::Bundler::InstallError, ::Bundler::VersionConflict
+        args = ["--gemfile=#{gemfile_path}"]
+        args << "--retry=#{retries}" if retries.positive?
+        bundler_bin = ::Gem.bin_path("bundler", "bundle", ::Bundler::VERSION)
+        result = exec_util.exec_ruby([bundler_bin, "install"] + args)
+        if result.error?
           terminal.puts("Failed to install. Trying update...")
-          ::Bundler::CLI.start(["update"] + args)
+          result = exec_util.exec_ruby([bundler_bin, "update"] + args)
+          unless result.success?
+            raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"
+          end
         end
       end
     end
