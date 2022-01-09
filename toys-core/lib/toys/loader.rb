@@ -213,7 +213,7 @@ module Toys
       @mutex.synchronize do
         raise "Cannot add a git source after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        path = git_cache.find(git_remote, path: git_path, commit: git_commit, update: update)
+        path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
         source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
                                             context_directory: context_directory,
                                             data_dir_name: @data_dir_name,
@@ -453,7 +453,7 @@ module Toys
     #
     def load_git(parent_source, git_remote, git_path, git_commit, words, remaining_words, priority,
                  update: false)
-      path = git_cache.find(git_remote, path: git_path, commit: git_commit, update: update)
+      path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
       source = parent_source.git_child(git_remote, git_path, git_commit, path)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)

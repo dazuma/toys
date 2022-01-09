@@ -52,7 +52,7 @@ describe Toys::Utils::GitCache do
 
   describe "with local_git" do
     let(:exec_tool) { Toys::Utils::Exec.new }
-    let(:git_repo_dir) { File.join(Dir.tmpdir, "toys_git_cache_test2") }
+    let(:git_repo_dir) { File.join(Dir.tmpdir, "toys_git_cache_test3") }
     let(:local_remote) { File.join(git_repo_dir, ".git") }
 
     def exec_git(*args)
@@ -88,7 +88,7 @@ describe Toys::Utils::GitCache do
     it "gets local repo content from HEAD" do
       file_name = "file1.txt"
       commit_file(file_name)
-      dir = git_cache.find(local_remote)
+      dir = git_cache.get(local_remote)
       content = File.read(File.join(dir, file_name))
       assert_equal(file_name, content.strip)
     end
@@ -96,7 +96,7 @@ describe Toys::Utils::GitCache do
     it "gets single local file from HEAD" do
       file_name = "file1.txt"
       commit_file(file_name)
-      found_path = git_cache.find(local_remote, path: file_name)
+      found_path = git_cache.get(local_remote, path: file_name)
       assert_equal(file_name, File.basename(found_path))
       content = File.read(found_path)
       assert_equal(file_name, content.strip)
@@ -105,7 +105,7 @@ describe Toys::Utils::GitCache do
     it "gets a file into a specified directory" do
       file_name = "foo/bar/file1.txt"
       commit_file(file_name)
-      found_path = git_cache.find(local_remote, path: file_name, into: target_dir)
+      found_path = git_cache.get(local_remote, path: file_name, into: target_dir)
       assert_equal(File.join(target_dir, file_name), found_path)
       content = File.read(found_path)
       assert_equal(file_name, content.strip)
@@ -115,12 +115,12 @@ describe Toys::Utils::GitCache do
       file1_name = "file1.txt"
       file2_name = "file2.txt"
       commit_file(file1_name)
-      dir1 = git_cache.find(local_remote, update: true)
+      dir1 = git_cache.get(local_remote, update: true)
       refute(File.file?(File.join(dir1, file2_name)))
-      dir2 = git_cache.find(local_remote, update: true)
+      dir2 = git_cache.get(local_remote, update: true)
       assert_equal(dir1, dir2)
       commit_file(file2_name)
-      dir3 = git_cache.find(local_remote, update: true)
+      dir3 = git_cache.get(local_remote, update: true)
       refute_equal(dir1, dir3)
       assert(File.file?(File.join(dir3, file2_name)))
       content = File.read(File.join(dir3, file2_name))
@@ -131,12 +131,12 @@ describe Toys::Utils::GitCache do
       file1_name = "file1.txt"
       file2_name = "file2.txt"
       commit_file(file1_name)
-      dir1 = git_cache.find(local_remote, timestamp: 1000)
+      dir1 = git_cache.get(local_remote, timestamp: 1000)
       refute(File.file?(File.join(dir1, file2_name)))
       commit_file(file2_name)
-      dir2 = git_cache.find(local_remote, timestamp: 1001, update: 10)
+      dir2 = git_cache.get(local_remote, timestamp: 1001, update: 10)
       refute(File.file?(File.join(dir2, file2_name)))
-      dir3 = git_cache.find(local_remote, timestamp: 1010, update: 10)
+      dir3 = git_cache.get(local_remote, timestamp: 1010, update: 10)
       assert(File.file?(File.join(dir3, file2_name)))
     end
 
@@ -150,7 +150,7 @@ describe Toys::Utils::GitCache do
       commit_file(file2_name)
       create_branch(branch2)
 
-      git_cache.find(local_remote, commit: branch1)
+      git_cache.get(local_remote, commit: branch1)
       repo_path = File.join(git_cache.cache_dir,
                             Toys::Utils::GitCache.remote_dir_name(local_remote),
                             Toys::Utils::GitCache::REPO_DIR_NAME)
@@ -159,7 +159,7 @@ describe Toys::Utils::GitCache do
         file.puts("hello")
       end
       sha1 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
-      git_cache.find(local_remote, commit: branch2)
+      git_cache.get(local_remote, commit: branch2)
       assert_equal("hello\n", File.read(file_path))
       sha2 = Dir.chdir(repo_path) { `git rev-parse HEAD` }
       refute_equal(sha1, sha2)
@@ -169,29 +169,29 @@ describe Toys::Utils::GitCache do
       dir_name = "foo"
       file_name = File.join(dir_name, "bar.txt")
       commit_file(file_name)
-      found_file_path = git_cache.find(local_remote, path: file_name)
-      found_dir_path = git_cache.find(local_remote, path: dir_name)
+      found_file_path = git_cache.get(local_remote, path: file_name)
+      found_dir_path = git_cache.get(local_remote, path: dir_name)
       assert_equal(found_dir_path, File.dirname(found_file_path))
     end
 
     it "does not reread the repo when a source can be reused" do
       file_name = "file1.txt"
       commit_file(file_name)
-      found_file_path = git_cache.find(local_remote, path: file_name)
+      found_file_path = git_cache.get(local_remote, path: file_name)
       FileUtils.rm_rf(File.join(git_cache.repo_info(local_remote).base_dir, "repo"))
-      found_file_path2 = git_cache.find(local_remote, path: file_name)
+      found_file_path2 = git_cache.get(local_remote, path: file_name)
       assert_equal(found_file_path, found_file_path2)
     end
 
     it "gets empty remote names list" do
-      assert_empty(git_cache.remote_names)
+      assert_empty(git_cache.remotes)
     end
 
     it "gets remote name for a local remote" do
       file_name = "file1.txt"
       commit_file(file_name)
-      git_cache.find(local_remote, path: file_name)
-      assert_equal([local_remote], git_cache.remote_names)
+      git_cache.get(local_remote, path: file_name)
+      assert_equal([local_remote], git_cache.remotes)
     end
 
     it "returns nil when asked for repo info for a nonexistent remote" do
@@ -203,7 +203,7 @@ describe Toys::Utils::GitCache do
       commit_file(file_name)
 
       time1 = Time.at(Time.now.to_i)
-      found_path = git_cache.find(local_remote, path: file_name)
+      found_path = git_cache.get(local_remote, path: file_name)
       time2 = Time.at(Time.now.to_i)
 
       repo_info = git_cache.repo_info(local_remote)
@@ -232,8 +232,8 @@ describe Toys::Utils::GitCache do
       commit_file(file_name)
 
       time1 = Time.at(Time.now.to_i)
-      found_path1 = git_cache.find(local_remote, path: file_name)
-      found_path2 = git_cache.find(local_remote)
+      found_path2 = git_cache.get(local_remote, path: file_name)
+      found_path1 = git_cache.get(local_remote)
       time2 = Time.at(Time.now.to_i)
 
       repo_info = git_cache.repo_info(local_remote)
@@ -241,11 +241,11 @@ describe Toys::Utils::GitCache do
       assert_equal(2, repo_info.sources.size)
       source_info1, source_info2 = repo_info.sources
       assert_equal(repo_info.refs.first.sha, source_info1.sha)
-      assert_equal(file_name, source_info1.git_path)
+      assert_equal(".", source_info1.git_path)
       assert_equal(found_path1, source_info1.source)
       assert(source_info1.last_accessed >= time1 && source_info1.last_accessed <= time2)
       assert_equal(repo_info.refs.first.sha, source_info2.sha)
-      assert_equal(".", source_info2.git_path)
+      assert_equal(file_name, source_info2.git_path)
       assert_equal(found_path2, source_info2.source)
       assert(source_info2.last_accessed >= time1 && source_info2.last_accessed <= time2)
     end
@@ -261,8 +261,8 @@ describe Toys::Utils::GitCache do
       create_branch(branch2)
 
       time1 = Time.at(Time.now.to_i)
-      found_path1 = git_cache.find(local_remote, commit: branch1)
-      found_path2 = git_cache.find(local_remote, commit: branch2)
+      found_path1 = git_cache.get(local_remote, commit: branch1)
+      found_path2 = git_cache.get(local_remote, commit: branch2)
       time2 = Time.at(Time.now.to_i)
 
       repo_info = git_cache.repo_info(local_remote)
@@ -279,50 +279,47 @@ describe Toys::Utils::GitCache do
       assert_includes(found_path2, ref_info2.sha)
     end
 
-    it "deletes a repo" do
+    it "removes a repo" do
       file_name = "file1.txt"
       commit_file(file_name)
-      git_cache.find(local_remote, path: file_name)
-      repo_info = git_cache.repo_info(local_remote)
-      assert(File.directory?(repo_info.base_dir))
-      git_cache.delete_repos(local_remote)
+      git_cache.get(local_remote)
+      repo_dir = git_cache.repo_info(local_remote).base_dir
+      assert(File.directory?(repo_dir))
+      git_cache.remove_repos(local_remote)
       assert_nil(git_cache.repo_info(local_remote))
-      refute(File.directory?(repo_info.base_dir))
+      refute(File.directory?(repo_dir))
     end
 
-    it "deletes a ref" do
+    it "removes a ref" do
       file_name = "file1.txt"
       updated_content = "updated"
       commit_file(file_name)
-      found_path = git_cache.find(local_remote, path: file_name)
+      found_path = git_cache.get(local_remote, path: file_name)
       assert_equal(file_name, File.read(found_path).strip)
 
       commit_file(file_name, content: updated_content)
-      found_path1 = git_cache.find(local_remote, path: file_name)
+      found_path1 = git_cache.get(local_remote, path: file_name)
       assert_equal(found_path, found_path1)
       assert_equal(file_name, File.read(found_path1).strip)
 
-      git_cache.delete_refs(local_remote, "HEAD")
-      found_path2 = git_cache.find(local_remote, path: file_name)
+      refs = git_cache.remove_refs(local_remote, refs: "HEAD")
+      assert_equal(1, refs.size)
+      assert_equal("HEAD", refs.first.ref)
+      found_path2 = git_cache.get(local_remote, path: file_name)
       refute_equal(found_path, found_path2)
       assert_equal(updated_content, File.read(found_path2).strip)
     end
 
-    it "deletes a source by ref" do
+    it "removes a source by commit" do
       file_name = "file1.txt"
       commit_file(file_name)
-      found_path = git_cache.find(local_remote, path: file_name)
+      git_cache.get(local_remote)
+      found_path = git_cache.get(local_remote, path: file_name)
       assert(File.file?(found_path))
-      git_cache.delete_sources(local_remote, refs: "HEAD")
-      refute(File.file?(found_path))
-    end
-
-    it "deletes a source by path" do
-      file_name = "file1.txt"
-      commit_file(file_name)
-      found_path = git_cache.find(local_remote, path: file_name)
-      assert(File.file?(found_path))
-      git_cache.delete_sources(local_remote, paths: file_name)
+      sources = git_cache.remove_sources(local_remote, commits: "HEAD")
+      assert_equal(2, sources.size)
+      assert_equal(".", sources.first.git_path)
+      assert_equal(file_name, sources.last.git_path)
       refute(File.file?(found_path))
     end
   end
@@ -338,7 +335,7 @@ describe Toys::Utils::GitCache do
 
     it "gets toys-core examples from a branch" do
       branch = "main"
-      dir = git_cache.find(toys_remote, path: toys_core_examples_path, commit: branch)
+      dir = git_cache.get(toys_remote, path: toys_core_examples_path, commit: branch)
       readme_content = File.read(File.join(dir, "simple-gem", "README.md"))
       expected_url = URI("https://raw.githubusercontent.com/#{toys_repo}/#{branch}/#{toys_core_examples_path}/simple-gem/README.md")
       expected_content = Net::HTTP.get(expected_url)
@@ -347,7 +344,7 @@ describe Toys::Utils::GitCache do
 
     it "gets toys-core examples from a sha" do
       sha = "590d7cc51beb4d905e93a10eb1a25c221877f81a"
-      dir = git_cache.find(toys_remote, path: toys_core_examples_path, commit: sha)
+      dir = git_cache.get(toys_remote, path: toys_core_examples_path, commit: sha)
       readme_content = File.read(File.join(dir, "simple-gem", "README.md"))
       expected_url = URI("https://raw.githubusercontent.com/#{toys_repo}/#{sha}/#{toys_core_examples_path}/simple-gem/README.md")
       expected_content = Net::HTTP.get(expected_url)
@@ -356,7 +353,7 @@ describe Toys::Utils::GitCache do
 
     it "gets toys-core examples from a tag" do
       tag = "toys-core/v0.11.5"
-      dir = git_cache.find(toys_remote, path: toys_core_examples_path, commit: tag)
+      dir = git_cache.get(toys_remote, path: toys_core_examples_path, commit: tag)
       readme_content = File.read(File.join(dir, "simple-gem", "README.md"))
       expected_url = URI("https://raw.githubusercontent.com/#{toys_repo}/#{tag}/#{toys_core_examples_path}/simple-gem/README.md")
       expected_content = Net::HTTP.get(expected_url)
@@ -364,7 +361,7 @@ describe Toys::Utils::GitCache do
     end
 
     it "gets toys-core examples from HEAD" do
-      dir = git_cache.find(toys_remote, path: toys_core_examples_path)
+      dir = git_cache.get(toys_remote, path: toys_core_examples_path)
       readme_content = File.read(File.join(dir, "simple-gem", "README.md"))
       expected_url = URI("https://raw.githubusercontent.com/#{toys_repo}/HEAD/#{toys_core_examples_path}/simple-gem/README.md")
       expected_content = Net::HTTP.get(expected_url)
