@@ -36,6 +36,8 @@ module Toys
     # {#exec_separate_tool}.
     #
     # @param cmd [String,Array<String>] The command to execute.
+    # @param fallback_to_separate [boolean] If true, fall back to
+    #     {exec_separate_tool} if the environment doesn't support fork.
     # @param opts [keywords] The command options.
     # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
     #     for the subprocess streams.
@@ -45,7 +47,10 @@ module Toys
     # @return [Toys::Utils::Exec::Result] The result, if the process ran in
     #     the foreground.
     #
-    def exec_tool(cmd, **opts, &block)
+    def exec_tool(cmd, fallback_to_separate: false, **opts, &block)
+      if fallback_to_separate && !::Toys::Compat.allow_fork?
+        return exec_separate_tool(cmd, **opts, &block)
+      end
       cli = opts.delete(:cli) || toys_cli
       cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
       cli.loader.lookup(cmd)
@@ -90,11 +95,14 @@ module Toys
     # with the keyword arguments `out: :capture, background: false`, and
     # calling `#captured_out` on the result.
     #
-    # Note: this method uses "fork" to execute the tool. If you are using an
-    # environment without "fork" support, such as JRuby oor Ruby on Windows,
-    # consider {#capture_separate_tool}.
+    # This method uses "fork" to isolate the run of the tool. On an environment
+    # without "fork" support, such as JRuby or Ruby on Windows, consider
+    # {#capture_separate_tool}.
     #
     # @param cmd [String,Array<String>] The command to execute.
+    # @param stream [:out,:err,:both] The stream to capture. Default is `:out`.
+    # @param fallback_to_separate [boolean] If true, fall back to
+    #     {capture_separate_tool} if the environment doesn't support fork.
     # @param opts [keywords] The command options.
     # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
     #     for the subprocess streams.
@@ -104,9 +112,15 @@ module Toys
     # @return [Toys::Utils::Exec::Result] The result, if the process ran in
     #     the foreground.
     #
-    def capture_tool(cmd, **opts, &block)
-      opts = opts.merge(out: :capture, background: false)
-      exec_tool(cmd, **opts, &block).captured_out
+    def capture_tool(cmd, fallback_to_separate: false, stream: :out, **opts, &block)
+      opts = opts.merge(background: false)
+      opts = opts.merge(out: :capture) if [:out, :both].include?(stream)
+      opts = opts.merge(err: :capture) if [:err, :both].include?(stream)
+      result = exec_tool(cmd, fallback_to_separate: fallback_to_separate, **opts, &block)
+      outputs = []
+      outputs << result.captured_out if [:out, :both].include?(stream)
+      outputs << result.captured_err if [:err, :both].include?(stream)
+      outputs.join
     end
 
     ##
@@ -116,10 +130,13 @@ module Toys
     # `out: :capture, background: false`, and calling `#captured_out` on the
     # result.
     #
-    # Unlike {#capture_tool}, this method does not use "fork", and thus can be
-    # called in an environment such as JRuby or Ruby on Windows.
+    # Unlike {#capture_tool}, this method does not use the shared CLI, but
+    # instead spawns a completely new Toys process for each run. It is thus
+    # slower than {#capture_tool}, but compatible with environments without
+    # "fork" support, such as JRuby or Ruby on Windows.
     #
     # @param cmd [String,Array<String>] The command to execute.
+    # @param stream [:out,:err,:both] The stream to capture. Default is `:out`.
     # @param opts [keywords] The command options.
     # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
     #     for the subprocess streams.
@@ -129,9 +146,15 @@ module Toys
     # @return [Toys::Utils::Exec::Result] The result, if the process ran in
     #     the foreground.
     #
-    def capture_separate_tool(cmd, **opts, &block)
-      opts = opts.merge(out: :capture, background: false)
-      exec_separate_tool(cmd, **opts, &block).captured_out
+    def capture_separate_tool(cmd, stream: :out, **opts, &block)
+      opts = opts.merge(background: false)
+      opts = opts.merge(out: :capture) if [:out, :both].include?(stream)
+      opts = opts.merge(err: :capture) if [:err, :both].include?(stream)
+      result = exec_separate_tool(cmd, **opts, &block)
+      outputs = []
+      outputs << result.captured_out if [:out, :both].include?(stream)
+      outputs << result.captured_err if [:err, :both].include?(stream)
+      outputs.join
     end
 
     ##
@@ -149,6 +172,47 @@ module Toys
     # returned. If no block is given, the command is run in the background, and
     # the controller object is returned.
     #
+    # This method uses "fork" to isolate the run of the tool. On an environment
+    # without "fork" support, such as JRuby or Ruby on Windows, consider
+    # {#control_separate_tool}.
+    #
+    # @param cmd [String,Array<String>] The command to execute.
+    # @param fallback_to_separate [boolean] If true, fall back to
+    #     {capture_separate_tool} if the environment doesn't support fork.
+    # @param opts [keywords] The command options.
+    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
+    #     for the subprocess streams.
+    #
+    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
+    #     the process is running in the background.
+    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
+    #     the foreground.
+    #
+    def control_tool(cmd, fallback_to_separate: false, **opts, &block)
+      opts = opts.merge(out: :controller, err: :controller, in: :controller, background: block.nil?)
+      exec_tool(cmd, fallback_to_separate: fallback_to_separate, **opts, &block)
+    end
+
+    ##
+    # Runs the tool corresponding to the given command line, managing streams
+    # using a controller. This is equivalent to calling {#exec_separate_tool}
+    # with the keyword arguments:
+    #
+    #     out: :controller,
+    #     err: :controller,
+    #     in: :controller,
+    #     background: block.nil?
+    #
+    # If a block is given, the command is run in the foreground, the
+    # controller is passed to the block during the run, and a result object is
+    # returned. If no block is given, the command is run in the background, and
+    # the controller object is returned.
+    #
+    # Unlike {#control_tool}, this method does not use the shared CLI, but
+    # instead spawns a completely new Toys process for each run. It is thus
+    # slower than {#control_tool}, but compatible with environments without
+    # "fork" support, such as JRuby or Ruby on Windows.
+    #
     # @param cmd [String,Array<String>] The command to execute.
     # @param opts [keywords] The command options.
     # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
@@ -159,9 +223,9 @@ module Toys
     # @return [Toys::Utils::Exec::Result] The result, if the process ran in
     #     the foreground.
     #
-    def control_tool(cmd, **opts, &block)
+    def control_separate_tool(cmd, **opts, &block)
       opts = opts.merge(out: :controller, err: :controller, in: :controller, background: block.nil?)
-      exec_tool(cmd, **opts, &block)
+      exec_separate_tool(cmd, **opts, &block)
     end
 
     @toys_mutex = ::Mutex.new
