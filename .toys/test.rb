@@ -2,6 +2,8 @@
 
 desc "Runs tests in both gems"
 
+flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
+
 include :terminal
 include :exec, exit_on_nonzero_status: true
 
@@ -13,6 +15,7 @@ def handle_gem(gem_name)
 end
 
 def run
+  ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
   handle_gem("toys-core")
   handle_gem("toys")
 end
