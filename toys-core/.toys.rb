@@ -11,6 +11,17 @@ expand :clean, paths: :gitignore
 
 expand :minitest, libs: ["lib", "test"], bundler: true
 
+tool "test" do
+  flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
+
+  alias_method :run_orig, :run
+
+  def run
+    ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+    run_orig
+  end
+end
+
 expand :rubocop, bundler: true
 
 expand :yardoc do |t|
