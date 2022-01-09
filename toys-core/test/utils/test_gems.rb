@@ -122,7 +122,7 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle requiring installation of a direct dependency" do
-      skip if Toys::Compat.jruby?
+      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
@@ -142,7 +142,7 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle requiring installation of a transitive dependency via a gemspec" do
-      skip if Toys::Compat.jruby?
+      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       setup_case("bundle-using-gemspec") do
         FileUtils.rm_f("Gemfile.lock")
         exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
@@ -162,7 +162,7 @@ describe Toys::Utils::Gems do
     end
 
     it "updates the bundle if install fails due to conflicts" do
-      skip if Toys::Compat.jruby?
+      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")

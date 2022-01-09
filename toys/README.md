@@ -55,6 +55,9 @@ Toys requires Ruby 2.4 or later.
 Most parts of Toys work on JRuby. However, JRuby is not recommended because of
 JVM boot latency, lack of support for Kernel#fork, and other issues.
 
+Most parts of Toys work on TruffleRuby. However, TruffleRuby is not recommended
+because it has a few known bugs that affect Toys.
+
 ### Write your first tool
 
 You can define tools by creating a *Toys file*. Go into any directory, and,

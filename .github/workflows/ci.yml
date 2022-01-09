@@ -36,6 +36,9 @@ jobs:
           - os: ubuntu-latest
             ruby: "jruby"
             tool: test
+          - os: ubuntu-latest
+            ruby: "truffleruby"
+            tool: test
           - os: macos-latest
             ruby: "2.4"
             tool: test

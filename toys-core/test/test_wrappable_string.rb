@@ -16,6 +16,7 @@ describe Toys::WrappableString do
     end
 
     it "handles whitespace string" do
+      skip("https://github.com/oracle/truffleruby/issues/2565") if Toys::Compat.truffleruby?
       result = Toys::WrappableString.new(" \n ").wrap(10)
       assert_equal([], result)
     end

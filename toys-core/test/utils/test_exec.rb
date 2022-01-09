@@ -14,12 +14,14 @@ describe Toys::Utils::Exec do
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
   let(:simple_exec_timeout) { 5 }
-  let(:ruby_exec_timeout) { Toys::Compat.jruby? ? 10 : simple_exec_timeout }
+  let(:ruby_exec_timeout) {
+    Toys::Compat.jruby? || Toys::Compat.truffleruby? ? 10 : simple_exec_timeout
+  }
 
   describe "result object" do
     it "detects zero exit codes" do
       ::Timeout.timeout(simple_exec_timeout) do
-        result = exec.exec("exit 0")
+        result = exec.exec(["true"])
         assert_nil(result.exception)
         assert_instance_of(::Process::Status, result.status)
         assert_equal(0, result.exit_code)
@@ -32,6 +34,7 @@ describe Toys::Utils::Exec do
     end
 
     it "detects nonzero exit codes" do
+      skip("https://github.com/oracle/truffleruby/issues/2568") if Toys::Compat.truffleruby?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("exit 3")
         assert_nil(result.exception)
@@ -105,7 +108,7 @@ describe Toys::Utils::Exec do
           assert(result.error?)
           was_called = true
         end
-        exec.exec("exit 3", result_callback: callback)
+        exec.exec(["false"], result_callback: callback)
         assert_equal(true, was_called)
       end
     end

@@ -318,12 +318,12 @@ describe Toys::StandardMixins::Exec do
         tool "foo" do
           include :exec, exit_on_nonzero_status: true
           to_run do
-            exec("exit 3")
+            exec(["false"])
             completed = true
           end
         end
       end
-      assert_equal(3, cli.run("foo"))
+      refute_equal(0, cli.run("foo"))
       refute(completed)
     end
 
