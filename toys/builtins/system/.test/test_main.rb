@@ -1,23 +1,34 @@
 describe "toys system" do
   include Toys::Testing
 
-  def universal_capture(cmd)
-    if Toys::Compat.allow_fork?
-      capture_tool(cmd)
-    else
-      capture_separate_tool(cmd)
-    end
-  end
-
   it "prints the description" do
-    output = universal_capture(["system"])
-    assert_includes(output, "A set of system commands for Toys")
+    output = capture_tool(["system"], fallback_to_separate: true)
+    output_lines = output.split("\n")
+    assert_equal("NAME", output_lines[0])
+    assert_equal("    toys system - A set of system commands for Toys", output_lines[1])
   end
 
   describe "version" do
     it "prints the current version" do
-      output = universal_capture(["system", "version"])
-      assert_includes(output, Toys::VERSION)
+      output = capture_tool(["system", "version"], fallback_to_separate: true)
+      assert_equal(Toys::VERSION, output.strip)
+    end
+
+    it "prints the system version using period as delimiter" do
+      output = capture_tool(["system.version"], fallback_to_separate: true)
+      assert_equal(Toys::VERSION, output.strip)
+    end
+
+    it "prints the system version using colon as delimiter" do
+      output = capture_tool(["system:version"], fallback_to_separate: true)
+      assert_equal(Toys::VERSION, output.strip)
+    end
+
+    it "prints help when passed --help flag" do
+      output = capture_tool(["system", "version", "--help"], fallback_to_separate: true)
+      output_lines = output.split("\n")
+      assert_equal("NAME", output_lines[0])
+      assert_equal("    toys system version - Print the current Toys version", output_lines[1])
     end
   end
 end

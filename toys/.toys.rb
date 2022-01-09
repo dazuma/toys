@@ -66,6 +66,8 @@ tool "ci" do
     env = {}
     env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
     exec_tool(["test"], name: "Tests", env: env)
+    exec_tool(["system", "test", "-d", File.join(context_directory, "builtins")],
+              name: "Builtins Tests", env: env)
     exec_tool(["rubocop"], name: "Style checker")
     exec_tool(["yardoc-full"], name: "Docs generation")
     exec_tool(["build"], name: "Gem build")

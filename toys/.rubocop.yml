@@ -15,6 +15,7 @@ Metrics/BlockLength:
     - "test/**/*"
     - "builtins/**/*"
     - "*.gemspec"
+    - ".toys.rb"
 Metrics/BlockNesting:
   Exclude:
     - "lib/toys/templates/*"
