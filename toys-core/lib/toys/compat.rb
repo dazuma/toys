@@ -13,7 +13,12 @@ module Toys
 
     # @private
     def self.jruby?
-      ::RUBY_PLATFORM == "java"
+      ::RUBY_ENGINE == "jruby"
+    end
+
+    # @private
+    def self.truffleruby?
+      ::RUBY_ENGINE == "truffleruby"
     end
 
     # @private
@@ -23,7 +28,7 @@ module Toys
 
     # @private
     def self.allow_fork?
-      !jruby? && !windows?
+      !jruby? && !truffleruby? && !windows?
     end
 
     # @private
@@ -68,7 +73,9 @@ module Toys
 
     # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
     # initialize will fail if there are no formal keyword args.
-    if ruby_version >= 20700
+    # This also hits TruffleRuby
+    # (see https://github.com/oracle/truffleruby/issues/2567)
+    if ruby_version >= 20700 && !truffleruby?
       # @private
       def self.instantiate(klass, args, kwargs, block)
         klass.new(*args, **kwargs, &block)

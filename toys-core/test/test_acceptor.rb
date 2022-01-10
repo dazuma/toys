@@ -534,10 +534,12 @@ describe Toys::Acceptor do
       end
 
       it "does not accept empty string" do
+        skip("https://github.com/oracle/truffleruby/issues/2566") if Toys::Compat.truffleruby?
         refute_accept(acceptor, "")
       end
 
       it "does not accept nonnumeric string" do
+        skip("https://github.com/oracle/truffleruby/issues/2566") if Toys::Compat.truffleruby?
         refute_accept(acceptor, "hi")
       end
 
