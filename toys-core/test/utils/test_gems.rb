@@ -14,7 +14,7 @@ describe Toys::Utils::Gems do
     skip unless ::ENV["TOYS_TEST_INTEGRATION"]
     ::Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
-        ::Timeout.timeout(30, &block)
+        ::Timeout.timeout(60, &block)
       end
     end
   end

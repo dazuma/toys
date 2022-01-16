@@ -93,10 +93,16 @@ module Toys
     # Create a standard CLI, configured with the appropriate paths and
     # middleware.
     #
+    # @param custom_paths [String,Array<String>] Custom paths to use. If set,
+    #     the CLI uses only the given paths. If not, the CLI will search for
+    #     paths from the current directory and global paths.
+    # @param include_builtins [boolean] Add the builtin tools. Default is true.
     # @param cur_dir [String,nil] Starting search directory for configs.
     #     Defaults to the current working directory.
     #
-    def initialize(cur_dir: nil)
+    def initialize(custom_paths: nil,
+                   include_builtins: true,
+                   cur_dir: nil)
       super(
         executable_name: EXECUTABLE_NAME,
         config_dir_name: CONFIG_DIR_NAME,
@@ -110,40 +116,48 @@ module Toys
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup
       )
-      add_standard_paths(cur_dir: cur_dir, toys_dir_name: CONFIG_DIR_NAME)
+      if custom_paths
+        Array(custom_paths).each { |path| add_config_path(path) }
+      else
+        add_current_directory_paths(cur_dir)
+      end
+      add_builtins if include_builtins
     end
 
     private
 
     ##
-    # Add paths for a toys standard CLI. Paths added, in order from high to
-    # low priority, are:
+    # Add paths for builtin tools
     #
-    #  *  Search the current directory and all ancestors for config files and
-    #     directories.
-    #  *  Read the `TOYS_PATH` environment variable and search for config files
-    #     and directories in the given paths. If this variable is empty, use
-    #     `$HOME:/etc` by default.
-    #  *  The builtins for the standard toys executable.
-    #
-    # @param cur_dir [String,nil] Starting search directory for configs.
-    #     Defaults to the current working directory.
-    # @param global_dirs [Array<String>,nil] Optional list of global
-    #     directories, or `nil` to use the defaults.
-    # @return [self]
-    #
-    def add_standard_paths(cur_dir: nil, global_dirs: nil, toys_dir_name: nil)
-      cur_dir ||= ::Dir.pwd
-      cur_dir = skip_toys_dir(cur_dir, toys_dir_name) if toys_dir_name
-      global_dirs ||= default_global_dirs
-      add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
-      global_dirs.each { |path| add_search_path(path) }
+    def add_builtins
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
       add_config_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
       self
     end
 
-    # Step out of any toys dir
+    ##
+    # Add paths for the given current directory and its ancestors, plus the
+    # global paths.
+    #
+    # @param cur_dir [String] The starting directory path, or nil to use the
+    #     current directory
+    # @return [self]
+    #
+    def add_current_directory_paths(cur_dir)
+      cur_dir = skip_toys_dir(cur_dir || ::Dir.pwd, CONFIG_DIR_NAME)
+      global_dirs = default_global_dirs
+      add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
+      global_dirs.each { |path| add_search_path(path) }
+      self
+    end
+
+    ##
+    # Step out of any toys dir.
+    #
+    # @param dir [String] The starting path
+    # @param toys_dir_name [String] The name of the toys directory to look for
+    # @return [String] The final directory path
+    #
     def skip_toys_dir(dir, toys_dir_name)
       cur_dir = dir
       loop do
@@ -155,6 +169,21 @@ module Toys
           dir = parent
         end
       end
+    end
+
+    ##
+    # Returns the default set of global config directories.
+    #
+    # @return [Array<String>]
+    #
+    def default_global_dirs
+      paths = ::ENV[TOYS_PATH_ENV].to_s.split(::File::PATH_SEPARATOR)
+      paths = [::Dir.home, "/etc"] if paths.empty?
+      paths
+        .compact
+        .uniq
+        .select { |path| ::File.directory?(path) && ::File.readable?(path) }
+        .map { |path| ::File.realpath(::File.expand_path(path)) }
     end
 
     ##
@@ -186,21 +215,6 @@ module Toys
         Middleware.spec(:handle_usage_errors),
         Middleware.spec(:add_verbosity_flags),
       ]
-    end
-
-    ##
-    # Returns the default set of global config directories.
-    #
-    # @return [Array<String>]
-    #
-    def default_global_dirs
-      paths = ::ENV[TOYS_PATH_ENV].to_s.split(::File::PATH_SEPARATOR)
-      paths = [::Dir.home, "/etc"] if paths.empty?
-      paths
-        .compact
-        .uniq
-        .select { |path| ::File.directory?(path) && ::File.readable?(path) }
-        .map { |path| ::File.realpath(::File.expand_path(path)) }
     end
 
     ##

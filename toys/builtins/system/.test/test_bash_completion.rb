@@ -1,45 +1,49 @@
 describe "toys system bash-completion" do
   include Toys::Testing
 
+  toys_custom_paths(File.dirname(File.dirname(__dir__)))
+  toys_include_builtins(false)
+
+  before do
+    skip unless Toys::Compat.allow_fork?
+  end
+
   it "prints the description" do
-    output = capture_tool(["system", "bash-completion"], fallback_to_separate: true)
-    output_lines = output.split("\n")
+    result = toys_exec_tool(["system", "bash-completion"])
+    output_lines = result.captured_out.split("\n")
     assert_equal("NAME", output_lines[0])
     assert_equal("    toys system bash-completion - Bash tab completion for Toys", output_lines[1])
   end
 
   describe "install" do
     it "sources the completion script file" do
-      output = capture_tool(["system", "bash-completion", "install"], fallback_to_separate: true)
-      assert_match(%r{^source .*/share/bash-completion\.sh toys$}, output)
+      result = toys_exec_tool(["system", "bash-completion", "install"])
+      assert_match(%r{^source .*/share/bash-completion\.sh toys$}, result.captured_out)
     end
 
     it "sources the completion script file with an alias name" do
-      output = capture_tool(["system", "bash-completion", "install", "myalias"],
-                            fallback_to_separate: true)
-      assert_match(%r{^source .*/share/bash-completion\.sh myalias$}, output)
+      result = toys_exec_tool(["system", "bash-completion", "install", "myalias"])
+      assert_match(%r{^source .*/share/bash-completion\.sh myalias$}, result.captured_out)
     end
   end
 
   describe "remove" do
     it "sources the completion script file" do
-      output = capture_tool(["system", "bash-completion", "remove"], fallback_to_separate: true)
-      assert_match(%r{^source .*/share/bash-completion-remove\.sh toys$}, output)
+      result = toys_exec_tool(["system", "bash-completion", "remove"])
+      assert_match(%r{^source .*/share/bash-completion-remove\.sh toys$}, result.captured_out)
     end
 
     it "sources the completion script file with an alias name" do
-      output = capture_tool(["system", "bash-completion", "remove", "myalias"],
-                            fallback_to_separate: true)
-      assert_match(%r{^source .*/share/bash-completion-remove\.sh myalias$}, output)
+      result = toys_exec_tool(["system", "bash-completion", "remove", "myalias"])
+      assert_match(%r{^source .*/share/bash-completion-remove\.sh myalias$}, result.captured_out)
     end
   end
 
   describe "eval" do
     def capture_completion(line)
       env = { "COMP_LINE" => line, "COMP_POINT" => "-1", "TOYS_DEV" => "true" }
-      output = capture_tool(["system", "bash-completion", "eval"],
-                            fallback_to_separate: true, env: env)
-      output.split("\n")
+      result = toys_exec_tool(["system", "bash-completion", "eval"], env: env)
+      result.captured_out.split("\n")
     end
 
     it "completes 'toys '" do

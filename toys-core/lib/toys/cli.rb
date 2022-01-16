@@ -446,6 +446,9 @@ module Toys
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
     # @param verbosity [Integer] Initial verbosity. Default is 0.
+    # @param delegated_from [Toys::Context] The context from which this
+    #     execution is delegated. Optional. Should be set only if this is a
+    #     delegated execution.
     #
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
@@ -457,49 +460,71 @@ module Toys
         "Error during tool execution!", tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
-        default_data = {
-          Context::Key::VERBOSITY => verbosity,
-          Context::Key::DELEGATED_FROM => delegated_from,
-        }
-        run_tool(tool, remaining, default_data)
+        context = build_context(tool, remaining,
+                                verbosity: verbosity,
+                                delegated_from: delegated_from)
+        execute_tool(tool, context, &:run)
       end
     rescue ContextualError, ::Interrupt => e
       @error_handler.call(e).to_i
     end
 
+    ##
+    # Prepare a tool to be run, but just execute the given block rather than
+    # performing a full run of the tool. This is intended for testing tools.
+    # Unlike {#run}, this does not catch errors and perform error handling.
+    #
+    # @param args [String...] Command line arguments specifying which tool to
+    #     run and what arguments to pass to it. You may pass either a single
+    #     array of strings, or a series of string arguments.
+    # @yieldparam context [Toys::Context] Yields the tool context.
+    #
+    # @return [Object] The value returned from the block.
+    #
+    def load_tool(*args)
+      tool, remaining = @loader.lookup(args.flatten)
+      context = build_context(tool, remaining)
+      execute_tool(tool, context) do |ctx|
+        ctx.exit(yield ctx)
+      end
+    end
+
     private
 
-    ##
-    # Run the given tool with the given arguments.
-    # Does not handle exceptions.
-    #
-    # @param tool [Toys::ToolDefinition] The tool to run.
-    # @param args [Array<String>] Command line arguments passed to the tool.
-    # @param default_data [Hash] Initial tool context data.
-    # @return [Integer] The resulting status code
-    #
-    def run_tool(tool, args, default_data)
+    def build_context(tool, args, verbosity: 0, delegated_from: nil)
+      default_data = {
+        Context::Key::VERBOSITY => verbosity,
+        Context::Key::DELEGATED_FROM => delegated_from,
+      }
       arg_parser = ArgParser.new(self, tool,
                                  default_data: default_data,
                                  require_exact_flag_match: tool.exact_flag_match_required?)
       arg_parser.parse(args).finish
-      context = tool.tool_class.new(arg_parser.data)
+      tool.tool_class.new(arg_parser.data)
+    end
+
+    def execute_tool(tool, context)
       tool.source_info&.apply_lib_paths
       tool.run_initializers(context)
-
       cur_logger = context[Context::Key::LOGGER]
       if cur_logger
         original_level = cur_logger.level
         cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
       end
       begin
-        execute_tool_in_context(context, tool)
+        executor = build_executor(tool, context) do
+          yield context
+        end
+        catch(:result) do
+          executor.call
+          0
+        end
       ensure
         cur_logger.level = original_level if cur_logger
       end
     end
 
-    def execute_tool_in_context(context, tool)
+    def build_executor(tool, context)
       executor = proc do
         begin
           if !context[Context::Key::USAGE_ERRORS].empty?
@@ -507,7 +532,7 @@ module Toys
           elsif !tool.runnable?
             raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
           else
-            context.run
+            yield
           end
         rescue ::Interrupt => e
           raise e unless tool.handles_interrupts?
@@ -517,10 +542,7 @@ module Toys
       tool.built_middleware.reverse_each do |middleware|
         executor = make_executor(middleware, context, executor)
       end
-      catch(:result) do
-        executor.call
-        0
-      end
+      executor
     end
 
     def handle_usage_errors(context, tool)

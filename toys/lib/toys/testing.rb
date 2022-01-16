@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "shellwords"
+
 module Toys
   ##
   # Helpers for writing tool tests.
@@ -18,8 +20,91 @@ module Toys
     end
 
     ##
-    # Runs the tool corresponding to the given command line, provided as an
-    # array of arguments, and returns a {Toys::Exec::Result}.
+    # Prepares the tool corresponding to the given command line, but instead of
+    # running it, yields the execution context to the given block. This can be
+    # used to test individual methods in a tool.
+    #
+    # By default, a single CLI is shared among the tests in each test class or
+    # _describe_ block. Thus, tools are loaded only once, and the loader is
+    # shared across the tests. If you need to isolate loading for a test,
+    # create a separate CLI and pass it in using the `:cli` keyword argument.
+    #
+    # Note: this method runs the given block in-process. This means you can
+    # test assertions within the block, but any input or output performed by
+    # the tool's methods that you call, will manifest during your test. If this
+    # is a problem, you might consider redirecting the standard streams when
+    # calling this method, for example by using
+    # [capture_subprocess_io](https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io).
+    #
+    # @param cmd [String,Array<String>] The command to execute.
+    # @yieldparam tool [Toys::Context] The tool context.
+    # @return [Object] The value returned from the block.
+    #
+    # @example
+    #   # Given the following tool:
+    #
+    #   tool "hello" do
+    #     flag :shout
+    #     def run
+    #       puts message
+    #     end
+    #     def message
+    #       shout ? "HELLO" : "hello"
+    #     end
+    #   end
+    #
+    #   # You can test the `message` method as follows:
+    #
+    #   class MyTest < Minitest::Test
+    #     include Toys::Testing
+    #     def test_message_without_shout
+    #       toys_load_tool(["hello"]) do |tool|
+    #         assert_equal("hello", tool.message)
+    #       end
+    #     end
+    #     def test_message_with_shout
+    #       toys_load_tool(["hello", "--shout"]) do |tool|
+    #         assert_equal("HELLO", tool.message)
+    #       end
+    #     end
+    #   end
+    #
+    def toys_load_tool(cmd, cli: nil, &block)
+      cli ||= toys_cli
+      cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+      cli.load_tool(*cmd, &block)
+    end
+
+    ##
+    # Runs the tool corresponding to the given command line, in-process, and
+    # returns the result code.
+    #
+    # By default, a single CLI is shared among the tests in each test class or
+    # _describe_ block. Thus, tools are loaded only once, and the loader is
+    # shared across the tests. If you need to isolate loading for a test,
+    # create a separate CLI and pass it in using the `:cli` keyword argument.
+    #
+    # Note: This method runs the tool in-process. This is often faster than
+    # running it in a separate process with {#toys_exec_tool}, but it also
+    # means any input or output performed by the tool, will manifest during
+    # your test. If this is a problem, you might consider redirecting the
+    # standard streams when calling this method, for example by using
+    # [capture_subprocess_io](https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io).
+    #
+    # @param cmd [String,Array<String>] The command to execute.
+    # @return [Integer] The integer result code (i.e. 0 for success).
+    #
+    def toys_run_tool(cmd, cli: nil)
+      cli ||= toys_cli
+      cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+      cli.run(*cmd)
+    end
+
+    ##
+    # Runs the tool corresponding to the given command line, in a separate
+    # forked process, and returns a {Toys::Exec::Result}. You can either
+    # provide a block to control the process, or simply let it run and capture
+    # its output.
     #
     # By default, a single CLI is shared among the tests in each test class or
     # _describe_ block. Thus, tools are loaded only once, and the loader is
@@ -27,206 +112,70 @@ module Toys
     # create a separate CLI and pass it in using the `:cli` keyword argument.
     #
     # All other keyword arguments are the same as those defined by the
-    # `Toys::Utils::Exec` class. If a block is given, a
-    # `Toys::Utils::Exec::Controller` is yielded to it. For more info, see the
-    # documentation for `Toys::Utils::Exec#exec`.
+    # {Toys::Utils::Exec} class. If a block is given, all streams are directed
+    # to a {Toys::Utils::Exec::Controller} which is yielded to the block. If no
+    # block is given, the output and error streams are captured and the input
+    # stream is closed.
     #
-    # This method uses "fork" to isolate the run of the tool. On an environment
-    # without "fork" support, such as JRuby or Ruby on Windows, consider
-    # {#exec_separate_tool}.
+    # This method uses "fork" to isolate the run of the tool. It will not work
+    # on environments such as JRuby or Ruby on Windows that do not support
+    # process forking.
     #
     # @param cmd [String,Array<String>] The command to execute.
-    # @param fallback_to_separate [boolean] If true, fall back to
-    #     {exec_separate_tool} if the environment doesn't support fork.
     # @param opts [keywords] The command options.
     # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
     #     for the subprocess streams.
+    # @return [Toys::Utils::Exec::Result] The process result.
     #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
+    # @example
+    #   # Given the following tool:
     #
-    def exec_tool(cmd, fallback_to_separate: false, **opts, &block)
-      if fallback_to_separate && !::Toys::Compat.allow_fork?
-        return exec_separate_tool(cmd, **opts, &block)
-      end
-      cli = opts.delete(:cli) || toys_cli
+    #   tool "hello" do
+    #     flag :shout
+    #     def run
+    #       puts message
+    #     end
+    #     def message
+    #       shout ? "HELLO" : "hello"
+    #     end
+    #   end
+    #
+    #   # You can test the tool's output as follows:
+    #
+    #   class MyTest < Minitest::Test
+    #     include Toys::Testing
+    #     def test_output_without_shout
+    #       result = toys_exec_tool(["hello"])
+    #       assert_equal("hello hello\n", result.captured_out)
+    #     end
+    #     def test_with_shout
+    #       result = toys_exec_tool(["hello", "--shout"])
+    #       assert_equal("HELLO HELLO\n", result.captured_out)
+    #     end
+    #   end
+    #
+    def toys_exec_tool(cmd, cli: nil, **opts, &block)
+      cli ||= toys_cli
       cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
+      opts =
+        if block
+          {
+            out: :controller,
+            err: :controller,
+            in: :controller,
+          }.merge(opts)
+        else
+          {
+            out: :capture,
+            err: :capture,
+            in: :close,
+          }.merge(opts)
+        end
       cli.loader.lookup(cmd)
       tool_caller = proc { ::Kernel.exit(cli.run(*cmd)) }
       self.class.toys_exec.exec_proc(tool_caller, **opts, &block)
     end
-
-    ##
-    # Runs the tool corresponding to the given command line, provided as an
-    # array of arguments, in a separately spawned process, and returns a
-    # {Toys::Exec::Result}.
-    #
-    # Unlike {#exec_tool}, this method does not use the shared CLI, but instead
-    # spawns a completely new Toys process for each run. It is thus slower than
-    # {#exec_tool}, but compatible with environments without "fork" support,
-    # such as JRuby or Ruby on Windows.
-    #
-    # Supported keyword arguments are the same as those defined by the
-    # `Toys::Utils::Exec` class. If a block is given, a
-    # `Toys::Utils::Exec::Controller` is yielded to it. For more info, see the
-    # documentation for `Toys::Utils::Exec#exec`.
-    #
-    # @param cmd [String,Array<String>] The command to execute.
-    # @param opts [keywords] The command options.
-    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-    #     for the subprocess streams.
-    #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
-    #
-    def exec_separate_tool(cmd, **opts, &block)
-      cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-      cmd = [::RbConfig.ruby, "--disable=gems", ::Toys.executable_path] + cmd
-      self.class.toys_exec.exec(cmd, **opts, &block)
-    end
-
-    ##
-    # Runs the tool corresponding to the given command line, and returns the
-    # data written to `STDOUT`. This is equivalent to calling {#exec_tool}
-    # with the keyword arguments `out: :capture, background: false`, and
-    # calling `#captured_out` on the result.
-    #
-    # This method uses "fork" to isolate the run of the tool. On an environment
-    # without "fork" support, such as JRuby or Ruby on Windows, consider
-    # {#capture_separate_tool}.
-    #
-    # @param cmd [String,Array<String>] The command to execute.
-    # @param stream [:out,:err,:both] The stream to capture. Default is `:out`.
-    # @param fallback_to_separate [boolean] If true, fall back to
-    #     {capture_separate_tool} if the environment doesn't support fork.
-    # @param opts [keywords] The command options.
-    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-    #     for the subprocess streams.
-    #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
-    #
-    def capture_tool(cmd, fallback_to_separate: false, stream: :out, **opts, &block)
-      opts = opts.merge(background: false)
-      opts = opts.merge(out: :capture) if [:out, :both].include?(stream)
-      opts = opts.merge(err: :capture) if [:err, :both].include?(stream)
-      result = exec_tool(cmd, fallback_to_separate: fallback_to_separate, **opts, &block)
-      outputs = []
-      outputs << result.captured_out if [:out, :both].include?(stream)
-      outputs << result.captured_err if [:err, :both].include?(stream)
-      outputs.join
-    end
-
-    ##
-    # Runs the tool corresponding to the given command line, and returns the
-    # data written to `STDOUT`. This is equivalent to calling
-    # {#exec_separate_tool} with the keyword arguments
-    # `out: :capture, background: false`, and calling `#captured_out` on the
-    # result.
-    #
-    # Unlike {#capture_tool}, this method does not use the shared CLI, but
-    # instead spawns a completely new Toys process for each run. It is thus
-    # slower than {#capture_tool}, but compatible with environments without
-    # "fork" support, such as JRuby or Ruby on Windows.
-    #
-    # @param cmd [String,Array<String>] The command to execute.
-    # @param stream [:out,:err,:both] The stream to capture. Default is `:out`.
-    # @param opts [keywords] The command options.
-    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-    #     for the subprocess streams.
-    #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
-    #
-    def capture_separate_tool(cmd, stream: :out, **opts, &block)
-      opts = opts.merge(background: false)
-      opts = opts.merge(out: :capture) if [:out, :both].include?(stream)
-      opts = opts.merge(err: :capture) if [:err, :both].include?(stream)
-      result = exec_separate_tool(cmd, **opts, &block)
-      outputs = []
-      outputs << result.captured_out if [:out, :both].include?(stream)
-      outputs << result.captured_err if [:err, :both].include?(stream)
-      outputs.join
-    end
-
-    ##
-    # Runs the tool corresponding to the given command line, managing streams
-    # using a controller. This is equivalent to calling {#exec_tool} with the
-    # keyword arguments:
-    #
-    #     out: :controller,
-    #     err: :controller,
-    #     in: :controller,
-    #     background: block.nil?
-    #
-    # If a block is given, the command is run in the foreground, the
-    # controller is passed to the block during the run, and a result object is
-    # returned. If no block is given, the command is run in the background, and
-    # the controller object is returned.
-    #
-    # This method uses "fork" to isolate the run of the tool. On an environment
-    # without "fork" support, such as JRuby or Ruby on Windows, consider
-    # {#control_separate_tool}.
-    #
-    # @param cmd [String,Array<String>] The command to execute.
-    # @param fallback_to_separate [boolean] If true, fall back to
-    #     {capture_separate_tool} if the environment doesn't support fork.
-    # @param opts [keywords] The command options.
-    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-    #     for the subprocess streams.
-    #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
-    #
-    def control_tool(cmd, fallback_to_separate: false, **opts, &block)
-      opts = opts.merge(out: :controller, err: :controller, in: :controller, background: block.nil?)
-      exec_tool(cmd, fallback_to_separate: fallback_to_separate, **opts, &block)
-    end
-
-    ##
-    # Runs the tool corresponding to the given command line, managing streams
-    # using a controller. This is equivalent to calling {#exec_separate_tool}
-    # with the keyword arguments:
-    #
-    #     out: :controller,
-    #     err: :controller,
-    #     in: :controller,
-    #     background: block.nil?
-    #
-    # If a block is given, the command is run in the foreground, the
-    # controller is passed to the block during the run, and a result object is
-    # returned. If no block is given, the command is run in the background, and
-    # the controller object is returned.
-    #
-    # Unlike {#control_tool}, this method does not use the shared CLI, but
-    # instead spawns a completely new Toys process for each run. It is thus
-    # slower than {#control_tool}, but compatible with environments without
-    # "fork" support, such as JRuby or Ruby on Windows.
-    #
-    # @param cmd [String,Array<String>] The command to execute.
-    # @param opts [keywords] The command options.
-    # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
-    #     for the subprocess streams.
-    #
-    # @return [Toys::Utils::Exec::Controller] The subprocess controller, if
-    #     the process is running in the background.
-    # @return [Toys::Utils::Exec::Result] The result, if the process ran in
-    #     the foreground.
-    #
-    def control_separate_tool(cmd, **opts, &block)
-      opts = opts.merge(out: :controller, err: :controller, in: :controller, background: block.nil?)
-      exec_separate_tool(cmd, **opts, &block)
-    end
+    alias exec_tool toys_exec_tool
 
     @toys_mutex = ::Mutex.new
 
@@ -241,11 +190,63 @@ module Toys
     end
 
     # @private
+    def self.toys_custom_paths(paths = :read)
+      @toys_custom_paths = paths unless paths == :read
+      @toys_custom_paths
+    end
+
+    # @private
+    def self.toys_include_builtins(value = :read)
+      @toys_include_builtins = value unless value == :read
+      @toys_include_builtins
+    end
+
+    @toys_custom_paths = nil
+    @toys_include_builtins = true
+
+    ##
+    # Class methods added to a test class or describe block when
+    # {Toys::Testing} is included. Generally, these are methods that configure
+    # the load path for the CLI in scope for the block.
+    #
     module ClassMethods
+      ##
+      # Configure the Toys CLI to load tools from the given paths, and ignore
+      # the current directory and global paths.
+      #
+      # @param paths [String,Array<String>] The paths to load from.
+      #
+      def toys_custom_paths(paths = :read)
+        @toys_custom_paths = paths unless paths == :read
+        return @toys_custom_paths if defined?(@toys_custom_paths)
+        begin
+          super
+        rescue ::NoMethodError
+          Testing.toys_custom_paths
+        end
+      end
+
+      ##
+      # Configure the Toys CLI to include or exclude builtins. Normally
+      # builtins are included unless false is passed to this method.
+      #
+      # @param value [boolean] Whether to include builtins.
+      #
+      def toys_include_builtins(value = :read)
+        @toys_include_builtins = value unless value == :read
+        return @toys_include_builtins if defined?(@toys_include_builtins)
+        begin
+          super
+        rescue ::NoMethodError
+          Testing.toys_include_builtins
+        end
+      end
+
       # @private
       def toys_cli
         Testing.toys_mutex.synchronize do
-          @toys_cli ||= StandardCLI.new
+          @toys_cli ||= StandardCLI.new(custom_paths: toys_custom_paths,
+                                        include_builtins: toys_include_builtins)
         end
       end
 

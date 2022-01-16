@@ -17,20 +17,40 @@ flag :recursive, "--[no-]recursive", default: true,
      desc: "Recursively test subtools (default is true)"
 flag :tool, "-t TOOL", "--tool TOOL", default: "",
      desc: "Run tests only for tools under the given path"
+flag :minitest_version, "--minitest-version=VERSION", default: "~> 5.0",
+     desc: "Set the minitest version requirement (default is ~>5.0)"
+flag :minitest_focus, "--minitest-focus[=VERSION]",
+     desc: "Make minitest-focus available during the run"
+flag :minitest_rg, "--minitest-rg[=VERSION]",
+     desc: "Make minitest-rg available during the run"
 
 include :exec
 include :gems
 include :terminal
 
 def run
-  gem "minitest", "~> 5.0"
+  load_minitest_gems
   ::Dir.chdir(tool_dir)
   test_files = find_test_files
   result = exec_ruby(ruby_args, in: :controller, log_cmd: "Starting minitest...") do |controller|
-    controller.in.puts("gem 'minitest', '~> 5.0'")
+    controller.in.puts("gem 'minitest', '= #{::Minitest::VERSION}'")
     controller.in.puts("require 'minitest/autorun'")
+    if minitest_focus
+      controller.in.puts("gem 'minitest-focus', '= #{::Minitest::Test::Focus::VERSION}'")
+      controller.in.puts("require 'minitest/focus'")
+    end
+    if minitest_rg
+      controller.in.puts("gem 'minitest-rg', '= #{::MiniTest::RG::VERSION}'")
+      controller.in.puts("require 'minitest/rg'")
+    end
+    controller.in.puts("gem 'toys', '= #{::Toys::VERSION}'")
     controller.in.puts("require 'toys'")
     controller.in.puts("require 'toys/testing'")
+    if directory
+      dir_str = ::File.absolute_path(directory).inspect
+      controller.in.puts("Toys::Testing.toys_custom_paths(#{dir_str})")
+      controller.in.puts("Toys::Testing.toys_include_builtins(false)")
+    end
     test_files.each do |file|
       controller.in.puts("load '#{file}'")
     end
@@ -38,6 +58,21 @@ def run
   if result.error?
     logger.error("Minitest failed!")
     exit(result.exit_code)
+  end
+end
+
+def load_minitest_gems
+  gem "minitest", minitest_version
+  require "minitest"
+  if minitest_focus
+    minitest_focus = "~> 1.0" if minitest_focus == true
+    gem "minitest-focus", minitest_focus
+    require "minitest/focus"
+  end
+  if minitest_rg
+    minitest_rg = "~> 5.0" if minitest_rg == true
+    gem "minitest-rg", minitest_rg
+    require "minitest/rg"
   end
 end
 
