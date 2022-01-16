@@ -10,15 +10,14 @@ details such as argument parsing, online help, and error reporting.
 
 Toys is designed for software developers, IT professionals, and other power
 users who want to write and organize scripts to automate their workflows. It
-can also be used as a Rake replacement, providing a more natural command line
-interface for your project's build tasks.
+can also be used as a replacement for Rake, providing a more natural command
+line interface for your project's build tasks.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line executable written in Ruby. Rather, it
-provides a single executable called `toys`. You define the commands recognized
-by the Toys executable by writing configuration files. (You can, however, build
-your own custom command line executable using the related **toys-core**
-library.)
+provides a single executable called `toys` whose functionality you can define
+by writing configuration files. (You can, however, build your own custom
+command line executable using the related **toys-core** library.)
 
 If this is your first time using Toys, we recommend starting with the
 [README](https://dazuma.github.io/toys/gems/toys/latest), which includes a
@@ -37,7 +36,7 @@ Toys is a command line *framework*. It provides an executable called `toys`
 with basic functions such as argument parsing and online help. You provide the
 actual behavior of the Toys executable by writing **Toys files**.
 
-Toys is a multi-command executable. You may define any number of commands,
+Toys is a *multi-command* executable. You may define any number of commands,
 called **tools**, which can be invoked by passing the tool name as an argument
 to the `toys` executable. Tools are arranged in a hierarchy; you may define
 **namespaces** that have **subtools**.
@@ -45,8 +44,8 @@ to the `toys` executable. Tools are arranged in a hierarchy; you may define
 Tools may recognize command line arguments in the form of **flags** and
 **positional arguments**. Flags can optionally take **values**, while
 positional arguments may be **required** or **optional**. Flags may be
-organized into **flag groups** which support different kinds of constraints on
-which flags are required.
+organized into **flag groups** that support marking flags or flag combinations
+as required.
 
 The configuration of a tool may include **descriptions**, for the tool itself,
 and for each command line argument. These descriptions are displayed in the
@@ -54,18 +53,19 @@ tool's **online help** screen. Descriptions come in **long** and **short**
 forms, which appear in different styles of help.
 
 Toys searches for tools in specifically-named **Toys files** and **Toys
-directories**. It searches for these in the current directory, in its
-ancestors, and in the Toys **search path**.
+directories**. It searches for these in the current directory, in parent
+directories, and in the Toys **search path**.
 
 Toys provides various features to help you write tools. This includes providing
 a **logger** for each tool, **mixins** that provide common functions a tool can
 call (such as to control subprocesses and style output), and **templates**
-which are prefabricated tools that you can configure for your needs.
+which are prefabricated tools that you can configure for your needs. It also
+integrates with testing frameworks, making it easy to write and run **tests**.
 
 Finally, Toys provides useful **built-in behavior**, including automatically
 providing flags to display help screens and set verbosity. It also includes a
-built-in namespace of **system tools** that let you inspect and configure the
-Toys system itself.
+built-in set of **system tools** that let you inspect and configure the Toys
+system itself.
 
 ## The Toys command line
 
@@ -1341,10 +1341,10 @@ one big complex subtool called `unit`, you might define all the simple tools in
 the index file `.toys/test/.toys.rb`, while defining the large `test unit` tool
 in the separate file `.toys/test/unit.rb`.
 
-Toys also loads index files first before other files in the directory. This
-means they are convenient places to define shared code that can be used by all
-the subtools defined in that directory, as we shall see later in the
-[section on sharing code](#Sharing_code).
+Toys also loads the index file in a directory *before* any other files in that
+directory. This means they are convenient places to define shared code that can
+be used by all the subtools defined in that directory, as we shall see later in
+the [section on sharing code](#Sharing_code).
 
 ### The Toys search path
 
@@ -1599,6 +1599,33 @@ more information, see the
 You may also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
 [useful gems](#Useful_gems) provides some examples.
+
+### Standard base directories
+
+Command line tools often need access to common user-specific files such as
+caches and state data. The
+[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+specifies standard locations for these files and standard environment variables
+that can be used to override them. Toys provides easy access to these paths via
+the `:xdg` mixin.
+
+Here's a simple example:
+
+    tool "my-tool" do
+      include :xdg
+
+      def run
+        # Get config file paths, in order from most to least inportant
+        config_files = xdg.lookup_config("my-tool/my-config.toml")
+        config_files.each do |absolute_path|
+          # Read the file...
+        end
+      end
+    end
+
+The `lookup_config` method and many others are documented under the
+[Toys::Utils::XDG](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/XDG)
+class.
 
 ## Sharing code
 
@@ -2053,8 +2080,8 @@ classes, modules, and other code. But preloaded files *automatically* loaded
 To use preloaded files, you must define your tools inside a
 [Toys directory](#Toys_directories). Before any tools inside a directory are
 loaded, any file named `.preload.rb` in the directory is automatically
-required. Additionally, any Ruby files inside a subdirectory called `.preload`
-are also automatically required.
+required. Next, any Ruby files inside a subdirectory called `.preload` are also
+automatically required.
 
 For example, take the following directory structure:
 
@@ -2096,6 +2123,352 @@ Either a single `.preload.rb` file or a `.preload` directory, or both, may be
 used. If both are present in the same directory, the `.preload.rb` file is
 loaded first before the `.preload` directory contents.
 
+## Testing your tools
+
+Tests play a critical part in the maintainability of any Ruby app. However, it
+can be difficult to set up tests for command line tools, Rake tasks, and
+similar code. Toys embraces testability by providing a dedicated place for
+tests, and a set of helpers that make it easy to test tools and parts of tools.
+
+### Writing and running tests
+
+Toys integrates with [Minitest](https://github.com/seattlerb/minitest) to
+provide a testing framework for your tools. To write tests, you must define
+your tools inside a [Toys directory](#Toys_directories). Create a directory
+called `.test` inside that directory. You can then write Minitest tests in
+files within that directory with names matching `test_*.rb`. You can also
+provide other files that do not match that name pattern, as fixture data or
+common test tools to load using `require_relative`. For example:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- greet.rb   <-- defines "greet" (and subtools)
+       |
+       +- .test/
+          |
+          +- test_greet.rb   <-- includes tests
+          |
+          +- helper.rb   <-- includes helper code but not tests
+
+Test files must be written against Minitest, and can use either unit test or
+spec syntax. (RSpec support is not currently available.) The framework will
+require `minitest/autorun` for you. Here is trivial example content for the
+`test_greet.rb` file:
+
+    # test_greet.rb
+
+    require_relative "helper"
+
+    class MyTest < Minitest::Test
+      def test_hello
+        assert_equal "hello", MyHelper.hello
+      end
+    end
+
+And the `helper.rb` file:
+
+    # helper.rb
+
+    module MyHelper
+      def self.hello
+        "hello"
+      end
+    end
+
+You can run tests using:
+
+    toys system test
+
+The built-in `system test` tool searches for the closest `.toys` directory, and
+runs any tests it finds. In the example above, `toys system test` will find the
+"hello" test in the file `.toys/.test/test_greet.rb`, run it, and display the
+results.
+
+Now, the example above defines a file called `test_greet.rb` but it doesn't
+actually test our `greet` tool. So let's cover how to invoke tools from tests
+so you can test their functionality.
+
+### Testing tool functionality
+
+Included in the Toys gem is the helper module {Toys::Testing}, which provides
+methods that load and execute tools for testing purposes. You can access these
+methods by including this module in your test class or `describe` block:
+
+    class MyTest < Minitest::Test
+      include Toys::Testing
+
+      # Write your tests..
+    end
+
+The simplest way to test a tool's functionality is by running it and observing
+the results. To run a tool, invoke the {Toys::Testing#toys_run_tool} method,
+passing in the name of the tool and its arguments as if you were invoking the
+tool from the command line. For example, recall our original `greet` tool that
+takes an optional argument and a `--shout` flag:
+
+    # greet.rb
+
+    desc "Print a friendly greeting."
+    long_desc "Prints a friendly greeting. You may customize whom to" \
+                " greet, and how friendly it should be.",
+              "",
+              "Example:",
+              ["    toys greet --shout ruby"]
+
+    optional_arg :whom, default: "world", desc: "Whom to greet."
+    flag :shout, "-s", "--shout", desc: "Greet loudly."
+
+    def run
+      greeting = "Hello, #{whom}!"
+      greeting = greeting.upcase if shout
+      puts greeting
+    end
+
+To execute the tool from a test, call `toys_run_tool` and pass it `["greet"]`
+as the command:
+
+    class GreetTest < Minitest::Test
+      include Toys::Testing
+
+      def test_greet_with_no_arguents
+        exit_code = toys_run_tool(["greet"])
+        assert_equal(0, exit_code)
+      end
+    end
+
+The `toys_run_tool` method executes the tool and returns the numeric exit code,
+which we can assert is 0 for a successful run. However, when we run this test,
+notice that "Hello, world!" is printed to the console in the middle of the test
+run. That is, of course, what our "greet" tool does. But normally, if you are
+testing a tool that writes to standard out, you'll want to assert against that
+output rather than have it pollute your test output. So typically, you'll wrap
+a call to `toys_run_tool` in a
+[`capture_subprocess_io`](http://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io)
+block, to capture the output. So here's a complete test for our `greet` tool:
+
+    class GreetTest < Minitest::Test
+      include Toys::Testing
+
+      def test_greet_with_no_arguents
+        out, err = capture_subprocess_io do
+          exit_code = toys_run_tool(["greet"])
+          assert_equal(0, exit_code)
+        end
+        assert_equal("Hello, world!\n", out)
+        assert_empty(err)
+      end
+    end
+
+Generally, you should test various use cases of your tool, including the effect
+of passing different arguments and flags. For example, here's a test of the
+`--shout` flag:
+
+    class GreetTest < Minitest::Test
+      include Toys::Testing
+
+      def test_greet_with_shout_flag
+        out, err = capture_subprocess_io do
+          exit_code = toys_run_tool(["greet", "--shout])
+          assert_equal(0, exit_code)
+        end
+        assert_equal("HELLO, WORLD!\n", out)
+        assert_empty(err)
+      end
+    end
+
+It is important to note that `toys_run_tool` executes the tool *in-process* in
+your tests. This may be appropriate for simple tools, but may not work for
+other cases such as tools that replace the current process using
+[Kernel#exec](http://ruby-doc.org/core/Kernel.html#method-i-exec), or tools
+that require user interaction. For these cases, you can run a tool in a
+separate forked process using the {Toys::Testing#toys_exec_tool} method, which
+we shall look at next.
+
+### Running tools out of process
+
+The {Toys::Testing#toys_exec_tool} method, like {Toys::Testing#toys_run_tool},
+executes a tool and lets you assert on its behavior. However, while
+`toys_run_tool` executes the tool *within the test process*, `toys_exec_tool`
+*forks a separate process* to run the tool. This insulates your tests from
+anything disruptive the tool might do (such as replacing the current process).
+It also provides access to the powerful subprocess control functionality
+provided by Toys, letting you redirect, capture, or interact with the tool's
+streams while it is running.
+
+There are two ways to run `toys_exec_tool`: in "capture" or "controller" mode.
+If you *do not* pass a block to `toys_exec_tool`, you are running in "capture"
+mode. It will close the input stream, and capture the output and error streams
+and return an object that provides the exit code and the stream contents. This
+object is actually an instance of
+[Toys::Utils::Exec::Result](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec/Result),
+the same object returned by methods from the `:exec` mixin. Thus, we could use
+"capture" mode to rewrite our greeting test as follows:
+
+    class GreetTest < Minitest::Test
+      include Toys::Testing
+
+      def test_greet_with_no_arguents
+        result = toys_exec_tool(["greet"])
+        assert_equal(0, result.exit_code)
+        assert_equal("Hello, world!\n", result.captured_out)
+        assert_empty(result.captured_err)
+      end
+    end
+
+If you pass a block to `toys_exec_tool`, you will be running in "controller"
+mode. In this mode, all the tool's streams are redirected to a controller
+object that is passed to your block. See the controller's interface at
+[Toys::Utils::Exec::Controller](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec/Controller)
+for more information.
+
+In either mode, you can still override many aspects of the subprocess's
+behavior. For example, "capture" closes the input stream by default, but you
+can override this and pass data into the tool's input stream by providing the
+`:in` keyword argument. The various arguments available are documented in the
+[Toys::Utils::Exec](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec)
+class. Here is an example, passing a string into our tool's input stream:
+
+    class GreetTest < Minitest::Test
+      include Toys::Testing
+
+      def test_greet_ignores_the_input_stream
+        result = toys_exec_tool(["greet"], in: [:string, "I am ignored"])
+        assert_equal(0, result.exit_code)
+        assert_equal("Hello, world!\n", result.captured_out)
+        assert_empty(result.captured_err)
+      end
+    end
+
+It is important to note that `toys_exec_tool` requires the Ruby runtime and
+underlying operating system to support `fork`. Standard "MRI" Ruby running on a
+Mac or Linux system will work; but JRuby, TruffleRuby, and any Ruby running on
+Windows, will not support `fork` and will not be able to run tests that use
+`toys_exec_tool`.
+
+### Testing tool methods
+
+The {Toys::Testing} module also provides a way to load tools and test
+individual methods without running the entire tool. This can be useful for
+writing unit tests for tools that are large, complex, or otherwise should not
+be executed in their entirety during testing.
+
+To test individual methods, pass a block to {Toys::Testing#toys_exec_tool}.
+This method loads the tool associated with the given command line, parses the
+command line arguments, and prepares the tool for execution, but does not
+invoke the `run` method. The tool's context is passed to the block, and you can
+then execute any of the tool's helper methods and check assertions.
+
+Let's consider an example tool with a helper method:
+
+    tool "hello" do
+      flag :shout
+
+      # The normal entrypoint "run" method
+      def run
+        puts message
+      end
+
+      # A helper method
+      def message
+        shout ? "HELLO" : "hello"
+      end
+    end
+
+Normally, testing this tool would involve capturing and asserting against the
+output printed by the `run` method. However, we can also test the `message`
+method in isolation without capturing any streams by loading the tool and
+calling the method directly.
+
+    class MyTest < Minitest::Test
+      include Toys::Testing
+
+      # A test of the tool when passed no command-line arguments
+      def test_message_without_shout
+        # Load the tool
+        toys_load_tool(["hello"]) do |tool|
+          # The tool's context is passed to the block, and you can use it to
+          # call the tool's methods.
+          assert_equal("hello", tool.message)
+        end
+      end
+
+      # Another test that includes a command-line flag
+      def test_message_with_shout
+        toys_load_tool(["hello", "--shout"]) do |tool|
+          assert_equal("HELLO", tool.message)
+        end
+      end
+    end
+
+Like `toys_run_tool`, `toys_load_tool` loads the tool *in-process* in your
+tests. This means it would be difficult to use it to test methods that replace
+the current process or depend on user interaction. It is not currently possible
+to fork `toys_load_tool` into a separate process because Minitest would not be
+able to track assertions in that separate process. It is therefore appropriate
+mainly for true unit tests of isolated methods.
+
+### Organizing and selecting tests
+
+So far we learned how to define tests in a `.test` directory located directly
+within a `.toys` directory. However, it is also possible to locate `.test`
+directories within subdirectories. Just like tools and tool namespaces can be
+defined within a directory structure, so corresponding tests can be associated
+with those tools by putting them in the same subdirectories.
+
+Consider the following `.toys` directory that includes `build` and `deploy`
+tools:
+
+    (current directory)
+    |
+    +- .toys/
+       |
+       +- build/
+       |  |
+       |  +- .toys.rb   <-- defines "build" (and subtools)
+       |  |
+       |  +- .test/
+       |     |
+       |     +- test_build.rb  <-- defines tests for "build"
+       |
+       +- deploy/
+          |
+          +- .toys.rb   <-- defines "deploy" (and subtools)
+          |
+          +- .test/
+             |
+             +- test_staging.rb  <-- defines tests for "deploy"
+             |
+             +- test_prod.rb  <-- defines more tests for "deploy"
+
+We've now created separate sets of tests under the `build/` and `deploy/`
+subdirectories. These are associated with those tools, and we can now run those
+sets of tests independently.
+
+To run just the tests under `build/`:
+
+    toys system test build
+
+To run just the tests under `deploy/`:
+
+    toys system test deploy
+
+Now, if you do not provide a specific tool:
+
+    toys system test
+
+...Toys will recursively search for `.test` directories, and run *all* the
+tests, including both the build and deploy tests. To disable this recursive
+search, pass `--no-recursive`. In the above case, that will result in no tests
+running because there are no tests defined at the top level.
+
+It is also possible to focus on specific tests using the
+[minitest-focus](https://github.com/seattlerb/minitest-focus) gem. Pass the
+`--minitest-focus` argument to `toys system test` to tell it to load the gem,
+and you will be able to use the `focus` keyword in your tests to temporarily
+focus on a few tests.
+
 ## Using third-party gems
 
 The toys executable itself uses only two gems: **toys** and **toys-core**. It
@@ -2135,9 +2508,9 @@ feasible for their Gemfiles to be present in every directory from which you
 might want to run them.
 
 Second, it's possible for a variety of tools to be available together,
-including both locally and globally defined, with potentially different sets of
-dependencies. With `bundle exec`, you must choose beforehand which bundle to
-use.
+including both locally and globally defined tools, with potentially different
+sets of dependencies. With `bundle exec`, you must choose beforehand which
+bundle to use.
 
 Although traditional `bundle exec` doesn't always work, Toys provides ways for
 individual tools to manage their own gem dependencies.
@@ -2278,7 +2651,7 @@ process with a clean Bundler setup for running the tool.
 
 Usually, the `:bundler` mixin sets up your bundle when the tool is *executed*.
 However, occasionally, you need the gems in the bundle to *define* a tool. This
-might happen, for instance, if your bundle includes gesm that define mixins or
+might happen, for instance, if your bundle includes gems that define mixins or
 templates used by your tool.
 
 If you need the bundle set up immediately because its gems are needed by the
@@ -2485,7 +2858,7 @@ how to use Toys for some of the things traditionally done with Rake.
 ### Comparing Toys and Rake
 
 Although Toys and Rake serve many of the same use cases, they have very
-different design goals, and it is useful to understand them.
+different design goals, and it is useful to understand the differences.
 
 Rake's design is based on the classic "make" tool often provided in unix
 development environments. This design focuses on *targets* and *dependencies*,
@@ -3450,6 +3823,18 @@ At this time, bash is the only shell that is supported directly. If you are
 using zsh, however, you can use the `bashcompinit` function to load the toys
 bash completion (as well as other bash-based completions). This *mostly* works,
 with a few caveats. Native zsh completion is on the future roadmap.
+
+### Managing the Git cache
+
+Toys manages a cache of files downloaded from remote Git repositories. This is
+used, for example, to share tools via Git. You can manage the contents of the
+Toys Git Cache using subtools under the `system git-cache` namespace. This
+includes querying the cache and using it to download files from git, gathering
+information about cache status, and deleting old data.
+
+To display general information and a list of tools, run:
+
+    toys system git-cache --help
 
 ## Writing your own CLI using Toys
 
