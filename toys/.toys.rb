@@ -75,7 +75,7 @@ tool "ci" do
 end
 
 class YardocFull < Toys::Tool
-  STAGING_DIR = "toys-core"
+  STAGING_DIR = "tmp/toys-core"
 
   desc "Generate full yardoc including classes from toys-core"
 
