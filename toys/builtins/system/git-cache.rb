@@ -9,8 +9,8 @@ long_desc \
     " It is used when loading tools from git, and can also be used directly by tools to access" \
     " files from a remote git repository such as from GitHub.",
   "",
-  "The tools in the `system git-cache` namespace can show the current contents of the git-cache," \
-    " as well as clear data from it."
+  "The tools under the `system git-cache` namespace manage the contents of the git-cache," \
+    " including querying the cache, getting information about cache status, and removing old data."
 
 tool "list" do
   desc "Output a list of the git repositories in the cache."
