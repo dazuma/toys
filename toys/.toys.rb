@@ -22,6 +22,20 @@ tool "test" do
   end
 end
 
+tool "test-builtins" do
+  include :exec, e: true
+
+  def run
+    cmd = [
+      "system", "test",
+      "-d", File.join(context_directory, "builtins"),
+      "--minitest-focus",
+      "--minitest-rg"
+    ]
+    exec_tool(cmd)
+  end
+end
+
 expand :rubocop, bundler: true
 
 expand :yardoc do |t|
@@ -66,7 +80,7 @@ tool "ci" do
     env = {}
     env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
     exec_tool(["test"], name: "Tests", env: env)
-    exec_tool(["system", "test", "-d", File.join(context_directory, "builtins")],
+    exec_tool(["system", "test", "-d", File.join(context_directory, "builtins"), "--minitest-rg"],
               name: "Builtins Tests", env: env)
     exec_tool(["rubocop"], name: "Style checker")
     exec_tool(["yardoc-full"], name: "Docs generation")

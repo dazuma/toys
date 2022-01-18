@@ -48,7 +48,7 @@ module Toys
       @source_info = nil
       @definition_finished = false
 
-      @desc = WrappableString.new("")
+      @desc = WrappableString.new
       @long_desc = []
 
       @default_data = {}

@@ -5,6 +5,9 @@ require "toys/utils/git_cache"
 describe "toys system git-cache" do
   include Toys::Testing
 
+  toys_custom_paths(File.dirname(File.dirname(__dir__)))
+  toys_include_builtins(false)
+
   let(:cache_dir) { File.join(Dir.tmpdir, "toys_git_cache_test") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: cache_dir) }
   let(:git_repo_dir) { File.join(Dir.tmpdir, "toys_git_cache_test2") }
@@ -37,17 +40,18 @@ describe "toys system git-cache" do
 
   def capture_git_cache_output(cmd)
     cmd = ["system", "git-cache"] + cmd + ["--cache-dir", cache_dir]
-    ::Psych.load(capture_tool(cmd, fallback_to_separate: true))
+    ::Psych.load(toys_exec_tool(cmd).captured_out)
   end
 
   def capture_assert_git_cache_error(cmd)
     cmd = ["system", "git-cache"] + cmd + ["--cache-dir", cache_dir]
-    result = exec_tool(cmd, fallback_to_separate: true, err: :capture)
+    result = toys_exec_tool(cmd)
     refute(result.success?)
     result.captured_err
   end
 
   before do
+    skip unless Toys::Compat.allow_fork?
     FileUtils.rm_rf(cache_dir)
     FileUtils.rm_rf(git_repo_dir)
     FileUtils.mkdir_p(git_repo_dir)
@@ -121,7 +125,7 @@ describe "toys system git-cache" do
              "--cache-dir", cache_dir,
              "--path", file_name,
              local_remote]
-      found_path = capture_tool(cmd, fallback_to_separate: true).strip
+      found_path = toys_exec_tool(cmd).captured_out.strip
       assert_equal(content, File.read(found_path).strip)
     end
 
