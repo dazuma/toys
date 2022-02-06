@@ -84,13 +84,6 @@ module Toys
       template_class
     end
 
-    ## @private
-    def self.included(mod)
-      return if mod.respond_to?(:on_expand)
-      mod.extend(ClassMethods)
-      mod.include(Context::Key)
-    end
-
     ##
     # Class methods that will be added to a template class.
     #
@@ -117,6 +110,15 @@ module Toys
       # @return [Proc] The expansion of this template.
       #
       attr_accessor :expansion
+    end
+
+    ##
+    # @private
+    #
+    def self.included(mod)
+      return if mod.respond_to?(:on_expand)
+      mod.extend(ClassMethods)
+      mod.include(Context::Key)
     end
   end
 end

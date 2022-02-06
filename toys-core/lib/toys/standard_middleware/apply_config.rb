@@ -28,6 +28,7 @@ module Toys
 
       ##
       # Appends the configuration block.
+      #
       # @private
       #
       def config(tool, loader)

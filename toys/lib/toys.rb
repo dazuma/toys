@@ -39,7 +39,9 @@ module Toys
   #
   EXECUTABLE_PATH = ::ENV["TOYS_BIN_PATH"]
 
+  ##
   # @private
+  #
   LIB_PATH = __dir__
 
   ##

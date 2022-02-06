@@ -16,7 +16,9 @@ module Toys
     module Fileutils
       include Mixin
 
-      ## @private
+      ##
+      # @private
+      #
       def self.included(mod)
         mod.include(::FileUtils)
       end

@@ -22,13 +22,6 @@ module Toys
     #     end
     #
     class FlagGroup
-      ## @private
-      def initialize(tool_dsl, tool, flag_group)
-        @tool_dsl = tool_dsl
-        @tool = tool
-        @flag_group = flag_group
-      end
-
       ##
       # Add a flag to the current group. Each flag must specify a key which
       # the script may use to obtain the flag value from the context.
@@ -267,6 +260,17 @@ module Toys
       def long_desc(*long_desc)
         @flag_group.append_long_desc(long_desc)
         self
+      end
+
+      ##
+      # Called only from DSL::Tool.
+      #
+      # @private
+      #
+      def initialize(tool_dsl, tool, flag_group)
+        @tool_dsl = tool_dsl
+        @tool = tool
+        @flag_group = flag_group
       end
     end
   end

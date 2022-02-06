@@ -149,23 +149,41 @@ module Toys
       #
       attr_writer :context_directory
 
+      ##
       # @private
+      #
       attr_reader :output
+
+      ##
       # @private
+      #
       attr_reader :push_gem
+
+      ##
       # @private
+      #
       attr_reader :install_gem
+
+      ##
       # @private
+      #
       attr_reader :tag
+
+      ##
       # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
 
+      ##
       # @private
+      #
       def gem_name(context_dir = nil)
         return @gem_name if @gem_name
         glob = "*.gemspec"
@@ -177,17 +195,23 @@ module Toys
         candidates.first.sub(/\.gemspec$/, "")
       end
 
+      ##
       # @private
+      #
       def output_flags
         @output_flags == true ? DEFAULT_OUTPUT_FLAGS : Array(@output_flags)
       end
 
+      ##
       # @private
+      #
       def push_tag
         @push_tag == true ? DEFAULT_PUSH_REMOTE : @push_tag
       end
 
+      ##
       # @private
+      #
       def task_names
         names = []
         names << "Install" if @install_gem

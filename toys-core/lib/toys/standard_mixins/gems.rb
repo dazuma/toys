@@ -25,23 +25,6 @@ module Toys
     module Gems
       include Mixin
 
-      on_include do |**opts|
-        @__gems_opts = opts
-
-        ## @private
-        def self.gems
-          require "toys/utils/gems"
-          # rubocop:disable Naming/MemoizedInstanceVariableName
-          @__gems ||= Utils::Gems.new(**@__gems_opts)
-          # rubocop:enable Naming/MemoizedInstanceVariableName
-        end
-
-        ## @private
-        def self.gem(name, *requirements)
-          gems.activate(name, *requirements)
-        end
-      end
-
       ##
       # A tool-wide instance of {Toys::Utils::Gems}.
       # @return [Toys::Utils::Gems]
@@ -59,6 +42,27 @@ module Toys
       #
       def gem(name, *requirements)
         self.class.gems.activate(name, *requirements)
+      end
+
+      on_include do |**opts|
+        @__gems_opts = opts
+
+        ##
+        # @private
+        #
+        def self.gems
+          require "toys/utils/gems"
+          # rubocop:disable Naming/MemoizedInstanceVariableName
+          @__gems ||= Utils::Gems.new(**@__gems_opts)
+          # rubocop:enable Naming/MemoizedInstanceVariableName
+        end
+
+        ##
+        # @private
+        #
+        def self.gem(name, *requirements)
+          gems.activate(name, *requirements)
+        end
       end
     end
   end

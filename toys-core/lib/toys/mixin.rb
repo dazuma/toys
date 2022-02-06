@@ -92,12 +92,6 @@ module Toys
       mixin_mod
     end
 
-    ## @private
-    def self.included(mod)
-      return if mod.respond_to?(:on_initialize)
-      mod.extend(ModuleMethods)
-    end
-
     ##
     # Methods that will be added to a mixin module object.
     #
@@ -147,6 +141,14 @@ module Toys
       # @return [Proc] The inclusion procedure for this mixin.
       #
       attr_accessor :inclusion
+    end
+
+    ##
+    # @private
+    #
+    def self.included(mod)
+      return if mod.respond_to?(:on_initialize)
+      mod.extend(ModuleMethods)
     end
   end
 end

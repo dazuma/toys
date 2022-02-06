@@ -7,23 +7,6 @@ module Toys
   class PositionalArg
     ##
     # Create a PositionalArg definition.
-    # This argument list is subject to change. Use {Toys::PositionalArg.create}
-    # instead for a more stable interface.
-    # @private
-    #
-    def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
-      @key = key
-      @type = type
-      @acceptor = Acceptor.create(acceptor)
-      @default = default
-      @completion = Completion.create(completion, **{})
-      @desc = WrappableString.make(desc)
-      @long_desc = WrappableString.make_array(long_desc)
-      @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
-    end
-
-    ##
-    # Create a PositionalArg definition.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
@@ -158,6 +141,24 @@ module Toys
     def append_long_desc(long_desc)
       @long_desc.concat(WrappableString.make_array(long_desc))
       self
+    end
+
+    ##
+    # Create a PositionalArg definition.
+    # This argument list is subject to change. Use {Toys::PositionalArg.create}
+    # instead for a more stable interface.
+    #
+    # @private
+    #
+    def initialize(key, type, acceptor, default, completion, desc, long_desc, display_name)
+      @key = key
+      @type = type
+      @acceptor = Acceptor.create(acceptor)
+      @default = default
+      @completion = Completion.create(completion, **{})
+      @desc = WrappableString.make(desc)
+      @long_desc = WrappableString.make_array(long_desc)
+      @display_name = display_name || key.to_s.tr("-", "_").gsub(/\W/, "").upcase
     end
   end
 end

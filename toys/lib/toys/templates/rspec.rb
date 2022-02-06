@@ -221,49 +221,77 @@ module Toys
         self
       end
 
-      ## @private
-      attr_reader :options
-      ## @private
-      attr_reader :out
-      ## @private
-      attr_reader :backtrace
-      ## @private
-      attr_reader :warnings
+      ##
       # @private
+      #
+      attr_reader :options
+
+      ##
+      # @private
+      #
+      attr_reader :out
+
+      ##
+      # @private
+      #
+      attr_reader :backtrace
+
+      ##
+      # @private
+      #
+      attr_reader :warnings
+
+      ##
+      # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
 
+      ##
       # @private
+      #
       def gem_version
         return Array(@gem_version) if @gem_version
         @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
       end
 
+      ##
       # @private
+      #
       def libs
         @libs ? Array(@libs) : DEFAULT_LIBS
       end
 
+      ##
       # @private
+      #
       def order
         @order || DEFAULT_ORDER
       end
 
+      ##
       # @private
+      #
       def format
         @format || DEFAULT_FORMAT
       end
 
+      ##
       # @private
+      #
       def pattern
         @pattern || DEFAULT_PATTERN
       end
 
+      ##
       # @private
+      #
       def bundler_settings
         if @bundler && !@bundler.is_a?(::Hash)
           {}

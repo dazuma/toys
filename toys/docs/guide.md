@@ -326,8 +326,7 @@ directory is called a **Toys file**. It defines tools available in that
 directory and its subdirectories.
 
 The format of a Toys file is a Ruby DSL that includes directives, methods, and
-nested blocks. The actual DSL is specified in the
-[Toys::DSL::Tool class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool).
+nested blocks. The actual DSL is specified in the {Toys::DSL::Tool} class.
 
 To create a tool, write a `tool` block, giving the tool a name. Within the
 block, use directives to set the properties of the tool, including descriptions
@@ -375,10 +374,8 @@ will not be split. The example command in the long description above
 illustrates how to prevent a line from being word-wrapped. This is also a
 useful technique for preserving spaces and indentation.
 
-For more details, see the reference documentation for
-[Toys::DSL::Tool#desc](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#desc-instance_method)
-and
-[Toys::DSL::Tool#long_desc](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#long_desc-instance_method).
+For more details, see the reference documentation for {Toys::DSL::Tool#desc}
+and {Toys::DSL::Tool#long_desc}.
 
 ### Positional arguments
 
@@ -387,10 +384,9 @@ have a name, which is a key that the tool can use to obtain the argument's
 value at execution time. Arguments may also have various properties controlling
 how values are validated and expressed.
 
-The above example uses the directive
-[Toys::DSL::Tool#optional_arg](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#optional_arg-instance_method)
-to declare an **optional argument** named `:whom`. If the argument is provided
-on the command line e.g.
+The above example uses the directive {Toys::DSL::Tool#optional_arg} to declare
+an **optional argument** named `:whom`. If the argument is provided on the
+command line e.g.
 
     $ toys greet ruby
     Hello, ruby!
@@ -406,13 +402,11 @@ Then the option `:whom` is set to the default value `"world"`.
 If the option name is a valid method name, Toys will provide a method that you
 can use to retrieve the value. In the above example, we retrieve the value for
 the option `:whom` by calling the method `whom`. If the option name cannot be
-made into a method, you can retrieve the value by calling
-[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method).
+made into a method, you can retrieve the value by calling {Toys::Context#get}.
 
 An argument may also be **required**, which means it must be provided on the
 command line; otherwise the tool will report a usage error. You may declare a
-required argument using the directive
-[Toys::DSL::Tool#required_arg](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#required_arg-instance_method).
+required argument using the directive {Toys::DSL::Tool#required_arg}.
 
 #### Parsing required and optional arguments
 
@@ -479,9 +473,7 @@ because it is not provided, will default to `"the-default"` instead of `nil`.
 
 Normally, unmatched arguments will result in an error message. However, you can
 provide an "argument" to match all **remaining** unmatched arguments at the
-end, using the directive
-[Toys::DSL::Tool#remaining_args](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#remaining_args-instance_method).
-For example:
+end, using the directive {Toys::DSL::Tool#remaining_args}. For example:
 
     tool "args-demo" do
       required_arg :arg1
@@ -532,7 +524,7 @@ way, Toys provides an alternate syntax for defining arguments using a block.
     end
 
 For detailed info on configuring an argument using a block, see the
-[Toys::DSL::PositionalArg class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/PositionalArg).
+{Toys::DSL::PositionalArg} class.
 
 #### Argument acceptors
 
@@ -605,8 +597,7 @@ have the same effect. A flag declaration may include any number of synonyms.
 As with arguments, Toys will provide a method that you can call to retrieve the
 option value set by a flag. In this case, a method called `shout` will be
 available, and will return either true or false. If the option name cannot be
-made into a method, you can retrieve the value by calling
-[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method).
+made into a method, you can retrieve the value by calling {Toys::Context#get}.
 
 #### Flag types
 
@@ -875,7 +866,7 @@ way, Toys provides an alternate syntax for defining flags using a block.
     end
 
 For detailed info on configuring an flag using a block, see the
-[Toys::DSL::Flag class](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Flag).
+{Toys::DSL::Flag} class.
 
 #### Flag completions
 
@@ -1009,9 +1000,8 @@ valid Ruby method name, Toys will provide a method that you can call to get the
 value. In the above example, `whom` and `shout` are such methods.
 
 If you create a flag or argument whose option name is not a symbol *or* is not
-a valid method name, you can still get the value by calling the
-[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
-method. For example:
+a valid method name, you can still get the value by calling
+{Toys::Context#get}. For example:
 
     tool "greet" do
       # The name "whom-to-greet" is not a valid method name.
@@ -1028,9 +1018,7 @@ method. For example:
 
 If a tool's `run` method finishes normally, Toys will exit with a result code
 of 0, indicating success. You may exit immediately and/or provide a nonzero
-result by calling the
-[Toys::Context#exit](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#exit-instance_method)
-method:
+result by calling {Toys::Context#exit}:
 
     def run
       puts "Exiting with an error..."
@@ -1397,17 +1385,15 @@ are located. Tools defined here are *global*, available everywhere.
 Though it is uncommon practice, it is possible to stop the search process and
 prevent Toys from loading tools further down in the search path (e.g. prevent
 tools from being defined from parent directories or global directories). To do
-so, use the directive
-[Toys::DSL::Tool#truncate_load_path!](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#truncate_load_path!-instance_method). This directive removes all
-directories further down the search path. It can be used, for example, to
-disable global tools when you run Toys from the current directory. It can also
-be useful if you are using [Bundler integration](#Using_bundler_with_a_tool) to
-prevent bundle conflicts with parent directories, by disabling tools from
-parent directories.
+so, use the directive {Toys::DSL::Tool#truncate_load_path!}. This directive
+removes all directories further down the search path. It can be used, for
+example, to disable global tools when you run Toys from the current directory.
+It can also be useful if you are using
+[Bundler integration](#Using_bundler_with_a_tool) to prevent bundle conflicts
+with parent directories, by disabling tools from parent directories.
 
 The `truncate_load_path!` directive works only if no tools from further down
-the search path have been loaded yet. It will raise
-[Toys::ToolDefinitionError](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/ToolDefinitionError)
+the search path have been loaded yet. It will raise {Toys::ToolDefinitionError}
 if it fails to truncate the load path. In most cases, Toys is very smart about
 loading tools only when needed, but there are exceptions. To minimize the
 chance of problems, if you need to use `truncate_load_path!`, locate it as
@@ -1419,22 +1405,19 @@ early as possible in your Toys files, typically at the top of the
 This section describes the context and resources available to your tool when it
 is running; that is, what you can call from your tool's `run` method.
 
-Each tool is defined as a class that subclasses
-[Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context).
-The base class defines helper methods, and provides access to a variety of data
-and objects relevant to your tool. We have already seen earlier how to use the
-[Toys::Context#get](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
-method to retrieve option values, and how to use the
-[Toys::Context#exit](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#exit-instance_method)
-method to exit immediately and return an exit code. Now we will cover other
-resources available to your tool.
+Each tool is defined as a class that subclasses {Toys::Context}. The base class
+defines helper methods, and provides access to a variety of data and objects
+relevant to your tool. We have already seen earlier how to use the
+{Toys::Context#get} method to retrieve option values, and how to use the
+{Toys::Context#exit} method to exit immediately and return an exit code. Now we
+will cover other resources available to your tool.
 
 ### Built-in context
 
 In addition to the options set by your tool's flags and command line arguments,
-a variety of other data and objects are also accessible using the
-[Toys::Context#get method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#get-instance_method)
-For example, you can get the full name of the tool being executed like this:
+a variety of other data and objects are also accessible using
+{Toys::Context#get}. For example, you can get the full name of the tool being
+executed like this:
 
     def run
       puts "Current tool is #{get(TOOL_NAME)}"
@@ -1442,16 +1425,14 @@ For example, you can get the full name of the tool being executed like this:
 
 The `TOOL_NAME` constant above is a well-known key that corresponds to the full
 name (as an array of strings) of the running tool. A variety of well-known keys
-are defined in the
-[Toys::Context::Key module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context/Key).
-They include information about the current execution, such as the tool name and
-the original command line arguments passed to it (before they were parsed).
-They also include some internal Toys objects, which can be used to do things
-like write to the logger or look up and call other tools.
+are defined in the {Toys::Context::Key} module. They include information about
+the current execution, such as the tool name and the original command line
+arguments passed to it (before they were parsed). They also include some
+internal Toys objects, which can be used to do things like write to the logger
+or look up and call other tools.
 
 Most of the important context also can be accessed from convenience methods.
-For example, the `TOOL_NAME` is also available from the
-[Toys::Context#tool_name method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#tool_name-instance_method):
+For example, the `TOOL_NAME` is also available from {Toys::Context#tool_name}:
 
     def run
       puts "Current tool is #{tool_name}"
@@ -1464,9 +1445,8 @@ access from built-in context.
 
 Toys provides a Logger (a simple instance of the Ruby standard library logger
 that writes to standard error) for your tool to use to report status
-information. You can access this logger via the `LOGGER` context key, or the
-[Toys::Context#logger method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#logger-instance_method).
-For example:
+information. You can access this logger via the `LOGGER` context key, or
+{Toys::Context#logger}. For example:
 
     def run
       logger.warn "Danger Will Robinson!"
@@ -1474,28 +1454,24 @@ For example:
 
 The current logger level is controlled by the verbosity. Verbosity is an
 integer context value that you can retrieve using the `VERBOSITY` context key
-or the
-[Toys::Context#verbosity method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#verbosity-instance_method).
-The verbosity is set to 0 by default. This corresponds to a logger level of
-`WARN`. That is, warnings, errors, and fatals are displayed, while infos and
-debugs are not. However, [as we saw earlier](#Standard_flags), most tools
-automatically respond to the `--verbose` and `--quiet` flags, (or `-v` and
-`-q`), which increment and decrement the verbosity value, respectively. If you
-run a tool with `-v`, the verbosity is incremented to 1, and the logger level
-is set to `INFO`. If you set `-q`, the verbosity is decremented to -1, and the
-logger level is set to `ERROR`. So by using the provided logger, a tool can
-easily provide command line based control of the output verbosity.
+or {Toys::Context#verbosity}. The verbosity is set to 0 by default. This
+corresponds to a logger level of `WARN`. That is, warnings, errors, and fatals
+are displayed, while infos and debugs are not. However,
+[as we saw earlier](#Standard_flags), most tools automatically respond to the
+`--verbose` and `--quiet` flags, (or `-v` and `-q`), which increment and
+decrement the verbosity value, respectively. If you pass `-v` to a tool, the
+verbosity is incremented to 1, and the logger level is set to `INFO`. If you
+pass `-q`, the verbosity is decremented to -1, and the logger level is set to
+`ERROR`. So by using the provided logger, a tool can easily provide command
+line based control of the output verbosity.
 
 ### Running tools from tools
 
 A common operation a tool might want to do is "call" another tool. This can be
-done via the CLI object, which you can retrieve using the `CLI` key or the
-[Toys::Context#cli method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#cli-instance_method).
-These return the current instance of
-[Toys::CLI](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI) which
-is the "main" interface to Toys. In particular, it provides the
-[Toys::CLI#run method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/CLI#run-instance_method)
-which can be used to call another tool:
+done via the CLI object, which you can retrieve using the `CLI` key or
+{Toys::Context#cli}. These return the current instance of {Toys::CLI}, which is
+the "main" interface to Toys. In particular, it provides the {Toys::CLI#run}
+method, which can be used to call another tool:
 
     def run
       status = cli.run("greet", "rubyists", "-v")
@@ -1513,10 +1489,9 @@ capture or manipulate that tool's input or output stream.
 
 ### Helper methods and mixins
 
-The methods of [Toys::Context](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context)
-are not the only methods available for your tool to call. We
-[saw earlier](#Tool_execution_basics) that a tool can define additional methods
-that you can use as helpers.
+The methods of {Toys::Context} are not the only methods available for your tool
+to call. We [saw earlier](#Tool_execution_basics) that a tool can define
+additional methods that you can use as helpers.
 
 You can also include **mixins**, which are modules that bring in a whole set of
 helper methods. Include a mixin using the `include` directive:
@@ -1535,9 +1510,8 @@ special `puts` method that lets you include style information such as `:bold`,
 which affects the display on ANSI-capable terminals.
 
 For details on the built-in mixins provided by Toys, see the modules under
-[Toys::StandardMixins](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins).
-We will look at a few examples of the use of these mixins below. Built-in
-mixins have names that are symbols.
+{Toys::StandardMixins}. We will look at a few examples of the use of these
+mixins below. Built-in mixins have names that are symbols.
 
 You can also define your own mixins, as we will see in the
 [upcoming section on defining mixins](#Defining_mixins).
@@ -1572,10 +1546,8 @@ subprocesses:
 *   Another tool run in a separate (forked) process.
 *   A block run in a separate (forked) process.
 
-For more information, see the
-[Toys::StandardMixins::Exec mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Exec)
-and the underyling library
-[Toys::Utils::Exec](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec).
+For more information, see the {Toys::StandardMixins::Exec} mixin module and the
+underyling library {Toys::Utils::Exec}.
 
 ### Formatting output
 
@@ -1586,15 +1558,13 @@ can help create nicer interfaces.
 
 First, there is `:terminal`, which provides some basic terminal features such
 as styled output and simple spinners. For information, see the
-[Toys::StandardMixins::Terminal mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Terminal)
-and the underyling library
-[Toys::Terminal](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Terminal).
+{Toys::StandardMixins::Terminal} mixin module and the underyling library
+{Toys::Utils::Terminal}.
 
 If you prefer the venerable Highline library interface, Toys provides a mixin
 called `:highline` that automatically installs the highline gem (version 2.x)
 if it is not available, and makes a highline object available to the tool. For
-more information, see the
-[Toys::StandardMixins::Highline mixin module](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Highline).
+more information, see the {Toys::StandardMixins::Highline} mixin module.
 
 You may also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
@@ -1624,8 +1594,7 @@ Here's a simple example:
     end
 
 The `lookup_config` method and many others are documented under the
-[Toys::Utils::XDG](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/XDG)
-class.
+{Toys::Utils::XDG} class.
 
 ## Sharing code
 
@@ -1937,9 +1906,7 @@ directive by setting properties on the template object.
 #### Template classes
 
 Finally, templates are classes, and you can create a template directly as a
-class by including the
-[Toys::Template](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Template)
-module in your class definition.
+class by including the {Toys::Template} module in your class definition.
 
     class GreetTemplate
       include Toys::Template
@@ -2301,10 +2268,9 @@ There are two ways to run `toys_exec_tool`: in "capture" or "controller" mode.
 If you *do not* pass a block to `toys_exec_tool`, you are running in "capture"
 mode. It will close the input stream, and capture the output and error streams
 and return an object that provides the exit code and the stream contents. This
-object is actually an instance of
-[Toys::Utils::Exec::Result](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec/Result),
-the same object returned by methods from the `:exec` mixin. Thus, we could use
-"capture" mode to rewrite our greeting test as follows:
+object is actually an instance of {Toys::Utils::Exec::Result}, the same class
+returned by methods from the `:exec` mixin. Thus, we could use "capture" mode
+to rewrite our greeting test as follows:
 
     class GreetTest < Minitest::Test
       include Toys::Testing
@@ -2320,15 +2286,14 @@ the same object returned by methods from the `:exec` mixin. Thus, we could use
 If you pass a block to `toys_exec_tool`, you will be running in "controller"
 mode. In this mode, all the tool's streams are redirected to a controller
 object that is passed to your block. See the controller's interface at
-[Toys::Utils::Exec::Controller](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec/Controller)
-for more information.
+{Toys::Utils::Exec::Controller} for more information.
 
 In either mode, you can still override many aspects of the subprocess's
 behavior. For example, "capture" closes the input stream by default, but you
 can override this and pass data into the tool's input stream by providing the
 `:in` keyword argument. The various arguments available are documented in the
-[Toys::Utils::Exec](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Exec)
-class. Here is an example, passing a string into our tool's input stream:
+{Toys::Utils::Exec} class. Here is an example, passing a string into our tool's
+input stream:
 
     class GreetTest < Minitest::Test
       include Toys::Testing
@@ -2347,7 +2312,7 @@ Mac or Linux system will work; but JRuby, TruffleRuby, and any Ruby running on
 Windows, will not support `fork` and will not be able to run tests that use
 `toys_exec_tool`.
 
-### Testing tool methods
+### Testing helper methods
 
 The {Toys::Testing} module also provides a way to load tools and test
 individual methods without running the entire tool. This can be useful for
@@ -2549,9 +2514,8 @@ as `bundle exec`, but it applies only to the running tool.
 
 In many cases, you might find that bundler is needed for many or most of the
 tools you write for a particular project. In this case, you might find it
-convenient to use
-[Toys::DSL::Tool#subtool_apply](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#subtool_apply-instance_method)
-to include the bundle in all your tools. For example:
+convenient to use {Toys::DSL::Tool#subtool_apply} to include the bundle in all
+your tools. For example:
 
     # Include bundler in every tool under this one
     subtool_apply do
@@ -2617,9 +2581,8 @@ simply install the bundle without asking for confirmation:
       # etc...
     end
 
-See the documentation for
-[Toys::StandardMixins::Bundler](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-for more information about bundler options.
+See the documentation for {Toys::StandardMixins::Bundler} for more information
+about bundler options.
 
 #### Solving bundle conflicts
 
@@ -2643,9 +2606,9 @@ Toys.
 
 It might also happen if one tool that uses one bundle, *calls* a tool that uses
 a different bundle. If you need to do this, use the
-[Toys::StandardMixins::Exec#exec_separate_tool](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Exec#exec_separate_tool-instance_method)
-method from the `:exec` mixin, to call the tool. This method spawns a separate
-process with a clean Bundler setup for running the tool.
+{Toys::StandardMixins::Exec#exec_separate_tool} method from the `:exec` mixin,
+to call the tool. This method spawns a separate process with a clean Bundler
+setup for running the tool.
 
 #### When a bundle is needed to define a tool
 
@@ -2697,9 +2660,8 @@ provides a way for a tool to install individual gems without using Bundler.
 
 Here's an example tool that just runs `rake`. Because it requires rake to be
 installed in order to run the tool, we call the
-[Toys::StandardMixins::Gems#gem](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Gems#gem-instance_method)
-method (which is provided by the `:gems` mixin) at the beginning of the `run`
-method:
+{Toys::StandardMixins::Gems#gem} method (which is provided by the `:gems`
+mixin) at the beginning of the `run` method:
 
     tool "rake" do
       include :gems
@@ -2754,10 +2716,8 @@ The above techniques for installing a bundle or activating a gem directly, are
 all part of the tool definition DSL. However, the functionality is also
 available outside the DSL---for example, from a class-based mixin.
 
-To set up a bundle, call
-[Toys::Utils::Gems#bundle](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#bundle-instance_method).
-(Note that you must `require "toys/utils/gems"` explicitly before invoking the
-[Toys::Utils::Gems](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems)
+To set up a bundle, call {Toys::Utils::Gems#bundle}. (Note that you must
+`require "toys/utils/gems"` explicitly before invoking the {Toys::Utils::Gems}
 class because, like all classes under `Toys::Utils`, Toys does not load it
 automatically.) For example:
 
@@ -2765,9 +2725,8 @@ automatically.) For example:
     gem_utils = Toys::Utils::Gems.new
     gem_utils.bundle(search_dirs: Dir.getwd)
 
-To activate single gems explicitly, call
-[Toys::Utils::Gems#activate](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Utils/Gems#activate-instance_method).
-For example:
+To activate single gems explicitly, call {Toys::Utils::Gems#activate}. For
+example:
 
     require "toys/utils/gems"
     gem_utils = Toys::Utils::Gems.new
@@ -3210,8 +3169,7 @@ Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
 
 Sometimes a group of tools are set up similarly or share a set of flags,
 mixins, or other directives. You can apply a set of directives to all subtools
-(recursively) of the current tool, using the
-[Toys::DSL::Tool#subtool_apply](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#subtool_apply-instance_method)
+(recursively) of the current tool, using the {Toys::DSL::Tool#subtool_apply}
 directive.
 
 For example, it is common for tools to use the `:exec` built-in mixin to invoke
@@ -3283,7 +3241,7 @@ to accept integers from 1 to 5 is:
     acceptor("1to5", [1, 2, 3, 4, 5])
 
 There are various other options. See the reference documentation for
-[Toys::DSL::Tool#acceptor](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#acceptor-instance_method).
+{Toys::DSL::Tool#acceptor}.
 
 An acceptor is available to the tool in which it is defined, and any subtools
 and descendants defined at the same point in the Toys search path, but not from
@@ -3415,8 +3373,8 @@ verbatim to a subprocess.
 To disable argument parsing, use the `disable_argument_parsing` directive. This
 directive disables parsing and validation of flags and positional arguments.
 (Thus, it is incompatible with specifying any flags or arguments for the tool.)
-Instead, you can retrieve the raw arguments using the
-[Toys::Context#args method](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#args-instance_method).
+Instead, you can retrieve the raw arguments using the {Toys::Context#args}
+method.
 
 Here is an example that wraps calls to git:
 
@@ -3503,8 +3461,8 @@ handler.
 
 If your handler block or method takes a parameter, Toys will pass it the array
 of usage errors. Otherwise, you can get the array by calling
-[Toys::Context#usage_errors](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#usage_errors-instance_method).
-This array will provide you with a list of the usage errors encountered.
+{Toys::Context#usage_errors}. This array will provide you with a list of the
+usage errors encountered.
 
 You can also get information about the arguments that could not be parsed from
 the context. For example, the list of unrecognized flags is available from the
@@ -3540,15 +3498,13 @@ directory named `.data` and copy your data files there.
 
 You may then "find" a data file by providing the relative path to the file from
 the `.data` directory. When defining a tool, use the
-[Toys::DSL::Tool#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/DSL/Tool#find_data-instance_method)
-directive in a Toys file. Or, at tool execution time, call
-[Toys::Context#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/Context#find_data-instance_method)
-(which is a convenience method for getting the tool source object using the
-`TOOL_SOURCE` key, and calling
-[Toys::SourceInfo#find_data](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/SourceInfo#find_data-instance_method)
-on it). In either case, `find_data` locates a matching file (or directory)
-among the data files, and returns the full path to that file system object. You
-may then read the file or perform any other operation on it.
+{Toys::DSL::Tool#find_data} directive in a Toys file. Or, at tool execution
+time, call {Toys::Context#find_data} (which is a convenience method for getting
+the tool source object using the `TOOL_SOURCE` key, and calling
+{Toys::SourceInfo#find_data} on it). In either case, `find_data` locates a
+matching file (or directory) among the data files, and returns the full path to
+that file system object. You may then read the file or perform any other
+operation on it.
 
 For example, take the following directory structure:
 

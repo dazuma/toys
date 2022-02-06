@@ -124,28 +124,41 @@ module Toys
         self
       end
 
-      ## @private
-      attr_reader :fail_on_error
+      ##
       # @private
+      #
+      attr_reader :fail_on_error
+
+      ##
+      # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
 
+      ##
       # @private
+      #
       def gem_version
         return Array(@gem_version) if @gem_version
         @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
       end
 
+      ##
       # @private
+      #
       def options
         Array(@options)
       end
 
+      ##
       # @private
+      #
       def bundler_settings
         if @bundler && !@bundler.is_a?(::Hash)
           {}

@@ -116,7 +116,9 @@ module Toys
         @arg_parser ||= ArgParser.new(@cli, @tool).parse(@args)
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def inspect
         "<Toys::Completion::Context previous=#{previous_words.inspect}" \
           " prefix=#{fragment_prefix.inspect} fragment=#{fragment.inspect}>"
@@ -175,17 +177,23 @@ module Toys
         !@partial
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def eql?(other)
         other.is_a?(Candidate) && other.string.eql?(string) && other.partial? == @partial
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def <=>(other)
         string <=> other.string
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def hash
         string.hash ^ (partial? ? 1 : 0)
       end
@@ -426,7 +434,9 @@ module Toys
       end
     end
 
-    ## @private
+    ##
+    # @private
+    #
     def self.scalarize_spec(spec, options, block)
       spec ||= block
       if options.empty?

@@ -120,24 +120,38 @@ module Toys
         self
       end
 
+      ##
       # @private
+      #
       attr_reader :only_described
+
+      ##
       # @private
+      #
       attr_reader :use_flags
+
+      ##
       # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def gem_version
         Array(@gem_version)
       end
 
+      ##
       # @private
+      #
       def rakefile_path
         @rakefile_path || DEFAULT_RAKEFILE_PATH
       end
 
+      ##
       # @private
+      #
       def bundler_settings
         if @bundler && !@bundler.is_a?(::Hash)
           {}
@@ -191,7 +205,9 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self.flag_specs(arg)
         name = arg.to_s.gsub(/\W/, "").downcase
         specs = []
@@ -203,7 +219,9 @@ module Toys
         specs
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self.find_rakefile(path, context_dir)
         if path == ::File.absolute_path(path)
           return ::File.file?(path) && ::File.readable?(path) ? path : nil
@@ -220,7 +238,9 @@ module Toys
         nil
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self.prepare_rake(rakefile_path, context_dir)
         ::Rake::TaskManager.record_task_metadata = true
         rake = ::Rake::Application.new

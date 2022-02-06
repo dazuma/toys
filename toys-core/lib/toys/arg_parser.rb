@@ -417,6 +417,7 @@ module Toys
 
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val, _prev) { val }
+    private_constant :REMAINING_HANDLER, :ARG_HANDLER
 
     def initial_data(cli, tool, default_data)
       data = {

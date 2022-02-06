@@ -12,6 +12,10 @@ module Toys
     VERSION = "0.12.2"
   end
 
-  ## @private deprecated
+  ##
+  # Deprecated
+  #
+  # @private
+  #
   CORE_VERSION = Core::VERSION
 end

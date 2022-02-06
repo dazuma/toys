@@ -431,8 +431,13 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       class SpinDriver
+        ##
+        # @private
+        #
         def initialize(terminal, frames, style, frame_length)
           @mutex = ::Monitor.new
           @terminal = terminal
@@ -446,6 +451,9 @@ module Toys
           @thread = @terminal.output.tty? ? start_thread : nil
         end
 
+        ##
+        # @private
+        #
         def stop
           @mutex.synchronize do
             @stopping = true
