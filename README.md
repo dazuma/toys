@@ -142,7 +142,7 @@ tool to the end of the file.)
         exec "git init"
         File.write ".gitignore", <<~CONTENT
           tmp
-          .DS_STORE
+          .DS_Store
         CONTENT
         # You can add additional files here.
         exec "git add ."
@@ -286,8 +286,8 @@ and take advantage of a variety of third-party libraries such as Highline and
 TTY. Finally, if your `.toys.rb` files are growing too large or complicated,
 you can replace them with `.toys` directories that contain tool definitions in
 separate files. Such directories are versatile, letting you organize your tool
-definitions, along with shared code, normal Ruby classes, and even data files
-for use by tools.
+definitions, along with shared code, normal Ruby classes, tests, and even data
+files for use by tools.
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line executable written in Ruby. However,
@@ -326,7 +326,7 @@ Toys scripts instead of Rakefiles.
 
 ## License
 
-Copyright 2019-2020 Daniel Azuma and the Toys contributors
+Copyright 2019-2022 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

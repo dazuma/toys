@@ -12,7 +12,6 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 * Tool archives for sharing/installing tools
 * Should it be possible to set require_exact_flag_match per-flag?
 * Convenience methods for creating pipes/splits/joins in exec
-* Integrate with the "less" tool in exec.
 * toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
 * Line length limit for Terminal
