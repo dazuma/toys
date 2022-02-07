@@ -489,12 +489,12 @@ return the numeric signal code.</li>
       <pre class="lines">
 
 
-832
-833
-834</pre>
+740
+741
+742</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 832</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 740</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_captured_err'>captured_err</span>
   <span class='ivar'>@captured_err</span>
@@ -561,12 +561,12 @@ return the numeric signal code.</li>
       <pre class="lines">
 
 
-824
-825
-826</pre>
+732
+733
+734</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 824</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 732</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_captured_out'>captured_out</span>
   <span class='ivar'>@captured_out</span>
@@ -637,12 +637,12 @@ non-nil.</p>
       <pre class="lines">
 
 
-856
-857
-858</pre>
+764
+765
+766</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 856</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 764</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_exception'>exception</span>
   <span class='ivar'>@exception</span>
@@ -692,12 +692,12 @@ non-nil.</p>
       <pre class="lines">
 
 
-816
-817
-818</pre>
+724
+725
+726</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 816</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 724</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_name'>name</span>
   <span class='ivar'>@name</span>
@@ -768,12 +768,12 @@ spanwed and terminated.</p>
       <pre class="lines">
 
 
-844
-845
-846</pre>
+752
+753
+754</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 844</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 752</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_status'>status</span>
   <span class='ivar'>@status</span>
@@ -830,13 +830,13 @@ returned a zero status.</p>
       <pre class="lines">
 
 
-927
-928
-929
-930</pre>
+835
+836
+837
+838</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 927</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 835</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_error?'>error?</span>
   <span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='id identifier rubyid_exit_code'>exit_code</span>
@@ -907,12 +907,12 @@ terminated by an uncaught signal.</p>
       <pre class="lines">
 
 
-869
-870
-871</pre>
+777
+778
+779</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 869</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 777</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_exit_code'>exit_code</span>
   <span class='id identifier rubyid_status'>status</span><span class='op'>&amp;.</span><span class='id identifier rubyid_exitstatus'>exitstatus</span>
@@ -961,12 +961,12 @@ process was able to execute.</p>
       <pre class="lines">
 
 
-894
-895
-896</pre>
+802
+803
+804</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 894</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 802</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_failed?'>failed?</span>
   <span class='id identifier rubyid_status'>status</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1039,12 +1039,12 @@ and exited with a normal exit code.</p>
       <pre class="lines">
 
 
-883
-884
-885</pre>
+791
+792
+793</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 883</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 791</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_signal_code'>signal_code</span>
   <span class='id identifier rubyid_status'>status</span><span class='op'>&amp;.</span><span class='id identifier rubyid_termsig'>termsig</span>
@@ -1093,12 +1093,12 @@ or false if the process failed to start or exited normally.</p>
       <pre class="lines">
 
 
-904
-905
-906</pre>
+812
+813
+814</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 904</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 812</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_signaled?'>signaled?</span>
   <span class='op'>!</span><span class='id identifier rubyid_signal_code'>signal_code</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
@@ -1148,13 +1148,13 @@ returned a nonzero status.</p>
       <pre class="lines">
 
 
-915
-916
-917
-918</pre>
+823
+824
+825
+826</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 915</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/exec.rb', line 823</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_success?'>success?</span>
   <span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='id identifier rubyid_exit_code'>exit_code</span>
@@ -1170,9 +1170,9 @@ returned a nonzero status.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Aug 30 05:48:10 2021 by
+  Generated on Sun Feb  6 19:23:42 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.7.4).
+  0.9.27 (ruby-3.1.0).
 </div>
 
     </div>

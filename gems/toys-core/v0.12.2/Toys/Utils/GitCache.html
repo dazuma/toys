@@ -103,8 +103,8 @@
   <div class="discussion">
     <p>This object provides cached access to remote git data. Given a remote
 repository, a path, and a commit, it makes the files availble in the
-local filesystem. Access is cached, so repeated requests do not hit the
-remote repository again.</p>
+local filesystem. Access is cached, so repeated requests for the same
+commit and path in the same repo do not hit the remote repository again.</p>
 
 <p>This class is used by the Loader to load tools from git. Tools can also
 use the <code>:git_cache</code> mixin for direct access to this class.</p>
@@ -121,7 +121,7 @@ use the <code>:git_cache</code> mixin for direct access to this class.</p>
     
   
     
-      <strong class="classes">Classes:</strong> <span class='object_link'><a href="GitCache/Error.html" title="Toys::Utils::GitCache::Error (class)">Error</a></span>
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="GitCache/Error.html" title="Toys::Utils::GitCache::Error (class)">Error</a></span>, <span class='object_link'><a href="GitCache/RefInfo.html" title="Toys::Utils::GitCache::RefInfo (class)">RefInfo</a></span>, <span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span>, <span class='object_link'><a href="GitCache/SourceInfo.html" title="Toys::Utils::GitCache::SourceInfo (class)">SourceInfo</a></span>
     
   
 </p>
@@ -176,9 +176,11 @@ use the <code>:git_cache</code> mixin for direct access to this class.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#find-instance_method" title="#find (instance method)">#<strong>find</strong>(remote, path: nil, commit: nil, update: false)  &#x21d2; String </a>
+      <a href="#get-instance_method" title="#get (instance method)">#<strong>get</strong>(remote, path: nil, commit: nil, into: nil, update: false, timestamp: nil)  &#x21d2; String </a>
     
 
+    
+      (also: #find)
     
   </span>
   
@@ -190,7 +192,7 @@ use the <code>:git_cache</code> mixin for direct access to this class.</p>
   
 
   
-    <span class="summary_desc"><div class='inline'><p>Find the given git-based files from the git cache, loading from the remote repo if necessary.</p>
+    <span class="summary_desc"><div class='inline'><p>Get the given git-based files from the git cache, loading from the remote repo if necessary.</p>
 </div></span>
   
 </li>
@@ -216,6 +218,121 @@ use the <code>:git_cache</code> mixin for direct access to this class.</p>
 
   
     <span class="summary_desc"><div class='inline'><p>Access a git cache.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#remotes-instance_method" title="#remotes (instance method)">#<strong>remotes</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns an array of the known remote names.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#remove_refs-instance_method" title="#remove_refs (instance method)">#<strong>remove_refs</strong>(remote, refs: nil)  &#x21d2; Array&lt;RefInfo&gt;<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Remove records of the given refs (i.e. branches, tags, or <code>HEAD</code>) from the given repository&#39;s cache.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#remove_repos-instance_method" title="#remove_repos (instance method)">#<strong>remove_repos</strong>(remotes)  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Removes caches for the given repos, or all repos if specified.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#remove_sources-instance_method" title="#remove_sources (instance method)">#<strong>remove_sources</strong>(remote, commits: nil)  &#x21d2; Array&lt;SourceInfo&gt;<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Removes shared sources for the given cache.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#repo_info-instance_method" title="#repo_info (instance method)">#<strong>repo_info</strong>(remote)  &#x21d2; RepoInfo<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a <span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span> describing the cache for the given remote, or <code>nil</code> if the given remote has never been cached.</p>
 </div></span>
   
 </li>
@@ -274,13 +391,13 @@ a specific directory in the user&#39;s XDG cache.</p>
       <pre class="lines">
 
 
-51
-52
-53
-54</pre>
+289
+290
+291
+292</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 51</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 289</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>cache_dir:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='ivar'>@cache_dir</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_expand_path'>expand_path</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_dir'>cache_dir</span> <span class='op'>||</span> <span class='id identifier rubyid_default_cache_dir'>default_cache_dir</span><span class='rparen'>)</span>
@@ -336,12 +453,12 @@ a specific directory in the user&#39;s XDG cache.</p>
       <pre class="lines">
 
 
-86
-87
-88</pre>
+299
+300
+301</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 86</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 299</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cache_dir'>cache_dir</span>
   <span class='ivar'>@cache_dir</span>
@@ -359,18 +476,31 @@ a specific directory in the user&#39;s XDG cache.</p>
 
     
       <div class="method_details first">
-  <h3 class="signature first" id="find-instance_method">
+  <h3 class="signature first" id="get-instance_method">
   
-    #<strong>find</strong>(remote, path: nil, commit: nil, update: false)  &#x21d2; <tt>String</tt> 
+    #<strong>get</strong>(remote, path: nil, commit: nil, into: nil, update: false, timestamp: nil)  &#x21d2; <tt>String</tt> 
   
 
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='find-instance_method'>find</span></span>
+    </span>
   
 
   
 </h3><div class="docstring">
   <div class="discussion">
-    <p>Find the given git-based files from the git cache, loading from the
+    <p>Get the given git-based files from the git cache, loading from the
 remote repo if necessary.</p>
+
+<p>The resulting files are either copied into a directory you provide in
+the <code>:into</code> parameter, or populated into a <em>shared</em> source directory if
+you omit the <code>:info</code> parameter. In the latter case, it is important
+that you do not modify the returned files or directories, nor add or
+remove any files from the directories returned, to avoid confusing
+callers that could be given the same directory. If you need to make any
+modifications to the returned files, use <code>:into</code> to provide your own
+private directory.</p>
 
 
   </div>
@@ -432,18 +562,41 @@ git ref such as a branch or tag. Optional. Defaults to <code>HEAD</code>.</p>
   
     <li>
       
+        <span class='name'>into</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If provided, copies the specified files into the
+given directory path. If omitted or <code>nil</code>, populates and returns a
+shared source file or directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
         <span class='name'>update</span>
       
       
-        <span class='type'>(<tt>Boolean</tt>)</span>
+        <span class='type'>(<tt>Boolean</tt>, <tt>Integer</tt>)</span>
       
       
         <em class="default">(defaults to: <tt>false</tt>)</em>
       
       
         &mdash;
-        <div class='inline'><p>Force update of non-SHA commit references, even
-if it has previously been loaded.</p>
+        <div class='inline'><p>Whether to update of non-SHA commit
+references if they were previously loaded. This is useful, for
+example, if the commit is <code>HEAD</code> or a branch name. Pass <code>true</code> or
+<code>false</code> to specify whether to update, or an integer to update if
+last update was done at least that many seconds ago. Default is
+<code>false</code>.</p>
 </div>
       
     </li>
@@ -461,7 +614,10 @@ if it has previously been loaded.</p>
       
       
         &mdash;
-        <div class='inline'><p>The full path to the cached files.</p>
+        <div class='inline'><p>The full path to the cached files. The returned path
+will correspod to the path given. For example, if you provide the
+path <code>Gemfile</code> representing a single file in the repository, the
+returned path will point directly to the cached copy of that file.</p>
 </div>
       
     </li>
@@ -474,28 +630,543 @@ if it has previously been loaded.</p>
       <pre class="lines">
 
 
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79</pre>
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 70</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 334</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='comma'>,</span> <span class='label'>path:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>commit:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>update:</span> <span class='kw'>false</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_path'>path</span> <span class='op'>||=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>def</span> <span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='comma'>,</span> <span class='label'>path:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>commit:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>into:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>update:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>timestamp:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::Utils::GitCache (class)">GitCache</a></span></span><span class='period'>.</span><span class='id identifier rubyid_normalize_path'>normalize_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_commit'>commit</span> <span class='op'>||=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HEAD</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_timestamp'>timestamp</span> <span class='op'>||=</span> <span class='op'>::</span><span class='const'>Time</span><span class='period'>.</span><span class='id identifier rubyid_now'>now</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span>
   <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_ensure_dir'>ensure_dir</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_remote'>remote</span><span class='comma'>,</span> <span class='id identifier rubyid_timestamp'>timestamp</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='op'>|</span>
     <span class='id identifier rubyid_ensure_repo'>ensure_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_sha'>sha</span> <span class='op'>=</span> <span class='id identifier rubyid_ensure_commit'>ensure_commit</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_update'>update</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_ensure_source'>ensure_source</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_sha'>sha</span> <span class='op'>=</span> <span class='id identifier rubyid_ensure_commit'>ensure_commit</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_commit'>commit</span><span class='comma'>,</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='comma'>,</span> <span class='id identifier rubyid_update'>update</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_into'>into</span>
+      <span class='id identifier rubyid_copy_files'>copy_files</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='comma'>,</span> <span class='id identifier rubyid_into'>into</span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='id identifier rubyid_ensure_source'>ensure_source</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="remotes-instance_method">
+  
+    #<strong>remotes</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns an array of the known remote names.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 356</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remotes'>remotes</span>
+  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_result'>result</span> <span class='kw'>unless</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_dir'>cache_dir</span><span class='rparen'>)</span>
+  <span class='op'>::</span><span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_entries'>entries</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_dir'>cache_dir</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_child'>child</span><span class='op'>|</span>
+    <span class='kw'>next</span> <span class='kw'>if</span> <span class='id identifier rubyid_child'>child</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_cache_dir'>cache_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_child'>child</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_file?'>file?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='const'>LOCK_FILE_NAME</span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_remote'>remote</span> <span class='op'>=</span> <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='symbol'>:remote</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_remote'>remote</span> <span class='kw'>if</span> <span class='id identifier rubyid_remote'>remote</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="remove_refs-instance_method">
+  
+    #<strong>remove_refs</strong>(remote, refs: nil)  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="GitCache/RefInfo.html" title="Toys::Utils::GitCache::RefInfo (class)">RefInfo</a></span>&gt;</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Remove records of the given refs (i.e. branches, tags, or <code>HEAD</code>) from
+the given repository&#39;s cache. The next time those refs are requested,
+they will be pulled from the remote repo.</p>
+
+<p>If you provide the <code>refs:</code> argument, only those refs are removed.
+Otherwise, all refs are removed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>remote</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The repository</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>refs</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The refs to remove. Optional.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="GitCache/RefInfo.html" title="Toys::Utils::GitCache::RefInfo (class)">RefInfo</a></span>&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The refs actually forgotten, or <code>nil</code> if
+the given repo is not in the cache.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 423</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remove_refs'>remove_refs</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='comma'>,</span> <span class='label'>refs:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_base_dir_for'>repo_base_dir_for</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='op'>|</span>
+    <span class='id identifier rubyid_refs'>refs</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_refs'>refs</span> <span class='kw'>if</span> <span class='id identifier rubyid_refs'>refs</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_refs'>refs</span> <span class='op'>==</span> <span class='symbol'>:all</span>
+    <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_refs'>refs</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_ref'>ref</span><span class='op'>|</span>
+      <span class='id identifier rubyid_ref_data'>ref_data</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_delete_ref!'>delete_ref!</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_results'>results</span> <span class='op'>&lt;&lt;</span> <span class='const'><span class='object_link'><a href="GitCache/RefInfo.html" title="Toys::Utils::GitCache::RefInfo (class)">RefInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='comma'>,</span> <span class='id identifier rubyid_ref_data'>ref_data</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_ref_data'>ref_data</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_results'>results</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="remove_repos-instance_method">
+  
+    #<strong>remove_repos</strong>(remotes)  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Removes caches for the given repos, or all repos if specified.</p>
+
+<p>Removes all cache information for the specified repositories, including
+local clones and shared source directories. The next time these
+repositories are requested, they will be reloaded from the remote
+repository from scratch.</p>
+
+<p>Be careful not to remove repos that are currently in use by other
+GitCache clients.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>remotes</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>, <tt>:all</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The remotes to remove.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The remotes actually removed.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 399</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remove_repos'>remove_repos</span><span class='lparen'>(</span><span class='id identifier rubyid_remotes'>remotes</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_remotes'>remotes</span> <span class='op'>=</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_remotes'>remotes</span> <span class='kw'>if</span> <span class='id identifier rubyid_remotes'>remotes</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>||</span> <span class='id identifier rubyid_remotes'>remotes</span> <span class='op'>==</span> <span class='symbol'>:all</span>
+  <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_remotes'>remotes</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_remote'>remote</span><span class='op'>|</span>
+    <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_base_dir_for'>repo_base_dir_for</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
+    <span class='kw'>if</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span>
+      <span class='op'>::</span><span class='const'>FileUtils</span><span class='period'>.</span><span class='id identifier rubyid_rm_rf'>rm_rf</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_remote'>remote</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="remove_sources-instance_method">
+  
+    #<strong>remove_sources</strong>(remote, commits: nil)  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="GitCache/SourceInfo.html" title="Toys::Utils::GitCache::SourceInfo (class)">SourceInfo</a></span>&gt;</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Removes shared sources for the given cache. The next time a client
+requests them, the removed sources will be recopied from the repo.</p>
+
+<p>If you provide the <code>commits:</code> argument, only sources associated with
+those commits are removed. Otherwise, all sources are removed.</p>
+
+<p>Be careful not to remove sources that are currently in use by other
+GitCache clients.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>remote</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The repository</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>commits</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Remove only the sources for the given
+commits. Optional.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="GitCache/SourceInfo.html" title="Toys::Utils::GitCache::SourceInfo (class)">SourceInfo</a></span>&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The sources actually removed, or <code>nil</code>
+if the given repo is not in the cache.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 453</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remove_sources'>remove_sources</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='comma'>,</span> <span class='label'>commits:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_base_dir_for'>repo_base_dir_for</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='op'>|</span>
+    <span class='id identifier rubyid_commits'>commits</span> <span class='op'>=</span> <span class='kw'>nil</span> <span class='kw'>if</span> <span class='id identifier rubyid_commits'>commits</span> <span class='op'>==</span> <span class='symbol'>:all</span>
+    <span class='id identifier rubyid_shas'>shas</span> <span class='op'>=</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_commits'>commits</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_ref'>ref</span><span class='op'>|</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_lookup_ref'>lookup_ref</span><span class='lparen'>(</span><span class='id identifier rubyid_ref'>ref</span><span class='rparen'>)</span> <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_compact'>compact</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span> <span class='kw'>if</span> <span class='id identifier rubyid_commits'>commits</span>
+    <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_find_sources'>find_sources</span><span class='lparen'>(</span><span class='label'>shas:</span> <span class='id identifier rubyid_shas'>shas</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='lparen'>(</span><span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span><span class='op'>|</span>
+      <span class='id identifier rubyid_data'>data</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_delete_source!'>delete_source!</span><span class='lparen'>(</span><span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_results'>results</span> <span class='op'>&lt;&lt;</span> <span class='const'><span class='object_link'><a href="GitCache/SourceInfo.html" title="Toys::Utils::GitCache::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_sha'>sha</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_results'>results</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:sha</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_uniq'>uniq</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_sha'>sha</span><span class='op'>|</span>
+      <span class='kw'>unless</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_source_exists?'>source_exists?</span><span class='lparen'>(</span><span class='id identifier rubyid_sha'>sha</span><span class='rparen'>)</span>
+        <span class='op'>::</span><span class='const'>FileUtils</span><span class='period'>.</span><span class='id identifier rubyid_rm_rf'>rm_rf</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_sha'>sha</span><span class='rparen'>)</span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_results'>results</span><span class='period'>.</span><span class='id identifier rubyid_sort'>sort</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="repo_info-instance_method">
+  
+    #<strong>repo_info</strong>(remote)  &#x21d2; <tt><span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a <span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span> describing the cache for the given remote, or
+<code>nil</code> if the given remote has never been cached.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>remote</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Remote name for a repo</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+377
+378
+379
+380
+381
+382
+383</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/git_cache.rb', line 377</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_repo_info'>repo_info</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_dir'>dir</span> <span class='op'>=</span> <span class='id identifier rubyid_repo_base_dir_for'>repo_base_dir_for</span><span class='lparen'>(</span><span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='kw'>nil</span> <span class='kw'>unless</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_lock_repo'>lock_repo</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_remote'>remote</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='op'>|</span>
+    <span class='const'><span class='object_link'><a href="GitCache/RepoInfo.html" title="Toys::Utils::GitCache::RepoInfo (class)">RepoInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='id identifier rubyid_repo_lock'>repo_lock</span><span class='period'>.</span><span class='id identifier rubyid_data'>data</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -508,9 +1179,9 @@ if it has previously been loaded.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Aug 30 05:48:11 2021 by
+  Generated on Sun Feb  6 19:23:43 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.7.4).
+  0.9.27 (ruby-3.1.0).
 </div>
 
     </div>

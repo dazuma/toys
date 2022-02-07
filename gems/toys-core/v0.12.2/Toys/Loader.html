@@ -581,6 +581,9 @@ well-known template classes. Defaults to an empty lookup.</p>
       <pre class="lines">
 
 
+44
+45
+46
 47
 48
 49
@@ -612,29 +615,22 @@ well-known template classes. Defaults to an empty lookup.</p>
 75
 76
 77
-78
-79
-80
-81
-82
-83</pre>
+78</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 44</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span>
-  <span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>middleware_stack:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
-  <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-  <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-  <span class='label'>git_cache:</span> <span class='kw'>nil</span>
-<span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>middleware_stack:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+               <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+               <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>git_cache:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_index_file_name'>index_file_name</span> <span class='op'>&amp;&amp;</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_extname'>extname</span><span class='lparen'>(</span><span class='id identifier rubyid_index_file_name'>index_file_name</span><span class='rparen'>)</span> <span class='op'>!=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.rb</span><span class='tstring_end'>&quot;</span></span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Illegal index file name </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index_file_name'>index_file_name</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
   <span class='kw'>end</span>
@@ -652,12 +648,12 @@ well-known template classes. Defaults to an empty lookup.</p>
   <span class='ivar'>@tool_data</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
   <span class='ivar'>@roots_by_priority</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
   <span class='ivar'>@max_priority</span> <span class='op'>=</span> <span class='ivar'>@min_priority</span> <span class='op'>=</span> <span class='int'>0</span>
-  <span class='ivar'>@stop_priority</span> <span class='op'>=</span> <span class='const'>BASE_PRIORITY</span>
+  <span class='ivar'>@stop_priority</span> <span class='op'>=</span> <span class='op'>-</span><span class='int'>999_999</span>
   <span class='ivar'>@min_loaded_priority</span> <span class='op'>=</span> <span class='int'>999_999</span>
   <span class='ivar'>@middleware_stack</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_stack'><span class='object_link'><a href="Middleware.html#stack-class_method" title="Toys::Middleware.stack (method)">stack</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_middleware_stack'>middleware_stack</span><span class='rparen'>)</span>
   <span class='ivar'>@delimiter_handler</span> <span class='op'>=</span> <span class='const'>DelimiterHandler</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_extra_delimiters'>extra_delimiters</span><span class='rparen'>)</span>
   <span class='ivar'>@git_cache</span> <span class='op'>=</span> <span class='id identifier rubyid_git_cache'>git_cache</span>
-  <span class='id identifier rubyid_get_tool'>get_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='const'>BASE_PRIORITY</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_get_tool'>get_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='op'>-</span><span class='int'>999_999</span><span class='rparen'>)</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -786,6 +782,11 @@ loaded from this block. You can pass a directory path as a string, or
       <pre class="lines">
 
 
+168
+169
+170
+171
+172
 173
 174
 175
@@ -797,15 +798,10 @@ loaded from this block. You can pass a directory path as a string, or
 181
 182
 183
-184
-185
-186
-187
-188
-189</pre>
+184</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 173</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 168</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_block'>add_block</span><span class='lparen'>(</span><span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
               <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -974,6 +970,11 @@ or <code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
       <pre class="lines">
 
 
+204
+205
+206
+207
+208
 209
 210
 211
@@ -985,15 +986,10 @@ or <code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
 217
 218
 219
-220
-221
-222
-223
-224
-225</pre>
+220</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 209</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 204</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_git'>add_git</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span>
             <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -1002,7 +998,7 @@ or <code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
   <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
     <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a git source after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
     <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_git_cache'>git_cache</span><span class='period'>.</span><span class='id identifier rubyid_find'>find</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='label'>path:</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='label'>commit:</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span> <span class='label'>update:</span> <span class='id identifier rubyid_update'>update</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_git_cache'>git_cache</span><span class='period'>.</span><span class='id identifier rubyid_get'>get</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='label'>path:</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='label'>commit:</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span> <span class='label'>update:</span> <span class='id identifier rubyid_update'>update</span><span class='rparen'>)</span>
     <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_git_root'>create_git_root</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
                                         <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
                                         <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
@@ -1131,6 +1127,11 @@ Defaults to <code>:parent</code>.</p>
       <pre class="lines">
 
 
+95
+96
+97
+98
+99
 100
 101
 102
@@ -1142,15 +1143,10 @@ Defaults to <code>:parent</code>.</p>
 108
 109
 110
-111
-112
-113
-114
-115
-116</pre>
+111</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 100</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 95</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_path'>add_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span>
              <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -1290,6 +1286,11 @@ Defaults to <code>:path</code>.</p>
       <pre class="lines">
 
 
+132
+133
+134
+135
+136
 137
 138
 139
@@ -1303,15 +1304,10 @@ Defaults to <code>:path</code>.</p>
 147
 148
 149
-150
-151
-152
-153
-154
-155</pre>
+150</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 137</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 132</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_path_set'>add_path_set</span><span class='lparen'>(</span><span class='id identifier rubyid_root_path'>root_path</span><span class='comma'>,</span> <span class='id identifier rubyid_relative_paths'>relative_paths</span><span class='comma'>,</span>
                  <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -1395,20 +1391,20 @@ configuration if necessary.</p>
       <pre class="lines">
 
 
+301
+302
+303
+304
+305
 306
 307
 308
 309
 310
-311
-312
-313
-314
-315
-316</pre>
+311</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 306</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 301</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_has_subtools?'>has_subtools?</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span> <span class='comment'># rubocop:disable Naming/PredicateName
 </span>  <span class='id identifier rubyid_load_for_prefix'>load_for_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
@@ -1524,6 +1520,11 @@ e.g. names beginning with underscores.</p>
       <pre class="lines">
 
 
+276
+277
+278
+279
+280
 281
 282
 283
@@ -1535,15 +1536,10 @@ e.g. names beginning with underscores.</p>
 289
 290
 291
-292
-293
-294
-295
-296
-297</pre>
+292</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 281</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 276</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_list_subtools'>list_subtools</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='comma'>,</span> <span class='label'>recursive:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>include_hidden:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_load_for_prefix'>load_for_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
@@ -1631,18 +1627,18 @@ that are not part of the tool name and should be passed as tool args.</p>
       <pre class="lines">
 
 
+235
+236
+237
+238
+239
 240
 241
 242
-243
-244
-245
-246
-247
-248</pre>
+243</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 235</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_orig_prefix'>orig_prefix</span><span class='comma'>,</span> <span class='id identifier rubyid_args'>args</span> <span class='op'>=</span> <span class='ivar'>@delimiter_handler</span><span class='period'>.</span><span class='id identifier rubyid_find_orig_prefix'>find_orig_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
@@ -1737,16 +1733,16 @@ the given name, returns <code>nil</code>.</p>
       <pre class="lines">
 
 
+257
+258
+259
+260
+261
 262
-263
-264
-265
-266
-267
-268</pre>
+263</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 262</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 257</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_lookup_specific'>lookup_specific</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_words'>words</span> <span class='op'>=</span> <span class='ivar'>@delimiter_handler</span><span class='period'>.</span><span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>==</span> <span class='int'>1</span>
@@ -1819,13 +1815,13 @@ delimited by path separators. Always returns an array of strings.</p>
       <pre class="lines">
 
 
-326
-327
-328
-329</pre>
+321
+322
+323
+324</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 326</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 321</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='id identifier rubyid_str'>str</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:to_s</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_str'>str</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Array</span><span class='rparen'>)</span>
@@ -1841,9 +1837,9 @@ delimited by path separators. Always returns an array of strings.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Aug 30 05:48:09 2021 by
+  Generated on Sun Feb  6 19:23:41 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.7.4).
+  0.9.27 (ruby-3.1.0).
 </div>
 
     </div>

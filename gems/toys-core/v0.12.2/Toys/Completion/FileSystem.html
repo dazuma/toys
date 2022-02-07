@@ -402,16 +402,16 @@ prefix. Defaults to requiring the prefix be empty.</p>
       <pre class="lines">
 
 
-238
-239
-240
-241
-242
-243
-244</pre>
+246
+247
+248
+249
+250
+251
+252</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 238</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 246</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>cwd:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>omit_files:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>omit_directories:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='label'>prefix_constraint:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='kw'>super</span><span class='lparen'>(</span><span class='rparen'>)</span>
@@ -470,12 +470,12 @@ prefix. Defaults to requiring the prefix be empty.</p>
       <pre class="lines">
 
 
-268
-269
-270</pre>
+276
+277
+278</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 268</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 276</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_cwd'>cwd</span>
   <span class='ivar'>@cwd</span>
@@ -525,12 +525,12 @@ prefix. Defaults to requiring the prefix be empty.</p>
       <pre class="lines">
 
 
-256
-257
-258</pre>
+264
+265
+266</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 256</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 264</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_include_directories'>include_directories</span>
   <span class='ivar'>@include_directories</span>
@@ -580,12 +580,12 @@ prefix. Defaults to requiring the prefix be empty.</p>
       <pre class="lines">
 
 
-250
-251
-252</pre>
+258
+259
+260</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 250</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 258</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_include_files'>include_files</span>
   <span class='ivar'>@include_files</span>
@@ -635,12 +635,12 @@ prefix. Defaults to requiring the prefix be empty.</p>
       <pre class="lines">
 
 
-262
-263
-264</pre>
+270
+271
+272</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 262</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 270</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_prefix_constraint'>prefix_constraint</span>
   <span class='ivar'>@prefix_constraint</span>
@@ -719,14 +719,6 @@ context including the string fragment.</p>
       <pre class="lines">
 
 
-277
-278
-279
-280
-281
-282
-283
-284
 285
 286
 287
@@ -739,10 +731,18 @@ context including the string fragment.</p>
 294
 295
 296
-297</pre>
+297
+298
+299
+300
+301
+302
+303
+304
+305</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 277</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 285</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
   <span class='kw'>return</span> <span class='lbracket'>[</span><span class='rbracket'>]</span> <span class='kw'>unless</span> <span class='ivar'>@prefix_constraint</span> <span class='op'>===</span> <span class='id identifier rubyid_context'>context</span><span class='period'>.</span><span class='id identifier rubyid_fragment_prefix'>fragment_prefix</span>
@@ -775,9 +775,9 @@ context including the string fragment.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Aug 30 05:48:10 2021 by
+  Generated on Sun Feb  6 19:23:42 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
-  0.9.26 (ruby-2.7.4).
+  0.9.27 (ruby-3.1.0).
 </div>
 
     </div>
