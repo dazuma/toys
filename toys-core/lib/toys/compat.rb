@@ -88,6 +88,23 @@ module Toys
       end
     end
 
+    # Dir.children requires Ruby 2.5 or later.
+    if ruby_version >= 20500
+      ##
+      # @private
+      #
+      def self.dir_children(dir)
+        ::Dir.children(dir)
+      end
+    else
+      ##
+      # @private
+      #
+      def self.dir_children(dir)
+        ::Dir.entries(dir) - [".", ".."]
+      end
+    end
+
     # Due to a bug in Ruby < 2.7, passing an empty **kwargs splat to
     # initialize will fail if there are no formal keyword args.
     # This also hits TruffleRuby

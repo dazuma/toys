@@ -335,7 +335,7 @@ module Toys
         path = GitCache.normalize_path(path)
         commit ||= "HEAD"
         timestamp ||= ::Time.now.to_i
-        dir = ensure_dir(remote)
+        dir = ensure_repo_base_dir(remote)
         lock_repo(dir, remote, timestamp) do |repo_lock|
           ensure_repo(dir, remote)
           sha = ensure_commit(dir, commit, repo_lock, update)
@@ -401,6 +401,7 @@ module Toys
         Array(remotes).map do |remote|
           dir = repo_base_dir_for(remote)
           if ::File.directory?(dir)
+            ::FileUtils.chmod_R("u+w", dir)
             ::FileUtils.rm_rf(dir)
             remote
           end
@@ -463,7 +464,9 @@ module Toys
           end
           results.map(&:sha).uniq.each do |sha|
             unless repo_lock.source_exists?(sha)
-              ::FileUtils.rm_rf(::File.join(dir, sha))
+              sha_dir = ::File.join(dir, sha)
+              ::FileUtils.chmod_R("u+w", sha_dir, force: true)
+              ::FileUtils.rm_rf(sha_dir)
             end
           end
         end
@@ -498,7 +501,7 @@ module Toys
         end
       end
 
-      def ensure_dir(remote)
+      def ensure_repo_base_dir(remote)
         dir = repo_base_dir_for(remote)
         ::FileUtils.mkdir_p(dir)
         dir
@@ -527,6 +530,7 @@ module Toys
         ::FileUtils.mkdir_p(repo_dir)
         result = git(repo_dir, ["remote", "get-url", "origin"])
         unless result.success? && result.captured_out.strip == remote
+          ::FileUtils.chmod_R("u+w", repo_dir, force: true)
           ::FileUtils.rm_rf(repo_dir)
           ::FileUtils.mkdir_p(repo_dir)
           git(repo_dir, ["init"],
@@ -562,7 +566,10 @@ module Toys
         repo_path = ::File.join(dir, REPO_DIR_NAME)
         source_path = ::File.join(dir, sha)
         unless repo_lock.source_exists?(sha, path)
+          ::FileUtils.mkdir_p(source_path)
+          ::FileUtils.chmod_R("u+w", source_path)
           copy_from_repo(repo_path, source_path, sha, path)
+          ::FileUtils.chmod_R("a-w", source_path)
         end
         repo_lock.access_source!(sha, path)
         path == "." ? source_path : ::File.join(source_path, path)
@@ -570,7 +577,9 @@ module Toys
 
       def copy_files(dir, sha, path, repo_lock, into)
         repo_path = ::File.join(dir, REPO_DIR_NAME)
-        ::FileUtils.rm_rf(into)
+        ::FileUtils.mkdir_p(into)
+        ::FileUtils.chmod_R("u+w", into)
+        Compat.dir_children(into).each { |child| ::FileUtils.rm_rf(::File.join(into, child)) }
         result = copy_from_repo(repo_path, into, sha, path)
         repo_lock.access_repo!
         result
@@ -579,10 +588,8 @@ module Toys
       def copy_from_repo(repo_dir, into, sha, path)
         git(repo_dir, ["checkout", sha])
         if path == "."
-          ::FileUtils.mkdir_p(into)
-          omit_names = [".", "..", ".git"]
-          ::Dir.entries(repo_dir).each do |entry|
-            next if omit_names.include?(entry)
+          Compat.dir_children(repo_dir).each do |entry|
+            next if entry == ".git"
             to_path = ::File.join(into, entry)
             unless ::File.exist?(to_path)
               from_path = ::File.join(repo_dir, entry)

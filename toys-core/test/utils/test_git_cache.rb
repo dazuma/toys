@@ -14,7 +14,9 @@ describe Toys::Utils::GitCache do
   let(:target_dir) { File.join(Dir.tmpdir, "toys_git_cache_test2") }
 
   before do
+    FileUtils.chmod_R("u+w", cache_dir, force: true)
     FileUtils.rm_rf(cache_dir)
+    FileUtils.chmod_R("u+w", target_dir, force: true)
     FileUtils.rm_rf(target_dir)
   end
 
@@ -100,6 +102,26 @@ describe Toys::Utils::GitCache do
       assert_equal(file_name, File.basename(found_path))
       content = File.read(found_path)
       assert_equal(file_name, content.strip)
+    end
+
+    it "makes source files read-only" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      found_path = git_cache.get(local_remote, path: file_name)
+      assert_raises(Errno::EACCES) do
+        File.open(found_path, "w") { |file| file.puts "whoops" }
+      end
+    end
+
+    it "allows updating of an existing source" do
+      file1_name = "dir/file1.txt"
+      file2_name = "dir/file2.txt"
+      commit_file(file1_name)
+      commit_file(file2_name)
+      git_cache.get(local_remote, path: file1_name)
+      found2_path = git_cache.get(local_remote, path: file2_name)
+      content = File.read(found2_path)
+      assert_equal(file2_name, content.strip)
     end
 
     it "gets a file into a specified directory" do
