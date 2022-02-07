@@ -638,29 +638,6 @@ tools that want to invoke other tools. For example:</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#load_tool-instance_method" title="#load_tool (instance method)">#<strong>load_tool</strong>(*args) {|context| ... } &#x21d2; Object </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'><p>Prepare a tool to be run, but just execute the given block rather than performing a full run of the tool.</p>
-</div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#run-instance_method" title="#run (instance method)">#<strong>run</strong>(*args, verbosity: 0, delegated_from: nil)  &#x21d2; Integer </a>
     
 
@@ -1191,29 +1168,33 @@ Note: the standard toys executable sets this to <code>&quot;.lib&quot;</code>.</
 223
 224
 225
-226</pre>
+226
+227
+228</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 178</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>executable_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='comment'># rubocop:disable Metrics/MethodLength
-</span>               <span class='label'>middleware_stack:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
-               <span class='label'>config_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>config_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>logger_factory:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>logger:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>base_level:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>error_handler:</span> <span class='kw'>nil</span><span class='comma'>,</span>
-               <span class='label'>completion:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span> <span class='comment'># rubocop:disable Metrics/MethodLength
+</span>  <span class='label'>executable_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>middleware_stack:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>config_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>config_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>logger_factory:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>logger:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>base_level:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>error_handler:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+  <span class='label'>completion:</span> <span class='kw'>nil</span>
+<span class='rparen'>)</span>
   <span class='ivar'>@executable_name</span> <span class='op'>=</span> <span class='id identifier rubyid_executable_name'>executable_name</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='gvar'>$PROGRAM_NAME</span><span class='rparen'>)</span>
   <span class='ivar'>@middleware_stack</span> <span class='op'>=</span> <span class='id identifier rubyid_middleware_stack'>middleware_stack</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_middleware_stack'><span class='object_link'><a href="#default_middleware_stack-class_method" title="Toys::CLI.default_middleware_stack (method)">default_middleware_stack</a></span></span>
   <span class='ivar'>@mixin_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_mixin_lookup'>mixin_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_mixin_lookup'><span class='object_link'><a href="#default_mixin_lookup-class_method" title="Toys::CLI.default_mixin_lookup (method)">default_mixin_lookup</a></span></span>
@@ -1296,12 +1277,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-301
-302
-303</pre>
+303
+304
+305</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 301</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 303</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_base_level'>base_level</span>
   <span class='ivar'>@base_level</span>
@@ -1351,12 +1332,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-307
-308
-309</pre>
+309
+310
+311</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 307</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 309</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_completion'>completion</span>
   <span class='ivar'>@completion</span>
@@ -1406,12 +1387,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-276
-277
-278</pre>
+278
+279
+280</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 276</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 278</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_executable_name'>executable_name</span>
   <span class='ivar'>@executable_name</span>
@@ -1461,12 +1442,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-282
-283
-284</pre>
+284
+285
+286</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 282</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 284</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_extra_delimiters'>extra_delimiters</span>
   <span class='ivar'>@extra_delimiters</span>
@@ -1516,12 +1497,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-270
-271
-272</pre>
+272
+273
+274</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 270</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 272</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_loader'>loader</span>
   <span class='ivar'>@loader</span>
@@ -1571,12 +1552,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-288
-289
-290</pre>
+290
+291
+292</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 288</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 290</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
   <span class='ivar'>@logger</span>
@@ -1626,12 +1607,12 @@ May be <code>nil</code>, indicating it will use the initial logger setting.</p>
       <pre class="lines">
 
 
-294
-295
-296</pre>
+296
+297
+298</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 294</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 296</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_logger_factory'>logger_factory</span>
   <span class='ivar'>@logger_factory</span>
@@ -1689,30 +1670,30 @@ interrupt one another.</p>
       <pre class="lines">
 
 
-647
-648
-649
-650
-651
-652
-653
-654
-655
-656
-657
-658
-659
-660
-661
-662
-663
-664
-665
-666
-667</pre>
+715
+716
+717
+718
+719
+720
+721
+722
+723
+724
+725
+726
+727
+728
+729
+730
+731
+732
+733
+734
+735</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 647</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 715</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_logger_factory'>default_logger_factory</span>
   <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/utils/terminal</span><span class='tstring_end'>&quot;</span></span>
@@ -1779,12 +1760,12 @@ StandardMiddleware module.</p>
       <pre class="lines">
 
 
-626
-627
-628</pre>
+694
+695
+696</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 626</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 694</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_middleware_lookup'>default_middleware_lookup</span>
   <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span><span class='period'>.</span><span class='id identifier rubyid_add_path'><span class='object_link'><a href="ModuleLookup.html#add_path-instance_method" title="Toys::ModuleLookup#add_path (method)">add_path</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/standard_middleware</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -1843,17 +1824,17 @@ and <code>--quiet</code> flags for managing the logger level.</li>
       <pre class="lines">
 
 
-601
-602
-603
-604
-605
-606
-607
-608</pre>
+669
+670
+671
+672
+673
+674
+675
+676</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 601</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 669</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_middleware_stack'>default_middleware_stack</span>
   <span class='lbracket'>[</span>
@@ -1907,12 +1888,12 @@ StandardMixins module.</p>
       <pre class="lines">
 
 
-616
-617
-618</pre>
+684
+685
+686</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 616</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 684</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_mixin_lookup'>default_mixin_lookup</span>
   <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span><span class='period'>.</span><span class='id identifier rubyid_add_path'><span class='object_link'><a href="ModuleLookup.html#add_path-instance_method" title="Toys::ModuleLookup#add_path (method)">add_path</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/standard_mixins</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -1960,12 +1941,12 @@ StandardMixins module.</p>
       <pre class="lines">
 
 
-635
-636
-637</pre>
+703
+704
+705</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 635</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 703</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default_template_lookup'>default_template_lookup</span>
   <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span>
@@ -2098,8 +2079,6 @@ loaded from this block. You can pass a directory path as a string, or
       <pre class="lines">
 
 
-359
-360
 361
 362
 363
@@ -2107,10 +2086,12 @@ loaded from this block. You can pass a directory path as a string, or
 365
 366
 367
-368</pre>
+368
+369
+370</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 359</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 361</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_config_block'>add_config_block</span><span class='lparen'>(</span><span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
                      <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -2247,8 +2228,6 @@ Defaults to <code>:parent</code>.</p>
       <pre class="lines">
 
 
-330
-331
 332
 333
 334
@@ -2256,10 +2235,12 @@ Defaults to <code>:parent</code>.</p>
 336
 337
 338
-339</pre>
+339
+340
+341</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 330</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 332</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_config_path'>add_config_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span>
                     <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -2376,8 +2357,6 @@ Defaults to <code>:path</code>.</p>
       <pre class="lines">
 
 
-387
-388
 389
 390
 391
@@ -2392,10 +2371,12 @@ Defaults to <code>:path</code>.</p>
 400
 401
 402
-403</pre>
+403
+404
+405</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 387</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 389</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_search_path'>add_search_path</span><span class='lparen'>(</span><span class='id identifier rubyid_search_path'>search_path</span><span class='comma'>,</span>
                     <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
@@ -2521,8 +2502,6 @@ priority list rather than the tail.</p>
       <pre class="lines">
 
 
-422
-423
 424
 425
 426
@@ -2536,10 +2515,12 @@ priority list rather than the tail.</p>
 434
 435
 436
-437</pre>
+437
+438
+439</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 422</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 424</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_add_search_path_hierarchy'>add_search_path_hierarchy</span><span class='lparen'>(</span><span class='label'>start:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>terminate:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_start'>start</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_pwd'>pwd</span>
@@ -2643,8 +2624,6 @@ to it so you can add paths and make other modifications.</p>
       <pre class="lines">
 
 
-240
-241
 242
 243
 244
@@ -2667,10 +2646,12 @@ to it so you can add paths and make other modifications.</p>
 261
 262
 263
-264</pre>
+264
+265
+266</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 242</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_child'>child</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_args'>args</span> <span class='op'>=</span> <span class='lbrace'>{</span>
@@ -2696,113 +2677,6 @@ to it so you can add paths and make other modifications.</p>
   <span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
   <span class='kw'>yield</span> <span class='id identifier rubyid_cli'>cli</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
   <span class='id identifier rubyid_cli'>cli</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="load_tool-instance_method">
-  
-    #<strong>load_tool</strong>(*args) {|context| ... } &#x21d2; <tt>Object</tt> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    <p>Prepare a tool to be run, but just execute the given block rather than
-performing a full run of the tool. This is intended for testing tools.
-Unlike <span class='object_link'><a href="#run-instance_method" title="Toys::CLI#run (method)">#run</a></span>, this does not catch errors and perform error handling.</p>
-
-
-  </div>
-</div>
-<div class="tags">
-  <p class="tag_title">Parameters:</p>
-<ul class="param">
-  
-    <li>
-      
-        <span class='name'>args</span>
-      
-      
-        <span class='type'>(<tt>String...</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'><p>Command line arguments specifying which tool to
-run and what arguments to pass to it. You may pass either a single
-array of strings, or a series of string arguments.</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-<p class="tag_title">Yield Parameters:</p>
-<ul class="yieldparam">
-  
-    <li>
-      
-        <span class='name'>context</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Toys::Context</a></span></tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'><p>Yields the tool context.</p>
-</div>
-      
-    </li>
-  
-</ul>
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Object</tt>)</span>
-      
-      
-      
-        &mdash;
-        <div class='inline'><p>The value returned from the block.</p>
-</div>
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-482
-483
-484
-485
-486
-487
-488</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 482</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_load_tool'>load_tool</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span> <span class='op'>=</span> <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_build_context'>build_context</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_execute_tool'>execute_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_ctx'>ctx</span><span class='op'>|</span>
-    <span class='id identifier rubyid_ctx'>ctx</span><span class='period'>.</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='kw'>yield</span> <span class='id identifier rubyid_ctx'>ctx</span><span class='rparen'>)</span>
-  <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -2864,25 +2738,6 @@ array of strings, or a series of string arguments.</p>
       
     </li>
   
-    <li>
-      
-        <span class='name'>delegated_from</span>
-      
-      
-        <span class='type'>(<tt><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Toys::Context</a></span></tt>)</span>
-      
-      
-        <em class="default">(defaults to: <tt>nil</tt>)</em>
-      
-      
-        &mdash;
-        <div class='inline'><p>The context from which this
-execution is delegated. Optional. Should be set only if this is a
-delegated execution.</p>
-</div>
-      
-    </li>
-  
 </ul>
 
 <p class="tag_title">Returns:</p>
@@ -2909,6 +2764,7 @@ delegated execution.</p>
       <pre class="lines">
 
 
+452
 453
 454
 455
@@ -2927,7 +2783,7 @@ delegated execution.</p>
 468</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 453</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 452</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='label'>verbosity:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>delegated_from:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_capture'>capture</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error finding tool definition</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>do</span>
@@ -2937,10 +2793,11 @@ delegated execution.</p>
     <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error during tool execution!</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_source_info'>source_info</span><span class='op'>&amp;.</span><span class='id identifier rubyid_source_path'>source_path</span><span class='comma'>,</span>
     <span class='label'>tool_name:</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_full_name'>full_name</span><span class='comma'>,</span> <span class='label'>tool_args:</span> <span class='id identifier rubyid_remaining'>remaining</span>
   <span class='rparen'>)</span> <span class='kw'>do</span>
-    <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_build_context'>build_context</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span><span class='comma'>,</span>
-                            <span class='label'>verbosity:</span> <span class='id identifier rubyid_verbosity'>verbosity</span><span class='comma'>,</span>
-                            <span class='label'>delegated_from:</span> <span class='id identifier rubyid_delegated_from'>delegated_from</span><span class='rparen'>)</span>
-    <span class='id identifier rubyid_execute_tool'>execute_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='symbol'>:run</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_default_data'>default_data</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+      <span class='const'><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Context</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#VERBOSITY-constant" title="Toys::Context::Key::VERBOSITY (constant)">VERBOSITY</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_verbosity'>verbosity</span><span class='comma'>,</span>
+      <span class='const'><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Context</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#DELEGATED_FROM-constant" title="Toys::Context::Key::DELEGATED_FROM (constant)">DELEGATED_FROM</a></span></span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_delegated_from'>delegated_from</span><span class='comma'>,</span>
+    <span class='rbrace'>}</span>
+    <span class='id identifier rubyid_run_tool'>run_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span><span class='comma'>,</span> <span class='id identifier rubyid_default_data'>default_data</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
 <span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span></span><span class='comma'>,</span> <span class='op'>::</span><span class='const'>Interrupt</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
   <span class='ivar'>@error_handler</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span>
@@ -2955,7 +2812,7 @@ delegated execution.</p>
 </div>
 
       <div id="footer">
-  Generated on Sun Feb  6 19:23:40 2022 by
+  Generated on Sun Feb  6 19:25:42 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-3.1.0).
 </div>

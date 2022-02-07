@@ -368,13 +368,13 @@ or any of its ancestors, or any other specification recognized by
       <pre class="lines">
 
 
-36
-37
-38
-39</pre>
+46
+47
+48
+49</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 36</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 46</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_accept'>accept</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='ivar'>@acceptor</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Acceptor.html" title="Toys::Acceptor (module)">Acceptor</a></span></span><span class='period'>.</span><span class='id identifier rubyid_scalarize_spec'>scalarize_spec</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -465,13 +465,13 @@ tool or any of its ancestors, or any other specification recognized by
       <pre class="lines">
 
 
-63
-64
-65
-66</pre>
+73
+74
+75
+76</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 63</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 73</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_complete'>complete</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='ivar'>@completion</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Completion.html" title="Toys::Completion (module)">Completion</a></span></span><span class='period'>.</span><span class='id identifier rubyid_scalarize_spec'>scalarize_spec</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -535,13 +535,13 @@ tool or any of its ancestors, or any other specification recognized by
       <pre class="lines">
 
 
-47
-48
-49
-50</pre>
+57
+58
+59
+60</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 47</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 57</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_default'>default</span><span class='lparen'>(</span><span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
   <span class='ivar'>@default</span> <span class='op'>=</span> <span class='id identifier rubyid_default'>default</span>
@@ -635,13 +635,13 @@ sole element of a string array:</p>
       <pre class="lines">
 
 
-111
-112
-113
-114</pre>
+121
+122
+123
+124</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 111</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 121</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_desc'>desc</span><span class='lparen'>(</span><span class='id identifier rubyid_desc'>desc</span><span class='rparen'>)</span>
   <span class='ivar'>@desc</span> <span class='op'>=</span> <span class='id identifier rubyid_desc'>desc</span>
@@ -705,13 +705,13 @@ sole element of a string array:</p>
       <pre class="lines">
 
 
-74
-75
-76
-77</pre>
+84
+85
+86
+87</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 74</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 84</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_display_name'>display_name</span><span class='lparen'>(</span><span class='id identifier rubyid_display_name'>display_name</span><span class='rparen'>)</span>
   <span class='ivar'>@display_name</span> <span class='op'>=</span> <span class='id identifier rubyid_display_name'>display_name</span>
@@ -793,13 +793,13 @@ string as one of the descriptions.</p>
       <pre class="lines">
 
 
-139
-140
-141
-142</pre>
+149
+150
+151
+152</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 139</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/positional_arg.rb', line 149</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_long_desc'>long_desc</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_long_desc'>long_desc</span><span class='rparen'>)</span>
   <span class='ivar'>@long_desc</span> <span class='op'>+=</span> <span class='id identifier rubyid_long_desc'>long_desc</span>
@@ -815,7 +815,7 @@ string as one of the descriptions.</p>
 </div>
 
       <div id="footer">
-  Generated on Sun Feb  6 19:23:43 2022 by
+  Generated on Sun Feb  6 19:25:45 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-3.1.0).
 </div>

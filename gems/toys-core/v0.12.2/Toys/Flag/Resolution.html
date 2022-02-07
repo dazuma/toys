@@ -411,12 +411,12 @@
       <pre class="lines">
 
 
-184
-185
-186</pre>
+617
+618
+619</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 184</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 617</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_string'>string</span>
   <span class='ivar'>@string</span>
@@ -471,12 +471,12 @@
       <pre class="lines">
 
 
-198
-199
-200</pre>
+631
+632
+633</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 198</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 631</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_count'>count</span>
   <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span>
@@ -524,12 +524,12 @@
       <pre class="lines">
 
 
-190
-191
-192</pre>
+623
+624
+625</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 190</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 623</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_found_exact?'>found_exact?</span>
   <span class='ivar'>@found_exact</span>
@@ -577,12 +577,12 @@
       <pre class="lines">
 
 
-222
-223
-224</pre>
+655
+656
+657</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 222</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 655</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_found_multiple?'>found_multiple?</span>
   <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>1</span>
@@ -630,12 +630,12 @@
       <pre class="lines">
 
 
-206
-207
-208</pre>
+639
+640
+641</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 206</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 639</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_found_unique?'>found_unique?</span>
   <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>==</span> <span class='int'>1</span>
@@ -683,14 +683,14 @@
       <pre class="lines">
 
 
-257
-258
-259
-260
-261</pre>
+690
+691
+692
+693
+694</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 257</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 690</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_matching_flag_strings'>matching_flag_strings</span>
   <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid__flag'>_flag</span><span class='comma'>,</span> <span class='id identifier rubyid_flag_syntax'>flag_syntax</span><span class='comma'>,</span> <span class='id identifier rubyid_negative'>negative</span><span class='op'>|</span>
@@ -740,12 +740,12 @@
       <pre class="lines">
 
 
-214
-215
-216</pre>
+647
+648
+649</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 214</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 647</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_not_found?'>not_found?</span>
   <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
@@ -794,12 +794,12 @@ not unique.</p>
       <pre class="lines">
 
 
-231
-232
-233</pre>
+664
+665
+666</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 231</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 664</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unique_flag'>unique_flag</span>
   <span class='id identifier rubyid_found_unique?'>found_unique?</span> <span class='op'>?</span> <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='lbracket'>[</span><span class='int'>0</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='kw'>nil</span>
@@ -848,12 +848,12 @@ case, or <code>nil</code> if not found or not unique.</p>
       <pre class="lines">
 
 
-249
-250
-251</pre>
+682
+683
+684</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 249</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 682</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unique_flag_negative?'>unique_flag_negative?</span>
   <span class='id identifier rubyid_found_unique?'>found_unique?</span> <span class='op'>?</span> <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='lbracket'>[</span><span class='int'>2</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='kw'>nil</span>
@@ -902,12 +902,12 @@ or not unique.</p>
       <pre class="lines">
 
 
-240
-241
-242</pre>
+673
+674
+675</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 240</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/flag.rb', line 673</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_unique_flag_syntax'>unique_flag_syntax</span>
   <span class='id identifier rubyid_found_unique?'>found_unique?</span> <span class='op'>?</span> <span class='ivar'>@flags</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='lbracket'>[</span><span class='int'>1</span><span class='rbracket'>]</span> <span class='op'>:</span> <span class='kw'>nil</span>
@@ -922,7 +922,7 @@ or not unique.</p>
 </div>
 
       <div id="footer">
-  Generated on Sun Feb  6 19:23:41 2022 by
+  Generated on Sun Feb  6 19:25:42 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-3.1.0).
 </div>

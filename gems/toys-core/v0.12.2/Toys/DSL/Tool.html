@@ -1315,14 +1315,14 @@ Defaults to the acceptor name.</p>
       <pre class="lines">
 
 
-102
-103
-104
-105
-106</pre>
+108
+109
+110
+111
+112</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 102</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_acceptor'>acceptor</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>type_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -1425,13 +1425,13 @@ string possibly delimited by path separators.</p>
       <pre class="lines">
 
 
-352
-353
-354
-355</pre>
+358
+359
+360
+361</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 352</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 358</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_alias_tool'>alias_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_word'>word</span><span class='comma'>,</span> <span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_tool'>tool</span><span class='lparen'>(</span><span class='id identifier rubyid_word'>word</span><span class='comma'>,</span> <span class='label'>delegate_to:</span> <span class='ivar'>@__words</span> <span class='op'>+</span> <span class='ivar'>@__loader</span><span class='period'>.</span><span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span><span class='rparen'>)</span>
@@ -1608,14 +1608,14 @@ for the directives that can be called in this block.</p>
       <pre class="lines">
 
 
-668
-669
-670
-671
-672</pre>
+674
+675
+676
+677
+678</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 668</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 674</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_all_required'>all_required</span><span class='lparen'>(</span><span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span>
                  <span class='label'>prepend:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -1799,14 +1799,14 @@ for the directives that can be called in this block.</p>
       <pre class="lines">
 
 
-755
-756
-757
-758
-759</pre>
+761
+762
+763
+764
+765</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 755</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 761</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_at_least_one'>at_least_one</span><span class='lparen'>(</span><span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span>
                  <span class='label'>prepend:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -1990,14 +1990,14 @@ for the directives that can be called in this block.</p>
       <pre class="lines">
 
 
-711
-712
-713
-714
-715</pre>
+717
+718
+719
+720
+721</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 711</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 717</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_at_most_one'>at_most_one</span><span class='lparen'>(</span><span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span>
                 <span class='label'>prepend:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -2114,15 +2114,15 @@ not complete the standard flags (like --help).</p>
       <pre class="lines">
 
 
-1387
-1388
-1389
-1390
-1391
-1392</pre>
+1393
+1394
+1395
+1396
+1397
+1398</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1387</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1393</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_complete_tool_args'>complete_tool_args</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -2274,15 +2274,15 @@ similar to how bash completes most of its file system commands.)</p>
       <pre class="lines">
 
 
-249
-250
-251
-252
-253
-254</pre>
+255
+256
+257
+258
+259
+260</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 249</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 255</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_completion'>completion</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -2353,12 +2353,12 @@ for the tool.</p>
       <pre class="lines">
 
 
-1589
-1590
-1591</pre>
+1595
+1596
+1597</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1589</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1595</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_context_directory'>context_directory</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_context_directory'>context_directory</span> <span class='op'>||</span> <span class='id identifier rubyid_source_info'>source_info</span><span class='period'>.</span><span class='id identifier rubyid_context_directory'>context_directory</span>
@@ -2407,12 +2407,12 @@ such information as the name, but it should not be altered.</p>
       <pre class="lines">
 
 
-1599
-1600
-1601</pre>
+1605
+1606
+1607</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1599</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1605</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_current_tool'>current_tool</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -2499,15 +2499,15 @@ string possibly delimited by path separators.</p>
       <pre class="lines">
 
 
-382
-383
-384
-385
-386
-387</pre>
+388
+389
+390
+391
+392
+393</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 382</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 388</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_delegate_to'>delegate_to</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -2608,15 +2608,15 @@ sole element of a string array:</p>
       <pre class="lines">
 
 
-529
-530
-531
-532
-533
-534</pre>
+535
+536
+537
+538
+539
+540</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 529</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 535</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_desc'>desc</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -2672,13 +2672,13 @@ declare arguments or flags.</p>
       <pre class="lines">
 
 
-1323
-1324
-1325
-1326</pre>
+1329
+1330
+1331
+1332</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1323</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1329</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_disable_argument_parsing'>disable_argument_parsing</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_disable_argument_parsing'>disable_argument_parsing</span>
@@ -2762,13 +2762,13 @@ and <code>--quiet</code>.)</p>
       <pre class="lines">
 
 
-1349
-1350
-1351
-1352</pre>
+1355
+1356
+1357
+1358</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1349</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1355</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_disable_flag'>disable_flag</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_flags'>flags</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_disable_flag'>disable_flag</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_flags'>flags</span><span class='rparen'>)</span>
@@ -2839,13 +2839,13 @@ off by passsing <code>false</code> as the parameter.</p>
       <pre class="lines">
 
 
-1292
-1293
-1294
-1295</pre>
+1298
+1299
+1300
+1301</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1292</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1298</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_enforce_flags_before_args'>enforce_flags_before_args</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_enforce_flags_before_args'>enforce_flags_before_args</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span><span class='rparen'>)</span>
@@ -3028,14 +3028,14 @@ for the directives that can be called in this block.</p>
       <pre class="lines">
 
 
-799
-800
-801
-802
-803</pre>
+805
+806
+807
+808
+809</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 799</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 805</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_exactly_one'>exactly_one</span><span class='lparen'>(</span><span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span>
                 <span class='label'>prepend:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -3158,12 +3158,6 @@ class or a well-known name.</p>
       <pre class="lines">
 
 
-477
-478
-479
-480
-481
-482
 483
 484
 485
@@ -3175,10 +3169,16 @@ class or a well-known name.</p>
 491
 492
 493
-494</pre>
+494
+495
+496
+497
+498
+499
+500</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 477</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 483</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_expand'>expand</span><span class='lparen'>(</span><span class='id identifier rubyid_template_class'>template_class</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_kwargs'>kwargs</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -3314,12 +3314,12 @@ Default is <code>nil</code>, indicating any type.</p>
       <pre class="lines">
 
 
-1576
-1577
-1578</pre>
+1582
+1583
+1584</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1576</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1582</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_find_data'>find_data</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>type:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_source_info'>source_info</span><span class='period'>.</span><span class='id identifier rubyid_find_data'>find_data</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>type:</span> <span class='id identifier rubyid_type'>type</span><span class='rparen'>)</span>
@@ -3739,12 +3739,6 @@ directives that can be called in this block.</p>
       <pre class="lines">
 
 
-973
-974
-975
-976
-977
-978
 979
 980
 981
@@ -3755,10 +3749,16 @@ directives that can be called in this block.</p>
 986
 987
 988
-989</pre>
+989
+990
+991
+992
+993
+994
+995</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 973</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 979</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag'>flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_flags'>flags</span><span class='comma'>,</span>
          <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>handler:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -3968,20 +3968,20 @@ for the directives that can be called in this block.</p>
       <pre class="lines">
 
 
-621
-622
-623
-624
-625
-626
 627
 628
 629
 630
-631</pre>
+631
+632
+633
+634
+635
+636
+637</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 621</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 627</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_flag_group'>flag_group</span><span class='lparen'>(</span><span class='label'>type:</span> <span class='symbol'>:optional</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
                <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>prepend:</span> <span class='kw'>false</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
@@ -4107,16 +4107,16 @@ magic.</p>
       <pre class="lines">
 
 
-1513
-1514
-1515
-1516
-1517
-1518
-1519</pre>
+1519
+1520
+1521
+1522
+1523
+1524
+1525</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1513</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1519</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_include'>include</span><span class='lparen'>(</span><span class='id identifier rubyid_mixin'>mixin</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_kwargs'>kwargs</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -4208,14 +4208,14 @@ of a well-known mixin.</p>
       <pre class="lines">
 
 
-1533
-1534
-1535
-1536
-1537</pre>
+1539
+1540
+1541
+1542
+1543</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1533</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1539</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_mod'>mod</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -4303,19 +4303,19 @@ configuration will be loaded into the current namespace.</p>
       <pre class="lines">
 
 
-399
-400
-401
-402
-403
-404
 405
 406
 407
-408</pre>
+408
+409
+410
+411
+412
+413
+414</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 399</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 405</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_load'>load</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>as:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_as'>as</span>
@@ -4479,12 +4479,6 @@ names, are up to date. Default is false.</p>
       <pre class="lines">
 
 
-428
-429
-430
-431
-432
-433
 434
 435
 436
@@ -4494,10 +4488,16 @@ names, are up to date. Default is false.</p>
 440
 441
 442
-443</pre>
+443
+444
+445
+446
+447
+448
+449</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 428</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 434</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_load_git'>load_git</span><span class='lparen'>(</span><span class='label'>remote:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>path:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>commit:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>as:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>update:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='kw'>if</span> <span class='id identifier rubyid_as'>as</span>
@@ -4628,12 +4628,6 @@ file. The file must be a plain text file whose suffix is <code>.txt</code>.</p>
       <pre class="lines">
 
 
-565
-566
-567
-568
-569
-570
 571
 572
 573
@@ -4643,10 +4637,16 @@ file. The file must be a plain text file whose suffix is <code>.txt</code>.</p>
 577
 578
 579
-580</pre>
+580
+581
+582
+583
+584
+585
+586</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 565</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 571</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_long_desc'>long_desc</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_strs'>strs</span><span class='comma'>,</span> <span class='label'>file:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>data:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -4789,14 +4789,14 @@ mixin within the block.</p>
       <pre class="lines">
 
 
-146
-147
-148
-149
-150</pre>
+152
+153
+154
+155
+156</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 146</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 152</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_mixin'>mixin</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_mixin_module'>mixin_module</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -4899,15 +4899,15 @@ name. Pass nil to disable interrupt handling.</p>
       <pre class="lines">
 
 
-1446
-1447
-1448
-1449
-1450
-1451</pre>
+1452
+1453
+1454
+1455
+1456
+1457</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1446</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1452</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_on_interrupt'>on_interrupt</span><span class='lparen'>(</span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -5013,15 +5013,15 @@ name. Pass nil to disable interrupt handling.</p>
       <pre class="lines">
 
 
-1478
-1479
-1480
-1481
-1482
-1483</pre>
+1484
+1485
+1486
+1487
+1488
+1489</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1478</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1484</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_on_usage_error'>on_usage_error</span><span class='lparen'>(</span><span class='id identifier rubyid_handler'>handler</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -5257,21 +5257,21 @@ this block.</p>
       <pre class="lines">
 
 
-1116
-1117
-1118
-1119
-1120
-1121
 1122
 1123
 1124
 1125
 1126
-1127</pre>
+1127
+1128
+1129
+1130
+1131
+1132
+1133</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1116</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1122</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_optional_arg'>optional_arg</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span>
                  <span class='label'>default:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -5513,21 +5513,21 @@ this block.</p>
       <pre class="lines">
 
 
-1188
-1189
-1190
-1191
-1192
-1193
 1194
 1195
 1196
 1197
 1198
-1199</pre>
+1199
+1200
+1201
+1202
+1203
+1204
+1205</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1188</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1194</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_remaining_args'>remaining_args</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span>
                    <span class='label'>default:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -5606,13 +5606,13 @@ off by passsing <code>false</code> as the parameter.</p>
       <pre class="lines">
 
 
-1308
-1309
-1310
-1311</pre>
+1314
+1315
+1316
+1317</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1308</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1314</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_require_exact_flag_match'>require_exact_flag_match</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_require_exact_flag_match'>require_exact_flag_match</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span><span class='rparen'>)</span>
@@ -5825,21 +5825,21 @@ this block.</p>
       <pre class="lines">
 
 
-1044
-1045
-1046
-1047
-1048
-1049
 1050
 1051
 1052
 1053
 1054
-1055</pre>
+1055
+1056
+1057
+1058
+1059
+1060
+1061</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1044</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1050</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_required_arg'>required_arg</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span>
                  <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
@@ -6014,19 +6014,19 @@ the execution context.</p>
       <pre class="lines">
 
 
-1270
-1271
-1272
-1273
-1274
-1275
 1276
 1277
 1278
-1279</pre>
+1279
+1280
+1281
+1282
+1283
+1284
+1285</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1270</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1276</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -6100,15 +6100,15 @@ the execution context.</p>
       <pre class="lines">
 
 
-1609
-1610
-1611
-1612
-1613
-1614</pre>
+1615
+1616
+1617
+1618
+1619
+1620</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1609</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1615</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_set_context_directory'>set_context_directory</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='rparen'>)</span> <span class='comment'># rubocop:disable Naming/AccessorMethodName
 </span>  <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -6163,12 +6163,12 @@ the execution context.</p>
       <pre class="lines">
 
 
-1678
-1679
-1680</pre>
+1684
+1685
+1686</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1678</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1684</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_settings'>settings</span>
   <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_settings'>settings</span>
@@ -6220,12 +6220,12 @@ the execution context.</p>
       <pre class="lines">
 
 
-1544
-1545
-1546</pre>
+1550
+1551
+1552</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1544</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1550</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_source_info'>source_info</span>
   <span class='ivar'>@__source</span><span class='period'>.</span><span class='id identifier rubyid_last'>last</span>
@@ -6396,12 +6396,6 @@ the execution context.</p>
       <pre class="lines">
 
 
-1231
-1232
-1233
-1234
-1235
-1236
 1237
 1238
 1239
@@ -6409,10 +6403,16 @@ the execution context.</p>
 1241
 1242
 1243
-1244</pre>
+1244
+1245
+1246
+1247
+1248
+1249
+1250</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1231</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1237</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_static'>static</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -6488,16 +6488,16 @@ directive in every tool.</p>
       <pre class="lines">
 
 
-1648
-1649
-1650
-1651
-1652
-1653
-1654</pre>
+1654
+1655
+1656
+1657
+1658
+1659
+1660</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1648</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1654</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_subtool_apply'>subtool_apply</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -6642,15 +6642,15 @@ mixin within the block.</p>
       <pre class="lines">
 
 
-201
-202
-203
-204
-205
-206</pre>
+207
+208
+209
+210
+211
+212</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 201</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 207</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_template'>template</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_template_class'>template_class</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span>
@@ -6740,15 +6740,15 @@ in the lexical scope. However, it is often more convenient to use
       <pre class="lines">
 
 
-1415
-1416
-1417
-1418
-1419
-1420</pre>
+1421
+1422
+1423
+1424
+1425
+1426</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1415</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1421</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_to_run'>to_run</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_cur_tool'>cur_tool</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../DSL.html" title="Toys::DSL (module)">DSL</a></span></span><span class='op'>::</span><span class='const'>Internal</span><span class='period'>.</span><span class='id identifier rubyid_current_tool'>current_tool</span><span class='lparen'>(</span><span class='kw'>self</span><span class='comma'>,</span> <span class='kw'>true</span><span class='rparen'>)</span>
@@ -6904,12 +6904,6 @@ delimited by path separators.</p>
       <pre class="lines">
 
 
-300
-301
-302
-303
-304
-305
 306
 307
 308
@@ -6929,10 +6923,16 @@ delimited by path separators.</p>
 322
 323
 324
-325</pre>
+325
+326
+327
+328
+329
+330
+331</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 300</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 306</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_tool'>tool</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='comma'>,</span> <span class='label'>if_defined:</span> <span class='symbol'>:combine</span><span class='comma'>,</span> <span class='label'>delegate_to:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_subtool_words'>subtool_words</span> <span class='op'>=</span> <span class='ivar'>@__words</span><span class='period'>.</span><span class='id identifier rubyid_dup'>dup</span>
@@ -7022,19 +7022,19 @@ satisfy the requirements.</p>
       <pre class="lines">
 
 
-1704
-1705
-1706
-1707
-1708
-1709
 1710
 1711
 1712
-1713</pre>
+1713
+1714
+1715
+1716
+1717
+1718
+1719</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1704</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1710</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_toys_version!'>toys_version!</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rubygems</span><span class='tstring_end'>&quot;</span></span>
@@ -7094,15 +7094,15 @@ requirements.</p>
       <pre class="lines">
 
 
-1688
-1689
-1690
-1691
-1692
-1693</pre>
+1694
+1695
+1696
+1697
+1698
+1699</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1688</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1694</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_toys_version?'>toys_version?</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rubygems</span><span class='tstring_end'>&quot;</span></span>
@@ -7162,15 +7162,15 @@ already been loaded.</p>
       <pre class="lines">
 
 
-1666
-1667
-1668
-1669
-1670
-1671</pre>
+1672
+1673
+1674
+1675
+1676
+1677</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1666</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/dsl/tool.rb', line 1672</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_truncate_load_path!'>truncate_load_path!</span>
   <span class='kw'>unless</span> <span class='ivar'>@__loader</span><span class='period'>.</span><span class='id identifier rubyid_stop_loading_at_priority'>stop_loading_at_priority</span><span class='lparen'>(</span><span class='ivar'>@__priority</span><span class='rparen'>)</span>
@@ -7188,7 +7188,7 @@ already been loaded.</p>
 </div>
 
       <div id="footer">
-  Generated on Sun Feb  6 19:23:40 2022 by
+  Generated on Sun Feb  6 19:25:41 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-3.1.0).
 </div>

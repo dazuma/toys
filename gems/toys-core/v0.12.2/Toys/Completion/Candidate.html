@@ -342,13 +342,13 @@ to <code>false</code>.</p>
       <pre class="lines">
 
 
+150
+151
 152
-153
-154
-155</pre>
+153</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 152</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 150</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='id identifier rubyid_string'>string</span><span class='comma'>,</span> <span class='label'>partial:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@string</span> <span class='op'>=</span> <span class='id identifier rubyid_string'>string</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span>
@@ -408,12 +408,12 @@ to <code>false</code>.</p>
       <pre class="lines">
 
 
-161
-162
-163</pre>
+159
+160
+161</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 161</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 159</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_string'>string</span>
   <span class='ivar'>@string</span>
@@ -487,12 +487,12 @@ to <code>false</code>.</p>
       <pre class="lines">
 
 
-207
-208
-209</pre>
+199
+200
+201</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 207</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 199</span>
 
 <span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_new_multi'>new_multi</span><span class='lparen'>(</span><span class='id identifier rubyid_array'>array</span><span class='comma'>,</span> <span class='label'>partial:</span> <span class='kw'>false</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_array'>array</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='comma'>,</span> <span class='label'>partial:</span> <span class='id identifier rubyid_partial'>partial</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
@@ -546,12 +546,12 @@ to <code>false</code>.</p>
       <pre class="lines">
 
 
-176
-177
-178</pre>
+174
+175
+176</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 176</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 174</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_final?'>final?</span>
   <span class='op'>!</span><span class='ivar'>@partial</span>
@@ -599,12 +599,12 @@ to <code>false</code>.</p>
       <pre class="lines">
 
 
-168
-169
-170</pre>
+166
+167
+168</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 168</span>
+      <pre class="code"><span class="info file"># File 'lib/toys/completion.rb', line 166</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_partial?'>partial?</span>
   <span class='ivar'>@partial</span>
@@ -619,7 +619,7 @@ to <code>false</code>.</p>
 </div>
 
       <div id="footer">
-  Generated on Sun Feb  6 19:23:42 2022 by
+  Generated on Sun Feb  6 19:25:43 2022 by
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.27 (ruby-3.1.0).
 </div>
