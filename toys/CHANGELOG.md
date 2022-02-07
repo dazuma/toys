@@ -1,5 +1,15 @@
 # Release History
 
+### v0.13.0 / 2022-02-07
+
+* ADDED: Significant GitCache updates
+* ADDED: Support fallback_to_separate option in Toys::Testing helper methods
+* ADDED: Add system git-cache tool
+* ADDED: Provide a mechanism to test individual tool methods
+* FIXED: Support for TruffleRuby
+* DOCS: Updates to the readme and user guide
+* DOCS: Add toys-core docs to the toys gem
+
 ### v0.12.2 / 2021-08-30
 
 * FIXED: Tool context inspect string is no longer overwhelmingly long
