@@ -229,20 +229,6 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      on_initialize do |**opts|
-        require "toys/utils/exec"
-        context = self
-        opts = Exec._setup_exec_opts(opts, context)
-        context[KEY] = Utils::Exec.new(**opts) do |k|
-          case k
-          when :logger
-            context[Context::Key::LOGGER]
-          when :cli
-            context[Context::Key::CLI]
-          end
-        end
-      end
-
       ##
       # Set default configuration options.
       #
@@ -676,13 +662,17 @@ module Toys
         0
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self._make_tool_caller(cmd)
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
         proc { |config| ::Kernel.exit(config[:cli].run(*cmd)) }
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self._setup_exec_opts(opts, context)
         count = 0
         result_callback = nil
@@ -705,7 +695,9 @@ module Toys
         opts
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self._interpret_e(value, context)
         return nil unless value
         proc do |result|
@@ -719,7 +711,9 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self._interpret_result_callback(value, context)
         if value.is_a?(::Symbol)
           context.method(value)
@@ -732,7 +726,9 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def self._setup_clean_process(cmd)
         raise ::ArgumentError, "Toys process is unknown" unless ::Toys.executable_path
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
@@ -745,6 +741,20 @@ module Toys
           end
         else
           yield(cmd)
+        end
+      end
+
+      on_initialize do |**opts|
+        require "toys/utils/exec"
+        context = self
+        opts = Exec._setup_exec_opts(opts, context)
+        context[KEY] = Utils::Exec.new(**opts) do |k|
+          case k
+          when :logger
+            context[Context::Key::LOGGER]
+          when :cli
+            context[Context::Key::CLI]
+          end
         end
       end
     end

@@ -25,6 +25,7 @@ require "toys/version"
 
   spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
                ::Dir.glob("*.md") + ::Dir.glob("docs/*.md") +
+               ::Dir.glob("core-docs/**/*.rb") +
                ::Dir.glob("bin/*") + ::Dir.glob("share/*") + [".yardopts"]
   spec.required_ruby_version = ">= 2.4.0"
   spec.require_paths = ["lib"]

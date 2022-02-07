@@ -326,67 +326,122 @@ module Toys
         self
       end
 
+      ##
       # @private
+      #
       attr_reader :generate_output
+
+      ##
       # @private
+      #
       attr_reader :generate_output_flag
+
+      ##
       # @private
+      #
       attr_reader :fail_on_warning
+
+      ##
       # @private
+      #
       attr_reader :fail_on_undocumented_objects
+
+      ##
       # @private
+      #
       attr_reader :show_public
+
+      ##
       # @private
+      #
       attr_reader :show_protected
+
+      ##
       # @private
+      #
       attr_reader :show_private
+
+      ##
       # @private
+      #
       attr_reader :hide_private_tag
+
+      ##
       # @private
+      #
       attr_reader :readme
+
+      ##
       # @private
+      #
       attr_reader :markup
+
+      ##
       # @private
+      #
       attr_reader :template
+
+      ##
       # @private
+      #
       attr_reader :template_path
+
+      ##
       # @private
+      #
       attr_reader :format
+
+      ##
       # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
 
+      ##
       # @private
+      #
       def gem_version
         return Array(@gem_version) if @gem_version
         @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
       end
 
+      ##
       # @private
+      #
       def files
         @files ? Array(@files) : DEFAULT_FILES
       end
 
+      ##
       # @private
+      #
       def output_dir
         @output_dir || DEFAULT_OUTPUT_DIR
       end
 
+      ##
       # @private
+      #
       def options
         Array(@options)
       end
 
+      ##
       # @private
+      #
       def stats_options
         Array(@stats_options)
       end
 
+      ##
       # @private
+      #
       def bundler_settings
         if @bundler && !@bundler.is_a?(::Hash)
           {}

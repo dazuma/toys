@@ -1,7 +1,8 @@
 repo: dazuma/toys
 git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
-docs_builder_tool: [yardoc-full]
+pre_builder_tool: [copy-core-docs]
+docs_builder_tool: [yardoc]
 coordinate_versions: true
 commit_lint:
   fail_checks: true

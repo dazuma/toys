@@ -22,16 +22,6 @@ module Toys
     #     end
     #
     class PositionalArg
-      ## @private
-      def initialize(acceptor, default, completion, display_name, desc, long_desc)
-        @default = default
-        @display_name = display_name
-        @desc = desc
-        @long_desc = long_desc || []
-        accept(acceptor, **{})
-        complete(completion, **{})
-      end
-
       ##
       # Set the acceptor for this argument's values.
       # You can pass either the string name of an acceptor defined in this tool
@@ -151,21 +141,41 @@ module Toys
         self
       end
 
-      ## @private
+      ##
+      # Called only from DSL::Tool
+      #
+      # @private
+      #
+      def initialize(acceptor, default, completion, display_name, desc, long_desc)
+        @default = default
+        @display_name = display_name
+        @desc = desc
+        @long_desc = long_desc || []
+        accept(acceptor, **{})
+        complete(completion, **{})
+      end
+
+      ##
+      # @private
+      #
       def _add_required_to(tool, key)
         tool.add_required_arg(key,
                               accept: @acceptor, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def _add_optional_to(tool, key)
         tool.add_optional_arg(key,
                               accept: @acceptor, default: @default, complete: @completion,
                               display_name: @display_name, desc: @desc, long_desc: @long_desc)
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def _set_remaining_on(tool, key)
         tool.set_remaining_args(key,
                                 accept: @acceptor, default: @default, complete: @completion,

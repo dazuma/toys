@@ -75,7 +75,9 @@ module Toys
   #     end
   #
   class Tool < Context
+    ##
     # @private
+    #
     def self.inherited(tool_class)
       DSL::Internal.configure_class(tool_class)
       super

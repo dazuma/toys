@@ -7,6 +7,367 @@ module Toys
   #
   class Flag
     ##
+    # Representation of a single flag.
+    #
+    class Syntax
+      # rubocop:disable Style/PerlBackrefs
+
+      ##
+      # Parse flag syntax
+      # @param str [String] syntax.
+      #
+      def initialize(str)
+        case str
+        when /\A(-([?\w]))\z/
+          setup(str, $1, nil, $1, $2, :short, nil, nil, nil, nil)
+        when /\A(-([?\w]))(?:( ?)\[|\[( ))(\w+)\]\z/
+          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3 || $4, $5)
+        when /\A(-([?\w]))( ?)(\w+)\z/
+          setup(str, $1, nil, $1, $2, :short, :value, :required, $3, $4)
+        when /\A--\[no-\](\w[?\w-]*)\z/
+          setup(str, "--#{$1}", "--no-#{$1}", str, $1, :long, :boolean, nil, nil, nil)
+        when /\A(--(\w[?\w-]*))\z/
+          setup(str, $1, nil, $1, $2, :long, nil, nil, nil, nil)
+        when /\A(--(\w[?\w-]*))(?:([= ])\[|\[([= ]))(\w+)\]\z/
+          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3 || $4, $5)
+        when /\A(--(\w[?\w-]*))([= ])(\w+)\z/
+          setup(str, $1, nil, $1, $2, :long, :value, :required, $3, $4)
+        else
+          raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
+        end
+      end
+
+      # rubocop:enable Style/PerlBackrefs
+
+      ##
+      # The original string that was parsed to produce this syntax.
+      # @return [String]
+      #
+      attr_reader :original_str
+
+      ##
+      # The flags (without values) corresponding to this syntax.
+      # @return [Array<String>]
+      #
+      attr_reader :flags
+
+      ##
+      # The flag (without values) corresponding to the normal "positive" form
+      # of this flag.
+      # @return [String]
+      #
+      attr_reader :positive_flag
+
+      ##
+      # The flag (without values) corresponding to the "negative" form of this
+      # flag, if any. i.e. if the original string was `"--[no-]abc"`, the
+      # negative flag is `"--no-abc"`.
+      # @return [String] The negative form.
+      # @return [nil] if the flag has no negative form.
+      #
+      attr_reader :negative_flag
+
+      ##
+      # The original string with the value (if any) stripped, but retaining
+      # the `[no-]` prefix if present.
+      # @return [String]
+      #
+      attr_reader :str_without_value
+
+      ##
+      # A string used to sort this flag compared with others.
+      # @return [String]
+      #
+      attr_reader :sort_str
+
+      ##
+      # The style of flag (`:long` or `:short`).
+      # @return [:long] if this is a long flag (i.e. double hyphen)
+      # @return [:short] if this is a short flag (i.e. single hyphen with one
+      #     character).
+      #
+      attr_reader :flag_style
+
+      ##
+      # The type of flag (`:boolean` or `:value`)
+      # @return [:boolean] if this is a boolean flag (i.e. no value)
+      # @return [:value] if this flag takes a value (even if optional)
+      #
+      attr_reader :flag_type
+
+      ##
+      # The type of value (`:required` or `:optional`)
+      # @return [:required] if this flag takes a required value
+      # @return [:optional] if this flag takes an optional value
+      # @return [nil] if this flag is a boolean flag
+      #
+      attr_reader :value_type
+
+      ##
+      # The default delimiter used for the value of this flag. This could be
+      # `""` or `" "` for a short flag, or `" "` or `"="` for a long flag.
+      # @return [String] delimiter
+      # @return [nil] if this flag is a boolean flag
+      #
+      attr_reader :value_delim
+
+      ##
+      # The default "label" for the value. e.g. in `--abc=VAL` the label is
+      # `"VAL"`.
+      # @return [String] the label
+      # @return [nil] if this flag is a boolean flag
+      #
+      attr_reader :value_label
+
+      ##
+      # A canonical string representing this flag's syntax, normalized to match
+      # the type, delimiters, etc. settings of other flag syntaxes. This is
+      # generally used in help strings to represent this flag.
+      # @return [String]
+      #
+      attr_reader :canonical_str
+
+      ##
+      # @private
+      #
+      def configure_canonical(canonical_flag_type, canonical_value_type,
+                              canonical_value_label, canonical_value_delim)
+        return unless flag_type.nil?
+        @flag_type = canonical_flag_type
+        return unless canonical_flag_type == :value
+        @value_type = canonical_value_type
+        canonical_value_delim = "" if canonical_value_delim == "=" && flag_style == :short
+        canonical_value_delim = "=" if canonical_value_delim == "" && flag_style == :long
+        @value_delim = canonical_value_delim
+        @value_label = canonical_value_label
+        label = @value_type == :optional ? "[#{@value_label}]" : @value_label
+        @canonical_str = "#{str_without_value}#{@value_delim}#{label}"
+      end
+
+      private
+
+      def setup(original_str, positive_flag, negative_flag, str_without_value, sort_str,
+                flag_style, flag_type, value_type, value_delim, value_label)
+        @original_str = original_str
+        @positive_flag = positive_flag
+        @negative_flag = negative_flag
+        @flags = [positive_flag]
+        @flags << negative_flag if negative_flag
+        @str_without_value = str_without_value
+        @sort_str = sort_str
+        @flag_style = flag_style
+        @flag_type = flag_type
+        @value_type = value_type
+        @value_delim = value_delim
+        @value_label = value_label ? value_label.upcase : value_label
+        @canonical_str = original_str
+      end
+    end
+
+    ##
+    # The result of looking up a flag by name.
+    #
+    class Resolution
+      ##
+      # @private
+      #
+      def initialize(str)
+        @string = str
+        @flags = []
+        @found_exact = false
+      end
+
+      ##
+      # The flag string that was looked up
+      # @return [String]
+      #
+      attr_reader :string
+
+      ##
+      # Whether an exact match of the string was found
+      # @return [Boolean]
+      #
+      def found_exact?
+        @found_exact
+      end
+
+      ##
+      # The number of matches that were found.
+      # @return [Integer]
+      #
+      def count
+        @flags.size
+      end
+
+      ##
+      # Whether a single unique match was found.
+      # @return [Boolean]
+      #
+      def found_unique?
+        @flags.size == 1
+      end
+
+      ##
+      # Whether no matches were found.
+      # @return [Boolean]
+      #
+      def not_found?
+        @flags.empty?
+      end
+
+      ##
+      # Whether multiple matches were found (i.e. ambiguous input).
+      # @return [Boolean]
+      #
+      def found_multiple?
+        @flags.size > 1
+      end
+
+      ##
+      # Return the unique {Toys::Flag}, or `nil` if not found or
+      # not unique.
+      # @return [Toys::Flag,nil]
+      #
+      def unique_flag
+        found_unique? ? @flags.first[0] : nil
+      end
+
+      ##
+      # Return the unique {Toys::Flag::Syntax}, or `nil` if not found
+      # or not unique.
+      # @return [Toys::Flag::Syntax,nil]
+      #
+      def unique_flag_syntax
+        found_unique? ? @flags.first[1] : nil
+      end
+
+      ##
+      # Return whether the unique match was a hit on the negative (`--no-*`)
+      # case, or `nil` if not found or not unique.
+      # @return [Boolean,nil]
+      #
+      def unique_flag_negative?
+        found_unique? ? @flags.first[2] : nil
+      end
+
+      ##
+      # Returns an array of the matching full flag strings.
+      # @return [Array<String>]
+      #
+      def matching_flag_strings
+        @flags.map do |_flag, flag_syntax, negative|
+          negative ? flag_syntax.negative_flag : flag_syntax.positive_flag
+        end
+      end
+
+      ##
+      # @private
+      #
+      def add!(flag, flag_syntax, negative, exact)
+        @flags = [] if exact && !found_exact?
+        if exact || !found_exact?
+          @flags << [flag, flag_syntax, negative]
+          @found_exact = exact
+        end
+        self
+      end
+
+      ##
+      # @private
+      #
+      def merge!(other)
+        raise "String mismatch" unless string == other.string
+        other.instance_variable_get(:@flags).each do |flag, flag_syntax, negative|
+          add!(flag, flag_syntax, negative, other.found_exact?)
+        end
+        self
+      end
+    end
+
+    ##
+    # A Completion that returns all possible flags associated with a
+    # {Toys::Flag}.
+    #
+    class DefaultCompletion < Completion::Base
+      ##
+      # Create a completion given configuration options.
+      #
+      # @param flag [Toys::Flag] The flag definition.
+      # @param include_short [Boolean] Whether to include short flags.
+      # @param include_long [Boolean] Whether to include long flags.
+      # @param include_negative [Boolean] Whether to include `--no-*` forms.
+      #
+      def initialize(flag:, include_short: true, include_long: true, include_negative: true)
+        super()
+        @flag = flag
+        @include_short = include_short
+        @include_long = include_long
+        @include_negative = include_negative
+      end
+
+      ##
+      # Whether to include short flags
+      # @return [Boolean]
+      #
+      def include_short?
+        @include_short
+      end
+
+      ##
+      # Whether to include long flags
+      # @return [Boolean]
+      #
+      def include_long?
+        @include_long
+      end
+
+      ##
+      # Whether to include negative long flags
+      # @return [Boolean]
+      #
+      def include_negative?
+        @include_negative
+      end
+
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param context [Toys::Completion::Context] the current completion
+      #     context including the string fragment.
+      # @return [Array<Toys::Completion::Candidate>] an array of candidates
+      #
+      def call(context)
+        results =
+          if @include_short && @include_long && @include_negative
+            @flag.effective_flags
+          else
+            collect_results
+          end
+        fragment = context.fragment
+        results.find_all { |val| val.start_with?(fragment) }
+               .map { |str| Completion::Candidate.new(str) }
+      end
+
+      private
+
+      def collect_results
+        results = []
+        if @include_short
+          results += @flag.short_flag_syntax.map(&:positive_flag)
+        end
+        if @include_long
+          results +=
+            if @include_negative
+              @flag.long_flag_syntax.flat_map(&:flags)
+            else
+              @flag.long_flag_syntax.map(&:positive_flag)
+            end
+        end
+        results
+      end
+    end
+
+    ##
     # The set handler replaces the previous value.
     # @return [Proc]
     #
@@ -23,30 +384,6 @@ module Toys
     # @return [Proc]
     #
     DEFAULT_HANDLER = SET_HANDLER
-
-    ##
-    # Create a Flag definition.
-    # This argument list is subject to change. Use {Toys::Flag.create} instead
-    # for a more stable interface.
-    # @private
-    #
-    def initialize(key, flags, used_flags, report_collisions, acceptor, handler, default,
-                   flag_completion, value_completion, desc, long_desc, display_name, group)
-      @group = group
-      @key = key
-      @flag_syntax = Array(flags).map { |s| Syntax.new(s) }
-      @acceptor = Acceptor.create(acceptor)
-      @handler = resolve_handler(handler)
-      @desc = WrappableString.make(desc)
-      @long_desc = WrappableString.make_array(long_desc)
-      @default = default
-      @flag_completion = create_flag_completion(flag_completion)
-      @value_completion = Completion.create(value_completion, **{})
-      create_default_flag if @flag_syntax.empty?
-      remove_used_flags(used_flags, report_collisions)
-      canonicalize
-      summarize(display_name)
-    end
 
     ##
     # Create a flag definition.
@@ -334,6 +671,31 @@ module Toys
       self
     end
 
+    ##
+    # Create a Flag definition.
+    # This argument list is subject to change. Use {Toys::Flag.create} instead
+    # for a more stable interface.
+    #
+    # @private
+    #
+    def initialize(key, flags, used_flags, report_collisions, acceptor, handler, default,
+                   flag_completion, value_completion, desc, long_desc, display_name, group)
+      @group = group
+      @key = key
+      @flag_syntax = Array(flags).map { |s| Syntax.new(s) }
+      @acceptor = Acceptor.create(acceptor)
+      @handler = resolve_handler(handler)
+      @desc = WrappableString.make(desc)
+      @long_desc = WrappableString.make_array(long_desc)
+      @default = default
+      @flag_completion = create_flag_completion(flag_completion)
+      @value_completion = Completion.create(value_completion, **{})
+      create_default_flag if @flag_syntax.empty?
+      remove_used_flags(used_flags, report_collisions)
+      canonicalize
+      summarize(display_name)
+    end
+
     private
 
     def resolve_handler(handler)
@@ -441,359 +803,6 @@ module Toys
         long_flag_syntax.first&.sort_str ||
         short_flag_syntax.first&.sort_str ||
         ""
-    end
-
-    ##
-    # Representation of a single flag.
-    #
-    class Syntax
-      # rubocop:disable Style/PerlBackrefs
-
-      ##
-      # Parse flag syntax
-      # @param str [String] syntax.
-      #
-      def initialize(str)
-        case str
-        when /\A(-([?\w]))\z/
-          setup(str, $1, nil, $1, $2, :short, nil, nil, nil, nil)
-        when /\A(-([?\w]))(?:( ?)\[|\[( ))(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :short, :value, :optional, $3 || $4, $5)
-        when /\A(-([?\w]))( ?)(\w+)\z/
-          setup(str, $1, nil, $1, $2, :short, :value, :required, $3, $4)
-        when /\A--\[no-\](\w[?\w-]*)\z/
-          setup(str, "--#{$1}", "--no-#{$1}", str, $1, :long, :boolean, nil, nil, nil)
-        when /\A(--(\w[?\w-]*))\z/
-          setup(str, $1, nil, $1, $2, :long, nil, nil, nil, nil)
-        when /\A(--(\w[?\w-]*))(?:([= ])\[|\[([= ]))(\w+)\]\z/
-          setup(str, $1, nil, $1, $2, :long, :value, :optional, $3 || $4, $5)
-        when /\A(--(\w[?\w-]*))([= ])(\w+)\z/
-          setup(str, $1, nil, $1, $2, :long, :value, :required, $3, $4)
-        else
-          raise ToolDefinitionError, "Illegal flag: #{str.inspect}"
-        end
-      end
-
-      # rubocop:enable Style/PerlBackrefs
-
-      ##
-      # The original string that was parsed to produce this syntax.
-      # @return [String]
-      #
-      attr_reader :original_str
-
-      ##
-      # The flags (without values) corresponding to this syntax.
-      # @return [Array<String>]
-      #
-      attr_reader :flags
-
-      ##
-      # The flag (without values) corresponding to the normal "positive" form
-      # of this flag.
-      # @return [String]
-      #
-      attr_reader :positive_flag
-
-      ##
-      # The flag (without values) corresponding to the "negative" form of this
-      # flag, if any. i.e. if the original string was `"--[no-]abc"`, the
-      # negative flag is `"--no-abc"`.
-      # @return [String] The negative form.
-      # @return [nil] if the flag has no negative form.
-      #
-      attr_reader :negative_flag
-
-      ##
-      # The original string with the value (if any) stripped, but retaining
-      # the `[no-]` prefix if present.
-      # @return [String]
-      #
-      attr_reader :str_without_value
-
-      ##
-      # A string used to sort this flag compared with others.
-      # @return [String]
-      #
-      attr_reader :sort_str
-
-      ##
-      # The style of flag (`:long` or `:short`).
-      # @return [:long] if this is a long flag (i.e. double hyphen)
-      # @return [:short] if this is a short flag (i.e. single hyphen with one
-      #     character).
-      #
-      attr_reader :flag_style
-
-      ##
-      # The type of flag (`:boolean` or `:value`)
-      # @return [:boolean] if this is a boolean flag (i.e. no value)
-      # @return [:value] if this flag takes a value (even if optional)
-      #
-      attr_reader :flag_type
-
-      ##
-      # The type of value (`:required` or `:optional`)
-      # @return [:required] if this flag takes a required value
-      # @return [:optional] if this flag takes an optional value
-      # @return [nil] if this flag is a boolean flag
-      #
-      attr_reader :value_type
-
-      ##
-      # The default delimiter used for the value of this flag. This could be
-      # `""` or `" "` for a short flag, or `" "` or `"="` for a long flag.
-      # @return [String] delimiter
-      # @return [nil] if this flag is a boolean flag
-      #
-      attr_reader :value_delim
-
-      ##
-      # The default "label" for the value. e.g. in `--abc=VAL` the label is
-      # `"VAL"`.
-      # @return [String] the label
-      # @return [nil] if this flag is a boolean flag
-      #
-      attr_reader :value_label
-
-      ##
-      # A canonical string representing this flag's syntax, normalized to match
-      # the type, delimiters, etc. settings of other flag syntaxes. This is
-      # generally used in help strings to represent this flag.
-      # @return [String]
-      #
-      attr_reader :canonical_str
-
-      ## @private
-      def configure_canonical(canonical_flag_type, canonical_value_type,
-                              canonical_value_label, canonical_value_delim)
-        return unless flag_type.nil?
-        @flag_type = canonical_flag_type
-        return unless canonical_flag_type == :value
-        @value_type = canonical_value_type
-        canonical_value_delim = "" if canonical_value_delim == "=" && flag_style == :short
-        canonical_value_delim = "=" if canonical_value_delim == "" && flag_style == :long
-        @value_delim = canonical_value_delim
-        @value_label = canonical_value_label
-        label = @value_type == :optional ? "[#{@value_label}]" : @value_label
-        @canonical_str = "#{str_without_value}#{@value_delim}#{label}"
-      end
-
-      private
-
-      def setup(original_str, positive_flag, negative_flag, str_without_value, sort_str,
-                flag_style, flag_type, value_type, value_delim, value_label)
-        @original_str = original_str
-        @positive_flag = positive_flag
-        @negative_flag = negative_flag
-        @flags = [positive_flag]
-        @flags << negative_flag if negative_flag
-        @str_without_value = str_without_value
-        @sort_str = sort_str
-        @flag_style = flag_style
-        @flag_type = flag_type
-        @value_type = value_type
-        @value_delim = value_delim
-        @value_label = value_label ? value_label.upcase : value_label
-        @canonical_str = original_str
-      end
-    end
-
-    ##
-    # The result of looking up a flag by name.
-    #
-    class Resolution
-      ## @private
-      def initialize(str)
-        @string = str
-        @flags = []
-        @found_exact = false
-      end
-
-      ##
-      # The flag string that was looked up
-      # @return [String]
-      #
-      attr_reader :string
-
-      ##
-      # Whether an exact match of the string was found
-      # @return [Boolean]
-      #
-      def found_exact?
-        @found_exact
-      end
-
-      ##
-      # The number of matches that were found.
-      # @return [Integer]
-      #
-      def count
-        @flags.size
-      end
-
-      ##
-      # Whether a single unique match was found.
-      # @return [Boolean]
-      #
-      def found_unique?
-        @flags.size == 1
-      end
-
-      ##
-      # Whether no matches were found.
-      # @return [Boolean]
-      #
-      def not_found?
-        @flags.empty?
-      end
-
-      ##
-      # Whether multiple matches were found (i.e. ambiguous input).
-      # @return [Boolean]
-      #
-      def found_multiple?
-        @flags.size > 1
-      end
-
-      ##
-      # Return the unique {Toys::Flag}, or `nil` if not found or
-      # not unique.
-      # @return [Toys::Flag,nil]
-      #
-      def unique_flag
-        found_unique? ? @flags.first[0] : nil
-      end
-
-      ##
-      # Return the unique {Toys::Flag::Syntax}, or `nil` if not found
-      # or not unique.
-      # @return [Toys::Flag::Syntax,nil]
-      #
-      def unique_flag_syntax
-        found_unique? ? @flags.first[1] : nil
-      end
-
-      ##
-      # Return whether the unique match was a hit on the negative (`--no-*`)
-      # case, or `nil` if not found or not unique.
-      # @return [Boolean,nil]
-      #
-      def unique_flag_negative?
-        found_unique? ? @flags.first[2] : nil
-      end
-
-      ##
-      # Returns an array of the matching full flag strings.
-      # @return [Array<String>]
-      #
-      def matching_flag_strings
-        @flags.map do |_flag, flag_syntax, negative|
-          negative ? flag_syntax.negative_flag : flag_syntax.positive_flag
-        end
-      end
-
-      ## @private
-      def add!(flag, flag_syntax, negative, exact)
-        @flags = [] if exact && !found_exact?
-        if exact || !found_exact?
-          @flags << [flag, flag_syntax, negative]
-          @found_exact = exact
-        end
-        self
-      end
-
-      ## @private
-      def merge!(other)
-        raise "String mismatch" unless string == other.string
-        other.instance_variable_get(:@flags).each do |flag, flag_syntax, negative|
-          add!(flag, flag_syntax, negative, other.found_exact?)
-        end
-        self
-      end
-    end
-
-    ##
-    # A Completion that returns all possible flags associated with a
-    # {Toys::Flag}.
-    #
-    class DefaultCompletion < Completion::Base
-      ##
-      # Create a completion given configuration options.
-      #
-      # @param flag [Toys::Flag] The flag definition.
-      # @param include_short [Boolean] Whether to include short flags.
-      # @param include_long [Boolean] Whether to include long flags.
-      # @param include_negative [Boolean] Whether to include `--no-*` forms.
-      #
-      def initialize(flag:, include_short: true, include_long: true, include_negative: true)
-        super()
-        @flag = flag
-        @include_short = include_short
-        @include_long = include_long
-        @include_negative = include_negative
-      end
-
-      ##
-      # Whether to include short flags
-      # @return [Boolean]
-      #
-      def include_short?
-        @include_short
-      end
-
-      ##
-      # Whether to include long flags
-      # @return [Boolean]
-      #
-      def include_long?
-        @include_long
-      end
-
-      ##
-      # Whether to include negative long flags
-      # @return [Boolean]
-      #
-      def include_negative?
-        @include_negative
-      end
-
-      ##
-      # Returns candidates for the current completion.
-      #
-      # @param context [Toys::Completion::Context] the current completion
-      #     context including the string fragment.
-      # @return [Array<Toys::Completion::Candidate>] an array of candidates
-      #
-      def call(context)
-        results =
-          if @include_short && @include_long && @include_negative
-            @flag.effective_flags
-          else
-            collect_results
-          end
-        fragment = context.fragment
-        results.find_all { |val| val.start_with?(fragment) }
-               .map { |str| Completion::Candidate.new(str) }
-      end
-
-      private
-
-      def collect_results
-        results = []
-        if @include_short
-          results += @flag.short_flag_syntax.map(&:positive_flag)
-        end
-        if @include_long
-          results +=
-            if @include_negative
-              @flag.long_flag_syntax.flat_map(&:flags)
-            else
-              @flag.long_flag_syntax.map(&:positive_flag)
-            end
-        end
-        results
-      end
     end
   end
 end

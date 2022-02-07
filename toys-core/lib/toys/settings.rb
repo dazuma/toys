@@ -299,26 +299,16 @@ module Toys
   #     grandchild_settings.str        # => "value_from_root"
   #
   class Settings
+    # A special value indicating a type check failure.
+    ILLEGAL_VALUE = ::Object.new.freeze
+
+    # A special type specification indicating infer from the default value.
+    DEFAULT_TYPE = ::Object.new.freeze
+
     ##
     # Error raised when a value does not match the type constraint.
     #
     class FieldError < ::StandardError
-      # @private
-      def initialize(value, settings_class, field_name, type_description)
-        @value = value
-        @settings_class = settings_class
-        @field_name = field_name
-        @type_description = type_description
-        message = "unable to set #{settings_class}##{field_name}"
-        message =
-          if type_description
-            "#{message}: value #{value.inspect} does not match type #{type_description}"
-          else
-            "#{message}: field does not exist"
-          end
-        super(message)
-      end
-
       ##
       # The value that did not match
       # @return [Object]
@@ -342,13 +332,25 @@ module Toys
       # @return [String, nil]
       #
       attr_reader :type_description
+
+      ##
+      # @private
+      #
+      def initialize(value, settings_class, field_name, type_description)
+        @value = value
+        @settings_class = settings_class
+        @field_name = field_name
+        @type_description = type_description
+        message = "unable to set #{settings_class}##{field_name}"
+        message =
+          if type_description
+            "#{message}: value #{value.inspect} does not match type #{type_description}"
+          else
+            "#{message}: field does not exist"
+          end
+        super(message)
+      end
     end
-
-    # A special value indicating a type check failure.
-    ILLEGAL_VALUE = ::Object.new.freeze
-
-    # A special type specification indicating infer from the default value.
-    DEFAULT_TYPE = ::Object.new.freeze
 
     ##
     # A type object that checks values.
@@ -558,7 +560,9 @@ module Toys
         end
       end
 
+      ##
       # @private
+      #
       CONVERTERS = {
         ::Date => date_converter,
         ::DateTime => datetime_converter,
@@ -568,51 +572,6 @@ module Toys
         ::Symbol => symbol_converter,
         ::Time => time_converter,
       }.freeze
-    end
-
-    # @private
-    SETTINGS_TYPE = Type.new("(settings object)") do |val|
-      val.nil? || val.is_a?(Settings) ? val : ILLEGAL_VALUE
-    end
-
-    # @private
-    class Field
-      def initialize(container, name, type_spec, default_or_group_class)
-        @container = container
-        @name = name
-        if type_spec == SETTINGS_TYPE
-          @default = nil
-          @group_class = default_or_group_class
-          @type = type_spec
-        else
-          @group_class = nil
-          if type_spec == DEFAULT_TYPE
-            @default = default_or_group_class
-            @type = Type.for_default_value(@default)
-          else
-            @type = Type.for_type_spec(type_spec)
-            @default = validate(default_or_group_class)
-          end
-        end
-      end
-
-      attr_reader :container
-      attr_reader :name
-      attr_reader :type
-      attr_reader :default
-      attr_reader :group_class
-
-      def group?
-        !@group_class.nil?
-      end
-
-      def validate(value)
-        validated_value = @type.call(value)
-        if validated_value == ILLEGAL_VALUE
-          raise FieldError.new(value, container, name, @type.description)
-        end
-        validated_value
-      end
     end
 
     ##
@@ -716,6 +675,7 @@ module Toys
 
     ##
     # @private
+    #
     # Internal get field value, with fallback to parents.
     #
     def get!(field)
@@ -743,6 +703,7 @@ module Toys
 
     ##
     # @private
+    #
     # Internal set field value, with validation.
     #
     def set!(field, value)
@@ -754,6 +715,7 @@ module Toys
 
     ##
     # @private
+    #
     # Internal determine if the field is set locally.
     #
     def set?(field)
@@ -764,11 +726,61 @@ module Toys
 
     ##
     # @private
+    #
     # Internal unset field value.
     #
     def unset!(field)
       @mutex.synchronize do
         @values.delete(field.name)
+      end
+    end
+
+    ##
+    # @private
+    #
+    SETTINGS_TYPE = Type.new("(settings object)") do |val|
+      val.nil? || val.is_a?(Settings) ? val : ILLEGAL_VALUE
+    end
+
+    ##
+    # @private
+    #
+    class Field
+      def initialize(container, name, type_spec, default_or_group_class)
+        @container = container
+        @name = name
+        if type_spec == SETTINGS_TYPE
+          @default = nil
+          @group_class = default_or_group_class
+          @type = type_spec
+        else
+          @group_class = nil
+          if type_spec == DEFAULT_TYPE
+            @default = default_or_group_class
+            @type = Type.for_default_value(@default)
+          else
+            @type = Type.for_type_spec(type_spec)
+            @default = validate(default_or_group_class)
+          end
+        end
+      end
+
+      attr_reader :container
+      attr_reader :name
+      attr_reader :type
+      attr_reader :default
+      attr_reader :group_class
+
+      def group?
+        !@group_class.nil?
+      end
+
+      def validate(value)
+        validated_value = @type.call(value)
+        if validated_value == ILLEGAL_VALUE
+          raise FieldError.new(value, container, name, @type.description)
+        end
+        validated_value
       end
     end
 
@@ -824,6 +836,7 @@ module Toys
 
       ##
       # @private
+      #
       # Returns the fields hash. This is shared between the settings class and
       # all its instances.
       #
@@ -833,6 +846,7 @@ module Toys
 
       ##
       # @private
+      #
       # When this base class is inherited, if its enclosing module is also a
       # Settings, add the new class as a group in the enclosing class.
       #

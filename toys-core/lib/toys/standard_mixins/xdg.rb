@@ -33,11 +33,6 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      on_initialize do
-        require "toys/utils/xdg"
-        self[KEY] = Utils::XDG.new
-      end
-
       ##
       # Access XDG utility methods.
       #
@@ -45,6 +40,11 @@ module Toys
       #
       def xdg
         self[KEY]
+      end
+
+      on_initialize do
+        require "toys/utils/xdg"
+        self[KEY] = Utils::XDG.new
       end
     end
 

@@ -33,6 +33,7 @@ module Toys
 
       ##
       # Intercept and handle usage errors during execution.
+      #
       # @private
       #
       def run(context)

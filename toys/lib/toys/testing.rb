@@ -179,23 +179,31 @@ module Toys
 
     @toys_mutex = ::Mutex.new
 
+    ##
     # @private
+    #
     def self.included(klass)
       klass.extend(ClassMethods)
     end
 
+    ##
     # @private
+    #
     def self.toys_mutex
       @toys_mutex
     end
 
+    ##
     # @private
+    #
     def self.toys_custom_paths(paths = :read)
       @toys_custom_paths = paths unless paths == :read
       @toys_custom_paths
     end
 
+    ##
     # @private
+    #
     def self.toys_include_builtins(value = :read)
       @toys_include_builtins = value unless value == :read
       @toys_include_builtins
@@ -242,7 +250,9 @@ module Toys
         end
       end
 
+      ##
       # @private
+      #
       def toys_cli
         Testing.toys_mutex.synchronize do
           @toys_cli ||= StandardCLI.new(custom_paths: toys_custom_paths,
@@ -250,7 +260,9 @@ module Toys
         end
       end
 
+      ##
       # @private
+      #
       def toys_exec
         Testing.toys_mutex.synchronize do
           require "toys/utils/exec"

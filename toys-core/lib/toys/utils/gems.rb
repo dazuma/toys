@@ -195,7 +195,9 @@ module Toys
         end
       end
 
+      ##
       # @private
+      #
       def self.find_gemfile(search_dir, gemfile_names: nil)
         gemfile_names ||= DEFAULT_GEMFILE_NAMES
         Array(gemfile_names).each do |file|
@@ -207,7 +209,9 @@ module Toys
 
       @global_mutex = ::Monitor.new
 
+      ##
       # @private
+      #
       def self.synchronize(&block)
         @global_mutex.synchronize(&block)
       end

@@ -35,11 +35,6 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      on_initialize do |**opts|
-        require "toys/utils/terminal"
-        self[KEY] = Utils::Terminal.new(**opts)
-      end
-
       ##
       # A tool-wide terminal instance
       # @return [Toys::Utils::Terminal]
@@ -138,6 +133,11 @@ module Toys
         terminal.spinner(leading_text: leading_text, final_text: final_text,
                          frame_length: frame_length, frames: frames, style: style,
                          &block)
+      end
+
+      on_initialize do |**opts|
+        require "toys/utils/terminal"
+        self[KEY] = Utils::Terminal.new(**opts)
       end
     end
   end

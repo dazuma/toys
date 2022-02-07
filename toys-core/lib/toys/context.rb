@@ -134,26 +134,6 @@ module Toys
     end
 
     ##
-    # Create a Context object. Applications generally will not need to create
-    # these objects directly; they are created by the tool when it is preparing
-    # for execution.
-    #
-    # @private
-    #
-    # @param data [Hash]
-    #
-    def initialize(data)
-      @__data = data
-    end
-
-    # @private
-    def inspect
-      name = Array(@__data[Key::TOOL_NAME]).join(" ")
-      id = object_id.to_s(16)
-      "#<Toys::Context id=0x#{id} #{name}>"
-    end
-
-    ##
     # The raw arguments passed to the tool, as an array of strings.
     # This does not include the tool name itself.
     #
@@ -341,6 +321,28 @@ module Toys
     #
     def self.exit(code = 0)
       throw :result, code
+    end
+
+    ##
+    # Create a Context object. Applications generally will not need to create
+    # these objects directly; they are created by the tool when it is preparing
+    # for execution.
+    #
+    # @param data [Hash]
+    #
+    # @private
+    #
+    def initialize(data)
+      @__data = data
+    end
+
+    ##
+    # @private
+    #
+    def inspect
+      name = Array(@__data[Key::TOOL_NAME]).join(" ")
+      id = object_id.to_s(16)
+      "#<Toys::Context id=0x#{id} #{name}>"
     end
   end
 end

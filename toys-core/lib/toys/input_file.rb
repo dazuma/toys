@@ -5,12 +5,16 @@
 # is parsed, a module is created under this parent for that file's constants.
 #
 module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
-  ## @private
+  ##
+  # @private
+  #
   def self.__binding
     binding
   end
 
-  ## @private
+  ##
+  # @private
+  #
   def self.evaluate(tool_class, words, priority, remaining_words, source, loader)
     namespace = ::Module.new
     namespace.module_eval do
@@ -33,7 +37,9 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     end
   end
 
-  ## @private
+  ##
+  # @private
+  #
   def self.build_eval_string(module_name, string)
     index = string.index(/^\s*[^#\s]/)
     return nil if index.nil?

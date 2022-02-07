@@ -22,22 +22,6 @@ module Toys
     #     end
     #
     class Flag
-      ## @private
-      def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
-                     report_collisions, group, desc, long_desc, display_name)
-        @flags = flags
-        @default = default
-        @handler = handler
-        @report_collisions = report_collisions
-        @group = group
-        @desc = desc
-        @long_desc = long_desc || []
-        @display_name = display_name
-        accept(acceptor)
-        complete_flags(flag_completion, **{})
-        complete_values(value_completion, **{})
-      end
-
       ##
       # Add flags in OptionParser format. This may be called multiple times,
       # and the results are cumulative.
@@ -284,7 +268,29 @@ module Toys
         self
       end
 
-      ## @private
+      ##
+      # Called only from DSL::Tool
+      #
+      # @private
+      #
+      def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
+                     report_collisions, group, desc, long_desc, display_name)
+        @flags = flags
+        @default = default
+        @handler = handler
+        @report_collisions = report_collisions
+        @group = group
+        @desc = desc
+        @long_desc = long_desc || []
+        @display_name = display_name
+        accept(acceptor)
+        complete_flags(flag_completion, **{})
+        complete_values(value_completion, **{})
+      end
+
+      ##
+      # @private
+      #
       def _add_to(tool, key)
         tool.add_flag(key, @flags,
                       accept: @acceptor, default: @default, handler: @handler,

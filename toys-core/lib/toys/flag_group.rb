@@ -56,6 +56,7 @@ module Toys
       # Create a flag group.
       # This argument list is subject to change. Use {Toys::FlagGroup.create}
       # instead for a more stable interface.
+      #
       # @private
       #
       def initialize(name, desc, long_desc)
@@ -168,12 +169,16 @@ module Toys
         self
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def <<(flag)
         flags << flag
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def validation_errors(_seen)
         []
       end
@@ -183,7 +188,9 @@ module Toys
     # A FlagGroup containing all required flags
     #
     class Required < Base
-      ## @private
+      ##
+      # @private
+      #
       def validation_errors(seen)
         results = []
         flags.each do |flag|
@@ -206,7 +213,9 @@ module Toys
     # A FlagGroup in which exactly one flag must be set
     #
     class ExactlyOne < Base
-      ## @private
+      ##
+      # @private
+      #
       def validation_errors(seen)
         seen_names = []
         flags.each do |flag|
@@ -229,7 +238,9 @@ module Toys
     # A FlagGroup in which at most one flag must be set
     #
     class AtMostOne < Base
-      ## @private
+      ##
+      # @private
+      #
       def validation_errors(seen)
         seen_names = []
         flags.each do |flag|
@@ -249,7 +260,9 @@ module Toys
     # A FlagGroup in which at least one flag must be set
     #
     class AtLeastOne < Base
-      ## @private
+      ##
+      # @private
+      #
       def validation_errors(seen)
         flags.each do |flag|
           return [] if seen.include?(flag.key)

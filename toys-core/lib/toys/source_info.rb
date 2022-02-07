@@ -7,30 +7,6 @@ module Toys
   #
   class SourceInfo
     ##
-    # Create a SourceInfo.
-    # @private
-    #
-    def initialize(parent, priority, context_directory, source_type, source_path, source_proc,
-                   git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
-      @parent = parent
-      @root = parent&.root || self
-      @priority = priority
-      @context_directory = context_directory
-      @source_type = source_type
-      @source = source_type == :proc ? source_proc : source_path
-      @source_path = source_path
-      @source_proc = source_proc
-      @git_remote = git_remote
-      @git_path = git_path
-      @git_commit = git_commit
-      @source_name = source_name
-      @data_dir_name = data_dir_name
-      @lib_dir_name = lib_dir_name
-      @data_dir = find_special_dir(data_dir_name)
-      @lib_dir = find_special_dir(lib_dir_name)
-    end
-
-    ##
     # The parent of this SourceInfo.
     #
     # @return [Toys::SourceInfo] The parent.
@@ -162,7 +138,33 @@ module Toys
     end
 
     ##
+    # Create a SourceInfo.
+    #
+    # @private
+    #
+    def initialize(parent, priority, context_directory, source_type, source_path, source_proc,
+                   git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
+      @parent = parent
+      @root = parent&.root || self
+      @priority = priority
+      @context_directory = context_directory
+      @source_type = source_type
+      @source = source_type == :proc ? source_proc : source_path
+      @source_path = source_path
+      @source_proc = source_proc
+      @git_remote = git_remote
+      @git_path = git_path
+      @git_commit = git_commit
+      @source_name = source_name
+      @data_dir_name = data_dir_name
+      @lib_dir_name = lib_dir_name
+      @data_dir = find_special_dir(data_dir_name)
+      @lib_dir = find_special_dir(lib_dir_name)
+    end
+
+    ##
     # Create a child SourceInfo relative to the parent path.
+    #
     # @private
     #
     def relative_child(filename, source_name: nil)
@@ -186,6 +188,7 @@ module Toys
 
     ##
     # Create a child SourceInfo with an absolute path.
+    #
     # @private
     #
     def absolute_child(child_path, source_name: nil)
@@ -197,6 +200,7 @@ module Toys
 
     ##
     # Create a child SourceInfo with a git source.
+    #
     # @private
     #
     def git_child(child_git_remote, child_git_path, child_git_commit, child_path,
@@ -211,6 +215,7 @@ module Toys
 
     ##
     # Create a proc child SourceInfo
+    #
     # @private
     #
     def proc_child(child_proc, source_name: nil)
@@ -222,6 +227,7 @@ module Toys
 
     ##
     # Create a root source info for a file path.
+    #
     # @private
     #
     def self.create_path_root(source_path, priority,
@@ -243,6 +249,7 @@ module Toys
 
     ##
     # Create a root source info for a cached git repo.
+    #
     # @private
     #
     def self.create_git_root(git_remote, git_path, git_commit, source_path, priority,
@@ -258,6 +265,7 @@ module Toys
 
     ##
     # Create a root source info for a proc.
+    #
     # @private
     #
     def self.create_proc_root(source_proc, priority,
@@ -272,6 +280,7 @@ module Toys
 
     ##
     # Check a path and determine the canonical path and type.
+    #
     # @private
     #
     def self.check_path(path, lenient)

@@ -17,16 +17,21 @@ module Toys
   # Namespace for DSL classes. These classes provide the directives that can be
   # used in configuration files. Most are defined in {Toys::DSL::Tool}.
   #
-  module DSL; end
+  module DSL
+  end
 
   ##
   # Namespace for standard middleware classes.
   #
   module StandardMiddleware
-    ## @private
+    ##
+    # @private
+    #
     COMMON_FLAG_GROUP = :__common
 
-    ## @private
+    ##
+    # @private
+    #
     def self.append_common_flag_group(tool)
       tool.add_flag_group(type: :optional, name: COMMON_FLAG_GROUP,
                           desc: "Common Flags", report_collisions: false)
@@ -37,7 +42,8 @@ module Toys
   ##
   # Namespace for standard mixin classes.
   #
-  module StandardMixins; end
+  module StandardMixins
+  end
 
   ##
   # Namespace for common utility classes.
@@ -46,7 +52,8 @@ module Toys
   # For example, before using {Toys::Utils::Exec}, you must
   # `require "toys/utils/exec"`.
   #
-  module Utils; end
+  module Utils
+  end
 
   class << self
     ##
@@ -59,7 +66,9 @@ module Toys
     attr_accessor :executable_path
   end
 
+  ##
   # @private
+  #
   CORE_LIB_PATH = __dir__
 end
 

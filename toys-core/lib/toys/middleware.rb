@@ -140,7 +140,9 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def spec_from_array(array)
         middleware = array.first
         if !middleware.is_a?(::String) && !middleware.is_a?(::Symbol) && !middleware.is_a?(::Class)
@@ -238,16 +240,12 @@ module Toys
       #
       attr_reader :block
 
-      ## @private
-      def initialize(object, name, args, kwargs, block)
-        @object = object
-        @name = name
-        @args = args
-        @kwargs = kwargs
-        @block = block
-      end
-
-      ## @private
+      ##
+      # Equality check
+      #
+      # @param other [Object]
+      # @return [Boolean]
+      #
       def ==(other)
         other.is_a?(Spec) &&
           object.eql?(other.object) &&
@@ -258,9 +256,24 @@ module Toys
       end
       alias eql? ==
 
-      ## @private
+      ##
+      # Return the hash code
+      #
+      # @return [Integer]
+      #
       def hash
         [object, name, args, kwargs, block].hash
+      end
+
+      ##
+      # @private
+      #
+      def initialize(object, name, args, kwargs, block)
+        @object = object
+        @name = name
+        @args = args
+        @kwargs = kwargs
+        @block = block
       end
     end
 
@@ -319,14 +332,12 @@ module Toys
         (@pre_specs + @default_specs + @post_specs).map { |spec| spec.build(middleware_lookup) }
       end
 
-      ## @private
-      def initialize(default_specs: nil, pre_specs: nil, post_specs: nil)
-        @pre_specs = pre_specs || []
-        @post_specs = post_specs || []
-        @default_specs = default_specs || []
-      end
-
-      ## @private
+      ##
+      # Equality check
+      #
+      # @param other [Object]
+      # @return [Boolean]
+      #
       def ==(other)
         other.is_a?(Stack) &&
           pre_specs.eql?(other.pre_specs) &&
@@ -335,9 +346,22 @@ module Toys
       end
       alias eql? ==
 
-      ## @private
+      ##
+      # Return the hash code
+      #
+      # @return [Integer]
+      #
       def hash
         [@pre_specs, @default_specs, @post_specs].hash
+      end
+
+      ##
+      # @private
+      #
+      def initialize(default_specs: nil, pre_specs: nil, post_specs: nil)
+        @pre_specs = pre_specs || []
+        @post_specs = post_specs || []
+        @default_specs = default_specs || []
       end
     end
   end

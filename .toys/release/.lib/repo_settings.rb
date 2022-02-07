@@ -25,6 +25,7 @@ class RepoSettings
   attr_reader :release_jobs_regexp
   attr_reader :required_checks_timeout
 
+  attr_reader :pre_builder_tool
   attr_reader :docs_builder_tool
 
   attr_reader :commit_lint_merge
@@ -158,6 +159,7 @@ class RepoSettings
     @signoff_commits = info["signoff_commits"] ? true : false
     @coordinate_versions = info["coordinate_versions"] ? true : false
     @docs_builder_tool = info["docs_builder_tool"]
+    @pre_builder_tool = info["pre_builder_tool"]
     @enable_release_automation = info["enable_release_automation"] != false
     required_checks = info["required_checks"]
     @required_checks_regexp = required_checks == false ? nil : ::Regexp.new(required_checks.to_s)

@@ -8,9 +8,6 @@ module Toys
   # appropriate tool given a set of command line arguments.
   #
   class Loader
-    # @private
-    BASE_PRIORITY = -999_999
-
     ##
     # Create a Loader
     #
@@ -44,19 +41,17 @@ module Toys
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(
-      index_file_name: nil,
-      preload_dir_name: nil,
-      preload_file_name: nil,
-      data_dir_name: nil,
-      lib_dir_name: nil,
-      middleware_stack: [],
-      extra_delimiters: "",
-      mixin_lookup: nil,
-      middleware_lookup: nil,
-      template_lookup: nil,
-      git_cache: nil
-    )
+    def initialize(index_file_name: nil,
+                   preload_dir_name: nil,
+                   preload_file_name: nil,
+                   data_dir_name: nil,
+                   lib_dir_name: nil,
+                   middleware_stack: [],
+                   extra_delimiters: "",
+                   mixin_lookup: nil,
+                   middleware_lookup: nil,
+                   template_lookup: nil,
+                   git_cache: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
@@ -74,12 +69,12 @@ module Toys
       @tool_data = {}
       @roots_by_priority = {}
       @max_priority = @min_priority = 0
-      @stop_priority = BASE_PRIORITY
+      @stop_priority = -999_999
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       @git_cache = git_cache
-      get_tool([], BASE_PRIORITY)
+      get_tool([], -999_999)
     end
 
     ##
@@ -499,6 +494,120 @@ module Toys
       end
     end
 
+    ##
+    # Tool data
+    #
+    # @private
+    #
+    class ToolData
+      ##
+      # @private
+      #
+      def initialize(words)
+        @words = validate_words(words)
+        @definitions = {}
+        @top_priority = @active_priority = nil
+        @mutex = ::Monitor.new
+      end
+
+      ##
+      # @private
+      #
+      def cur_definition
+        @mutex.synchronize { active_definition || top_definition }
+      end
+
+      ##
+      # @private
+      #
+      def empty?
+        @definitions.empty?
+      end
+
+      ##
+      # @private
+      #
+      def get_tool(priority, loader, tool_class = nil)
+        @mutex.synchronize do
+          if @top_priority.nil? || @top_priority < priority
+            @top_priority = priority
+          end
+          if tool_class && @definitions.include?(priority)
+            raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
+          end
+          @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
+        end
+      end
+
+      ##
+      # @private
+      #
+      def activate_tool(priority, loader)
+        @mutex.synchronize do
+          return active_definition if @active_priority == priority
+          return nil if @active_priority && @active_priority > priority
+          @active_priority = priority
+          get_tool(priority, loader)
+        end
+      end
+
+      private
+
+      def validate_words(words)
+        words.each do |word|
+          if /[[:cntrl:] #"$&'()*;<>\[\\\]\^`{|}]/.match(word)
+            raise ToolDefinitionError, "Illegal characters in name #{word.inspect}"
+          end
+        end
+      end
+
+      def top_definition
+        @top_priority ? @definitions[@top_priority] : nil
+      end
+
+      def active_definition
+        @active_priority ? @definitions[@active_priority] : nil
+      end
+    end
+
+    ##
+    # An object that handles name delimiting.
+    #
+    # @private
+    #
+    class DelimiterHandler
+      ##
+      # @private
+      #
+      def initialize(extra_delimiters)
+        unless %r{^[[:space:]./:]*$}.match?(extra_delimiters)
+          raise ::ArgumentError, "Illegal delimiters in #{extra_delimiters.inspect}"
+        end
+        chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
+        @delimiters = ::Regexp.new("[[:space:]#{chars}]")
+      end
+
+      ##
+      # @private
+      #
+      def split_path(str)
+        str.split(@delimiters)
+      end
+
+      ##
+      # @private
+      #
+      def find_orig_prefix(args)
+        first_split = (args.first || "").split(@delimiters)
+        if first_split.size > 1
+          args = first_split + args.slice(1..-1)
+          return [first_split, args]
+        end
+        orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
+        [orig_prefix, args]
+      end
+    end
+
     private
 
     def all_cur_definitions
@@ -646,101 +755,6 @@ module Toys
         return words1.slice(index..-1) if lengths.include?(index)
         return nil if words1[index] != words2[index]
         index += 1
-      end
-    end
-
-    ##
-    # Tool data
-    #
-    # @private
-    #
-    class ToolData
-      # @private
-      def initialize(words)
-        @words = validate_words(words)
-        @definitions = {}
-        @top_priority = @active_priority = nil
-        @mutex = ::Monitor.new
-      end
-
-      # @private
-      def cur_definition
-        @mutex.synchronize { active_definition || top_definition }
-      end
-
-      # @private
-      def empty?
-        @definitions.empty?
-      end
-
-      # @private
-      def get_tool(priority, loader, tool_class = nil)
-        @mutex.synchronize do
-          if @top_priority.nil? || @top_priority < priority
-            @top_priority = priority
-          end
-          if tool_class && @definitions.include?(priority)
-            raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
-          end
-          @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
-        end
-      end
-
-      # @private
-      def activate_tool(priority, loader)
-        @mutex.synchronize do
-          return active_definition if @active_priority == priority
-          return nil if @active_priority && @active_priority > priority
-          @active_priority = priority
-          get_tool(priority, loader)
-        end
-      end
-
-      private
-
-      def validate_words(words)
-        words.each do |word|
-          if /[[:cntrl:] #"$&'()*;<>\[\\\]\^`{|}]/.match(word)
-            raise ToolDefinitionError, "Illegal characters in name #{word.inspect}"
-          end
-        end
-      end
-
-      def top_definition
-        @top_priority ? @definitions[@top_priority] : nil
-      end
-
-      def active_definition
-        @active_priority ? @definitions[@active_priority] : nil
-      end
-    end
-
-    ##
-    # An object that handles name delimiting.
-    #
-    # @private
-    #
-    class DelimiterHandler
-      def initialize(extra_delimiters)
-        unless %r{^[[:space:]./:]*$}.match?(extra_delimiters)
-          raise ::ArgumentError, "Illegal delimiters in #{extra_delimiters.inspect}"
-        end
-        chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
-        @delimiters = ::Regexp.new("[[:space:]#{chars}]")
-      end
-
-      def split_path(str)
-        str.split(@delimiters)
-      end
-
-      def find_orig_prefix(args)
-        first_split = (args.first || "").split(@delimiters)
-        if first_split.size > 1
-          args = first_split + args.slice(1..-1)
-          return [first_split, args]
-        end
-        orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
-        [orig_prefix, args]
       end
     end
   end

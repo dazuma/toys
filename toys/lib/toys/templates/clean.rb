@@ -56,15 +56,21 @@ module Toys
       #
       attr_writer :context_directory
 
+      ##
       # @private
+      #
       attr_reader :context_directory
 
+      ##
       # @private
+      #
       def paths
         Array(@paths)
       end
 
+      ##
       # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
@@ -80,7 +86,9 @@ module Toys
           include :fileutils
           include :exec
 
+          ##
           # @private
+          #
           def run
             cd(context_directory || ::Dir.getwd) do
               template_paths.each do |elem|
@@ -96,7 +104,9 @@ module Toys
             end
           end
 
+          ##
           # @private
+          #
           def clean_gitignore
             result = exec(["git", "rev-parse", "--is-inside-work-tree"], out: :null, err: :null)
             unless result.success?
@@ -106,7 +116,9 @@ module Toys
             clean_gitignore_dir(".")
           end
 
+          ##
           # @private
+          #
           def clean_gitignore_dir(dir)
             children = dir_children(dir)
             result = exec(["git", "check-ignore", "--stdin"],
@@ -118,7 +130,9 @@ module Toys
             children.each { |child| clean_gitignore_dir(child) if ::File.directory?(child) }
           end
 
+          ##
           # @private
+          #
           def dir_children(dir)
             ::Dir.entries(dir)
                  .reject { |entry| entry =~ /^\.\.?$/ }
@@ -126,12 +140,16 @@ module Toys
                  .map { |entry| ::File.join(dir, entry) }
           end
 
+          ##
           # @private
+          #
           def clean_pattern(pattern)
             ::Dir.glob(pattern) { |path| clean_path(path) }
           end
 
+          ##
           # @private
+          #
           def clean_path(path)
             if ::File.exist?(path)
               rm_rf(path)

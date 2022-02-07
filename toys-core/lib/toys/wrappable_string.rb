@@ -50,14 +50,21 @@ module Toys
     end
     alias to_s string
 
-    ## @private
+    ##
+    # Tests two wrappable strings for equality
+    # @param other [Object]
+    # @return [Boolean]
+    #
     def ==(other)
       return false unless other.is_a?(WrappableString)
       other.fragments == fragments
     end
     alias eql? ==
 
-    ## @private
+    ##
+    # Returns a hash code for this object
+    # @return [Integer]
+    #
     def hash
       fragments.hash
     end

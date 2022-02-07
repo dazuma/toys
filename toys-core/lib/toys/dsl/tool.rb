@@ -34,12 +34,6 @@ module Toys
     #     toys greet rubyists
     #
     module Tool
-      ## @private
-      def method_added(_meth)
-        super
-        DSL::Internal.current_tool(self, true)&.check_definition_state(is_method: true)
-      end
-
       ##
       # Create a named acceptor that can be referenced by name from any flag or
       # positional argument in this tool or its subtools.
@@ -1716,6 +1710,16 @@ module Toys
                 "Toys version requirements #{requirement} not satisfied by {version}"
         end
         self
+      end
+
+      ##
+      # Notify the tool definition when a method is defined in this tool class.
+      #
+      # @private
+      #
+      def method_added(_meth)
+        super
+        DSL::Internal.current_tool(self, true)&.check_definition_state(is_method: true)
       end
     end
   end

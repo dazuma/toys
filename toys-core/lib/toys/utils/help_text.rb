@@ -200,8 +200,13 @@ module Toys
               .map { |source, subtools| [source&.source_name || "unknown source", subtools] }
       end
 
-      ## @private
+      ##
+      # @private
+      #
       class UsageStringAssembler
+        ##
+        # @private
+        #
         def initialize(tool, executable_name, subtools, separate_sources,
                        indent, left_column_width, wrap_width)
           @tool = tool
@@ -216,6 +221,9 @@ module Toys
           assemble
         end
 
+        ##
+        # @private
+        #
         attr_reader :result
 
         private
@@ -330,8 +338,13 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       class HelpStringAssembler
+        ##
+        # @private
+        #
         def initialize(tool, executable_name, delegates, subtools, search_term,
                        show_source_path, separate_sources, indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
@@ -349,6 +362,9 @@ module Toys
           assemble
         end
 
+        ##
+        # @private
+        #
         attr_reader :result
 
         private
@@ -638,8 +654,13 @@ module Toys
         end
       end
 
-      ## @private
+      ##
+      # @private
+      #
       class ListStringAssembler
+        ##
+        # @private
+        #
         def initialize(tool, subtools, recursive, search_term, separate_sources,
                        indent, wrap_width, styled)
           require "toys/utils/terminal"
@@ -653,6 +674,9 @@ module Toys
           assemble(styled)
         end
 
+        ##
+        # @private
+        #
         attr_reader :result
 
         private

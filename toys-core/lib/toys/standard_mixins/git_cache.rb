@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "fileutils"
-
 module Toys
   module StandardMixins
     ##
@@ -30,11 +28,6 @@ module Toys
       #
       KEY = ::Object.new.freeze
 
-      on_initialize do
-        require "toys/utils/git_cache"
-        self[KEY] = Utils::GitCache.new
-      end
-
       ##
       # Access the builtin GitCache.
       #
@@ -42,6 +35,11 @@ module Toys
       #
       def git_cache
         self[KEY]
+      end
+
+      on_initialize do
+        require "toys/utils/git_cache"
+        self[KEY] = Utils::GitCache.new
       end
     end
   end

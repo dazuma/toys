@@ -54,6 +54,7 @@ module Toys
 
         ##
         # Internal completion method designed for testing.
+        #
         # @private
         #
         def run_internal(line)
@@ -78,7 +79,9 @@ module Toys
       end
 
       class << self
-        ## @private
+        ##
+        # @private
+        #
         def split(line)
           words = []
           field = ::String.new
@@ -97,7 +100,9 @@ module Toys
           words
         end
 
-        ## @private
+        ##
+        # @private
+        #
         def format_candidate(candidate, quote_type)
           str = candidate.to_s
           partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false

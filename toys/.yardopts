@@ -3,6 +3,8 @@
 --markup=markdown
 --markup-provider redcarpet
 --main=README.md
+./core-docs/toys/**/*.rb
+./core-docs/toys-core.rb
 ./lib/toys/**/*.rb
 ./lib/toys.rb
 -

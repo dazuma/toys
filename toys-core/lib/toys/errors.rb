@@ -40,10 +40,13 @@ module Toys
   end
 
   ##
-  # A wrapper exception used to provide user-oriented context for an exception
+  # A wrapper exception used to provide user-oriented context for an error
+  # thrown during tool execution.
   #
   class ContextualError < ::StandardError
-    ## @private
+    ##
+    # @private
+    #
     def initialize(cause, banner,
                    config_path: nil, config_line: nil,
                    tool_name: nil, tool_args: nil)
@@ -57,16 +60,66 @@ module Toys
       set_backtrace(cause.backtrace)
     end
 
+    ##
+    # The underlying exception
+    # @return [::StandardError]
+    #
     attr_reader :cause
+
+    ##
+    # An overall banner message
+    # @return [String]
+    #
     attr_reader :banner
 
-    attr_accessor :config_path
-    attr_accessor :config_line
-    attr_accessor :tool_name
-    attr_accessor :tool_args
+    ##
+    # The path to the toys config file in which the error was detected
+    # @return [String]
+    #
+    attr_reader :config_path
+
+    ##
+    # The line number in the toys config file in which the error was detected
+    # @return [Integer]
+    #
+    attr_reader :config_line
+
+    ##
+    # The full name of the tool that was running when the error occurred
+    # @return [Array<String>]
+    #
+    attr_reader :tool_name
+
+    ##
+    # The arguments passed to the tool that was running when the error occurred
+    # @return [Array<String>]
+    #
+    attr_reader :tool_args
+
+    ##
+    # @private
+    #
+    attr_writer :config_path
+
+    ##
+    # @private
+    #
+    attr_writer :config_line
+
+    ##
+    # @private
+    #
+    attr_writer :tool_name
+
+    ##
+    # @private
+    #
+    attr_writer :tool_args
 
     class << self
-      ## @private
+      ##
+      # @private
+      #
       def capture_path(banner, path, **opts)
         yield
       rescue ContextualError => e
@@ -86,7 +139,9 @@ module Toys
         raise e
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def capture(banner, **opts)
         yield
       rescue ContextualError => e

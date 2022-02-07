@@ -397,92 +397,6 @@ module Toys
       end
 
       ##
-      # An internal helper class storing the configuration of a subprocess invocation
-      # @private
-      #
-      class Opts
-        ##
-        # Option keys that belong to exec configuration
-        # @private
-        #
-        CONFIG_KEYS = [
-          :argv0,
-          :background,
-          :cli,
-          :env,
-          :err,
-          :in,
-          :logger,
-          :log_cmd,
-          :log_level,
-          :name,
-          :out,
-          :result_callback,
-        ].freeze
-
-        ##
-        # Option keys that belong to spawn configuration
-        # @private
-        #
-        SPAWN_KEYS = [
-          :chdir,
-          :close_others,
-          :new_pgroup,
-          :pgroup,
-          :umask,
-          :unsetenv_others,
-        ].freeze
-
-        ## @private
-        def initialize(parent = nil)
-          if parent
-            @config_opts = ::Hash.new { |_h, k| parent.config_opts[k] }
-            @spawn_opts = ::Hash.new { |_h, k| parent.spawn_opts[k] }
-          elsif block_given?
-            @config_opts = ::Hash.new { |_h, k| yield k }
-            @spawn_opts = ::Hash.new { |_h, k| yield k }
-          else
-            @config_opts = {}
-            @spawn_opts = {}
-          end
-        end
-
-        ## @private
-        def add(config)
-          config.each do |k, v|
-            if CONFIG_KEYS.include?(k)
-              @config_opts[k] = v
-            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
-              @spawn_opts[k] = v
-            else
-              raise ::ArgumentError, "Unknown key: #{k.inspect}"
-            end
-          end
-          self
-        end
-
-        ## @private
-        def delete(*keys)
-          keys.each do |k|
-            if CONFIG_KEYS.include?(k)
-              @config_opts.delete(k)
-            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
-              @spawn_opts.delete(k)
-            else
-              raise ::ArgumentError, "Unknown key: #{k.inspect}"
-            end
-          end
-          self
-        end
-
-        ## @private
-        attr_reader :config_opts
-
-        ## @private
-        attr_reader :spawn_opts
-      end
-
-      ##
       # An object that controls a subprocess. This object is returned from an
       # execution running in the background, or is yielded to a control block
       # for an execution running in the foreground.
@@ -490,28 +404,6 @@ module Toys
       # send signals to the process, and get its result.
       #
       class Controller
-        ## @private
-        def initialize(name, controller_streams, captures, pid, join_threads,
-                       result_callback, mutex)
-          @name = name
-          @in = controller_streams[:in]
-          @out = controller_streams[:out]
-          @err = controller_streams[:err]
-          @captures = captures
-          @pid = @exception = @wait_thread = nil
-          case pid
-          when ::Integer
-            @pid = pid
-            @wait_thread = ::Process.detach(pid)
-          when ::Exception
-            @exception = pid
-          end
-          @join_threads = join_threads
-          @result_callback = result_callback
-          @mutex = mutex
-          @result = nil
-        end
-
         ##
         # The subcommand's name.
         # @return [Object]
@@ -747,7 +639,32 @@ module Toys
         end
 
         ##
+        # @private
+        #
+        def initialize(name, controller_streams, captures, pid, join_threads,
+                       result_callback, mutex)
+          @name = name
+          @in = controller_streams[:in]
+          @out = controller_streams[:out]
+          @err = controller_streams[:err]
+          @captures = captures
+          @pid = @exception = @wait_thread = nil
+          case pid
+          when ::Integer
+            @pid = pid
+            @wait_thread = ::Process.detach(pid)
+          when ::Exception
+            @exception = pid
+          end
+          @join_threads = join_threads
+          @result_callback = result_callback
+          @mutex = mutex
+          @result = nil
+        end
+
+        ##
         # Close the controller's streams.
+        #
         # @private
         #
         def close_streams(which)
@@ -799,15 +716,6 @@ module Toys
       #     return the numeric signal code.
       #
       class Result
-        ## @private
-        def initialize(name, out, err, status, exception)
-          @name = name
-          @captured_out = out
-          @captured_err = err
-          @status = status
-          @exception = exception
-        end
-
         ##
         # The subcommand's name.
         #
@@ -928,13 +836,129 @@ module Toys
           code = exit_code
           !code.nil? && !code.zero?
         end
+
+        ##
+        # @private
+        #
+        def initialize(name, out, err, status, exception)
+          @name = name
+          @captured_out = out
+          @captured_err = err
+          @status = status
+          @exception = exception
+        end
+      end
+
+      private
+
+      ##
+      # An internal helper class storing the configuration of a subprocess invocation
+      #
+      # @private
+      #
+      class Opts
+        ##
+        # Option keys that belong to exec configuration
+        #
+        # @private
+        #
+        CONFIG_KEYS = [
+          :argv0,
+          :background,
+          :cli,
+          :env,
+          :err,
+          :in,
+          :logger,
+          :log_cmd,
+          :log_level,
+          :name,
+          :out,
+          :result_callback,
+        ].freeze
+
+        ##
+        # Option keys that belong to spawn configuration
+        #
+        # @private
+        #
+        SPAWN_KEYS = [
+          :chdir,
+          :close_others,
+          :new_pgroup,
+          :pgroup,
+          :umask,
+          :unsetenv_others,
+        ].freeze
+
+        ##
+        # @private
+        #
+        def initialize(parent = nil)
+          if parent
+            @config_opts = ::Hash.new { |_h, k| parent.config_opts[k] }
+            @spawn_opts = ::Hash.new { |_h, k| parent.spawn_opts[k] }
+          elsif block_given?
+            @config_opts = ::Hash.new { |_h, k| yield k }
+            @spawn_opts = ::Hash.new { |_h, k| yield k }
+          else
+            @config_opts = {}
+            @spawn_opts = {}
+          end
+        end
+
+        ##
+        # @private
+        #
+        def add(config)
+          config.each do |k, v|
+            if CONFIG_KEYS.include?(k)
+              @config_opts[k] = v
+            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
+              @spawn_opts[k] = v
+            else
+              raise ::ArgumentError, "Unknown key: #{k.inspect}"
+            end
+          end
+          self
+        end
+
+        ##
+        # @private
+        #
+        def delete(*keys)
+          keys.each do |k|
+            if CONFIG_KEYS.include?(k)
+              @config_opts.delete(k)
+            elsif SPAWN_KEYS.include?(k) || k.to_s.start_with?("rlimit_")
+              @spawn_opts.delete(k)
+            else
+              raise ::ArgumentError, "Unknown key: #{k.inspect}"
+            end
+          end
+          self
+        end
+
+        ##
+        # @private
+        #
+        attr_reader :config_opts
+
+        ##
+        # @private
+        #
+        attr_reader :spawn_opts
       end
 
       ##
       # An object that manages the execution of a subcommand
+      #
       # @private
       #
       class Executor
+        ##
+        # @private
+        #
         def initialize(exec_opts, spawn_cmd, block)
           @fork_func = spawn_cmd.respond_to?(:call) ? spawn_cmd : nil
           @spawn_cmd = spawn_cmd.respond_to?(:call) ? nil : spawn_cmd
@@ -950,6 +974,9 @@ module Toys
           @mutex = ::Mutex.new
         end
 
+        ##
+        # @private
+        #
         def execute
           setup_in_stream
           setup_out_stream(:out)
@@ -1316,8 +1343,6 @@ module Toys
           end
         end
       end
-
-      private
 
       def canonical_binary_spec(cmd, exec_opts)
         config_argv0 = exec_opts.config_opts[:argv0]

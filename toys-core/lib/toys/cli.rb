@@ -175,26 +175,24 @@ module Toys
     #     Optional. If not provided, lib directories are disabled.
     #     Note: the standard toys executable sets this to `".lib"`.
     #
-    def initialize( # rubocop:disable Metrics/MethodLength
-      executable_name: nil,
-      middleware_stack: nil,
-      extra_delimiters: "",
-      config_dir_name: nil,
-      config_file_name: nil,
-      index_file_name: nil,
-      preload_file_name: nil,
-      preload_dir_name: nil,
-      data_dir_name: nil,
-      lib_dir_name: nil,
-      mixin_lookup: nil,
-      middleware_lookup: nil,
-      template_lookup: nil,
-      logger_factory: nil,
-      logger: nil,
-      base_level: nil,
-      error_handler: nil,
-      completion: nil
-    )
+    def initialize(executable_name: nil, # rubocop:disable Metrics/MethodLength
+                   middleware_stack: nil,
+                   extra_delimiters: "",
+                   config_dir_name: nil,
+                   config_file_name: nil,
+                   index_file_name: nil,
+                   preload_file_name: nil,
+                   preload_dir_name: nil,
+                   data_dir_name: nil,
+                   lib_dir_name: nil,
+                   mixin_lookup: nil,
+                   middleware_lookup: nil,
+                   template_lookup: nil,
+                   logger_factory: nil,
+                   logger: nil,
+                   base_level: nil,
+                   error_handler: nil,
+                   completion: nil)
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @middleware_stack = middleware_stack || CLI.default_middleware_stack
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
@@ -489,94 +487,6 @@ module Toys
       end
     end
 
-    private
-
-    def build_context(tool, args, verbosity: 0, delegated_from: nil)
-      default_data = {
-        Context::Key::VERBOSITY => verbosity,
-        Context::Key::DELEGATED_FROM => delegated_from,
-      }
-      arg_parser = ArgParser.new(self, tool,
-                                 default_data: default_data,
-                                 require_exact_flag_match: tool.exact_flag_match_required?)
-      arg_parser.parse(args).finish
-      tool.tool_class.new(arg_parser.data)
-    end
-
-    def execute_tool(tool, context)
-      tool.source_info&.apply_lib_paths
-      tool.run_initializers(context)
-      cur_logger = context[Context::Key::LOGGER]
-      if cur_logger
-        original_level = cur_logger.level
-        cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
-      end
-      begin
-        executor = build_executor(tool, context) do
-          yield context
-        end
-        catch(:result) do
-          executor.call
-          0
-        end
-      ensure
-        cur_logger.level = original_level if cur_logger
-      end
-    end
-
-    def build_executor(tool, context)
-      executor = proc do
-        begin
-          if !context[Context::Key::USAGE_ERRORS].empty?
-            handle_usage_errors(context, tool)
-          elsif !tool.runnable?
-            raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
-          else
-            yield
-          end
-        rescue ::Interrupt => e
-          raise e unless tool.handles_interrupts?
-          handle_interrupt(context, tool.interrupt_handler, e)
-        end
-      end
-      tool.built_middleware.reverse_each do |middleware|
-        executor = make_executor(middleware, context, executor)
-      end
-      executor
-    end
-
-    def handle_usage_errors(context, tool)
-      usage_errors = context[Context::Key::USAGE_ERRORS]
-      handler = tool.usage_error_handler
-      raise ArgParsingError, usage_errors if handler.nil?
-      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
-      if handler.arity.zero?
-        context.instance_exec(&handler)
-      else
-        context.instance_exec(usage_errors, &handler)
-      end
-    end
-
-    def handle_interrupt(context, handler, exception)
-      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
-      if handler.arity.zero?
-        context.instance_exec(&handler)
-      else
-        context.instance_exec(exception, &handler)
-      end
-    rescue ::Interrupt => e
-      raise e if e.equal?(exception)
-      handle_interrupt(context, handler, e)
-    end
-
-    def make_executor(middleware, context, next_executor)
-      if middleware.respond_to?(:run)
-        proc { middleware.run(context, &next_executor) }
-      else
-        next_executor
-      end
-    end
-
     ##
     # A basic error handler that prints out captured errors to a stream or
     # a logger.
@@ -777,6 +687,94 @@ module Toys
             header
           end
         "#{styled_header}  #{msg}\n"
+      end
+    end
+
+    private
+
+    def build_context(tool, args, verbosity: 0, delegated_from: nil)
+      default_data = {
+        Context::Key::VERBOSITY => verbosity,
+        Context::Key::DELEGATED_FROM => delegated_from,
+      }
+      arg_parser = ArgParser.new(self, tool,
+                                 default_data: default_data,
+                                 require_exact_flag_match: tool.exact_flag_match_required?)
+      arg_parser.parse(args).finish
+      tool.tool_class.new(arg_parser.data)
+    end
+
+    def execute_tool(tool, context)
+      tool.source_info&.apply_lib_paths
+      tool.run_initializers(context)
+      cur_logger = context[Context::Key::LOGGER]
+      if cur_logger
+        original_level = cur_logger.level
+        cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
+      end
+      begin
+        executor = build_executor(tool, context) do
+          yield context
+        end
+        catch(:result) do
+          executor.call
+          0
+        end
+      ensure
+        cur_logger.level = original_level if cur_logger
+      end
+    end
+
+    def build_executor(tool, context)
+      executor = proc do
+        begin
+          if !context[Context::Key::USAGE_ERRORS].empty?
+            handle_usage_errors(context, tool)
+          elsif !tool.runnable?
+            raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
+          else
+            yield
+          end
+        rescue ::Interrupt => e
+          raise e unless tool.handles_interrupts?
+          handle_interrupt(context, tool.interrupt_handler, e)
+        end
+      end
+      tool.built_middleware.reverse_each do |middleware|
+        executor = make_executor(middleware, context, executor)
+      end
+      executor
+    end
+
+    def handle_usage_errors(context, tool)
+      usage_errors = context[Context::Key::USAGE_ERRORS]
+      handler = tool.usage_error_handler
+      raise ArgParsingError, usage_errors if handler.nil?
+      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
+      if handler.arity.zero?
+        context.instance_exec(&handler)
+      else
+        context.instance_exec(usage_errors, &handler)
+      end
+    end
+
+    def handle_interrupt(context, handler, exception)
+      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
+      if handler.arity.zero?
+        context.instance_exec(&handler)
+      else
+        context.instance_exec(exception, &handler)
+      end
+    rescue ::Interrupt => e
+      raise e if e.equal?(exception)
+      handle_interrupt(context, handler, e)
+    end
+
+    def make_executor(middleware, context, next_executor)
+      if middleware.respond_to?(:run)
+        proc { middleware.run(context, &next_executor) }
+      else
+        next_executor
       end
     end
   end

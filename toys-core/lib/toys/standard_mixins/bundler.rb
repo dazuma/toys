@@ -67,20 +67,6 @@ module Toys
     module Bundler
       include Mixin
 
-      on_initialize do |static: false, **kwargs|
-        unless static
-          context_directory = self[::Toys::Context::Key::CONTEXT_DIRECTORY]
-          source_info = self[::Toys::Context::Key::TOOL_SOURCE]
-          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
-        end
-      end
-
-      on_include do |static: false, **kwargs|
-        if static
-          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
-        end
-      end
-
       ##
       # Default search directories for Gemfiles.
       # @return [Array<String,Symbol>]
@@ -93,7 +79,9 @@ module Toys
       #
       DEFAULT_TOYS_GEMFILE_NAMES = [".gems.rb", "Gemfile"].freeze
 
+      ##
       # @private
+      #
       def self.setup_bundle(context_directory,
                             source_info,
                             gemfile_path: nil,
@@ -118,9 +106,27 @@ module Toys
         gems.bundle(groups: groups, gemfile_path: gemfile_path, retries: retries)
       end
 
+      on_initialize do |static: false, **kwargs|
+        unless static
+          context_directory = self[::Toys::Context::Key::CONTEXT_DIRECTORY]
+          source_info = self[::Toys::Context::Key::TOOL_SOURCE]
+          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
+        end
+      end
+
+      on_include do |static: false, **kwargs|
+        if static
+          ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
+        end
+      end
+
+      ##
       # @private
+      #
       class GemfileFinder
+        ##
         # @private
+        #
         def initialize(context_directory, source_info, gemfile_names, toys_gemfile_names)
           @context_directory = context_directory
           @source_info = source_info
@@ -128,7 +134,9 @@ module Toys
           @toys_gemfile_names = toys_gemfile_names || DEFAULT_TOYS_GEMFILE_NAMES
         end
 
+        ##
         # @private
+        #
         def search(search_dir)
           case search_dir
           when ::Array

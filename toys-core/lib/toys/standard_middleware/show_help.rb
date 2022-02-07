@@ -202,6 +202,7 @@ module Toys
 
       ##
       # Configure flags and default data.
+      #
       # @private
       #
       def config(tool, loader)
@@ -224,6 +225,7 @@ module Toys
 
       ##
       # Display help text if requested.
+      #
       # @private
       #
       def run(context)

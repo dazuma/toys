@@ -152,8 +152,7 @@ describe Toys::Utils::GitCache do
 
       git_cache.get(local_remote, commit: branch1)
       repo_path = File.join(git_cache.cache_dir,
-                            Toys::Utils::GitCache.remote_dir_name(local_remote),
-                            Toys::Utils::GitCache::REPO_DIR_NAME)
+                            Toys::Utils::GitCache.remote_dir_name(local_remote), "repo")
       file_path = File.join(repo_path, "tmp.txt")
       File.open(file_path, "w") do |file|
         file.puts("hello")

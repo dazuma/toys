@@ -130,6 +130,7 @@ class ReleasePerformer
     def build_gem
       @utils.log("Building #{@gem_name} #{@gem_version} gem ...")
       @utils.gem_cd(@gem_name) do
+        @parent.pre_builder&.call
         ::FileUtils.mkdir_p("pkg")
         @utils.exec(["gem", "build", "#{@gem_name}.gemspec",
                      "-o", "pkg/#{@gem_name}-#{@gem_version}.gem"])
@@ -219,6 +220,7 @@ class ReleasePerformer
     @gh_pages_dir = gh_pages_dir
     @gh_token = gh_token
     @pr_info = pr_info
+    @pre_builder = create_pre_builder
     @docs_builder = create_docs_builder
     @instances = []
     @extra_errors = []
@@ -230,6 +232,7 @@ class ReleasePerformer
   attr_reader :release_sha
   attr_reader :rubygems_api_key
   attr_reader :gh_pages_dir
+  attr_reader :pre_builder
   attr_reader :docs_builder
   attr_reader :git_remote
   attr_reader :result
@@ -296,6 +299,13 @@ class ReleasePerformer
   end
 
   private
+
+  def create_pre_builder
+    pre_builder_tool = Array(@utils.pre_builder_tool)
+    return nil if pre_builder_tool.empty?
+    tool_context = @utils.tool_context
+    proc { tool_context.exec_separate_tool(pre_builder_tool) }
+  end
 
   def create_docs_builder
     docs_builder_tool = Array(@utils.docs_builder_tool)

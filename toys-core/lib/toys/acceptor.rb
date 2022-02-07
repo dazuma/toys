@@ -178,6 +178,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to use the given function.
+      #
       # @private
       #
       def match(str)
@@ -188,6 +189,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#convert} to use the given function's
       # result.
+      #
       # @private
       #
       def convert(_str, result)
@@ -234,6 +236,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to use the given regex.
+      #
       # @private
       #
       def match(str)
@@ -242,6 +245,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#convert} to use the given converter.
+      #
       # @private
       #
       def convert(str, *extra)
@@ -285,6 +289,7 @@ module Toys
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to find the value.
+      #
       # @private
       #
       def match(str)
@@ -294,6 +299,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#convert} to return the actual enum
       # element.
+      #
       # @private
       #
       def convert(_str, elem)
@@ -303,6 +309,7 @@ module Toys
       ##
       # Overrides {Toys::Acceptor::Base#suggestions} to return close matches
       # from the enum.
+      #
       # @private
       #
       def suggestions(str)
@@ -513,7 +520,9 @@ module Toys
         internal_create(spec, options, block)
       end
 
-      ## @private
+      ##
+      # @private
+      #
       def scalarize_spec(spec, options, block)
         spec ||= block
         if options.empty?

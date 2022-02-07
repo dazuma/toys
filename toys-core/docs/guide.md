@@ -31,7 +31,7 @@ sophisticated command line tools.
 
 Toys-Core is a command line *framework* in the traditional sense. It is
 intended to be used to write custom command line executables in Ruby. The
-framework provides common facilities such as argumentparsing and online help,
+framework provides common facilities such as argument parsing and online help,
 while your executable chooses and configures those facilities, and implements
 the actual behavior.
 

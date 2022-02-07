@@ -48,6 +48,7 @@ module Toys
 
       ##
       # Configure the tool flags.
+      #
       # @private
       #
       def config(tool, _loader)
@@ -63,6 +64,7 @@ module Toys
 
       INCREMENT_HANDLER = ->(_val, cur) { cur.to_i + 1 }
       DECREMENT_HANDLER = ->(_val, cur) { cur.to_i - 1 }
+      private_constant :INCREMENT_HANDLER, :DECREMENT_HANDLER
 
       def add_verbose_flags(tool)
         verbose_flags = resolve_flags_spec(@verbose_flags, tool, DEFAULT_VERBOSE_FLAGS)

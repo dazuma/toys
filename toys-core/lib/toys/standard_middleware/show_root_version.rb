@@ -46,6 +46,7 @@ module Toys
 
       ##
       # Adds the version flag if requested.
+      #
       # @private
       #
       def config(tool, _loader)
@@ -58,6 +59,7 @@ module Toys
 
       ##
       # This middleware displays the version.
+      #
       # @private
       #
       def run(context)

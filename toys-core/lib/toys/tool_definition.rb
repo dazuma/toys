@@ -12,8 +12,208 @@ module Toys
   #
   class ToolDefinition
     ##
+    # A Completion that implements the default algorithm for a tool.
+    #
+    class DefaultCompletion < Completion::Base
+      ##
+      # Create a completion given configuration options.
+      #
+      # @param complete_subtools [Boolean] Whether to complete subtool names
+      # @param include_hidden_subtools [Boolean] Whether to include hidden
+      #     subtools (i.e. those beginning with an underscore)
+      # @param complete_args [Boolean] Whether to complete positional args
+      # @param complete_flags [Boolean] Whether to complete flag names
+      # @param complete_flag_values [Boolean] Whether to complete flag values
+      # @param delegation_target [Array<String>,nil] Delegation target, or
+      #     `nil` if none.
+      #
+      def initialize(complete_subtools: true, include_hidden_subtools: false,
+                     complete_args: true, complete_flags: true, complete_flag_values: true,
+                     delegation_target: nil)
+        super()
+        @complete_subtools = complete_subtools
+        @include_hidden_subtools = include_hidden_subtools
+        @complete_flags = complete_flags
+        @complete_args = complete_args
+        @complete_flag_values = complete_flag_values
+        @delegation_target = delegation_target
+      end
+
+      ##
+      # Whether to complete subtool names
+      # @return [Boolean]
+      #
+      def complete_subtools?
+        @complete_subtools
+      end
+
+      ##
+      # Whether to include hidden subtools
+      # @return [Boolean]
+      #
+      def include_hidden_subtools?
+        @include_hidden_subtools
+      end
+
+      ##
+      # Whether to complete flags
+      # @return [Boolean]
+      #
+      def complete_flags?
+        @complete_flags
+      end
+
+      ##
+      # Whether to complete positional args
+      # @return [Boolean]
+      #
+      def complete_args?
+        @complete_args
+      end
+
+      ##
+      # Whether to complete flag values
+      # @return [Boolean]
+      #
+      def complete_flag_values?
+        @complete_flag_values
+      end
+
+      ##
+      # Delegation target, or nil for none.
+      # @return [Array<String>] if there is a delegation target
+      # @return [nil] if there is no delegation target
+      #
+      attr_accessor :delegation_target
+
+      ##
+      # Returns candidates for the current completion.
+      #
+      # @param context [Toys::Completion::Context] the current completion
+      #     context including the string fragment.
+      # @return [Array<Toys::Completion::Candidate>] an array of candidates
+      #
+      def call(context)
+        candidates = valued_flag_candidates(context)
+        return candidates if candidates
+        candidates = subtool_or_arg_candidates(context)
+        candidates += plain_flag_candidates(context)
+        candidates += flag_value_candidates(context)
+        if delegation_target
+          delegate_tool = context.cli.loader.lookup_specific(delegation_target)
+          if delegate_tool
+            context = context.with(previous_words: delegation_target)
+            candidates += delegate_tool.completion.call(context)
+          end
+        end
+        candidates
+      end
+
+      private
+
+      def valued_flag_candidates(context)
+        return unless @complete_flag_values
+        arg_parser = context.arg_parser
+        return unless arg_parser.flags_allowed?
+        active_flag_def = arg_parser.active_flag_def
+        return if active_flag_def && active_flag_def.value_type == :required
+        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
+        return unless match
+        flag_value_context = context.with(fragment_prefix: match[2])
+        flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag
+        return [] unless flag_def
+        flag_def.value_completion.call(flag_value_context)
+      end
+
+      def subtool_or_arg_candidates(context)
+        return [] if context.arg_parser.active_flag_def
+        return [] if context.arg_parser.flags_allowed? && context.fragment.start_with?("-")
+        subtool_candidates(context) || arg_candidates(context)
+      end
+
+      def subtool_candidates(context)
+        return if !@complete_subtools || !context.args.empty?
+        tool_name, prefix, fragment = analyze_subtool_fragment(context)
+        return unless tool_name
+        subtools = context.cli.loader.list_subtools(tool_name,
+                                                    include_hidden: @include_hidden_subtools)
+        return if subtools.empty?
+        candidates = []
+        subtools.each do |subtool|
+          name = subtool.simple_name
+          candidates << Completion::Candidate.new("#{prefix}#{name}") if name.start_with?(fragment)
+        end
+        candidates
+      end
+
+      def analyze_subtool_fragment(context)
+        tool_name = context.tool.full_name
+        prefix = ""
+        fragment = context.fragment
+        delims = context.cli.extra_delimiters
+        unless context.fragment_prefix.empty?
+          if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
+            return [nil, nil, nil]
+          end
+          tool_name += context.fragment_prefix.split(":")
+        end
+        unless delims.empty?
+          delims_regex = ::Regexp.escape(delims)
+          if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
+            fragment = match[3]
+            tool_name += match[2].split(/[#{delims_regex}]/)
+            prefix = match[1]
+          end
+        end
+        [tool_name, prefix, fragment]
+      end
+
+      def arg_candidates(context)
+        return unless @complete_args
+        arg_def = context.arg_parser.next_arg_def
+        return [] unless arg_def
+        arg_def.completion.call(context)
+      end
+
+      def plain_flag_candidates(context)
+        return [] if !@complete_flags || context[:disable_flags]
+        arg_parser = context.arg_parser
+        return [] unless arg_parser.flags_allowed?
+        flag_def = arg_parser.active_flag_def
+        return [] if flag_def && flag_def.value_type == :required
+        return [] if context.fragment =~ /\A[^-]/ || !context.fragment_prefix.empty?
+        context.tool.flags.flat_map do |flag|
+          flag.flag_completion.call(context)
+        end
+      end
+
+      def flag_value_candidates(context)
+        return unless @complete_flag_values
+        arg_parser = context.arg_parser
+        flag_def = arg_parser.active_flag_def
+        return [] unless flag_def
+        return [] if @complete_flags && arg_parser.flags_allowed? &&
+                     flag_def.value_type == :optional && context.fragment.start_with?("-")
+        flag_def.value_completion.call(context)
+      end
+    end
+
+    ##
+    # Tool-based settings class.
+    #
+    # The following settings are supported:
+    #
+    #  *  `propagate_helper_methods` (_Boolean_) - Whether subtools should
+    #     inherit methods defined by parent tools. Defaults to `false`.
+    #
+    class Settings < ::Toys::Settings
+      settings_attr :propagate_helper_methods, default: false
+    end
+
+    ##
     # Create a new tool.
     # Should be created only from the DSL via the Loader.
+    #
     # @private
     #
     def initialize(parent, full_name, priority, source_root, middleware_stack, middleware_lookup,
@@ -40,6 +240,7 @@ module Toys
     # Reset the definition of this tool, deleting all definition data but
     # leaving named acceptors, mixins, and templates intact.
     # Should be called only from the DSL.
+    #
     # @private
     #
     def reset_definition
@@ -470,8 +671,8 @@ module Toys
     ##
     # Include the given mixin in the tool class.
     #
-    # The mixin must be given as a module. You can use {#lookup_mixin} or
-    # {Loader#resolve_standard_mixin} to resolve named mixins.
+    # The mixin must be given as a module. You can use {#lookup_mixin} to
+    # resolve named mixins.
     #
     # @param mod [Module] The mixin module
     # @return [self]
@@ -1074,6 +1275,7 @@ module Toys
 
     ##
     # Lookup the custom context directory in this tool and its ancestors.
+    #
     # @private
     #
     def lookup_custom_context_directory
@@ -1082,6 +1284,7 @@ module Toys
 
     ##
     # Mark this tool as having at least one module included.
+    #
     # @private
     #
     def mark_includes_modules
@@ -1093,6 +1296,7 @@ module Toys
     ##
     # Complete definition and run middleware configs. Should be called from
     # the Loader only.
+    #
     # @private
     #
     def finish_definition(loader)
@@ -1114,6 +1318,7 @@ module Toys
 
     ##
     # Run all initializers against a context. Called from the Runner.
+    #
     # @private
     #
     def run_initializers(context)
@@ -1125,6 +1330,7 @@ module Toys
     ##
     # Check that the tool can still be defined. Should be called internally
     # or from the DSL only.
+    #
     # @private
     #
     def check_definition_state(is_arg: false, is_method: false)
@@ -1141,205 +1347,6 @@ module Toys
               "Tool #{display_name.inspect} is already delegating to another tool"
       end
       self
-    end
-
-    ##
-    # A Completion that implements the default algorithm for a tool.
-    #
-    class DefaultCompletion < Completion::Base
-      ##
-      # Create a completion given configuration options.
-      #
-      # @param complete_subtools [Boolean] Whether to complete subtool names
-      # @param include_hidden_subtools [Boolean] Whether to include hidden
-      #     subtools (i.e. those beginning with an underscore)
-      # @param complete_args [Boolean] Whether to complete positional args
-      # @param complete_flags [Boolean] Whether to complete flag names
-      # @param complete_flag_values [Boolean] Whether to complete flag values
-      # @param delegation_target [Array<String>,nil] Delegation target, or
-      #     `nil` if none.
-      #
-      def initialize(complete_subtools: true, include_hidden_subtools: false,
-                     complete_args: true, complete_flags: true, complete_flag_values: true,
-                     delegation_target: nil)
-        super()
-        @complete_subtools = complete_subtools
-        @include_hidden_subtools = include_hidden_subtools
-        @complete_flags = complete_flags
-        @complete_args = complete_args
-        @complete_flag_values = complete_flag_values
-        @delegation_target = delegation_target
-      end
-
-      ##
-      # Whether to complete subtool names
-      # @return [Boolean]
-      #
-      def complete_subtools?
-        @complete_subtools
-      end
-
-      ##
-      # Whether to include hidden subtools
-      # @return [Boolean]
-      #
-      def include_hidden_subtools?
-        @include_hidden_subtools
-      end
-
-      ##
-      # Whether to complete flags
-      # @return [Boolean]
-      #
-      def complete_flags?
-        @complete_flags
-      end
-
-      ##
-      # Whether to complete positional args
-      # @return [Boolean]
-      #
-      def complete_args?
-        @complete_args
-      end
-
-      ##
-      # Whether to complete flag values
-      # @return [Boolean]
-      #
-      def complete_flag_values?
-        @complete_flag_values
-      end
-
-      ##
-      # Delegation target, or nil for none.
-      # @return [Array<String>] if there is a delegation target
-      # @return [nil] if there is no delegation target
-      #
-      attr_accessor :delegation_target
-
-      ##
-      # Returns candidates for the current completion.
-      #
-      # @param context [Toys::Completion::Context] the current completion
-      #     context including the string fragment.
-      # @return [Array<Toys::Completion::Candidate>] an array of candidates
-      #
-      def call(context)
-        candidates = valued_flag_candidates(context)
-        return candidates if candidates
-        candidates = subtool_or_arg_candidates(context)
-        candidates += plain_flag_candidates(context)
-        candidates += flag_value_candidates(context)
-        if delegation_target
-          delegate_tool = context.cli.loader.lookup_specific(delegation_target)
-          if delegate_tool
-            context = context.with(previous_words: delegation_target)
-            candidates += delegate_tool.completion.call(context)
-          end
-        end
-        candidates
-      end
-
-      private
-
-      def valued_flag_candidates(context)
-        return unless @complete_flag_values
-        arg_parser = context.arg_parser
-        return unless arg_parser.flags_allowed?
-        active_flag_def = arg_parser.active_flag_def
-        return if active_flag_def && active_flag_def.value_type == :required
-        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
-        return unless match
-        flag_value_context = context.with(fragment_prefix: match[2])
-        flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag
-        return [] unless flag_def
-        flag_def.value_completion.call(flag_value_context)
-      end
-
-      def subtool_or_arg_candidates(context)
-        return [] if context.arg_parser.active_flag_def
-        return [] if context.arg_parser.flags_allowed? && context.fragment.start_with?("-")
-        subtool_candidates(context) || arg_candidates(context)
-      end
-
-      def subtool_candidates(context)
-        return if !@complete_subtools || !context.args.empty?
-        tool_name, prefix, fragment = analyze_subtool_fragment(context)
-        return unless tool_name
-        subtools = context.cli.loader.list_subtools(tool_name,
-                                                    include_hidden: @include_hidden_subtools)
-        return if subtools.empty?
-        candidates = []
-        subtools.each do |subtool|
-          name = subtool.simple_name
-          candidates << Completion::Candidate.new("#{prefix}#{name}") if name.start_with?(fragment)
-        end
-        candidates
-      end
-
-      def analyze_subtool_fragment(context)
-        tool_name = context.tool.full_name
-        prefix = ""
-        fragment = context.fragment
-        delims = context.cli.extra_delimiters
-        unless context.fragment_prefix.empty?
-          if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
-            return [nil, nil, nil]
-          end
-          tool_name += context.fragment_prefix.split(":")
-        end
-        unless delims.empty?
-          delims_regex = ::Regexp.escape(delims)
-          if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
-            fragment = match[3]
-            tool_name += match[2].split(/[#{delims_regex}]/)
-            prefix = match[1]
-          end
-        end
-        [tool_name, prefix, fragment]
-      end
-
-      def arg_candidates(context)
-        return unless @complete_args
-        arg_def = context.arg_parser.next_arg_def
-        return [] unless arg_def
-        arg_def.completion.call(context)
-      end
-
-      def plain_flag_candidates(context)
-        return [] if !@complete_flags || context[:disable_flags]
-        arg_parser = context.arg_parser
-        return [] unless arg_parser.flags_allowed?
-        flag_def = arg_parser.active_flag_def
-        return [] if flag_def && flag_def.value_type == :required
-        return [] if context.fragment =~ /\A[^-]/ || !context.fragment_prefix.empty?
-        context.tool.flags.flat_map do |flag|
-          flag.flag_completion.call(context)
-        end
-      end
-
-      def flag_value_candidates(context)
-        return unless @complete_flag_values
-        arg_parser = context.arg_parser
-        flag_def = arg_parser.active_flag_def
-        return [] unless flag_def
-        return [] if @complete_flags && arg_parser.flags_allowed? &&
-                     flag_def.value_type == :optional && context.fragment.start_with?("-")
-        flag_def.value_completion.call(context)
-      end
-    end
-
-    ##
-    # Tool-based settings class.
-    #
-    # The following settings are supported:
-    #
-    #  *  `propagate_helper_methods` (_Boolean_) - Whether subtools should
-    #     inherit methods defined by parent tools. Defaults to `false`.
-    #
-    class Settings < ::Toys::Settings
-      settings_attr :propagate_helper_methods, default: false
     end
 
     private
