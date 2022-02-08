@@ -1,5 +1,27 @@
 # Release History
 
+### v0.13.0 / 2022-02-08
+
+Toys-Core 0.13.0 is a major release with significant improvements to the git cache, along with compatibility improvements and bug fixes.
+
+New functionality:
+
+* The `load_git` directive and the underlying `Toys::Utils::GitCache` class now support updating from git based on cache age.
+* The `Toys::Utils::GitCache` class supports copying git content into a provided directory, querying repo information, and deleting cache data.
+* The `Toys::Utils::GitCache` class makes files read-only, to help prevent clients from interfering with one another.
+* The `:terminal` mixin and the underlying `Toys::Utils::Terminal` class now honor the `NO_COLOR` environment variable.
+* Added `Toys::CLI#load_tool`, which is useful for testing tools.
+
+Fixes and compatibility updates:
+
+* Bundler install/updates are now spawned in subprocesses for compatibility with bundler 2.3. The bundler integration also now requires bundler 2.2 or later.
+* The `exec_tool` and `exec_proc` methods in the `:exec` mixin now log their execution in the same way as other exec functions.
+* Minor compatibility fixes to provide partial support for TruffleRuby.
+
+Other notes:
+
+* The internal GitCache representation has changed significantly to support additional features and improve robustness and performance. This will force existing caches to update, but should not break existing usage.
+
 ### v0.12.2 / 2021-08-30
 
 * FIXED: Tool context inspect string is no longer overwhelmingly long

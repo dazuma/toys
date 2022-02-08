@@ -1,5 +1,40 @@
 # Release History
 
+### v0.13.0 / 2022-02-08
+
+Toys 0.13.0 is a major release with significant improvements to the testing framework and git cache, along with compatibility improvements and bug fixes.
+
+Breaking changes:
+
+* Passing `--directory=` to `toys system test` now restricts the search to *only* that directory, excluding global and builtin tools.
+* Renamed `Toys::Testing#exec_tool` to `Toys::Testing#toys_exec_tool`.
+* Removed the methods of `Toys::Testing` that were specific to "capture", "control", or "separate" spawning (i.e. `#exec_separate_tool`, `#capture_tool`, `#capture_separate_tool`, `#control_tool`, and `#control_separate_tool`). The general `Toys::Testing#toys_exec_tool` now either controls or captures depending on whether a block is present. Spawn-based execution is no longer available.
+
+New functionality:
+
+* Provided several builtin system tools for viewing and managing the git cache.
+* The `load_git` directive and the underlying `Toys::Utils::GitCache` class now support updating from git based on cache age.
+* The `Toys::Utils::GitCache` class supports supports copying git content into a provided directory, querying repo information, and deleting cache data.
+* The `Toys::Utils::GitCache` class makes files read-only, to help prevent clients from interfering with one another.
+* The `:terminal` mixin and the underlying `Toys::Utils::Terminal` class now honor the `NO_COLOR` environment variable.
+* `toys system test` now understands `--minitest-focus` and `--minitest-rg` to activate those plugins.
+* `toys system test` now understands `--minitest-version=` to set the minitest version requirement.
+* Added `Toys::Testing#toys_run_tool` to run a tool in-process for testing.
+* Added `Toys::Testing#toys_load_tool` to load a tool in-process and provide a way to test individual methods.
+* Added `:custom_paths` and `:include_builtins` arguments to the `Toys::StandardCLI` constructor.
+
+Fixes and compatibility:
+
+* Bundler install/updates are now spawned in subprocesses for compatibility with bundler 2.3. The bundler integration also now requires bundler 2.2 or later.
+* The `exec_tool` and `exec_proc` methods in the `:exec` mixin now log their execution in the same way as other exec functions.
+* Minor compatibility fixes to provide partial support for TruffleRuby.
+
+Other notes:
+
+* The internal GitCache representation has changed significantly to support additional features and improve robustness and performance. This will force existing caches to update, but should not break existing usage.
+* Significant updates to the readme and user guide, including a section in the user guide on the test framework.
+* Toys-core docs are now embedded into the toys gem, so that all the links will work in rubydoc.info.
+
 ### v0.12.2 / 2021-08-30
 
 * FIXED: Tool context inspect string is no longer overwhelmingly long
