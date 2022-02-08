@@ -82,6 +82,33 @@ expand :rdoc, output_dir: "doc", bundler: true
 
 expand :gem_build
 
+tool "build" do
+  alias_method :run_orig, :run
+
+  def run
+    cli.run("copy-core-docs")
+    run_orig
+  end
+end
+
 expand :gem_build, name: "release", push_gem: true
 
+tool "release" do
+  alias_method :run_orig, :run
+
+  def run
+    cli.run("copy-core-docs")
+    run_orig
+  end
+end
+
 expand :gem_build, name: "install", install_gem: true
+
+tool "install" do
+  alias_method :run_orig, :run
+
+  def run
+    cli.run("copy-core-docs")
+    run_orig
+  end
+end
