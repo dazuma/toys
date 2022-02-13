@@ -52,6 +52,7 @@ describe "toys system git-cache" do
 
   before do
     skip unless Toys::Compat.allow_fork?
+    FileUtils.chmod_R("u+w", cache_dir, force: true)
     FileUtils.rm_rf(cache_dir)
     FileUtils.rm_rf(git_repo_dir)
     FileUtils.mkdir_p(git_repo_dir)

@@ -10,11 +10,15 @@ describe Toys::Utils::Gems do
   let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
   let(:exec_service) { Toys::Utils::Exec.new }
 
-  def setup_case(name, &block)
+  def setup_case(name, tmp_vendor: true, &block)
     skip unless ::ENV["TOYS_TEST_INTEGRATION"]
-    ::Bundler.with_unbundled_env do
+    Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
-        ::Timeout.timeout(60, &block)
+        if tmp_vendor
+          ENV["BUNDLE_PATH"] = "tmp/vendor"
+          FileUtils.rm_rf("tmp/vendor")
+        end
+        Timeout.timeout(60, &block)
       end
     end
   end
@@ -60,7 +64,7 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle installing to a local directory" do
-      setup_case("bundle-with-vendored-path") do
+      setup_case("bundle-with-vendored-path", tmp_vendor: false) do
         FileUtils.rm_f("Gemfile.lock")
         FileUtils.rm_rf("vendor")
         result = run_script
@@ -70,7 +74,7 @@ describe Toys::Utils::Gems do
       end
     end
 
-    it "restores the original Gemfile.lock" do
+    it "preserves the original Gemfile.lock" do
       setup_case("bundle-without-toys") do
         exec_service.exec(["bundle", "install"], out: :null, err: :null)
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
@@ -123,14 +127,14 @@ describe Toys::Utils::Gems do
 
     it "sets up a bundle requiring installation of a direct dependency" do
       skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      skip if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
-        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
         assert_match(/Bundle (complete|updated)!/, result.captured_out)
-        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.2"], out: :null)
+        FileUtils.rm_rf("tmp/vendor")
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
@@ -143,14 +147,13 @@ describe Toys::Utils::Gems do
 
     it "sets up a bundle requiring installation of a transitive dependency via a gemspec" do
       skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      skip if exec_service.capture(["gem", "list", "highline"]).include?("2.0.1")
       setup_case("bundle-using-gemspec") do
-        FileUtils.rm_f("Gemfile.lock")
-        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
         assert_match(/Bundle (complete|updated)!/, result.captured_out)
-        exec_service.exec(["gem", "uninstall", "highline", "--version=2.0.1"], out: :null)
+        FileUtils.rm_rf("tmp/vendor")
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
@@ -163,16 +166,24 @@ describe Toys::Utils::Gems do
 
     it "updates the bundle if install fails due to conflicts" do
       skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      skip if exec_service.capture(["gem", "list", "rubocop"]).include?("0.81.0")
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
-        exec_service.exec(["gem", "uninstall", "rubocop", "--version=0.81.0"], out: :null)
         result = run_script
         assert(result.success?)
         assert_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
         result = run_script
         assert(result.success?)
         refute_match(/Your bundle requires additional gems\. Install\?/, result.captured_out)
+      end
+    end
+
+    it "preserves the versions of default gems" do
+      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      setup_case("bundle-with-default-gems") do
+        result = run_script
+        assert(result.success?)
       end
     end
   end

@@ -372,16 +372,24 @@ module Toys
       end
 
       def modified_gemfile_content(gemfile_path)
-        is_running_toys = ::Toys.const_defined?(:VERSION)
         content = [::File.read(gemfile_path)]
-        content << "has_toys_dep = dependencies.any? { |dep| dep.name == 'toys' }" unless is_running_toys
-        content << "dependencies.delete_if { |dep| dep.name == 'toys-core' || dep.name == 'toys' }"
-        repo_root = ::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH)) if ::ENV["TOYS_DEV"]
-        path = repo_root ? ::File.join(repo_root, "toys-core") : nil
-        content << "gem 'toys-core', #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}"
-        path = repo_root ? ::File.join(repo_root, "toys") : nil
-        guard = is_running_toys ? "" : " if has_toys_dep"
-        content << "gem 'toys', #{::Toys::Core::VERSION.inspect}, path: #{path.inspect}#{guard}"
+
+        custom_paths = {}
+        if ::ENV["TOYS_DEV"]
+          repo_root = ::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH))
+          custom_paths["toys-core"] = ::File.join(repo_root, "toys-core")
+          custom_paths["toys"] = ::File.join(repo_root, "toys")
+        end
+
+        loaded_gems = ::Gem.loaded_specs.values.sort_by(&:name)
+        content << "toys_loaded_gems = #{loaded_gems.map(&:name).inspect}"
+        content << "dependencies.delete_if { |dep| toys_loaded_gems.include?(dep.name) }"
+        loaded_gems.each do |spec|
+          path = custom_paths[spec.name]
+          path_suffix = path ? ", path: '#{path}'" : ""
+          content << "gem '#{spec.name}', '= #{spec.version}'#{path_suffix}"
+        end
+
         content
       end
 
@@ -422,13 +430,16 @@ module Toys
         args << "--retry=#{retries}" if retries.positive?
         bundler_bin = ::Gem.bin_path("bundler", "bundle", ::Bundler::VERSION)
         result = exec_util.exec_ruby([bundler_bin, "install"] + args)
-        if result.error?
-          terminal.puts("Failed to install. Trying update...")
-          result = exec_util.exec_ruby([bundler_bin, "update"] + args)
-          unless result.success?
-            raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"
-          end
-        end
+        return if result.success?
+        terminal.puts("Failed to install. Trying update...")
+        result = exec_util.exec_ruby([bundler_bin, "update"] + args)
+        return if result.success?
+        terminal.puts("Failed to update. Trying update with clean lockfile...")
+        lockfile_path = find_lockfile_path(gemfile_path)
+        ::File.delete(lockfile_path) if ::File.exist?(lockfile_path)
+        result = exec_util.exec_ruby([bundler_bin, "update"] + args)
+        return if result.success?
+        raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"
       end
     end
   end
