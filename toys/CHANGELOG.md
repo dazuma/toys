@@ -2,7 +2,7 @@
 
 ### v0.13.1 / 2022-03-01
 
-* FIXED: Fix bundler failures if a bundle locks to a different version of a builtin gem
+* FIXED: Bundler integration no longer fails if a bundle was locked to a different version of a builtin gem
 
 ### v0.13.0 / 2022-02-08
 
