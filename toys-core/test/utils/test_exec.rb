@@ -666,15 +666,15 @@ describe Toys::Utils::Exec do
   describe "backgrounding" do
     it "determines whether processes are executing" do
       ::Timeout.timeout(ruby_exec_timeout * 2) do
-        controller1 = exec.exec("sleep 1", background: true)
-        controller2 = exec.exec("sleep 0.3", background: true)
+        controller1 = exec.exec("sleep 1.5", background: true)
+        controller2 = exec.exec("sleep 0.5", background: true)
         sleep(0.1)
         assert_equal(true, controller1.executing?)
         assert_equal(true, controller2.executing?)
-        sleep(0.7)
+        sleep(0.9)
         assert_equal(true, controller1.executing?)
         assert_equal(false, controller2.executing?)
-        sleep(0.7)
+        sleep(1.0)
         assert_equal(false, controller1.executing?)
         assert_equal(false, controller2.executing?)
       end
