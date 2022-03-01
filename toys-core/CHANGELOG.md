@@ -1,5 +1,9 @@
 # Release History
 
+### v0.13.1 / 2022-03-01
+
+* FIXED: Toys::Utils::Gems no longer fails to install a bundle if it had locked to a different version of a builtin gem
+
 ### v0.13.0 / 2022-02-08
 
 Toys-Core 0.13.0 is a major release with significant improvements to the git cache, along with compatibility improvements and bug fixes.
