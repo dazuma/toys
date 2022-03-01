@@ -1,0 +1,2965 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::CLI
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::CLI";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (C)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">CLI</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::CLI
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::CLI</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/cli.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A Toys-based CLI.</p>
+
+<p>This is the entry point for command line execution. It includes the set of
+tool definitions (and/or information on how to load them from the file
+system), configuration parameters such as logging and error handling, and a
+method to call to invoke a command.</p>
+
+<p>This is the class to instantiate to create a Toys-based command line
+executable. For example:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span><span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'>CLI</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+<span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>The currently running CLI is also available at runtime, and can be used by
+tools that want to invoke other tools. For example:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># My .toys.rb
+</span><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>foo</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>in foo</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+<span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bar</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>in bar</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>foo</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="CLI/DefaultCompletion.html" title="Toys::CLI::DefaultCompletion (class)">DefaultCompletion</a></span>, <span class='object_link'><a href="CLI/DefaultErrorHandler.html" title="Toys::CLI::DefaultErrorHandler (class)">DefaultErrorHandler</a></span>
+    
+  
+</p>
+
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#base_level-instance_method" title="#base_level (instance method)">#<strong>base_level</strong>  &#x21d2; Integer<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The initial logger level in this CLI, used as the level for verbosity 0.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#completion-instance_method" title="#completion (instance method)">#<strong>completion</strong>  &#x21d2; Toys::Completion::Base, Proc </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The overall completion strategy for this CLI.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#executable_name-instance_method" title="#executable_name (instance method)">#<strong>executable_name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The effective executable name used for usage text in this CLI.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#extra_delimiters-instance_method" title="#extra_delimiters (instance method)">#<strong>extra_delimiters</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The string of tool name delimiter characters (besides space).</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#loader-instance_method" title="#loader (instance method)">#<strong>loader</strong>  &#x21d2; Toys::Loader </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The current loader for this CLI.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#logger-instance_method" title="#logger (instance method)">#<strong>logger</strong>  &#x21d2; Logger<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The global logger, if any.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#logger_factory-instance_method" title="#logger_factory (instance method)">#<strong>logger_factory</strong>  &#x21d2; Proc </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The logger factory.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_logger_factory-class_method" title="default_logger_factory (class method)">.<strong>default_logger_factory</strong>  &#x21d2; Proc </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a logger factory that generates loggers that write to stderr.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_middleware_lookup-class_method" title="default_middleware_lookup (class method)">.<strong>default_middleware_lookup</strong>  &#x21d2; Toys::ModuleLookup </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a default ModuleLookup for middleware that points at the StandardMiddleware module.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_middleware_stack-class_method" title="default_middleware_stack (class method)">.<strong>default_middleware_stack</strong>  &#x21d2; Array&lt;Toys::Middleware::Spec&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a default set of middleware that may be used as a starting point for a typical CLI.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_mixin_lookup-class_method" title="default_mixin_lookup (class method)">.<strong>default_mixin_lookup</strong>  &#x21d2; Toys::ModuleLookup </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a default ModuleLookup for mixins that points at the StandardMixins module.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_template_lookup-class_method" title="default_template_lookup (class method)">.<strong>default_template_lookup</strong>  &#x21d2; Toys::ModuleLookup </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a default empty ModuleLookup for templates.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_config_block-instance_method" title="#add_config_block (instance method)">#<strong>add_config_block</strong>(high_priority: false, source_name: nil, context_directory: nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a configuration block to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_config_path-instance_method" title="#add_config_path (instance method)">#<strong>add_config_path</strong>(path, high_priority: false, source_name: nil, context_directory: :parent)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a specific configuration file or directory to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_search_path-instance_method" title="#add_search_path (instance method)">#<strong>add_search_path</strong>(search_path, high_priority: false, context_directory: :path)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Checks the given directory path.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_search_path_hierarchy-instance_method" title="#add_search_path_hierarchy (instance method)">#<strong>add_search_path_hierarchy</strong>(start: nil, terminate: [], high_priority: false)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Walk up the directory hierarchy from the given start location, and add to the loader any config files and directories found.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#child-instance_method" title="#child (instance method)">#<strong>child</strong>(**opts) {|cli| ... } &#x21d2; Toys::CLI </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Make a clone with the same settings but no no config blocks and no paths in the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(executable_name: nil, middleware_stack: nil, extra_delimiters: &quot;&quot;, config_dir_name: nil, config_file_name: nil, index_file_name: nil, preload_file_name: nil, preload_dir_name: nil, data_dir_name: nil, lib_dir_name: nil, mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil, logger_factory: nil, logger: nil, base_level: nil, error_handler: nil, completion: nil)  &#x21d2; CLI </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a CLI.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#load_tool-instance_method" title="#load_tool (instance method)">#<strong>load_tool</strong>(*args) {|context| ... } &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Prepare a tool to be run, but just execute the given block rather than performing a full run of the tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#run-instance_method" title="#run (instance method)">#<strong>run</strong>(*args, verbosity: 0, delegated_from: nil)  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Run the CLI with the given command line arguments.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(executable_name: nil, middleware_stack: nil, extra_delimiters: &quot;&quot;, config_dir_name: nil, config_file_name: nil, index_file_name: nil, preload_file_name: nil, preload_dir_name: nil, data_dir_name: nil, lib_dir_name: nil, mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil, logger_factory: nil, logger: nil, base_level: nil, error_handler: nil, completion: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a CLI.</p>
+
+<p>Most configuration parameters (besides tool definitions and tool lookup
+paths) are set as options passed to the constructor. These options fall
+roughly into four categories:</p>
+
+<ul>
+<li> Options affecting output behavior:
+
+<ul>
+<li> <code>logger</code>: A global logger for all tools to use</li>
+<li> <code>logger_factory</code>: A proc that returns a logger to use</li>
+<li> <code>base_level</code>: The default log level</li>
+<li> <code>error_handler</code>: Callback for handling exceptions</li>
+<li> <code>executable_name</code>: The name of the executable</li>
+</ul></li>
+<li> Options affecting tool specification
+
+<ul>
+<li> <code>extra_delimibers</code>: Tool name delimiters besides space</li>
+<li> <code>completion</code>: Tab completion handler</li>
+</ul></li>
+<li> Options affecting tool definition
+
+<ul>
+<li> <code>middleware_stack</code>: The middleware applied to all tools</li>
+<li> <code>mixin_lookup</code>: Where to find well-known mixins</li>
+<li> <code>middleware_lookup</code>: Where to find well-known middleware</li>
+<li> <code>template_lookup</code>: Where to find well-known templates</li>
+</ul></li>
+<li> Options affecting tool files and directories
+
+<ul>
+<li> <code>config_dir_name</code>: Directory name containing tool files</li>
+<li> <code>config_file_name</code>: File name for tools</li>
+<li> <code>index_file_name</code>: Name of index files in tool directories</li>
+<li> <code>preload_file_name</code>: Name of preload files in tool directories</li>
+<li> <code>preload_dir_name</code>: Name of preload directories in tool directories</li>
+<li> <code>data_dir_name</code>: Name of data directories in tool directories</li>
+</ul></li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>logger</span>
+      
+      
+        <span class='type'>(<tt>Logger</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A global logger to use for all tools. This may be
+set if the CLI will call at most one tool at a time. However, it will
+behave incorrectly if CLI might run multiple tools at the same time
+with different verbosity settings (since the logger cannot have
+multiple level settings simultaneously). In that case, do not set a
+global logger, but use the <code>logger_factory</code> parameter instead.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>logger_factory</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A proc that takes a <span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">ToolDefinition</a></span>
+as an argument, and returns a <code>Logger</code> to use when running that tool.
+Optional. If not provided (and no global logger is set), CLI will use
+a default factory that writes generates loggers writing formatted
+output to <code>STDERR</code>, as defined by <span class='object_link'><a href="#default_logger_factory-class_method" title="Toys::CLI.default_logger_factory (method)">default_logger_factory</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>base_level</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The logger level that should correspond
+to zero verbosity.
+Optional. If not provided, defaults to the current level of the
+logger (which is often <code>Logger::WARN</code>).</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>error_handler</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A proc that is called when an error is
+caught. The proc should take a <span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">Toys::ContextualError</a></span> argument and
+report the error. It should return an exit code (normally nonzero).
+Optional. If not provided, defaults to an instance of
+<span class='object_link'><a href="CLI/DefaultErrorHandler.html" title="Toys::CLI::DefaultErrorHandler (class)">DefaultErrorHandler</a></span>, which displays an error message to
+<code>STDERR</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>executable_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The executable name displayed in help
+text. Optional. Defaults to the ruby program name.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>extra_delimiters</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&quot;&quot;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A string containing characters that can
+function as delimiters in a tool name. Defaults to empty. Allowed
+characters are period, colon, and slash.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>completion</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab
+completion for the CLI as a whole.
+Optional. If not provided, defaults to an instance of
+<span class='object_link'><a href="CLI/DefaultCompletion.html" title="Toys::CLI::DefaultCompletion (class)">DefaultCompletion</a></span>, which delegates completion to the
+relevant tool.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>middleware_stack</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of
+middleware that will be used by default for all tools.
+Optional. If not provided, uses a default set of middleware defined
+in <span class='object_link'><a href="#default_middleware_stack-class_method" title="Toys::CLI.default_middleware_stack (method)">default_middleware_stack</a></span>. To include no middleware,
+pass the empty array explicitly.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>mixin_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for well-known mixin
+modules (i.e. with symbol names).
+Optional. If not provided, defaults to the set of standard mixins
+provided by toys-core, as defined by
+<span class='object_link'><a href="#default_mixin_lookup-class_method" title="Toys::CLI.default_mixin_lookup (method)">default_mixin_lookup</a></span>. If you explicitly want no standard
+mixins, pass an empty instance of <span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>middleware_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for well-known
+middleware classes.
+Optional. If not provided, defaults to the set of standard middleware
+classes provided by toys-core, as defined by
+<span class='object_link'><a href="#default_middleware_lookup-class_method" title="Toys::CLI.default_middleware_lookup (method)">default_middleware_lookup</a></span>. If you explicitly want no
+standard middleware, pass an empty instance of
+<span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>template_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for well-known
+template classes.
+Optional. If not provided, defaults to the set of standard template
+classes provided by toys core, as defined by
+<span class='object_link'><a href="#default_template_lookup-class_method" title="Toys::CLI.default_template_lookup (method)">default_template_lookup</a></span>. If you explicitly want no
+standard tenokates, pass an empty instance of <span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>config_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears
+in the loader path, is treated as a configuration directory whose
+contents are loaded into the toys configuration.
+Optional. If not provided, toplevel configuration directories are
+disabled.
+Note: the standard toys executable sets this to <code>&quot;.toys&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>config_file_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A file with this name that appears in
+the loader path, is treated as a toplevel configuration file whose
+contents are loaded into the toys configuration. This does not
+include &quot;index&quot; configuration files located within a configuration
+directory.
+Optional. If not provided, toplevel configuration files are disabled.
+Note: the standard toys executable sets this to <code>&quot;.toys.rb&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>index_file_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A file with this name that appears in any
+configuration directory is loaded first as a standalone configuration
+file. This does not include &quot;toplevel&quot; configuration files outside
+configuration directories.
+Optional. If not provided, index configuration files are disabled.
+Note: the standard toys executable sets this to <code>&quot;.toys.rb&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>preload_file_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A file with this name that appears
+in any configuration directory is preloaded using <code>require</code> before
+any tools in that configuration directory are defined. A preload file
+includes normal Ruby code, rather than Toys DSL definitions. The
+preload file is loaded before any files in a preload directory.
+Optional. If not provided, preload files are disabled.
+Note: the standard toys executable sets this to <code>&quot;.preload.rb&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>preload_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears
+in any configuration directory is searched for Ruby files, which are
+preloaded using <code>require</code> before any tools in that configuration
+directory are defined. Files in a preload directory include normal
+Ruby code, rather than Toys DSL definitions. Files in a preload
+directory are loaded after any standalone preload file.
+Optional. If not provided, preload directories are disabled.
+Note: the standard toys executable sets this to <code>&quot;.preload&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>data_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears in
+any configuration directory is added to the data directory search
+path for any tool file in that directory.
+Optional. If not provided, data directories are disabled.
+Note: the standard toys executable sets this to <code>&quot;.data&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>lib_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears in
+any configuration directory is added to the Ruby load path when
+executing any tool file in that directory.
+Optional. If not provided, lib directories are disabled.
+Note: the standard toys executable sets this to <code>&quot;.lib&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 178</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>executable_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='comment'># rubocop:disable Metrics/MethodLength
+</span>               <span class='label'>middleware_stack:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+               <span class='label'>config_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>config_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>logger_factory:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>logger:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>base_level:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>error_handler:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>completion:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@executable_name</span> <span class='op'>=</span> <span class='id identifier rubyid_executable_name'>executable_name</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_basename'>basename</span><span class='lparen'>(</span><span class='gvar'>$PROGRAM_NAME</span><span class='rparen'>)</span>
+  <span class='ivar'>@middleware_stack</span> <span class='op'>=</span> <span class='id identifier rubyid_middleware_stack'>middleware_stack</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_middleware_stack'><span class='object_link'><a href="#default_middleware_stack-class_method" title="Toys::CLI.default_middleware_stack (method)">default_middleware_stack</a></span></span>
+  <span class='ivar'>@mixin_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_mixin_lookup'>mixin_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_mixin_lookup'><span class='object_link'><a href="#default_mixin_lookup-class_method" title="Toys::CLI.default_mixin_lookup (method)">default_mixin_lookup</a></span></span>
+  <span class='ivar'>@middleware_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_middleware_lookup'>middleware_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_middleware_lookup'><span class='object_link'><a href="#default_middleware_lookup-class_method" title="Toys::CLI.default_middleware_lookup (method)">default_middleware_lookup</a></span></span>
+  <span class='ivar'>@template_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_template_lookup'>template_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_template_lookup'><span class='object_link'><a href="#default_template_lookup-class_method" title="Toys::CLI.default_template_lookup (method)">default_template_lookup</a></span></span>
+  <span class='ivar'>@error_handler</span> <span class='op'>=</span> <span class='id identifier rubyid_error_handler'>error_handler</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="CLI/DefaultErrorHandler.html" title="Toys::CLI::DefaultErrorHandler (class)">DefaultErrorHandler</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="CLI/DefaultErrorHandler.html#initialize-instance_method" title="Toys::CLI::DefaultErrorHandler#initialize (method)">new</a></span></span>
+  <span class='ivar'>@completion</span> <span class='op'>=</span> <span class='id identifier rubyid_completion'>completion</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="CLI/DefaultCompletion.html" title="Toys::CLI::DefaultCompletion (class)">DefaultCompletion</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='ivar'>@logger</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span>
+  <span class='ivar'>@logger_factory</span> <span class='op'>=</span> <span class='id identifier rubyid_logger'>logger</span> <span class='op'>?</span> <span class='id identifier rubyid_proc'>proc</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_logger'>logger</span> <span class='rbrace'>}</span> <span class='op'>:</span> <span class='id identifier rubyid_logger_factory'>logger_factory</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_default_logger_factory'><span class='object_link'><a href="#default_logger_factory-class_method" title="Toys::CLI.default_logger_factory (method)">default_logger_factory</a></span></span>
+  <span class='ivar'>@base_level</span> <span class='op'>=</span> <span class='id identifier rubyid_base_level'>base_level</span>
+  <span class='ivar'>@extra_delimiters</span> <span class='op'>=</span> <span class='id identifier rubyid_extra_delimiters'>extra_delimiters</span>
+  <span class='ivar'>@config_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_config_dir_name'>config_dir_name</span>
+  <span class='ivar'>@config_file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_config_file_name'>config_file_name</span>
+  <span class='ivar'>@index_file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_index_file_name'>index_file_name</span>
+  <span class='ivar'>@preload_file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_preload_file_name'>preload_file_name</span>
+  <span class='ivar'>@preload_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_preload_dir_name'>preload_dir_name</span>
+  <span class='ivar'>@data_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_data_dir_name'>data_dir_name</span>
+  <span class='ivar'>@lib_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_lib_dir_name'>lib_dir_name</span>
+  <span class='ivar'>@loader</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Loader.html" title="Toys::Loader (class)">Loader</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Loader.html#initialize-instance_method" title="Toys::Loader#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+    <span class='label'>index_file_name:</span> <span class='ivar'>@index_file_name</span><span class='comma'>,</span>
+    <span class='label'>preload_dir_name:</span> <span class='ivar'>@preload_dir_name</span><span class='comma'>,</span>
+    <span class='label'>preload_file_name:</span> <span class='ivar'>@preload_file_name</span><span class='comma'>,</span>
+    <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+    <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='comma'>,</span>
+    <span class='label'>middleware_stack:</span> <span class='ivar'>@middleware_stack</span><span class='comma'>,</span>
+    <span class='label'>extra_delimiters:</span> <span class='ivar'>@extra_delimiters</span><span class='comma'>,</span>
+    <span class='label'>mixin_lookup:</span> <span class='ivar'>@mixin_lookup</span><span class='comma'>,</span>
+    <span class='label'>template_lookup:</span> <span class='ivar'>@template_lookup</span><span class='comma'>,</span>
+    <span class='label'>middleware_lookup:</span> <span class='ivar'>@middleware_lookup</span>
+  <span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="base_level-instance_method">
+  
+    #<strong>base_level</strong>  &#x21d2; <tt>Integer</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The initial logger level in this CLI, used as the level for verbosity 0.
+May be <code>nil</code>, indicating it will use the initial logger setting.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+301
+302
+303</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 301</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_base_level'>base_level</span>
+  <span class='ivar'>@base_level</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="completion-instance_method">
+  
+    #<strong>completion</strong>  &#x21d2; <tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Proc</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The overall completion strategy for this CLI.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+307
+308
+309</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 307</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_completion'>completion</span>
+  <span class='ivar'>@completion</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="executable_name-instance_method">
+  
+    #<strong>executable_name</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The effective executable name used for usage text in this CLI.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+276
+277
+278</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 276</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_executable_name'>executable_name</span>
+  <span class='ivar'>@executable_name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="extra_delimiters-instance_method">
+  
+    #<strong>extra_delimiters</strong>  &#x21d2; <tt>String</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The string of tool name delimiter characters (besides space).</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+282
+283
+284</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 282</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_extra_delimiters'>extra_delimiters</span>
+  <span class='ivar'>@extra_delimiters</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="loader-instance_method">
+  
+    #<strong>loader</strong>  &#x21d2; <tt><span class='object_link'><a href="Loader.html" title="Toys::Loader (class)">Toys::Loader</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The current loader for this CLI.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Loader.html" title="Toys::Loader (class)">Toys::Loader</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+270
+271
+272</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 270</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_loader'>loader</span>
+  <span class='ivar'>@loader</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="logger-instance_method">
+  
+    #<strong>logger</strong>  &#x21d2; <tt>Logger</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The global logger, if any.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Logger</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+288
+289
+290</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 288</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
+  <span class='ivar'>@logger</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="logger_factory-instance_method">
+  
+    #<strong>logger_factory</strong>  &#x21d2; <tt>Proc</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The logger factory.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+294
+295
+296</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 294</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_logger_factory'>logger_factory</span>
+  <span class='ivar'>@logger_factory</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="default_logger_factory-class_method">
+  
+    .<strong>default_logger_factory</strong>  &#x21d2; <tt>Proc</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a logger factory that generates loggers that write to stderr.
+All loggers generated by this factory share a single
+<span class='object_link'><a href="Utils/Terminal.html" title="Toys::Utils::Terminal (class)">Utils::Terminal</a></span>, so log entries may interleave but will not
+interrupt one another.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+647
+648
+649
+650
+651
+652
+653
+654
+655
+656
+657
+658
+659
+660
+661
+662
+663
+664
+665
+666
+667</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 647</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_logger_factory'>default_logger_factory</span>
+  <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/utils/terminal</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_shared_terminal'>shared_terminal</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Utils.html" title="Toys::Utils (module)">Utils</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Utils/Terminal.html" title="Toys::Utils::Terminal (class)">Terminal</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Utils/Terminal.html#initialize-instance_method" title="Toys::Utils::Terminal#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>output:</span> <span class='gvar'>$stderr</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_logger'>logger</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Logger</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_shared_terminal'>shared_terminal</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_formatter'>formatter</span> <span class='op'>=</span> <span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_severity'>severity</span><span class='comma'>,</span> <span class='id identifier rubyid_time'>time</span><span class='comma'>,</span> <span class='id identifier rubyid__progname'>_progname</span><span class='comma'>,</span> <span class='id identifier rubyid_msg'>msg</span><span class='op'>|</span>
+      <span class='id identifier rubyid_msg_str'>msg_str</span> <span class='op'>=</span>
+        <span class='kw'>case</span> <span class='id identifier rubyid_msg'>msg</span>
+        <span class='kw'>when</span> <span class='op'>::</span><span class='const'>String</span>
+          <span class='id identifier rubyid_msg'>msg</span>
+        <span class='kw'>when</span> <span class='op'>::</span><span class='const'>Exception</span>
+          <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_msg'>msg</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_content'> (</span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_msg'>msg</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='embexpr_end'>}</span><span class='tstring_content'>)\n</span><span class='tstring_end'>&quot;</span></span> <span class='op'>&lt;&lt;</span> <span class='lparen'>(</span><span class='id identifier rubyid_msg'>msg</span><span class='period'>.</span><span class='id identifier rubyid_backtrace'>backtrace</span> <span class='op'>||</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+        <span class='kw'>else</span>
+          <span class='id identifier rubyid_msg'>msg</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span>
+        <span class='kw'>end</span>
+      <span class='id identifier rubyid_format_log'>format_log</span><span class='lparen'>(</span><span class='id identifier rubyid_shared_terminal'>shared_terminal</span><span class='comma'>,</span> <span class='id identifier rubyid_time'>time</span><span class='comma'>,</span> <span class='id identifier rubyid_severity'>severity</span><span class='comma'>,</span> <span class='id identifier rubyid_msg_str'>msg_str</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_level'>level</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Logger</span><span class='op'>::</span><span class='const'>WARN</span>
+    <span class='id identifier rubyid_logger'>logger</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_middleware_lookup-class_method">
+  
+    .<strong>default_middleware_lookup</strong>  &#x21d2; <tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a default ModuleLookup for middleware that points at the
+StandardMiddleware module.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+626
+627
+628</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 626</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_middleware_lookup'>default_middleware_lookup</span>
+  <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span><span class='period'>.</span><span class='id identifier rubyid_add_path'><span class='object_link'><a href="ModuleLookup.html#add_path-instance_method" title="Toys::ModuleLookup#add_path (method)">add_path</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/standard_middleware</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_middleware_stack-class_method">
+  
+    .<strong>default_middleware_stack</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a default set of middleware that may be used as a starting
+point for a typical CLI. This set includes the following in order:</p>
+
+<ul>
+<li> <span class='object_link'><a href="StandardMiddleware/SetDefaultDescriptions.html" title="Toys::StandardMiddleware::SetDefaultDescriptions (class)">StandardMiddleware::SetDefaultDescriptions</a></span> providing
+defaults for description fields.</li>
+<li> <span class='object_link'><a href="StandardMiddleware/ShowHelp.html" title="Toys::StandardMiddleware::ShowHelp (class)">StandardMiddleware::ShowHelp</a></span> adding the <code>--help</code> flag and
+providing default behavior for namespaces.</li>
+<li> <span class='object_link'><a href="StandardMiddleware/HandleUsageErrors.html" title="Toys::StandardMiddleware::HandleUsageErrors (class)">StandardMiddleware::HandleUsageErrors</a></span></li>
+<li> <span class='object_link'><a href="StandardMiddleware/AddVerbosityFlags.html" title="Toys::StandardMiddleware::AddVerbosityFlags (class)">StandardMiddleware::AddVerbosityFlags</a></span> adding the <code>--verbose</code>
+and <code>--quiet</code> flags for managing the logger level.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+601
+602
+603
+604
+605
+606
+607
+608</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 601</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_middleware_stack'>default_middleware_stack</span>
+  <span class='lbracket'>[</span>
+    <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:set_default_descriptions</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:show_help</span><span class='comma'>,</span> <span class='label'>help_flags:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>fallback_execution:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:handle_usage_errors</span><span class='rparen'>)</span><span class='comma'>,</span>
+    <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:add_verbosity_flags</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_mixin_lookup-class_method">
+  
+    .<strong>default_mixin_lookup</strong>  &#x21d2; <tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a default ModuleLookup for mixins that points at the
+StandardMixins module.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+616
+617
+618</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 616</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_mixin_lookup'>default_mixin_lookup</span>
+  <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span><span class='period'>.</span><span class='id identifier rubyid_add_path'><span class='object_link'><a href="ModuleLookup.html#add_path-instance_method" title="Toys::ModuleLookup#add_path (method)">add_path</a></span></span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/standard_mixins</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="default_template_lookup-class_method">
+  
+    .<strong>default_template_lookup</strong>  &#x21d2; <tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a default empty ModuleLookup for templates.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+635
+636
+637</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 635</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_template_lookup'>default_template_lookup</span>
+  <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="add_config_block-instance_method">
+  
+    #<strong>add_config_block</strong>(high_priority: false, source_name: nil, context_directory: nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a configuration block to the loader.</p>
+
+<p>This is used to create tools &quot;inline&quot;, and is useful for simple command
+line executables based on Toys.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Add the config at the head of the priority
+list rather than the tail.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>source_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The source name that will be shown in
+documentation for tools defined in this block. If omitted, a default
+unique string will be generated.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The block of configuration, executed in the context
+of the tool DSL <span class='object_link'><a href="DSL/Tool.html" title="Toys::DSL::Tool (module)">DSL::Tool</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory for tools
+loaded from this block. You can pass a directory path as a string, or
+<code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 359</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_config_block'>add_config_block</span><span class='lparen'>(</span><span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                     <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                     <span class='label'>context_directory:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                     <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_add_block'>add_block</span><span class='lparen'>(</span><span class='label'>high_priority:</span> <span class='id identifier rubyid_high_priority'>high_priority</span><span class='comma'>,</span>
+                    <span class='label'>source_name:</span> <span class='id identifier rubyid_source_name'>source_name</span><span class='comma'>,</span>
+                    <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                    <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_config_path-instance_method">
+  
+    #<strong>add_config_path</strong>(path, high_priority: false, source_name: nil, context_directory: :parent)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a specific configuration file or directory to the loader.</p>
+
+<p>This is generally used to load a static or &quot;built-in&quot; set of tools,
+either for a standalone command line executable based on Toys, or to
+provide a &quot;default&quot; set of tools for a dynamic executable. For example,
+the main Toys executable uses this to load the builtin tools from its
+&quot;builtins&quot; directory.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A path to add. May reference a single Toys file or
+a Toys directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Add the config at the head of the priority
+list rather than the tail.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>source_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A custom name for the root source. Optional.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>, <tt>:path</tt>, <tt>:parent</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:parent</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory
+for tools loaded from this path. You can pass a directory path as a
+string, <code>:path</code> to denote the given path, <code>:parent</code> to denote the
+given path&#39;s parent directory, or <code>nil</code> to denote no context.
+Defaults to <code>:parent</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 330</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_config_path'>add_config_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span>
+                    <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                    <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                    <span class='label'>context_directory:</span> <span class='symbol'>:parent</span><span class='rparen'>)</span>
+  <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_add_path'>add_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span>
+                   <span class='label'>high_priority:</span> <span class='id identifier rubyid_high_priority'>high_priority</span><span class='comma'>,</span>
+                   <span class='label'>source_name:</span> <span class='id identifier rubyid_source_name'>source_name</span><span class='comma'>,</span>
+                   <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_search_path-instance_method">
+  
+    #<strong>add_search_path</strong>(search_path, high_priority: false, context_directory: :path)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Checks the given directory path. If it contains a config file and/or
+config directory, those are added to the loader.</p>
+
+<p>The main Toys executable uses this method to load tools from directories
+in the <code>TOYS_PATH</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>search_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A path to search for configs.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Add the configs at the head of the
+priority list rather than the tail.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>, <tt>:path</tt>, <tt>:parent</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:path</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory
+for tools loaded from this path. You can pass a directory path as a
+string, <code>:path</code> to denote the given path, <code>:parent</code> to denote the
+given path&#39;s parent directory, or <code>nil</code> to denote no context.
+Defaults to <code>:path</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 387</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_search_path'>add_search_path</span><span class='lparen'>(</span><span class='id identifier rubyid_search_path'>search_path</span><span class='comma'>,</span>
+                    <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                    <span class='label'>context_directory:</span> <span class='symbol'>:path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='kw'>if</span> <span class='ivar'>@config_file_name</span>
+    <span class='id identifier rubyid_file_path'>file_path</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_search_path'>search_path</span><span class='comma'>,</span> <span class='ivar'>@config_file_name</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_paths'>paths</span> <span class='op'>&lt;&lt;</span> <span class='ivar'>@config_file_name</span> <span class='kw'>if</span> <span class='op'>!</span><span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_file_path'>file_path</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_readable?'>readable?</span><span class='lparen'>(</span><span class='id identifier rubyid_file_path'>file_path</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='kw'>if</span> <span class='ivar'>@config_dir_name</span>
+    <span class='id identifier rubyid_dir_path'>dir_path</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_join'>join</span><span class='lparen'>(</span><span class='id identifier rubyid_search_path'>search_path</span><span class='comma'>,</span> <span class='ivar'>@config_dir_name</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_paths'>paths</span> <span class='op'>&lt;&lt;</span> <span class='ivar'>@config_dir_name</span> <span class='kw'>if</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_directory?'>directory?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir_path'>dir_path</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_readable?'>readable?</span><span class='lparen'>(</span><span class='id identifier rubyid_dir_path'>dir_path</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_add_path_set'>add_path_set</span><span class='lparen'>(</span><span class='id identifier rubyid_search_path'>search_path</span><span class='comma'>,</span> <span class='id identifier rubyid_paths'>paths</span><span class='comma'>,</span>
+                       <span class='label'>high_priority:</span> <span class='id identifier rubyid_high_priority'>high_priority</span><span class='comma'>,</span>
+                       <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_search_path_hierarchy-instance_method">
+  
+    #<strong>add_search_path_hierarchy</strong>(start: nil, terminate: [], high_priority: false)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Walk up the directory hierarchy from the given start location, and add to
+the loader any config files and directories found.</p>
+
+<p>The main Toys executable uses this method to load tools from the current
+directory and its ancestors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>start</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The first directory to add. Defaults to the current
+working directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>terminate</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Optional list of directories that should
+terminate the search. If the walk up the directory tree encounters
+one of these directories, the search is halted without checking the
+terminating directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Add the configs at the head of the
+priority list rather than the tail.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 422</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_search_path_hierarchy'>add_search_path_hierarchy</span><span class='lparen'>(</span><span class='label'>start:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>terminate:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_start'>start</span> <span class='op'>||</span> <span class='op'>::</span><span class='const'>Dir</span><span class='period'>.</span><span class='id identifier rubyid_pwd'>pwd</span>
+  <span class='id identifier rubyid_paths'>paths</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
+    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_terminate'>terminate</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_paths'>paths</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_path'>path</span>
+    <span class='id identifier rubyid_next_path'>next_path</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_dirname'>dirname</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span>
+    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_next_path'>next_path</span> <span class='op'>==</span> <span class='id identifier rubyid_path'>path</span>
+    <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_next_path'>next_path</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_reverse!'>reverse!</span> <span class='kw'>if</span> <span class='id identifier rubyid_high_priority'>high_priority</span>
+  <span class='id identifier rubyid_paths'>paths</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_p'>p</span><span class='op'>|</span>
+    <span class='id identifier rubyid_add_search_path'>add_search_path</span><span class='lparen'>(</span><span class='id identifier rubyid_p'>p</span><span class='comma'>,</span> <span class='label'>high_priority:</span> <span class='id identifier rubyid_high_priority'>high_priority</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="child-instance_method">
+  
+    #<strong>child</strong>(**opts) {|cli| ... } &#x21d2; <tt><span class='object_link'><a href="" title="Toys::CLI (class)">Toys::CLI</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Make a clone with the same settings but no no config blocks and no paths
+in the loader. This is sometimes useful for calling another tool that has
+to be loaded from a different configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>keywords</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Any configuration arguments that should be
+modified from the original. See <span class='object_link'><a href="#initialize-instance_method" title="Toys::CLI#initialize (method)">#initialize</a></span> for a list of
+recognized keywords.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>cli</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="Toys::CLI (class)">Toys::CLI</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>If you pass a block, the new CLI is yielded
+to it so you can add paths and make other modifications.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="" title="Toys::CLI (class)">Toys::CLI</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 240</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_child'>child</span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_args'>args</span> <span class='op'>=</span> <span class='lbrace'>{</span>
+    <span class='label'>executable_name:</span> <span class='ivar'>@executable_name</span><span class='comma'>,</span>
+    <span class='label'>config_dir_name:</span> <span class='ivar'>@config_dir_name</span><span class='comma'>,</span>
+    <span class='label'>config_file_name:</span> <span class='ivar'>@config_file_name</span><span class='comma'>,</span>
+    <span class='label'>index_file_name:</span> <span class='ivar'>@index_file_name</span><span class='comma'>,</span>
+    <span class='label'>preload_dir_name:</span> <span class='ivar'>@preload_dir_name</span><span class='comma'>,</span>
+    <span class='label'>preload_file_name:</span> <span class='ivar'>@preload_file_name</span><span class='comma'>,</span>
+    <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+    <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='comma'>,</span>
+    <span class='label'>middleware_stack:</span> <span class='ivar'>@middleware_stack</span><span class='comma'>,</span>
+    <span class='label'>extra_delimiters:</span> <span class='ivar'>@extra_delimiters</span><span class='comma'>,</span>
+    <span class='label'>mixin_lookup:</span> <span class='ivar'>@mixin_lookup</span><span class='comma'>,</span>
+    <span class='label'>middleware_lookup:</span> <span class='ivar'>@middleware_lookup</span><span class='comma'>,</span>
+    <span class='label'>template_lookup:</span> <span class='ivar'>@template_lookup</span><span class='comma'>,</span>
+    <span class='label'>logger:</span> <span class='ivar'>@logger</span><span class='comma'>,</span>
+    <span class='label'>logger_factory:</span> <span class='ivar'>@logger_factory</span><span class='comma'>,</span>
+    <span class='label'>base_level:</span> <span class='ivar'>@base_level</span><span class='comma'>,</span>
+    <span class='label'>error_handler:</span> <span class='ivar'>@error_handler</span><span class='comma'>,</span>
+    <span class='label'>completion:</span> <span class='ivar'>@completion</span><span class='comma'>,</span>
+  <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='op'>**</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='kw'>yield</span> <span class='id identifier rubyid_cli'>cli</span> <span class='kw'>if</span> <span class='id identifier rubyid_block_given?'>block_given?</span>
+  <span class='id identifier rubyid_cli'>cli</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="load_tool-instance_method">
+  
+    #<strong>load_tool</strong>(*args) {|context| ... } &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Prepare a tool to be run, but just execute the given block rather than
+performing a full run of the tool. This is intended for testing tools.
+Unlike <span class='object_link'><a href="#run-instance_method" title="Toys::CLI#run (method)">#run</a></span>, this does not catch errors and perform error handling.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Command line arguments specifying which tool to
+run and what arguments to pass to it. You may pass either a single
+array of strings, or a series of string arguments.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>context</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Toys::Context</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Yields the tool context.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The value returned from the block.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+482
+483
+484
+485
+486
+487
+488</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 482</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_load_tool'>load_tool</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span> <span class='op'>=</span> <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_build_context'>build_context</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_execute_tool'>execute_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_ctx'>ctx</span><span class='op'>|</span>
+    <span class='id identifier rubyid_ctx'>ctx</span><span class='period'>.</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='kw'>yield</span> <span class='id identifier rubyid_ctx'>ctx</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="run-instance_method">
+  
+    #<strong>run</strong>(*args, verbosity: 0, delegated_from: nil)  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Run the CLI with the given command line arguments.
+Handles exceptions using the error handler.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Command line arguments specifying which tool to
+run and what arguments to pass to it. You may pass either a single
+array of strings, or a series of string arguments.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>verbosity</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>0</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Initial verbosity. Default is 0.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>delegated_from</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Toys::Context</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context from which this
+execution is delegated. Optional. Should be set only if this is a
+delegated execution.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The resulting process status code (i.e. 0 for success).</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/cli.rb', line 453</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='label'>verbosity:</span> <span class='int'>0</span><span class='comma'>,</span> <span class='label'>delegated_from:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_capture'>capture</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error finding tool definition</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='ivar'>@loader</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_flatten'>flatten</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='const'><span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span></span><span class='period'>.</span><span class='id identifier rubyid_capture_path'>capture_path</span><span class='lparen'>(</span>
+    <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Error during tool execution!</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_source_info'>source_info</span><span class='op'>&amp;.</span><span class='id identifier rubyid_source_path'>source_path</span><span class='comma'>,</span>
+    <span class='label'>tool_name:</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_full_name'>full_name</span><span class='comma'>,</span> <span class='label'>tool_args:</span> <span class='id identifier rubyid_remaining'>remaining</span>
+  <span class='rparen'>)</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_context'>context</span> <span class='op'>=</span> <span class='id identifier rubyid_build_context'>build_context</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_remaining'>remaining</span><span class='comma'>,</span>
+                            <span class='label'>verbosity:</span> <span class='id identifier rubyid_verbosity'>verbosity</span><span class='comma'>,</span>
+                            <span class='label'>delegated_from:</span> <span class='id identifier rubyid_delegated_from'>delegated_from</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_execute_tool'>execute_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_context'>context</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='symbol'>:run</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>rescue</span> <span class='const'><span class='object_link'><a href="ContextualError.html" title="Toys::ContextualError (class)">ContextualError</a></span></span><span class='comma'>,</span> <span class='op'>::</span><span class='const'>Interrupt</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+  <span class='ivar'>@error_handler</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_to_i'>to_i</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Tue Mar  1 01:49:42 2022 by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.27 (ruby-2.7.5).
+</div>
+
+    </div>
+  </body>
+</html>
