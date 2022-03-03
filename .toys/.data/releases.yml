@@ -4,6 +4,7 @@ git_user_email: dazuma@gmail.com
 pre_builder_tool: [copy-core-docs]
 docs_builder_tool: [yardoc]
 coordinate_versions: true
+required_checks_timeout: 1800
 commit_lint:
   fail_checks: true
   merge: squash
