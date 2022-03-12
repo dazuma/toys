@@ -14,15 +14,15 @@ module Toys
     # the [XDG Base Directory Spec version
     # 0.8](https://specifications.freedesktop.org/basedir-spec/0.8/).
     #
-    # Example usage:
+    # @example
     #
-    #     include :xdg
+    #   include :xdg
     #
-    #     def run
-    #       # Get config file paths, in order from most to least inportant
-    #       config_files = xdg.lookup_config("my-config.toml")
-    #       config_files.each { |path| read_my_config(path) }
-    #     end
+    #   def run
+    #     # Get config file paths, in order from most to least inportant
+    #     config_files = xdg.lookup_config("my-config.toml")
+    #     config_files.each { |path| read_my_config(path) }
+    #   end
     #
     module XDG
       include Mixin
