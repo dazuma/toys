@@ -661,6 +661,15 @@ describe Toys::Utils::Exec do
       end
       ::FileUtils.rm_rf(tmp_dir)
     end
+
+    it "detects if the command fails" do
+      ::Timeout.timeout(ruby_exec_timeout) do
+        exec.exec(["blah"]) do |controller|
+          assert_nil(controller.pid)
+          refute_nil(controller.exception)
+        end
+      end
+    end
   end
 
   describe "backgrounding" do
