@@ -24,15 +24,11 @@ end
 
 tool "test-builtins" do
   include :exec, e: true
+  include :bundler
 
   def run
-    cmd = [
-      "system", "test",
-      "-d", File.join(context_directory, "builtins"),
-      "--minitest-focus",
-      "--minitest-rg"
-    ]
-    exec_tool(cmd)
+    ::Dir.chdir(context_directory)
+    exec_separate_tool(["system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg"])
   end
 end
 

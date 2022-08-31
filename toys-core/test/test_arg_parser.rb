@@ -700,7 +700,7 @@ describe Toys::ArgParser do
     end
 
     it "includes tool suggestions" do
-      tool
+      tool.run_handler = proc { nil }
       root_arg_parser.parse(["fop"])
       root_arg_parser.finish
       assert_errors_include('Tool not found: "fop"', root_arg_parser.errors)

@@ -79,9 +79,11 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli.add_config_block do
       tool "foo" do
         desc "beyond all recognition"
+        def run; end
       end
       tool "bar" do
         desc "was met"
+        def run; end
       end
     end
     cli.run("--search", "bar")
@@ -94,6 +96,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli.add_config_block do
       tool "_bar" do
         desc "was met"
+        def run; end
       end
     end
     cli.run
@@ -105,6 +108,7 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli.add_config_block do
       tool "_bar" do
         desc "was met"
+        def run; end
       end
     end
     cli.run("--all")
@@ -118,6 +122,7 @@ describe Toys::StandardMiddleware::ShowHelp do
         desc "beyond all recognition"
         tool "bar" do
           desc "was met"
+          def run; end
         end
       end
     end
@@ -132,6 +137,7 @@ describe Toys::StandardMiddleware::ShowHelp do
         desc "beyond all recognition"
         tool "bar" do
           desc "was met"
+          def run; end
         end
       end
     end
@@ -146,6 +152,7 @@ describe Toys::StandardMiddleware::ShowHelp do
         desc "beyond all recognition"
         tool "bar" do
           desc "was met"
+          def run; end
         end
       end
     end
@@ -160,6 +167,7 @@ describe Toys::StandardMiddleware::ShowHelp do
         desc "beyond all recognition"
         tool "bar" do
           desc "was met"
+          def run; end
         end
       end
     end

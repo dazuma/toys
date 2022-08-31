@@ -205,10 +205,11 @@ module Toys
                 high_priority: false,
                 update: false,
                 context_directory: nil)
+      git_cache = @git_cache || Loader.default_git_cache
+      path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
       @mutex.synchronize do
         raise "Cannot add a git source after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
         source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
                                             context_directory: context_directory,
                                             data_dir_name: @data_dir_name,
@@ -257,43 +258,48 @@ module Toys
     def lookup_specific(words)
       words = @delimiter_handler.split_path(words.first) if words.size == 1
       load_for_prefix(words)
-      tool = get_tool_data(words, false)&.cur_definition
+      tool = @mutex.synchronize { get_tool_data(words, false)&.cur_definition }
       finish_definitions_in_tree(words) if tool
       tool
     end
 
     ##
     # Returns a list of subtools for the given path, loading from the
-    # configuration if necessary.
+    # configuration if necessary. The list will be sorted by name.
     #
     # @param words [Array<String>] The name of the parent tool
     # @param recursive [Boolean] If true, return all subtools recursively
     #     rather than just the immediate children (the default)
     # @param include_hidden [Boolean] If true, include hidden subtools,
-    #     e.g. names beginning with underscores.
+    #     i.e. names beginning with underscores. Defaults to false.
+    # @param include_namespaces [Boolean] If true, include namespaces,
+    #     i.e. tools that are not runnable but have descendents that would have
+    #     been listed by the current filters. Defaults to false.
+    # @param include_non_runnable [Boolean] If true, include tools that have
+    #     no children and are not runnable. Defaults to false.
     # @return [Array<Toys::ToolDefinition>] An array of subtools.
     #
-    def list_subtools(words, recursive: false, include_hidden: false)
+    def list_subtools(words,
+                      recursive: false,
+                      include_hidden: false,
+                      include_namespaces: false,
+                      include_non_runnable: false)
       load_for_prefix(words)
-      found_tools = []
       len = words.length
-      all_cur_definitions.each do |tool|
+      found_tools = all_cur_definitions.find_all do |tool|
         name = tool.full_name
-        next if name.empty?
-        if recursive
-          next if name.length <= len || name.slice(0, len) != words
-        else
-          next unless name.slice(0..-2) == words
-        end
-        found_tools << tool
+        name.length > len && name.slice(0, len) == words &&
+          (include_hidden || name[len..-1].none? { |word| word.start_with?("_") })
       end
-      sort_tools_by_name(found_tools)
-      include_hidden ? found_tools : filter_hidden_subtools(found_tools)
+      found_tools.sort_by!(&:full_name)
+      found_tools = filter_non_runnable_tools(found_tools, include_namespaces, include_non_runnable)
+      found_tools.select! { |tool| tool.full_name.length == len + 1 } unless recursive
+      found_tools
     end
 
     ##
-    # Returns true if the given path has at least one subtool. Loads from the
-    # configuration if necessary.
+    # Returns true if the given path has at least one subtool, even if they are
+    # hidden or non-runnable. Loads from the configuration if necessary.
     #
     # @param words [Array<String>] The name of the parent tool
     # @return [Boolean]
@@ -301,13 +307,10 @@ module Toys
     def has_subtools?(words) # rubocop:disable Naming/PredicateName
       load_for_prefix(words)
       len = words.length
-      all_cur_definitions.each do |tool|
+      all_cur_definitions.any? do |tool|
         name = tool.full_name
-        if !name.empty? && name.length > len && name.slice(0, len) == words
-          return true
-        end
+        name.length > len && name.slice(0, len) == words
       end
-      false
     end
 
     ##
@@ -329,7 +332,9 @@ module Toys
     # @private
     #
     def get_tool(words, priority, tool_class = nil)
-      get_tool_data(words, true).get_tool(priority, self, tool_class)
+      @mutex.synchronize do
+        get_tool_data(words, true).get_tool(priority, self, tool_class)
+      end
     end
 
     ##
@@ -342,7 +347,9 @@ module Toys
     # @private
     #
     def activate_tool(words, priority)
-      get_tool_data(words, true).activate_tool(priority, self)
+      @mutex.synchronize do
+        get_tool_data(words, true).activate_tool(priority, self)
+      end
     end
 
     ##
@@ -448,6 +455,7 @@ module Toys
     #
     def load_git(parent_source, git_remote, git_path, git_commit, words, remaining_words, priority,
                  update: false)
+      git_cache = @git_cache || Loader.default_git_cache
       path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
       source = parent_source.git_child(git_remote, git_path, git_commit, path)
       @mutex.synchronize do
@@ -467,15 +475,20 @@ module Toys
       end
     end
 
+    @git_cache_mutex = ::Monitor.new
+    @default_git_cache = nil
+
     ##
-    # Get a GitCache.
+    # Get a global default GitCache.
     #
     # @private
     #
-    def git_cache
-      @git_cache ||= begin
-        require "toys/utils/git_cache"
-        Utils::GitCache.new
+    def self.default_git_cache
+      @git_cache_mutex.synchronize do
+        @default_git_cache ||= begin
+          require "toys/utils/git_cache"
+          Utils::GitCache.new
+        end
       end
     end
 
@@ -495,26 +508,35 @@ module Toys
     end
 
     ##
-    # Tool data
+    # An internal object managing the various definitions for a specific tool
+    # tool name and their priorities, and tracking which, if any, has been
+    # activated.
+    #
+    # This class is not thread-safe by itself. The caller must protect access
+    # with a mutex.
     #
     # @private
     #
     class ToolData
       ##
+      # Create an empty tool data with no definitions.
+      #
       # @private
       #
       def initialize(words)
         @words = validate_words(words)
         @definitions = {}
         @top_priority = @active_priority = nil
-        @mutex = ::Monitor.new
       end
 
       ##
+      # Return the current "best" definition, which is either the active
+      # definition, or, if none, the current highest-priority definition.
+      #
       # @private
       #
       def cur_definition
-        @mutex.synchronize { active_definition || top_definition }
+        active_definition || top_definition
       end
 
       ##
@@ -525,30 +547,37 @@ module Toys
       end
 
       ##
+      # Ensure there is a tool definition of the given priority, creating it if
+      # needed, and return it. A tool class may be provided, but only if the
+      # tool definition has not yet been created.
+      #
       # @private
       #
       def get_tool(priority, loader, tool_class = nil)
-        @mutex.synchronize do
-          if @top_priority.nil? || @top_priority < priority
-            @top_priority = priority
-          end
-          if tool_class && @definitions.include?(priority)
-            raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
-          end
-          @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
+        if @top_priority.nil? || @top_priority < priority
+          @top_priority = priority
         end
+        if tool_class && @definitions.include?(priority)
+          raise ToolDefinitionError, "Tool already defined for #{@words.inspect}"
+        end
+        @definitions[priority] ||= loader.build_tool(@words, priority, tool_class)
       end
 
       ##
+      # Attempt to activate the tool with the given priority, and return it.
+      # If the given priority tool is already active, returns it.
+      # If a lower priority tool is already active, activates the given higher
+      # priority tool and returns it.
+      # If a higher priority tool is already active, does nothing and returns
+      # nil.
+      #
       # @private
       #
       def activate_tool(priority, loader)
-        @mutex.synchronize do
-          return active_definition if @active_priority == priority
-          return nil if @active_priority && @active_priority > priority
-          @active_priority = priority
-          get_tool(priority, loader)
-        end
+        return active_definition if @active_priority == priority
+        return nil if @active_priority && @active_priority > priority
+        @active_priority = priority
+        get_tool(priority, loader)
       end
 
       private
@@ -610,10 +639,15 @@ module Toys
 
     private
 
+    ##
+    # Return a snapshot of all the current tool definitions that have been
+    # loaded. No additional loading is done. The returned array is not in any
+    # particular order.
+    #
     def all_cur_definitions
       result = []
       @mutex.synchronize do
-        @tool_data.map do |_name, td|
+        @tool_data.each_value do |td|
           tool = td.cur_definition
           result << tool unless tool.nil?
         end
@@ -621,10 +655,12 @@ module Toys
       result
     end
 
+    ##
+    # Get or create the ToolData for the given name.
+    # Caller must own the mutex.
+    #
     def get_tool_data(words, create)
-      @mutex.synchronize do
-        create ? (@tool_data[words] ||= ToolData.new(words)) : @tool_data[words]
-      end
+      create ? (@tool_data[words] ||= ToolData.new(words)) : @tool_data[words]
     end
 
     ##
@@ -641,6 +677,10 @@ module Toys
       end
     end
 
+    ##
+    # Loads from a proc source.
+    # Caller must own the mutex.
+    #
     def load_proc(source, words, remaining_words, priority)
       if remaining_words
         update_min_loaded_priority(priority)
@@ -655,6 +695,10 @@ module Toys
       end
     end
 
+    ##
+    # Load from a file path source that is known to exist.
+    # Caller must own the mutex.
+    #
     def load_validated_path(source, words, remaining_words, priority)
       if remaining_words
         load_relevant_path(source, words, remaining_words, priority)
@@ -663,6 +707,11 @@ module Toys
       end
     end
 
+    ##
+    # Load from a file path source that is known to exist and is known to be
+    # relevant to the current load request.
+    # Caller must own the mutex.
+    #
     def load_relevant_path(source, words, remaining_words, priority)
       if source.source_type == :file
         update_min_loaded_priority(priority)
@@ -677,12 +726,20 @@ module Toys
       end
     end
 
+    ##
+    # Load an index file in a directory source.
+    # Caller must own the mutex.
+    #
     def load_index_in(source, words, remaining_words, priority)
       return unless @index_file_name
       index_source = source.relative_child(@index_file_name)
       load_relevant_path(index_source, words, remaining_words, priority) if index_source
     end
 
+    ##
+    # Load non-index file in a directory source.
+    # Caller must own the mutex.
+    #
     def load_child_in(source, child, words, remaining_words, priority)
       return if child.start_with?(".") || child == @index_file_name ||
                 child == @preload_file_name || child == @preload_dir_name ||
@@ -695,10 +752,17 @@ module Toys
       load_validated_path(child_source, next_words, next_remaining, priority)
     end
 
+    ##
+    # Update min_loaded_priority to the given value.
+    # Caller must own the mutex.
+    #
     def update_min_loaded_priority(priority)
       @min_loaded_priority = priority if @min_loaded_priority > priority
     end
 
+    ##
+    # Look for and require any preloads.
+    #
     def do_preload(path)
       if @preload_file_name
         preload_file = ::File.join(path, @preload_file_name)
@@ -709,43 +773,21 @@ module Toys
       if @preload_dir_name
         preload_dir = ::File.join(path, @preload_dir_name)
         if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
-          preload_dir_contents(preload_dir)
+          require_dir_contents(preload_dir)
         end
       end
     end
 
-    def preload_dir_contents(preload_dir)
-      ::Dir.entries(preload_dir).each do |child|
+    ##
+    # Require the contents of the given directory.
+    #
+    def require_dir_contents(preload_dir)
+      ::Dir.entries(preload_dir).sort.each do |child|
         next unless ::File.extname(child) == ".rb"
         preload_file = ::File.join(preload_dir, child)
         next if !::File.file?(preload_file) || !::File.readable?(preload_file)
         require preload_file
       end
-    end
-
-    def sort_tools_by_name(tools)
-      tools.sort! do |a, b|
-        a = a.full_name
-        b = b.full_name
-        while !a.empty? && !b.empty? && a.first == b.first
-          a = a.slice(1..-1)
-          b = b.slice(1..-1)
-        end
-        a.first.to_s <=> b.first.to_s
-      end
-    end
-
-    def filter_hidden_subtools(tools)
-      result = []
-      tools.each_with_index do |tool, index|
-        result << tool unless tool_hidden?(tool, tools[index + 1])
-      end
-      result
-    end
-
-    def tool_hidden?(tool, next_tool)
-      return true if tool.full_name.any? { |n| n.start_with?("_") }
-      !tool.runnable? && next_tool && next_tool.full_name.slice(0..-2) == tool.full_name
     end
 
     def calc_remaining_words(words1, words2)
@@ -756,6 +798,30 @@ module Toys
         return nil if words1[index] != words2[index]
         index += 1
       end
+    end
+
+    ##
+    # Given a sorted list of tools, filter out non-runnable tools, subject to
+    # the given settings.
+    #
+    def filter_non_runnable_tools(tools, include_namespaces, include_non_runnable)
+      return tools if include_namespaces && include_non_runnable
+
+      # This is a bit of a clever algorithm, sorry. We iterate over the sorted
+      # list of tools backwards (i.e. a reverse depth-first traversal) and
+      # apply the runnable and namespace filters.
+      # We determine whether a non-runnable tool is a namespace (i.e. has a
+      # runnable descendent) by tracking the state "kept_depth" representing
+      # the longest tool name length of a tool that we have kept and whose
+      # parent has yet to be traversed. Thus, when we traverse a non-runnable
+      # node, we can tell whether we have kept at least one child.
+      kept_depth = 0
+      tools.reverse_each.select do |tool|
+        cur_len = tool.full_name.length
+        keep = tool.runnable? || (kept_depth > cur_len ? include_namespaces : include_non_runnable)
+        kept_depth = cur_len if keep || kept_depth > cur_len
+        keep
+      end.reverse
     end
   end
 end

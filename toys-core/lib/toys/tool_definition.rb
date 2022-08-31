@@ -136,7 +136,9 @@ module Toys
         tool_name, prefix, fragment = analyze_subtool_fragment(context)
         return unless tool_name
         subtools = context.cli.loader.list_subtools(tool_name,
-                                                    include_hidden: @include_hidden_subtools)
+                                                    include_namespaces: true,
+                                                    include_hidden: @include_hidden_subtools,
+                                                    include_non_runnable: @include_hidden_subtools)
         return if subtools.empty?
         candidates = []
         subtools.each do |subtool|

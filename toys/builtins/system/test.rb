@@ -30,7 +30,6 @@ include :terminal
 
 def run
   load_minitest_gems
-  ::Dir.chdir(tool_dir)
   test_files = find_test_files
   result = exec_ruby(ruby_args, in: :controller, log_cmd: "Starting minitest...") do |controller|
     controller.in.puts("gem 'minitest', '= #{::Minitest::VERSION}'")
@@ -43,7 +42,6 @@ def run
       controller.in.puts("gem 'minitest-rg', '= #{::MiniTest::RG::VERSION}'")
       controller.in.puts("require 'minitest/rg'")
     end
-    controller.in.puts("gem 'toys', '= #{::Toys::VERSION}'")
     controller.in.puts("require 'toys'")
     controller.in.puts("require 'toys/testing'")
     if directory
@@ -79,7 +77,8 @@ end
 def find_test_files
   glob = ".test/**/test_*.rb"
   glob = "**/#{glob}" if recursive
-  test_files = ::Dir.glob(glob)
+  glob = "#{tool_dir}/#{glob}"
+  test_files = Dir.glob(glob)
   if test_files.empty?
     logger.warn("No test files found")
     exit

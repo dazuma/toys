@@ -7,15 +7,16 @@ flag :integration_tests, "--integration-tests", "--integration", desc: "Enable i
 include :terminal
 include :exec, exit_on_nonzero_status: true
 
-def handle_gem(gem_name)
-  puts("**** Testing #{gem_name}...", :bold, :cyan)
-  ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    exec_separate_tool("test")
-  end
-end
-
 def run
   ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-  handle_gem("toys-core")
-  handle_gem("toys")
+  ::Dir.chdir(context_directory)
+
+  puts("**** Testing toys-core...", :bold, :cyan)
+  exec_separate_tool(["test"], chdir: "toys-core")
+
+  puts("**** Testing toys...", :bold, :cyan)
+  exec_separate_tool(["test"], chdir: "toys")
+
+  puts("**** Testing builtins...", :bold, :cyan)
+  exec_separate_tool(["test-builtins"], chdir: "toys")
 end
