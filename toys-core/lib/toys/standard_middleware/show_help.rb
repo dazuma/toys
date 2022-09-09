@@ -285,23 +285,11 @@ module Toys
           separate_sources: @separate_sources,
           wrap_width: terminal.width
         )
-        if less_path
-          require "toys/utils/exec"
-          Utils::Exec.new.exec([less_path, "-R"], in: [:string, str])
-        else
-          terminal.puts(str)
+        require "toys/utils/pager"
+        use_pager = @use_less && @stream.tty?
+        Utils::Pager.start(command: use_pager, fallback_io: terminal) do |io|
+          io.puts(str)
         end
-      end
-
-      def less_path
-        unless defined? @less_path
-          @less_path =
-            if @use_less && @stream.tty?
-              path = `which less`.strip
-              path.empty? ? nil : path
-            end
-        end
-        @less_path
       end
 
       def get_help_text(context, use_extra_args)
