@@ -30,9 +30,10 @@ describe Toys::Utils::CompletionEngine do
           complete ["n", "k"], prefix_constraint: /\A([a-z]+=)?\z/
         end
         remaining_args :baz, complete: ["aar", "ooka"]
+        def run; end
       end
       tool "two" do
-        # Empty tool
+        def run; end
       end
       tool "three" do
         tool "four" do
@@ -41,11 +42,12 @@ describe Toys::Utils::CompletionEngine do
           required_arg :foo, complete: tester.context_capture
           optional_arg :bar, complete: tester.context_capture
           remaining_args :baz, complete: tester.context_capture
+          def run; end
         end
       end
       tool "five", delegate_to: ["one"] do
         tool "six" do
-          # Empty tool
+          def run; end
         end
       end
     end

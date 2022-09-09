@@ -15,16 +15,14 @@ include :exec
 
 def handle_gem(gem_name)
   puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
-  ::Dir.chdir(::File.join(context_directory, gem_name)) do
-    env = {}
-    env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-    result = exec_separate_tool("ci", env: env)
-    if result.success?
-      puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
-    else
-      puts("**** #{gem_name.upcase} GEM FAILED!", :red, :bold)
-      exit(result.exit_code)
-    end
+  env = {}
+  env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+  result = exec_separate_tool("ci", env: env, chdir: gem_name)
+  if result.success?
+    puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
+  else
+    puts("**** #{gem_name.upcase} GEM FAILED!", :red, :bold)
+    exit(result.exit_code)
   end
 end
 

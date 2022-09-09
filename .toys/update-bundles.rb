@@ -11,10 +11,9 @@ def run
   puts("**** Updating root bundle...", :bold, :cyan)
   exec(["bundle", "update"])
 
-  ["toys-core", "toys"].each do |gem_name|
-    puts("**** Updating #{gem_name} bundle...", :bold, :cyan)
-    ::Dir.chdir(gem_name) do
-      exec(["bundle", "update"])
-    end
-  end
+  puts("**** Updating toys-core bundle...", :bold, :cyan)
+  exec(["bundle", "update"], chdir: "toys-core")
+
+  puts("**** Updating toys bundle...", :bold, :cyan)
+  exec(["bundle", "update"], chdir: "toys")
 end

@@ -171,7 +171,10 @@ module Toys
         ([@tool] + @delegates).each do |tool|
           name_len = tool.full_name.length
           subtools = @loader.list_subtools(tool.full_name,
-                                           recursive: recursive, include_hidden: include_hidden)
+                                           recursive: recursive,
+                                           include_hidden: include_hidden,
+                                           include_namespaces: include_hidden,
+                                           include_non_runnable: include_hidden)
           subtools.each do |subtool|
             local_name = subtool.full_name.slice(name_len..-1).join(" ")
             subtools_by_name[local_name] = subtool

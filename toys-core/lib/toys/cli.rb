@@ -226,9 +226,9 @@ module Toys
     end
 
     ##
-    # Make a clone with the same settings but no no config blocks and no paths
-    # in the loader. This is sometimes useful for calling another tool that has
-    # to be loaded from a different configuration.
+    # Make a clone with the same settings but no config blocks and no paths in
+    # the loader. This is sometimes useful for calling another tool that has to
+    # be loaded from a different configuration.
     #
     # @param opts [keywords] Any configuration arguments that should be
     #     modified from the original. See {#initialize} for a list of

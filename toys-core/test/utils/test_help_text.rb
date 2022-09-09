@@ -816,9 +816,11 @@ describe Toys::Utils::HelpText do
           tool "foo bar" do
             tool "one" do
               desc "one description"
+              def run; end
             end
             tool "two" do
               desc "two description"
+              def run; end
             end
           end
         end
@@ -826,6 +828,7 @@ describe Toys::Utils::HelpText do
           tool "foo bar" do
             tool "three" do
               desc "three description"
+              def run; end
             end
           end
         end

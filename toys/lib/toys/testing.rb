@@ -94,6 +94,37 @@ module Toys
     # @param cmd [String,Array<String>] The command to execute.
     # @return [Integer] The integer result code (i.e. 0 for success).
     #
+    # @example
+    #   # Given the following tool:
+    #
+    #   tool "hello" do
+    #     flag :shout
+    #     def run
+    #       puts message
+    #     end
+    #     def message
+    #       shout ? "HELLO" : "hello"
+    #     end
+    #   end
+    #
+    #   # You can test the tool's output as follows:
+    #
+    #   class MyTest < Minitest::Test
+    #     include Toys::Testing
+    #     def test_output_without_shout
+    #       assert_output("hello\n") do
+    #         result = toys_run_tool(["hello"])
+    #         assert_equal(0, result)
+    #       end
+    #     end
+    #     def test_with_shout
+    #       assert_output("HELLO\n") do
+    #         result = toys_run_tool(["hello", "--shout"])
+    #         assert_equal(0, result)
+    #       end
+    #     end
+    #   end
+    #
     def toys_run_tool(cmd, cli: nil)
       cli ||= toys_cli
       cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
@@ -146,11 +177,11 @@ module Toys
     #     include Toys::Testing
     #     def test_output_without_shout
     #       result = toys_exec_tool(["hello"])
-    #       assert_equal("hello hello\n", result.captured_out)
+    #       assert_equal("hello\n", result.captured_out)
     #     end
     #     def test_with_shout
     #       result = toys_exec_tool(["hello", "--shout"])
-    #       assert_equal("HELLO HELLO\n", result.captured_out)
+    #       assert_equal("HELLO\n", result.captured_out)
     #     end
     #   end
     #

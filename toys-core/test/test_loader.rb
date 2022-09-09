@@ -491,33 +491,41 @@ describe Toys::Loader do
       loader.add_block(source_name: "test block") do
         tool "ns3" do
           tool "tool1" do
+            def run; end
+          end
+          tool "tool4" do
             desc "hi"
           end
           def run; end
         end
         tool "ns2" do
-          desc "hi"
           tool "tool3" do
-            desc "hi"
+            def run; end
           end
           tool "_tool2" do
-            desc "hi"
+            def run; end
           end
         end
         tool "_ns1" do
-          desc "hi"
           tool "tool2" do
-            desc "hi"
+            def run; end
           end
           tool "tool1" do
-            desc "hi"
+            def run; end
           end
+          def run; end
         end
       end
     }
 
     it "loads a list" do
       subtools = subtools_loader.list_subtools([])
+      assert_equal(1, subtools.size)
+      assert_equal(["ns3"], subtools[0].full_name)
+    end
+
+    it "loads a list including non-runnable" do
+      subtools = subtools_loader.list_subtools([], include_namespaces: true)
       assert_equal(2, subtools.size)
       assert_equal(["ns2"], subtools[0].full_name)
       assert_equal(["ns3"], subtools[1].full_name)
@@ -531,25 +539,29 @@ describe Toys::Loader do
       assert_equal(["ns3", "tool1"], subtools[2].full_name)
     end
 
-    it "loads a list including hidden" do
-      subtools = subtools_loader.list_subtools([], include_hidden: true)
-      assert_equal(3, subtools.size)
-      assert_equal(["_ns1"], subtools[0].full_name)
-      assert_equal(["ns2"], subtools[1].full_name)
-      assert_equal(["ns3"], subtools[2].full_name)
+    it "loads a list with recursion including non-runnable" do
+      subtools = subtools_loader.list_subtools([], recursive: true, include_non_runnable: true)
+      assert_equal(4, subtools.size)
+      assert_equal(["ns2", "tool3"], subtools[0].full_name)
+      assert_equal(["ns3"], subtools[1].full_name)
+      assert_equal(["ns3", "tool1"], subtools[2].full_name)
+      assert_equal(["ns3", "tool4"], subtools[3].full_name)
     end
 
-    it "loads a list including hidden with recursion" do
-      subtools = subtools_loader.list_subtools([], recursive: true, include_hidden: true)
-      assert_equal(8, subtools.size)
+    it "loads a list including hidden" do
+      subtools = subtools_loader.list_subtools([], include_hidden: true)
+      assert_equal(2, subtools.size)
       assert_equal(["_ns1"], subtools[0].full_name)
-      assert_equal(["_ns1", "tool1"], subtools[1].full_name)
-      assert_equal(["_ns1", "tool2"], subtools[2].full_name)
-      assert_equal(["ns2"], subtools[3].full_name)
-      assert_equal(["ns2", "_tool2"], subtools[4].full_name)
-      assert_equal(["ns2", "tool3"], subtools[5].full_name)
-      assert_equal(["ns3"], subtools[6].full_name)
-      assert_equal(["ns3", "tool1"], subtools[7].full_name)
+      assert_equal(["ns3"], subtools[1].full_name)
+    end
+
+    it "loads a list including namespaces with recursion" do
+      subtools = subtools_loader.list_subtools([], recursive: true, include_namespaces: true)
+      assert_equal(4, subtools.size)
+      assert_equal(["ns2"], subtools[0].full_name)
+      assert_equal(["ns2", "tool3"], subtools[1].full_name)
+      assert_equal(["ns3"], subtools[2].full_name)
+      assert_equal(["ns3", "tool1"], subtools[3].full_name)
     end
   end
 
