@@ -668,6 +668,36 @@ module Toys
       end
 
       ##
+      # Returns an array of standard verbosity flags needed to replicate the
+      # current verbosity level. This is useful when you want to spawn tools
+      # with the same verbosity level as the current tool.
+      #
+      # @param short [Boolean] Whether to emit short rather than long flags.
+      #     Default is false.
+      # @return [Array<String>]
+      #
+      def verbosity_flags(short: false)
+        verbosity = self[Context::Key::VERBOSITY]
+        if verbosity.positive?
+          if short
+            flag = "v" * verbosity
+            ["-#{flag}"]
+          else
+            ::Array.new(verbosity, "--verbose")
+          end
+        elsif verbosity.negative?
+          if short
+            flag = "q" * -verbosity
+            ["-#{flag}"]
+          else
+            ::Array.new(-verbosity, "--quiet")
+          end
+        else
+          []
+        end
+      end
+
+      ##
       # @private
       #
       def self._make_tool_caller(cmd)

@@ -467,4 +467,114 @@ describe Toys::StandardMixins::Exec do
       assert_equal(2, cli.run("foo"))
     end
   end
+
+  describe "verbosity_flags" do
+    it "returns an empty array when verbosity is zero" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags == [] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+    end
+
+    it "returns a short flag for verbosity 1" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags(short: true) == ["-v"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: 1))
+    end
+
+    it "returns a short flag for verbosity 2" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags(short: true) == ["-vv"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: 2))
+    end
+
+    it "returns a short flag for verbosity -1" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags(short: true) == ["-q"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: -1))
+    end
+
+    it "returns a short flag for verbosity -2" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags(short: true) == ["-qqq"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: -3))
+    end
+
+    it "returns long flags for verbosity 1" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags == ["--verbose"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: 1))
+    end
+
+    it "returns long flags for verbosity 2" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags == ["--verbose", "--verbose"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: 2))
+    end
+
+    it "returns long flags for verbosity -1" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags == ["--quiet"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: -1))
+    end
+
+    it "returns long flags for verbosity -2" do
+      cli.add_config_block do
+        tool "foo" do
+          include :exec
+          def run
+            exit(verbosity_flags == ["--quiet", "--quiet", "--quiet"] ? 0 : 1)
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo", verbosity: -3))
+    end
+  end
 end
