@@ -87,6 +87,11 @@ module Toys
     #     objects that do not have a corresponding file descriptor (such as
     #     StringIO objects). In such a case, a thread will be spawned to pipe
     #     the IO data through to the child process.
+    #  *  **Redirect to a pipe:** You may redirect to a pipe created using
+    #     `IO.pipe` (i.e. a two-element array of read and write IO objects) by
+    #     passing the array as the option value. This will connect the
+    #     appropriate IO (either read or write), and close it in the parent.
+    #     Thus, you can connect only one process to each end.
     #  *  **Combine with another child stream:** You may redirect one child
     #     output stream to another, to combine them. To merge the child's error
     #     stream into its output stream, use `err: [:child, :out]`.
@@ -1163,14 +1168,21 @@ module Toys
         end
 
         def interpret_in_array(setting)
-          case setting.first
-          when ::Symbol
+          if setting.first.is_a?(::Symbol)
             setup_in_stream_of_type(setting.first, setting[1..-1])
-          when ::String
+          elsif setting.first.is_a?(::String)
             setup_in_stream_of_type(:file, setting)
+          elsif setting.size == 2 && setting.first.is_a?(::IO) && setting.last.is_a?(::IO)
+            interpret_in_pipe(*setting)
           else
             raise "Unknown value for in: #{setting.inspect}"
           end
+        end
+
+        def interpret_in_pipe(reader, writer)
+          @spawn_opts[:in] = reader
+          @child_streams << reader
+          @parent_streams << writer
         end
 
         def setup_in_stream_of_type(type, args)
@@ -1230,14 +1242,21 @@ module Toys
         end
 
         def interpret_out_array(key, setting)
-          case setting.first
-          when ::Symbol
+          if setting.first.is_a?(::Symbol)
             setup_out_stream_of_type(key, setting.first, setting[1..-1])
-          when ::String
+          elsif setting.first.is_a?(::String)
             setup_out_stream_of_type(key, :file, setting)
+          elsif setting.size == 2 && setting.first.is_a?(::IO) && setting.last.is_a?(::IO)
+            interpret_out_pipe(key, *setting)
           else
             raise "Unknown value for #{key}: #{setting.inspect}"
           end
+        end
+
+        def interpret_out_pipe(key, reader, writer)
+          @spawn_opts[key] = writer
+          @child_streams << writer
+          @parent_streams << reader
         end
 
         def setup_out_stream_of_type(key, type, args)

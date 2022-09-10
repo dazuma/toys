@@ -337,6 +337,24 @@ describe Toys::Utils::Exec do
       ::FileUtils.rm_rf(tmp_dir)
     end
 
+    it "handles pipes from stdout" do
+      ::Timeout.timeout(ruby_exec_timeout * 2) do
+        pipe = ::IO.pipe
+        exec.ruby(["-e", '$stdout.write "hello"'], out: pipe, background: true)
+        output = exec.capture_ruby(["-e", 'puts($stdin.read + " world")'], in: pipe)
+        assert_equal("hello world\n", output)
+      end
+    end
+
+    it "handles pipes from stderr" do
+      ::Timeout.timeout(ruby_exec_timeout * 2) do
+        pipe = ::IO.pipe
+        exec.ruby(["-e", '$stderr.write "hello"'], err: pipe, background: true)
+        output = exec.capture_ruby(["-e", 'puts($stdin.read + " world")'], in: pipe)
+        assert_equal("hello world\n", output)
+      end
+    end
+
     it "inherits parent streams by default when running in the foreground" do
       skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(ruby_exec_timeout) do
@@ -378,8 +396,11 @@ describe Toys::Utils::Exec do
   end
 
   describe "stream handling for fork" do
-    it "inherits parent streams" do
+    before do
       skip unless Toys::Compat.allow_fork?
+    end
+
+    it "inherits parent streams" do
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           f = proc do
@@ -402,7 +423,6 @@ describe Toys::Utils::Exec do
     end
 
     it "captures stdout and stderr" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           puts "hello"
@@ -415,7 +435,6 @@ describe Toys::Utils::Exec do
     end
 
     it "writes a string to stdin" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           exit gets == "hello" ? 0 : 1
@@ -426,7 +445,6 @@ describe Toys::Utils::Exec do
     end
 
     it "combines err into out" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           puts "hello"
@@ -439,7 +457,6 @@ describe Toys::Utils::Exec do
     end
 
     it "handles StringIO" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         input = ::StringIO.new("hello\n")
         output = ::StringIO.new
@@ -452,7 +469,6 @@ describe Toys::Utils::Exec do
     end
 
     it "handles file redirects" do
-      skip unless Toys::Compat.allow_fork?
       ::FileUtils.mkdir_p(tmp_dir)
       ::FileUtils.rm_rf(output_path)
       ::Timeout.timeout(simple_exec_timeout) do
@@ -466,7 +482,6 @@ describe Toys::Utils::Exec do
     end
 
     it "closes stdin" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           begin
@@ -481,7 +496,6 @@ describe Toys::Utils::Exec do
     end
 
     it "closes stdout" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           begin
@@ -496,7 +510,6 @@ describe Toys::Utils::Exec do
     end
 
     it "closes stderr" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           begin
@@ -513,7 +526,6 @@ describe Toys::Utils::Exec do
     end
 
     it "redirects stdin from null" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           exit gets.nil? ? 0 : 1
@@ -524,7 +536,6 @@ describe Toys::Utils::Exec do
     end
 
     it "redirects stdout to null" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           puts "THIS SHOULD NOT BE DISPLAYED."
@@ -535,7 +546,6 @@ describe Toys::Utils::Exec do
     end
 
     it "redirects stderr to null" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           warn "THIS SHOULD NOT BE DISPLAYED."
@@ -545,8 +555,37 @@ describe Toys::Utils::Exec do
       end
     end
 
+    it "handles pipes from stdout" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        pipe = ::IO.pipe
+        producer = proc do
+          $stdout.write "hello"
+        end
+        exec.exec_proc(producer, out: pipe, background: true)
+        consumer = proc do
+          puts("#{$stdin.read} world")
+        end
+        output = exec.capture_proc(consumer, in: pipe)
+        assert_equal("hello world\n", output)
+      end
+    end
+
+    it "handles pipes from stderr" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        pipe = ::IO.pipe
+        producer = proc do
+          $stderr.write "hello"
+        end
+        exec.exec_proc(producer, err: pipe, background: true)
+        consumer = proc do
+          puts("#{$stdin.read} world")
+        end
+        output = exec.capture_proc(consumer, in: pipe)
+        assert_equal("hello world\n", output)
+      end
+    end
+
     it "inherits parent streams by default when running in the foreground" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           f = proc do
@@ -569,7 +608,6 @@ describe Toys::Utils::Exec do
     end
 
     it "redirects to null by default when running in the background" do
-      skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           f = proc do

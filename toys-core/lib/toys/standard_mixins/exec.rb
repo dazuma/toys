@@ -87,6 +87,11 @@ module Toys
     #     objects that do not have a corresponding file descriptor (such as
     #     StringIO objects). In such a case, a thread will be spawned to pipe
     #     the IO data through to the child process.
+    #  *  **Redirect to a pipe:** You may redirect to a pipe created using
+    #     `IO.pipe` (i.e. a two-element array of read and write IO objects) by
+    #     passing the array as the option value. This will connect the
+    #     appropriate IO (either read or write), and close it in the parent.
+    #     Thus, you can connect only one process to each end.
     #  *  **Combine with another child stream:** You may redirect one child
     #     output stream to another, to combine them. To merge the child's error
     #     stream into its output stream, use `err: [:child, :out]`.
