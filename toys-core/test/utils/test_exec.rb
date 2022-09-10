@@ -13,6 +13,7 @@ describe Toys::Utils::Exec do
   let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
   let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
+  let(:output2_path) { ::File.join(tmp_dir, "output2.txt") }
   let(:simple_exec_timeout) { 5 }
   let(:ruby_exec_timeout) {
     Toys::Compat.jruby? || Toys::Compat.truffleruby? ? 10 : simple_exec_timeout
@@ -353,6 +354,45 @@ describe Toys::Utils::Exec do
         output = exec.capture_ruby(["-e", 'puts($stdin.read + " world")'], in: pipe)
         assert_equal("hello world\n", output)
       end
+    end
+
+    it "handles tees" do
+      ::FileUtils.mkdir_p(tmp_dir)
+      ::FileUtils.rm_rf(output_path)
+      ::FileUtils.rm_rf(output2_path)
+      ::Timeout.timeout(ruby_exec_timeout * 2) do
+        pipe = ::IO.pipe
+        file1 = ::File.open(output_path, "w")
+        stringio = ::StringIO.new
+        result1 = result2 = controller1_data = nil
+        out, _err = capture_subprocess_io do
+          controller1 = exec.ruby(
+            ["-e", '5.times { |i| $stdout.write("abcd "*5); $stdout.flush; sleep(0.2) }'],
+            out: [
+              :tee, :inherit, :capture, :controller, file1, output2_path, stringio, pipe,
+              {buffer_size: 10}
+            ],
+            background: true
+          )
+          controller2 = exec.ruby(["-e", "puts $stdin.read.length"],
+                                  in: pipe, out: :capture, background: true)
+          controller1_data = controller1.out.read
+          result1 = controller1.result
+          result2 = controller2.result
+        end
+        assert(pipe.last.closed?)
+        refute(file1.closed?)
+        file1.close
+        expected = "abcd " * 25
+        assert_equal(expected, out)
+        assert_equal(expected, result1.captured_out)
+        assert_equal(expected, controller1_data)
+        assert_equal(expected, ::File.read(output_path))
+        assert_equal(expected, ::File.read(output2_path))
+        assert_equal(expected, stringio.string)
+        assert_equal("#{expected.length}\n", result2.captured_out)
+      end
+      ::FileUtils.rm_rf(tmp_dir)
     end
 
     it "inherits parent streams by default when running in the foreground" do
@@ -729,7 +769,7 @@ describe Toys::Utils::Exec do
 
     it "waits for results and captures output" do
       ::Timeout.timeout(ruby_exec_timeout * 2) do
-        controller1 = exec.ruby(["-e", 'sleep 0.8; puts "hi1"; exit 1'],
+        controller1 = exec.ruby(["-e", 'sleep 1.5; puts "hi1"; exit 1'],
                                 background: true, out: :capture)
         controller2 = exec.ruby(["-e", 'sleep 0.2; puts "hi2"; exit 2'],
                                 background: true, out: :capture)

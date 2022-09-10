@@ -106,6 +106,17 @@ module Toys
     #     controller. If you pass a block to {Toys::StandardMixins::Exec#exec},
     #     it yields the {Toys::Utils::Exec::Controller}, giving you access to
     #     streams.
+    #  *  **Make copies of an output stream:** You may "tee," or duplicate the
+    #     `:out` or `:err` stream and redirect those copies to various
+    #     destinations. To specify a tee, use the setting `[:tee, ...]` where
+    #     the additional array elements include two or more of the following.
+    #     See the corresponding documentation above for more detail.
+    #      *  `:inherit` to direct to the parent process's stream.
+    #      *  `:capture` to capture the stream and store it in the result.
+    #      *  `:controller` to direct the stream to the controller.
+    #      *  `[:file, "/path/to/file"]` to write to a file.
+    #      *  An `IO` or `StringIO` object.
+    #      *  An array of two `IO` objects representing a pipe
     #
     # ### Result handling
     #
