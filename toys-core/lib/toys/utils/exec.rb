@@ -106,6 +106,17 @@ module Toys
     #     controller. If you pass a block to {Toys::Utils::Exec#exec}, it
     #     yields the {Toys::Utils::Exec::Controller}, giving you access to
     #     streams.
+    #  *  **Make copies of an output stream:** You may "tee," or duplicate the
+    #     `:out` or `:err` stream and redirect those copies to various
+    #     destinations. To specify a tee, use the setting `[:tee, ...]` where
+    #     the additional array elements include two or more of the following.
+    #     See the corresponding documentation above for more detail.
+    #      *  `:inherit` to direct to the parent process's stream.
+    #      *  `:capture` to capture the stream and store it in the result.
+    #      *  `:controller` to direct the stream to the controller.
+    #      *  `[:file, "/path/to/file"]` to write to a file.
+    #      *  An `IO` or `StringIO` object.
+    #      *  An array of two `IO` objects representing a pipe
     #
     # ### Result handling
     #
@@ -1096,7 +1107,7 @@ module Toys
             when :close
               :close
             else
-              stream if stream.respond_to?(:write)
+              stream if stream.respond_to?(:read)
             end
           if in_stream == :close
             stdstream.close
@@ -1211,7 +1222,7 @@ module Toys
         end
 
         def interpret_in_file(args)
-          raise "Expected only file name" unless args.size == 1 && args.first.is_a?(::String)
+          raise "Expected only file name for in" unless args.size == 1 && args.first.is_a?(::String)
           @spawn_opts[:in] = args + [::File::RDONLY]
         end
 
@@ -1279,15 +1290,148 @@ module Toys
             copy_from_out_thread(key, args.first)
           when :file
             interpret_out_file(key, args)
+          when :tee
+            interpret_out_tee(key, args)
           else
             raise "Unknown type for #{key}: #{type.inspect}"
           end
         end
 
         def interpret_out_file(key, args)
-          raise "Expected file name" if args.empty? || !args.first.is_a?(::String)
-          raise "Too many file arguments" if args.size > 3
+          raise "Expected file name for #{key}" if args.empty? || !args.first.is_a?(::String)
+          raise "Too many file arguments for #{key}" if args.size > 3
           @spawn_opts[key] = args.size == 1 ? args.first : args
+        end
+
+        def interpret_out_tee(key, args)
+          opts = args.last.is_a?(::Hash) ? args.pop : {}
+          reader = make_out_pipe(key)
+          sinks = interpret_out_tee_arguments(key, args)
+          tee_runner(key, reader, sinks, opts[:buffer_size] || 65_536)
+        end
+
+        def interpret_out_tee_arguments(key, args)
+          args.map do |arg|
+            case arg
+            when :inherit
+              [key == :err ? $stderr : $stdout, nil]
+            when :capture
+              [::StringIO.new, :capture]
+            when :controller
+              tee_sink_for_controller(key)
+            when ::IO, ::StringIO
+              [arg, nil]
+            when ::String
+              [::File.open(arg, "w"), :close]
+            when ::Array
+              tee_sink_for_array(key, arg)
+            else
+              raise "Unknown value for #{key} tee argument: #{arg.inspect}"
+            end
+          end
+        end
+
+        def tee_sink_for_controller(key)
+          @controller_streams[key], writer = ::IO.pipe
+          writer.sync = true
+          [writer, :close]
+        end
+
+        def tee_sink_for_array(key, arg)
+          if arg.size == 2 &&
+             arg.last.is_a?(::IO) &&
+             (arg.first == :autoclose || arg.first.is_a?(::IO))
+            [arg.last, :close]
+          else
+            arg = arg[1..-1] if arg.first == :file
+            if arg.empty? || !arg.first.is_a?(::String)
+              raise "Expected file name for #{key} tee argument"
+            end
+            raise "Too many file arguments for #{key} tee argument" if arg.size > 3
+            arg += ["w"] if arg.size == 1
+            [::File.open(*arg), :close]
+          end
+        end
+
+        def tee_runner(key, reader, sinks, buffer_size)
+          @join_threads << ::Thread.new do
+            sinks.map! { |io, on_done| [io, ::String.new, :write_nonblock, on_done] }
+            until sinks.empty?
+              tee_wait_for_streams(reader, sinks)
+              reader = tee_read_stream(reader, sinks, buffer_size)
+              tee_write_streams(sinks, key, reader.nil?)
+            end
+          end
+        end
+
+        def tee_wait_for_streams(reader, sinks)
+          read_select = reader && [reader]
+          write_select = []
+          sinks.each do |io, buffer, _write_method, _on_done|
+            write_select << io unless buffer.empty?
+          end
+          ::IO.select(read_select, write_select)
+        end
+
+        def tee_read_stream(reader, sinks, buffer_size)
+          return nil if reader.nil?
+          max = tee_amount_to_read(sinks, buffer_size)
+          return reader unless max.positive?
+          begin
+            data = reader.read_nonblock(max)
+            unless data.empty?
+              sinks.each { |_io, buffer, _write_method, _on_done| buffer << data }
+            end
+            reader
+          rescue ::IO::WaitReadable
+            reader
+          rescue ::StandardError
+            reader.close rescue nil # rubocop:disable Style/RescueModifier
+            nil
+          end
+        end
+
+        def tee_write_streams(sinks, key, read_complete)
+          sinks.delete_if do |sink|
+            io, buffer, write_method, on_done = sink
+            done, write_method = tee_write_one_stream(io, buffer, write_method, read_complete)
+            sink[2] = write_method
+            if done
+              case on_done
+              when :close
+                io.close rescue nil # rubocop:disable Style/RescueModifier
+              when :capture
+                @mutex.synchronize do
+                  @captures[key] = io.string
+                end
+              end
+            end
+            done
+          end
+        end
+
+        def tee_write_one_stream(io, buffer, write_method, read_complete)
+          return [read_complete, write_method] if buffer.empty?
+          begin
+            bytes = io.send(write_method, buffer)
+            buffer.slice!(0, bytes)
+            [false, write_method]
+          rescue ::IO::WaitWritable, ::Errno::EINTR
+            [false, write_method]
+          rescue ::Errno::EBADF, ::NoMethodError
+            raise if write_method == :write
+            [false, :write]
+          rescue ::StandardError
+            [true, write_method]
+          end
+        end
+
+        def tee_amount_to_read(sink_info, buffer_size)
+          maxbuff = 0
+          sink_info.each do |_sink, buffer, _meth|
+            maxbuff = buffer.size if buffer.size > maxbuff
+          end
+          buffer_size - maxbuff
         end
 
         def make_null_stream(key, mode)
