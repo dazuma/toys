@@ -38,9 +38,23 @@ describe "toys system git-cache" do
     end
   end
 
-  def capture_git_cache_output(cmd)
+  def capture_git_cache_output(cmd, format: nil)
     cmd = ["system", "git-cache"] + cmd + ["--cache-dir", cache_dir]
-    ::Psych.load(toys_exec_tool(cmd).captured_out)
+    cmd += ["--format", format] if format
+    out = toys_exec_tool(cmd).captured_out
+    case format
+    when nil, "yaml"
+      assert_match(/^---/, out)
+      ::Psych.load(out)
+    when "json"
+      assert_match(/^\{\n/, out)
+      ::JSON.parse(out)
+    when "json-compact"
+      assert_match(/^\{\S/, out)
+      ::JSON.parse(out)
+    else
+      flunk("Unrecognized format: #{format}")
+    end
   end
 
   def capture_assert_git_cache_error(cmd)
@@ -64,6 +78,24 @@ describe "toys system git-cache" do
   describe "list" do
     it "lists an empty cache" do
       output = capture_git_cache_output(["list"])
+      expected = {
+        "cache_dir" => cache_dir,
+        "remotes" => []
+      }
+      assert_equal(expected, output)
+    end
+
+    it "lists an empty cache with json output" do
+      output = capture_git_cache_output(["list"], format: "json")
+      expected = {
+        "cache_dir" => cache_dir,
+        "remotes" => []
+      }
+      assert_equal(expected, output)
+    end
+
+    it "lists an empty cache with json-compact output" do
+      output = capture_git_cache_output(["list"], format: "json-compact")
       expected = {
         "cache_dir" => cache_dir,
         "remotes" => []
