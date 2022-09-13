@@ -56,9 +56,9 @@ tool "list" do
   end
 
   include "tool-methods"
+  include "output-tools"
 
   def run
-    require "psych"
     loader = choose_loader(local, from_dir)
     words = namespace
     words = loader.split_path(words.first) if words.size == 1
@@ -76,7 +76,7 @@ tool "list" do
     else
       format_tool_list(tool_list, output, words)
     end
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
   end
 
   def format_tool_list(tool_list, toplevel, cur_ns)
@@ -111,9 +111,9 @@ tool "show" do
   end
 
   include "tool-methods"
+  include "output-tools"
 
   def run
-    require "psych"
     loader = choose_loader(local, from_dir)
     words = name
     words = loader.split_path(words.first) if words.size == 1
@@ -127,7 +127,7 @@ tool "show" do
       else
         format_tool(tool, [], detailed: true)
       end
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
     exit(tool.nil? ? 1 : 0)
   end
 end

@@ -23,15 +23,16 @@ tool "list" do
     desc "The base directory for the cache. Optional. Defaults to the standard cache directory."
   end
 
+  include "output-tools"
+
   def run
-    require "psych"
     require "toys/utils/git_cache"
     git_cache = ::Toys::Utils::GitCache.new(cache_dir: cache_dir)
     output = {
       "cache_dir" => git_cache.cache_dir,
       "remotes" => git_cache.remotes,
     }
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
   end
 end
 
@@ -48,8 +49,9 @@ tool "show" do
     desc "The base directory for the cache. Optional. Defaults to the standard cache directory."
   end
 
+  include "output-tools"
+
   def run
-    require "psych"
     require "toys/utils/git_cache"
     git_cache = ::Toys::Utils::GitCache.new(cache_dir: cache_dir)
     info = git_cache.repo_info(remote)
@@ -57,7 +59,7 @@ tool "show" do
       logger.fatal("Unknown remote: #{remote}")
       exit(1)
     end
-    puts(::Psych.dump(info.to_h))
+    puts(generate_output(info.to_h))
   end
 end
 
@@ -130,8 +132,9 @@ tool "remove" do
     desc "Remove all repositories. Required unless specific remotes are provided."
   end
 
+  include "output-tools"
+
   def run
-    require "psych"
     require "toys/utils/git_cache"
     if remotes.empty? == !all
       logger.fatal("You must specify at least one remote to clear, or --all to clear all remotes.")
@@ -142,7 +145,7 @@ tool "remove" do
     output = {
       "removed" => removed,
     }
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
   end
 end
 
@@ -175,8 +178,9 @@ tool "remove-refs" do
     desc "The base directory for the cache. Optional. Defaults to the standard cache directory."
   end
 
+  include "output-tools"
+
   def run
-    require "psych"
     require "toys/utils/git_cache"
     git_cache = ::Toys::Utils::GitCache.new(cache_dir: cache_dir)
     removed = git_cache.remove_refs(remote, refs: refs)
@@ -188,7 +192,7 @@ tool "remove-refs" do
       "remote" => remote,
       "removed_refs" => removed.map(&:to_h),
     }
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
   end
 end
 
@@ -220,8 +224,9 @@ tool "remove-sources" do
     desc "The base directory for the cache. Optional. Defaults to the standard cache directory."
   end
 
+  include "output-tools"
+
   def run
-    require "psych"
     require "toys/utils/git_cache"
     git_cache = ::Toys::Utils::GitCache.new(cache_dir: cache_dir)
     removed = git_cache.remove_sources(remote, commits: commits)
@@ -233,6 +238,6 @@ tool "remove-sources" do
       "remote" => remote,
       "removed_sources" => removed.map(&:to_h),
     }
-    puts(::Psych.dump(output))
+    puts(generate_output(output))
   end
 end

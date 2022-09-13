@@ -9,12 +9,25 @@ describe "toys system tools" do
 
   let(:toys_gem_dir) { ::File.dirname(::File.dirname(::File.dirname(__dir__))) }
 
-  def capture_system_tools_output(cmd, expected_status: 0)
+  def capture_system_tools_output(cmd, expected_status: 0, format: nil)
     out, _err = capture_subprocess_io do
+      cmd += ["--format", format] if format
       status = toys_run_tool(["system", "tools"] + cmd)
       assert_equal(expected_status, status)
     end
-    ::Psych.load(out)
+    case format
+    when nil, "yaml"
+      assert_match(/^---/, out)
+      ::Psych.load(out)
+    when "json"
+      assert_match(/^\{\n/, out)
+      ::JSON.parse(out)
+    when "json-compact"
+      assert_match(/^\{\S/, out)
+      ::JSON.parse(out)
+    else
+      flunk("Unrecognized format: #{format}")
+    end
   end
 
   describe "list" do
@@ -96,6 +109,24 @@ describe "toys system tools" do
       ci_tool = result["tools"].find { |t| t["name"] == "ci" }
       assert_equal("Run all CI checks", ci_tool["desc"])
       assert(ci_tool["runnable"])
+    end
+
+    it "lists tools non-recursively, outputting as json" do
+      result = capture_system_tools_output(["list"], format: "json")
+      assert_equal("", result["namespace"])
+      system_tool = result["tools"].find { |t| t["name"] == "system" }
+      refute_nil(system_tool)
+      assert_equal("A set of system commands for Toys", system_tool["desc"])
+      refute(system_tool["runnable"])
+    end
+
+    it "lists tools non-recursively, outputting as json-compact" do
+      result = capture_system_tools_output(["list"], format: "json-compact")
+      assert_equal("", result["namespace"])
+      system_tool = result["tools"].find { |t| t["name"] == "system" }
+      refute_nil(system_tool)
+      assert_equal("A set of system commands for Toys", system_tool["desc"])
+      refute(system_tool["runnable"])
     end
   end
 
