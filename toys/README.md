@@ -256,11 +256,11 @@ than Rake does.
 But you also might find Toys a more natural way to *write* tasks, and indeed
 you can often rewrite an entire Rakefile as a Toys file and get quite a bit of
 benefit in readability and maintainability. For an example, see the
-[Toys file for the Toys repo itself](https://github.com/dazuma/toys/blob/main/toys/.toys.rb).
-It contains the Toys scripts that I use to develop, test, and release Toys
-itself. Yes, Toys is self-hosted. You'll notice most of this Toys file consists
-of template expansions. Toys provides templates for a lot of common build,
-test, and release tasks for Ruby projects.
+[Toys file for the Toys gem itself](https://github.com/dazuma/toys/blob/main/toys/.toys/.toys.rb).
+It contains Toys scripts that I use to develop, test, and release Toys itself.
+Yes, Toys is self-hosted. You'll notice most of this Toys file consists of
+template expansions. Toys provides templates for a lot of common build, test,
+and release tasks for Ruby projects.
 
 If you're feeling adventurous, try translating some of your Rake tasks into
 native Toys tools. You can do so in your existing `.toys.rb` file. Keep the
