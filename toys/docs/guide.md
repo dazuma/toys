@@ -36,18 +36,18 @@ Toys is a command line *framework*. It provides an executable called `toys`
 with basic functions such as argument parsing and online help. You provide the
 actual behavior of the Toys executable by writing **Toys files**.
 
-Toys is a *multi-command* executable. You may define any number of commands,
+Toys is a *multi-command* executable. You can define any number of commands,
 called **tools**, which can be invoked by passing the tool name as an argument
-to the `toys` executable. Tools are arranged in a hierarchy; you may define
+to the `toys` executable. Tools are arranged in a hierarchy; you can define
 **namespaces** that have **subtools**.
 
-Tools may recognize command line arguments in the form of **flags** and
+Tools can recognize command line arguments in the form of **flags** and
 **positional arguments**. Flags can optionally take **values**, while
-positional arguments may be **required** or **optional**. Flags may be
+positional arguments can be **required** or **optional**. Flags can be
 organized into **flag groups** that support marking flags or flag combinations
 as required.
 
-The configuration of a tool may include **descriptions**, for the tool itself,
+The configuration of a tool can include **descriptions**, for the tool itself,
 and for each command line argument. These descriptions are displayed in the
 tool's **online help** screen. Descriptions come in **long** and **short**
 forms, which appear in different styles of help.
@@ -88,7 +88,7 @@ For example, in the following command:
            |----TOOL----|
     $ toys system version
 
-The tool name is `system version`. Notice that the tool name may have multiple
+The tool name is `system version`. Notice that the tool name can have multiple
 words. Tools are arranged hierarchically. In this case, `system` is a
 **namespace** for tools related to the Toys system, and `version` is one of its
 **subtools**. It prints the current Toys version.
@@ -210,10 +210,10 @@ them.) These standard flags include:
 *   `--usage` which displays a shorter usage screen for the tool.
 *   `--verbose` (also `-v`) which increases the verbosity. This affects the
     tool's logging display, increasing the number of log levels shown. This
-    flag may be issued multiple times.
+    flag can be issued multiple times.
 *   `--quiet` (also `-q`) which decreases the verbosity. This affects the
     tool's logging display, decreasing the number of log levels shown. This
-    flag may also be issued multiple times.
+    flag can also be issued multiple times.
 
 Namespace tools (tools that have subtools but no explicit functionality of
 their own) always behave as though `--help` is invoked. (They do recognize the
@@ -236,7 +236,7 @@ Finally, the root tool also supports:
 ### Positional arguments
 
 Any arguments not recognized as flags or flag arguments, are interpreted as
-**positional arguments**. Positional arguments are recognized in order and may
+**positional arguments**. Positional arguments are recognized in order and can
 be required or optional.
 
 Each tool recognizes a specific set of positional arguments. If you do not pass
@@ -337,7 +337,7 @@ Let's start with an example:
 
     tool "greet" do
       desc "Print a friendly greeting."
-      long_desc "Prints a friendly greeting. You may customize whom to" \
+      long_desc "Prints a friendly greeting. You can customize whom to" \
                   " greet, and how friendly it should be.",
                 "",
                 "Example:",
@@ -357,12 +357,12 @@ Its results should be mostly self-evident. But let's unpack a few details.
 
 ### Tool descriptions
 
-Each tool may have a **short description** and/or a **long description**. The
+Each tool can have a **short description** and/or a **long description**. The
 short description is a generally a single string that is displayed with the
 tool name, at the top of its help page or in a subtool list. The long
 description generally includes multiple strings, which are displayed in
 multiple lines in the "description" section of the tool's help page. Long
-descriptions may include blank lines to separate paragraphs visually.
+descriptions can include blank lines to separate paragraphs visually.
 
 By default, each description string/line is word-wrapped when displayed. In the
 long description example above, the first line is a bit longer than 80
@@ -379,9 +379,9 @@ and {Toys::DSL::Tool#long_desc}.
 
 ### Positional arguments
 
-Tools may recognize any number of **positional arguments**. Each argument must
+Tools can recognize any number of **positional arguments**. Each argument must
 have a name, which is a key that the tool can use to obtain the argument's
-value at execution time. Arguments may also have various properties controlling
+value at execution time. Arguments can also have various properties controlling
 how values are validated and expressed.
 
 The above example uses the directive {Toys::DSL::Tool#optional_arg} to declare
@@ -404,8 +404,8 @@ can use to retrieve the value. In the above example, we retrieve the value for
 the option `:whom` by calling the method `whom`. If the option name cannot be
 made into a method, you can retrieve the value by calling {Toys::Context#get}.
 
-An argument may also be **required**, which means it must be provided on the
-command line; otherwise the tool will report a usage error. You may declare a
+An argument can also be **required**, which means it must be provided on the
+command line; otherwise the tool will report a usage error. You can declare a
 required argument using the directive {Toys::DSL::Tool#required_arg}.
 
 #### Parsing required and optional arguments
@@ -449,7 +449,7 @@ Will produce a usage error, because no value is set for the required argument
 Will also produce an error, since the tool does not define an argument to
 match `"baz"`.
 
-Optional arguments may declare a default value to be used if the argument is
+Optional arguments can declare a default value to be used if the argument is
 not provided on the command line. For example:
 
     tool "args-demo" do
@@ -499,7 +499,7 @@ most only one `remaining_args` directive.
 
 #### Descriptions and the args DSL
 
-Positional arguments may also have short and long descriptions, which are
+Positional arguments can also have short and long descriptions, which are
 displayed in online help. Set descriptions via the `desc:` and `long_desc:`
 arguments to the argument directive. The `desc:` argument takes a single string
 description, while the `long_desc:` argument takes an array of strings. Here is
@@ -507,7 +507,7 @@ an example:
 
     required_arg :arg,
                  desc: "This is a short description for the arg",
-                 long_desc: ["Long descriptions may have multiple lines.",
+                 long_desc: ["Long descriptions can have multiple lines.",
                              "This is the second line."]
 
 See the [above section on Descriptions](#Tool_descriptions) for more
@@ -528,10 +528,10 @@ For detailed info on configuring an argument using a block, see the
 
 #### Argument acceptors
 
-Finally, positional arguments may use **acceptors** to define how to validate
+Finally, positional arguments can use **acceptors** to define how to validate
 arguments and convert them to Ruby objects for your tool to consume. By
 default, Toys will accept any argument string, and expose it to your tool as a
-raw string. However, you may provide an acceptor to change this behavior.
+raw string. However, you can provide an acceptor to change this behavior.
 
 Acceptors are part of the OptionParser interface, and are described under the
 [type coercion](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#class-OptionParser-label-Type+Coercion)
@@ -548,13 +548,13 @@ integer during parsing:
 
 If you pass a non-integer for this argument, Toys will report a usage error.
 
-You may use any of the ready-to-use coercion types provided by OptionParser,
+You can use any of the ready-to-use coercion types provided by OptionParser,
 including the special types such as
 [OptionParser::DecimalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#DecimalInteger)
 and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
-You may also create **custom acceptors**. See the
+You can also create **custom acceptors**. See the
 [section below on Custom Acceptors](#Custom_acceptors) for more information.
 
 #### Argument completions
@@ -583,7 +583,7 @@ argument parsing, whereas completions affect tab completion in the shell.
 
 ### Flags
 
-Tools may also recognize **flags** on the command line. In our "greet" example,
+Tools can also recognize **flags** on the command line. In our "greet" example,
 we declared a flag named `:shout`:
 
     flag :shout, "-s", "--shout", desc: "Greet loudly."
@@ -592,7 +592,7 @@ Like a positional argument, a flag sets an option based on the command line
 arguments passed to the tool. In the case above, the `:shout` option is set to
 `true` if either `-s` or `--shout` is provided on the command line; otherwise
 it remains falsy. The two flags `-s` and `--shout` are effectively synonyms and
-have the same effect. A flag declaration may include any number of synonyms.
+have the same effect. A flag declaration can include any number of synonyms.
 
 As with arguments, Toys will provide a method that you can call to retrieve the
 option value set by a flag. In this case, a method called `shout` will be
@@ -738,10 +738,10 @@ Here is the behavior:
 
 #### Flag acceptors
 
-Flags may use **acceptors** to define how to validate values and convert them
+Flags can use **acceptors** to define how to validate values and convert them
 to Ruby objects for your tool to consume. By default, Toys will accept a flag
 value string in any form, and expose it to your tool as a raw string. However,
-you may provide an acceptor to change this behavior.
+you can provide an acceptor to change this behavior.
 
 Acceptors are part of the OptionParser interface, and are described under the
 [type coercion](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#class-OptionParser-label-Type+Coercion)
@@ -758,13 +758,13 @@ integer during parsing:
 
 If you pass a non-integer for this flag value, Toys will report a usage error.
 
-You may use any of the ready-to-use coercion types provided by OptionParser,
+You can use any of the ready-to-use coercion types provided by OptionParser,
 including the special types such as
 [OptionParser::DecimalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#DecimalInteger)
 and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
-You may also create **custom acceptors**. See the
+You can also create **custom acceptors**. See the
 [section below on Custom Acceptors](#Custom_acceptors) for more information.
 
 #### Defaults and handlers
@@ -773,7 +773,7 @@ Flags are usually optional; a flag can appear in a command line zero, one, or
 any number of times.
 
 If a flag is not passed in the command line arguments for a tool, by default
-its corresponding option value will be `nil`. You may change this by providing
+its corresponding option value will be `nil`. You can change this by providing
 a default value for a flag:
 
     flag :age, accept: Integer, default: 21
@@ -805,7 +805,7 @@ equivalent to:
 
 The `--verbose` flag, provided automatically by Toys for most tools, shows an
 example of an alternate handler. Verbosity is represented by an integer value,
-defaulting to 0. The `--verbose` flag may appear any number of times, and
+defaulting to 0. The `--verbose` flag can appear any number of times, and
 *each* appearance increases the verbosity. Its implementation is internal to
 Toys, but looks something like this:
 
@@ -841,14 +841,14 @@ The `:push` handler is equivalent to
 
 #### Descriptions and the flags DSL
 
-Flags may also have short and long descriptions, which are displayed in online
+Flags can also have short and long descriptions, which are displayed in online
 help. Set descriptions via the `desc:` and `long_desc:` arguments to the flag
 directive. The `desc:` argument takes a single string description, while the
 `long_desc:` argument takes an array of strings. Here is an example:
 
     flag :my_flag, "--my-flag",
          desc: "This is a short description for the arg",
-         long_desc: ["Long descriptions may have multiple lines.",
+         long_desc: ["Long descriptions can have multiple lines.",
                      "This is the second line."]
 
 See the [above section on Descriptions](#Tool_descriptions) for more information on
@@ -894,13 +894,13 @@ option parsing, whereas completions affect tab completion in the shell.
 
 #### Flag groups
 
-Flags may be organized into groups. This serves two functions:
+Flags can be organized into groups. This serves two functions:
 
 *   Grouping related flags in the help and usage screens
 *   Implementing required flags and other constraints
 
 To create a simple flag group, use the `flag_group` directive, and provide a
-block that defines the group's flags. You may also provide a group description
+block that defines the group's flags. You can also provide a group description
 that appears in the help screen.
 
     flag_group desc: "Debug flags" do
@@ -908,9 +908,9 @@ that appears in the help screen.
       flag :warnings, "-W[VAL]", desc: "Enable warnings"
     end
 
-Flag groups may have a "type" that specifies constraints on the flags contained
+Flag groups can have a "type" that specifies constraints on the flags contained
 in the group. Flags in a simple group like the above are ordinary optional
-flags. However, you may specify that flags in the group are required using the
+flags. However, you can specify that flags in the group are required using the
 `all_required` directive:
 
     all_required desc: "Login flags (all required)" do
@@ -1017,7 +1017,7 @@ a valid method name, you can still get the value by calling
     end
 
 If a tool's `run` method finishes normally, Toys will exit with a result code
-of 0, indicating success. You may exit immediately and/or provide a nonzero
+of 0, indicating success. You can exit immediately and/or provide a nonzero
 result by calling {Toys::Context#exit}:
 
     def run
@@ -1029,7 +1029,7 @@ result by calling {Toys::Context#exit}:
 If your `run` method raises an exception, Toys will display the exception and
 exit with a nonzero code.
 
-Finally, you may also define additional methods within the tool. These are
+Finally, you can also define additional methods within the tool. These are
 available to be called by your `run` method, and can be used to decompose your
 tool implementation. Indeed, a tool is actually a class under the hood, and
 you can define methods as with any other class. Here's a contrived example:
@@ -1059,7 +1059,7 @@ discussed further below. But first we will cover a few important topics.
 
 ### Namespaces and subtools
 
-Like many command line frameworks, Toys supports **subtools**. You may, for
+Like many command line frameworks, Toys supports **subtools**. You can, for
 example create a tool called "test" that runs your tests for a particular
 project, but you might also want "test unit" and "test integration" tools to
 run specific subsets of the test suite. One way to do this, of course, is for
@@ -1483,7 +1483,7 @@ execute, and return a process status code (i.e. 0 for success, and nonzero for
 error). Make sure you handle the exit status. For example, in most cases, you
 should probably exit if the tool you are calling returns a nonzero code.
 
-You may also use the `exec` mixin [described below](#Executing_subprocesses) to
+You can also use the `exec` mixin [described below](#Executing_subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
 capture or manipulate that tool's input or output stream.
 
@@ -1503,7 +1503,7 @@ helper methods. Include a mixin using the `include` directive:
       end
     end
 
-A mixin may be specified by providing a module itself, or by providing a
+A mixin can be specified by providing a module itself, or by providing a
 **mixin name**. In the above example, we used `:terminal`, which is the name
 of a built-in mixin that Toys provides. Among other things, it defines a
 special `puts` method that lets you include style information such as `:bold`,
@@ -1566,7 +1566,10 @@ called `:highline` that automatically installs the highline gem (version 2.x)
 if it is not available, and makes a highline object available to the tool. For
 more information, see the {Toys::StandardMixins::Highline} mixin module.
 
-You may also use other third-party gems such as
+The `:pager` mixin provides a convenient interface to pager utilities such as
+`less`, which let your users interactively page through long output.
+
+You can also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
 [useful gems](#Useful_gems) provides some examples.
 
@@ -1828,7 +1831,7 @@ arguments to the `expand` directive, such as:
 
     expand :minitest, name: "unit-test", warnings: true
 
-Alternatively, you may provide a block to `expand`. It will yield the template
+Alternatively, you can provide a block to `expand`. It will yield the template
 to your block, letting you modify its properties:
 
     expand :minitest do |t|
@@ -1843,7 +1846,7 @@ templates. Like built-in mixins, built-in template names are always symbols.
 You can read more about them in the next section on using
 [Toys as a Rake replacement](#Toys_as_a_Rake_replacement).
 
-You may also write your own templates. Here's how...
+You can also write your own templates. Here's how...
 
 #### Defining templates
 
@@ -2038,7 +2041,7 @@ by how close they are to the tool being executed. For example:
 
 ### Preloading Ruby files
 
-You may also provide Ruby files that are "preloaded" before tools are defined.
+You can also provide Ruby files that are "preloaded" before tools are defined.
 This is useful if those Ruby files are required by the tool definitions
 themselves. Like files in the `.lib` directory, preloaded files can define Ruby
 classes, modules, and other code. But preloaded files *automatically* loaded
@@ -2086,7 +2089,7 @@ Furthermore, Toys will also execute
 first before loading any of the tools in the `test` subdirectory. Thus, any
 additional classes needed by `test unit` can be defined in these files.
 
-Either a single `.preload.rb` file or a `.preload` directory, or both, may be
+Either a single `.preload.rb` file or a `.preload` directory, or both, can be
 used. If both are present in the same directory, the `.preload.rb` file is
 loaded first before the `.preload` directory contents.
 
@@ -2178,7 +2181,7 @@ takes an optional argument and a `--shout` flag:
     # greet.rb
 
     desc "Print a friendly greeting."
-    long_desc "Prints a friendly greeting. You may customize whom to" \
+    long_desc "Prints a friendly greeting. You can customize whom to" \
                 " greet, and how friendly it should be.",
               "",
               "Example:",
@@ -2319,7 +2322,7 @@ individual methods without running the entire tool. This can be useful for
 writing unit tests for tools that are large, complex, or otherwise should not
 be executed in their entirety during testing.
 
-To test individual methods, pass a block to {Toys::Testing#toys_exec_tool}.
+To test individual methods, pass a block to {Toys::Testing#toys_load_tool}.
 This method loads the tool associated with the given command line, parses the
 command line arguments, and prepares the tool for execution, but does not
 invoke the `run` method. The tool's context is passed to the block, and you can
@@ -2804,7 +2807,7 @@ A variety of other useful gems can also be found in
 
 ## Toys as a Rake replacement
 
-Toys was designed to organize scripts that may be "scoped" to a project or
+Toys was designed to organize scripts that can be "scoped" to a project or
 directory. Rake is also commonly used for this purpose: you can write a
 "Rakefile" that defines rake tasks scoped to a directory. In many cases, Toys
 can be used as a replacement for Rake. Indeed, the Toys repository itself
@@ -2906,7 +2909,7 @@ pass an explicit path to it when expanding the template:
     # In .toys.rb
     expand :rake, rakefile_path: "path/to/my_rakefile"
 
-You may also choose to pass arguments as named flags rather than command line
+You can also choose to pass arguments as named flags rather than command line
 arguments. Set `:use_flags` when expanding the template:
 
     # In .toys.rb
@@ -2988,7 +2991,7 @@ The `:gem_build` template by default looks for a gemspec file in the current
 directory, and builds that gem into a `pkg` directory. You can also build a
 specific gem if you have multiple gemspec files.
 
-You may also configure the template so it also releases the gem to Rubygems
+You can also configure the template so it also releases the gem to Rubygems
 (using your stored Rubygems credentials), by setting the `push_gem` option.
 For example, here is how to generate a "release" tool that builds and releases
 your gem:
@@ -3113,7 +3116,7 @@ regularly.
 
 ### Delegating tools
 
-A tool may **delegate** to another tool, which means it uses the other tool's
+A tool can **delegate** to another tool, which means it uses the other tool's
 flags, arguments, and execution. Effectively, it becomes an "alias"---that is,
 an alternate name---for the target tool.
 
@@ -3213,27 +3216,27 @@ to use a different configuration:
 ### Custom acceptors
 
 We saw earlier that flags and positional arguments can have acceptors, which
-control the allowed format, and may also convert the string argument to a Ruby
+control the allowed format, and can also convert the string argument to a Ruby
 object. By default, Toys supports the same acceptors recognized by Ruby's
 OptionParser library. And like OptionParser, Toys also lets you define your own
 acceptors.
 
 Define an acceptor using the `acceptor` directive. You provide a name for the
 acceptor, and specify how to validate input strings and how to convert input
-strings to Ruby objects. You may then reference the acceptor in that tool or
+strings to Ruby objects. You can then reference the acceptor in that tool or
 any of its subtools or their subtools, recursively.
 
 There are several ways to define an acceptor.
 
-You may validate input strings against a regular expression, by passing the
-regex to the `acceptor` directive. You may also optionally provide a block to
+You can validate input strings against a regular expression, by passing the
+regex to the `acceptor` directive. You can also optionally provide a block to
 convert input strings to objects (or omit the block to use the original string
 as the option value.) For example, a simple hexadecimal input acceptor might
 look like this:
 
     acceptor("hex", /^[0-9a-fA-F]+$/) { |input| input.to_i(16) }
 
-You may also accept enum values by passing an array of valid values to the
+You can also accept enum values by passing an array of valid values to the
 `acceptor` directive. Inputs will be matched against the `to_s` form of the
 given values, and will be converted to the value itself. For example, one way
 to accept integers from 1 to 5 is:
@@ -3272,7 +3275,7 @@ still be present to decrease verbosity.
     # Repurposes -q to set the "quick" option instead of "quiet"
     flag :quick, "-q"
 
-You may also completely disable a flag, and *not* repurpose it, using the
+You can also completely disable a flag, and *not* repurpose it, using the
 `disable_flag` directive. It lets you mark one or more flags as "never use".
 
 For example, if you disable the `-q` flag, then `-q` will no longer be a
@@ -3296,7 +3299,7 @@ first, followed by positional arguments. In such a tool, once a non-flag
 argument appears on the command line, all remaining arguments are treated as
 positional, even if they look like a flag and start with a hyphen.
 
-You may configure a tool to follow this alternate parsing strategy using the
+You can configure a tool to follow this alternate parsing strategy using the
 `enforce_flags_before_args` directive.
 
 The built-in tool `toys do` is an example of a tool that does this. It
@@ -3405,9 +3408,9 @@ interrupts as follows:
 2.  Toys will call the interrupt handler. If this method or block takes an
     argument, Toys will pass it the `Interrupt` exception object.
 3.  The interrupt handler is then responsible for tool execution from that
-    point. It may terminate execution by returning or calling `exit`, or it may
+    point. It can terminate execution by returning or calling `exit`, or it can
     restart or resume processing (perhaps by calling the `run` method again).
-    Or it may invoke the normal Toys interrupt handling (i.e. terminating
+    Or it can invoke the normal Toys interrupt handling (i.e. terminating
     execution, displaying the message `INTERRUPTED`) by re-raising *the same*
     interrupt exception object.
 4.  If another interrupt takes place during the execution of the interrupt
@@ -3496,14 +3499,14 @@ To use data files, you must define your tools inside a
 [Toys directory](#Toys_directories). Within the Toys directory, create a
 directory named `.data` and copy your data files there.
 
-You may then "find" a data file by providing the relative path to the file from
+You mcanay then "find" a data file by providing the relative path to the file from
 the `.data` directory. When defining a tool, use the
 {Toys::DSL::Tool#find_data} directive in a Toys file. Or, at tool execution
 time, call {Toys::Context#find_data} (which is a convenience method for getting
 the tool source object using the `TOOL_SOURCE` key, and calling
 {Toys::SourceInfo#find_data} on it). In either case, `find_data` locates a
 matching file (or directory) among the data files, and returns the full path to
-that file system object. You may then read the file or perform any other
+that file system object. You can then read the file or perform any other
 operation on it.
 
 For example, take the following directory structure:
@@ -3714,7 +3717,7 @@ context directory to `my-repo/gem1`. Here's what that could look like:
 
 Tools whose name begins with an underscore (e.g. `_foo`) are called "hidden"
 tools. They can be executed the same as any other tool, but are normally
-omitted from the subtool list displayed in help and usage screens. You may use
+omitted from the subtool list displayed in help and usage screens. You can use
 hidden tools as "internal" tools that are meant to be called only as part of
 the implementation of other tools.
 
@@ -3779,6 +3782,21 @@ At this time, bash is the only shell that is supported directly. If you are
 using zsh, however, you can use the `bashcompinit` function to load the toys
 bash completion (as well as other bash-based completions). This *mostly* works,
 with a few caveats. Native zsh completion is on the future roadmap.
+
+### Getting information about tools
+
+Sometimes you need to introspect the list of defined tools. For example, you
+might have a CI job that runs a Toys tool if available, but falls back to a
+Rake task if no Toys tools are defined. To determine whether a tool exists, you
+could use the status code returned from `system tools show`.
+
+Two operations are available under the `system tools` namespace, one to search
+and list tools, and another to get information about a specific tool. In both
+cases, you can view results as either YAML or JSON. For more information, see
+the help screens:
+
+    toys system tools list --help
+    toys system tools show --help
 
 ### Managing the Git cache
 
