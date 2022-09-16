@@ -16,6 +16,18 @@ mixin "tool-methods" do
 
   def choose_loader(local, from_dir)
     return cli.loader unless local || from_dir
+    if from_dir
+      unless ::File.directory?(from_dir)
+        logger.fatal("Not a directory: #{from_dir}")
+        exit(1)
+      end
+      if ::File.basename(from_dir) == ".toys"
+        from_dir = ::File.dirname(from_dir)
+      elsif from_dir =~ %r{(^|/)\.toys/}
+        logger.fatal("Directory is inside a toys directory: #{from_dir}")
+        exit(1)
+      end
+    end
     special_cli = if local
                     cli.child.add_search_path(from_dir || ::Dir.getwd)
                   else

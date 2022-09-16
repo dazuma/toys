@@ -8,6 +8,7 @@ describe "toys system tools" do
   toys_include_builtins(false)
 
   let(:toys_gem_dir) { ::File.dirname(::File.dirname(::File.dirname(__dir__))) }
+  let(:toys_repo_dir) { ::File.dirname(toys_gem_dir) }
 
   def capture_system_tools_output(cmd, expected_status: 0, format: nil)
     out, _err = capture_subprocess_io do
@@ -111,6 +112,14 @@ describe "toys system tools" do
       assert(ci_tool["runnable"])
     end
 
+    it "handles --dir pointing at a .toys dir" do
+      dir = "#{toys_gem_dir}/.toys"
+      result = capture_system_tools_output(["list", "--recursive", "--local", "--dir", dir])
+      ci_tool = result["tools"].find { |t| t["name"] == "ci" }
+      assert_equal("Run all CI checks", ci_tool["desc"])
+      assert(ci_tool["runnable"])
+    end
+
     it "lists tools non-recursively, outputting as json" do
       result = capture_system_tools_output(["list"], format: "json")
       assert_equal("", result["namespace"])
@@ -127,6 +136,36 @@ describe "toys system tools" do
       refute_nil(system_tool)
       assert_equal("A set of system commands for Toys", system_tool["desc"])
       refute(system_tool["runnable"])
+    end
+
+    it "displays the correct error if --dir doesn't exist" do
+      out, err = capture_subprocess_io do
+        cmd = ["system", "tools", "list", "--local", "--dir", "#{toys_gem_dir}/nope"]
+        status = toys_run_tool(cmd)
+        assert_equal(1, status)
+      end
+      assert_empty(out)
+      assert_match(/Not a directory:/, err)
+    end
+
+    it "displays the correct error if --dir points at a file" do
+      out, err = capture_subprocess_io do
+        cmd = ["system", "tools", "list", "--local", "--dir", "#{toys_gem_dir}/README.md"]
+        status = toys_run_tool(cmd)
+        assert_equal(1, status)
+      end
+      assert_empty(out)
+      assert_match(/Not a directory:/, err)
+    end
+
+    it "displays the correct error if --dir points inside a toys dir" do
+      out, err = capture_subprocess_io do
+        cmd = ["system", "tools", "list", "--local", "--dir", "#{toys_repo_dir}/.toys/release"]
+        status = toys_run_tool(cmd)
+        assert_equal(1, status)
+      end
+      assert_empty(out)
+      assert_match(/Directory is inside a toys directory:/, err)
     end
   end
 
