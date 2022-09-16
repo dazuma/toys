@@ -1563,11 +1563,14 @@ as styled output and simple spinners. For information, see the
 
 If you prefer the venerable Highline library interface, Toys provides a mixin
 called `:highline` that automatically installs the highline gem (version 2.x)
-if it is not available, and makes a highline object available to the tool. For
-more information, see the {Toys::StandardMixins::Highline} mixin module.
+if it is not already available, and makes a highline object available to the
+tool. For more information, see the {Toys::StandardMixins::Highline} mixin
+module.
 
 The `:pager` mixin provides a convenient interface to pager utilities such as
-`less`, which let your users interactively page through long output.
+`less`, which let your users interactively page through long output. For more
+information, see the {Toys::StandardMixins::Pager} mixin module and the
+underlying library {Toys::Utils::Pager}.
 
 You can also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
