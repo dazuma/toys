@@ -92,6 +92,7 @@ module Toys
       # The type of flag (`:boolean` or `:value`)
       # @return [:boolean] if this is a boolean flag (i.e. no value)
       # @return [:value] if this flag takes a value (even if optional)
+      # @return [nil] if this flag is indeterminate
       #
       attr_reader :flag_type
 
@@ -683,6 +684,7 @@ module Toys
       @group = group
       @key = key
       @flag_syntax = Array(flags).map { |s| Syntax.new(s) }
+      @explicit_acceptor = !acceptor.nil?
       @acceptor = Acceptor.create(acceptor)
       @handler = resolve_handler(handler)
       @desc = WrappableString.make(desc)
@@ -737,7 +739,7 @@ module Toys
         end
       if flag_str
         needs_val = @value_completion != Completion::EMPTY ||
-                    ![::Object, ::TrueClass, ::FalseClass].include?(@acceptor.well_known_spec) ||
+                    @explicit_acceptor ||
                     ![nil, true, false].include?(@default)
         flag_str = "#{flag_str} VALUE" if needs_val
         @flag_syntax << Syntax.new(flag_str)
@@ -771,6 +773,10 @@ module Toys
         analyze_flag_syntax(flag)
       end
       @flag_type ||= :boolean
+      if @flag_type == :boolean && @explicit_acceptor
+        raise ToolDefinitionError,
+              "Flag #{key.inspect} cannot have an acceptor because it does not take a value."
+      end
       @value_type ||= :required if @flag_type == :value
       flag_syntax.each do |flag|
         flag.configure_canonical(@flag_type, @value_type, @value_label, @value_delim)

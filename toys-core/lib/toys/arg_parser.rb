@@ -439,7 +439,7 @@ module Toys
       return false unless @active_flag_def
       result = @active_flag_def.value_type == :required || !arg.start_with?("-")
       add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
-               result ? arg : nil, :flag, @active_flag_arg)
+               result ? arg : true, :flag, @active_flag_arg)
       @seen_flag_keys << @active_flag_def.key
       @active_flag_def = nil
       @active_flag_arg = nil
@@ -481,7 +481,7 @@ module Toys
           @active_flag_def = flag_def
           @active_flag_arg = name
         else
-          add_data(flag_def.key, flag_def.handler, flag_def.acceptor, nil, :flag, name)
+          add_data(flag_def.key, flag_def.handler, flag_def.acceptor, true, :flag, name)
         end
       else
         add_data(flag_def.key, flag_def.handler, flag_def.acceptor, following, :flag, name)
@@ -540,7 +540,7 @@ module Toys
     end
 
     def add_data(key, handler, accept, value, type_name, display_name)
-      if accept
+      if accept && value.is_a?(::String)
         match = accept.match(value)
         unless match
           error_class = type_name == :flag ? FlagValueUnacceptableError : ArgValueUnacceptableError
@@ -562,7 +562,7 @@ module Toys
           @errors << FlagValueMissingError.new(name: @active_flag_arg)
         else
           add_data(@active_flag_def.key, @active_flag_def.handler, @active_flag_def.acceptor,
-                   nil, :flag, @active_flag_arg)
+                   true, :flag, @active_flag_arg)
         end
       end
     end

@@ -6,16 +6,13 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 
 ## Ideas under investigation
 
-* Accept seems to be incompatible with flag optional values
 * Allow override when doing data lookup (for subdirectory-specific configuration)
 * Evaluate options for closer Rails integration
-* Tool archives for sharing/installing tools
 * Should it be possible to set require_exact_flag_match per-flag?
-* Convenience methods for creating pipes/splits/joins in exec
 * toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
 * Line length limit for Terminal
-* Something to generate output formats
+* Generalized classes for generating output formats
 * Namespace clearing/locking
 * Additional ways to find terminal size
 
@@ -23,3 +20,4 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 
 * toys system clean: Clean old installations of toys. Probably not a good idea because other versions may be in bundles.
 * Customize the value to set when not providing a value to an optional-value flag. Probably not worth it since normal boolean flags are always set to `true`, and the handler can be used to customize it already.
+* Tool archives: We implemented tool loading over git which is probably better.
