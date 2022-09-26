@@ -83,7 +83,7 @@ module Toys
       # When given a valid input, return an array in which the first element is
       # the original input string, and the remaining elements (which may be
       # empty) comprise any additional information that may be useful during
-      # conversion. If there is no additional information, you may return the
+      # conversion. If there is no additional information, you can return the
       # original input string by itself without wrapping in an array.
       #
       # When given an invalid input, return a falsy value such as `nil`.
@@ -95,8 +95,7 @@ module Toys
       # as the only array element, indicating all inputs are valid. You can
       # override this method to provide a different validation function.
       #
-      # @param str [String,nil] The input argument string. May be `nil` if the
-      #     value is optional and not provided.
+      # @param str [String] The input argument string.
       # @return [String,Array,nil]
       #
       def match(str)
@@ -110,15 +109,14 @@ module Toys
       # original input string and any other values returned from {#match}. It
       # must return the final converted value to use.
       #
-      # @param str [String,nil] Original argument string. May be `nil` if the
-      #     value is optional and not provided.
+      # @param str [String] Original argument string.
       # @param extra [Object...] Zero or more additional arguments comprising
       #     additional elements returned from the match function.
       # @return [Object] The converted argument as it should be stored in the
       #     context data.
       #
       def convert(str, *extra) # rubocop:disable Lint/UnusedMethodArgument
-        str.nil? ? true : str
+        str
       end
 
       ##
@@ -183,7 +181,7 @@ module Toys
       #
       def match(str)
         result = @function.call(str) rescue REJECT # rubocop:disable Style/RescueModifier
-        result.equal?(REJECT) ? nil : [str, result]
+        REJECT.equal?(result) ? nil : [str, result]
       end
 
       ##
@@ -240,7 +238,7 @@ module Toys
       # @private
       #
       def match(str)
-        str.nil? ? [nil] : @regex.match(str)
+        @regex.match(str)
       end
 
       ##
@@ -293,7 +291,7 @@ module Toys
       # @private
       #
       def match(str)
-        str.nil? ? [nil, nil] : @values.find { |s, _e| s == str }
+        @values.find { |s, _e| s == str }
       end
 
       ##
@@ -418,14 +416,47 @@ module Toys
     #
     NUMERIC_CONVERTER =
       proc do |s|
-        if s.nil?
-          nil
-        elsif s.include?("/")
+        if s.include?("/")
           Rational(s)
         elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
           Float(s)
         else
           Integer(s)
+        end
+      end
+
+    ##
+    # A set of strings that are considered true for boolean acceptors.
+    # Currently set to `["+", "true", "yes"]`.
+    # @return [Array<String>]
+    #
+    TRUE_STRINGS = ["+", "true", "yes"].freeze
+
+    ##
+    # A set of strings that are considered false for boolean acceptors.
+    # Currently set to `["-", "false", "no", "nil"]`.
+    # @return [Array<String>]
+    #
+    FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
+
+    ##
+    # A converter proc that handles boolean strings. Recognizes {TRUE_STRINGS}
+    # and {FALSE_STRINGS}. Useful for Simple acceptors.
+    # @return [Proc]
+    #
+    BOOLEAN_CONVERTER =
+      proc do |s|
+        if s.empty?
+          REJECT
+        else
+          s = s.downcase
+          if TRUE_STRINGS.any? { |t| t.start_with?(s) }
+            true
+          elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
+            false
+          else
+            REJECT
+          end
         end
       end
 
@@ -564,8 +595,8 @@ module Toys
           ::Float => build_float,
           ::Rational => build_rational,
           ::Numeric => build_numeric,
-          ::TrueClass => build_boolean(::TrueClass, true),
-          ::FalseClass => build_boolean(::FalseClass, false),
+          ::TrueClass => build_boolean(::TrueClass),
+          ::FalseClass => build_boolean(::FalseClass),
           ::Array => build_array,
           ::Regexp => build_regexp,
         }
@@ -603,77 +634,48 @@ module Toys
         Simple.new(NUMERIC_CONVERTER, type_desc: "number", well_known_spec: ::Numeric)
       end
 
-      TRUE_STRINGS = ["+", "true", "yes"].freeze
-      FALSE_STRINGS = ["-", "false", "no", "nil"].freeze
-      private_constant :TRUE_STRINGS, :FALSE_STRINGS
-
-      def build_boolean(spec, default)
-        Simple.new(type_desc: "boolean", well_known_spec: spec) do |s|
-          if s.nil?
-            default
-          elsif s.empty?
-            REJECT
-          else
-            s = s.downcase
-            if TRUE_STRINGS.any? { |t| t.start_with?(s) }
-              true
-            elsif FALSE_STRINGS.any? { |f| f.start_with?(s) }
-              false
-            else
-              REJECT
-            end
-          end
-        end
+      def build_boolean(spec)
+        Simple.new(BOOLEAN_CONVERTER, type_desc: "boolean", well_known_spec: spec)
       end
 
       def build_array
         Simple.new(type_desc: "string array", well_known_spec: ::Array) do |s|
-          if s.nil?
-            nil
-          else
-            s.split(",").collect { |elem| elem unless elem.empty? }
-          end
+          s.split(",").collect { |elem| elem unless elem.empty? }
         end
       end
 
       def build_regexp
         Simple.new(type_desc: "regular expression", well_known_spec: ::Regexp) do |s|
-          if s.nil?
-            nil
-          else
-            flags = 0
-            if (match = %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}.match(s))
-              s = match[1]
-              opts = match[2] || ""
-              flags |= ::Regexp::IGNORECASE if opts.include?("i")
-              flags |= ::Regexp::MULTILINE if opts.include?("m")
-              flags |= ::Regexp::EXTENDED if opts.include?("x")
-            end
-            ::Regexp.new(s, flags)
+          flags = 0
+          if (match = %r{\A/((?:\\.|[^\\])*)/([[:alpha:]]*)\z}.match(s))
+            s = match[1]
+            opts = match[2] || ""
+            flags |= ::Regexp::IGNORECASE if opts.include?("i")
+            flags |= ::Regexp::MULTILINE if opts.include?("m")
+            flags |= ::Regexp::EXTENDED if opts.include?("x")
           end
+          ::Regexp.new(s, flags)
         end
       end
 
       def build_decimal_integer
         Simple.new(type_desc: "decimal integer",
                    well_known_spec: ::OptionParser::DecimalInteger) do |s|
-          s.nil? ? nil : Integer(s, 10)
+          Integer(s, 10)
         end
       end
 
       def build_octal_integer
         Simple.new(type_desc: "octal integer",
                    well_known_spec: ::OptionParser::OctalInteger) do |s|
-          s.nil? ? nil : Integer(s, 8)
+          Integer(s, 8)
         end
       end
 
       def build_decimal_numeric
         Simple.new(type_desc: "decimal number",
                    well_known_spec: ::OptionParser::DecimalNumeric) do |s|
-          if s.nil?
-            nil
-          elsif s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
+          if s.include?(".") || (s.include?("e") && s !~ /\A-?0x/)
             Float(s)
           else
             Integer(s, 10)

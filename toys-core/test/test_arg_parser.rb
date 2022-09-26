@@ -333,6 +333,15 @@ describe Toys::ArgParser do
         assert_empty(arg_parser.errors)
       end
 
+      it "defaults to nil if absent" do
+        tool.add_flag(:a, ["--aa=[VALUE]"])
+        tool.set_remaining_args(:r)
+        arg_parser.parse([])
+        arg_parser.finish
+        assert_data_includes({a: nil, r: []}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
       describe "long option with = delimiter" do
         before do
           tool.add_flag(:a, ["--aa=[VALUE]"], default: "def")
@@ -382,6 +391,14 @@ describe Toys::ArgParser do
         end
 
         it "goes to true if the next separate arg looks like a flag" do
+          tool.add_flag(:bb)
+          arg_parser.parse(["--aa", "--bb"])
+          arg_parser.finish
+          assert_data_includes({a: true, bb: true, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "goes to true if followed by the end-flags signal" do
           arg_parser.parse(["--aa", "--"])
           arg_parser.finish
           assert_data_includes({a: true, r: []}, arg_parser.data)
@@ -477,6 +494,97 @@ describe Toys::ArgParser do
         end
 
         it "goes to true when no more args are available" do
+          arg_parser.parse(["-a"])
+          arg_parser.finish
+          assert_data_includes({a: true, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+      end
+
+      describe "long option with space delimiter and an acceptor" do
+        before do
+          tool.add_flag(:a, ["--aa [VALUE]"], accept: Integer)
+          tool.set_remaining_args(:r)
+        end
+
+        it "accepts a number" do
+          arg_parser.parse(["--aa", "123"])
+          arg_parser.finish
+          assert_data_includes({a: 123, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "accepts true when there are no more args" do
+          arg_parser.parse(["--aa"])
+          arg_parser.finish
+          assert_data_includes({a: true, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+      end
+
+      describe "long option with = delimiter and an acceptor" do
+        before do
+          tool.add_flag(:a, ["--aa[=VALUE]"], accept: Integer)
+          tool.set_remaining_args(:r)
+        end
+
+        it "accepts a number" do
+          arg_parser.parse(["--aa=123"])
+          arg_parser.finish
+          assert_data_includes({a: 123, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "accepts true when the value is in a separate arg" do
+          arg_parser.parse(["--aa", "123"])
+          arg_parser.finish
+          assert_data_includes({a: true, r: ["123"]}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "accepts true when there are no more args" do
+          arg_parser.parse(["--aa"])
+          arg_parser.finish
+          assert_data_includes({a: true, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+      end
+
+      describe "short option with attached value and an acceptor" do
+        before do
+          tool.add_flag(:a, ["-a[VALUE]"], accept: Integer)
+          tool.set_remaining_args(:r)
+        end
+
+        it "accepts a number" do
+          arg_parser.parse(["-a123"])
+          arg_parser.finish
+          assert_data_includes({a: 123, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "accepts true when there are no more args" do
+          arg_parser.parse(["-a"])
+          arg_parser.finish
+          assert_data_includes({a: true, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+      end
+
+      describe "short option with space delimiter and an acceptor" do
+        before do
+          tool.add_flag(:a, ["-a [VALUE]"], accept: Integer)
+          tool.set_remaining_args(:r)
+        end
+
+        it "accepts a number" do
+          arg_parser.parse(["-a", "123"])
+          arg_parser.finish
+          assert_data_includes({a: 123, r: []}, arg_parser.data)
+          assert_empty(arg_parser.errors)
+        end
+
+        it "accepts true when there are no more args" do
           arg_parser.parse(["-a"])
           arg_parser.finish
           assert_data_includes({a: true, r: []}, arg_parser.data)

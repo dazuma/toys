@@ -15,10 +15,6 @@ describe Toys::Acceptor::Base do
     assert_equal(input_string, acceptor.convert(input_string, "No one"))
   end
 
-  it "accepts nil" do
-    assert_equal([nil], acceptor.match(nil))
-  end
-
   it "defaults type desc to DEFAULT_TYPE_DESC" do
     assert_equal(Toys::Acceptor::DEFAULT_TYPE_DESC, acceptor.type_desc)
   end
@@ -99,14 +95,6 @@ describe Toys::Acceptor::Pattern do
   it "does not accept unmatching strings" do
     assert_nil(acceptor.match("Jon Snow"))
   end
-
-  it "accepts nil" do
-    assert_equal([nil], acceptor.match(nil))
-  end
-
-  it "converts nil" do
-    assert_nil(acceptor.convert(nil))
-  end
 end
 
 describe Toys::Acceptor::Enum do
@@ -124,14 +112,6 @@ describe Toys::Acceptor::Enum do
 
   it "converts to the enum value" do
     assert_equal(:Arya, acceptor.convert("Arya", :Arya))
-  end
-
-  it "accepts nil" do
-    assert_equal([nil, nil], acceptor.match(nil))
-  end
-
-  it "converts nil" do
-    assert_nil(acceptor.convert(nil, nil))
   end
 
   it "returns suggestions" do
@@ -161,10 +141,6 @@ describe Toys::Acceptor::Range do
     it "rejects non-numerics" do
       assert_nil(acceptor.match("hi!"))
     end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
-    end
   end
 
   describe "of float" do
@@ -190,10 +166,6 @@ describe Toys::Acceptor::Range do
 
     it "rejects non-numerics" do
       assert_nil(acceptor.match("hi!"))
-    end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
     end
   end
 
@@ -221,10 +193,6 @@ describe Toys::Acceptor::Range do
     it "rejects non-numerics" do
       assert_nil(acceptor.match("hi!"))
     end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
-    end
   end
 
   describe "of numeric" do
@@ -251,10 +219,6 @@ describe Toys::Acceptor::Range do
     it "rejects non-numerics" do
       assert_nil(acceptor.match("hi!"))
     end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
-    end
   end
 
   describe "of string" do
@@ -268,10 +232,6 @@ describe Toys::Acceptor::Range do
 
     it "rejects strings outside the range" do
       assert_nil(acceptor.match("A"))
-    end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
     end
   end
 
@@ -288,10 +248,6 @@ describe Toys::Acceptor::Range do
 
     it "rejects times outside the range" do
       assert_nil(acceptor.match("21"))
-    end
-
-    it "accepts nil" do
-      assert_equal([nil, nil], acceptor.match(nil))
     end
   end
 end
@@ -393,10 +349,6 @@ describe Toys::Acceptor do
         assert_accept(acceptor, "", "")
       end
 
-      it "converts nil to true" do
-        assert_accept(acceptor, nil, true)
-      end
-
       it "has the correct type desc" do
         assert_equal("string", acceptor.type_desc)
       end
@@ -413,10 +365,6 @@ describe Toys::Acceptor do
         assert_accept(acceptor, "", "")
       end
 
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
-      end
-
       it "has the correct type desc" do
         assert_equal("string", acceptor.type_desc)
       end
@@ -431,10 +379,6 @@ describe Toys::Acceptor do
 
       it "does not accept empty string" do
         refute_accept(acceptor, "")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -473,10 +417,6 @@ describe Toys::Acceptor do
         refute_accept(acceptor, "hi")
       end
 
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
-      end
-
       it "has the correct type desc" do
         assert_equal("integer", acceptor.type_desc)
       end
@@ -503,10 +443,6 @@ describe Toys::Acceptor do
 
       it "does not accept nonnumeric string" do
         refute_accept(acceptor, "hi")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -541,10 +477,6 @@ describe Toys::Acceptor do
       it "does not accept nonnumeric string" do
         skip("https://github.com/oracle/truffleruby/issues/2566") if Toys::Compat.truffleruby?
         refute_accept(acceptor, "hi")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -585,10 +517,6 @@ describe Toys::Acceptor do
 
       it "does not accept nonnumeric string" do
         refute_accept(acceptor, "hi")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -647,10 +575,6 @@ describe Toys::Acceptor do
         refute_accept(acceptor, "yessir")
       end
 
-      it "converts nil to true" do
-        assert_accept(acceptor, nil, true)
-      end
-
       it "has the correct type desc" do
         assert_equal("boolean", acceptor.type_desc)
       end
@@ -665,10 +589,6 @@ describe Toys::Acceptor do
 
       it "accepts -" do
         assert_accept(acceptor, "-", false)
-      end
-
-      it "converts nil to false" do
-        assert_accept(acceptor, nil, false)
       end
 
       it "has the correct type desc" do
@@ -697,10 +617,6 @@ describe Toys::Acceptor do
 
       it "converts empty leading and internal elements to nil" do
         assert_accept(acceptor, ",hi,,ho,he", [nil, "hi", nil, "ho", "he"])
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -733,10 +649,6 @@ describe Toys::Acceptor do
 
       it "accepts a regex ignoring o flag" do
         assert_accept(acceptor, "/hi/io", /hi/i)
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -773,10 +685,6 @@ describe Toys::Acceptor do
 
       it "does not accept noninteger string" do
         refute_accept(acceptor, "hi")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do
@@ -820,10 +728,6 @@ describe Toys::Acceptor do
         refute_accept(acceptor, "hi")
       end
 
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
-      end
-
       it "has the correct type desc" do
         assert_equal("octal integer", acceptor.type_desc)
       end
@@ -858,10 +762,6 @@ describe Toys::Acceptor do
 
       it "does not accept nonnumeric string" do
         refute_accept(acceptor, "hi")
-      end
-
-      it "converts nil to nil" do
-        assert_accept(acceptor, nil, nil)
       end
 
       it "has the correct type desc" do

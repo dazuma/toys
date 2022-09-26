@@ -409,23 +409,34 @@ describe Toys::Flag do
       assert_equal("--[no-]aa", flag.display_name)
       assert_equal("aa", flag.sort_str)
     end
+
+    it "canonicalizes to a value flag if there is an acceptor" do
+      flag = Toys::Flag.create(:abc, accept: Integer)
+      assert_equal(:value, flag.flag_type)
+    end
+
+    it "errors if a no-value flag has an acceptor" do
+      assert_raises(Toys::ToolDefinitionError) do
+        Toys::Flag.create(:a, ["--foo"], accept: Integer)
+      end
+    end
+
+    it "prevents value and boolean collisions" do
+      assert_raises(Toys::ToolDefinitionError) do
+        Toys::Flag.create(:abc, ["--[no-]aa", "--bb=VAL"])
+      end
+    end
+
+    it "prevents required and optional collisions" do
+      assert_raises(Toys::ToolDefinitionError) do
+        Toys::Flag.create(:abc, ["--aa=VAL", "--bb=[VAL]"])
+      end
+    end
   end
 
   it "honors provided display name" do
     flag = Toys::Flag.create(:abc, ["--aa VAL", "--bb", "-a"], display_name: "aa flag")
     assert_equal("aa flag", flag.display_name)
-  end
-
-  it "prevents value and boolean collisions" do
-    assert_raises(Toys::ToolDefinitionError) do
-      Toys::Flag.create(:abc, ["--[no-]aa", "--bb=VAL"])
-    end
-  end
-
-  it "prevents required and optional collisions" do
-    assert_raises(Toys::ToolDefinitionError) do
-      Toys::Flag.create(:abc, ["--aa=VAL", "--bb=[VAL]"])
-    end
   end
 
   it "updates used flags" do
