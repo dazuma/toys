@@ -54,59 +54,71 @@ module Toys
     # options.
     #
     # Three general strategies are available for custom stream handling. First,
-    # you may redirect to other streams such as files, IO objects, or Ruby
+    # you can redirect to other streams such as files, IO objects, or Ruby
     # strings. Some of these options map directly to options provided by the
-    # `Process#spawn` method. Second, you may use a controller to manipulate
-    # the streams programmatically. Third, you may capture output stream data
+    # `Process#spawn` method. Second, you can use a controller to manipulate
+    # the streams programmatically. Third, you can capture output stream data
     # and make it available in the result.
     #
     # Following is a full list of the stream handling options, along with how
     # to specify them using the `:in`, `:out`, and `:err` options.
     #
-    #  *  **Inherit parent stream:** You may inherit the corresponding stream
+    #  *  **Inherit parent stream:** You can inherit the corresponding stream
     #     in the parent process by passing `:inherit` as the option value. This
     #     is the default if the subprocess is *not* run in the background.
-    #  *  **Redirect to null:** You may redirect to a null stream by passing
+    #
+    #  *  **Redirect to null:** You can redirect to a null stream by passing
     #     `:null` as the option value. This connects to a stream that is not
     #     closed but contains no data, i.e. `/dev/null` on unix systems. This
     #     is the default if the subprocess is run in the background.
-    #  *  **Close the stream:** You may close the stream by passing `:close` as
+    #
+    #  *  **Close the stream:** You can close the stream by passing `:close` as
     #     the option value. This is the same as passing `:close` to
     #     `Process#spawn`.
-    #  *  **Redirect to a file:** You may redirect to a file. This reads from
+    #
+    #  *  **Redirect to a file:** You can redirect to a file. This reads from
     #     an existing file when connected to `:in`, and creates or appends to a
     #     file when connected to `:out` or `:err`. To specify a file, use the
-    #     setting `[:file, "/path/to/file"]`. You may also, when writing a
+    #     setting `[:file, "/path/to/file"]`. You can also, when writing a
     #     file, append an optional mode and permission code to the array. For
     #     example, `[:file, "/path/to/file", "a", 0644]`.
-    #  *  **Redirect to an IO object:** You may redirect to an IO object in the
-    #     parent process, by passing the IO object as the option value. You may
+    #
+    #  *  **Redirect to an IO object:** You can redirect to an IO object in the
+    #     parent process, by passing the IO object as the option value. You can
     #     use any IO object. For example, you could connect the child's output
     #     to the parent's error using `out: $stderr`, or you could connect to
     #     an existing File stream. Unlike `Process#spawn`, this works for IO
     #     objects that do not have a corresponding file descriptor (such as
     #     StringIO objects). In such a case, a thread will be spawned to pipe
     #     the IO data through to the child process.
-    #  *  **Redirect to a pipe:** You may redirect to a pipe created using
+    #
+    #  *  **Redirect to a pipe:** You can redirect to a pipe created using
     #     `IO.pipe` (i.e. a two-element array of read and write IO objects) by
     #     passing the array as the option value. This will connect the
     #     appropriate IO (either read or write), and close it in the parent.
-    #     Thus, you can connect only one process to each end.
-    #  *  **Combine with another child stream:** You may redirect one child
+    #     Thus, you can connect only one process to each end. If you want more
+    #     direct control over IO closing behavior, pass the IO object (i.e. the
+    #     element of the pipe array) directly.
+    #
+    #  *  **Combine with another child stream:** You can redirect one child
     #     output stream to another, to combine them. To merge the child's error
     #     stream into its output stream, use `err: [:child, :out]`.
-    #  *  **Read from a string:** You may pass a string to the input stream by
+    #
+    #  *  **Read from a string:** You can pass a string to the input stream by
     #     setting `[:string, "the string"]`. This works only for `:in`.
-    #  *  **Capture output stream:** You may capture a stream and make it
+    #
+    #  *  **Capture output stream:** You can capture a stream and make it
     #     available on the {Toys::Utils::Exec::Result} object, using the
     #     setting `:capture`. This works only for the `:out` and `:err`
     #     streams.
-    #  *  **Use the controller:** You may hook a stream to the controller using
+    #
+    #  *  **Use the controller:** You can hook a stream to the controller using
     #     the setting `:controller`. You can then manipulate the stream via the
     #     controller. If you pass a block to {Toys::Utils::Exec#exec}, it
     #     yields the {Toys::Utils::Exec::Controller}, giving you access to
     #     streams.
-    #  *  **Make copies of an output stream:** You may "tee," or duplicate the
+    #
+    #  *  **Make copies of an output stream:** You can "tee," or duplicate the
     #     `:out` or `:err` stream and redirect those copies to various
     #     destinations. To specify a tee, use the setting `[:tee, ...]` where
     #     the additional array elements include two or more of the following.
@@ -117,6 +129,12 @@ module Toys
     #      *  `[:file, "/path/to/file"]` to write to a file.
     #      *  An `IO` or `StringIO` object.
     #      *  An array of two `IO` objects representing a pipe
+    #
+    #     Additionally, the last element of the array can be a hash of options.
+    #     Supported options include:
+    #      *  `:buffer_size` The size of the memory buffer for each element of
+    #         the tee. Larger buffers may allow higher throughput. The default
+    #         is 65536.
     #
     # ### Result handling
     #
@@ -187,7 +205,7 @@ module Toys
     #     not present, the command is not logged.
     #
     #  *  `:log_level` (Integer,false) Level for logging the actual command.
-    #     Defaults to Logger::INFO if not present. You may also pass `false` to
+    #     Defaults to Logger::INFO if not present. You can also pass `false` to
     #     disable logging of the command.
     #
     #  *  `:log_cmd` (String) The string logged for the actual command.
@@ -243,7 +261,7 @@ module Toys
       end
 
       ##
-      # Execute a command. The command may be given as a single string to pass
+      # Execute a command. The command can be given as a single string to pass
       # to a shell, or an array of strings indicating a posix command.
       #
       # If the process is not set to run in the background, and a block is
@@ -326,7 +344,7 @@ module Toys
       end
 
       ##
-      # Execute a command. The command may be given as a single string to pass
+      # Execute a command. The command can be given as a single string to pass
       # to a shell, or an array of strings indicating a posix command.
       #
       # Captures standard out and returns it as a string.
@@ -416,7 +434,7 @@ module Toys
       # An object that controls a subprocess. This object is returned from an
       # execution running in the background, or is yielded to a control block
       # for an execution running in the foreground.
-      # You may use this object to interact with the subcommand's streams,
+      # You can use this object to interact with the subcommand's streams,
       # send signals to the process, and get its result.
       #
       class Controller
@@ -518,8 +536,8 @@ module Toys
         ##
         # Redirects the remainder of the given stream.
         #
-        # You may specify the stream as an IO or IO-like object, or as a file
-        # specified by its path. If specifying a file, you may optionally
+        # You can specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you can optionally
         # provide the mode and permissions for the call to `File#open`. You can
         # also specify the value `:null` to indicate the null file.
         #
@@ -556,8 +574,8 @@ module Toys
         ##
         # Redirects the remainder of the standard input stream.
         #
-        # You may specify the stream as an IO or IO-like object, or as a file
-        # specified by its path. If specifying a file, you may optionally
+        # You can specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you can optionally
         # provide the mode and permissions for the call to `File#open`. You can
         # also specify the value `:null` to indicate the null file.
         #
@@ -575,8 +593,8 @@ module Toys
         ##
         # Redirects the remainder of the standard output stream.
         #
-        # You may specify the stream as an IO or IO-like object, or as a file
-        # specified by its path. If specifying a file, you may optionally
+        # You can specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you can optionally
         # provide the mode and permissions for the call to `File#open`. You can
         # also specify the value `:null` to indicate the null file.
         #
@@ -594,8 +612,8 @@ module Toys
         ##
         # Redirects the remainder of the standard error stream.
         #
-        # You may specify the stream as an IO or IO-like object, or as a file
-        # specified by its path. If specifying a file, you may optionally
+        # You can specify the stream as an IO or IO-like object, or as a file
+        # specified by its path. If specifying a file, you can optionally
         # provide the mode and permissions for the call to `File#open`.
         #
         # After calling this, do not interact directly with the stream.
@@ -610,7 +628,7 @@ module Toys
         end
 
         ##
-        # Send the given signal to the process. The signal may be specified
+        # Send the given signal to the process. The signal can be specified
         # by name or number.
         #
         # @param sig [Integer,String] The signal to send.

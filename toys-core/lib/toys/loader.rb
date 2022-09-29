@@ -326,6 +326,8 @@ module Toys
       @delimiter_handler.split_path(str.to_s)
     end
 
+    #### INTERNAL METHODS ####
+
     ##
     # Get or create the tool definition for the given name and priority.
     #
