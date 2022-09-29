@@ -31,7 +31,7 @@ Install the **toys-core** gem using:
 
     $ gem install toys-core
 
-You may also install the **toys** gem, which brings in **toys-core** as a
+You can also install the **toys** gem, which brings in **toys-core** as a
 dependency.
 
 Toys-Core requires Ruby 2.4 or later.
@@ -77,7 +77,7 @@ use to write Toys files. You could point your executable at a directory
 containing actual Toys files, but the simplest option is to provide the
 information to the Toys CLI object in a block.
 
-Let's add some functionality.
+Let's add some functionality to `mycmd`.
 
     #!/usr/bin/env ruby
 
@@ -107,7 +107,7 @@ look familiar. Let's run it now, and experiment with passing flags to it.
 Notice that we did not create a `tool` block, but instead set up description,
 flags, and functionality directly in the configuration block. This configures
 the "root tool", i.e. what happens when you run the executable without passing
-a tool name to it. (Note, it's legal to do this in Toys as well, by setting
+a tool name to it. (In fact, it's legal to do this in Toys as well, by setting
 functionality at the "top level" of a `.toys.rb` file without including any
 `tool` block.)
 
@@ -172,8 +172,8 @@ modifies error handling and delimiter parsing.
     #### Pass some additional options to the CLI constructor ...
     cli = Toys::CLI.new(
       extra_delimiters: ":",
-      error_handler: ->(_err) {
-        puts "Dude, an error happened..."
+      error_handler: ->(err) {
+        puts "Aww shucks, an error happened: #{err.message}"
         return 1
       }
     )
@@ -209,8 +209,8 @@ Toys _middleware_ are objects that provide common functionality for all the
 tools in your executable. For example, a middleware adds the `--help` flag to
 your tools by default.
 
-The next example modifies the middleware stack to alter this common tool
-functionality.
+The next example provides a custom middleware stack, resulting in a different
+set of common tool functionality.
 
     #!/usr/bin/env ruby
 
