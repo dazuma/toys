@@ -435,7 +435,11 @@ module Toys
     end
 
     ##
-    # @private
+    # Take the various ways to express a completion spec, and convert them to a
+    # canonical form expressed as a single object. This is called from the DSL
+    # DSL to generate a spec object that can be stored.
+    #
+    # @private This interface is internal and subject to change without warning.
     #
     def self.scalarize_spec(spec, options, block)
       spec ||= block

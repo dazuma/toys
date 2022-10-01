@@ -45,7 +45,11 @@ module Toys
   #
   class ContextualError < ::StandardError
     ##
-    # @private
+    # Construct a ContextualError. This exception type is thrown from
+    # {ContextualError.capture} and {ContextualError.capture_path} and should
+    # not be constructed directly.
+    #
+    # @private This interface is internal and subject to change without warning.
     #
     def initialize(cause, banner,
                    config_path: nil, config_line: nil,
@@ -118,7 +122,11 @@ module Toys
 
     class << self
       ##
-      # @private
+      # Execute the given block, and wrap any exceptions thrown with a
+      # ContextualError. This is intended for loading a config file from the
+      # given path, and wraps any Ruby parsing errors.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def capture_path(banner, path, **opts)
         yield
@@ -140,7 +148,10 @@ module Toys
       end
 
       ##
-      # @private
+      # Execute the given block, and wrap any exceptions thrown with a
+      # ContextualError.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def capture(banner, **opts)
         yield

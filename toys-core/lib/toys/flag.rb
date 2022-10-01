@@ -129,7 +129,9 @@ module Toys
       attr_reader :canonical_str
 
       ##
-      # @private
+      # This method is accessible for testing only.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def configure_canonical(canonical_flag_type, canonical_value_type,
                               canonical_value_label, canonical_value_delim)

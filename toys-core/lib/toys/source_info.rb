@@ -140,7 +140,7 @@ module Toys
     ##
     # Create a SourceInfo.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def initialize(parent, priority, context_directory, source_type, source_path, source_proc,
                    git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
@@ -165,7 +165,7 @@ module Toys
     ##
     # Create a child SourceInfo relative to the parent path.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def relative_child(filename, source_name: nil)
       unless source_type == :directory
@@ -189,7 +189,7 @@ module Toys
     ##
     # Create a child SourceInfo with an absolute path.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def absolute_child(child_path, source_name: nil)
       child_path, type = SourceInfo.check_path(child_path, false)
@@ -201,7 +201,7 @@ module Toys
     ##
     # Create a child SourceInfo with a git source.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def git_child(child_git_remote, child_git_path, child_git_commit, child_path,
                   source_name: nil)
@@ -216,7 +216,7 @@ module Toys
     ##
     # Create a proc child SourceInfo
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def proc_child(child_proc, source_name: nil)
       source_name ||= self.source_name
@@ -228,7 +228,7 @@ module Toys
     ##
     # Create a root source info for a file path.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.create_path_root(source_path, priority,
                               context_directory: nil,
@@ -250,7 +250,7 @@ module Toys
     ##
     # Create a root source info for a cached git repo.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.create_git_root(git_remote, git_path, git_commit, source_path, priority,
                              context_directory: nil,
@@ -266,7 +266,7 @@ module Toys
     ##
     # Create a root source info for a proc.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.create_proc_root(source_proc, priority,
                               context_directory: nil,
@@ -281,7 +281,7 @@ module Toys
     ##
     # Check a path and determine the canonical path and type.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.check_path(path, lenient)
       path = ::File.expand_path(path)

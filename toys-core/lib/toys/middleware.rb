@@ -141,7 +141,9 @@ module Toys
       end
 
       ##
-      # @private
+      # Create a spec from an array specification.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def spec_from_array(array)
         middleware = array.first
@@ -168,7 +170,7 @@ module Toys
     end
 
     ##
-    # A base class that provides default NOP implementations of the middleware
+    # A base class that provides default no-op implementation of the middleware
     # interface. This base class may optionally be subclassed by a middleware
     # implementation.
     #
@@ -266,7 +268,9 @@ module Toys
       end
 
       ##
-      # @private
+      # Internal constructor. Use {Toys::Middleware.spec} instead.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def initialize(object, name, args, kwargs, block)
         @object = object
@@ -278,7 +282,20 @@ module Toys
     end
 
     ##
-    # A stack of middleware specs.
+    # A stack of middleware specs, which can be applied in order to a tool.
+    #
+    # A middleware stack is separated into three groups:
+    #
+    #  *  {#pre_specs}, which are applied first.
+    #  *  {#default_specs}, which are applied next. The default specs are set
+    #     when the stack is created and are generally not modified.
+    #  *  {#post_specs}, which are applied third.
+    #
+    # When adding middleware to a stack, you should normally add them to the
+    # pre or post specs. By default, {Stack#add} appends to the pre specs,
+    # inserting new middleware just before the defaults.
+    #
+    # Use {Toys::Middleware.stack} to create a middleware stack.
     #
     class Stack
       ##
@@ -356,7 +373,9 @@ module Toys
       end
 
       ##
-      # @private
+      # Internal constructor. Use {Toys::Middleware.stack} instead.
+      #
+      # @private This interface is internal and subject to change without warning.
       #
       def initialize(default_specs: nil, pre_specs: nil, post_specs: nil)
         @pre_specs = pre_specs || []

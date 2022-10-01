@@ -6,14 +6,7 @@
 #
 module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   ##
-  # @private
-  #
-  def self.__binding
-    binding
-  end
-
-  ##
-  # @private
+  # @private This interface is internal and subject to change without warning.
   #
   def self.evaluate(tool_class, words, priority, remaining_words, source, loader)
     namespace = ::Module.new
@@ -35,6 +28,13 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
         end
       end
     end
+  end
+
+  ##
+  # @private
+  #
+  def self.__binding
+    binding
   end
 
   ##
