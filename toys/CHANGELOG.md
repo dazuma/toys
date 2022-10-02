@@ -1,5 +1,13 @@
 # Release History
 
+### v0.14.0 / 2022-10-02
+
+* ADDED: Implement system tools show and system tools list builtins
+* ADDED: Builtin commands that display data can format as either YAML or JSON
+* FIXED: Fixes related to specifying a directory for system tools
+* DOCS: Miscellaneous fixes to the readme and users guide
+* DOCS: More minor docs updates
+
 ### v0.13.1 / 2022-03-01
 
 * FIXED: Bundler integration no longer fails if a bundle was locked to a different version of a builtin gem

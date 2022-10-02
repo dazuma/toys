@@ -1,5 +1,18 @@
 # Release History
 
+### v0.14.0 / 2022-10-02
+
+* BREAKING CHANGE: Fixes for acceptors on flags that do not take a value
+
+* ADDED: Implement system tools show and system tools list builtins
+* ADDED: Implement pager util and mixin
+* ADDED: Pipes can be passed directly to exec streams
+* ADDED: New verbosity_flags convenience method in the exec mixin
+* ADDED: Support tee-ing exec outputs
+* FIXED: Fixes for acceptors on flags that do not take a value
+* DOCS: Various documentation fixes and cleanup
+* DOCS: More minor docs updates
+
 ### v0.13.1 / 2022-03-01
 
 * FIXED: Toys::Utils::Gems no longer fails to install a bundle if it had locked to a different version of a builtin gem
