@@ -302,7 +302,7 @@ module Toys
     end
 
     ##
-    # Exit immediately with the given status code
+    # Exit immediately with the given status code.
     #
     # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
@@ -313,7 +313,8 @@ module Toys
     end
 
     ##
-    # Exit immediately with the given status code
+    # Exit immediately with the given status code. This class method can be
+    # called if the instance method is or could be replaced by the tool.
     #
     # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
@@ -330,7 +331,7 @@ module Toys
     #
     # @param data [Hash]
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def initialize(data)
       @__data = data

@@ -24,7 +24,7 @@ This repository includes the source for two gems:
 
 Here's a tutorial to help you get a feel of what Toys can do.
 
-### Install Toys
+### Install and try out Toys
 
 Install the **toys** gem using:
 
@@ -54,14 +54,6 @@ following command in your shell, or add it to your bash configuration file
 Toys does not yet specially implement tab completion for zsh or other shells.
 However, if you are using zsh, installing bash completion using `bashcompinit`
 *mostly* works.
-
-Toys requires Ruby 2.4 or later.
-
-Most parts of Toys work on JRuby. However, JRuby is not recommended because of
-JVM boot latency, lack of support for Kernel#fork, and other issues.
-
-Most parts of Toys work on TruffleRuby. However, TruffleRuby is not recommended
-because it has a few known bugs that affect Toys.
 
 ### Write your first tool
 
@@ -248,8 +240,8 @@ Note that if you normally run Rake with Bundler (e.g. `bundle exec rake test`),
 you may need to add Toys to your Gemfile and use Bundler to invoke Toys (i.e.
 `bundle exec toys test`). This is because Toys is just calling the Rake API to
 run your task, and the Rake task might require the bundle. However, when Toys
-is not wrapping Rake, typical practice is actually *not* to use Bundler. Toys
-provides its own mechanisms to activate and even install needed gems for you.
+is not wrapping Rake, typical practice is actually *not* to use `bundle exec`.
+Toys provides its own mechanisms to manage bundles or install gems for you.
 
 So far, we've made Toys a front-end for your Rake tasks. This may be useful by
 itself. Toys lets you pass command line arguments "normally" to tools, whereas
@@ -309,7 +301,7 @@ them. Furthermore, when writing new scripts, I was repeating the same
 OptionParser boilerplate and common functionality.
 
 Toys was designed to address those problems by providing a framework for
-writing *and organizing* your own command line scripts. You provide the actual
+writing and organizing your own command line scripts. You provide the actual
 functionality by writing Toys files, and Toys takes care of all the other
 details expected from a good command line tool. It provides a streamlined
 interface for defining and handling command line flags and positional
@@ -323,6 +315,16 @@ Rake to provide build and test scripts for a project. Unlike Rake tasks,
 scripts written for Toys can be invoked and passed arguments and flags using
 familiar unix command line conventions. The Toys github repo itself comes with
 Toys scripts instead of Rakefiles.
+
+## System requirements
+
+Toys requires Ruby 2.4 or later.
+
+Most parts of Toys work on JRuby. However, JRuby is not recommended because of
+JVM boot latency, lack of support for Kernel#fork, and other issues.
+
+Most parts of Toys work on TruffleRuby. However, TruffleRuby is not recommended
+because it has a few known bugs that affect Toys.
 
 ## License
 

@@ -334,7 +334,7 @@ module Toys
       attr_reader :type_description
 
       ##
-      # @private
+      # @private This interface is internal and subject to change without warning.
       #
       def initialize(value, settings_class, field_name, type_description)
         @value = value
@@ -835,7 +835,7 @@ module Toys
       end
 
       ##
-      # @private
+      # @private This interface is internal and subject to change without warning.
       #
       # Returns the fields hash. This is shared between the settings class and
       # all its instances.

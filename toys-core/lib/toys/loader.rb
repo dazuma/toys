@@ -331,7 +331,7 @@ module Toys
     ##
     # Get or create the tool definition for the given name and priority.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def get_tool(words, priority, tool_class = nil)
       @mutex.synchronize do
@@ -346,7 +346,7 @@ module Toys
     # the active priority, returns `nil`. If the given priority is higher than
     # the active priority, returns and activates a new tool.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def activate_tool(words, priority)
       @mutex.synchronize do
@@ -358,7 +358,7 @@ module Toys
     # Returns true if the given tool name currently exists in the loader.
     # Does not load the tool if not found.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def tool_defined?(words)
       @tool_data.key?(words)
@@ -368,7 +368,7 @@ module Toys
     # Build a new tool.
     # Called only from ToolData.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def build_tool(words, priority, tool_class = nil)
       parent = words.empty? ? nil : get_tool(words.slice(0..-2), priority)
@@ -381,7 +381,7 @@ module Toys
     # Stop search at the given priority. Returns true if successful.
     # Called only from the DSL.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def stop_loading_at_priority(priority)
       @mutex.synchronize do
@@ -394,7 +394,7 @@ module Toys
     ##
     # Loads the subtree under the given prefix.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def load_for_prefix(prefix)
       @mutex.synchronize do
@@ -417,7 +417,7 @@ module Toys
     ##
     # Attempt to get a well-known mixin module for the given symbolic name.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def resolve_standard_mixin(name)
       @mixin_lookup.lookup(name)
@@ -426,7 +426,7 @@ module Toys
     ##
     # Attempt to get a well-known template class for the given symbolic name.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def resolve_standard_template(name)
       @template_lookup.lookup(name)
@@ -436,7 +436,7 @@ module Toys
     # Load configuration from the given path. This is called from the `load`
     # directive in the DSL.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def load_path(parent_source, path, words, remaining_words, priority)
       if parent_source.git_remote
@@ -453,7 +453,7 @@ module Toys
     # Load configuration from the given git remote. This is called from the
     # `load_git` directive in the DSL.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def load_git(parent_source, git_remote, git_path, git_commit, words, remaining_words, priority,
                  update: false)
@@ -468,7 +468,7 @@ module Toys
     ##
     # Load a subtool block. Called from the `tool` directive in the DSL.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def load_block(parent_source, block, words, remaining_words, priority)
       source = parent_source.proc_child(block)
@@ -483,7 +483,7 @@ module Toys
     ##
     # Get a global default GitCache.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.default_git_cache
       @git_cache_mutex.synchronize do
@@ -497,7 +497,7 @@ module Toys
     ##
     # Determine the next setting for remaining_words, given a word.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def self.next_remaining_words(remaining_words, word)
       if remaining_words.nil?

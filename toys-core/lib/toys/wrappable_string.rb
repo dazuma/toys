@@ -4,9 +4,19 @@ module Toys
   ##
   # A string intended for word-wrapped display.
   #
+  # A WrappableString is an array of string "fragments" representing the atomic
+  # units that should not be split when word-wrapping. It should be possible to
+  # reconstruct the original string by joining these fragments with whitespace.
+  #
   class WrappableString
     ##
     # Create a wrapped string.
+    #
+    # You can pass either:
+    #
+    #  *  A single String, which will be split into fragments by whitespace.
+    #  *  An array of Strings representing the fragments explicitly.
+    #
     # @param string [String,Array<String>] The string or array of string
     #     fragments
     #
@@ -35,6 +45,7 @@ module Toys
 
     ##
     # Returns true if the string is empty (i.e. has no fragments)
+    #
     # @return [Boolean]
     #
     def empty?
@@ -43,6 +54,7 @@ module Toys
 
     ##
     # Returns the string without any wrapping
+    #
     # @return [String]
     #
     def string

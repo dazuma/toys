@@ -25,7 +25,7 @@ recommend first walking through the tutorial in the
 you are running a unix-like system such as Linux or macOS. Some commands might
 need to be modified if you're running on Windows.
 
-### Install Toys
+### Install Toys-Core
 
 Install the **toys-core** gem using:
 
@@ -33,14 +33,6 @@ Install the **toys-core** gem using:
 
 You can also install the **toys** gem, which brings in **toys-core** as a
 dependency.
-
-Toys-Core requires Ruby 2.4 or later.
-
-Most parts of Toys-Core work on JRuby. However, JRuby is not recommended
-because of JVM boot latency, lack of support for Kernel#fork, and other issues.
-
-Most parts of Toys-Core work on TruffleRuby. However, TruffleRuby is not
-recommended because it has a few known bugs that affect Toys.
 
 ### Create a new executable
 
@@ -338,6 +330,16 @@ Learn more about how to customize and package your own executable, including
 handling errors, controlling log output, and providing your own mixins,
 templates, and middleware, in the
 [Toys-Core User Guide](https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html).
+
+## System requirements
+
+Toys-Core requires Ruby 2.4 or later.
+
+Most parts of Toys-Core work on JRuby. However, JRuby is not recommended
+because of JVM boot latency, lack of support for Kernel#fork, and other issues.
+
+Most parts of Toys-Core work on TruffleRuby. However, TruffleRuby is not
+recommended because it has a few known bugs that affect Toys.
 
 ## License
 

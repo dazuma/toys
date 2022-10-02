@@ -216,7 +216,7 @@ module Toys
     # Create a new tool.
     # Should be created only from the DSL via the Loader.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def initialize(parent, full_name, priority, source_root, middleware_stack, middleware_lookup,
                    tool_class = nil)
@@ -243,7 +243,7 @@ module Toys
     # leaving named acceptors, mixins, and templates intact.
     # Should be called only from the DSL.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def reset_definition
       @tool_class = @precreated_class || create_class
@@ -1278,7 +1278,7 @@ module Toys
     ##
     # Lookup the custom context directory in this tool and its ancestors.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def lookup_custom_context_directory
       custom_context_directory || @parent&.lookup_custom_context_directory
@@ -1287,7 +1287,7 @@ module Toys
     ##
     # Mark this tool as having at least one module included.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def mark_includes_modules
       check_definition_state
@@ -1299,7 +1299,7 @@ module Toys
     # Complete definition and run middleware configs. Should be called from
     # the Loader only.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def finish_definition(loader)
       unless @definition_finished
@@ -1321,7 +1321,7 @@ module Toys
     ##
     # Run all initializers against a context. Called from the Runner.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def run_initializers(context)
       @initializers.each do |func, args, kwargs|
@@ -1333,7 +1333,7 @@ module Toys
     # Check that the tool can still be defined. Should be called internally
     # or from the DSL only.
     #
-    # @private
+    # @private This interface is internal and subject to change without warning.
     #
     def check_definition_state(is_arg: false, is_method: false)
       if @definition_finished
