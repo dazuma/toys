@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.1 / 2022-10-03
+
+* (No significant changes)
+
 ### v0.14.0 / 2022-10-03
 
 Toys-Core 0.14.0 is a major release with pager support, support for tees and pipes in the Exec utility, some cleanup of the behavior of Acceptors, and other improvements.
