@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.1 / 2022-10-03
+
+* FIXED: Fixed a crash due to a missing file in the gem
+
 ### v0.14.0 / 2022-10-03
 
 Toys 0.14.0 is a major release with new system tools for introspecting defined tools, pager support, support for tees and pipes in the Exec utility, some cleanup of the behavior of Acceptors, and other improvements.
