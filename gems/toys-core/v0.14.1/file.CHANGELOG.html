@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: CHANGELOG
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "CHANGELOG";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: CHANGELOG</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="release-history">Release History</h1>
+
+<h3 id="v0-14-1-2022-10-03">v0.14.1 / 2022-10-03</h3>
+
+<ul>
+<li>(No significant changes)</li>
+</ul>
+
+<h3 id="v0-14-0-2022-10-03">v0.14.0 / 2022-10-03</h3>
+
+<p>Toys-Core 0.14.0 is a major release with pager support, support for tees and pipes in the Exec utility, some cleanup of the behavior of Acceptors, and other improvements.</p>
+
+<p>Fixes that are potentially breaking:</p>
+
+<ul>
+<li>Disallowed acceptors on flags that are explicitly boolean.</li>
+<li>Acceptors no longer sometimes apply to the boolean setting of a flag with an optional value.</li>
+</ul>
+
+<p>New functionality:</p>
+
+<ul>
+<li>Implemented a utility class and mixin for output pagers.</li>
+<li>Builtin commands that display data can format as either YAML or JSON.</li>
+<li>The Exec utility and mixin can tee (i.e. duplicate and split) output streams.</li>
+<li>The Exec utility and mixin can take pipes as input and output streams.</li>
+<li>The Exec mixin provides a <code>verbosity_flags</code> convenience method.</li>
+<li><code>Loader#list_subtools</code> takes separate arguments for filtering namespaces and non-runnable tools</li>
+</ul>
+
+<p>Fixes:</p>
+
+<ul>
+<li>Contents of preload directories are loaded in sorted order.</li>
+<li>Removed some potential deadlocks if a <code>Toys::Loader</code> is accessed from multiple threads</li>
+<li>Various clarifications, fixes, and updates to the users guide and documentation.</li>
+</ul>
+
+<h3 id="v0-13-1-2022-03-01">v0.13.1 / 2022-03-01</h3>
+
+<ul>
+<li>FIXED: Toys::Utils::Gems no longer fails to install a bundle if it had locked to a different version of a builtin gem</li>
+</ul>
+
+<h3 id="v0-13-0-2022-02-08">v0.13.0 / 2022-02-08</h3>
+
+<p>Toys-Core 0.13.0 is a major release with significant improvements to the git cache, along with compatibility improvements and bug fixes.</p>
+
+<p>New functionality:</p>
+
+<ul>
+<li>The <code>load_git</code> directive and the underlying <code>Toys::Utils::GitCache</code> class now support updating from git based on cache age.</li>
+<li>The <code>Toys::Utils::GitCache</code> class supports copying git content into a provided directory, querying repo information, and deleting cache data.</li>
+<li>The <code>Toys::Utils::GitCache</code> class makes files read-only, to help prevent clients from interfering with one another.</li>
+<li>The <code>:terminal</code> mixin and the underlying <code>Toys::Utils::Terminal</code> class now honor the <code>NO_COLOR</code> environment variable.</li>
+<li>Added <code>Toys::CLI#load_tool</code>, which is useful for testing tools.</li>
+</ul>
+
+<p>Fixes and compatibility updates:</p>
+
+<ul>
+<li>Bundler install/updates are now spawned in subprocesses for compatibility with bundler 2.3. The bundler integration also now requires bundler 2.2 or later.</li>
+<li>The <code>exec_tool</code> and <code>exec_proc</code> methods in the <code>:exec</code> mixin now log their execution in the same way as other exec functions.</li>
+<li>Minor compatibility fixes to provide partial support for TruffleRuby.</li>
+</ul>
+
+<p>Other notes:</p>
+
+<ul>
+<li>The internal GitCache representation has changed significantly to support additional features and improve robustness and performance. This will force existing caches to update, but should not break existing usage.</li>
+</ul>
+
+<h3 id="v0-12-2-2021-08-30">v0.12.2 / 2021-08-30</h3>
+
+<ul>
+<li>FIXED: Tool context inspect string is no longer overwhelmingly long</li>
+<li>FIXED: Fixed an exception in GitCache when updating a changed ref</li>
+</ul>
+
+<h3 id="v0-12-1-2021-08-17">v0.12.1 / 2021-08-17</h3>
+
+<ul>
+<li>FIXED: Fixed a regression in 0.12.0 where bundler could use the wrong Gemfile if you set a custom context directory</li>
+</ul>
+
+<h3 id="v0-12-0-2021-08-05">v0.12.0 / 2021-08-05</h3>
+
+<p>Toys-Core 0.12.0 is a major release with significant new features and bug fixes, and a few breaking interface changes. Additionally, this release now requires Ruby 2.4 or later.</p>
+
+<p>Breaking interface changes:</p>
+
+<ul>
+<li>The Toys::Tool class has been renamed Toys::ToolDefinition so that the old name can be used for class-based tool definition.</li>
+<li>Tool definition now raises ToolDefinitionError if whitespace, control characters, or certain punctuation are used in a tool name.</li>
+<li>Toys::Loader#add_path no longer supports multiple paths. Use add_path_set instead.</li>
+<li>The &quot;name&quot; argument was renamed to &quot;source_name&quot; in Toys::Loader#add_block and Toys::CLI#add_config_block</li>
+</ul>
+
+<p>New functionality:</p>
+
+<ul>
+<li>The DSL now supports a class-based tool definition syntax (in addition to the existing block-based syntax). Some users may prefer this new class-based style as more Ruby-like.</li>
+<li>You can now load tools from a remote git repository using the load_git directive.</li>
+<li>Whitespace is now automatically considered a name delimiter when defining tools.</li>
+<li>There is now an extensible settings mechanism to activate less-common tool behavior. Currently there is one setting, which causes subtools to inherit their parent&#39;s methods by default.</li>
+<li>The load directive can load into a new tool.</li>
+<li>Added a new utility class and mixin that provides XDG Base Directory information.</li>
+<li>Added a new utility class and mixin that provides cached access to remote git repos.</li>
+<li>The help text generator now supports splitting the subtool list by source.</li>
+<li>Loader and CLI methods that add tool configs now uniformly provide optional source_name and context_directory arguments.</li>
+<li>Toys::SourceInfo now supports getting the root ancestor and priority of a source.</li>
+<li>Toys::ToolDefinition now has a direct accessor for the source root. This is always set for a tool, even if it isn&#39;t marked as finished.</li>
+</ul>
+
+<p>Fixes:</p>
+
+<ul>
+<li>Fixed some bundler integration issues that occurred when the bundle is being installed in a separate path such as a vendor directory.</li>
+<li>Toys::ContextualError now includes the full backtrace of the cause.</li>
+<li>Cleaned up some unused memory objects during tool loading and lookup.</li>
+</ul>
+
+<h3 id="v0-11-5-2021-03-28">v0.11.5 / 2021-03-28</h3>
+
+<ul>
+<li>BREAKING CHANGE: The exit_on_nonzero_status option to exec now exits on signals and failures to spawn, in addition to error codes.</li>
+<li>ADDED: Support retries in the bundler integration.</li>
+<li>FIXED: Fix a bundler 2.2 integration issue that fails install in certain cases when an update is needed.</li>
+</ul>
+
+<h3 id="v0-11-4-2020-10-11">v0.11.4 / 2020-10-11</h3>
+
+<ul>
+<li>FIXED: Doesn&#39;t modify bundler lockfiles when adding Toys to a bundle</li>
+</ul>
+
+<h3 id="v0-11-3-2020-09-13">v0.11.3 / 2020-09-13</h3>
+
+<ul>
+<li>FIXED: The Exec library recognizes the argv0 option, and logs it appropriately</li>
+</ul>
+
+<h3 id="v0-11-2-2020-09-06">v0.11.2 / 2020-09-06</h3>
+
+<ul>
+<li>FIXED: Fix a JRuby-specific race condition when capturing exec streams</li>
+</ul>
+
+<h3 id="v0-11-1-2020-08-24">v0.11.1 / 2020-08-24</h3>
+
+<ul>
+<li>DOCS: Minor documentation tweaks.</li>
+</ul>
+
+<h3 id="v0-11-0-2020-08-21">v0.11.0 / 2020-08-21</h3>
+
+<ul>
+<li>ADDED: The load path can be truncated using the <code>truncate_load_path!</code> directive.</li>
+<li>IMPROVED: Generated help for delegates now includes the information for the target tool, plus subtools of the delegate.</li>
+<li>IMPROVED: The <code>:bundler</code> mixin searches for <code>gems.rb</code> and <code>.gems.rb</code> in addition to <code>Gemfile</code>.</li>
+<li>IMPROVED: The <code>:budnler</code> mixin can load a specific Gemfile path.</li>
+<li>FIXED: The loader can now find data and lib directories at the root level of a Toys directory.</li>
+<li>FIXED: Exec::Result correctly reports processes that terminated due to signals.</li>
+<li>FIXED: Fixed a rare Exec capture failure that resulted from a race condition when closing streams.</li>
+</ul>
+
+<h3 id="v0-10-5-2020-07-18">v0.10.5 / 2020-07-18</h3>
+
+<ul>
+<li>IMPROVED: The bundler mixin silences bundler output during bundle setup.</li>
+<li>IMPROVED: The bundler mixin allows toys and toys-core to be in the Gemfile. It checks their version requirements against the running Toys version, and either adds the corret version to the bundle or raises IncompatibleToysError.</li>
+<li>IMPROVED: The bundler mixin automatically updates the bundle if install fails (typically because a transitive dependency has been explicitly updated.)</li>
+<li>FIXED: Some cases of transitive dependency handling by the bundler mixin.</li>
+<li>FIXED: Fixed a crash when computing suggestions, when running with a bundle on Ruby 2.6 or earlier.</li>
+</ul>
+
+<h3 id="v0-10-4-2020-07-11">v0.10.4 / 2020-07-11</h3>
+
+<ul>
+<li>IMPROVED: Bundler integration can now handle Toys itself being in the bundle, as long as the version requirements cover the running Toys version.</li>
+<li>IMPROVED: Passing <code>static: true</code> to the <code>:bundler</code> mixin installs the bundle at definition rather than execution time.</li>
+</ul>
+
+<h3 id="v0-10-3-2020-07-04">v0.10.3 / 2020-07-04</h3>
+
+<ul>
+<li>FIXED: The <code>exec_separate_tool</code> method in the <code>:exec</code> mixin no longer throws ENOEXEC on Windows.</li>
+</ul>
+
+<h3 id="v0-10-2-2020-07-03">v0.10.2 / 2020-07-03</h3>
+
+<ul>
+<li>FIXED: The load path no longer loses the toys and toys-core directories after a bundle install.</li>
+</ul>
+
+<h3 id="v0-10-1-2020-03-07">v0.10.1 / 2020-03-07</h3>
+
+<ul>
+<li>FIXED: Setting <code>:exit_on_nonzero_status</code> explicitly to false now works as expected.</li>
+</ul>
+
+<h3 id="v0-10-0-2020-02-24">v0.10.0 / 2020-02-24</h3>
+
+<p>Functional changes:</p>
+
+<ul>
+<li>ADDED: <code>:bundler</code> mixin that installs and sets up a bundle for the tool</li>
+<li>ADDED: <code>bundle</code> method to <code>Toys::Utils::Gems</code> that performs bundler install and setup</li>
+<li>ADDED: <code>subtool_apply</code> directive which applies a block to all subtools.</li>
+<li>ADDED: Add <code>.lib</code> directories to the Ruby load path when executing a tool.</li>
+<li>ADDED: <code>toys_version?</code> and <code>toys_version!</code> directives that check against version requirements.</li>
+<li>ADDED: <code>exec_separate_tool</code> and <code>capture_separate_tool</code> methods in the <code>:exec</code> mixin, to support executing tools in a separate process without forking</li>
+<li>IMPROVED: <code>long_desc</code> directive can now read the description from a text file.</li>
+<li>IMPROVED: The <code>tool</code> directive can take delimited strings as tool names.</li>
+<li>IMPROVED: Subtool blocks aren&#39;t actually executed unless the tool is needed.</li>
+<li>CHANGED: Added <code>on_missing</code> and <code>on_conflict</code> arguments to <code>Toys::Utils::Gems</code> constructor (which also affects the <code>:gems</code> mixin), and deprecated <code>suppress_confirm</code> and <code>default_confirm</code>.</li>
+</ul>
+
+<p>Internal interface changes:</p>
+
+<ul>
+<li>ADDED: <code>Toys::Tool#subtool_middleware_stack</code> allowing a tool to modify the middleware stack for its subtools.</li>
+<li>ADDED: The <code>Toys::Middleware::Stack</code> class represents a stack of middleware specs, and distinguishes the default set from those added afterward.</li>
+<li>ADDED: <code>Toys.executable_path</code> attribute allowing an executable to provide the executable for running tools separately.</li>
+<li>ADDED: <code>Toys::CLI</code> now has a <code>logger_factory</code> property, to generate separate loggers per tool execution.</li>
+<li>ADDED: <code>Toys::CLI</code> and <code>Toys::Loader</code> now let you set <code>:lib_dir_name</code>.</li>
+<li>IMPROVED: Toys-core no longer has a general dependency on rubygems. (Parts that do depend on rubygems, such as the <code>:gems</code> mixin, do an explicit <code>require &quot;rubygems&quot;</code>.) This makes it possible to write an executable with <code>ruby --disable=gems</code> which improves startup time.</li>
+<li>IMPROVED: Middleware objects no longer have to respond to all middleware methods. If a method is not implemented, it is simply considered a nop.</li>
+<li>IMPROVED: <code>Toys::Utils::Terminal</code> is now thread-safe.</li>
+<li>CHANGED: <code>Toys::Utils::Terminal#styled</code> is no longer mutable.</li>
+<li>CHANGED: <code>Toys::Tool#middleware_stack</code> renamed to <code>Toys::Tool#built_middleware</code> to clarify that it is an array of middleware objects rather than specs.</li>
+<li>CHANGED: <code>Toys::CLI.default_logger</code> removed and replaced with <code>Toys::CLI.default_logger_factory</code>. In general, global loggers for CLI are now discouraged because they are not thread-safe.</li>
+<li>CHANGED: <code>Toys::Loader</code> uses an internal monitor rather than including <code>MonitorMixin</code>.</li>
+</ul>
+
+<h3 id="v0-9-4-2020-01-26">v0.9.4 / 2020-01-26</h3>
+
+<ul>
+<li>FIXED: Crash in the loader when a non-ruby file appears in a toys directory</li>
+</ul>
+
+<h3 id="v0-9-3-2020-01-05">v0.9.3 / 2020-01-05</h3>
+
+<ul>
+<li>FIXED: <code>delegate_to</code> directive could crash if an overriding tool has already been defined.</li>
+<li>FIXED: A Ruby 2.7 warning when reporting a Toys file syntax error.</li>
+</ul>
+
+<h3 id="v0-9-2-2020-01-03">v0.9.2 / 2020-01-03</h3>
+
+<ul>
+<li>IMPROVED: Mixins can now take real keyword arguments, and will pass them on properly to <code>on_initialize</code> and <code>on_include</code> blocks.</li>
+<li>CHANGED: <code>Toys::Utils::Exec</code> and the <code>:exec</code> mixin methods now take real keyword arguments rather than an <code>opts</code> hash. This means you should use keywords (or the double-splat operator) to avoid a deprecation warning on Ruby 2.7.</li>
+<li>IMPROVED: <code>Toys::CLI#clone</code> can be passed keyword arguments to modify the configuration.</li>
+<li>IMPROVED: <code>Toys::Loader</code> is now thread-safe. This means it is now possible for a single <code>Toys::CLI</code> to run multiple tools in different threads.</li>
+<li>IMPROVED: There is now a class for middleware specs, making possible a nicer syntax for building a middleware stack.</li>
+</ul>
+
+<h3 id="v0-9-1-2019-12-22">v0.9.1 / 2019-12-22</h3>
+
+<ul>
+<li>IMPROVED: <code>delegate_to</code> and <code>alias_tool</code> can take symbols as well as strings.</li>
+</ul>
+
+<h3 id="v0-9-0-2019-12-02">v0.9.0 / 2019-12-02</h3>
+
+<p>Functional changes:</p>
+
+<ul>
+<li>ADDED: The <code>delegate_to</code> directive causes the tool to delegate execution to another tool. This means it takes the same arguments and has the same execution behavior.</li>
+<li>ADDED: The <code>delegate_to</code> argument to the <code>tool</code> directive causes the tool to delegate to another tool. (Note: the <code>alias_tool</code> directive is now just shorthand for creating a tool with a delegate, and as such is mildly deprecated.)</li>
+<li>ADDED: The <code>current_tool</code> function can be called from the DSL to get the current <code>Toys::Tool</code> object.</li>
+<li>ADDED: The <code>:e</code> option is now an alias for <code>:exit_on_nonzero_status</code>.</li>
+<li>IMPROVED: <code>alias_tool</code> is now just shorthand for delegating. This means, aliases can now point to namespaces and will resolve subtools of their targets, and they now support tab completion and online help.</li>
+<li>IMPROVED: This release of Toys is now compatible with Ruby 2.7.0-preview3. It fixes some Ruby 2.7 specific bugs, and sanitizes keyword argument usage to eliminate Ruby 2.7 warnings.</li>
+<li>IMPROVED: JRuby is now supported for most operations. However, JRuby is generally not recommended because of JVM boot latency, lack of Kernel#fork support, and other issues.</li>
+<li>FIXED: The <code>tool</code> directive no longer crashes if no block is provided.</li>
+</ul>
+
+<p>Internal interface changes:</p>
+
+<ul>
+<li>REMOVED: The <code>Toys::Alias</code> class has been removed, along with relevant functionality in <code>Toys::Loader</code> including <code>Toys::Loader#make_alias</code>. Use tool delegation instead.</li>
+<li>CHANGED: Positional arguments to middleware specs must now be wrapped in an array.</li>
+<li>CHANGED: The <code>Toys::ArgParser</code> constructor takes a <code>default_data</code> argument instead of <code>verbosity</code>.</li>
+<li>CHANGED: Version constant is now <code>Toys::Core::VERSION</code>.</li>
+<li>CHNAGED: The <code>flag</code> argument to <code>Toys::Flag::DefaultCompletion#initialize</code> is now a required keyword argument.</li>
+<li>ADDED: <code>Toys::Tool#delegate_to</code> causes the tool to delegate to another tool.</li>
+<li>ADDED: The <code>Toys::Context::Key::DELEGATED_FROM</code> key provides the delegating context, if any.</li>
+</ul>
+
+<h3 id="v0-8-1-2019-11-19">v0.8.1 / 2019-11-19</h3>
+
+<ul>
+<li>FIXED: Listing subtools would crash if a broken alias was present.</li>
+<li>DOCUMENTATION: Switched from redcarpet to kramdown, and tried to make some structural fixes.</li>
+</ul>
+
+<h3 id="v0-8-0-2019-06-20">v0.8.0 / 2019-06-20</h3>
+
+<p>This is a major update with significant new features and a bunch of fixes. It also includes a significant amount of internal reorganization and cleanup, some of which resulted in backward incompatible changes. Basic use should not be affected. All signifiant features planned for beta are now implemented.</p>
+
+<p>Major changes and features:</p>
+
+<ul>
+<li>CHANGED: Relicensed under the MIT License.</li>
+<li>CHANGED: Requires Ruby 2.3 or later.</li>
+<li>ADDED: Tab completion for bash. Added APIs and DSL constructs for tools to customize completions.</li>
+<li>ADDED: The usage error screen displays suggestions when an argument is misspelled. (Requires Ruby 2.4 or later.)</li>
+<li>ADDED: Tools can provide an interrupt handler and a custom usage error handler. Added appropriate APIs and DSL methods.</li>
+<li>ADDED: Tools can enforce that flags must be given before positional args, and can control whether partial flags are accepted.</li>
+</ul>
+
+<p>Other notable changes:</p>
+
+<ul>
+<li>ADDED: Flag handlers can accept the symbolic names <code>:set</code> and <code>:push</code> for common cases.</li>
+<li>ADDED: Function and range based acceptors.</li>
+<li>ADDED: The <code>acceptor</code> directive takes an optional <code>type_desc</code> argument.</li>
+<li>ADDED: The <code>accept</code> directives under flag and positional arg blocks in the DSL can now take blocks and <code>type_desc</code> values.</li>
+<li>ADDED: Context keys <code>UNMATCHED_ARGS</code>, <code>UNMATCHED_POSITIONAL</code>, and <code>UNMATCHED_FLAGS</code> that provide arguments that were not handled during arg parsing.</li>
+<li>ADDED: The Exec util and mixin support specifying a callback for process results.</li>
+<li>ADDED: The Exec util and mixin provide a way to identify processes by name.</li>
+<li>CHANGED: Implemented custom argument parsing and custom implementations of the standard OptionParser acceptors, rather than relying on OptionParser itself. For the most part, OptionParser behavior is preserved, except in cases where there is clearly a bug.</li>
+<li>CHANGED: Flags create a short form flag by default if the name has one character.</li>
+<li>CHANGED: Flags with explicit value-less syntax are no longer given a value if they specify a default or an acceptor.</li>
+<li>CHANGED: Renamed the <code>TOOL_DEFINITION</code> context key to <code>TOOL</code>, and removed the <code>tool_definition</code> convenience method.</li>
+<li>CHANGED: Removed the <code>BINARY_NAME</code> and <code>LOADER</code> context keys, and removed the corresponding convenience methods. Get these values from the CLI if needed.</li>
+<li>CHANGED: Renamed the <code>USAGE_ERROR</code> context key to <code>USAGE_ERRORS</code>, and the corresponding convenience method to <code>usage_errors</code>. The value is now a (possibly empty) array of <code>Toys::ArgParser::UsageError</code> objects rather than a string that isn&#39;t machine-parseable.</li>
+<li>CHANGED: The help middleware no longer defines remaining_args on the root tool.</li>
+<li>CHANGED: Renamed <code>to_expand</code> to <code>on_expand</code> in template definitions.</li>
+<li>CHANGED: Renamed <code>to_initialize</code> to <code>on_initialize</code>, and <code>to_include</code> to <code>on_include</code> in mixin definitions.</li>
+<li>CHANGED: The CLI options <code>preload_directory_name</code> and <code>data_directory_name</code> renamed to <code>preload_dir_name</code> and <code>data_dir_name</code>.</li>
+<li>CHANGED: Default descriptions for flag groups is now handled by the <code>set_default_descriptions</code> middleware rather than hard-coded in FlagGroup.</li>
+<li>CHANGED: Exec reports failure to start processes in the result object rather than, e.g. raising ENOENT.</li>
+<li>IMPROVED: Default error handler no longer displays a stack trace if a tool is interrupted.</li>
+<li>IMPROVED: Error messages for flag groups are more complete.</li>
+<li>IMPROVED: All context data, including well-known data, is available to be modified by flags and args.</li>
+<li>FIXED: Flags with optional values are properly set to <code>true</code> (rather than left at <code>nil</code>) if no value is provided.</li>
+<li>FIXED: Acceptors no longer raise errors when run on missing optional values.</li>
+<li>FIXED: When reporting errors in toys files, the line number was off by 2.</li>
+<li>FIXED: The <code>--usage</code> help flag now honors <code>--all</code> and <code>--no-recursive</code>.</li>
+<li>FIXED: The terminal now handles nil streams, as advertised.</li>
+</ul>
+
+<p>Changes to internal interfaces:</p>
+
+<ul>
+<li>General changes:
+
+<ul>
+<li>CHANGED: Renamed <code>Toys::Tool</code> to <code>Toys::Context</code>, and the <code>Keys</code> submodule to <code>Key</code>.</li>
+<li>CHANGED: Moved the <code>ModuleLookup</code> and <code>WrappableString</code> out of the <code>Utils</code> module to be located directly under <code>Toys</code>. Other modules remain under <code>Utils</code>.  The remaining files under &quot;toys/utils&quot; must now be required explicitly. This directory is now specifically for modules that are not part of the &quot;core&quot; interface.</li>
+<li>CHANGED: All the classes under <code>Toys::Definition</code> are now located directly under <code>Toys</code>. For example, <code>Toys::Definition::Tool</code> is now <code>Toys::Tool</code>.</li>
+<li>CHANGED: Generally removed the term &quot;definition&quot; from interfaces. For example, an accessor method called <code>tool_definition</code> is now just called <code>tool</code>.</li>
+<li>CHANGED: Renamed <code>Toys::DSL::Arg</code> to <code>Toys::DSL::PositionalArg</code></li>
+<li>CHANGED: Removed <code>Toys::Runner</code> and folded its functionality into <code>Toys::CLI</code>.</li>
+<li>CHANGED: The fallback execution feature of the show_help middleware is implemented by catching an exception afterward rather than detecting non-runnable up front. This lets us remove the second copy of show_help from the middleware stack.</li>
+<li>ADDED: Functionality dependent on Ruby version is kept in <code>Toys::Compat</code>.</li>
+</ul></li>
+<li>Changes related to the tool classes:
+
+<ul>
+<li>CHANGED: Moved <code>Toys::Definition::Tool</code> to <code>Toys::Tool</code>.</li>
+<li>CHANGED: Removed the term &quot;definition&quot; from accessors. Specifically <code>flag_definitions</code> renamed to <code>flags</code>, <code>required_arg_definitions</code> renamed to <code>required_args</code>, <code>optional_arg_definitions</code> renamed to <code>optional_args</code>, <code>remaining_args_definition</code> renamed to <code>remaining_arg</code>, and <code>arg_definitions</code> renamed to <code>positional_args</code>.</li>
+<li>CHANGED: Renamed <code>Tool#runnable=</code> to <code>Tool#run_handler=</code>.</li>
+<li>CHANGED: <code>Tool#add_acceptor</code> takes the name as a separate argument, for consistency with <code>add_mixin</code> and <code>add_template</code>.</li>
+<li>CHANGED: Removed <code>Tool#custom_acceptors</code> method.</li>
+<li>CHANGED: Removed <code>Tool#resolve_acceptor</code> and replaced with <code>lookup_acceptor</code> which only looks up names.</li>
+<li>CHANGED: Renamed <code>Tool#resolve_mixin</code> to <code>lookup_mixin</code> and <code>Tool#resolve_template</code> to <code>lookup_template</code>.</li>
+<li>ADDED: Added <code>resolve_flag</code> method to look up flags by syntax.</li>
+<li>ADDED: Accessor for interrupt handler.</li>
+<li>ADDED: <code>enforce_flags_before_args</code> setting and <code>flags_before_args_enforced?</code> query.</li>
+<li>ADDED: Completion accessor, and options to the various flag and positional arg methods to set their completion strategies.</li>
+<li>ADDED: Added <code>Tool::DefaultCompletion</code> class.</li>
+<li>IMPROVED: <code>add_mixin</code>, <code>add_template</code>, and <code>add_acceptor</code> support all the specs understood by their create methods.</li>
+</ul></li>
+<li>Changes related to the flag classes:
+
+<ul>
+<li>CHANGED: Moved <code>Toys::Definition::Flag</code> to <code>Toys::Flag</code></li>
+<li>CHANGED: <code>FlagSyntax</code> is now <code>Flag::Syntax</code>.</li>
+<li>CHANGED: <code>Flag::Syntax#flag_style</code> now has values <code>:short</code> and <code>:long</code> instead of <code>&quot;-&quot;</code> and <code>&quot;--&quot;</code>.</li>
+<li>CHANGED: <code>Flag#single_flag_syntax</code> renamed to <code>Flag#short_flag_syntax</code>, and <code>Flag#double_flag_syntax</code> renamed to <code>Flag#long_flag_syntax</code>.</li>
+<li>CHANGED: Renamed <code>Flag#accept</code> to <code>Flag#acceptor</code> which now always returns an acceptor object (even for well-known acceptors such as <code>Integer</code>).</li>
+<li>CHANGED: Removed <code>Flag#optparser_info</code> and replaced with <code>Flag#canonical_syntax_strings</code>.</li>
+<li>ADDED: <code>Flag#create</code> class method providing a sane construction interface.</li>
+<li>ADDED: <code>Flag#resolve</code> method to look up flag syntax.</li>
+<li>ADDED: <code>Flag#completion</code> field.</li>
+<li>ADDED: Added <code>Flag::Resolution</code> and <code>Flag::DefaultCompletion</code> classes.</li>
+</ul></li>
+<li>Changes related to the positional arg classes:
+
+<ul>
+<li>CHANGED: Moved <code>Toys::Definition::Arg</code> to <code>Toys::PositionalArg</code>.</li>
+<li>CHANGED: Renamed <code>Arg#accept</code> to <code>PositionalArg#acceptor</code> which now always returns an acceptor object (even for well-known acceptors such as <code>Integer</code>).</li>
+<li>ADDED: <code>PositionalArg#create</code> class method providing a sane construction interface.</li>
+<li>ADDED: <code>PositionalArg#completion</code> field</li>
+</ul></li>
+<li>Changes related to the flag group classes:
+
+<ul>
+<li>CHANGED: Moved <code>Toys::Definition::FlagGroup</code> to <code>Toys::FlagGroup</code></li>
+<li>CHANGED: The base class is now <code>FlagGroup::Base</code> instead of <code>FlagGroup</code> itself.</li>
+<li>ADDED: <code>FlagGroup#create</code> class method providing a sane construction interface.</li>
+</ul></li>
+<li>Changes related to acceptors:
+
+<ul>
+<li>CHANGED: Moved <code>Toys::Definition::Acceptor</code> to <code>Toys::Acceptor</code></li>
+<li>CHANGED: The base ciass is now <code>Acceptor::Base</code> instead of <code>Acceptor</code> itself.</li>
+<li>CHANGED: Subclasses are now submodules under <code>Acceptor</code>. For example, moved <code>Toys::Definition::PatternAcceptor</code> to <code>Toys::Acceptor::Pattern</code>.</li>
+<li>CHANGED: Replaced <code>name</code> field with separate <code>type_desc</code> and <code>well_known_spec</code> fields.</li>
+<li>CHANGED: The base class no longer takes a conversion proc. It is always a no-op. <code>Acceptor::Pattern</code>, however, does take a converter so it can continue to handle custom OptionParser acceptors.</li>
+<li>ADDED: Acceptors may define <code>suggestions</code> which returns results from did-you-mean.</li>
+<li>ADDED: Simple acceptor (<code>Acceptor::Simple</code>) which uses a single function to validate and convert input.</li>
+<li>ADDED: Range acceptor (<code>Acceptor::Range</code>) which validates against a range.</li>
+<li>ADDED: Class methods <code>Acceptor.create</code> and <code>Acceptor.lookup_well_known</code>.</li>
+</ul></li>
+</ul>
+
+<h3 id="v0-7-0-2019-01-23">v0.7.0 / 2019-01-23</h3>
+
+<ul>
+<li>ADDED: Flag groups, which enforce policies around which flags are required.</li>
+<li>CHANGED: Flags within a group are sorted in help screens.</li>
+<li>CHANGED: Canonical flag within a flag definition is now the first rather than the last.</li>
+</ul>
+
+<h3 id="v0-6-1-2019-01-07">v0.6.1 / 2019-01-07</h3>
+
+<ul>
+<li>FIXED: The presence of aliases caused subtool listing to crash.</li>
+</ul>
+
+<h3 id="v0-6-0-2018-10-22">v0.6.0 / 2018-10-22</h3>
+
+<ul>
+<li>CHANGED: Replaced Toys::Definition::DataFinder with Toys::Definition::SourceInfo.</li>
+<li>CHANGED: Removed Toys::Definition#find_data. Use Toys::Definition#source_info and call find_data.</li>
+<li>ADDED: Context directory is kept in SourceInfo and available in the DSL and the tool runtime.</li>
+<li>IMPROVED: Optionally omit hidden subtools (i.e. names beginning with underscore)
+from subtool lists.</li>
+<li>IMPROVED: Optionally omit non-runnable namespaces from recursive subtool lists.</li>
+</ul>
+
+<h3 id="v0-5-0-2018-10-07">v0.5.0 / 2018-10-07</h3>
+
+<ul>
+<li>FIXED: Template instantiation was failing if the hosting tool was priority-masked.</li>
+<li>ADDED: Several additional characters can optionally be used as tool path delimiters.</li>
+<li>ADDED: Support for preloaded files and directories</li>
+<li>ADDED: Support for data directories</li>
+<li>ADDED: Ability to display just the list of subtools of a tool</li>
+<li>IMPROVED: The tool directive can now take an array as the tool name.</li>
+<li>IMPROVED: The tool directive can now take an <code>if_defined</code> argument.</li>
+</ul>
+
+<h3 id="v0-4-5-2018-08-05">v0.4.5 / 2018-08-05</h3>
+
+<ul>
+<li>CHANGED: Dropped preload file feature</li>
+</ul>
+
+<h3 id="v0-4-4-2018-07-21">v0.4.4 / 2018-07-21</h3>
+
+<ul>
+<li>FIXED: Utils::Exec wasn&#39;t closing streams after copying.</li>
+<li>IMPROVED: Utils::Exec::Controller can capture or redirect the remainder of a controlled stream.</li>
+<li>ADDED: Terminal#ask</li>
+</ul>
+
+<h3 id="v0-4-3-2018-07-13">v0.4.3 / 2018-07-13</h3>
+
+<ul>
+<li>IMPROVED: Utils::Exec methods can now spawn subprocesses in the background</li>
+<li>IMPROVED: Utils::Exec capture methods can now yield a controller</li>
+</ul>
+
+<h3 id="v0-4-2-2018-07-08">v0.4.2 / 2018-07-08</h3>
+
+<ul>
+<li>FIXED: Raise an error rather than cause unexpected behavior if a mixin is included twice.</li>
+<li>IMPROVED: The <code>include?</code> method extended to support mixin names in a tool dsl.</li>
+</ul>
+
+<h3 id="v0-4-1-2018-07-03">v0.4.1 / 2018-07-03</h3>
+
+<ul>
+<li>FIXED: Terminal#confirm uppercased &quot;N&quot; for the wrong default.</li>
+</ul>
+
+<h3 id="v0-4-0-2018-07-03">v0.4.0 / 2018-07-03</h3>
+
+<p>Now declaring this alpha quality. Backward-incompatible changes are still
+possible from this point, but I&#39;ll try to avoid them.</p>
+
+<ul>
+<li>CHANGED: Utils::Terminal#confirm default is now unset by default</li>
+<li>CHANGED: Moved gem install/activation methods into a mixin</li>
+<li>IMPROVED: Toys::Utils::Gems can suppress the confirmation prompt</li>
+<li>IMPROVED: Magic comments are now honored in toys files.</li>
+<li>IMPROVED: Utils::Gems installation is now much faster.</li>
+<li>FIXED: Utils::Gems didn&#39;t reset the specifications on Ruby 2.3.</li>
+</ul>
+
+<h3 id="v0-3-11-2018-07-02">v0.3.11 / 2018-07-02</h3>
+
+<ul>
+<li>CHANGED: Require Ruby 2.3 or later</li>
+<li>CHANGED: Renamed &quot;set&quot; directive to &quot;static&quot; to reduce confusion with Tool#set.</li>
+<li>ADDED: Convenience methods for getting option values</li>
+</ul>
+
+<h3 id="v0-3-10-2018-06-30">v0.3.10 / 2018-06-30</h3>
+
+<ul>
+<li>CHANGED: Dropped Tool#option. Use Tool#get instead.</li>
+<li>CHANGED: &quot;run&quot; directive renamed to &quot;to_run&quot;</li>
+<li>CHANGED: Highline mixin now uses Highline 2.0</li>
+<li>CHANGED: Middleware-added keys no longer show up in the options hash</li>
+<li>ADDED: Mixins can provide initializers</li>
+<li>ADDED: Loader can load an inline block</li>
+</ul>
+
+<h3 id="v0-3-9-1-2018-06-24">v0.3.9.1 / 2018-06-24</h3>
+
+<ul>
+<li>FIXED: Built-in flags were interfering with disable_argument_parsing</li>
+</ul>
+
+<h3 id="v0-3-9-2018-06-24">v0.3.9 / 2018-06-24</h3>
+
+<ul>
+<li>CHANGED: Cli#add_search_path_hierarchy changed the behavior of the base/terminate param</li>
+<li>CHANGED: Removed alias_as directive since it&#39;s incompatible with selective loading.</li>
+<li>ADDED: Ability to define named templates in Toys files</li>
+<li>ADDED: Ability to disable argument parsing</li>
+<li>ADDED: Exec#exec_proc and Exec#exec_tool that supports all the stream redirects</li>
+<li>IMPROVED: Acceptors can be looked up recursively in the same way as mixins and templates</li>
+</ul>
+
+<h3 id="v0-3-8-2018-06-10">v0.3.8 / 2018-06-10</h3>
+
+<ul>
+<li>CHANGED: Renamed helpers to mixins.</li>
+<li>CHANGED: ModuleLookup is now a customizable class and can have multiple sources.</li>
+<li>CHANGED: Moved the existing templates to the toys gem since they are rake replacements.</li>
+<li>CHANGED: Renamed :in_from, :out_to, and :err_to exec options to :in, :out, :err</li>
+<li>ADDED: CLI can now customize the standard mixins, templates, and middleware.</li>
+<li>IMPROVED: Exec raises an error if passed an unknown option.</li>
+<li>IMPROVED: Exec now accepts nearly all the same stream specifications as Process#spawn.</li>
+</ul>
+
+<h3 id="v0-3-7-1-2018-05-30">v0.3.7.1 / 2018-05-30</h3>
+
+<ul>
+<li>No changes.</li>
+</ul>
+
+<h3 id="v0-3-7-2018-05-30">v0.3.7 / 2018-05-30</h3>
+
+<ul>
+<li>CHANGED: Execution runs in the same scope as the DSL, which lets us use normal methods instead of helper-blocks.</li>
+<li>CHANGED: Renamed &quot;script&quot; to &quot;run&quot;, and allow setting of runnable by defining a &quot;run&quot; method</li>
+<li>CHANGED: Set up a constant scope for each config file, to make constant lookup make sense.</li>
+<li>CHANGED: Removed run_toys and dropped EXIT_ON_NONZERO_STATUS key in favor of using cli directly.</li>
+<li>CHANGED: Renamed definition_path to source_path</li>
+<li>CHANGED: LineOutput util changed to a simple Terminal util, and folded spinner into it.</li>
+<li>CHANGED: Removed spinner helper and added terminal helper.</li>
+<li>CHANGED: Organized DSL and definition classes</li>
+<li>ADDED: Helper modules scoped to the tool hierarchy</li>
+<li>ADDED: Utility that installs and activates third-party gems.</li>
+</ul>
+
+<h3 id="v0-3-6-2018-05-21">v0.3.6 / 2018-05-21</h3>
+
+<ul>
+<li>CHANGED: Renamed show_version middleware to show_root_version.</li>
+<li>CHANGED: Reworked set_default_descriptions interface for more flexibility.</li>
+<li>CHANGED: Renamed Utils::Exec#config_defaults to configure_defaults to match the helper.</li>
+<li>CHANGED: Removed Context#new_cli and exposed Context#cli instead.</li>
+<li>CHANGED: Renamed CLI#empty_clone to CLI#child.</li>
+<li>IMPROVED: show_help middleware lets you control display of the source path section.</li>
+<li>IMPROVED: Optional parameters are now supported for flags.</li>
+<li>IMPROVED: Support custom acceptors.</li>
+<li>IMPROVED: Highline helper automatically sets use_color based on the type of stdout.</li>
+</ul>
+
+<h3 id="v0-3-5-2018-05-15">v0.3.5 / 2018-05-15</h3>
+
+<ul>
+<li>CHANGED: Exec logic now lives in a utils class.</li>
+<li>CHANGED: Moved flag and arg blocks from Tool into the DSL.</li>
+<li>CHANGED: Renamed <code>execute do</code> to <code>script do</code>, and Tool#executor to Tool#script.</li>
+<li>IMPROVED: Help display can use <code>less</code> if available.</li>
+</ul>
+
+<h3 id="v0-3-4-2018-05-14">v0.3.4 / 2018-05-14</h3>
+
+<ul>
+<li>CHANGED: Renamed switch to flag</li>
+<li>CHANGED: Renamed Utils::Usage to Utils::HelpText</li>
+<li>CHANGED: Renamed show_usage middleware to show_help and default everything false.</li>
+<li>CHANGED: Renamed docs: parameter again, to desc: and long_desc: to match tool desc.</li>
+<li>CHANGED: Middleware config method takes a loader as the second arg</li>
+<li>CHANGED: desc is now a single string rather than an array.</li>
+<li>CHANGED: Removed Loader#execute, and returned remaining args from Loader#lookup.</li>
+<li>CHANGED: Wrapped most errors with Toys::ContextualError</li>
+<li>CHANGED: accept: parameter now controls whether a switch takes a value by default</li>
+<li>CHANGED: Explicit and implicit show-help now handled by separate middleware instances</li>
+<li>CHANGED: All description strings are now wrappable</li>
+<li>IMPROVED: gem_build template can suppress interactive confirmation.</li>
+<li>IMPROVED: Logger colors the header when possible.</li>
+<li>IMPROVED: HelpText class can now generate nicer help pages</li>
+<li>IMPROVED: Style support for spinner helper</li>
+<li>IMPROVED: Set default descriptions for flags and args</li>
+<li>ADDED: CLI now takes an error handler to report most errors.</li>
+<li>ADDED: Alias DSL methods <code>required</code>, <code>optional</code>, and <code>remaining</code>.</li>
+<li>FIXED: Finish definitions for subtools since the desc may depend on it</li>
+</ul>
+
+<h3 id="v0-3-3-2018-05-09">v0.3.3 / 2018-05-09</h3>
+
+<ul>
+<li>CHANGED: Renamed file_utils helper to fileutils.</li>
+<li>CHANGED: Renamed <code>doc:</code> parameter to <code>docs:</code>.</li>
+<li>CHANGED: SwitchDefinition has separate fields for acceptor and docs.</li>
+<li>CHANGED: Description and long description are now arrays of strings.</li>
+<li>FIXED: Documentation strings that begin with &quot;--&quot; no longer cause problems.</li>
+<li>ADDED: Highline helper</li>
+<li>ADDED: Spinner helper</li>
+<li>ADDED: WrappableString for descriptions and docs</li>
+<li>IMPROVED: Usage can now customize the left column width and indent</li>
+<li>IMPROVED: Newlines in documentation are properly indented</li>
+</ul>
+
+<h3 id="v0-3-2-2018-05-07">v0.3.2 / 2018-05-07</h3>
+
+<ul>
+<li>CHANGED: Split core engine out into &quot;toys-core&quot; from the &quot;toys&quot; gem.</li>
+<li>CHANGED: Renamed path types to &quot;search&quot; and &quot;config&quot; paths, and restricted the former to the CLI.</li>
+<li>CHANGED: Removed aliasing from the Tool interface and reimplemented in the Loader.</li>
+<li>CHANGED: Default descriptions are now set via a middleware rather than in the Tool.</li>
+<li>CHANGED: Renamed most of the middleware classes.</li>
+<li>CHANGED: Combined usage-displaying middleware.</li>
+<li>CHANGED: Standard paths logic moved from CLI to StandardCLI.</li>
+<li>ADDED: Middleware that responds to the &quot;--version&quot; switch.</li>
+<li>ADDED: Context#new_cli that lets you run sub-instances of toys.</li>
+<li>IMPROVED: Middleware can now be referenced by class and constructed implicitly.</li>
+<li>IMPROVED: Usage error handler can now have its exit code configured.</li>
+<li>IMPROVED: Help and verbosity middlewares can have their switches configured.</li>
+<li>IMPROVED: Help middleware can search for keywords in subcommands.</li>
+<li>IMPROVED: Help middleware displays the config path in verbose mode.</li>
+<li>IMPROVED: Context::EXIT_ON_NONZERO_STATUS controls Context#run behavior.</li>
+<li>DOCS: Expanded middleware documentation</li>
+<li>INTERNAL: Removed Context::Base and just used CLI as base context</li>
+</ul>
+</div></div>
+
+      <div id="footer">
+  Generated on Mon Oct  3 18:44:53 2022 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.28 (ruby-2.7.6).
+</div>
+
+    </div>
+  </body>
+</html>
