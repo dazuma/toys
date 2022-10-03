@@ -1,5 +1,30 @@
 # Release History
 
+### v0.14.0 / 2022-10-03
+
+Toys 0.14.0 is a major release with new system tools for introspecting defined tools, pager support, support for tees and pipes in the Exec utility, some cleanup of the behavior of Acceptors, and other improvements.
+
+Fixes that are potentially breaking:
+
+* Disallowed acceptors on flags that are explicitly boolean.
+* Acceptors no longer sometimes apply to the boolean setting of a flag with an optional value.
+
+New functionality:
+
+* Implemented new builtins for obtaining information about defined tools: `system tools show` and `system tools list`.
+* Implemented a utility class and mixin for output pagers.
+* Builtin commands that display data can format as either YAML or JSON.
+* The Exec utility and mixin can tee (i.e. duplicate and split) output streams.
+* The Exec utility and mixin can take pipes as input and output streams.
+* The Exec mixin provides a `verbosity_flags` convenience method.
+
+Fixes:
+
+* The `system test` builtin no longer requires toys to be installed as a gem.
+* Fixed a failure when passing a relative path to `system test --directory`.
+* Contents of preload directories are loaded in sorted order.
+* Various clarifications, fixes, and updates to the users guide and documentation.
+
 ### v0.13.1 / 2022-03-01
 
 * FIXED: Bundler integration no longer fails if a bundle was locked to a different version of a builtin gem
