@@ -1,17 +1,28 @@
 # Release History
 
-### v0.14.0 / 2022-10-02
+### v0.14.0 / 2022-10-03
 
-* BREAKING CHANGE: Fixes for acceptors on flags that do not take a value
+Toys-Core 0.14.0 is a major release with pager support, support for tees and pipes in the Exec utility, some cleanup of the behavior of Acceptors, and other improvements.
 
-* ADDED: Implement system tools show and system tools list builtins
-* ADDED: Implement pager util and mixin
-* ADDED: Pipes can be passed directly to exec streams
-* ADDED: New verbosity_flags convenience method in the exec mixin
-* ADDED: Support tee-ing exec outputs
-* FIXED: Fixes for acceptors on flags that do not take a value
-* DOCS: Various documentation fixes and cleanup
-* DOCS: More minor docs updates
+Fixes that are potentially breaking:
+
+* Disallowed acceptors on flags that are explicitly boolean.
+* Acceptors no longer sometimes apply to the boolean setting of a flag with an optional value.
+
+New functionality:
+
+* Implemented a utility class and mixin for output pagers.
+* Builtin commands that display data can format as either YAML or JSON.
+* The Exec utility and mixin can tee (i.e. duplicate and split) output streams.
+* The Exec utility and mixin can take pipes as input and output streams.
+* The Exec mixin provides a `verbosity_flags` convenience method.
+* `Loader#list_subtools` takes separate arguments for filtering namespaces and non-runnable tools
+
+Fixes:
+
+* Contents of preload directories are loaded in sorted order.
+* Removed some potential deadlocks if a `Toys::Loader` is accessed from multiple threads
+* Various clarifications, fixes, and updates to the users guide and documentation.
 
 ### v0.13.1 / 2022-03-01
 
