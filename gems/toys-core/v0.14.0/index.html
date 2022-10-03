@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: README
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "README";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="toys-core">Toys-Core</h1>
+
+<p>Toys is a configurable command line tool. Write commands in Ruby using a simple
+DSL, and Toys will provide the command line executable and take care of all the
+details such as argument parsing, online help, and error reporting.</p>
+
+<p>Toys-Core is the command line tool framework underlying Toys. It can be used
+to write command line executables using the Toys DSL and the power of the Toys
+classes.</p>
+
+<p>For more detailed information about Toys-Core, see the
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html">Toys-Core User&#39;s Guide</a>.
+For background information about Toys itself, see the
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys README</a> and the
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">Toys User Guide</a>.</p>
+
+<h2 id="introductory-tutorial">Introductory tutorial</h2>
+
+<p>Here&#39;s a tutorial to help you get a feel for how to write a basic command line
+executable using Toys-Core.</p>
+
+<p>It assumes basic familiarity with Toys, so, if you have not done so, I
+recommend first walking through the tutorial in the
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys README</a>. It also assumes
+you are running a unix-like system such as Linux or macOS. Some commands might
+need to be modified if you&#39;re running on Windows.</p>
+
+<h3 id="install-toys-core">Install Toys-Core</h3>
+
+<p>Install the <strong>toys-core</strong> gem using:</p>
+
+<pre class="code ruby"><code class="ruby">$ gem install toys-core
+</code></pre>
+
+<p>You can also install the <strong>toys</strong> gem, which brings in <strong>toys-core</strong> as a
+dependency.</p>
+
+<h3 id="create-a-new-executable">Create a new executable</h3>
+
+<p>We&#39;ll start by creating an executable Ruby script. Using your favorite text
+editor, create new a file called <code>mycmd</code> with the following contents:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Make sure the file&#39;s executable bit is set:</p>
+
+<pre class="code ruby"><code class="ruby">$ chmod a+x mycmd
+</code></pre>
+
+<p>That&#39;s it! This is a fully-functional Toys-based executable! Let&#39;s see what
+happens when you run it:</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd
+</code></pre>
+
+<p>Just as with Toys itself, you get a help screen by default (since we haven&#39;t
+yet actually implemented any behavior.) As you can see, some of the same
+features from Toys are present already: online help, and <code>--verbose</code> and
+<code>--quiet</code> flags. These features can of course all be customized or disabled,
+but they&#39;re often useful to have to start off.</p>
+
+<h3 id="add-some-functionality">Add some functionality</h3>
+
+<p>You implement the functionality of your executable using the same DSL that you
+use to write Toys files. You could point your executable at a directory
+containing actual Toys files, but the simplest option is to provide the
+information to the Toys CLI object in a block.</p>
+
+<p>Let&#39;s add some functionality to <code>mycmd</code>.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'>#### Insert the following block ...
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>If you went through the tutorial in the README for the Toys gem, this should
+look familiar. Let&#39;s run it now, and experiment with passing flags to it.</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd
+$ ./mycmd --whom=ruby
+$ ./mycmd --bye
+$ ./mycmd --help
+</code></pre>
+
+<p>Notice that we did not create a <code>tool</code> block, but instead set up description,
+flags, and functionality directly in the configuration block. This configures
+the &quot;root tool&quot;, i.e. what happens when you run the executable without passing
+a tool name to it. (In fact, it&#39;s legal to do this in Toys as well, by setting
+functionality at the &quot;top level&quot; of a <code>.toys.rb</code> file without including any
+<code>tool</code> block.)</p>
+
+<h3 id="tool-based-executables">Tool-based executables</h3>
+
+<p>But perhaps you want your executable to have multiple &quot;tools&quot;, similar to other
+familiar executables like git or kubectl. You can define tools, including
+nested tools, by writing <code>tool</code> blocks in your config. Here&#39;s an example:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'>#### Change the config block as follows ...
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='comment'># Things outside any tool block still apply to the root
+</span>  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable with several tools</span><span class='tstring_end'>&quot;</span></span>
+
+  <span class='comment'># We&#39;ll put the greet function here
+</span>  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>greet</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first tool!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># Try writing a second tool here. You could use the &quot;new-repo&quot;
+</span>  <span class='comment'># example from the Toys tutorial.
+</span><span class='kw'>end</span>
+
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Now you can run <code>greet</code> as a tool:</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd greet
+</code></pre>
+
+<p>The &quot;root&quot; functionality once again shows global help, including a list of the
+available tools.</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd
+</code></pre>
+
+<p>Notice that the description set at the &quot;root&quot; of the config block (outside the
+tool blocks) shows up here.</p>
+
+<h3 id="configuring-the-cli">Configuring the CLI</h3>
+
+<p>So far, our executable behaves very similarly to Toys itself. Help screens are
+shown by default, flags for help and verbosity are provided automatically, and
+any exceptions are displayed to the terminal.</p>
+
+<p>These and many more aspects of the behavior of our executable can be customized
+by passing options to the <code>Toys::CLI</code> constructor. Here&#39;s an example that
+modifies error handling and delimiter parsing.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='comment'>#### Pass some additional options to the CLI constructor ...
+</span><span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span>
+  <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>:</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+  <span class='label'>error_handler:</span> <span class='tlambda'>-&gt;</span><span class='lparen'>(</span><span class='id identifier rubyid_err'>err</span><span class='rparen'>)</span> <span class='tlambeg'>{</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Aww shucks, an error happened: </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_err'>err</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>return</span> <span class='int'>1</span>
+  <span class='rbrace'>}</span>
+<span class='rparen'>)</span>
+
+<span class='comment'>#### Change the config block as follows ...
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>example</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>greet</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+      <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+        <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>error</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+      <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+        <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Whoops!</span><span class='tstring_end'>&quot;</span></span>
+      <span class='kw'>end</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Try these runs. Do they behave as you expected?</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd example greet
+$ ./mycmd example:greet
+$ ./mycmd example.greet
+$ ./mycmd example error
+</code></pre>
+
+<h3 id="configuring-middleware">Configuring middleware</h3>
+
+<p>Toys <em>middleware</em> are objects that provide common functionality for all the
+tools in your executable. For example, a middleware adds the <code>--help</code> flag to
+your tools by default.</p>
+
+<p>The next example provides a custom middleware stack, resulting in a different
+set of common tool functionality.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='comment'>#### Change the CLI construction again ...
+</span><span class='id identifier rubyid_middlewares'>middlewares</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='lbracket'>[</span><span class='symbol'>:set_default_descriptions</span><span class='comma'>,</span> <span class='label'>default_tool_desc:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hey look, a tool!</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span>
+  <span class='lbracket'>[</span><span class='symbol'>:show_help</span><span class='comma'>,</span> <span class='label'>help_flags:</span> <span class='kw'>true</span><span class='rbracket'>]</span>
+<span class='rbracket'>]</span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span> <span class='label'>middleware_stack:</span> <span class='id identifier rubyid_middlewares'>middlewares</span>
+
+<span class='comment'>#### Use this config block ...
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>greet</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, world!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>We&#39;ve now modified the default description applied to tools that don&#39;t provide
+their own description. See the effect with:</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd greet --help
+</code></pre>
+
+<p>We&#39;ve also omitted some of the default middleware, including the one that adds
+the <code>--verbose</code> and <code>--quiet</code> flags to all your tools. Notice those flags are
+no longer present.</p>
+
+<p>We&#39;ve also omitted the middleware that provides default execution behavior
+(i.e. displaying the help screen) when there is no <code>run</code> method. Now, since we
+haven&#39;t defined a toplevel <code>run</code> method in this last example, invoking the root
+tool will cause an error:</p>
+
+<pre class="code ruby"><code class="ruby">$ ./mycmd
+</code></pre>
+
+<p>It is even possible to write your own middleware. In general, while the
+<code>Toys::CLI</code> constructor provides defaults that should work for many use cases,
+you can also customize it heavily to suit the needs of your executable.</p>
+
+<h3 id="packaging-as-a-gem">Packaging as a gem</h3>
+
+<p>So far we&#39;ve created simple one-file executables that you could distribute by
+itself. However, the <code>toys-core</code> gem is a dependency, and your users will need
+to have it installed. You could alleviate this by wrapping your executable in a
+gem that can declare <code>toys-core</code> as a dependency explicitly.</p>
+
+<p>The <a href="https://github.com/dazuma/toys/tree/main/toys-core/examples">examples directory</a>
+includes a few simple examples that you can use as a starting point.</p>
+
+<p>To experiment with the examples, clone the Toys repo from GitHub:</p>
+
+<pre class="code ruby"><code class="ruby">$ git clone https://github.com/dazuma/toys.git
+$ cd toys
+</code></pre>
+
+<p>Navigate to the simple-gem example:</p>
+
+<pre class="code ruby"><code class="ruby">$ cd toys-core/examples/simple-gem
+</code></pre>
+
+<p>This example wraps the simple &quot;greet&quot; executable that we
+<a href="#Add_some_functionality">covered earlier</a> in a gem. You can see the
+<a href="https://github.com/dazuma/toys/tree/main/toys-core/examples/simple-gem/bin/toys-core-simple-example">executable file</a>
+in the bin directory.</p>
+
+<p>Try it out by building and installing the gem. From the <code>examples/simple-gem</code>
+directory, run:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys install
+</code></pre>
+
+<p>Once the gem has successfully installed, you can run the executable, which
+Rubygems should have added to your path. (Note: if you are using a ruby
+installation manager, you may need to &quot;rehash&quot; or &quot;reshim&quot; to gain access to
+the executable.)</p>
+
+<pre class="code ruby"><code class="ruby">$ toys-core-simple-example --whom=Toys
+</code></pre>
+
+<p>Clean up by uninstalling the gem:</p>
+
+<pre class="code ruby"><code class="ruby">$ gem uninstall toys-core-simple-example
+</code></pre>
+
+<p>If the implementation of your executable is more complex, you might want to
+break it up into multiple files. The multi-file gem example demonstrates this.</p>
+
+<pre class="code ruby"><code class="ruby">$ cd ../multi-file-gem
+</code></pre>
+
+<p>This executable&#39;s implementation resides in its
+<a href="https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/lib">lib directory</a>,
+a technique that may be familiar to writers of command line executables. More
+interestingly, the tools themselves are no longer defined in a block passed to
+the CLI object, but have been moved into a separate
+<a href="https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/tools">&quot;tools&quot; directory</a>.
+This directory has the same structure and supports the same features that are
+available when writing complex sets of tools in a <code>.toys</code> directory. You then
+configure the CLI object to look in this directory for its tools definitions,
+as you can see in
+<a href="https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/lib/toys-core-multi-gem-example.rb">the code</a>.</p>
+
+<p>Try it out now. From the <code>examples/multi-file-gem</code> directory, run:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys install
+</code></pre>
+
+<p>Once the gem has successfully installed, you can run the executable, which
+Rubygems should have added to your path. (Note: if you are using a ruby
+installation manager, you may need to &quot;rehash&quot; or &quot;reshim&quot; to gain access to
+the executable.)</p>
+
+<pre class="code ruby"><code class="ruby">$ toys-core-multi-file-example greet
+</code></pre>
+
+<p>Clean up by uninstalling the gem:</p>
+
+<pre class="code ruby"><code class="ruby">$ gem uninstall toys-core-multi-file-example
+</code></pre>
+
+<h3 id="learning-more">Learning more</h3>
+
+<p>This introduction should be enough to get you started. However, Toys-Core is a
+deep framework with many more features. Learn about how to write tools using
+the Toys DSL, including validating and interpreting command line arguments,
+using templates and mixins, controlling subprocesses, and producing nice styled
+output, in the
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">Toys User Guide</a>.
+Learn more about how to customize and package your own executable, including
+handling errors, controlling log output, and providing your own mixins,
+templates, and middleware, in the
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html">Toys-Core User Guide</a>.</p>
+
+<h2 id="system-requirements">System requirements</h2>
+
+<p>Toys-Core requires Ruby 2.4 or later.</p>
+
+<p>Most parts of Toys-Core work on JRuby. However, JRuby is not recommended
+because of JVM boot latency, lack of support for Kernel#fork, and other issues.</p>
+
+<p>Most parts of Toys-Core work on TruffleRuby. However, TruffleRuby is not
+recommended because it has a few known bugs that affect Toys.</p>
+
+<h2 id="license">License</h2>
+
+<p>Copyright 2019-2022 Daniel Azuma and the Toys contributors</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Mon Oct  3 17:27:21 2022 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.28 (ruby-2.7.6).
+</div>
+
+    </div>
+  </body>
+</html>
