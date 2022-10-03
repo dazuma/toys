@@ -23,10 +23,15 @@ require "toys/version"
   spec.license = "MIT"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("builtins/**/*.rb") +
-               ::Dir.glob("*.md") + ::Dir.glob("docs/*.md") +
+  spec.files = ::Dir.glob("lib/**/*.rb") +
+               ["builtins/do.rb", "builtins/system/.toys.rb"] +
+               ::Dir.glob("builtins/system/*.rb") +
+               ::Dir.glob("*.md") +
+               ::Dir.glob("docs/*.md") +
                ::Dir.glob("core-docs/**/*.rb") +
-               ::Dir.glob("bin/*") + ::Dir.glob("share/*") + [".yardopts"]
+               ::Dir.glob("bin/*") +
+               ::Dir.glob("share/*") +
+               [".yardopts"]
   spec.required_ruby_version = ">= 2.4.0"
   spec.require_paths = ["lib"]
   spec.bindir = "bin"
