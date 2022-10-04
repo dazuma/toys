@@ -23,7 +23,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
       ::Toys::DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, loader) do
         ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
           # rubocop:disable Security/Eval
-          eval(str, __binding, path, -2)
+          eval(str, __binding, path)
           # rubocop:enable Security/Eval
         end
       end
@@ -43,11 +43,9 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   def self.build_eval_string(module_name, string)
     index = string.index(/^\s*[^#\s]/)
     return nil if index.nil?
-    "#{string[0, index]}\n" \
-      "module #{module_name}\n" \
-      "@__tool_class.class_eval do\n" \
+    "#{string[0, index]}" \
+      "module #{module_name}; @__tool_class.class_eval do; " \
       "#{string[index..-1]}\n" \
-      "end\n" \
-      "end\n"
+      "end; end\n"
   end
 end

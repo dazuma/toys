@@ -482,4 +482,26 @@ describe Toys::CLI do
       assert_same(logger2, child.logger_factory.call)
     end
   end
+
+  describe "errors" do
+    before do
+      cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
+    end
+
+    it "reports errors during definition" do
+      assert_equal(1, cli.run("definition"))
+      error_string = error_io.string
+      assert_match(/NameError:/, error_string)
+      refute_match(/while executing tool/, error_string)
+      assert_match(%r{n config file: [^\n]+/errors/definition\.rb:4}, error_string)
+    end
+
+    it "reports errors during runtime" do
+      assert_equal(1, cli.run("runtime", "hello"))
+      error_string = error_io.string
+      assert_match(/NameError:/, error_string)
+      assert_match(/while executing tool: "runtime hello"/, error_string)
+      assert_match(%r{n config file: [^\n]+/errors/runtime\.rb:5}, error_string)
+    end
+  end
 end
