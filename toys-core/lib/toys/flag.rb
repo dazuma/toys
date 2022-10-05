@@ -774,12 +774,15 @@ module Toys
       long_flag_syntax.reverse_each do |flag|
         analyze_flag_syntax(flag)
       end
-      @flag_type ||= :boolean
       if @flag_type == :boolean && @explicit_acceptor
         raise ToolDefinitionError,
               "Flag #{key.inspect} cannot have an acceptor because it does not take a value."
       end
-      @value_type ||= :required if @flag_type == :value
+      @flag_type ||= (@explicit_acceptor ? :value : :boolean)
+      if @flag_type == :value
+        @value_type ||= :required
+        @value_label ||= "VALUE"
+      end
       flag_syntax.each do |flag|
         flag.configure_canonical(@flag_type, @value_type, @value_label, @value_delim)
       end

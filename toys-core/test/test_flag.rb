@@ -413,11 +413,18 @@ describe Toys::Flag do
     it "canonicalizes to a value flag if there is an acceptor" do
       flag = Toys::Flag.create(:abc, accept: Integer)
       assert_equal(:value, flag.flag_type)
+      assert_equal("--abc VALUE", flag.flag_syntax.first.canonical_str)
     end
 
-    it "errors if a no-value flag has an acceptor" do
+    it "canonicalizes an ambiguous type flag to a value flag if there is an acceptor" do
+      flag = Toys::Flag.create(:a, ["--foo"], accept: Integer)
+      assert_equal(:value, flag.flag_type)
+      assert_equal("--foo VALUE", flag.flag_syntax.first.canonical_str)
+    end
+
+    it "errors if a boolean-only flag has an acceptor" do
       assert_raises(Toys::ToolDefinitionError) do
-        Toys::Flag.create(:a, ["--foo"], accept: Integer)
+        Toys::Flag.create(:a, ["--[no-]foo"], accept: Integer)
       end
     end
 
