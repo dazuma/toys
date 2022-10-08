@@ -3171,6 +3171,10 @@ a namespace to delegate to one of its subtools:
 
 Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
 
+It is also possible to specify the delegate via _relative_ name, using the
+`:delegate_relative` keyword argument. This can be helpful if you have a set of
+tools and delegates that are meant to be reused under different namespaces.
+
 ### Applying directives to multiple tools
 
 Sometimes a group of tools are set up similarly or share a set of flags,

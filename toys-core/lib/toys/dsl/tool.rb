@@ -273,7 +273,8 @@ module Toys
       #       end
       #     end
       #
-      # The following example defines a tool that runs one of its subtools.
+      # The following example uses `delegate_to` to define a tool that runs one
+      # of its subtools.
       #
       #     tool "test", delegate_to: ["test", "unit"] do
       #       tool "unit" do
@@ -294,17 +295,14 @@ module Toys
       #     delegate to another tool, specified by the full path. This path may
       #     be given as an array of strings, or a single string possibly
       #     delimited by path separators.
+      # @param delegate_relative [String,Array<String>] Optional. Similar to
+      #     delegate_to, but takes a delegate name relative to the context in
+      #     which this tool is being defined.
       # @param block [Proc] Defines the subtool.
       # @return [self]
       #
-      def tool(words, if_defined: :combine, delegate_to: nil, &block)
-        subtool_words = @__words.dup
-        next_remaining = @__remaining_words
-        @__loader.split_path(words).each do |word|
-          word = word.to_s
-          subtool_words << word
-          next_remaining = Loader.next_remaining_words(next_remaining, word)
-        end
+      def tool(words, if_defined: :combine, delegate_to: nil, delegate_relative: nil, &block)
+        subtool_words, next_remaining = DSL::Internal.analyze_name(self, words)
         subtool = @__loader.get_tool(subtool_words, @__priority)
         if subtool.includes_definition?
           case if_defined
@@ -314,9 +312,14 @@ module Toys
             subtool.reset_definition
           end
         end
-        if delegate_to
-          delegator = proc { self.delegate_to(delegate_to) }
-          @__loader.load_block(source_info, delegator, subtool_words, next_remaining, @__priority)
+        if delegate_to || delegate_relative
+          delegate_to2 = @__words + @__loader.split_path(delegate_relative) if delegate_relative
+          orig_block = block
+          block = proc do
+            self.delegate_to(delegate_to) if delegate_to
+            self.delegate_to(delegate_to2) if delegate_to2
+            instance_eval(&orig_block) if orig_block
+          end
         end
         if block
           @__loader.load_block(source_info, block, subtool_words, next_remaining, @__priority)
@@ -327,9 +330,9 @@ module Toys
       ##
       # Create an alias, representing an "alternate name" for a tool.
       #
-      # This is functionally equivalent to creating a subtool with the
-      # `delegate_to` option, except that `alias_tool` takes a _relative_ name
-      # for the delegate.
+      # Note: This is functionally equivalent to creating a tool with the
+      # `:delegate_relative` option. As such, `alias_tool` is considered
+      # deprecated.
       #
       # ### Example
       #
@@ -342,21 +345,25 @@ module Toys
       #       end
       #     end
       #     alias_tool "t", "test"
+      #     # Note: the following is preferred over alias_tool:
+      #     # tool "t", delegate_relative: "test"
       #
       # @param word [String] The name of the alias
       # @param target [String,Array<String>] Relative path to the target of the
       #     alias. This path may be given as an array of strings, or a single
       #     string possibly delimited by path separators.
       # @return [self]
+      # @deprecated Use {#tool} and pass `:delegate_relative` instead
       #
       def alias_tool(word, target)
-        tool(word, delegate_to: @__words + @__loader.split_path(target))
+        tool(word, delegate_relative: target)
         self
       end
 
       ##
-      # Causes the current tool to delegate to another tool. When run, it
-      # simply invokes the target tool with the same arguments.
+      # Causes the current tool to delegate to another tool, specified by the
+      # full tool name. When run, it simply invokes the target tool with the
+      # same arguments.
       #
       # ### Example
       #
