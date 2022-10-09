@@ -131,6 +131,41 @@ describe Toys::DSL::Tool do
       assert_equal(3, cli.run(["foo"]))
     end
 
+    it "recognizes delegate_relative" do
+      loader.add_block do
+        tool "namespace" do
+          tool "foo", delegate_relative: "bar"
+          tool "bar" do
+            def run
+              exit(3)
+            end
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["namespace", "foo"])
+      assert_equal(["namespace", "bar"], tool.delegate_target)
+      assert_equal(3, cli.run(["namespace", "foo"]))
+    end
+
+    it "allows delegate_to, delegate_relative, and a block together" do
+      loader.add_block do
+        tool "namespace" do
+          tool "foo", delegate_relative: "bar", delegate_to: "namespace:bar" do
+            desc "this is foo"
+          end
+          tool "bar" do
+            def run
+              exit(3)
+            end
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["namespace", "foo"])
+      assert_equal(["namespace", "bar"], tool.delegate_target)
+      assert_equal("this is foo", tool.desc.to_s)
+      assert_equal(3, cli.run(["namespace", "foo"]))
+    end
+
     it "doesn't execute the block if not needed" do
       test = self
       loader.add_block do
@@ -1504,7 +1539,7 @@ describe Toys::DSL::Tool do
       assert_equal(3, cli.run(["foo", "baz"]))
     end
 
-    it "delegates using a symbols" do
+    it "delegates using a symbol" do
       loader.add_block do
         tool :foo do
           tool :bar do

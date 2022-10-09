@@ -69,6 +69,24 @@ module Toys
         end
 
         ##
+        # Called by the DSL implementation to analyze the name of a new tool
+        # definition in context.
+        #
+        # @private
+        #
+        def analyze_name(tool_class, words)
+          loader = tool_class.instance_variable_get(:@__loader)
+          subtool_words = tool_class.instance_variable_get(:@__words).dup
+          next_remaining = tool_class.instance_variable_get(:@__remaining_words)
+          loader.split_path(words).each do |word|
+            word = word.to_s
+            subtool_words << word
+            next_remaining = Loader.next_remaining_words(next_remaining, word)
+          end
+          [subtool_words, next_remaining]
+        end
+
+        ##
         # Called by the DSL implementation to add a getter to the tool class.
         #
         # @private

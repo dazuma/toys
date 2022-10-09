@@ -907,6 +907,19 @@ describe Toys::ToolDefinition do
       assert_equal("Existing description", tool.desc.to_s)
     end
 
+    it "allows delegating to the same tool twice" do
+      tool.delegate_to(["bar"])
+      tool.delegate_to(["bar"])
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "errors if there is already a different delegate" do
+      tool.delegate_to(["bar"])
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.delegate_to(["baz"])
+      end
+    end
+
     it "errors if there is already an argument" do
       tool.add_required_arg(:foo)
       assert_raises(Toys::ToolDefinitionError) do

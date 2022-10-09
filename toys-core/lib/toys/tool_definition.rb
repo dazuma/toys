@@ -1254,9 +1254,10 @@ module Toys
     #
     def delegate_to(target)
       if @delegate_target
+        return self if target == @delegate_target
         raise ToolDefinitionError,
-              "Cannot delegate tool #{display_name.inspect} because" \
-              " it already delegates to \"#{@delegate_target.join(' ')}\"."
+              "Cannot delegate tool #{display_name.inspect} to #{target.join(' ')} because it" \
+              " already delegates to \"#{@delegate_target.join(' ')}\"."
       end
       if includes_arguments?
         raise ToolDefinitionError,
