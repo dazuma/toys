@@ -2,9 +2,10 @@
 
 ### v0.14.2 / 2022-10-09
 
-* FIXED: Show toys file reference in error messages on Ruby 3.1
-* FIXED: The presence of an acceptor forces an ambiguous flag to take a value rather than erroring
-* FIXED: Support delegate_relative from the tool directive, as a preferred alternative over alias_tool
+* ADDED: The tool directive supports the delegate_relative argument, as a preferred alternative over alias_tool.
+* FIXED: The toys file reference now properly appears in error messages on Ruby 3.1.
+* FIXED: Error messages show the correct toys file line number on TruffleRuby.
+* FIXED: The presence of an acceptor forces an ambiguous flag to take a value rather than erroring.
 
 ### v0.14.1 / 2022-10-03
 
