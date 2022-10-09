@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.2 / 2022-10-09
+
+* FIXED: Support delegate_relative from the tool directive, as a preferred alternative over alias_tool
+
 ### v0.14.1 / 2022-10-03
 
 * FIXED: Fixed a crash due to a missing file in the gem

@@ -1,5 +1,11 @@
 # Release History
 
+### v0.14.2 / 2022-10-09
+
+* FIXED: Show toys file reference in error messages on Ruby 3.1
+* FIXED: The presence of an acceptor forces an ambiguous flag to take a value rather than erroring
+* FIXED: Support delegate_relative from the tool directive, as a preferred alternative over alias_tool
+
 ### v0.14.1 / 2022-10-03
 
 * (No significant changes)
