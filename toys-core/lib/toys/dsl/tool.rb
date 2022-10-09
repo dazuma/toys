@@ -1728,6 +1728,18 @@ module Toys
         super
         DSL::Internal.current_tool(self, true)&.check_definition_state(is_method: true)
       end
+
+      ##
+      # Include the tool name in the class inspection dump.
+      #
+      # @private
+      #
+      def inspect
+        return super unless defined? @__words
+        name = @__words.empty? ? "(root)" : @__words.join(" ").inspect
+        id = object_id.to_s(16)
+        "#<Class id=0x#{id} tool=#{name}>"
+      end
     end
   end
 end
