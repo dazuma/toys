@@ -338,12 +338,15 @@ module Toys
     end
 
     ##
+    # Include the tool name in the object inspection dump.
+    #
     # @private
     #
     def inspect
-      name = Array(@__data[Key::TOOL_NAME]).join(" ")
+      words = Array(@__data[Key::TOOL_NAME])
+      name = words.empty? ? "(root)" : words.join(" ").inspect
       id = object_id.to_s(16)
-      "#<Toys::Context id=0x#{id} #{name}>"
+      "#<Toys::Context id=0x#{id} tool=#{name}>"
     end
   end
 end

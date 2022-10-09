@@ -492,6 +492,7 @@ describe Toys::CLI do
       assert_equal(1, cli.run("definition"))
       error_string = error_io.string
       assert_match(/NameError:/, error_string)
+      assert_match(/#<Class id=\w+ tool="definition hello">/, error_string)
       refute_match(/while executing tool/, error_string)
       assert_match(%r{n config file: [^\n]+/errors/definition\.rb:4}, error_string)
     end
@@ -500,6 +501,7 @@ describe Toys::CLI do
       assert_equal(1, cli.run("runtime", "hello"))
       error_string = error_io.string
       assert_match(/NameError:/, error_string)
+      assert_match(/#<Toys::Context id=\w+ tool="runtime hello">/, error_string)
       assert_match(/while executing tool: "runtime hello"/, error_string)
       assert_match(%r{n config file: [^\n]+/errors/runtime\.rb:5}, error_string)
     end
