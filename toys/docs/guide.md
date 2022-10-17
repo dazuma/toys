@@ -1400,6 +1400,10 @@ chance of problems, if you need to use `truncate_load_path!`, locate it as
 early as possible in your Toys files, typically at the top of the
 [index file](#Index_files).
 
+### Loading remote files
+
+(TODO)
+
 ## The execution environment
 
 This section describes the context and resources available to your tool when it
@@ -3397,44 +3401,49 @@ Here is an example that wraps calls to git:
       end
     end
 
-### Handling interrupts
+### Handling signals
 
-If you interrupt a running tool, say, by hitting `CTRL`-`C`, Toys will normally
-terminate execution and display the message `INTERRUPTED` on the standard error
-stream.
+If you interrupt a running tool by hitting `CTRL`-`C` or sending it a signal,
+Toys will normally terminate execution and display the message `INTERRUPTED` on
+the standard error stream.
 
-If your tool needs to handle interrupts itself, you have several options. You
-can rescue the `Interrupt` exception or call `Signal.trap`. Or you can provide
-an *interrupt handler* in your tool using the `on_interrupt` directive. This
-directive either provides a block to handle interrupts, or designates a named
-method as the handler. If an interrupt handler is present, Toys will handle
-interrupts as follows:
+If your tool needs to handle signals or inerrupts itself, you have several
+options. You can rescue the `SignalException` or call `Signal.trap`. Or you can
+provide a *signal handler* in your tool using the `on_signal` or `on_interrupt`
+directive. These directives either provide a block or designate a named method
+to handle a given signal received by the process. A separate handler must be
+provided for each signal type. (The `on_interrupt` directive is simply
+shorthand for registering a handler for `SIGINT`.)
 
-1.  Toys will terminate the tool's `run` method by raising an `Interrupt`
-    exception. Any `ensure` blocks will be called.
-2.  Toys will call the interrupt handler. If this method or block takes an
-    argument, Toys will pass it the `Interrupt` exception object.
-3.  The interrupt handler is then responsible for tool execution from that
+If a signal or interrupt is received and is not caught via `Signal.trap`, the
+following takes place:
+
+1.  Ruby will terminate the tool's `run` method by raising a `SignalException`
+    Any `ensure` blocks in the tool will be called.
+2.  Toys will call the signal handler, either a method or a block. If the
+    handler takes an argument, Toys will pass it the `SignalException` object.
+3.  The signal handler is then responsible for tool execution from that
     point. It can terminate execution by returning or calling `exit`, or it can
     restart or resume processing (perhaps by calling the `run` method again).
-    Or it can invoke the normal Toys interrupt handling (i.e. terminating
-    execution, displaying the message `INTERRUPTED`) by re-raising *the same*
-    interrupt exception object.
-4.  If another interrupt takes place during the execution of the interrupt
-    handler, Toys will terminate it by raising a *second* `Interrupt` exception
-    (calling any `ensure` blocks). Then, the interrupt handler will be called
-    *again* and passed the new exception. Any additional interrupts will be
-    handled similarly.
+    Or it can invoke the normal Toys signal handling (i.e. terminating
+    execution and displaying the message `INTERRUPTED` or `SIGNAL RECEIVED`) by
+    re-raising *the same* `SignalException` object.
+4.  If another signal is received or interrupt takes place during the execution
+    of the handler, Toys will terminate the handler by raising a *second*
+    `SignalException` (again calling any `ensure` blocks). Then, any matching
+    signal handler will be called *again* for the new signal and passed the new
+    exception. Any further signals will be handled similarly.
 
-Because the interrupt handler is called again even if it is itself interrupted,
-you might consider detecting this case if your interrupt handler might be
-long-running. You can tell how many interrupts have taken place by looking at
-the `Exception#cause` property of the exception. The first interrupt will have
-a cause of `nil`. The second interrupt (i.e. the interrupt raised the first
-time the interrupt handler is itself interrupted) will have its cause point to
-the first interrupt (which in turn has a `nil` cause.) The third interrupt's
-cause will point to the second interrupt, and so on. So you can determine the
-interrupt "depth" by counting the length of the cause chain.
+It is possible for a signal handler itself to receive signals. For example, if
+you have a long-running `CTRL`-`C` interrupt handler, it itself could get
+interrupted. You can tell how many signals have taken place by looking at the
+`Exception#cause` property of the `SignalException`. The first signal will have
+a cause of `nil`. The second signal (i.e. the first time a signal handler
+itself receives a signal) will have a cause pointing to the first
+`SignalException` (which in turn has a `nil` cause). The third signal's cause
+points at the second, and so forth. Hence, you can determine the signal "depth"
+by counting the length of the cause chain, which could be important to prevent
+"infinite" signals.
 
 Here is an example that performs a long-running task. The first two times the
 task is interrupted, it is restarted. The third time, it is terminated.
