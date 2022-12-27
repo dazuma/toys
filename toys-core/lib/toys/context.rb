@@ -309,7 +309,7 @@ module Toys
     # @return [void]
     #
     def exit(code = 0)
-      throw :result, code
+      Context.exit(code)
     end
 
     ##
@@ -321,6 +321,7 @@ module Toys
     # @return [void]
     #
     def self.exit(code = 0)
+      code = -1 unless code.is_a?(::Integer)
       throw :result, code
     end
 
