@@ -427,7 +427,7 @@ module Toys
       #
       def sh(cmd, **opts, &block)
         opts = opts.merge(background: false)
-        exec(cmd, **opts, &block).exit_code
+        exec(cmd, **opts, &block).exit_code || -1
       end
 
       ##
