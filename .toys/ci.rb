@@ -8,7 +8,7 @@ long_desc "The CI tool runs all CI checks for both gems, including unit" \
             " entrypoint for CI systems. Any failure will result in a" \
             " nonzero result code."
 
-flag :integration_tests, desc: "Enable integration tests"
+flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
 
 include :terminal
 include :exec
