@@ -188,7 +188,7 @@ module Toys
         gemfile_path = ::File.absolute_path(gemfile_path)
         Gems.synchronize do
           if configure_gemfile(gemfile_path)
-            activate("bundler", "~> 2.2")
+            activate("bundler", *bundler_version_requirements)
             require "bundler"
             setup_bundle(gemfile_path, groups: groups, retries: retries)
           end
@@ -327,6 +327,16 @@ module Toys
           exceptions << ::Bundler::VersionConflict if ::Bundler.const_defined?(:VersionConflict)
           exceptions << ::Bundler::SolveFailure if ::Bundler.const_defined?(:SolveFailure)
           exceptions
+        end
+      end
+
+      def bundler_version_requirements
+        if ::RUBY_VERSION < "2.6"
+          [">= 2.2", "< 2.4"]
+        elsif ::RUBY_VERSION < "3"
+          [">= 2.2", "< 2.5"]
+        else
+          ["~> 2.2"]
         end
       end
 
