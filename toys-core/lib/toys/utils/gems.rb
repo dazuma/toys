@@ -309,7 +309,7 @@ module Toys
         modified_gemfile_path = create_modified_gemfile(gemfile_path)
         begin
           attempt_setup_bundle(modified_gemfile_path, groups)
-        rescue ::Bundler::GemNotFound, ::Bundler::VersionConflict
+        rescue *bundler_exceptions
           ::Bundler.reset!
           restore_toys_libs
           install_bundle(modified_gemfile_path, retries: retries)
@@ -319,6 +319,15 @@ module Toys
           ::ENV["BUNDLE_GEMFILE"] = gemfile_path
         end
         restore_toys_libs
+      end
+
+      def bundler_exceptions
+        @bundler_exceptions ||= begin
+          exceptions = [::Bundler::GemNotFound]
+          exceptions << ::Bundler::VersionConflict if ::Bundler.const_defined?(:VersionConflict)
+          exceptions << ::Bundler::SolveFailure if ::Bundler.const_defined?(:SolveFailure)
+          exceptions
+        end
       end
 
       def attempt_setup_bundle(modified_gemfile_path, groups)
