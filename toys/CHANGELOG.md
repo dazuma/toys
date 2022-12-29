@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.3 / 2022-12-29
+
+* (No significant changes)
+
 ### v0.14.2 / 2022-10-09
 
 * ADDED: The tool directive supports the delegate_relative argument, as a preferred alternative over alias_tool.
