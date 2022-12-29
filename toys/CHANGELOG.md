@@ -2,7 +2,11 @@
 
 ### v0.14.3 / 2022-12-29
 
-* (No significant changes)
+* FIXED: Exit with a code -1 if a non-integer exit code is thrown
+* FIXED: The sh command in the Exec utility returns -1 if the exit code cannot be determined
+* FIXED: Update Bundler integration to support Bundler 2.4 and Ruby 3.2
+* FIXED: Fix for installing bundler on older Rubies
+* FIXED: Fixed XDG defaults on JRuby 9.4
 
 ### v0.14.2 / 2022-10-09
 
