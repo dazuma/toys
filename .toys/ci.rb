@@ -53,13 +53,11 @@ tool "init" do
   def run
     changed = false
     if exec(["git", "config", "--global", "--get", "user.email"], out: :null).error?
-      exec(["git", "config", "--global", "user.email", "hello@example.com"],
-           exit_on_nonzero_status: true)
+      exec(["git", "config", "--global", "user.email", "hello@example.com"], e: true)
       changed = true
     end
     if exec(["git", "config", "--global", "--get", "user.name"], out: :null).error?
-      exec(["git", "config", "--global", "user.name", "Hello Ruby"],
-           exit_on_nonzero_status: true)
+      exec(["git", "config", "--global", "user.name", "Hello Ruby"], e: true)
       changed = true
     end
     if changed

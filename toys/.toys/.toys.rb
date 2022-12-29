@@ -58,17 +58,11 @@ tool "yardoc-test" do
 
   def run
     puts "Running yardoc on unoptimized input..."
-    unoptimized_output = capture_tool(["yardoc", "--no-optimize"])
+    unoptimized_result = exec_tool(["yardoc", "--no-optimize"], out: [:tee, :inherit, :controller])
     puts "Running yardoc on optimized input..."
-    optimized_output = capture_tool(["yardoc", "--optimize"])
-    if unoptimized_output == optimized_output
-      puts optimized_output
-    else
+    optimized_result = exec_tool(["yardoc", "--optimize"], out: [:tee, :inherit, :controller])
+    unless unoptimized_result.captured_out == optimized_result.captured_out
       puts "Output changed!", :red
-      puts "Unoptimized:", :red
-      puts unoptimized_output
-      puts "Optimized:", :red
-      puts optimized_output
       exit 1
     end
   end
