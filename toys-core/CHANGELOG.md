@@ -2,7 +2,7 @@
 
 ### v0.14.4 / 2023-01-23
 
-* FIXED: Fixed missing require when utils/xdg or utils/git_cache is required in isolation
+* FIXED: Fixed missing require when "toys/utils/xdg" or "toys/utils/git_cache" is required without the rest of toys-core
 
 ### v0.14.3 / 2022-12-29
 
