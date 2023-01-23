@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.4 / 2023-01-23
+
+* (No significant changes)
+
 ### v0.14.3 / 2022-12-29
 
 * FIXED: Exit with a code -1 if a non-integer exit code is thrown
