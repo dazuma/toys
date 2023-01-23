@@ -6,6 +6,8 @@ require "pathname"
 require "toys/utils/xdg"
 
 describe Toys::Utils::XDG do
+  include Toys::TestHelper
+
   let(:root_dir) { Toys::Compat.absolute_path?("/usr") ? "/" : "c:" }
   let(:home_dir) { File.join(root_dir, "home") }
   let(:workspace_dir) { File.join(root_dir, "workspace") }
@@ -19,6 +21,14 @@ describe Toys::Utils::XDG do
   let(:default_state_home) { File.join(home_dir, ".local", "state") }
   let(:default_cache_home) { File.join(home_dir, ".cache") }
   let(:default_executable_home) { File.join(home_dir, ".local", "bin") }
+
+  it "can be loaded in isolation" do
+    result = isolate_ruby do |io|
+      io.puts "require 'toys/utils/xdg'"
+      io.puts "Toys::Utils::XDG.new.data_dirs"
+    end
+    assert result.success?
+  end
 
   describe "#data_home" do
     it "honors XDG_DATA_HOME" do

@@ -3,6 +3,7 @@
 require "digest"
 require "fileutils"
 require "json"
+require "toys/compat"
 require "toys/utils/exec"
 require "toys/utils/xdg"
 
