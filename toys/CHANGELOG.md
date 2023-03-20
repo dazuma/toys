@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.5 / 2023-03-20
+
+* FIXED: Rescue broken pipe errors by default when running a pager
+
 ### v0.14.4 / 2023-01-23
 
 * (No significant changes)
