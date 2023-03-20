@@ -34,12 +34,18 @@ module Toys
       #     executing commands, or `nil` (the default) to use a default.
       # @param fallback_io [IO] An IO-like object to write to if the pager is
       #     disabled. Defaults to `$stdout`.
+      # @param rescue_broken_pipes [boolean] If `true` (the default), broken
+      #     pipes are silently rescued. This prevents the exception from
+      #     propagating out if the pager is interrupted. Set this parameter to
+      #     `false` to disable this behavior.
       #
-      def initialize(command: true, exec_service: nil, fallback_io: nil)
+      def initialize(command: true, exec_service: nil, fallback_io: nil,
+                     rescue_broken_pipes: true)
         @command = command == true ? Pager.default_command : command
         @command ||= nil
         @exec_service = exec_service || Pager.default_exec_service
         @fallback_io = fallback_io || $stdout
+        @rescue_broken_pipes = rescue_broken_pipes
       end
 
       ##
@@ -60,7 +66,11 @@ module Toys
       def start
         if @command
           result = @exec_service.exec(@command, in: :controller) do |controller|
-            yield controller.in if controller.pid
+            begin
+              yield controller.in if controller.pid
+            rescue ::Errno::EPIPE => e
+              raise e unless @rescue_broken_pipes
+            end
           end
           return result.exit_code unless result.failed?
         end
@@ -100,6 +110,10 @@ module Toys
         #     executing commands, or `nil` (the default) to use a default.
         # @param fallback_io [IO] An IO-like object to write to if the pager is
         #     disabled. Defaults to `$stdout`.
+        # @param rescue_broken_pipes [boolean] If `true` (the default), broken
+        #     pipes are silently rescued. This prevents the exception from
+        #     propagating out if the pager is interrupted. Set this parameter to
+        #     `false` to disable this behavior.
         # @return [Integer] The exit code of the pager process.
         #
         # @example
@@ -107,8 +121,14 @@ module Toys
         #   Toys::Utils::Pager.start do |io|
         #     io.puts "A long string\n"
         #   end
-        def start(command: true, exec_service: nil, fallback_io: nil, &block)
-          pager = new(command: command, exec_service: exec_service, fallback_io: fallback_io)
+        #
+        def start(command: true,
+                  exec_service: nil,
+                  fallback_io: nil,
+                  rescue_broken_pipes: true,
+                  &block)
+          pager = new(command: command, exec_service: exec_service, fallback_io: fallback_io,
+                      rescue_broken_pipes: rescue_broken_pipes)
           pager.start(&block)
         end
 

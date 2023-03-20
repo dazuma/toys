@@ -8,6 +8,10 @@ module Toys
     # This mixin provides an instance of {Toys::Utils::Pager}, which invokes
     # an external pager for output.
     #
+    # You can also pass additional keyword arguments to the `include` directive
+    # to configure the pager object. These will be passed on to
+    # {Toys::Utils::Pager#initialize}.
+    #
     # @example
     #
     #   include :pager
@@ -44,13 +48,12 @@ module Toys
         self[KEY].start(&block)
       end
 
-      on_initialize do
+      on_initialize do |**opts|
         require "toys/utils/pager"
-        exec_service =
-          if defined?(::Toys::StandardMixins::Exec)
-            self[::Toys::StandardMixins::Exec::KEY]
-          end
-        self[KEY] = Utils::Pager.new(exec_service: exec_service)
+        if !opts.key?(:exec_service) && defined?(::Toys::StandardMixins::Exec)
+          opts[:exec_service] = self[::Toys::StandardMixins::Exec::KEY]
+        end
+        self[KEY] = Utils::Pager.new(**opts)
       end
     end
   end

@@ -48,4 +48,21 @@ describe Toys::Utils::Pager do
     assert_equal("ruby rox\n", out)
     assert_empty(fallback_io.string)
   end
+
+  it "returns the pager result code" do
+    skip if Toys::Compat.windows?
+    command = [::RbConfig.ruby, "-e", "exit(12)"]
+    code = Toys::Utils::Pager.start(command: command, fallback_io: fallback_io) do |io|
+      io.puts "ruby rox"
+    end
+    assert_equal(12, code)
+  end
+
+  it "catches broken pipes" do
+    skip if Toys::Compat.windows?
+    command = [::RbConfig.ruby, "-e", "$stdin.read(10); $stdin.close"]
+    Toys::Utils::Pager.start(command: command, fallback_io: fallback_io) do |io|
+      100_000.times { io.puts "hello ruby hello ruby" }
+    end
+  end
 end
