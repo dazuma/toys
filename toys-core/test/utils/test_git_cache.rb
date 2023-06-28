@@ -104,6 +104,19 @@ describe Toys::Utils::GitCache do
       assert_equal(file_name, content.strip)
     end
 
+    it "is resilient against broken symlinks" do
+      file_name = "broken.txt"
+      bad_target = "nonexistent.txt"
+      Dir.chdir(git_repo_dir) do
+        FileUtils.ln_s(bad_target, file_name)
+        exec_git("add", file_name)
+        exec_git("commit", "-m", "Add broken symlink")
+      end
+      dir = git_cache.get(local_remote)
+      content = File.readlink(File.join(dir, file_name))
+      assert_equal(bad_target, content)
+    end
+
     it "makes source files read-only" do
       file_name = "file1.txt"
       commit_file(file_name)

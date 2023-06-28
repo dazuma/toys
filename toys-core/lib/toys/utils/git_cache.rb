@@ -402,7 +402,7 @@ module Toys
         Array(remotes).map do |remote|
           dir = repo_base_dir_for(remote)
           if ::File.directory?(dir)
-            ::FileUtils.chmod_R("u+w", dir)
+            ::FileUtils.chmod_R("u+w", dir, force: true)
             ::FileUtils.rm_rf(dir)
             remote
           end
@@ -568,9 +568,9 @@ module Toys
         source_path = ::File.join(dir, sha)
         unless repo_lock.source_exists?(sha, path)
           ::FileUtils.mkdir_p(source_path)
-          ::FileUtils.chmod_R("u+w", source_path)
+          ::FileUtils.chmod_R("u+w", source_path, force: true)
           copy_from_repo(repo_path, source_path, sha, path)
-          ::FileUtils.chmod_R("a-w", source_path)
+          ::FileUtils.chmod_R("a-w", source_path, force: true)
         end
         repo_lock.access_source!(sha, path)
         path == "." ? source_path : ::File.join(source_path, path)
@@ -579,7 +579,7 @@ module Toys
       def copy_files(dir, sha, path, repo_lock, into)
         repo_path = ::File.join(dir, REPO_DIR_NAME)
         ::FileUtils.mkdir_p(into)
-        ::FileUtils.chmod_R("u+w", into)
+        ::FileUtils.chmod_R("u+w", into, force: true)
         Compat.dir_children(into).each { |child| ::FileUtils.rm_rf(::File.join(into, child)) }
         result = copy_from_repo(repo_path, into, sha, path)
         repo_lock.access_repo!
@@ -594,7 +594,7 @@ module Toys
             to_path = ::File.join(into, entry)
             unless ::File.exist?(to_path)
               from_path = ::File.join(repo_dir, entry)
-              ::FileUtils.cp_r(from_path, to_path)
+              ::FileUtils.copy_entry(from_path, to_path)
             end
           end
           into
@@ -603,7 +603,7 @@ module Toys
           unless ::File.exist?(to_path)
             from_path = ::File.join(repo_dir, path)
             ::FileUtils.mkdir_p(::File.dirname(to_path))
-            ::FileUtils.cp_r(from_path, to_path)
+            ::FileUtils.copy_entry(from_path, to_path)
           end
           to_path
         end
