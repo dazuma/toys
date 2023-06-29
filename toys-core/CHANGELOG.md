@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.6 / 2023-06-29
+
+* FIXED: Fixed a GitCache exception when loading a repository containing a broken symlink
+
 ### v0.14.5 / 2023-03-20
 
 * FIXED: Rescue broken pipe errors by default when running a pager
