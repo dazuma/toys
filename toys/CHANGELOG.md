@@ -2,7 +2,7 @@
 
 ### v0.14.6 / 2023-06-29
 
-* (No significant changes)
+* FIXED: Fixed a GitCache exception when loading a repository containing a broken symlink
 
 ### v0.14.5 / 2023-03-20
 
