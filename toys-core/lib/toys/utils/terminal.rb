@@ -104,7 +104,7 @@ module Toys
       # @return [String] String with styles removed
       #
       def self.remove_style_escapes(str)
-        str.gsub(/\e\[\d+(;\d+)*m/, "")
+        str.to_s.gsub(/\e\[\d+(;\d+)*m/, "")
       end
 
       ##
@@ -158,7 +158,7 @@ module Toys
       def write(str = "", *styles)
         @output_mutex.synchronize do
           begin
-            output&.write(apply_styles(str, *styles))
+            output&.write(apply_styles(str.to_s, *styles))
             output&.flush
           rescue ::IOError
             nil
@@ -200,7 +200,7 @@ module Toys
       # @return [self]
       #
       def puts(str = "", *styles)
-        str = "#{str}\n" unless str.end_with?("\n")
+        str = "#{str}\n" unless str.to_s.end_with?("\n")
         write(str, *styles)
       end
       alias say puts
@@ -240,7 +240,7 @@ module Toys
           trailing_text = default.nil? ? nil : "[#{default}]"
         end
         if trailing_text
-          ptext, pspaces, = prompt.partition(/\s+$/)
+          ptext, pspaces, = prompt.to_s.partition(/\s+$/)
           prompt = "#{ptext} #{trailing_text}#{pspaces}"
         end
         write(prompt, *styles)
@@ -307,13 +307,13 @@ module Toys
         return nil unless block_given?
         frame_length ||= DEFAULT_SPINNER_FRAME_LENGTH
         frames ||= DEFAULT_SPINNER_FRAMES
-        write(leading_text) unless leading_text.empty?
+        write(leading_text) unless leading_text.to_s.empty?
         spin = SpinDriver.new(self, frames, Array(style), frame_length)
         begin
           yield
         ensure
           spin.stop
-          write(final_text) unless final_text.empty?
+          write(final_text) unless final_text.to_s.empty?
         end
       end
 
@@ -377,7 +377,7 @@ module Toys
       def apply_styles(str, *styles)
         if styled
           prefix = escape_styles(*styles)
-          suffix = prefix.empty? || str.end_with?(CLEAR_CODE) ? "" : CLEAR_CODE
+          suffix = prefix.empty? || str.to_s.end_with?(CLEAR_CODE) ? "" : CLEAR_CODE
           "#{prefix}#{str}#{suffix}"
         else
           Terminal.remove_style_escapes(str)
