@@ -10,15 +10,23 @@ describe Toys::Utils::Gems do
   let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
   let(:exec_service) { Toys::Utils::Exec.new }
 
-  def setup_case(name, tmp_vendor: true, &block)
+  def setup_case(name, tmp_vendor: true, timeout: 60, &block)
     skip unless ::ENV["TOYS_TEST_INTEGRATION"]
     Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
+        old_path = ENV["BUNDLE_PATH"]
         if tmp_vendor
           ENV["BUNDLE_PATH"] = "tmp/vendor"
           FileUtils.rm_rf("tmp/vendor")
         end
-        Timeout.timeout(60, &block)
+        begin
+          Timeout.timeout(timeout, &block)
+        ensure
+          if tmp_vendor
+            ENV["BUNDLE_PATH"] = old_path
+            FileUtils.rm_rf("tmp/vendor")
+          end
+        end
       end
     end
   end
@@ -75,7 +83,7 @@ describe Toys::Utils::Gems do
     end
 
     it "preserves the original Gemfile.lock" do
-      setup_case("bundle-without-toys") do
+      setup_case("bundle-without-toys", timeout: 120) do
         exec_service.exec(["bundle", "install"], out: :null, err: :null)
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
         result = run_script
