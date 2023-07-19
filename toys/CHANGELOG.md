@@ -2,7 +2,7 @@
 
 ### v0.14.7 / 2023-07-19
 
-* (No significant changes)
+* FIXED: Fixed an exception when passing a non-string to puts in the terminal mixin
 
 ### v0.14.6 / 2023-06-29
 
