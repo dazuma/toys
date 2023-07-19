@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Toys::Acceptor
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Acceptor";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (A)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">Acceptor</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Toys::Acceptor
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/acceptor.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>An Acceptor validates and converts arguments. It is designed to be
+compatible with the OptionParser accept mechanism.</p>
+
+<p>First, an acceptor validates the argument via its
+<span class='object_link'><a href="Acceptor/Base.html#match-instance_method" title="Toys::Acceptor::Base#match (method)">Base#match</a></span> method. This method should determine whether
+the argument is valid, and return information that will help with
+conversion of the argument.</p>
+
+<p>Second, an acceptor converts the argument to its final form via the
+<span class='object_link'><a href="Acceptor/Base.html#convert-instance_method" title="Toys::Acceptor::Base#convert (method)">Base#convert</a></span> method.</p>
+
+<p>Finally, an acceptor has a name that may appear in help text for flags and
+arguments that use it.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Base</a></span>, <span class='object_link'><a href="Acceptor/Enum.html" title="Toys::Acceptor::Enum (class)">Enum</a></span>, <span class='object_link'><a href="Acceptor/Pattern.html" title="Toys::Acceptor::Pattern (class)">Pattern</a></span>, <span class='object_link'><a href="Acceptor/Range.html" title="Toys::Acceptor::Range (class)">Range</a></span>, <span class='object_link'><a href="Acceptor/Simple.html" title="Toys::Acceptor::Simple (class)">Simple</a></span>
+    
+  
+</p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="REJECT-constant" class="">REJECT =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A sentinel that may be returned from a function-based acceptor to
+indicate invalid input.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='op'>::</span><span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="DEFAULT_TYPE_DESC-constant" class="">DEFAULT_TYPE_DESC =
+          <div class="docstring">
+  <div class="discussion">
+    <p>The default type description.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>string</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT-constant" class="">DEFAULT =
+          <div class="docstring">
+  <div class="discussion">
+    <p>The default acceptor. Corresponds to the well-known acceptor for
+<code>Object</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='const'><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Base</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Acceptor/Base.html#initialize-instance_method" title="Toys::Acceptor::Base#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>type_desc:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>string</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>well_known_spec:</span> <span class='op'>::</span><span class='const'>Object</span><span class='rparen'>)</span></pre></dd>
+      
+        <dt id="INTEGER_CONVERTER-constant" class="">INTEGER_CONVERTER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A converter proc that handles integers. Useful in Simple and Range
+acceptors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='id identifier rubyid_proc'>proc</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='const'>Integer</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span> <span class='rbrace'>}</span></pre></dd>
+      
+        <dt id="FLOAT_CONVERTER-constant" class="">FLOAT_CONVERTER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A converter proc that handles floats. Useful in Simple and Range
+acceptors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='id identifier rubyid_proc'>proc</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='const'>Float</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span> <span class='rbrace'>}</span></pre></dd>
+      
+        <dt id="RATIONAL_CONVERTER-constant" class="">RATIONAL_CONVERTER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A converter proc that handles rationals. Useful in Simple and Range
+acceptors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='id identifier rubyid_proc'>proc</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>nil</span> <span class='op'>:</span> <span class='const'>Rational</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span> <span class='rbrace'>}</span></pre></dd>
+      
+        <dt id="NUMERIC_CONVERTER-constant" class="">NUMERIC_CONVERTER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A converter proc that handles any numeric value. Useful in Simple and
+Range acceptors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>/</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+    <span class='const'>Rational</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span>
+  <span class='kw'>elsif</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>||</span> <span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>e</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_s'>s</span> <span class='op'>!~</span> <span class='tstring'><span class='regexp_beg'>/</span><span class='tstring_content'>\A-?0x</span><span class='regexp_end'>/</span></span><span class='rparen'>)</span>
+    <span class='const'>Float</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='const'>Integer</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre></dd>
+      
+        <dt id="TRUE_STRINGS-constant" class="">TRUE_STRINGS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A set of strings that are considered true for boolean acceptors.
+Currently set to <code>[&quot;+&quot;, &quot;true&quot;, &quot;yes&quot;]</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>+</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>true</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>yes</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="FALSE_STRINGS-constant" class="">FALSE_STRINGS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A set of strings that are considered false for boolean acceptors.
+Currently set to <code>[&quot;-&quot;, &quot;false&quot;, &quot;no&quot;, &quot;nil&quot;]</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>-</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>false</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>no</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>nil</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="BOOLEAN_CONVERTER-constant" class="">BOOLEAN_CONVERTER =
+          <div class="docstring">
+  <div class="discussion">
+    <p>A converter proc that handles boolean strings. Recognizes <span class='object_link'><a href="#TRUE_STRINGS-constant" title="Toys::Acceptor::TRUE_STRINGS (constant)">TRUE_STRINGS</a></span>
+and <span class='object_link'><a href="#FALSE_STRINGS-constant" title="Toys::Acceptor::FALSE_STRINGS (constant)">FALSE_STRINGS</a></span>. Useful for Simple acceptors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_s'>s</span><span class='op'>|</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+    <span class='const'><span class='object_link'><a href="#REJECT-constant" title="Toys::Acceptor::REJECT (constant)">REJECT</a></span></span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_s'>s</span> <span class='op'>=</span> <span class='id identifier rubyid_s'>s</span><span class='period'>.</span><span class='id identifier rubyid_downcase'>downcase</span>
+    <span class='kw'>if</span> <span class='const'><span class='object_link'><a href="#TRUE_STRINGS-constant" title="Toys::Acceptor::TRUE_STRINGS (constant)">TRUE_STRINGS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_t'>t</span><span class='op'>|</span> <span class='id identifier rubyid_t'>t</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+      <span class='kw'>true</span>
+    <span class='kw'>elsif</span> <span class='const'><span class='object_link'><a href="#FALSE_STRINGS-constant" title="Toys::Acceptor::FALSE_STRINGS (constant)">FALSE_STRINGS</a></span></span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_f'>f</span><span class='op'>|</span> <span class='id identifier rubyid_f'>f</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='id identifier rubyid_s'>s</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+      <span class='kw'>false</span>
+    <span class='kw'>else</span>
+      <span class='const'><span class='object_link'><a href="#REJECT-constant" title="Toys::Acceptor::REJECT (constant)">REJECT</a></span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#create-class_method" title="create (class method)">.<strong>create</strong>(spec = nil, **options, &amp;block)  &#x21d2; Toys::Acceptor::Base, Proc </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create an acceptor from a variety of specification formats.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_well_known-class_method" title="lookup_well_known (class method)">.<strong>lookup_well_known</strong>(spec)  &#x21d2; Toys::Acceptor::Base<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Lookup a standard acceptor name recognized by OptionParser.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="create-class_method">
+  
+    .<strong>create</strong>(spec = nil, **options, &amp;block)  &#x21d2; <tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>, <tt>Proc</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create an acceptor from a variety of specification formats. The
+acceptor is constructed from the given specification object and/or the
+given block. Additionally, some acceptors can take an optional type
+description string used to describe the type of data in online help.</p>
+
+<p>Recognized specs include:</p>
+
+<ul>
+<li><p>Any well-known acceptor recognized by OptionParser, such as
+<code>Integer</code>, <code>Array</code>, or <code>OptionParser::DecimalInteger</code>. Any block
+and type description you provide are ignored.</p></li>
+<li><p>Any <strong>regular expression</strong>. The returned acceptor validates only if
+the regex matches the <em>entire string parameter</em>.</p>
+
+<p>You can also provide an optional conversion function as a block. If
+provided, the block must take a variable number of arguments, the
+first being the matched string and the remainder being the captures
+from the regular expression. It should return the converted object
+that will be stored in the context data. If you do not provide a
+block, no conversion takes place, and the original string is used.</p></li>
+<li><p>An <strong>array</strong> of possible values. The acceptor validates if the
+string parameter matches the <em>string form</em> of one of the array
+elements (i.e. the results of calling <code>to_s</code> on the element.)</p>
+
+<p>An array acceptor automatically converts the string parameter to
+the actual array element that it matched. For example, if the
+symbol <code>:foo</code> is in the array, it will match the string <code>&quot;foo&quot;</code>,
+and then store the symbol <code>:foo</code> in the tool data. You may not
+further customize the conversion function; any block is ignored.</p></li>
+<li><p>A <strong>range</strong> of possible values. The acceptor validates if the
+string parameter, after conversion to the range type, lies within
+the range. The final value stored in context data is the converted
+value. For numeric ranges, conversion is provided, but if the range
+has a different type, you must provide the conversion function as
+a block.</p></li>
+<li><p>A <strong>function</strong> as a Proc (where the block is ignored) or a block
+(if the spec is nil). This function performs <em>both</em> validation and
+conversion. It should take the string parameter as its argument,
+and it must either return the object that should be stored in the
+tool data, or raise an exception (descended from <code>StandardError</code>)
+to indicate that the string parameter is invalid. You may also
+return the sentinel value <span class='object_link'><a href="#REJECT-constant" title="Toys::Acceptor::REJECT (constant)">REJECT</a></span> to indicate that
+the string is invalid.</p></li>
+<li><p>The value <code>nil</code> or <code>:default</code> with no block, to indicate the
+default pass-through acceptor <span class='object_link'><a href="#DEFAULT-constant" title="Toys::Acceptor::DEFAULT (constant)">DEFAULT</a></span>. Any type
+description you provide is ignored.</p></li>
+</ul>
+
+<p>Additional options:</p>
+
+<ul>
+<li> <code>:type_desc</code> (String) The type description for interpolating into
+help text. Ignored if the spec indicates the default acceptor or a
+well-known acceptor.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>spec</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>See the description for recognized values.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Additional options to pass to the acceptor.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>See the description for recognized forms.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>, <tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/acceptor.rb', line 543</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_create'>create</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_well_known'>well_known</span> <span class='op'>=</span> <span class='id identifier rubyid_lookup_well_known'>lookup_well_known</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_well_known'>well_known</span> <span class='kw'>if</span> <span class='id identifier rubyid_well_known'>well_known</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_spec'>spec</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_options'>options</span> <span class='op'>=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_spec'>spec</span> <span class='op'>=</span> <span class='kw'>nil</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_spec'>spec</span> <span class='op'>||=</span> <span class='id identifier rubyid_options'>options</span><span class='period'>.</span><span class='id identifier rubyid_delete'>delete</span><span class='lparen'>(</span><span class='symbol'>:&quot;&quot;</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_internal_create'>internal_create</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='comma'>,</span> <span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_well_known-class_method">
+  
+    .<strong>lookup_well_known</strong>(spec)  &#x21d2; <tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Lookup a standard acceptor name recognized by OptionParser.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>spec</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A well-known acceptor specification, such as
+<code>String</code>, <code>Integer</code>, <code>Array</code>, <code>OptionParser::DecimalInteger</code>, etc.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The corresponding Acceptor object</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the given standard acceptor was not recognized.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+472
+473
+474
+475
+476
+477
+478</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/acceptor.rb', line 472</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_well_known'>lookup_well_known</span><span class='lparen'>(</span><span class='id identifier rubyid_spec'>spec</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_standard_well_knowns'>standard_well_knowns</span><span class='lbracket'>[</span><span class='id identifier rubyid_spec'>spec</span><span class='rbracket'>]</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>&amp;&amp;</span> <span class='kw'>defined?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>OptionParser</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_optparse_well_knowns'>optparse_well_knowns</span><span class='lbracket'>[</span><span class='id identifier rubyid_spec'>spec</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_result'>result</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jul 19 02:12:43 2023 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-2.7.8).
+</div>
+
+    </div>
+  </body>
+</html>
