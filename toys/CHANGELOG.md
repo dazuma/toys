@@ -1,5 +1,9 @@
 # Release History
 
+### v0.14.7 / 2023-07-19
+
+* FIXED: Fixed an exception when passing a non-string to puts in the terminal mixin
+
 ### v0.14.6 / 2023-06-29
 
 * FIXED: Fixed a GitCache exception when loading a repository containing a broken symlink
