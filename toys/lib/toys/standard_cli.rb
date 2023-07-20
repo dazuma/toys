@@ -103,6 +103,8 @@ module Toys
     def initialize(custom_paths: nil,
                    include_builtins: true,
                    cur_dir: nil)
+      require "toys/utils/standard_ui"
+      ui = Toys::Utils::StandardUI.new
       super(
         executable_name: EXECUTABLE_NAME,
         config_dir_name: CONFIG_DIR_NAME,
@@ -114,7 +116,8 @@ module Toys
         lib_dir_name: LIB_DIR_NAME,
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
-        template_lookup: default_template_lookup
+        template_lookup: default_template_lookup,
+        **ui.cli_args
       )
       if custom_paths
         Array(custom_paths).each { |path| add_config_path(path) }

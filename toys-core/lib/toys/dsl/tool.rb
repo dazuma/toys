@@ -1405,7 +1405,7 @@ module Toys
       #
       # You may want to do this if your method needs access to local variables
       # in the lexical scope. However, it is often more convenient to use
-      # {#static} to set the value in the context.)
+      # {#static} to set the value in the context.
       #
       # ### Example
       #
@@ -1430,9 +1430,12 @@ module Toys
       ##
       # Specify how to handle interrupts.
       #
-      # You may pass a block to be called, or the name of a method to call. In
-      # either case, the block or method should take one argument, the
-      # Interrupt exception that was raised.
+      # You can provide either a block to be called, a Proc to be called, or
+      # the name of a method to be called. In each case, the block, Proc, or
+      # method can optionally take one argument, the Interrupt exception that
+      # was raised.
+      #
+      # Note: this is equivalent to `on_signal("SIGINT")`.
       #
       # ### Example
       #
@@ -1458,17 +1461,49 @@ module Toys
       end
 
       ##
-      # Specify how to handle usage errors.
+      # Specify how to handle the given signal.
       #
-      # You may pass a block to be called, or the name of a method to call. In
-      # either case, the block or method should take one argument, the array of
-      # usage errors reported.
+      # You can provide either a block to be called, a Proc to be called, or
+      # the name of a method to be called. In each case, the block, Proc, or
+      # method can optionally take one argument, the SignalException that was
+      # raised.
       #
       # ### Example
       #
-      # This tool runs even if a usage error is encountered. You can find info
-      # on the errors from {Toys::Context::Key::USAGE_ERRORS},
-      # {Toys::Context::Key::UNMATCHED_ARGS}, and similar keys.
+      #     tool "foo" do
+      #       def run
+      #         sleep 10
+      #       end
+      #       on_signal("QUIT") do |e|
+      #         puts "Signal caught: #{e.signo}."
+      #       end
+      #     end
+      #
+      # @param signal [Integer,String,Symbol] The signal name or number
+      # @param handler [Proc,Symbol,nil] The signal callback proc or method
+      #     name. Pass nil to disable signal handling.
+      # @param block [Proc] The signal callback as a block.
+      # @return [self]
+      #
+      def on_signal(signal, handler = nil, &block)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        return self if cur_tool.nil?
+        cur_tool.set_signal_handler(signal, handler || block)
+        self
+      end
+
+      ##
+      # Specify how to handle usage errors.
+      #
+      # You can provide either a block to be called, a Proc to be called, or
+      # the name of a method to be called. In each case, the block, Proc, or
+      # method can optionally take one argument, the array of usage errors
+      # reported.
+      #
+      # ### Example
+      #
+      # This tool runs even if a usage error is encountered, by setting the
+      # `run` method as the usage error handler.
       #
       #     tool "foo" do
       #       def run
@@ -1493,7 +1528,7 @@ module Toys
       # Specify that the given module should be mixed into this tool, and its
       # methods made available when running the tool.
       #
-      # You may provide either a module, the string name of a mixin that you
+      # You can provide either a module, the string name of a mixin that you
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
       #
@@ -1528,7 +1563,7 @@ module Toys
       ##
       # Determine if the given module/mixin has already been included.
       #
-      # You may provide either a module, the string name of a mixin that you
+      # You can provide either a module, the string name of a mixin that you
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
       #

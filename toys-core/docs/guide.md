@@ -188,9 +188,8 @@ the tool source where it was triggered. This logic is handled by the
 The CLI can be configured with an error handler that responds to any exceptions
 raised during execution. An error handler is simply a callable object (such as
 a `Proc`) that takes an exception as an argument. The provided
-{Toys::CLI::DefaultErrorHandler} class provides the default behavior of the
-normal `toys` CLI, but you can provide any object that duck types the `call`
-method.
+{Toys::Utils::StandardUI} class provides the default behavior of the normal
+`toys` CLI, but you can provide any object that duck types the `call` method.
 
 #### Multiple runs
 
