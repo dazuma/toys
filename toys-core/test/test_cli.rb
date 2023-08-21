@@ -3,6 +3,7 @@
 require "helper"
 
 require "toys/utils/exec"
+require "toys/utils/standard_ui"
 
 describe Toys::CLI do
   let(:logger_io) { ::StringIO.new }
@@ -12,13 +13,15 @@ describe Toys::CLI do
     end
   }
   let(:executable_name) { "toys" }
-  let(:error_io) { ::StringIO.new }
-  let(:error_handler) { Toys::CLI::DefaultErrorHandler.new(output: error_io) }
   let(:cli) {
     Toys::CLI.new(
-      executable_name: executable_name, logger: logger, middleware_stack: [],
-      error_handler: error_handler, index_file_name: ".toys.rb",
-      data_dir_name: ".data", lib_dir_name: ".lib", extra_delimiters: ":"
+      executable_name: executable_name,
+      logger: logger,
+      middleware_stack: [],
+      index_file_name: ".toys.rb",
+      data_dir_name: ".data",
+      lib_dir_name: ".lib",
+      extra_delimiters: ":"
     )
   }
 
@@ -34,26 +37,16 @@ describe Toys::CLI do
       assert_equal(3, cli.run("foo"))
     end
 
-    it "handles an error" do
-      cli.add_config_block do
-        tool "foo" do
-          def run
-            raise "whoops"
-          end
-        end
-      end
-      assert_equal(1, cli.run("foo"))
-      assert_match(/RuntimeError: whoops/, error_io.string)
-    end
-
     it "handles no script defined" do
       cli.add_config_block do
         tool "foo" do
           # Empty tool
         end
       end
-      assert_equal(126, cli.run("foo"))
-      assert_match(/No implementation for tool/, error_io.string)
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo")
+      end
+      assert_kind_of(Toys::NotRunnableError, error.cause)
     end
 
     it "can disable argument parsing" do
@@ -67,7 +60,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run("foo", "baz", "--bar"), error_io.string)
+      cli.run("foo", "baz", "--bar")
     end
 
     it "runs initializer at the beginning" do
@@ -81,7 +74,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run("foo"), error_io.string)
+      cli.run("foo")
     end
 
     it "makes context fields available via convenience methods" do
@@ -101,7 +94,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
+      cli.run(["foo", "hello", "-a"])
     end
 
     it "makes context fields available via get" do
@@ -121,7 +114,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
+      cli.run(["foo", "hello", "-a"])
     end
 
     it "makes options available via get" do
@@ -138,7 +131,7 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(0, cli.run(["foo", "hello", "-a"]), error_io.string)
+      cli.run(["foo", "hello", "-a"])
     end
 
     it "supports sub-runs" do
@@ -201,17 +194,110 @@ describe Toys::CLI do
     end
   end
 
-  describe "interrupt handling" do
-    it "uses the default interrupt handler" do
+  describe "error handling" do
+    it "raises the error by default" do
       cli.add_config_block do
         tool "foo" do
           def run
-            raise ::Interrupt
+            raise "whoops"
           end
         end
       end
-      assert_equal(130, cli.run("foo"))
-      assert_match(/INTERRUPT/, error_io.string)
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo")
+      end
+      assert_equal("whoops", error.cause.message)
+    end
+
+    it "supports a custom handler that receives definition errors" do
+      my_handler = proc do |error|
+        assert_nil(error.tool_name)
+        assert_includes(error.config_path, "/errors/definition.rb")
+        assert_kind_of(NameError, error.cause)
+        9
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
+      assert_equal(9, my_cli.run("definition"))
+    end
+
+    it "supports a custom handler that receives runtime errors" do
+      my_handler = proc do |error|
+        assert_equal(["runtime", "hello"], error.tool_name)
+        assert_includes(error.config_path, "/errors/runtime.rb")
+        assert_kind_of(NameError, error.cause)
+        10
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
+      assert_equal(10, my_cli.run("runtime", "hello"))
+    end
+
+    it "supports a custom handler that receives signals" do
+      my_handler = proc do |error|
+        cause = error.cause
+        assert_kind_of(SignalException, cause)
+        assert_equal(4, cause.signo)
+        12
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "foo" do
+          def run
+            raise SignalException, 4
+          end
+        end
+      end
+      assert_equal(12, my_cli.run("foo"))
+    end
+  end
+
+  describe "signal_handling" do
+    it "raises the signal by default" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise SignalException, 4
+          end
+        end
+      end
+      error = assert_raises(SignalException) do
+        cli.run("foo")
+      end
+      assert_equal(4, error.signo)
+    end
+
+    it "executes a signal handler block that matches the signal" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise SignalException, 15
+          end
+
+          on_signal(15) do
+            exit(16)
+          end
+        end
+      end
+      assert_equal(16, cli.run("foo"))
+    end
+
+    it "bypasses a signal handler block that doesn't match the signal" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise SignalException, 15
+          end
+
+          on_signal(4) do
+            exit(2)
+          end
+        end
+      end
+      error = assert_raises(SignalException) do
+        cli.run("foo")
+      end
+      assert_equal(15, error.signo)
     end
 
     it "supports an interrupt block with no argument" do
@@ -241,8 +327,9 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(130, cli.run("foo"))
-      assert_match(/INTERRUPT/, error_io.string)
+      assert_raises(Interrupt) do
+        cli.run("foo")
+      end
     end
 
     it "supports an interrupt block with an argument" do
@@ -316,17 +403,20 @@ describe Toys::CLI do
   end
 
   describe "usage error handling" do
-    it "uses the default handler" do
+    it "passes the exception out by default" do
       cli.add_config_block do
         tool "foo" do
           def run; end
         end
       end
-      assert_equal(2, cli.run("foo", "--bar"))
-      assert_match(/Flag "--bar" is not recognized/, error_io.string)
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo", "--bar")
+      end
+      usage_errors = error.cause.usage_errors
+      assert(usage_errors.any? { |ue| ue.message == "Flag \"--bar\" is not recognized." })
     end
 
-    it "sets the default handler" do
+    it "supports setting the handler back to the default" do
       cli.add_config_block do
         tool "foo" do
           on_usage_error :run
@@ -335,8 +425,11 @@ describe Toys::CLI do
           def run; end
         end
       end
-      assert_equal(2, cli.run("foo", "--bar"))
-      assert_match(/Flag "--bar" is not recognized/, error_io.string)
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo", "--bar")
+      end
+      usage_errors = error.cause.usage_errors
+      assert(usage_errors.any? { |ue| ue.message == "Flag \"--bar\" is not recognized." })
     end
 
     it "supports redirecting back to run" do
@@ -440,7 +533,10 @@ describe Toys::CLI do
           end
         end
       end
-      assert_equal(2, cli.run("foo", "--abc"))
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo", "--abc")
+      end
+      assert_equal('Flag "--abc" is not recognized.', error.cause.usage_errors.first.message)
     end
   end
 
@@ -480,30 +576,6 @@ describe Toys::CLI do
       assert_same(logger, cli.logger_factory.call)
       child = cli.child(logger: logger2)
       assert_same(logger2, child.logger_factory.call)
-    end
-  end
-
-  describe "errors" do
-    before do
-      cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
-    end
-
-    it "reports errors during definition" do
-      assert_equal(1, cli.run("definition"))
-      error_string = error_io.string
-      assert_match(/NameError:/, error_string)
-      assert_match(/#<Class id=\w+ tool="definition hello">/, error_string)
-      refute_match(/while executing tool/, error_string)
-      assert_match(%r{n config file: [^\n]+/errors/definition\.rb:4}, error_string)
-    end
-
-    it "reports errors during runtime" do
-      assert_equal(1, cli.run("runtime", "hello"))
-      error_string = error_io.string
-      assert_match(/NameError:/, error_string)
-      assert_match(/#<Toys::Context id=\w+ tool="runtime hello">/, error_string)
-      assert_match(/while executing tool: "runtime hello"/, error_string)
-      assert_match(%r{n config file: [^\n]+/errors/runtime\.rb:5}, error_string)
     end
   end
 end

@@ -273,7 +273,7 @@ module Toys
       @includes_modules = false
       @custom_context_directory = nil
 
-      @interrupt_handler = nil
+      @signal_handlers = {}
       @usage_error_handler = nil
       @delegate_target = nil
 
@@ -454,16 +454,13 @@ module Toys
     attr_reader :completion
 
     ##
-    # The interrupt handler.
-    #
-    # @return [Proc] The interrupt handler proc
-    # @return [Symbol] The name of a method to call
-    # @return [nil] if there is no interrupt handler
-    #
-    attr_reader :interrupt_handler
-
-    ##
     # The usage error handler.
+    #
+    # This handler is called when at least one usage error is detected during
+    # argument parsing, and is called instead of the `run` method. It can be
+    # specified as a Proc, or a Symbol indicating a method to call. It
+    # optionally takes an array of {Toys::ArgParser::UsageError} as the sole
+    # argument.
     #
     # @return [Proc] The usage error handler proc
     # @return [Symbol] The name of a method to call
@@ -499,6 +496,34 @@ module Toys
     end
 
     ##
+    # Return the signal handler for the given signal.
+    #
+    # This handler is called when the given signal is received, immediately
+    # taking over the execution as if it were the new `run` method. The signal
+    # handler can be specified as a Proc, or a Symbol indicating a method to
+    # call. It optionally takes the `SignalException` as the sole argument.
+    #
+    # @param signal [Integer,String,Symbol] The signal number or name
+    # @return [Proc] The signal handler proc
+    # @return [Symbol] The name of a method to call
+    # @return [nil] if there is no handler for the given signal
+    #
+    def signal_handler(signal)
+      @signal_handlers[canonicalize_signal(signal)]
+    end
+
+    ##
+    # Return the interrupt handler. This is equivalent to `signal_handler(2)`.
+    #
+    # @return [Proc] The interrupt signal handler proc
+    # @return [Symbol] The name of a method to call
+    # @return [nil] if there is no handler for the interrupt signals
+    #
+    def interrupt_handler
+      signal_handler(2)
+    end
+
+    ##
     # Returns true if this tool is a root tool.
     # @return [Boolean]
     #
@@ -515,11 +540,24 @@ module Toys
     end
 
     ##
-    # Returns true if this tool handles interrupts.
+    # Returns true if this tool handles interrupts. This is equivalent to
+    # `handles_signal?(2)`.
+    #
     # @return [Boolean]
     #
     def handles_interrupts?
-      !interrupt_handler.nil?
+      handles_signal?(2)
+    end
+
+    ##
+    # Returns true if this tool handles the given signal.
+    #
+    # @param signal [Integer,String,Symbol] The signal number or name
+    # @return [Boolean]
+    #
+    def handles_signal?(signal)
+      signal = canonicalize_signal(signal)
+      !@signal_handlers[signal].nil?
     end
 
     ##
@@ -1147,7 +1185,8 @@ module Toys
     end
 
     ##
-    # Set the run handler block
+    # Set the run handler as a Proc. This simply defines the `run` method in
+    # the tool class.
     #
     # @param proc [Proc] The runnable block
     #
@@ -1159,20 +1198,43 @@ module Toys
     end
 
     ##
-    # Set the interrupt handler.
+    # Set the interrupt handler. This is equivalent to calling
+    # {#set_signal_handler} for the `SIGINT` signal.
     #
-    # @param handler [Proc,Symbol] The interrupt handler
+    # @param handler [Proc,Symbol] The interrupt signal handler
     #
     def interrupt_handler=(handler)
+      set_signal_handler(2, handler)
+    end
+
+    ##
+    # Set the handler for the given signal.
+    #
+    # This handler is called when the given signal is received, immediately
+    # taking over the execution as if it were the new `run` method. The signal
+    # handler can be specified as a Proc, or a Symbol indicating a method to
+    # call. It optionally takes the `SignalException` as the sole argument.
+    #
+    # @param signal [Integer,String,Symbol] The signal number or name
+    # @param handler [Proc,Symbol] The signal handler
+    #
+    def set_signal_handler(signal, handler)
       check_definition_state(is_method: true)
       if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
-        raise ToolDefinitionError, "Interrupt handler must be a proc or symbol"
+        raise ToolDefinitionError, "Signal handler must be a proc or symbol"
       end
-      @interrupt_handler = handler
+      signal = canonicalize_signal(signal)
+      @signal_handlers[signal] = handler
     end
 
     ##
     # Set the usage error handler.
+    #
+    # This handler is called when at least one usage error is detected during
+    # argument parsing, and is called instead of the `run` method. It can be
+    # specified as a Proc, or a Symbol indicating a method to call. It
+    # optionally takes an array of {Toys::ArgParser::UsageError} as the sole
+    # argument.
     #
     # @param handler [Proc,Symbol] The usage error handler
     #
@@ -1374,14 +1436,14 @@ module Toys
           name = walk_context[::Toys::Context::Key::TOOL_NAME]
           path << name.join(" ").inspect
           if name == target
-            raise "Delegation loop: #{path.join(' <- ')}"
+            raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}"
           end
           walk_context = walk_context[::Toys::Context::Key::DELEGATED_FROM]
         end
         cli = self[::Toys::Context::Key::CLI]
         cli.loader.load_for_prefix(target)
         unless cli.loader.tool_defined?(target)
-          raise "Delegate target not found: \"#{target.join(' ')}\""
+          raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
         end
         exit(cli.run(target + self[::Toys::Context::Key::ARGS], delegated_from: self))
       end
@@ -1399,6 +1461,19 @@ module Toys
       completion = lookup_completion(name)
       raise ToolDefinitionError, "Unknown completion: #{name.inspect}" if completion.nil?
       completion
+    end
+
+    def canonicalize_signal(signal)
+      case signal
+      when ::String, ::Symbol
+        sigstr = signal.to_s
+        sigstr = sigstr[3..-1] if sigstr.start_with?("SIG")
+        signo = ::Signal.list[sigstr]
+        return signo if signo
+      when ::Integer
+        return signal if ::Signal.signame(signal)
+      end
+      raise ::ArgumentError, "Unknown signal: #{signal}"
     end
   end
 end

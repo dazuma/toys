@@ -72,7 +72,7 @@ module Toys
     #      *  `preload_dir_name`: Name of preload directories in tool directories
     #      *  `data_dir_name`: Name of data directories in tool directories
     #
-    # @param logger [Logger] A global logger to use for all tools. This may be
+    # @param logger [Logger] A global logger to use for all tools. This can be
     #     set if the CLI will call at most one tool at a time. However, it will
     #     behave incorrectly if CLI might run multiple tools at the same time
     #     with different verbosity settings (since the logger cannot have
@@ -80,19 +80,21 @@ module Toys
     #     global logger, but use the `logger_factory` parameter instead.
     # @param logger_factory [Proc] A proc that takes a {Toys::ToolDefinition}
     #     as an argument, and returns a `Logger` to use when running that tool.
-    #     Optional. If not provided (and no global logger is set), CLI will use
-    #     a default factory that writes generates loggers writing formatted
-    #     output to `STDERR`, as defined by {Toys::CLI.default_logger_factory}.
+    #     Optional. If not provided (and no global logger is set),
+    #     {Toys::CLI.default_logger_factory} is called to get a basic default.
     # @param base_level [Integer] The logger level that should correspond
     #     to zero verbosity.
     #     Optional. If not provided, defaults to the current level of the
     #     logger (which is often `Logger::WARN`).
-    # @param error_handler [Proc,nil] A proc that is called when an error is
-    #     caught. The proc should take a {Toys::ContextualError} argument and
-    #     report the error. It should return an exit code (normally nonzero).
-    #     Optional. If not provided, defaults to an instance of
-    #     {Toys::CLI::DefaultErrorHandler}, which displays an error message to
-    #     `STDERR`.
+    # @param error_handler [Proc,nil] A proc that is called when an unhandled
+    #     exception (a normal exception subclassing `StandardError`, an error
+    #     loading a toys config file subclassing `SyntaxError`, or an unhandled
+    #     signal subclassing `SignalException`) is detected. The proc should
+    #     take a {Toys::ContextualError}, whose cause is the unhandled
+    #     exception, as the sole argument, and report the error. It should
+    #     return an exit code (normally nonzero) appropriate to the error.
+    #     Optional. If not provided, {Toys::CLI.default_error_handler} is
+    #     called to get a basic default handler.
     # @param executable_name [String] The executable name displayed in help
     #     text. Optional. Defaults to the ruby program name.
     #
@@ -101,9 +103,8 @@ module Toys
     #     characters are period, colon, and slash.
     # @param completion [Toys::Completion::Base] A specifier for shell tab
     #     completion for the CLI as a whole.
-    #     Optional. If not provided, defaults to an instance of
-    #     {Toys::CLI::DefaultCompletion}, which delegates completion to the
-    #     relevant tool.
+    #     Optional. If not provided, {Toys::CLI.default_completion} is called
+    #     to get a default completion that delegates to the tool.
     #
     # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
     #     middleware that will be used by default for all tools.
@@ -198,8 +199,8 @@ module Toys
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
       @middleware_lookup = middleware_lookup || CLI.default_middleware_lookup
       @template_lookup = template_lookup || CLI.default_template_lookup
-      @error_handler = error_handler || DefaultErrorHandler.new
-      @completion = completion || DefaultCompletion.new
+      @error_handler = error_handler || CLI.default_error_handler
+      @completion = completion || CLI.default_completion
       @logger = logger
       @logger_factory = logger ? proc { logger } : logger_factory || CLI.default_logger_factory
       @base_level = base_level
@@ -463,7 +464,7 @@ module Toys
                                 delegated_from: delegated_from)
         execute_tool(tool, context, &:run)
       end
-    rescue ContextualError, ::Interrupt => e
+    rescue ContextualError => e
       @error_handler.call(e).to_i
     end
 
@@ -484,102 +485,6 @@ module Toys
       context = build_context(tool, remaining)
       execute_tool(tool, context) do |ctx|
         ctx.exit(yield ctx)
-      end
-    end
-
-    ##
-    # A basic error handler that prints out captured errors to a stream or
-    # a logger.
-    #
-    class DefaultErrorHandler
-      ##
-      # Create an error handler.
-      #
-      # @param output [IO,nil] Where to write errors. Default is `$stderr`.
-      #
-      def initialize(output: $stderr)
-        require "toys/utils/terminal"
-        @terminal = Utils::Terminal.new(output: output)
-      end
-
-      ##
-      # The error handler routine. Prints out the error message and backtrace,
-      # and returns the correct result code.
-      #
-      # @param error [Exception] The error that occurred.
-      # @return [Integer] The result code for the execution.
-      #
-      def call(error)
-        cause = error
-        case error
-        when ContextualError
-          cause = error.cause
-          @terminal.puts(cause_string(cause))
-          @terminal.puts(context_string(error), :bold)
-        when ::Interrupt
-          @terminal.puts
-          @terminal.puts("INTERRUPTED", :bold)
-        else
-          @terminal.puts(cause_string(error))
-        end
-        exit_code_for(cause)
-      end
-
-      private
-
-      def exit_code_for(error)
-        case error
-        when ArgParsingError
-          2
-        when NotRunnableError
-          126
-        when ::Interrupt
-          130
-        else
-          1
-        end
-      end
-
-      def cause_string(cause)
-        lines = ["#{cause.class}: #{cause.message}"]
-        cause.backtrace.each_with_index.reverse_each do |bt, i|
-          lines << "    #{(i + 1).to_s.rjust(3)}: #{bt}"
-        end
-        lines.join("\n")
-      end
-
-      def context_string(error)
-        lines = [
-          error.banner || "Unexpected error!",
-          "    #{error.cause.class}: #{error.cause.message}",
-        ]
-        if error.config_path
-          lines << "    in config file: #{error.config_path}:#{error.config_line}"
-        end
-        if error.tool_name
-          lines << "    while executing tool: #{error.tool_name.join(' ').inspect}"
-          if error.tool_args
-            lines << "    with arguments: #{error.tool_args.inspect}"
-          end
-        end
-        lines.join("\n")
-      end
-    end
-
-    ##
-    # A Completion that implements the default algorithm for a CLI. This
-    # algorithm simply determines the tool and uses its completion.
-    #
-    class DefaultCompletion < Completion::Base
-      ##
-      # Returns candidates for the current completion.
-      #
-      # @param context [Toys::Completion::Context] the current completion
-      #     context including the string fragment.
-      # @return [Array<Toys::Completion::Candidate>] an array of candidates
-      #
-      def call(context)
-        context.tool.completion.call(context)
       end
     end
 
@@ -637,56 +542,43 @@ module Toys
       end
 
       ##
-      # Returns a logger factory that generates loggers that write to stderr.
-      # All loggers generated by this factory share a single
-      # {Toys::Utils::Terminal}, so log entries may interleave but will not
-      # interrupt one another.
+      # Returns a bare-bones error handler that takes simply reraises the
+      # error. If the original error (the cause of the {Toys::ContextualError})
+      # was a `SignalException` (or a subclass such as `Interrupted`), that
+      # `SignalException` itself is reraised so that the Ruby VM has a chance
+      # to handle it. Otherwise, for any other error, the
+      # {Toys::ContextualError} is reraised.
+      #
+      # @return [Proc]
+      #
+      def default_error_handler
+        proc do |error|
+          cause = error.cause
+          raise cause.is_a?(::SignalException) ? cause : error
+        end
+      end
+
+      ##
+      # Returns a default logger factory that generates simple loggers that
+      # write to STDERR.
       #
       # @return [Proc]
       #
       def default_logger_factory
-        require "toys/utils/terminal"
-        shared_terminal = Utils::Terminal.new(output: $stderr)
         proc do
-          logger = ::Logger.new(shared_terminal)
-          logger.formatter = proc do |severity, time, _progname, msg|
-            msg_str =
-              case msg
-              when ::String
-                msg
-              when ::Exception
-                "#{msg.message} (#{msg.class})\n" << (msg.backtrace || []).join("\n")
-              else
-                msg.inspect
-              end
-            format_log(shared_terminal, time, severity, msg_str)
-          end
+          logger = ::Logger.new($stderr)
           logger.level = ::Logger::WARN
           logger
         end
       end
 
-      private
-
-      def format_log(terminal, time, severity, msg)
-        timestr = time.strftime("%Y-%m-%d %H:%M:%S")
-        header = format("[%<time>s %<sev>5s]", time: timestr, sev: severity)
-        styled_header =
-          case severity
-          when "FATAL"
-            terminal.apply_styles(header, :bright_magenta, :bold, :underline)
-          when "ERROR"
-            terminal.apply_styles(header, :bright_red, :bold)
-          when "WARN"
-            terminal.apply_styles(header, :bright_yellow)
-          when "INFO"
-            terminal.apply_styles(header, :bright_cyan)
-          when "DEBUG"
-            terminal.apply_styles(header, :white)
-          else
-            header
-          end
-        "#{styled_header}  #{msg}\n"
+      ##
+      # Returns a default Completion that simply uses the tool's completion.
+      #
+      def default_completion
+        proc do |context|
+          context.tool.completion.call(context)
+        end
       end
     end
 
@@ -704,7 +596,7 @@ module Toys
       tool.tool_class.new(arg_parser.data)
     end
 
-    def execute_tool(tool, context)
+    def execute_tool(tool, context, &block)
       tool.source_info&.apply_lib_paths
       tool.run_initializers(context)
       cur_logger = context[Context::Key::LOGGER]
@@ -713,9 +605,7 @@ module Toys
         cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
       end
       begin
-        executor = build_executor(tool, context) do
-          yield context
-        end
+        executor = build_executor(tool, context, &block)
         catch(:result) do
           executor.call
           0
@@ -733,11 +623,10 @@ module Toys
           elsif !tool.runnable?
             raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
           else
-            yield
+            yield context
           end
-        rescue ::Interrupt => e
-          raise e unless tool.handles_interrupts?
-          handle_interrupt(context, tool.interrupt_handler, e)
+        rescue ::SignalException => e
+          handle_signal_by_tool(context, tool, e)
         end
       end
       tool.built_middleware.reverse_each do |middleware|
@@ -750,24 +639,25 @@ module Toys
       usage_errors = context[Context::Key::USAGE_ERRORS]
       handler = tool.usage_error_handler
       raise ArgParsingError, usage_errors if handler.nil?
-      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
-      if handler.arity.zero?
-        context.instance_exec(&handler)
-      else
-        context.instance_exec(usage_errors, &handler)
-      end
+      call_handler(context, handler, usage_errors)
     end
 
-    def handle_interrupt(context, handler, exception)
+    def handle_signal_by_tool(context, tool, exception)
+      handler = tool.signal_handler(exception.signo)
+      raise exception unless handler
+      call_handler(context, handler, exception)
+    rescue ::SignalException => e
+      raise e if e.equal?(exception)
+      handle_signal_by_tool(context, tool, e)
+    end
+
+    def call_handler(context, handler, argument)
       handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
       if handler.arity.zero?
         context.instance_exec(&handler)
       else
-        context.instance_exec(exception, &handler)
+        context.instance_exec(argument, &handler)
       end
-    rescue ::Interrupt => e
-      raise e if e.equal?(exception)
-      handle_interrupt(context, handler, e)
     end
 
     def make_executor(middleware, context, next_executor)

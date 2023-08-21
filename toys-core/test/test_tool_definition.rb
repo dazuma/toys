@@ -24,9 +24,12 @@ describe Toys::ToolDefinition do
   }
   let(:executable_name) { "toys" }
   let(:cli) {
-    Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [])
+    Toys::CLI.new(executable_name: executable_name, logger: logger,
+                  middleware_stack: [])
   }
-  let(:full_cli) { Toys::CLI.new(executable_name: executable_name, logger: logger) }
+  let(:full_cli) {
+    Toys::CLI.new(executable_name: executable_name, logger: logger)
+  }
   let(:loader) { cli.loader }
   let(:full_loader) { full_cli.loader }
   let(:tool_name) { "foo" }
@@ -970,19 +973,135 @@ describe Toys::ToolDefinition do
 
     it "detects dangling references" do
       tool.delegate_to([tool2_name])
-      _out, err = capture_subprocess_io do
-        refute_equal(0, cli.run(tool_name))
+      error = assert_raises(Toys::ContextualError) do
+        cli.run(tool_name)
       end
-      assert_match(/Delegate target not found: "#{tool2_name}"/, err)
+      assert_equal("Delegate target not found: \"#{tool2_name}\"", error.cause.message)
     end
 
     it "detects circular references" do
       tool.delegate_to([tool2_name])
       tool2.delegate_to([tool_name])
-      _out, err = capture_subprocess_io do
-        refute_equal(0, cli.run(tool_name))
+      error = assert_raises(Toys::ContextualError) do
+        cli.run(tool_name)
       end
-      assert_match(/Delegation loop: "#{tool_name}" <- "#{tool2_name}" <- "#{tool_name}"/, err)
+      assert_equal("Delegation loop: \"#{tool_name}\" <- \"#{tool2_name}\" <- \"#{tool_name}\"",
+                   error.cause.message)
+    end
+  end
+
+  describe "interrupt handler" do
+    it "sets from a proc" do
+      handler = proc { nil }
+      refute(tool.handles_interrupts?)
+      refute(tool.handles_signal?(2))
+      tool.interrupt_handler = handler
+      assert_same(handler, tool.interrupt_handler)
+      assert(tool.handles_interrupts?)
+      assert(tool.handles_signal?(2))
+    end
+
+    it "sets from a symbol" do
+      handler = :my_handler
+      refute(tool.handles_interrupts?)
+      refute(tool.handles_signal?(2))
+      tool.interrupt_handler = handler
+      assert_same(handler, tool.interrupt_handler)
+      assert(tool.handles_interrupts?)
+      assert(tool.handles_signal?(2))
+    end
+
+    it "checks the type" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.interrupt_handler = "my_handler"
+      end
+    end
+  end
+
+  describe "signal handler" do
+    it "sets from a proc" do
+      handler = proc { nil }
+      refute(tool.handles_signal?(4))
+      tool.set_signal_handler(4, handler)
+      assert_same(handler, tool.signal_handler(4))
+      assert(tool.handles_signal?(4))
+    end
+
+    it "sets from a symbol" do
+      handler = :my_handler
+      refute(tool.handles_signal?(4))
+      tool.set_signal_handler(4, handler)
+      assert_same(handler, tool.signal_handler(4))
+      assert(tool.handles_signal?(4))
+    end
+
+    it "checks the type" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.set_signal_handler(4, "my_handler")
+      end
+    end
+
+    it "recognizes the interrupt signal" do
+      handler = proc { nil }
+      refute(tool.handles_interrupts?)
+      tool.set_signal_handler(2, handler)
+      assert(tool.handles_interrupts?)
+    end
+
+    it "recognizes signals by name" do
+      handler = proc { nil }
+      handler2 = :my_handler
+      refute(tool.handles_signal?(15))
+      refute(tool.handles_signal?("SIGTERM"))
+      refute(tool.handles_signal?(:TERM))
+      tool.set_signal_handler("SIGTERM", handler)
+      assert_same(handler, tool.signal_handler(15))
+      assert_same(handler, tool.signal_handler("SIGTERM"))
+      assert_same(handler, tool.signal_handler(:TERM))
+      assert(tool.handles_signal?(15))
+      assert(tool.handles_signal?("SIGTERM"))
+      assert(tool.handles_signal?(:TERM))
+      tool.set_signal_handler(:TERM, handler2)
+      assert_same(handler2, tool.signal_handler(15))
+      assert_same(handler2, tool.signal_handler("SIGTERM"))
+      assert_same(handler2, tool.signal_handler(:TERM))
+    end
+
+    it "checks for illegal signals" do
+      handler = proc { nil }
+      assert_raises(ArgumentError) do
+        tool.set_signal_handler("SIGNIFICANT", handler)
+      end
+      assert_raises(ArgumentError) do
+        tool.set_signal_handler(1234, handler)
+      end
+      assert_raises(ArgumentError) do
+        tool.set_signal_handler(Time.now, handler)
+      end
+    end
+  end
+
+  describe "usage error handler" do
+    it "sets from a proc" do
+      handler = proc { nil }
+      refute(tool.handles_usage_errors?)
+      tool.usage_error_handler = handler
+      assert_same(handler, tool.usage_error_handler)
+      assert(tool.handles_usage_errors?)
+    end
+
+    it "sets from a symbol" do
+      handler = :my_handler
+      refute(tool.handles_usage_errors?)
+      tool.usage_error_handler = handler
+      assert_same(handler, tool.usage_error_handler)
+      assert(tool.handles_usage_errors?)
+    end
+
+    it "checks the type" do
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.usage_error_handler = "my_handler"
+      end
     end
   end
 
