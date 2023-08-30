@@ -12,16 +12,60 @@
 # This module contains the command line framework underlying Toys. It can be
 # used to create command line executables using the Toys DSL and classes.
 #
+# ## Common starting points
+#
+# Some of the most commonly needed class documentation is listed below:
+#
+# * For information on the DSL used to write tools, start with
+#   {Toys::DSL::Tool}.
+# * The base class for tool runtime (i.e. that defines the basic methods
+#   available to a tool's implementation) is {Toys::Context}.
+# * For information on writing mixins, see {Toys::Mixin}.
+# * For information on writing templates, see {Toys::Template}.
+# * For information on writing acceptors, see {Toys::Acceptor}.
+# * For information on writing custom shell completions, see {Toys::Completion}.
+# * Standard mixins are defined under the {Toys::StandardMixins} module.
+# * Various utilities are defined under {Toys::Utils}. Some of these serve as
+#   the implementations of corresponding mixins.
+# * The main entrypoint for the command line framework is {Toys::CLI}.
+#
+# Other important internal classes are listed below.
+#
+# * The definition of a tool is represented by {Toys::ToolDefinition} along
+#   the helpers {Toys::Flag}, {Toys::PositionalArg}, and {Toys::FlagGroup}.
+# * Argument parsing is implemented by {Toys::ArgParser}.
+# * The process of finding and loading a tool definition given a tool name, is
+#   implemented by {Toys::Loader}.
+# * Text wrapping is handled by {Toys::WrappableString}.
+# * The settings system is implemented by {Toys::Settings}.
+#
 module Toys
   ##
   # Namespace for DSL classes. These classes provide the directives that can be
-  # used in configuration files. Most are defined in {Toys::DSL::Tool}.
+  # used in configuration files.
+  #
+  # DSL directives that can appear at the top level of Toys files and tool
+  # blocks are defined by the {Toys::DSL::Tool} module.
+  #
+  # Directives that can appear within a block passed to {Toys::DSL::Tool#flag}
+  # are defined by the {Toys::DSL::Flag} class.
+  #
+  # Directives that can appear within a {Toys::DSL::Tool#flag_group} block or
+  # any of its related directives, are defined by the {Toys::DSL::FlagGroup}
+  # class.
+  #
+  # Directives that can appear within a {Toys::DSL::Tool#required_arg},
+  # {Toys::DSL::Tool#optional_arg}, or {Toys::DSL::Tool#remaining_args} block,
+  # are defined by the {Toys::DSL::PositionalArg} class.
   #
   module DSL
   end
 
   ##
   # Namespace for standard middleware classes.
+  #
+  # These middleware are provided by Toys-Core and can be referenced by name
+  # when creating a {Toys::CLI}.
   #
   module StandardMiddleware
     ##
@@ -42,6 +86,9 @@ module Toys
   ##
   # Namespace for standard mixin classes.
   #
+  # These mixins are provided by Toys-Core and can be included by name by
+  # passing a symbol to {Toys::DSL::Tool#include}.
+  #
   module StandardMixins
   end
 
@@ -49,8 +96,9 @@ module Toys
   # Namespace for common utility classes.
   #
   # These classes are not loaded by default, and must be required explicitly.
-  # For example, before using {Toys::Utils::Exec}, you must
-  # `require "toys/utils/exec"`.
+  # For example, before using {Toys::Utils::Exec}, you must:
+  #
+  #     require "toys/utils/exec"
   #
   module Utils
   end

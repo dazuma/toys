@@ -120,7 +120,14 @@ module Toys
       # should be set. You may pass the handler as a Proc (or an object
       # responding to the `call` method) or you may pass a block.
       #
-      # @param handler [Proc]
+      # You can also pass one of the special values `:set` or `:push` as the
+      # handler. The `:set` handler replaces the previous value (equivalent to
+      # `-> (val, _prev) { val }`.) The `:push` handler expects the previous
+      # value to be an array and pushes the given value onto it; it should be
+      # combined with setting the default value to `[]` and is intended for
+      # "multi-valued" flags.
+      #
+      # @param handler [Proc,:set,:push]
       # @param block [Proc]
       # @return [self]
       #

@@ -249,7 +249,7 @@ you can often rewrite an entire Rakefile as a Toys file and get quite a bit of
 benefit in readability and maintainability. For an example, see the
 [Toys file for the Toys gem itself](https://github.com/dazuma/toys/blob/main/toys/.toys/.toys.rb).
 It contains Toys scripts that I use to develop, test, and release Toys itself.
-Yes, Toys is self-hosted. You'll notice most of this Toys file consists of
+Yes, Toys is self-hosted. You'll notice much of this Toys file consists of
 template expansions. Toys provides templates for a lot of common build, test,
 and release tasks for Ruby projects.
 
@@ -275,6 +275,9 @@ you can replace them with `.toys` directories that contain tool definitions in
 separate files. Such directories are versatile, letting you organize your tool
 definitions, along with shared code, normal Ruby classes, tests, and even data
 files for use by tools.
+
+You can find detailed usage information, including the entire DSL, in the
+[class reference documentation](https://dazuma.github.io/toys/gems/toys/latest/Toys.html)
 
 Unlike most command line frameworks, Toys is *not primarily* designed to help
 you build and ship a custom command line executable written in Ruby. However,
@@ -323,7 +326,7 @@ because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2022 Daniel Azuma and the Toys contributors
+Copyright 2019-2023 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

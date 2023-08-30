@@ -30,6 +30,24 @@ require "toys-core"
 # workflows. It can also be used as a Rake replacement, providing a more
 # natural command line interface for your project's build tasks.
 #
+# This set of documentation includes classes from both Toys-Core, the
+# underlying command line framework, and the Toys executable itself. Most of
+# the actual classes you will likely need to look up are from Toys-Core.
+#
+# ## Common starting points
+#
+# * For information on the DSL used to write tools, start with
+#   {Toys::DSL::Tool}.
+# * The base class for tool runtime (i.e. that defines the basic methods
+#   available to a tool's implementation) is {Toys::Context}.
+# * For information on writing mixins, see {Toys::Mixin}.
+# * For information on writing templates, see {Toys::Template}.
+# * For information on writing acceptors, see {Toys::Acceptor}.
+# * For information on writing custom shell completions, see {Toys::Completion}.
+# * Standard mixins are defined under the {Toys::StandardMixins} module.
+# * Various utilities are defined under {Toys::Utils}. Some of these serve as
+#   the implementations of corresponding mixins.
+#
 module Toys
   ##
   # Path to the Toys executable.
@@ -46,6 +64,9 @@ module Toys
 
   ##
   # Namespace for standard template classes.
+  #
+  # These templates are provided by Toys and can be expanded by name by passing
+  # a symbol to {Toys::DSL::Tool#expand}.
   #
   module Templates; end
 end

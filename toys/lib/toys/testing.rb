@@ -53,7 +53,7 @@ module Toys
     #     end
     #   end
     #
-    #   # You can test the `message` method as follows:
+    #   # You can test the `message` method in isolation as follows:
     #
     #   class MyTest < Minitest::Test
     #     include Toys::Testing
