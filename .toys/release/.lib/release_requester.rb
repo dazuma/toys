@@ -345,7 +345,12 @@ class ReleaseRequester
       @release_commit_title = "release: Release #{info.gem_name} #{info.new_version}"
       @release_branch_name = @utils.release_branch_name(info.gem_name)
     else
-      @release_commit_title = "release: Release #{@gem_info_list.size} gems"
+      @release_commit_title = "release: Release #{@gem_info_list.size} gems\n\n"
+      @gem_info_list.each do |info|
+        gem_line = " *  **#{info.gem_name} #{info.new_version}**"
+        gem_line += info.last_version ? " (was #{info.last_version})" : " (initial release)"
+        @release_commit_title += gem_line + "\n"
+      end
       @release_branch_name = @utils.multi_release_branch_name
     end
   end
