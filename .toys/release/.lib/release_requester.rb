@@ -342,12 +342,21 @@ class ReleaseRequester
   def determine_commit_info
     if @gem_info_list.size == 1
       info = @gem_info_list.first
-      @release_commit_title = "release: Release #{info.gem_name} #{info.new_version}"
+      @release_commit_title = "release: Release #{format_gem_release_info(info)}"
+      @release_commit_message_addenda = []
       @release_branch_name = @utils.release_branch_name(info.gem_name)
     else
       @release_commit_title = "release: Release #{@gem_info_list.size} gems"
+      @release_commit_message_addenda = @gem_info_list.map do |gem_info|
+        "* #{format_gem_release_info(gem_info)}"
+      end
       @release_branch_name = @utils.multi_release_branch_name
     end
+  end
+
+  def format_gem_release_info(info)
+    last_release = info.last_version ? "was #{info.last_version}" : "initial release"
+    "#{info.gem_name} #{info.new_version} (#{last_release})"
   end
 
   def create_release_commit
@@ -360,6 +369,7 @@ class ReleaseRequester
     end
     @utils.exec(["git", "checkout", "-b", @release_branch_name])
     commit_cmd = ["git", "commit", "-a", "-m", @release_commit_title]
+    @release_commit_message_addenda.each { |message| commit_cmd << "-m" << message }
     commit_cmd << "--signoff" if @utils.signoff_commits?
     @utils.exec(commit_cmd)
     @utils.exec(["git", "push", "-f", @git_remote, @release_branch_name])
