@@ -71,11 +71,8 @@ class ReleaseRequester
 
     def init_analysis
       @bump_segment = 2
-      @feats = []
-      @fixes = []
-      @docs = []
+      @changes = @utils.release_commit_tags.keys.to_h { |tag| [tag, []] }
       @breaks = []
-      @others = []
     end
 
     def determine_last_version
@@ -125,18 +122,12 @@ class ReleaseRequester
 
     def analyze_title(title)
       bump_segment = 2
-      match = /^(fix|feat|docs)(?:\([^()]+\))?(!?):\s+(.*)$/.match(title)
+      match = /^([\w-]+)(?:\([^()]+\))?(!?):\s+(.*)$/.match(title)
       return bump_segment unless match
+      tag_info = @utils.release_commit_tags[match[1]]
       description = normalize_line(match[3], delete_pr_number: true)
-      case match[1]
-      when "fix"
-        @fixes << description
-      when "docs"
-        @docs << description
-      when "feat"
-        @feats << description
-        bump_segment = 1 if bump_segment > 1
-      end
+      @changes[tag_info.tag] << description if tag_info
+      bump_segment = [bump_segment, tag_info.bump_segment].min
       if match[2] == "!"
         bump_segment = 0
         @breaks << description
@@ -204,17 +195,10 @@ class ReleaseRequester
         end
         @changelog_entries << ""
       end
-      @feats.each do |line|
-        @changelog_entries << "* ADDED: #{line}"
-      end
-      @fixes.each do |line|
-        @changelog_entries << "* FIXED: #{line}"
-      end
-      @docs.each do |line|
-        @changelog_entries << "* DOCS: #{line}"
-      end
-      @others.each do |line|
-        @changelog_entries << "* #{line}"
+      @utils.release_commit_tags.each do |tag, tag_info|
+        @changes[tag].each do |line|
+          @changelog_entries << "* #{tag_info.label}: #{line}"
+        end
       end
     end
 
