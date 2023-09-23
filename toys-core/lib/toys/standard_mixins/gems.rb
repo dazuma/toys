@@ -10,10 +10,23 @@ module Toys
     # tool DSL itself, so you can also ensure a gem is present when defining a
     # tool.
     #
-    # You may make these methods available to your tool by including the
-    # following directive in your tool configuration:
+    # ### Usage
+    #
+    # Make these methods available to your tool by including this mixin in your
+    # tool:
     #
     #     include :gems
+    #
+    # You can then call the mixin method {#gem} to ensure that a gem is
+    # installed and in the load path. For example:
+    #
+    #     tool "my_tool" do
+    #       include :gems
+    #       gem "nokogiri", "~> 1.15"
+    #       def run
+    #         # Do stuff with Nokogiri
+    #       end
+    #     end
     #
     # If you pass additional options to the include directive, those are used
     # to initialize settings for the gem install process. For example:
@@ -34,7 +47,8 @@ module Toys
       end
 
       ##
-      # Activate the given gem.
+      # Activate the given gem. If it is not present, attempt to install it (or
+      # inform the user to update the bundle).
       #
       # @param name [String] Name of the gem
       # @param requirements [String...] Version requirements

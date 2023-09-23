@@ -5,6 +5,21 @@ module Toys
     ##
     # Ensures that a bundle is installed and set up when this tool is run.
     #
+    # This is the normal recommended way to use [bundler](https://bundler.io)
+    # with Toys. Including this mixin in a tool will cause Toys to ensure that
+    # the bundle is installed and available during tool execution. For example:
+    #
+    #     tool "run-rails" do
+    #       include :bundler
+    #       def run
+    #         # Note: no "bundle exec" required because Toys has already
+    #         # installed and loaded the bundle.
+    #         exec "rails s"
+    #       end
+    #     end
+    #
+    # ### Customization
+    #
     # The following parameters can be passed when including this mixin:
     #
     #  *  `:static` (Boolean) If `true`, installs the bundle immediately, when
@@ -39,7 +54,7 @@ module Toys
     #     Defaults to {Toys::Utils::Gems::DEFAULT_GEMFILE_NAMES}.
     #
     #  *  `:toys_gemfile_names` (Array\<String\>) File names that are
-    #     recognized as Gemfiles when wearching in Toys directories.
+    #     recognized as Gemfiles when searching in Toys directories.
     #     Defaults to {DEFAULT_TOYS_GEMFILE_NAMES}.
     #
     #  *  `:on_missing` (Symbol) What to do if a needed gem is not installed.

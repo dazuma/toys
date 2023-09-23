@@ -16,6 +16,27 @@ module Toys
     # This class is not loaded by default. Before using it directly, you should
     # `require "toys/utils/exec"`
     #
+    # ### The exec service
+    #
+    # The main entrypoint class is this one, {Toys::Utils::Exec}. It's a
+    # "service" object that provides functionality, primarily methods that
+    # spawn processes. Create it like any object:
+    #
+    #     require "toys/utils/exec"
+    #     exec_service = Toys::Utils::Exec.new
+    #
+    # There are two "primitive" functions: {#exec} and {#exec_proc}. The {#exec}
+    # method spawns an operating system process specified by an executable and
+    # a set of arguments. The {#exec_proc} method takes a `Proc` and forks a
+    # Ruby process. Both of these can be heavily configured with stream
+    # handling, result handling, and numerous other options described below.
+    # The class also provides convenience methods for common cases such as
+    # spawning a Ruby process, spawning a shell script, or capturing output.
+    #
+    # The exec service class also stores default configuration that it applies
+    # to processes it spawns. You can set these defaults when constructing the
+    # service class, or at any time by calling {#configure_defaults}.
+    #
     # ### Controlling processes
     #
     # A process can be started in the *foreground* or the *background*. If you
@@ -24,7 +45,7 @@ module Toys
     # If you start a background process, its streams will be redirected to null
     # by default, and control will be returned to you immediately.
     #
-    # When a process is running, you can control it using a
+    # While a process is running, you can control it using a
     # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
     # the process's input and output streams, send it signals, or wait for it
     # to complete.

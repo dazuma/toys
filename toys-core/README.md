@@ -321,15 +321,20 @@ Clean up by uninstalling the gem:
 ### Learning more
 
 This introduction should be enough to get you started. However, Toys-Core is a
-deep framework with many more features. Learn about how to write tools using
-the Toys DSL, including validating and interpreting command line arguments,
-using templates and mixins, controlling subprocesses, and producing nice styled
-output, in the
+deep framework with many more features.
+
+Learn about how to write tools using the Toys DSL, including validating and
+interpreting command line arguments, using templates and mixins, controlling
+subprocesses, and producing nice styled output, in the
 [Toys User Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
+
 Learn more about how to customize and package your own executable, including
 handling errors, controlling log output, and providing your own mixins,
 templates, and middleware, in the
 [Toys-Core User Guide](https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html).
+
+Detailed usage information can be found in the
+[class reference documentation](https://dazuma.github.io/toys/gems/toys-core/lateset/Toys.html)
 
 ## System requirements
 
@@ -343,7 +348,7 @@ recommended because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2022 Daniel Azuma and the Toys contributors
+Copyright 2019-2023 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

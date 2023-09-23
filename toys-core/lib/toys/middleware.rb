@@ -21,8 +21,9 @@ module Toys
   # Generally, a middleware is a class that implements one or more of the
   # methods defined in this module: {Toys::Middleware#config}, and
   # {Toys::Middleware#run}. This module provides default implementations that
-  # do nothing, but using them is not required. Middleware objects need respond
-  # only to methods they care about.
+  # do nothing, but it is not required to include this module, or even to
+  # define both methods. Middleware objects need respond only to methods they
+  # care about.
   #
   module Middleware
     ##

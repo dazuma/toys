@@ -3,7 +3,19 @@
 module Toys
   ##
   # Subclass of `Toys::CLI` configured for the behavior of the standard Toys
-  # executable.
+  # executable. Specifically, this subclass:
+  #
+  # * Configures the standard names of files and directories, such as the
+  #   `.toys.rb` file for an "index" tool, and the `.data` and `.lib` directory
+  #   names.
+  # * Configures default descriptions for the root tool.
+  # * Configures a default error handler and logger that provide ANSI-colored
+  #   formatted output.
+  # * Configures a set of middleware that implement online help, verbosity
+  #   flags, and other features.
+  # * Provides a set of standard templates for typical project build and
+  #   maintenance scripts (suh as clean, test, and rubocop).
+  # * Finds tool definitions in the standard Toys search path.
   #
   class StandardCLI < CLI
     ##

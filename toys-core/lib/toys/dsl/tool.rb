@@ -3,7 +3,7 @@
 module Toys
   module DSL
     ##
-    # This class defines the DSL for a Toys configuration file.
+    # This module defines the DSL for a Toys configuration file.
     #
     # A Toys configuration defines one or more named tools. It provides syntax
     # for setting the description, defining flags and arguments, specifying
@@ -24,6 +24,9 @@ module Toys
     #         puts "Hello, #{recipient}!"
     #       end
     #     end
+    #
+    # The DSL directives `tool`, `desc`, `optional_arg`, and others are defined
+    # in this module.
     #
     # Now you can execute it using:
     #
@@ -81,8 +84,8 @@ module Toys
       # ### Example
       #
       # The following example creates an acceptor named "hex" that is defined
-      # via a regular expression. It then uses it to validate values passed to
-      # a flag.
+      # via a regular expression. It uses the acceptor to validate values
+      # passed to a flag.
       #
       #     tool "example" do
       #       acceptor "hex", /[0-9a-fA-F]+/, type_desc: "hex numbers"
@@ -155,16 +158,21 @@ module Toys
       #
       # A template is an object that generates DSL directives. You can use it
       # to build "prefabricated" tools, and then instantiate them in your Toys
-      # files. Generally, a template is a class with an associated `expansion`
-      # procedure. The class defines parameters for the template expansion,
-      # and `expansion` includes DSL directives that should be run based on
-      # those parameters.
+      # files.
       #
-      # Normally, you provide a block and define the template class in that
-      # block. Most templates will define an `initialize` method that takes any
-      # arguments passed into the template expansion. The template must also
-      # provide an `expansion` block showing how to use the template object to
-      # produce DSL directives.
+      # A template is an object that defines an `expansion` procedure. This
+      # procedure generates the DSL directives implemented by the template. The
+      # template object typically also includes attributes that are used to
+      # configure the expansion.
+      #
+      # The simplest way to define a template is to pass a block to the
+      # {#template} directive. In the block, define an `initialize` method that
+      # accepts any arguments that may be passed to the template when it is
+      # instantiated and are used to configure the template. Define
+      # `attr_reader`s or other methods to make this configuration accessible
+      # from the object. Then define an `on_expand` block that implements the
+      # template's expansion. The template object is passed as an object to the
+      # `on_expand` block.
       #
       # Alternately, you can create a template class separately and pass it
       # directly. See {Toys::Template} for details on creating a template
@@ -172,7 +180,9 @@ module Toys
       #
       # ### Example
       #
-      # The following example creates and uses a simple template.
+      # The following example creates and uses a simple template. The template
+      # defines a tool, with a configurable name, that simply prints out a
+      # configurable message.
       #
       #     template "hello-generator" do
       #       def initialize(name, message)
@@ -180,7 +190,7 @@ module Toys
       #         @message = message
       #       end
       #       attr_reader :name, :message
-      #       expansion do |template|
+      #       on_expand do |template|
       #         tool template.name do
       #           to_run do
       #             puts template.message
@@ -1325,6 +1335,15 @@ module Toys
       # This directive is mutually exclusive with any of the directives that
       # declare arguments or flags.
       #
+      # ### Example
+      #
+      #     tool "mytool" do
+      #       disable_argument_parsing
+      #       def run
+      #         puts "Arguments passed: #{args}"
+      #       end
+      #     end
+      #
       # @return [self]
       #
       def disable_argument_parsing
@@ -1409,9 +1428,21 @@ module Toys
       #
       # ### Example
       #
+      #     # You can use this to keep access to the enclosing lexical scope
+      #     # from the run method:
+      #
       #     tool "foo" do
-      #       cur_time = Time.new
+      #       cur_time = Time.now
       #       to_run do
+      #         puts "The time at tool definition was #{cur_time}"
+      #       end
+      #     end
+      #
+      #     # But the following is approximately equivalent:
+      #
+      #     tool "foo" do
+      #       static :cur_time, Time.now
+      #       def run
       #         puts "The time at tool definition was #{cur_time}"
       #       end
       #     end
@@ -1443,7 +1474,7 @@ module Toys
       #       def run
       #         sleep 10
       #       end
-      #       on_interrupt do |e|
+      #       on_interrupt do
       #         puts "I was interrupted."
       #       end
       #     end
@@ -1475,7 +1506,7 @@ module Toys
       #         sleep 10
       #       end
       #       on_signal("QUIT") do |e|
-      #         puts "Signal caught: #{e.signo}."
+      #         puts "Signal caught: #{e.signm}."
       #       end
       #     end
       #

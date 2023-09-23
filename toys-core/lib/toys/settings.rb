@@ -223,7 +223,7 @@ module Toys
   #     has a parent, the parent is queried. If that parent also does not have
   #     a value for the field, it may query its parent in turn, and so forth.
   #  *  If we encounter a root settings with no parent, and still no value is
-  #     set for the field, the default is returned.
+  #     set for the field, the default for the *original* setting is returned.
   #
   # Example:
   #

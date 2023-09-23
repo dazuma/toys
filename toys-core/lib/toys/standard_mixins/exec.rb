@@ -3,10 +3,10 @@
 module Toys
   module StandardMixins
     ##
-    # A set of helper methods for invoking subcommands. Provides shortcuts for
-    # common cases such as invoking Ruby in a subprocess or capturing output
-    # in a string. Also provides an interface for controlling a spawned
-    # process's streams.
+    # The `:exec` mixin provides set of helper methods for executing processes
+    # and subcommands. It provides shortcuts for common cases such as invoking
+    # a Ruby script in a subprocess or capturing output in a string. It also
+    # provides an interface for controlling a spawned process's streams.
     #
     # You can make these methods available to your tool by including the
     # following directive in your tool configuration:
@@ -16,6 +16,25 @@ module Toys
     # This is a frontend for {Toys::Utils::Exec}. More information is
     # available in that class's documentation.
     #
+    # ### Mixin overview
+    #
+    # The mixin provides a number of methods for spawning processes. The most
+    # basic are {#exec} and {#exec_proc}. The {#exec} method spawns an
+    # operating system process specified by an executable and a set of
+    # arguments. The {#exec_proc} method takes a `Proc` and forks a Ruby
+    # process. Both of these can be heavily configured with stream handling,
+    # result handling, and numerous other options described below. The mixin
+    # also provides convenience methods for common cases such as spawning a
+    # Ruby process, spawning a shell script, or capturing output.
+    #
+    # The mixin also stores default configuration that it applies to processes
+    # it spawns. You can change these defaults by calling {#configure_exec}.
+    #
+    # Underlying the mixin is a service object of type {Toys::Utils::Exec}.
+    # Normally you would use the mixin methods to access this functionality,
+    # but you can also retrieve the service object itself by calling
+    # {Toys::Context#get} with the key {Toys::StandardMixins::Exec::KEY}.
+    #
     # ### Controlling processes
     #
     # A process can be started in the *foreground* or the *background*. If you
@@ -24,7 +43,7 @@ module Toys
     # If you start a background process, its streams will be redirected to null
     # by default, and control will be returned to you immediately.
     #
-    # When a process is running, you can control it using a
+    # While a process is running, you can control it using a
     # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
     # the process's input and output streams, send it signals, or wait for it
     # to complete.
@@ -44,7 +63,7 @@ module Toys
     # When running a process in the background, the controller is returned from
     # the method that starts the process:
     #
-    #     controller = exec_service.exec(["git", "init"], background: true)
+    #     controller = exec(["git", "init"], background: true)
     #
     # ### Stream handling
     #
