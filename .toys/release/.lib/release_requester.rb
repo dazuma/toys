@@ -71,11 +71,8 @@ class ReleaseRequester
 
     def init_analysis
       @bump_segment = 2
-      @feats = []
-      @fixes = []
-      @docs = []
+      @changes = @utils.release_commit_tags.keys.to_h { |tag| [tag, []] }
       @breaks = []
-      @others = []
     end
 
     def determine_last_version
@@ -124,19 +121,15 @@ class ReleaseRequester
     end
 
     def analyze_title(title)
+puts "**** TITLE: #{title}"
       bump_segment = 2
-      match = /^(fix|feat|docs)(?:\([^()]+\))?(!?):\s+(.*)$/.match(title)
+      match = /^([\w-]+)(?:\([^()]+\))?(!?):\s+(.*)$/.match(title)
       return bump_segment unless match
+      tag_info = @utils.release_commit_tags[match[1]]
+p tag_info
       description = normalize_line(match[3], delete_pr_number: true)
-      case match[1]
-      when "fix"
-        @fixes << description
-      when "docs"
-        @docs << description
-      when "feat"
-        @feats << description
-        bump_segment = 1 if bump_segment > 1
-      end
+      @changes[tag_info.tag] << description if tag_info
+      bump_segment = [bump_segment, tag_info.bump_segment].min
       if match[2] == "!"
         bump_segment = 0
         @breaks << description
@@ -204,17 +197,10 @@ class ReleaseRequester
         end
         @changelog_entries << ""
       end
-      @feats.each do |line|
-        @changelog_entries << "* ADDED: #{line}"
-      end
-      @fixes.each do |line|
-        @changelog_entries << "* FIXED: #{line}"
-      end
-      @docs.each do |line|
-        @changelog_entries << "* DOCS: #{line}"
-      end
-      @others.each do |line|
-        @changelog_entries << "* #{line}"
+      @utils.release_commit_tags.each do |tag, tag_info|
+        @changes[tag].each do |line|
+          @changelog_entries << "* #{tag_info.label}: #{line}"
+        end
       end
     end
 
@@ -343,13 +329,13 @@ class ReleaseRequester
     if @gem_info_list.size == 1
       info = @gem_info_list.first
       @release_commit_title = "release: Release #{format_gem_release_info(info)}"
-      @release_commit_message_addenda = []
+      @release_commit_message_details = nil
       @release_branch_name = @utils.release_branch_name(info.gem_name)
     else
       @release_commit_title = "release: Release #{@gem_info_list.size} gems"
-      @release_commit_message_addenda = @gem_info_list.map do |gem_info|
+      @release_commit_message_details = @gem_info_list.map do |gem_info|
         "* #{format_gem_release_info(gem_info)}"
-      end
+      end.join("\n")
       @release_branch_name = @utils.multi_release_branch_name
     end
   end
@@ -369,7 +355,7 @@ class ReleaseRequester
     end
     @utils.exec(["git", "checkout", "-b", @release_branch_name])
     commit_cmd = ["git", "commit", "-a", "-m", @release_commit_title]
-    @release_commit_message_addenda.each { |message| commit_cmd << "-m" << message }
+    commit_cmd << "-m" << @release_commit_message_details if @release_commit_message_details
     commit_cmd << "--signoff" if @utils.signoff_commits?
     @utils.exec(commit_cmd)
     @utils.exec(["git", "push", "-f", @git_remote, @release_branch_name])

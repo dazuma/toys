@@ -8,6 +8,16 @@ required_checks_timeout: 1800
 commit_lint:
   fail_checks: true
   merge: squash
+release_commit_tags:
+  - tag: feat
+    semver: minor
+    label: ADDED
+  - tag: fix
+    label: FIXED
+  - docs
+  - tests: patch
+required_checks: false
+
 gems:
   - name: toys-core
     version_rb_path: lib/toys/core.rb
