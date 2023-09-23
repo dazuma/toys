@@ -8,7 +8,7 @@ jobs:
   release-check-commits:
     if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
-      ruby_version: "2.7"
+      ruby_version: "3.2"
     runs-on: ubuntu-latest
     steps:
       - name: Install Ruby ${{ env.ruby_version }}
@@ -16,7 +16,7 @@ jobs:
         with:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
       - name: Install Toys
