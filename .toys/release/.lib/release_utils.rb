@@ -38,7 +38,8 @@ class ReleaseUtils
                  :signoff_commits?, :enable_release_automation?, :coordinate_versions?
   def_delegators :@repo_settings,
                  :commit_lint_active?, :commit_lint_fail_checks?,
-                 :commit_lint_merge, :commit_lint_allowed_types
+                 :commit_lint_merge, :commit_lint_allowed_types,
+                 :release_commit_tags
   def_delegators :@repo_settings,
                  :all_gems, :gem_info,
                  :gem_directory, :gem_cd,
