@@ -1,12 +1,57 @@
 # frozen_string_literal: true
 
 class RepoSettings
+  class CommitTagSettings
+    BUMP_SEGMENT = {
+      "major" => 0,
+      "minor" => 1,
+      "patch" => 2,
+    }.freeze
+
+    def initialize(input) # rubocop:disable Metrics/MethodLength
+      case input
+      when ::String
+        @tag = input
+      when ::Hash
+        if input.size == 1
+          key = input.keys.first
+          value = input.values.first
+          if value.is_a?(::Hash)
+            @tag = key
+            @label = value["label"]
+            @semver = value["semver"]
+          elsif key == "tag"
+            @tag = value
+          else
+            @tag = key
+            @semver = value
+          end
+        else
+          @tag = input["tag"]
+          @label = input["label"]
+          @semver = input["semver"]
+        end
+      end
+      raise "tag missing in #{input}" unless @tag
+      @label ||= @tag.upcase
+      @semver = (@semver || "patch").downcase
+      @bump_segment = BUMP_SEGMENT[@semver]
+      raise "unknown semver: #{@semver} in #{input}" unless @bump_segment
+    end
+
+    attr_reader :tag
+    attr_reader :label
+    attr_reader :semver
+    attr_reader :bump_segment
+  end
+
   def initialize(info, tool_context)
     @tool_context = tool_context
     @warnings = []
     @errors = []
     read_global_info(info)
     read_commit_lint_info(info)
+    read_commit_tag_info(info)
     read_gem_info(info)
     check_global_info
     check_gem_info
@@ -30,6 +75,8 @@ class RepoSettings
 
   attr_reader :commit_lint_merge
   attr_reader :commit_lint_allowed_types
+
+  attr_reader :release_commit_tags
 
   def repo_owner
     repo_path.split("/").first
@@ -153,6 +200,19 @@ class RepoSettings
 
   private
 
+  DEFAULT_RELEASE_COMMIT_TAGS = [
+    {
+      "tag" => "feat",
+      "label" => "ADDED",
+      "semver" => "minor",
+    },
+    {
+      "tag" => "fix",
+      "label" => "FIXED",
+    },
+    "docs",
+  ].freeze
+
   def read_global_info(info)
     @main_branch = info["main_branch"] || "main"
     @repo_path = info["repo"]
@@ -179,6 +239,14 @@ class RepoSettings
     @commit_lint_allowed_types = info["allowed_types"]
     if @commit_lint_allowed_types
       @commit_lint_allowed_types = Array(@commit_lint_allowed_types).map(&:downcase)
+    end
+  end
+
+  def read_commit_tag_info(info)
+    release_commit_tag_data = info["release_commit_tags"] || DEFAULT_RELEASE_COMMIT_TAGS
+    @release_commit_tags = release_commit_tag_data.to_h do |value|
+      settings = CommitTagSettings.new(value)
+      [settings.tag, settings]
     end
   end
 
