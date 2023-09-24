@@ -1,5 +1,12 @@
 # Release History
 
+### v0.15.0 / 2023-09-23
+
+* BREAKING CHANGE: Overhaul of the CLI standard error handling
+
+* ADDED: Overhaul of the CLI standard error handling
+* DOCS: Various documentation fixes and clarifications
+
 ### v0.14.7 / 2023-07-19
 
 * FIXED: Fixed an exception when passing a non-string to puts in the terminal mixin
