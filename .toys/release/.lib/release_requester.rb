@@ -126,8 +126,10 @@ class ReleaseRequester
       return bump_segment unless match
       tag_info = @utils.release_commit_tags[match[1]]
       description = normalize_line(match[3], delete_pr_number: true)
-      @changes[tag_info.tag] << description if tag_info
-      bump_segment = [bump_segment, tag_info.bump_segment].min
+      if tag_info
+        @changes[tag_info.tag] << description
+        bump_segment = [bump_segment, tag_info.bump_segment].min
+      end
       if match[2] == "!"
         bump_segment = 0
         @breaks << description
