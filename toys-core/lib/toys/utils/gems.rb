@@ -304,6 +304,9 @@ module Toys
       end
 
       def setup_bundle(gemfile_path, groups: nil, retries: nil)
+        # Lock the bundler version, preventing bundler's SelfManager from
+        # installing a different bundler and taking over the process.
+        ::ENV["BUNDLER_VERSION"] = ::Bundler::VERSION
         check_gemfile_compatibility(gemfile_path)
         groups = Array(groups)
         modified_gemfile_path = create_modified_gemfile(gemfile_path)
