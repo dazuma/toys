@@ -2,6 +2,6 @@
 
 module SpecFixture
   def self.foo
-    :foo
+    "foo"
   end
 end

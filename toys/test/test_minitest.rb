@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "helper"
+require "toys/utils/exec"
 
 describe "minitest template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
@@ -128,6 +129,7 @@ describe "minitest template" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
     let(:cases_dir) { File.join(__dir__, "minitest-cases") }
+    let(:exec_service) { Toys::Utils::Exec.new }
 
     it "runs passing tests" do
       dir = cases_dir
@@ -162,6 +164,18 @@ describe "minitest template" do
         assert_equal(1, cli.run("test"))
       end
       assert_match(/1 failure/, out)
+    end
+
+    it "supports input streams" do
+      dir = "#{cases_dir}/stream"
+      args = ["--disable=gems", Toys.executable_path, "test"]
+      result = exec_service.exec_ruby(args, chdir: dir,
+                                      in: :controller, out: :capture) do |controller|
+        controller.in.puts "hello"
+      end
+      assert(result.success?)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
     end
   end
 end

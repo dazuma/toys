@@ -184,11 +184,12 @@ module Toys
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               logger.info "Running RuboCop..."
-              result = exec_ruby([], in: :controller) do |controller|
-                controller.in.puts("gem 'rubocop', *#{template.gem_version.inspect}")
-                controller.in.puts("require 'rubocop'")
-                controller.in.puts("exit(::RuboCop::CLI.new.run(#{template.options.inspect}))")
-              end
+              code = <<~CODE
+                gem 'rubocop', *#{template.gem_version.inspect}
+                require 'rubocop'
+                exit(::RuboCop::CLI.new.run(#{template.options.inspect}))
+              CODE
+              result = exec_ruby(["-e", code])
               if result.error?
                 logger.error "RuboCop failed!"
                 exit(1) if template.fail_on_error

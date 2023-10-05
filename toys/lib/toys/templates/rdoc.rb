@@ -322,11 +322,12 @@ module Toys
               args << "-T" << template.template if template.template
               args << "-f" << template.generator if template.generator
 
-              exec_ruby([], in: :controller) do |controller|
-                controller.in.puts("gem 'rdoc', *#{gem_requirements.inspect}")
-                controller.in.puts("require 'rdoc'")
-                controller.in.puts("::RDoc::RDoc.new.document(#{(args + files).inspect})")
-              end
+              code = <<~CODE
+                gem 'rdoc', *#{gem_requirements.inspect}
+                require 'rdoc'
+                ::RDoc::RDoc.new.document(#{(args + files).inspect})
+              CODE
+              exec_ruby(["-e", code])
             end
           end
         end

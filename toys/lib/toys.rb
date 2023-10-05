@@ -8,6 +8,7 @@ require "toys/version"
 # don't get clobbered in case someone sets up bundler later.
 unless ::ENV.key?("TOYS_CORE_LIB_PATH")
   path = ::File.expand_path("../../toys-core-#{::Toys::VERSION}/lib", __dir__)
+  path = ::File.expand_path("../../toys-core/lib", __dir__) unless path && ::File.directory?(path)
   unless path && ::File.directory?(path)
     require "rubygems"
     dep = ::Gem::Dependency.new("toys-core", "= #{::Toys::VERSION}")
