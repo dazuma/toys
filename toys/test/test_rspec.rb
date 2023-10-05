@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "helper"
+require "toys/utils/exec"
 
 describe "rspec template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
@@ -155,12 +156,14 @@ describe "rspec template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
+    let(:cases_dir) { File.join(__dir__, "rspec-cases") }
+    let(:exec_service) { Toys::Utils::Exec.new }
 
     it "executes a successful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+      dir = cases_dir
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib1"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory dir
+        expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb"
       end
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("spec"))
@@ -169,10 +172,10 @@ describe "rspec template" do
     end
 
     it "executes an unsuccessful spec" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+      dir = cases_dir
       loader.add_block do
-        expand :rspec, libs: File.join(cases_dir, "lib2"),
-                       pattern: File.join(cases_dir, "spec", "*_spec.rb")
+        set_context_directory dir
+        expand :rspec, libs: "lib2", pattern: "spec/*_spec.rb"
       end
       out, _err = capture_subprocess_io do
         refute_equal(0, cli.run("spec"))
@@ -181,14 +184,25 @@ describe "rspec template" do
     end
 
     it "honors the context_directory setting" do
-      cases_dir = File.join(__dir__, "rspec-cases")
+      dir = cases_dir
       loader.add_block do
-        expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb", context_directory: cases_dir
+        expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb", context_directory: dir
       end
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("spec"))
       end
       assert_match(/1 example, 0 failures/, out)
+    end
+
+    it "supports input streams" do
+      dir = "#{cases_dir}/stream"
+      args = ["--disable=gems", Toys.executable_path, "spec"]
+      result = exec_service.exec_ruby(args, chdir: dir,
+                                      in: :controller, out: :capture) do |controller|
+        controller.in.puts "foo"
+      end
+      assert(result.success?)
+      assert_match(/0 failures/, result.captured_out)
     end
   end
 end

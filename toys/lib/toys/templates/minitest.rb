@@ -269,13 +269,6 @@ module Toys
               libs = Array(template.libs)
               ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
-              ruby_args << "-"
-              ruby_args << "--seed" << seed if seed
-              vv = verbosity
-              vv += 1 if template.verbose
-              ruby_args << "--verbose" if vv.positive?
-              ruby_args << "--name" << name if name
-              ruby_args << "--exclude" << exclude if exclude
 
               if tests.empty?
                 Array(template.files).each do |pattern|
@@ -283,13 +276,18 @@ module Toys
                 end
                 tests.uniq!
               end
+              code = ["require 'minitest/autorun'"] + tests.map { |file| "load '#{file}'" }
+              ruby_args << "-e" << code.join("\n")
 
-              result = exec_ruby(ruby_args, in: :controller) do |controller|
-                controller.in.puts("require 'minitest/autorun'")
-                tests.each do |file|
-                  controller.in.puts("load '#{file}'")
-                end
-              end
+              ruby_args << "--"
+              ruby_args << "--seed" << seed if seed
+              vv = verbosity
+              vv += 1 if template.verbose
+              ruby_args << "--verbose" if vv.positive?
+              ruby_args << "--name" << name if name
+              ruby_args << "--exclude" << exclude if exclude
+
+              result = exec_ruby(ruby_args)
               if result.error?
                 logger.error("Minitest failed!")
                 exit(result.exit_code)

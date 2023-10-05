@@ -352,7 +352,15 @@ module Toys
               libs = Array(template.libs)
               ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
-              ruby_args << "-"
+
+              code = <<~CODE
+                gem 'rspec', *#{gem_requirements.inspect}
+                require 'rspec/core'
+                ::RSpec::Core::Runner.invoke
+              CODE
+              ruby_args << "-e" << code
+
+              ruby_args << "--"
               ruby_args << "--options" << template.options if template.options
               ruby_args << "--order" << order if order
               ruby_args << "--format" << format if format
@@ -364,11 +372,7 @@ module Toys
               ruby_args << "--tag" << tag if tag
               ruby_args.concat(files)
 
-              result = exec_ruby(ruby_args, in: :controller) do |controller|
-                controller.in.puts("gem 'rspec', *#{gem_requirements.inspect}")
-                controller.in.puts("require 'rspec/core'")
-                controller.in.puts("::RSpec::Core::Runner.invoke")
-              end
+              result = exec_ruby(ruby_args)
               if result.error?
                 logger.error("RSpec failed!")
                 exit(result.exit_code)

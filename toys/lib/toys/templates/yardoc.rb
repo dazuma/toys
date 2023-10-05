@@ -503,21 +503,23 @@ module Toys
               end
               run_options.concat(files)
 
-              result = exec_ruby([], in: :controller) do |controller|
-                controller.in.puts("gem 'yard', *#{gem_requirements.inspect}")
-                controller.in.puts("require 'yard'")
-                controller.in.puts("::YARD::CLI::Yardoc.run(*#{run_options.inspect})")
-              end
+              code = <<~CODE
+                gem 'yard', *#{gem_requirements.inspect}
+                require 'yard'
+                ::YARD::CLI::Yardoc.run(*#{run_options.inspect})
+              CODE
+              result = exec_ruby(["-e", code])
               if result.error?
                 puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?
                 exit(1)
               end
               unless stats_options.empty?
-                result = exec_ruby([], in: :controller, out: :capture) do |controller|
-                  controller.in.puts("gem 'yard', *#{gem_requirements.inspect}")
-                  controller.in.puts("require 'yard'")
-                  controller.in.puts("::YARD::CLI::Stats.run(*#{stats_options.inspect})")
-                end
+                code = <<~CODE
+                  gem 'yard', *#{gem_requirements.inspect}
+                  require 'yard'
+                  ::YARD::CLI::Stats.run(*#{stats_options.inspect})
+                CODE
+                result = exec_ruby(["-e", code], out: :capture)
                 puts result.captured_out
                 if result.error?
                   puts("Yardoc encountered errors", :red, :bold) unless verbosity.negative?

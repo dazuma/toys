@@ -3,6 +3,7 @@ inherit_from: "../.rubocop-common.yml"
 AllCops:
   Exclude:
     - "test/rubocop-cases/**/*"
+    - "test/rspec-cases/**/*"
     - "core-docs/**/*"
 Layout/LineLength:
   Exclude:
