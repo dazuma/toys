@@ -68,6 +68,14 @@ describe "minitest template" do
       assert_equal(false, template.warnings)
     end
 
+    it "handles the mt_compat field" do
+      assert_nil(template.mt_compat)
+      template.mt_compat = false
+      assert_equal(false, template.mt_compat)
+      template.mt_compat = true
+      assert_equal(true, template.mt_compat)
+    end
+
     it "handles the gem_version field with bundler" do
       template.use_bundler
       assert_equal([], template.gem_version)
@@ -162,6 +170,55 @@ describe "minitest template" do
       end
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("test"))
+      end
+      assert_match(/1 failure/, out)
+    end
+
+    it "passes MT_COMPAT" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "mt-compat/*.rb"
+      end
+      expected_failures = ENV["MT_COMPAT"] ? 0 : 1
+      out, _err = capture_subprocess_io do
+        assert_equal(expected_failures, cli.run("test"))
+      end
+      assert_match(/#{expected_failures} failure/, out)
+    end
+
+    it "sets MT_COMPAT" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "mt-compat/*.rb", mt_compat: true
+      end
+      old_mt_compat = ENV["MT_COMPAT"]
+      begin
+        out, _err = capture_subprocess_io do
+          ENV["MT_COMPAT"] = nil
+          assert_equal(0, cli.run("test"))
+        end
+      ensure
+        ENV["MT_COMPAT"] = old_mt_compat
+      end
+      assert_match(/0 failures/, out)
+    end
+
+    it "clears MT_COMPAT" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "mt-compat/*.rb", mt_compat: false
+      end
+      old_mt_compat = ENV["MT_COMPAT"]
+      begin
+        out, _err = capture_subprocess_io do
+          ENV["MT_COMPAT"] = "true"
+          assert_equal(1, cli.run("test"))
+        end
+      ensure
+        ENV["MT_COMPAT"] = old_mt_compat
       end
       assert_match(/1 failure/, out)
     end
