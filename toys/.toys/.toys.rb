@@ -9,7 +9,7 @@ end
 
 expand :clean, paths: :gitignore
 
-expand :minitest, libs: ["lib", "test"], bundler: true
+expand :minitest, libs: ["lib", "test"], bundler: true, mt_compat: true
 
 tool "test" do
   flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"

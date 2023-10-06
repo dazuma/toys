@@ -55,6 +55,10 @@ module Toys
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       #     for information on available options.
+      # @param mt_compat [boolean] If set to `true` or `false`, sets the
+      #     `MT_COMPAT` environment variable accordingly. This may be required
+      #     for certain older Minitest plugins. Optional. If not present, keeps
+      #     any current setting.
       # @param context_directory [String] A custom context directory to use
       #     when executing this tool.
       #
@@ -66,6 +70,7 @@ module Toys
                      verbose: false,
                      warnings: true,
                      bundler: false,
+                     mt_compat: nil,
                      context_directory: nil)
         @name = name
         @gem_version = gem_version
@@ -75,6 +80,7 @@ module Toys
         @verbose = verbose
         @warnings = warnings
         @bundler = bundler
+        @mt_compat = mt_compat
         @context_directory = context_directory
       end
 
@@ -161,6 +167,18 @@ module Toys
       attr_writer :bundler
 
       ##
+      # Adjust the `MT_COMPAT` environment variable when running tests. This
+      # setting may be necessary for certain older Minitest plugins.
+      #
+      # Pass `true` to enable compat mode, `false` to disable it, or `nil` to
+      # use any ambient setting from the current environment.
+      #
+      # @param value [true,false,nil]
+      # @return [true,false,nil]
+      #
+      attr_writer :mt_compat
+
+      ##
       # Use bundler for this tool.
       #
       # See the documentation for the
@@ -194,6 +212,11 @@ module Toys
       # @private
       #
       attr_reader :context_directory
+
+      ##
+      # @private
+      #
+      attr_reader :mt_compat
 
       ##
       # @private
@@ -287,7 +310,10 @@ module Toys
               ruby_args << "--name" << name if name
               ruby_args << "--exclude" << exclude if exclude
 
-              result = exec_ruby(ruby_args)
+              env = {}
+              env["MT_COMPAT"] = template.mt_compat ? "true" : nil unless template.mt_compat.nil?
+
+              result = exec_ruby(ruby_args, env: env)
               if result.error?
                 logger.error("Minitest failed!")
                 exit(result.exit_code)
