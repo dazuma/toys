@@ -297,33 +297,43 @@ module Toys
 
           set_context_directory template.context_directory if template.context_directory
 
+          static :gem_version, template.gem_version
+          static :template_files, template.files
+          static :rdoc_options, template.options
+          static :output_dir, template.output_dir
+          static :rdoc_markup, template.markup
+          static :rdoc_main, template.main
+          static :rdoc_title, template.title
+          static :rdoc_template, template.template
+          static :rdoc_generator, template.generator
+
           include :exec, exit_on_nonzero_status: true
           include :gems
 
           bundler_settings = template.bundler_settings
           include :bundler, **bundler_settings if bundler_settings
 
-          to_run do
-            gem_requirements = template.gem_version
-            gem "rdoc", *gem_requirements
+          # @private
+          def run # rubocop:disable all
+            gem "rdoc", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
-              template.files.each do |pattern|
+              template_files.each do |pattern|
                 files.concat(::Dir.glob(pattern))
               end
               files.uniq!
 
-              args = template.options.dup
-              args << "-o" << template.output_dir
-              args << "--markup" << template.markup if template.markup
-              args << "--main" << template.main if template.main
-              args << "--title" << template.title if template.title
-              args << "-T" << template.template if template.template
-              args << "-f" << template.generator if template.generator
+              args = rdoc_options.dup
+              args << "-o" << output_dir
+              args << "--markup" << rdoc_markup if rdoc_markup
+              args << "--main" << rdoc_main if rdoc_main
+              args << "--title" << rdoc_title if rdoc_title
+              args << "-T" << rdoc_template if rdoc_template
+              args << "-f" << rdoc_generator if rdoc_generator
 
               code = <<~CODE
-                gem 'rdoc', *#{gem_requirements.inspect}
+                gem 'rdoc', *#{gem_version.inspect}
                 require 'rdoc'
                 ::RDoc::RDoc.new.document(#{(args + files).inspect})
               CODE

@@ -284,17 +284,23 @@ module Toys
                          complete: :file_system,
                          desc: "Paths to the tests to run (defaults to all tests)"
 
-          to_run do
-            gem "minitest", *template.gem_version
+          static :gem_version, template.gem_version
+          static :libs, template.libs
+          static :files, template.files
+          static :template_verbose, template.verbose
+          static :mt_compat, template.mt_compat
+
+          # @private
+          def run # rubocop:disable all
+            gem "minitest", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               ruby_args = []
-              libs = Array(template.libs)
               ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
 
               if tests.empty?
-                Array(template.files).each do |pattern|
+                files.each do |pattern|
                   tests.concat(::Dir.glob(pattern))
                 end
                 tests.uniq!
@@ -305,13 +311,13 @@ module Toys
               ruby_args << "--"
               ruby_args << "--seed" << seed if seed
               vv = verbosity
-              vv += 1 if template.verbose
+              vv += 1 if template_verbose
               ruby_args << "--verbose" if vv.positive?
               ruby_args << "--name" << name if name
               ruby_args << "--exclude" << exclude if exclude
 
               env = {}
-              env["MT_COMPAT"] = template.mt_compat ? "true" : nil unless template.mt_compat.nil?
+              env["MT_COMPAT"] = mt_compat ? "true" : nil unless mt_compat.nil?
 
               result = exec_ruby(ruby_args, env: env)
               if result.error?

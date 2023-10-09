@@ -23,36 +23,18 @@ flag :minitest_focus, "--minitest-focus[=VERSION]",
      desc: "Make minitest-focus available during the run"
 flag :minitest_rg, "--minitest-rg[=VERSION]",
      desc: "Make minitest-rg available during the run"
+flag :minitest_compat, "--[no-]minitest-compat",
+     desc: "Set MT_COMPAT to retain compatibility with certain old plugins"
 
 include :exec
 include :gems
 include :terminal
 
 def run
+  env = ruby_env
+  ENV["MT_COMPAT"] = env["MT_COMPAT"] if env.key?("MT_COMPAT")
   load_minitest_gems
-  test_files = find_test_files
-  result = exec_ruby(ruby_args, in: :controller, log_cmd: "Starting minitest...") do |controller|
-    controller.in.puts("gem 'minitest', '= #{::Minitest::VERSION}'")
-    controller.in.puts("require 'minitest/autorun'")
-    if minitest_focus
-      controller.in.puts("gem 'minitest-focus', '= #{::Minitest::Test::Focus::VERSION}'")
-      controller.in.puts("require 'minitest/focus'")
-    end
-    if minitest_rg
-      controller.in.puts("gem 'minitest-rg', '= #{::MiniTest::RG::VERSION}'")
-      controller.in.puts("require 'minitest/rg'")
-    end
-    controller.in.puts("require 'toys'")
-    controller.in.puts("require 'toys/testing'")
-    if directory
-      dir_str = ::File.absolute_path(directory).inspect
-      controller.in.puts("Toys::Testing.toys_custom_paths(#{dir_str})")
-      controller.in.puts("Toys::Testing.toys_include_builtins(false)")
-    end
-    test_files.each do |file|
-      controller.in.puts("load '#{file}'")
-    end
-  end
+  result = exec_ruby(ruby_args, log_cmd: "Starting minitest...", env: env)
   if result.error?
     logger.error("Minitest failed!")
     exit(result.exit_code)
@@ -72,6 +54,54 @@ def load_minitest_gems
     gem "minitest-rg", minitest_rg
     require "minitest/rg"
   end
+end
+
+def ruby_env
+  case minitest_compat
+  when true
+    { "MT_COMPAT" => "true" }
+  when false
+    { "MT_COMPAT" => nil }
+  else
+    {}
+  end
+end
+
+def ruby_args
+  args = []
+  args << "-w" if warnings
+  args << "-I#{::Toys::CORE_LIB_PATH}#{::File::PATH_SEPARATOR}#{::Toys::LIB_PATH}"
+  args << "-e" << ruby_code.join("\n")
+  args << "--"
+  args << "--seed" << seed if seed
+  args << "--verbose" if verbosity.positive?
+  args << "--name" << name if name
+  args << "--exclude" << exclude if exclude
+  args
+end
+
+def ruby_code
+  code = []
+  code << "gem 'minitest', '= #{::Minitest::VERSION}'"
+  code << "require 'minitest/autorun'"
+  if minitest_focus
+    code << "gem 'minitest-focus', '= #{::Minitest::Test::Focus::VERSION}'"
+    code << "require 'minitest/focus'"
+  end
+  if minitest_rg
+    code << "gem 'minitest-rg', '= #{::MiniTest::RG::VERSION}'"
+    code << "require 'minitest/rg'"
+  end
+  code << "require 'toys'"
+  code << "require 'toys/testing'"
+  if directory
+    code << "Toys::Testing.toys_custom_paths(#{::File.absolute_path(directory).inspect})"
+    code << "Toys::Testing.toys_include_builtins(false)"
+  end
+  find_test_files.each do |file|
+    code << "load '#{file}'"
+  end
+  code
 end
 
 def find_test_files
@@ -115,16 +145,4 @@ def base_dir
     end
     dir = parent
   end
-end
-
-def ruby_args
-  args = []
-  args << "-w" if warnings
-  args << "-I#{::Toys::CORE_LIB_PATH}#{::File::PATH_SEPARATOR}#{::Toys::LIB_PATH}"
-  args << "-"
-  args << "--seed" << seed if seed
-  args << "--verbose" if verbosity.positive?
-  args << "--name" << name if name
-  args << "--exclude" << exclude if exclude
-  args
 end

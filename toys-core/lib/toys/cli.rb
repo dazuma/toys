@@ -462,7 +462,8 @@ module Toys
         context = build_context(tool, remaining,
                                 verbosity: verbosity,
                                 delegated_from: delegated_from)
-        execute_tool(tool, context, &:run)
+        run_handler = make_run_handler(tool)
+        execute_tool(tool, context, &run_handler)
       end
     rescue ContextualError => e
       @error_handler.call(e).to_i
@@ -594,6 +595,19 @@ module Toys
                                  require_exact_flag_match: tool.exact_flag_match_required?)
       arg_parser.parse(args).finish
       tool.tool_class.new(arg_parser.data)
+    end
+
+    def make_run_handler(tool)
+      run_handler = tool.run_handler
+      if run_handler.is_a?(::Symbol)
+        proc do |context|
+          context.send(run_handler)
+        end
+      else
+        proc do |context|
+          context.instance_exec(&run_handler)
+        end
+      end
     end
 
     def execute_tool(tool, context, &block)

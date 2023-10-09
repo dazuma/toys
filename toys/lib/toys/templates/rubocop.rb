@@ -173,26 +173,31 @@ module Toys
 
           set_context_directory template.context_directory if template.context_directory
 
+          static :gem_version, template.gem_version
+          static :rubocop_options, template.options
+          static :fail_on_error, template.fail_on_error
+
           include :gems
           include :exec
 
           bundler_settings = template.bundler_settings
           include :bundler, **bundler_settings if bundler_settings
 
-          to_run do
-            gem "rubocop", *template.gem_version
+          # @private
+          def run
+            gem "rubocop", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               logger.info "Running RuboCop..."
               code = <<~CODE
-                gem 'rubocop', *#{template.gem_version.inspect}
+                gem 'rubocop', *#{gem_version.inspect}
                 require 'rubocop'
-                exit(::RuboCop::CLI.new.run(#{template.options.inspect}))
+                exit(::RuboCop::CLI.new.run(#{rubocop_options.inspect}))
               CODE
               result = exec_ruby(["-e", code])
               if result.error?
                 logger.error "RuboCop failed!"
-                exit(1) if template.fail_on_error
+                exit(1) if fail_on_error
               end
             end
           end

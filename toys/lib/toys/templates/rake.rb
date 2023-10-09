@@ -163,31 +163,41 @@ module Toys
       on_expand do |template|
         gem "rake", *template.gem_version
         require "rake"
+
         rakefile_path = Templates::Rake.find_rakefile(
           template.rakefile_path, template.context_directory || context_directory
         )
         raise "Cannot find #{template.rakefile_path}" unless rakefile_path
-        context_dir = ::File.dirname(rakefile_path)
-        rake = Templates::Rake.prepare_rake(rakefile_path, context_dir)
+        rake_context_dir = ::File.dirname(rakefile_path)
+        rake = Templates::Rake.prepare_rake(rakefile_path, rake_context_dir)
+
         rake.tasks.each do |task|
           comments = task.full_comment.to_s.split("\n")
           next if comments.empty? && template.only_described
+
           tool(task.name.split(":"), if_defined: :ignore) do
+            static :task, task
+            static :rake_context_dir, rake_context_dir
+
             bundler_settings = template.bundler_settings
             include :bundler, **bundler_settings if bundler_settings
+
             unless comments.empty?
               desc(comments.first)
               comments << "" << "Defined as a Rake task in #{rakefile_path}"
               long_desc(*comments)
             end
+
             if template.use_flags
               task.arg_names.each do |arg|
                 specs = Templates::Rake.flag_specs(arg)
                 flag(arg, *specs) unless specs.empty?
               end
-              to_run do
+
+              # @private
+              def run
                 args = task.arg_names.map { |arg| self[arg] }
-                ::Dir.chdir(context_dir) do
+                ::Dir.chdir(rake_context_dir) do
                   task.invoke(*args)
                 end
               end
@@ -195,8 +205,10 @@ module Toys
               task.arg_names.each do |arg|
                 optional_arg(arg)
               end
-              to_run do
-                ::Dir.chdir(context_dir) do
+
+              # @private
+              def run
+                ::Dir.chdir(rake_context_dir) do
                   task.invoke(*args)
                 end
               end

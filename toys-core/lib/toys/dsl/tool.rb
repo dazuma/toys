@@ -1418,18 +1418,30 @@ module Toys
       end
 
       ##
-      # Specify how to run this tool. Typically you do this by defining a
-      # method namd `run`. Alternatively, however, you can pass a block to the
-      # `to_run` method.
+      # Specify how to run this tool.
       #
-      # You may want to do this if your method needs access to local variables
-      # in the lexical scope. However, it is often more convenient to use
-      # {#static} to set the value in the context.
+      # Typically the entrypoint for a tool is a method named `run`. However,
+      # you can change this by passing a different method name, as a symbol, to
+      # {#to_run}.
       #
-      # ### Example
+      # You can also alternatively pass a block to {#to_run}. You might do this
+      # if your method needs access to local variables in the lexical scope.
+      # However, it is often more convenient to use {#static} to set those
+      # values in the context.
       #
-      #     # You can use this to keep access to the enclosing lexical scope
-      #     # from the run method:
+      # ### Examples
+      #
+      #     # Set a different method name as the entrypoint:
+      #
+      #     tool "foo" do
+      #       to_run :foo
+      #       def foo
+      #         puts "The fool tool ran!"
+      #       end
+      #     end
+      #
+      #     # Use a block to retain access to the enclosing lexical scope from
+      #     # the run method:
       #
       #     tool "foo" do
       #       cur_time = Time.now
@@ -1447,13 +1459,13 @@ module Toys
       #       end
       #     end
       #
-      # @param block [Proc] The run method.
+      # @param handler [Proc,Symbol,nil] The run handler as a method name
+      #     symbol or a proc, or nil to explicitly set as non-runnable.
+      # @param block [Proc] The run handler as a block.
       # @return [self]
       #
-      def to_run(&block)
-        cur_tool = DSL::Internal.current_tool(self, true)
-        return self if cur_tool.nil?
-        cur_tool.run_handler = block
+      def to_run(handler = nil, &block)
+        DSL::Internal.current_tool(self, true)&.run_handler = handler || block
         self
       end
       alias on_run to_run
@@ -1485,9 +1497,7 @@ module Toys
       # @return [self]
       #
       def on_interrupt(handler = nil, &block)
-        cur_tool = DSL::Internal.current_tool(self, true)
-        return self if cur_tool.nil?
-        cur_tool.interrupt_handler = handler || block
+        DSL::Internal.current_tool(self, true)&.interrupt_handler = handler || block
         self
       end
 
@@ -1517,9 +1527,7 @@ module Toys
       # @return [self]
       #
       def on_signal(signal, handler = nil, &block)
-        cur_tool = DSL::Internal.current_tool(self, true)
-        return self if cur_tool.nil?
-        cur_tool.set_signal_handler(signal, handler || block)
+        DSL::Internal.current_tool(self, true)&.set_signal_handler(signal, handler || block)
         self
       end
 
@@ -1549,9 +1557,7 @@ module Toys
       # @return [self]
       #
       def on_usage_error(handler = nil, &block)
-        cur_tool = DSL::Internal.current_tool(self, true)
-        return self if cur_tool.nil?
-        cur_tool.usage_error_handler = handler || block
+        DSL::Internal.current_tool(self, true)&.usage_error_handler = handler || block
         self
       end
 

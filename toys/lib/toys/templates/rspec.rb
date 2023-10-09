@@ -343,25 +343,28 @@ module Toys
                          complete: :file_system,
                          desc: "Paths to the specs to run (defaults to all specs)"
 
-          to_run do
-            gem_requirements = Array(template.gem_version)
-            gem "rspec", *gem_requirements
+          static :libs, template.libs
+          static :gem_version, template.gem_version
+          static :rspec_options, template.options
+
+          # @private
+          def run # rubocop:disable all
+            gem "rspec", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               ruby_args = []
-              libs = Array(template.libs)
               ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
 
               code = <<~CODE
-                gem 'rspec', *#{gem_requirements.inspect}
+                gem 'rspec', *#{gem_version.inspect}
                 require 'rspec/core'
                 ::RSpec::Core::Runner.invoke
               CODE
               ruby_args << "-e" << code
 
               ruby_args << "--"
-              ruby_args << "--options" << template.options if template.options
+              ruby_args << "--options" << rspec_options if rspec_options
               ruby_args << "--order" << order if order
               ruby_args << "--format" << format if format
               ruby_args << "--out" << out if out

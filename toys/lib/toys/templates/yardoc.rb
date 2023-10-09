@@ -464,6 +464,23 @@ module Toys
             static :generate_output, template.generate_output
           end
 
+          static :gem_version, template.gem_version
+          static :template_files, template.files
+          static :run_options, template.options.dup
+          static :stats_options, template.stats_options.dup
+          static :fail_on_undocumented_objects, template.fail_on_undocumented_objects
+          static :fail_on_warning, template.fail_on_warning
+          static :output_dir, template.output_dir
+          static :show_public, template.show_public
+          static :show_protected, template.show_protected
+          static :show_private, template.show_private
+          static :hide_private_tag, template.hide_private_tag
+          static :readme, template.readme
+          static :markup, template.markup
+          static :yard_template, template.template
+          static :template_path, template.template_path
+          static :yard_format, template.format
+
           include :exec
           include :terminal
           include :gems
@@ -471,32 +488,30 @@ module Toys
           bundler_settings = template.bundler_settings
           include :bundler, **bundler_settings if bundler_settings
 
-          to_run do
-            gem_requirements = template.gem_version
-            gem "yard", *gem_requirements
+          # @private
+          def run # rubocop:disable all
+            gem "yard", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               files = []
-              template.files.each do |pattern|
+              template_files.each do |pattern|
                 files.concat(::Dir.glob(pattern))
               end
               files.uniq!
 
-              run_options = template.options.dup
-              stats_options = template.stats_options.dup
-              stats_options << "--list-undoc" if template.fail_on_undocumented_objects
-              run_options << "--fail-on-warning" if template.fail_on_warning
+              stats_options << "--list-undoc" if fail_on_undocumented_objects
+              run_options << "--fail-on-warning" if fail_on_warning
               run_options << "--no-output" unless generate_output
-              run_options << "--output-dir" << template.output_dir if template.output_dir
-              run_options << "--no-public" unless template.show_public
-              run_options << "--protected" if template.show_protected
-              run_options << "--private" if template.show_private
-              run_options << "--no-private" if template.hide_private_tag
-              run_options << "-r" << template.readme if template.readme
-              run_options << "-m" << template.markup if template.markup
-              run_options << "-t" << template.template if template.template
-              run_options << "-p" << template.template_path if template.template_path
-              run_options << "-f" << template.format if template.format
+              run_options << "--output-dir" << output_dir if output_dir
+              run_options << "--no-public" unless show_public
+              run_options << "--protected" if show_protected
+              run_options << "--private" if show_private
+              run_options << "--no-private" if hide_private_tag
+              run_options << "-r" << readme if readme
+              run_options << "-m" << markup if markup
+              run_options << "-t" << yard_template if yard_template
+              run_options << "-p" << template_path if template_path
+              run_options << "-f" << yard_format if yard_format
               unless stats_options.empty?
                 run_options << "--no-stats"
                 stats_options << "--use-cache"
@@ -504,7 +519,7 @@ module Toys
               run_options.concat(files)
 
               code = <<~CODE
-                gem 'yard', *#{gem_requirements.inspect}
+                gem 'yard', *#{gem_version.inspect}
                 require 'yard'
                 ::YARD::CLI::Yardoc.run(*#{run_options.inspect})
               CODE
@@ -515,7 +530,7 @@ module Toys
               end
               unless stats_options.empty?
                 code = <<~CODE
-                  gem 'yard', *#{gem_requirements.inspect}
+                  gem 'yard', *#{gem_version.inspect}
                   require 'yard'
                   ::YARD::CLI::Stats.run(*#{stats_options.inspect})
                 CODE
@@ -526,7 +541,7 @@ module Toys
                   exit(1)
                 end
                 exit_on_nonzero_status(result)
-                if template.fail_on_undocumented_objects && result.captured_out =~ /Undocumented\sObjects:/
+                if fail_on_undocumented_objects && result.captured_out =~ /Undocumented\sObjects:/
                   unless verbosity.negative?
                     puts("Yardoc encountered undocumented objects", :red, :bold)
                   end
