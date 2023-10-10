@@ -181,19 +181,29 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
+      # @param add_method [true,false,nil] Whether to add a method for this
+      #     flag. If omitted or set to nil, uses the default behavior, which
+      #     adds the method if the key is a symbol representing a legal method
+      #     name that starts with a letter and does not override any public
+      #     method in the Ruby Object class or collide with any method directly
+      #     defined in the tool class.
       # @param block [Proc] Configures the flag. See {Toys::DSL::Flag} for the
       #     directives that can be called in this block.
       # @return [self]
       #
       def flag(key, *flags,
-               accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil,
-               report_collisions: true, desc: nil, long_desc: nil, display_name: nil,
+               accept: nil, default: nil, handler: nil,
+               complete_flags: nil, complete_values: nil,
+               report_collisions: true, desc: nil, long_desc: nil,
+               display_name: nil, add_method: nil,
                &block)
-        flag_dsl = DSL::Flag.new(flags, accept, default, handler, complete_flags, complete_values,
-                                 report_collisions, @flag_group, desc, long_desc, display_name)
+        flag_dsl = DSL::Flag.new(flags, accept, default, handler,
+                                 complete_flags, complete_values,
+                                 report_collisions, @flag_group, desc, long_desc,
+                                 display_name, add_method)
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(@tool, key)
-        DSL::Internal.maybe_add_getter(@tool_dsl, key)
+        DSL::Internal.maybe_add_getter(@tool_dsl, key, flag_dsl._get_add_method)
         self
       end
 

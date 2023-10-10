@@ -28,7 +28,8 @@ tool "test-builtins" do
 
   def run
     ::Dir.chdir(context_directory)
-    exec_separate_tool(["system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg"])
+    exec_separate_tool(["system", "test", "-d", "builtins",
+                        "--minitest-focus", "--minitest-rg", "--minitest-compat"])
   end
 end
 

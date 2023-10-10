@@ -983,6 +983,12 @@ module Toys
       #     arguments.) Defaults to the empty array.
       # @param display_name [String] A display name for this flag, used in help
       #     text and error messages.
+      # @param add_method [true,false,nil] Whether to add a method for this
+      #     flag. If omitted or set to nil, uses the default behavior, which
+      #     adds the method if the key is a symbol representing a legal method
+      #     name that starts with a letter and does not override any public
+      #     method in the Ruby Object class or collide with any method directly
+      #     defined in the tool class.
       # @param block [Proc] Configures the flag. See {Toys::DSL::Flag} for the
       #     directives that can be called in this block.
       # @return [self]
@@ -991,17 +997,17 @@ module Toys
                accept: nil, default: nil, handler: nil,
                complete_flags: nil, complete_values: nil,
                report_collisions: true, group: nil,
-               desc: nil, long_desc: nil, display_name: nil,
+               desc: nil, long_desc: nil, display_name: nil, add_method: nil,
                &block)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         flag_dsl = DSL::Flag.new(
           flags.flatten, accept, default, handler, complete_flags, complete_values,
-          report_collisions, group, desc, long_desc, display_name
+          report_collisions, group, desc, long_desc, display_name, add_method
         )
         flag_dsl.instance_exec(flag_dsl, &block) if block
         flag_dsl._add_to(cur_tool, key)
-        DSL::Internal.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key, flag_dsl._get_add_method)
         self
       end
 
@@ -1053,6 +1059,12 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
+      # @param add_method [true,false,nil] Whether to add a method for this
+      #     argument. If omitted or set to nil, uses the default behavior,
+      #     which adds the method if the key is a symbol representing a legal
+      #     method name that starts with a letter and does not override any
+      #     public method in the Ruby Object class or collide with any method
+      #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
       #     this block.
@@ -1060,14 +1072,15 @@ module Toys
       #
       def required_arg(key,
                        accept: nil, complete: nil, display_name: nil,
-                       desc: nil, long_desc: nil,
+                       desc: nil, long_desc: nil, add_method: nil,
                        &block)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::PositionalArg.new(accept, nil, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, nil, complete, display_name,
+                                         desc, long_desc, add_method)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_required_to(cur_tool, key)
-        DSL::Internal.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key, arg_dsl._get_add_method)
         self
       end
       alias required required_arg
@@ -1125,6 +1138,12 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
+      # @param add_method [true,false,nil] Whether to add a method for this
+      #     argument. If omitted or set to nil, uses the default behavior,
+      #     which adds the method if the key is a symbol representing a legal
+      #     method name that starts with a letter and does not override any
+      #     public method in the Ruby Object class or collide with any method
+      #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
       #     this block.
@@ -1132,14 +1151,15 @@ module Toys
       #
       def optional_arg(key,
                        default: nil, accept: nil, complete: nil, display_name: nil,
-                       desc: nil, long_desc: nil,
+                       desc: nil, long_desc: nil, add_method: nil,
                        &block)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name,
+                                         desc, long_desc, add_method)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._add_optional_to(cur_tool, key)
-        DSL::Internal.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key, arg_dsl._get_add_method)
         self
       end
       alias optional optional_arg
@@ -1197,6 +1217,12 @@ module Toys
       #     a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
+      # @param add_method [true,false,nil] Whether to add a method for these
+      #     arguments. If omitted or set to nil, uses the default behavior,
+      #     which adds the method if the key is a symbol representing a legal
+      #     method name that starts with a letter and does not override any
+      #     public method in the Ruby Object class or collide with any method
+      #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
       #     this block.
@@ -1204,20 +1230,21 @@ module Toys
       #
       def remaining_args(key,
                          default: [], accept: nil, complete: nil, display_name: nil,
-                         desc: nil, long_desc: nil,
+                         desc: nil, long_desc: nil, add_method: nil,
                          &block)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name, desc, long_desc)
+        arg_dsl = DSL::PositionalArg.new(accept, default, complete, display_name,
+                                         desc, long_desc, add_method)
         arg_dsl.instance_exec(arg_dsl, &block) if block
         arg_dsl._set_remaining_on(cur_tool, key)
-        DSL::Internal.maybe_add_getter(self, key)
+        DSL::Internal.maybe_add_getter(self, key, arg_dsl._get_add_method)
         self
       end
       alias remaining remaining_args
 
       ##
-      # Set a option values statically and create a helper method.
+      # Set option values statically and create helper methods.
       #
       # If any given key is a symbol representing a valid method name, then a
       # helper method is automatically added to retrieve the value. Otherwise,
@@ -1251,17 +1278,17 @@ module Toys
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
           key.each_key do |k|
-            DSL::Internal.maybe_add_getter(self, k)
+            DSL::Internal.maybe_add_getter(self, k, true)
           end
         else
           cur_tool.default_data[key] = value
-          DSL::Internal.maybe_add_getter(self, key)
+          DSL::Internal.maybe_add_getter(self, key, true)
         end
         self
       end
 
       ##
-      # Set a option values statically without creating helper methods.
+      # Set option values statically without creating helper methods.
       #
       # ### Example
       #

@@ -8,6 +8,14 @@ module Toys
     # @private
     #
     module Internal
+      ##
+      # @private A list of method names to avoid using as getters
+      #
+      AVOID_GETTERS = (::Object.instance_methods + [:run, :initialize])
+                      .find_all { |name| /^[a-z]\w*$/.match?(name) }
+                      .map { |name| [name, true] }.to_h
+                      .freeze
+
       class << self
         ##
         # Called by the Loader and InputFile to prepare a tool class for running
@@ -91,14 +99,21 @@ module Toys
         #
         # @private
         #
-        def maybe_add_getter(tool_class, key)
-          if key.is_a?(::Symbol) && key.to_s =~ /^[_a-zA-Z]\w*[!?]?$/ && key != :run
-            unless tool_class.public_method_defined?(key)
-              tool_class.class_eval do
-                define_method(key) do
-                  self[key]
-                end
-              end
+        def maybe_add_getter(tool_class, key, force)
+          return unless key.is_a?(::Symbol)
+          case force
+          when false
+            return
+          when true
+            return unless /^[_a-zA-Z]\w*[!?]?$/.match(key.to_s)
+          when nil
+            return if !/^[a-zA-Z]\w*[!?]?$/.match?(key.to_s) ||
+                      AVOID_GETTERS.key?(key) ||
+                      Compat.method_defined_without_ancestors?(tool_class, key)
+          end
+          tool_class.class_eval do
+            define_method(key) do
+              self[key]
             end
           end
         end
