@@ -54,7 +54,7 @@ module Toys
       # @return [self]
       #
       def puts(str = "", *styles)
-        terminal.puts(str, *styles)
+        self[KEY].puts(str, *styles)
         self
       end
       alias say puts
@@ -70,7 +70,7 @@ module Toys
       # @return [self]
       #
       def write(str = "", *styles)
-        terminal.write(str, *styles)
+        self[KEY].write(str, *styles)
         self
       end
 
@@ -89,7 +89,7 @@ module Toys
       # @return [String]
       #
       def ask(prompt, *styles, default: nil, trailing_text: :default)
-        terminal.ask(prompt, *styles, default: default, trailing_text: trailing_text)
+        self[KEY].ask(prompt, *styles, default: default, trailing_text: trailing_text)
       end
 
       ##
@@ -105,7 +105,7 @@ module Toys
       # @return [Boolean]
       #
       def confirm(prompt = "Proceed?", *styles, default: nil)
-        terminal.confirm(prompt, *styles, default: default)
+        self[KEY].confirm(prompt, *styles, default: default)
       end
 
       ##
@@ -130,9 +130,9 @@ module Toys
       #
       def spinner(leading_text: "", final_text: "",
                   frame_length: nil, frames: nil, style: nil, &block)
-        terminal.spinner(leading_text: leading_text, final_text: final_text,
-                         frame_length: frame_length, frames: frames, style: style,
-                         &block)
+        self[KEY].spinner(leading_text: leading_text, final_text: final_text,
+                          frame_length: frame_length, frames: frames, style: style,
+                          &block)
       end
 
       on_initialize do |**opts|

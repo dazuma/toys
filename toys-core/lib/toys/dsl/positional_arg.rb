@@ -142,17 +142,41 @@ module Toys
       end
 
       ##
+      # Specify whether to add a method for this argument.
+      #
+      # Recognized values are true to force creation of a method, false to
+      # disable method creation, and nil for the default behavior. The default
+      # checks the name and adds a method if the name is a symbol representing
+      # a legal method name that starts with a letter and does not override any
+      # public method in the Ruby Object class or collide with any method
+      # directly defined in the tool class.
+      #
+      # @param value [true,false,nil]
+      #
+      def add_method(value)
+        @add_method =
+          if value.nil?
+            nil
+          elsif value
+            true
+          else
+            false
+          end
+      end
+
+      ##
       # Called only from DSL::Tool
       #
       # @private
       #
-      def initialize(acceptor, default, completion, display_name, desc, long_desc)
+      def initialize(acceptor, default, completion, display_name, desc, long_desc, method_flag)
         @default = default
         @display_name = display_name
         @desc = desc
         @long_desc = long_desc || []
         accept(acceptor, **{})
         complete(completion, **{})
+        add_method(method_flag)
       end
 
       ##
@@ -180,6 +204,13 @@ module Toys
         tool.set_remaining_args(key,
                                 accept: @acceptor, default: @default, complete: @completion,
                                 display_name: @display_name, desc: @desc, long_desc: @long_desc)
+      end
+
+      ##
+      # @private
+      #
+      def _get_add_method
+        @add_method
       end
     end
   end

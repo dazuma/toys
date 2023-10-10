@@ -139,22 +139,30 @@ module Toys
     #
     # This is a convenience getter for {Toys::Context::Key::ARGS}.
     #
+    # If the `args` method is overridden by the tool, you can still access it
+    # using the name `__args`.
+    #
     # @return [Array<String>]
     #
     def args
       @__data[Key::ARGS]
     end
+    alias __args args
 
     ##
     # The currently running CLI.
     #
     # This is a convenience getter for {Toys::Context::Key::CLI}.
     #
+    # If the `cli` method is overridden by the tool, you can still access it
+    # using the name `__cli`.
+    #
     # @return [Toys::CLI]
     #
     def cli
       @__data[Key::CLI]
     end
+    alias __cli cli
 
     ##
     # Return the context directory for this tool. Generally, this defaults
@@ -164,70 +172,97 @@ module Toys
     #
     # This is a convenience getter for {Toys::Context::Key::CONTEXT_DIRECTORY}.
     #
+    # If the `context_directory` method is overridden by the tool, you can
+    # still access it using the name `__context_directory`.
+    #
     # @return [String] Context directory path
     # @return [nil] if there is no context.
     #
     def context_directory
       @__data[Key::CONTEXT_DIRECTORY]
     end
+    alias __context_directory context_directory
 
     ##
     # The logger for this execution.
     #
     # This is a convenience getter for {Toys::Context::Key::LOGGER}.
     #
+    # If the `logger` method is overridden by the tool, you can still access it
+    # using the name `__logger`.
+    #
     # @return [Logger]
     #
     def logger
       @__data[Key::LOGGER]
     end
+    alias __logger logger
 
     ##
     # The full name of the tool being executed, as an array of strings.
     #
     # This is a convenience getter for {Toys::Context::Key::TOOL_NAME}.
     #
+    # If the `tool_name` method is overridden by the tool, you can still access
+    # it using the name `__tool_name`.
+    #
     # @return [Array<String>]
     #
     def tool_name
       @__data[Key::TOOL_NAME]
     end
+    alias __tool_name tool_name
 
     ##
     # The source of the tool being executed.
     #
     # This is a convenience getter for {Toys::Context::Key::TOOL_SOURCE}.
     #
+    # If the `tool_source` method is overridden by the tool, you can still
+    # access it using the name `__tool_source`.
+    #
     # @return [Toys::SourceInfo]
     #
     def tool_source
       @__data[Key::TOOL_SOURCE]
     end
+    alias __tool_source tool_source
 
     ##
     # The (possibly empty) array of errors detected during argument parsing.
     #
     # This is a convenience getter for {Toys::Context::Key::USAGE_ERRORS}.
     #
+    # If the `usage_errors` method is overridden by the tool, you can still
+    # access it using the name `__usage_errors`.
+    #
     # @return [Array<Toys::ArgParser::UsageError>]
     #
     def usage_errors
       @__data[Key::USAGE_ERRORS]
     end
+    alias __usage_errors usage_errors
 
     ##
     # The current verbosity setting as an integer.
     #
     # This is a convenience getter for {Toys::Context::Key::VERBOSITY}.
     #
+    # If the `verbosity` method is overridden by the tool, you can still access
+    # it using the name `__verbosity`.
+    #
     # @return [Integer]
     #
     def verbosity
       @__data[Key::VERBOSITY]
     end
+    alias __verbosity verbosity
 
     ##
     # Fetch an option or other piece of data by key.
+    #
+    # If the `get` method is overridden by the tool, you can still access it
+    # using the name `__get` or the `[]` operator.
     #
     # @param key [Symbol]
     # @return [Object]
@@ -251,6 +286,9 @@ module Toys
     ##
     # Set one or more options or other context data by key.
     #
+    # If the `set` method is overridden by the tool, you can still access it
+    # using the name `__set`.
+    #
     # @return [self]
     #
     # @overload set(key, value)
@@ -272,12 +310,16 @@ module Toys
       end
       self
     end
+    alias __set set
 
     ##
     # The subset of the context that uses string or symbol keys. By convention,
     # this includes keys that are set by tool flags and arguments, but does not
     # include well-known context values such as verbosity or private context
     # values used by middleware or mixins.
+    #
+    # If the `options` method is overridden by the tool, you can still access
+    # it using the name `__options`.
     #
     # @return [Hash]
     #
@@ -286,9 +328,13 @@ module Toys
         k.is_a?(::Symbol) || k.is_a?(::String)
       end
     end
+    alias __options options
 
     ##
     # Find the given data file or directory in this tool's search path.
+    #
+    # If the `find_data` method is overridden by the tool, you can still access
+    # it using the name `__find_data`.
     #
     # @param path [String] The path to find
     # @param type [nil,:file,:directory] Type of file system object to find,
@@ -300,9 +346,13 @@ module Toys
     def find_data(path, type: nil)
       @__data[Key::TOOL_SOURCE].find_data(path, type: type)
     end
+    alias __find_data find_data
 
     ##
     # Exit immediately with the given status code.
+    #
+    # If the `exit` method is overridden by the tool, you can still access it
+    # using the name `__exit` or by calling {Context.exit}.
     #
     # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
@@ -311,6 +361,7 @@ module Toys
     def exit(code = 0)
       Context.exit(code)
     end
+    alias __exit exit
 
     ##
     # Exit immediately with the given status code. This class method can be

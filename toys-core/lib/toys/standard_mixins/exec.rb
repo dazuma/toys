@@ -483,7 +483,8 @@ module Toys
       #
       def exec_separate_tool(cmd, **opts, &block)
         Exec._setup_clean_process(cmd) do |clean_cmd|
-          exec(clean_cmd, **opts, &block)
+          opts = Exec._setup_exec_opts(opts, self)
+          self[KEY].exec(clean_cmd, **opts, &block)
         end
       end
 
@@ -669,7 +670,8 @@ module Toys
       #
       def capture_separate_tool(cmd, **opts, &block)
         Exec._setup_clean_process(cmd) do |clean_cmd|
-          capture(clean_cmd, **opts, &block)
+          opts = Exec._setup_exec_opts(opts, self)
+          self[KEY].capture(clean_cmd, **opts, &block)
         end
       end
 

@@ -49,84 +49,84 @@ module Toys
       # Calls [HighLine#agree](https://www.rubydoc.info/gems/highline/HighLine:agree)
       #
       def agree(*args, &block)
-        highline.agree(*args, &block)
+        self[KEY].agree(*args, &block)
       end
 
       ##
       # Calls [HighLine#ask](https://www.rubydoc.info/gems/highline/HighLine:ask)
       #
       def ask(*args, &block)
-        highline.ask(*args, &block)
+        self[KEY].ask(*args, &block)
       end
 
       ##
       # Calls [HighLine#choose](https://www.rubydoc.info/gems/highline/HighLine:choose)
       #
       def choose(*args, &block)
-        highline.choose(*args, &block)
+        self[KEY].choose(*args, &block)
       end
 
       ##
       # Calls [HighLine#list](https://www.rubydoc.info/gems/highline/HighLine:list)
       #
       def list(*args, &block)
-        highline.list(*args, &block)
+        self[KEY].list(*args, &block)
       end
 
       ##
       # Calls [HighLine#say](https://www.rubydoc.info/gems/highline/HighLine:say)
       #
       def say(*args, &block)
-        highline.say(*args, &block)
+        self[KEY].say(*args, &block)
       end
 
       ##
       # Calls [HighLine#indent](https://www.rubydoc.info/gems/highline/HighLine:indent)
       #
       def indent(*args, &block)
-        highline.indent(*args, &block)
+        self[KEY].indent(*args, &block)
       end
 
       ##
       # Calls [HighLine#newline](https://www.rubydoc.info/gems/highline/HighLine:newline)
       #
       def newline
-        highline.newline
+        self[KEY].newline
       end
 
       ##
       # Calls [HighLine#puts](https://www.rubydoc.info/gems/highline/HighLine:puts)
       #
       def puts(*args)
-        highline.puts(*args)
+        self[KEY].puts(*args)
       end
 
       ##
       # Calls [HighLine#color](https://www.rubydoc.info/gems/highline/HighLine:color)
       #
       def color(*args)
-        highline.color(*args)
+        self[KEY].color(*args)
       end
 
       ##
       # Calls [HighLine#color_code](https://www.rubydoc.info/gems/highline/HighLine:color_code)
       #
       def color_code(*args)
-        highline.color_code(*args)
+        self[KEY].color_code(*args)
       end
 
       ##
       # Calls [HighLine#uncolor](https://www.rubydoc.info/gems/highline/HighLine:uncolor)
       #
       def uncolor(*args)
-        highline.uncolor(*args)
+        self[KEY].uncolor(*args)
       end
 
       ##
       # Calls [HighLine#new_scope](https://www.rubydoc.info/gems/highline/HighLine:new_scope)
       #
       def new_scope
-        highline.new_scope
+        self[KEY].new_scope
       end
 
       on_initialize do |*args|

@@ -276,12 +276,35 @@ module Toys
       end
 
       ##
+      # Specify whether to add a method for this flag.
+      #
+      # Recognized values are true to force creation of a method, false to
+      # disable method creation, and nil for the default behavior. The default
+      # checks the name and adds a method if the name is a symbol representing
+      # a legal method name that starts with a letter and does not override any
+      # public method in the Ruby Object class or collide with any method
+      # directly defined in the tool class.
+      #
+      # @param value [true,false,nil]
+      #
+      def add_method(value)
+        @add_method =
+          if value.nil?
+            nil
+          elsif value
+            true
+          else
+            false
+          end
+      end
+
+      ##
       # Called only from DSL::Tool
       #
       # @private
       #
       def initialize(flags, acceptor, default, handler, flag_completion, value_completion,
-                     report_collisions, group, desc, long_desc, display_name)
+                     report_collisions, group, desc, long_desc, display_name, method_flag)
         @flags = flags
         @default = default
         @handler = handler
@@ -293,6 +316,7 @@ module Toys
         accept(acceptor)
         complete_flags(flag_completion, **{})
         complete_values(value_completion, **{})
+        add_method(method_flag)
       end
 
       ##
@@ -304,6 +328,13 @@ module Toys
                       complete_flags: @flag_completion, complete_values: @value_completion,
                       report_collisions: @report_collisions, group: @group,
                       desc: @desc, long_desc: @long_desc, display_name: @display_name)
+      end
+
+      ##
+      # @private
+      #
+      def _get_add_method
+        @add_method
       end
     end
   end

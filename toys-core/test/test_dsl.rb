@@ -737,13 +737,13 @@ describe Toys::DSL::Tool do
       assert_equal(10, context.abc_2def?)
     end
 
-    it "defines a getter for another valid symbol key" do
+    it "does not define a getter if the name begins with underscore" do
       loader.add_block do
         flag(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "defines a getter for a single capital letter symbol key" do
@@ -755,6 +755,18 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
       context = tool.tool_class.new(A: 10)
       assert_equal(10, context.A())
+    end
+
+    it "defines a getter that overrides a method in Context" do
+      loader.add_block do
+        flag(:options)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:options))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      context = tool.tool_class.new(options: 10)
+      assert_equal(10, context.options)
+      assert_equal(10, context.__options[:options])
     end
 
     it "does not define a getter for a string key" do
@@ -775,12 +787,30 @@ describe Toys::DSL::Tool do
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
+    it "does not define a getter if the name collides with an Object method" do
+      loader.add_block do
+        flag(:object_id)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
     it "does not define a getter for the run method" do
       loader.add_block do
         flag(:run)
       end
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:run))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the initialize method" do
+      loader.add_block do
+        flag(:initialize)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:initialize))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -794,6 +824,37 @@ describe Toys::DSL::Tool do
       tool, _remaining = loader.lookup([])
       context = tool.tool_class.new(hello: 10)
       assert_equal(20, context.hello)
+    end
+
+    it "does not define a getter if a private method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        private :hello
+        flag(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.send(:hello))
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        flag(:object_id, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces not defining a getter" do
+      loader.add_block do
+        flag(:abc_2def?, add_method: false)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_2def?))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "recognizes require_exact_flag_match" do
@@ -1052,13 +1113,13 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter for another valid symbol key" do
+    it "does not define a getter if the name begins with underscore" do
       loader.add_block do
         required(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "does not define a getter for a string key" do
@@ -1076,6 +1137,24 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        required(:object_id, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces not defining a getter" do
+      loader.add_block do
+        required(:abc_2def?, add_method: false)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_2def?))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end
@@ -1132,13 +1211,13 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter for another valid symbol key" do
+    it "does not define a getter if the name begins with underscore" do
       loader.add_block do
         optional(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "does not define a getter for a string key" do
@@ -1156,6 +1235,24 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        optional(:object_id, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces not defining a getter" do
+      loader.add_block do
+        optional(:abc_2def?, add_method: false)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_2def?))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end
@@ -1212,13 +1309,13 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter for another valid symbol key" do
+    it "does not define a getter if the name begins with underscore" do
       loader.add_block do
         remaining(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "does not define a getter for a string key" do
@@ -1236,6 +1333,24 @@ describe Toys::DSL::Tool do
       end
       tool, _remaining = loader.lookup([])
       assert_equal(false, tool.tool_class.public_method_defined?(:"1abc"))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        remaining(:object_id, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "forces not defining a getter" do
+      loader.add_block do
+        remaining(:abc_2def?, add_method: false)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:abc_2def?))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
   end
@@ -1297,12 +1412,21 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter for another valid symbol key" do
+    it "defines a getter even if the key starts with an underscore" do
       loader.add_block do
         static(:_abc_2def!, "hi")
       end
       tool, _remaining = loader.lookup([])
       assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "defines a getter even if the key collides with an Object method" do
+      loader.add_block do
+        static(:object_id, "hi")
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
