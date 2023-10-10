@@ -26,7 +26,8 @@ def run
   env = {}
   env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
   exec_tool(["test"], name: "Tests", env: env)
-  exec_tool(["system", "test", "-d", File.join(context_directory, "builtins"), "--minitest-rg"],
+  builtins_dir = File.join(context_directory, "builtins")
+  exec_tool(["system", "test", "-d", builtins_dir, "--minitest-rg", "--minitest-compat"],
             name: "Builtins Tests", env: env)
   exec_tool(["rubocop"], name: "Style checker")
   exec_tool(["yardoc-test"], name: "Docs generation")

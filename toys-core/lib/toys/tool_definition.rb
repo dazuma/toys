@@ -18,12 +18,12 @@ module Toys
       ##
       # Create a completion given configuration options.
       #
-      # @param complete_subtools [Boolean] Whether to complete subtool names
-      # @param include_hidden_subtools [Boolean] Whether to include hidden
+      # @param complete_subtools [true,false] Whether to complete subtool names
+      # @param include_hidden_subtools [true,false] Whether to include hidden
       #     subtools (i.e. those beginning with an underscore)
-      # @param complete_args [Boolean] Whether to complete positional args
-      # @param complete_flags [Boolean] Whether to complete flag names
-      # @param complete_flag_values [Boolean] Whether to complete flag values
+      # @param complete_args [true,false] Whether to complete positional args
+      # @param complete_flags [true,false] Whether to complete flag names
+      # @param complete_flag_values [true,false] Whether to complete flag values
       # @param delegation_target [Array<String>,nil] Delegation target, or
       #     `nil` if none.
       #
@@ -41,7 +41,7 @@ module Toys
 
       ##
       # Whether to complete subtool names
-      # @return [Boolean]
+      # @return [true,false]
       #
       def complete_subtools?
         @complete_subtools
@@ -49,7 +49,7 @@ module Toys
 
       ##
       # Whether to include hidden subtools
-      # @return [Boolean]
+      # @return [true,false]
       #
       def include_hidden_subtools?
         @include_hidden_subtools
@@ -57,7 +57,7 @@ module Toys
 
       ##
       # Whether to complete flags
-      # @return [Boolean]
+      # @return [true,false]
       #
       def complete_flags?
         @complete_flags
@@ -65,7 +65,7 @@ module Toys
 
       ##
       # Whether to complete positional args
-      # @return [Boolean]
+      # @return [true,false]
       #
       def complete_args?
         @complete_args
@@ -73,7 +73,7 @@ module Toys
 
       ##
       # Whether to complete flag values
-      # @return [Boolean]
+      # @return [true,false]
       #
       def complete_flag_values?
         @complete_flag_values
@@ -205,7 +205,7 @@ module Toys
     #
     # The following settings are supported:
     #
-    #  *  `propagate_helper_methods` (_Boolean_) - Whether subtools should
+    #  *  `propagate_helper_methods` (_boolean_) - Whether subtools should
     #     inherit methods defined by parent tools. Defaults to `false`.
     #
     class Settings < ::Toys::Settings
@@ -273,6 +273,7 @@ module Toys
       @includes_modules = false
       @custom_context_directory = nil
 
+      @run_handler = :run
       @signal_handlers = {}
       @usage_error_handler = nil
       @delegate_target = nil
@@ -454,6 +455,23 @@ module Toys
     attr_reader :completion
 
     ##
+    # The run handler.
+    #
+    # This handler is called to run the tool. Normally it is a method name,
+    # represented by a symbol. (The default is `:run`.) It can be set to a
+    # different method name, or to a proc that will be called with `self` set
+    # to the tool context. Either way, it takes no arguments. The run handler
+    # can also be explicitly set to `nil` indicating a non-runnable tool;
+    # however, typically a tool is made non-runnable simply by leaving the run
+    # handler set to `:run` and not defining the method.
+    #
+    # @return [Proc] if the run handler is defined as a Proc
+    # @return [Symbol] if the run handler is defined as a method
+    # @return [nil] if the tool is explicitly made non-runnable
+    #
+    attr_reader :run_handler
+
+    ##
     # The usage error handler.
     #
     # This handler is called when at least one usage error is detected during
@@ -462,8 +480,8 @@ module Toys
     # optionally takes an array of {Toys::ArgParser::UsageError} as the sole
     # argument.
     #
-    # @return [Proc] The usage error handler proc
-    # @return [Symbol] The name of a method to call
+    # @return [Proc] if the usage error handler is defined as a Proc
+    # @return [Symbol] if the user error handler is defined as a method
     # @return [nil] if there is no usage error handler
     #
     attr_reader :usage_error_handler
@@ -499,13 +517,13 @@ module Toys
     # Return the signal handler for the given signal.
     #
     # This handler is called when the given signal is received, immediately
-    # taking over the execution as if it were the new `run` method. The signal
+    # taking over the execution as if it were the new run handler. The signal
     # handler can be specified as a Proc, or a Symbol indicating a method to
     # call. It optionally takes the `SignalException` as the sole argument.
     #
     # @param signal [Integer,String,Symbol] The signal number or name
-    # @return [Proc] The signal handler proc
-    # @return [Symbol] The name of a method to call
+    # @return [Proc] if the signal handler is defined as a Proc
+    # @return [Symbol] if the signal handler is defined as a method
     # @return [nil] if there is no handler for the given signal
     #
     def signal_handler(signal)
@@ -515,8 +533,8 @@ module Toys
     ##
     # Return the interrupt handler. This is equivalent to `signal_handler(2)`.
     #
-    # @return [Proc] The interrupt signal handler proc
-    # @return [Symbol] The name of a method to call
+    # @return [Proc] if the interrupt signal handler is defined as a Proc
+    # @return [Symbol] if the interrupt signal handler is defined as a method
     # @return [nil] if there is no handler for the interrupt signals
     #
     def interrupt_handler
@@ -525,7 +543,7 @@ module Toys
 
     ##
     # Returns true if this tool is a root tool.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def root?
       full_name.empty?
@@ -533,17 +551,19 @@ module Toys
 
     ##
     # Returns true if this tool is marked as runnable.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def runnable?
-      tool_class.public_instance_methods(false).include?(:run)
+      @run_handler.is_a?(::Symbol) &&
+        tool_class.public_instance_methods(false).include?(@run_handler) ||
+        @run_handler.is_a?(::Proc)
     end
 
     ##
     # Returns true if this tool handles interrupts. This is equivalent to
     # `handles_signal?(2)`.
     #
-    # @return [Boolean]
+    # @return [true,false]
     #
     def handles_interrupts?
       handles_signal?(2)
@@ -553,7 +573,7 @@ module Toys
     # Returns true if this tool handles the given signal.
     #
     # @param signal [Integer,String,Symbol] The signal number or name
-    # @return [Boolean]
+    # @return [true,false]
     #
     def handles_signal?(signal)
       signal = canonicalize_signal(signal)
@@ -562,7 +582,7 @@ module Toys
 
     ##
     # Returns true if this tool handles usage errors.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def handles_usage_errors?
       !usage_error_handler.nil?
@@ -570,7 +590,7 @@ module Toys
 
     ##
     # Returns true if this tool has at least one included module.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def includes_modules?
       @includes_modules
@@ -578,7 +598,7 @@ module Toys
 
     ##
     # Returns true if there is a specific description set for this tool.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def includes_description?
       !long_desc.empty? || !desc.empty?
@@ -587,7 +607,7 @@ module Toys
     ##
     # Returns true if at least one flag or positional argument is defined
     # for this tool.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def includes_arguments?
       !default_data.empty? || !flags.empty? ||
@@ -597,7 +617,7 @@ module Toys
 
     ##
     # Returns true if this tool has any definition information.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def includes_definition?
       includes_arguments? || runnable? || argument_parsing_disabled? ||
@@ -606,7 +626,7 @@ module Toys
 
     ##
     # Returns true if this tool's definition has been finished and is locked.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def definition_finished?
       @definition_finished
@@ -614,7 +634,7 @@ module Toys
 
     ##
     # Returns true if this tool has disabled argument parsing.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def argument_parsing_disabled?
       @disable_argument_parsing
@@ -622,7 +642,7 @@ module Toys
 
     ##
     # Returns true if this tool enforces flags before args.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def flags_before_args_enforced?
       @enforce_flags_before_args
@@ -630,7 +650,7 @@ module Toys
 
     ##
     # Returns true if this tool requires exact flag matches.
-    # @return [Boolean]
+    # @return [true,false]
     #
     def exact_flag_match_required?
       @require_exact_flag_match
@@ -905,7 +925,7 @@ module Toys
     # Enforce that flags must come before args for this tool.
     # You may disable enforcement by passoing `false` for the state.
     #
-    # @param state [Boolean]
+    # @param state [true,false]
     # @return [self]
     #
     def enforce_flags_before_args(state = true)
@@ -923,7 +943,7 @@ module Toys
     # Require that flags must match exactly. (If false, flags can match an
     # unambiguous substring.)
     #
-    # @param state [Boolean]
+    # @param state [true,false]
     # @return [self]
     #
     def require_exact_flag_match(state = true)
@@ -957,10 +977,10 @@ module Toys
     #     formats. Defaults to the empty array.
     # @param name [String,Symbol,nil] The name of the group, or nil for no
     #     name.
-    # @param report_collisions [Boolean] If `true`, raise an exception if a
+    # @param report_collisions [true,false] If `true`, raise an exception if a
     #     the given name is already taken. If `false`, ignore. Default is
     #     `true`.
-    # @param prepend [Boolean] If `true`, prepend rather than append the
+    # @param prepend [true,false] If `true`, prepend rather than append the
     #     group to the list. Default is `false`.
     # @return [self]
     #
@@ -1015,7 +1035,7 @@ module Toys
     # @param complete_values [Object] A specifier for shell tab completion
     #     for flag values associated with this flag. Pass any spec
     #     recognized by {Toys::Completion.create}.
-    # @param report_collisions [Boolean] Raise an exception if a flag is
+    # @param report_collisions [true,false] Raise an exception if a flag is
     #     requested that is already in use or marked as disabled. Default is
     #     true.
     # @param group [Toys::FlagGroup,String,Symbol,nil] Group for
@@ -1185,16 +1205,24 @@ module Toys
     end
 
     ##
-    # Set the run handler as a Proc. This simply defines the `run` method in
-    # the tool class.
+    # Set the run handler.
     #
-    # @param proc [Proc] The runnable block
+    # This handler is called to run the tool. Normally it is a method name,
+    # represented by a symbol. (The default is `:run`.) It can be set to a
+    # different method name, or to a proc that will be called with `self` set
+    # to the tool context. Either way, it takes no arguments. The run handler
+    # can also be explicitly set to `nil` indicating a non-runnable tool;
+    # however, typically a tool is made non-runnable simply by leaving the run
+    # handler set to `:run` and not defining the method.
     #
-    def run_handler=(proc)
+    # @param handler [Proc,Symbol,nil] the run handler
+    #
+    def run_handler=(handler)
       check_definition_state(is_method: true)
-      tool_class.class_eval do
-        define_method(:run, &proc)
+      if !handler.is_a?(::Proc) && !handler.is_a?(::Symbol) && !handler.nil?
+        raise ToolDefinitionError, "Run handler must be a proc or symbol"
       end
+      @run_handler = handler
     end
 
     ##

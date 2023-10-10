@@ -990,6 +990,53 @@ describe Toys::ToolDefinition do
     end
   end
 
+  describe "run handler" do
+    it "defaults to the run method" do
+      assert_equal(:run, tool.run_handler)
+      refute(tool.runnable?)
+      tool.tool_class.class_eval do
+        def run
+          exit(11)
+        end
+      end
+      assert(tool.runnable?)
+      assert_equal(11, cli.run(tool_name))
+    end
+
+    it "sets the run method" do
+      tool.run_handler = :run2
+      assert_equal(:run2, tool.run_handler)
+      refute(tool.runnable?)
+      tool.tool_class.class_eval do
+        def run2
+          exit(12)
+        end
+      end
+      assert(tool.runnable?)
+      assert_equal(12, cli.run(tool_name))
+    end
+
+    it "supports proc" do
+      tool.run_handler = proc do
+        exit(13)
+      end
+      assert_kind_of(Proc, tool.run_handler)
+      assert(tool.runnable?)
+      assert_equal(13, cli.run(tool_name))
+    end
+
+    it "supports nil" do
+      tool.run_handler = nil
+      refute(tool.runnable?)
+      tool.tool_class.class_eval do
+        def run
+          exit(14)
+        end
+      end
+      refute(tool.runnable?)
+    end
+  end
+
   describe "interrupt handler" do
     it "sets from a proc" do
       handler = proc { nil }

@@ -203,6 +203,28 @@ describe Toys::DSL::Tool do
       assert_equal(true, tool.runnable?)
     end
 
+    it "changes the run method name" do
+      loader.add_block do
+        tool "foo" do
+          to_run :run2
+          def run2; end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(true, tool.runnable?)
+    end
+
+    it "causes a tool to be non-runnable when to_run is set to nil" do
+      loader.add_block do
+        tool "foo" do
+          to_run nil
+          def run; end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(false, tool.runnable?)
+    end
+
     it "allows other methods to be defined but not make the tool runnable" do
       loader.add_block do
         tool "foo" do

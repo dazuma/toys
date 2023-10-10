@@ -237,15 +237,21 @@ module Toys
             end
           end
 
+          static :gem_name, template.gem_name(context_directory || ::Dir.getwd)
+          static :install_gem, template.install_gem
+          static :push_gem, template.push_gem
+          static :tag, template.tag
+          static :push_tag, template.push_tag
+
           include :exec, exit_on_nonzero_status: true
           include :fileutils
           include :terminal
 
-          to_run do
+          # @private
+          def run # rubocop:disable all
             require "rubygems"
             require "rubygems/package"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              gem_name = template.gem_name
               gemspec = ::Gem::Specification.load("#{gem_name}.gemspec")
               ::Gem::Package.build(gemspec)
               version = gemspec.version
@@ -255,21 +261,21 @@ module Toys
                 mkdir_p(::File.dirname(archive_path))
                 mv(archive_name, archive_path)
               end
-              if template.install_gem
+              if install_gem
                 exit(1) unless yes || confirm("Install #{gem_name} #{version}? ", default: true)
                 exec ["gem", "install", archive_path]
               end
-              if template.push_gem
+              if push_gem
                 if ::File.directory?(".git") && capture("git status -s").strip != ""
                   logger.error "Cannot push the gem when there are uncommited changes"
                   exit(1)
                 end
                 exit(1) unless yes || confirm("Release #{gem_name} #{version}? ", default: true)
                 exec(["gem", "push", archive_path])
-                if template.tag
+                if tag
                   exec(["git", "tag", "v#{version}"])
-                  if template.push_tag
-                    exec(["git", "push", template.push_tag, "v#{version}"])
+                  if push_tag
+                    exec(["git", "push", push_tag, "v#{version}"])
                   end
                 end
               end
