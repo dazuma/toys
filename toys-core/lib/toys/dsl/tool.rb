@@ -1334,7 +1334,8 @@ module Toys
       # @return [self]
       #
       def enforce_flags_before_args(state = true)
-        DSL::Internal.current_tool(self, true)&.enforce_flags_before_args(state)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.enforce_flags_before_args(state)
         self
       end
 
@@ -1350,7 +1351,8 @@ module Toys
       # @return [self]
       #
       def require_exact_flag_match(state = true)
-        DSL::Internal.current_tool(self, true)&.require_exact_flag_match(state)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.require_exact_flag_match(state)
         self
       end
 
@@ -1374,7 +1376,8 @@ module Toys
       # @return [self]
       #
       def disable_argument_parsing
-        DSL::Internal.current_tool(self, true)&.disable_argument_parsing
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.disable_argument_parsing
         self
       end
 
@@ -1400,7 +1403,8 @@ module Toys
       # @return [self]
       #
       def disable_flag(*flags)
-        DSL::Internal.current_tool(self, true)&.disable_flag(*flags)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.disable_flag(*flags)
         self
       end
 
@@ -1492,7 +1496,8 @@ module Toys
       # @return [self]
       #
       def to_run(handler = nil, &block)
-        DSL::Internal.current_tool(self, true)&.run_handler = handler || block
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.run_handler = handler || block
         self
       end
       alias on_run to_run
@@ -1524,7 +1529,8 @@ module Toys
       # @return [self]
       #
       def on_interrupt(handler = nil, &block)
-        DSL::Internal.current_tool(self, true)&.interrupt_handler = handler || block
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.interrupt_handler = handler || block
         self
       end
 
@@ -1554,7 +1560,8 @@ module Toys
       # @return [self]
       #
       def on_signal(signal, handler = nil, &block)
-        DSL::Internal.current_tool(self, true)&.set_signal_handler(signal, handler || block)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.set_signal_handler(signal, handler || block)
         self
       end
 
@@ -1584,7 +1591,8 @@ module Toys
       # @return [self]
       #
       def on_usage_error(handler = nil, &block)
-        DSL::Internal.current_tool(self, true)&.usage_error_handler = handler || block
+        cur_tool = DSL::Internal.current_tool(self, true)
+        cur_tool&.usage_error_handler = handler || block
         self
       end
 
@@ -1693,7 +1701,8 @@ module Toys
       # @return [nil] if there is no context.
       #
       def context_directory
-        DSL::Internal.current_tool(self, false)&.context_directory || source_info.context_directory
+        cur_tool = DSL::Internal.current_tool(self, false)
+        cur_tool&.context_directory || source_info.context_directory
       end
 
       ##
@@ -1714,8 +1723,7 @@ module Toys
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
         cur_tool = DSL::Internal.current_tool(self, false)
-        return self if cur_tool.nil?
-        cur_tool.custom_context_directory = dir
+        cur_tool&.custom_context_directory = dir
         self
       end
 
@@ -1754,8 +1762,7 @@ module Toys
       def subtool_apply(&block)
         cur_tool = DSL::Internal.current_tool(self, false)
         return self if cur_tool.nil?
-        cur_tool.subtool_middleware_stack.add(:apply_config,
-                                              parent_source: source_info, &block)
+        cur_tool.subtool_middleware_stack.add(:apply_config, parent_source: source_info, &block)
         self
       end
 

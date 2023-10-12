@@ -399,10 +399,11 @@ argument is omitted, e.g.
 
 Then the option `:whom` is set to the default value `"world"`.
 
-If the option name is a valid method name, Toys will provide a method that you
-can use to retrieve the value. In the above example, we retrieve the value for
-the option `:whom` by calling the method `whom`. If the option name cannot be
-made into a method, you can retrieve the value by calling {Toys::Context#get}.
+If the option name is symbol representing a valid method name (that doesn't
+collide with a method already present), Toys will provide a method that you can
+use to retrieve the value. In the above example, we retrieve the value for the
+option `:whom` by calling the method `whom`. If the option name cannot be made
+into a method, you can retrieve the value by calling {Toys::Context#get}.
 
 An argument can also be **required**, which means it must be provided on the
 command line; otherwise the tool will report a usage error. You can declare a
@@ -418,7 +419,7 @@ first, in order, followed by the optional arguments. For example:
       required_arg :arg1
 
       def run
-        puts "options data is #{options.inspect}"
+        puts "Options data is #{options.inspect}"
       end
     end
 
@@ -457,7 +458,7 @@ not provided on the command line. For example:
       optional_arg :arg2, default: "the-default"
 
       def run
-        puts "options data is #{options.inspect}"
+        puts "Options data is #{options.inspect}"
       end
     end
 
@@ -594,10 +595,12 @@ arguments passed to the tool. In the case above, the `:shout` option is set to
 it remains falsy. The two flags `-s` and `--shout` are effectively synonyms and
 have the same effect. A flag declaration can include any number of synonyms.
 
-As with arguments, Toys will provide a method that you can call to retrieve the
-option value set by a flag. In this case, a method called `shout` will be
-available, and will return either true or false. If the option name cannot be
-made into a method, you can retrieve the value by calling {Toys::Context#get}.
+As with arguments, Toys can provide a method that you can call to retrieve the
+option value set by a flag. This method is provided if the flag name is a
+symbol representing a valid method name that does not collide with a method
+already present. In our example, Toys provides a method called `shout` that
+returns either true or false. If the option name cannot be made into a method,
+you can retrieve the value by calling {Toys::Context#get}.
 
 #### Flag types
 
@@ -820,10 +823,11 @@ like this:
          default: 0,
          handler: proc { |_val, prev| prev - 1 }
 
-Note that both flags affect the same option name, `VERBOSITY`. The first
-increments it each time it appears, and the second decrements it. A tool can
-query this option and get an integer telling the requested verbosity level, as
-you will see [below](#Logging_and_verbosity).
+Note that both flags affect the same option name,
+{Toys::Context::Key::VERBOSITY}. The first increments it each time it appears,
+and the second decrements it. A tool can query this option and get an integer
+telling the requested verbosity level, as you will see
+[below](#Logging_and_verbosity).
 
 Toys provides a few built-in handlers that can be specified by name. We already
 discussed the default handler that can be specified by its name `:set` or by
@@ -1875,8 +1879,11 @@ Following is a simple template example:
       on_expand do |template|
         tool template.name do
           desc "A greeting tool generated from a template"
-          to_run do
-            puts "Hello, #{template.whom}!"
+
+          static :whom, template.whom
+
+          def run
+            puts "Hello, #{whom}!"
           end
         end
       end
@@ -1897,15 +1904,12 @@ passed to the block, so it can access the template configuration when
 generating directives. The "greet" template in the above example generates a
 tool whose name is set by the template's `name` property.
 
-Notice that in the above example, we used `to_run do`, providing a *block* for
-the tool's execution, rather than `def run`, providing a method. Both forms are
-valid and will work in a template (as well as in a normal Toys file), but the
-block form is often useful in a template because you can access the `template`
-variable inside the block, whereas it would not be accessible if you defined a
-method. Similarly, if your template generates helper methods, and the body of
-those methods need access to the `template` variable, you can use
-[Module#define_method](http://ruby-doc.org/core/Module.html#method-i-define_method)
-instead of `def`.
+Notice in the above example, we used the {Toys::DSL::Tool#static} directive to
+create a "static" option for `template.whom`. A "static" option is an option
+whose value is set directly in code rather than via a flag or argument. We use
+it here because we can't access the `template` local variable from within the
+`run` method. Static options are a common technique for accessing template
+configuration properties from inside tool methods.
 
 By convention, it is a good idea for configuration options for your template to
 be settable *both* as arguments to the constructor, *and* as `attr_accessor`
@@ -1931,8 +1935,9 @@ class by including the {Toys::Template} module in your class definition.
       on_expand do |template|
         tool template.name do
           desc "A greeting tool generated from a template"
-          to_run do
-            puts "Hello, #{template.whom}!"
+          static :whom, template.whom
+          def run
+            puts "Hello, #{whom}!"
           end
         end
       end
@@ -3049,9 +3054,9 @@ themselves.
 
     # This file is .toys.rb
 
-    # A "clean" tool that cleans out gem builds (from the pkg directory), and
-    # documentation builds (from doc and .yardoc)
-    expand :clean, paths: ["pkg", "doc", ".yardoc"]
+    # A "clean" tool that cleans out anything matched by the gitignore. You can
+    # also configure it to clean specific files and directories.
+    expand :clean, paths: :gitignore
 
     # This is the "test" tool.
     expand :minitest, libs: ["lib", "test"]
@@ -3502,6 +3507,81 @@ failed.
         else
           puts "Usage was not correct"
         end
+      end
+    end
+
+### Changing the entrypoint
+
+The normal entrypoint for a tool is the `run` method. However, you can change
+it using the {Toys::DSL::Tool#to_run} directive, providing either a different
+method name as a symbol, or a block that will be called instead of a method to
+run the tool.
+
+One reason to change which method is called, is if you need to modify a tool
+that was already defined by some other means (like a template expansion). For
+example, the tests for the Toys gems include a number of longer-running
+"integration" tests that run only when the `TOYS_TEST_INTEGRATION` environment
+variable is set. The Toys gems provide standard `test` tools using the
+`:minitest` template, but then modify those tools to add an `--integration`
+flag. When this flag is set, the `TOYS_TEST_INTEGRATION` environment variable
+gets set, causing the integration tests to run. Here's what that looks like:
+
+    # Use the minitest template to generate the normal test tool with the
+    # normal "run" method as the entrypoint
+    expand :minitest, libs: ["lib", "test"], bundler: true
+
+    # Reopen the "test" tool generated above
+    tool "test" do
+      # Add a flag to the tool
+      flag :integration
+
+      # Create a new run method that "wraps" the existing one
+      def run_with_integration
+        # First set the environment variable to activate integration tests
+        # if requested
+        ENV["TOYS_TEST_INTEGRATION"] = "true" if integration
+
+        # Invoke the original run method that was defined in the template
+        run
+      end
+
+      # Now set the entrypoint to our new method
+      to_run :run_with_integration
+    end
+
+Passing a block to {Toys::DSL::Tool#to_run} is less common. One reason you
+might do it is if you need to access variables from an outer scope. (Normally,
+defining a method isolates your variables from any enclosing scopes.) Here is
+an example that prints out the time that the tool was *defined* (rather than
+executed).
+
+    tool "def-time" do
+      # Grab the time during tool definition
+      time = Time.now
+
+      # Define the entrypoint using a block rather than a method.
+      # The block is still called in the same object context, but now has
+      # access to variables from enclosing scopes.
+      to_run do
+        puts "Defined at #{time}"
+      end
+    end
+
+The downside of this technique is that the entrypoint is not a method, and
+can't be called like one. Which means, among other things, you can't "wrap" it
+like we did with the test tool above.
+
+If you need to access information from enclosing scopes, consider instead
+setting options using the {Toys::DSL::Tool#static} directive, as illustrated
+earlier when we discussed [defining templates](#Defining_templates).
+
+    tool "def-time" do
+      # Grab the time during tool definition and set it as a static option. 
+      static :time, Time.now
+
+      # Now you can access it from a run method like any other option
+      def run
+        puts "Defined at #{time}"
       end
     end
 

@@ -14,11 +14,11 @@ expand :minitest, libs: ["lib", "test"], bundler: true, mt_compat: true
 tool "test" do
   flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
 
-  alias_method :run_orig, :run
+  to_run :run_with_integration
 
-  def run
+  def run_with_integration
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-    run_orig
+    run
   end
 end
 
