@@ -1,5 +1,19 @@
 # Release History
 
+### v0.15.0 / 2023-10-12
+
+* BREAKING CHANGE: Overhaul of the CLI standard error handling
+* BREAKING CHANGE: Update default algorithm determining whether to add a method
+
+* ADDED: Overhaul of the CLI standard error handling
+* ADDED: Support configuring MT_COMPAT in the minitest template
+* ADDED: Support setting a different method as the run handler
+* FIXED: Allow tests and specs to interact with stdin
+* FIXED: Update default algorithm determining whether to add a method
+* DOCS: Various documentation fixes and clarifications
+* DOCS: Progress on the Toys-Core guide
+* DOCS: Additional guide updates
+
 ### v0.14.7 / 2023-07-19
 
 * FIXED: Fixed an exception when passing a non-string to puts in the terminal mixin
