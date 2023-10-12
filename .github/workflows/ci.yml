@@ -71,7 +71,6 @@ jobs:
         shell: bash
         env:
           TOYS_TEST_INTEGRATION: "1"
-          MT_COMPAT: "true"
         run: |
           unset JAVA_TOOL_OPTIONS
           ./toys-dev do ci init , ${{ matrix.tool }} < /dev/null
