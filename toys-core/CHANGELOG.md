@@ -1,5 +1,33 @@
 # Release History
 
+### v0.15.0 / 2023-10-12
+
+Toys-Core 0.15.0 is a major release that overhauls error and signal handling, cleans up some warts around entrypoint and method definition, and fixes a few long-standing issues.
+
+Breaking changes:
+
+* The default error_handler for Toys::CLI now simply reraises the unhandled exception out of Toys::CLI#run. This was done to simplify the default behavior and reduce its dependencies. Additionally, the Toys::CLI::DefaultErrorHandler class has been removed, and replaced with the Toys::CLI.default_error_handler class method implementing the simplified behavior. You can restore the old behavior by passing Toys::Utils::StandardUI#error_handler to the CLI.
+* The default logger_factory for Toys::CLI now uses a simple bare-bones logger instead of the nicely formatted logger previously used as default. This was done to simplify the default behavior and reduce its dependencies. You can restore the old behavior by passing Toys::Utils::StandardUI#logger_factory to the CLI.
+* The Toys::CLI::DefaultCompletion class has been removed, and replaced with the Toys::CLI.default_completion class method.
+* Passing a proc to Toys::ToolDefinition#run_handler= now sets the run handler directly to the proc rather than defining the run method.
+* The default algorithm for determining whether flags and arguments add methods now allows overriding of methods of Toys::Context and any other included modules, but prevents collisions with private methods defined in the tool. (It continues to prevent overriding of public methods of Object and BasicObject.)
+
+New functionality:
+
+* New DSL directive on_signal lets tools provide signal handlers.
+* New utility Toys::Utils::StandardUI implements the error handling and logger formatting used by the toys executable. (These implementations were moved out of the Toys::CLI base class.)
+* Toys::ToolDefinition provides methods for managing signal handlers.
+* Passing a symbol to Toys::ToolDefinition#run_handler= can set the run entrypoint to a method other than "run".
+* Flags and arguments can be configured explicitly to add methods or not add methods, overriding the default behavior.
+
+Fixes and other changes:
+
+* The Bundler integration prevents Bundler from attempting to self-update to the version specified in a lockfile (which would often cause problems when Bundler is called from Toys).
+* If a missing delegate or a delegation loop is detected, ToolDefinitionError is raised instead of RuntimeError.
+* Some cleanup of various mixins to prevent issues if their methods ever get overridden.
+* Progress on the toys-core user guide. It's not yet complete, but getting closer.
+* Various improvements and clarifications in the reference documentation.
+
 ### v0.14.7 / 2023-07-19
 
 * FIXED: Fixed an exception when passing a non-string to puts in the terminal mixin
