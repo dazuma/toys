@@ -351,6 +351,7 @@ module Toys
         def initialize(tool, executable_name, delegates, subtools, search_term,
                        show_source_path, separate_sources, indent, indent2, wrap_width, styled)
           require "toys/utils/terminal"
+          require "stringio"
           @tool = tool
           @executable_name = executable_name
           @delegates = delegates
@@ -667,6 +668,7 @@ module Toys
         def initialize(tool, subtools, recursive, search_term, separate_sources,
                        indent, wrap_width, styled)
           require "toys/utils/terminal"
+          require "stringio"
           @tool = tool
           @subtools = subtools
           @recursive = recursive

@@ -830,6 +830,8 @@ module Toys
       end
 
       on_initialize do |**opts|
+        require "rbconfig"
+        require "shellwords"
         require "toys/utils/exec"
         context = self
         opts = Exec._setup_exec_opts(opts, context)

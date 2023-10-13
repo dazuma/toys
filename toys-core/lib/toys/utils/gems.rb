@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "monitor"
-require "rubygems"
 
 module Toys
   module Utils
@@ -123,6 +122,7 @@ module Toys
                      output: nil,
                      suppress_confirm: nil,
                      default_confirm: nil)
+        require "rubygems"
         @default_confirm = default_confirm || default_confirm.nil? ? true : false
         @on_missing = on_missing ||
                       if suppress_confirm

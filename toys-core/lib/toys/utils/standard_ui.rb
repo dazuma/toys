@@ -28,8 +28,9 @@ module Toys
       #     terminal output. Default is `$stderr`.
       #
       def initialize(output: nil)
-        @terminal = output || $stderr
+        require "logger"
         require "toys/utils/terminal"
+        @terminal = output || $stderr
         @terminal = Terminal.new(output: @terminal) unless @terminal.is_a?(Terminal)
         @log_header_severity_styles = {
           "FATAL" => [:bright_magenta, :bold, :underline],

@@ -65,9 +65,11 @@ module Toys
         # @private
         #
         def self.gems
-          require "toys/utils/gems"
           # rubocop:disable Naming/MemoizedInstanceVariableName
-          @__gems ||= Utils::Gems.new(**@__gems_opts)
+          @__gems ||= begin
+            require "toys/utils/gems"
+            Utils::Gems.new(**@__gems_opts)
+          end
           # rubocop:enable Naming/MemoizedInstanceVariableName
         end
 

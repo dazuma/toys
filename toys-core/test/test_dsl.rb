@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "helper"
+require "logger"
+require "stringio"
 
 describe Toys::DSL::Tool do
   let(:logger) {

@@ -1,3 +1,5 @@
+require "fileutils"
+require "json"
 require "psych"
 require "toys/utils/exec"
 require "toys/utils/git_cache"

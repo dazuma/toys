@@ -131,7 +131,7 @@ module Toys
 
       on_initialize do |*args|
         require "toys/utils/gems"
-        Toys::Utils::Gems.activate("highline", "~> 2.0")
+        ::Toys::Utils::Gems.activate("highline", "~> 2.0")
         require "highline"
         self[KEY] = ::HighLine.new(*args)
         self[KEY].use_color = $stdout.tty?

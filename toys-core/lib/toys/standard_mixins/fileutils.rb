@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "fileutils"
-
 module Toys
   module StandardMixins
     ##
@@ -20,6 +18,7 @@ module Toys
       # @private
       #
       def self.included(mod)
+        require "fileutils"
         mod.include(::FileUtils)
       end
     end
