@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "stringio"
-require "monitor"
-
 begin
   require "io/console"
 rescue ::LoadError
@@ -116,6 +113,7 @@ module Toys
       #     setting is inferred from whether the output has a tty.
       #
       def initialize(input: $stdin, output: $stdout, styled: nil)
+        require "monitor"
         @input = input
         @output = output
         @styled =

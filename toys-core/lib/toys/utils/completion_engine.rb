@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "shellwords"
-
 module Toys
   module Utils
     ##
@@ -21,6 +19,7 @@ module Toys
         # @param cli [Toys::CLI] The CLI.
         #
         def initialize(cli)
+          require "shellwords"
           @cli = cli
         end
 

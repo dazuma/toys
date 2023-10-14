@@ -248,8 +248,10 @@ module Toys
       private
 
       def terminal
-        require "toys/utils/terminal"
-        @terminal ||= Utils::Terminal.new(output: @stream, styled: @styled_output)
+        @terminal ||= begin
+          require "toys/utils/terminal"
+          Utils::Terminal.new(output: @stream, styled: @styled_output)
+        end
       end
 
       def show_usage(context)

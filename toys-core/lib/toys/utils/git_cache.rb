@@ -1,12 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
-require "fileutils"
-require "json"
-require "toys/compat"
-require "toys/utils/exec"
-require "toys/utils/xdg"
-
 module Toys
   module Utils
     ##
@@ -288,6 +281,11 @@ module Toys
       #     a specific directory in the user's XDG cache.
       #
       def initialize(cache_dir: nil)
+        require "digest"
+        require "fileutils"
+        require "json"
+        require "toys/compat"
+        require "toys/utils/exec"
         @cache_dir = ::File.expand_path(cache_dir || default_cache_dir)
         @exec = Utils::Exec.new(out: :capture, err: :capture)
       end
@@ -485,6 +483,7 @@ module Toys
       end
 
       def default_cache_dir
+        require "toys/utils/xdg"
         ::File.join(XDG.new.cache_home, "toys", "git")
       end
 

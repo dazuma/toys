@@ -164,12 +164,12 @@ module Toys
         gem "rake", *template.gem_version
         require "rake"
 
-        rakefile_path = Templates::Rake.find_rakefile(
+        rakefile_path = ::Toys::Templates::Rake.find_rakefile(
           template.rakefile_path, template.context_directory || context_directory
         )
         raise "Cannot find #{template.rakefile_path}" unless rakefile_path
         rake_context_dir = ::File.dirname(rakefile_path)
-        rake = Templates::Rake.prepare_rake(rakefile_path, rake_context_dir)
+        rake = ::Toys::Templates::Rake.prepare_rake(rakefile_path, rake_context_dir)
 
         rake.tasks.each do |task|
           comments = task.full_comment.to_s.split("\n")
@@ -190,7 +190,7 @@ module Toys
 
             if template.use_flags
               task.arg_names.each do |arg|
-                specs = Templates::Rake.flag_specs(arg)
+                specs = ::Toys::Templates::Rake.flag_specs(arg)
                 flag(arg, *specs) unless specs.empty?
               end
 

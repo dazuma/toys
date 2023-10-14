@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "toys/utils/exec"
-
 module Toys
   module Utils
     ##
@@ -150,7 +148,10 @@ module Toys
         # @private
         #
         def default_exec_service
-          @default_exec_service ||= Exec.new
+          @default_exec_service ||= begin
+            require "toys/utils/exec"
+            Utils::Exec.new
+          end
         end
       end
     end

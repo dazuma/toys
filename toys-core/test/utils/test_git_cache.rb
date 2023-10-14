@@ -3,6 +3,7 @@
 require "helper"
 require "toys/utils/exec"
 require "toys/utils/git_cache"
+require "digest"
 require "fileutils"
 require "net/http"
 require "uri"

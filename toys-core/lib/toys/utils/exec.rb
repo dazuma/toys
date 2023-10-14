@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require "rbconfig"
-require "logger"
-require "shellwords"
-
 module Toys
   module Utils
     ##
@@ -266,6 +262,9 @@ module Toys
       #     for a description of the options.
       #
       def initialize(**opts, &block)
+        require "rbconfig"
+        require "logger"
+        require "stringio"
         @default_opts = Opts.new(&block).add(opts)
       end
 

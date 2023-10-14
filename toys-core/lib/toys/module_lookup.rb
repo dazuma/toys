@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "monitor"
-
 module Toys
   ##
   # A helper module that provides methods to do module lookups. This is
@@ -56,6 +54,7 @@ module Toys
     # Create an empty ModuleLookup
     #
     def initialize
+      require "monitor"
       @mutex = ::Monitor.new
       @paths = []
       @paths_locked = false

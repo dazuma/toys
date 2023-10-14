@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "monitor"
-
 module Toys
   ##
   # The Loader service loads tools from configuration files, and finds the
@@ -55,6 +53,7 @@ module Toys
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
+      require "monitor"
       @mutex = ::Monitor.new
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
@@ -477,7 +476,7 @@ module Toys
       end
     end
 
-    @git_cache_mutex = ::Monitor.new
+    @git_cache_mutex = ::Mutex.new
     @default_git_cache = nil
 
     ##

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "set"
-
 module Toys
   ##
   # A ToolDefinition describes a single command that can be invoked using Toys.
@@ -284,7 +282,7 @@ module Toys
     ##
     # Settings for this tool
     #
-    # @return [Toys::Tool::Settings]
+    # @return [Toys::ToolDefinition::Settings]
     #
     attr_reader :settings
 

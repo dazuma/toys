@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "date"
-
 module Toys
   ##
   # A settings class defines the structure of application settings, i.e. the
@@ -488,7 +486,7 @@ module Toys
         def convert(val, klass)
           return val if val.is_a?(klass)
           begin
-            CONVERTERS[klass].call(val)
+            CONVERTERS[klass.name].call(val)
           rescue ::StandardError
             ILLEGAL_VALUE
           end
@@ -564,13 +562,13 @@ module Toys
       # @private
       #
       CONVERTERS = {
-        ::Date => date_converter,
-        ::DateTime => datetime_converter,
-        ::Float => float_converter,
-        ::Integer => integer_converter,
-        ::Regexp => regexp_converter,
-        ::Symbol => symbol_converter,
-        ::Time => time_converter,
+        "Date" => date_converter,
+        "DateTime" => datetime_converter,
+        "Float" => float_converter,
+        "Integer" => integer_converter,
+        "Regexp" => regexp_converter,
+        "Symbol" => symbol_converter,
+        "Time" => time_converter,
       }.freeze
     end
 

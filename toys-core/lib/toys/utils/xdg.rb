@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "toys/compat"
-
 module Toys
   module Utils
     ##
@@ -50,6 +48,8 @@ module Toys
       #     you can omit this argument, as it will default to `::ENV`.
       #
       def initialize(env: ::ENV)
+        require "fileutils"
+        require "toys/compat"
         @env = env
       end
 
