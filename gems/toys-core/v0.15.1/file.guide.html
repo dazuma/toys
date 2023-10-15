@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: Toys-Core User Guide
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "guide";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: Toys-Core User Guide</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="toys-core-user-guide">Toys-Core User Guide</h1>
+
+<p>Toys-Core is the command line framework underlying
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys</a>. It implements most of
+the core functionality of Toys, including the tool DSL, argument parsing,
+loading Toys files, online help, subprocess control, and so forth. Toys-Core
+can be used to create custom command line executables, or it can be used to
+provide mixins or templates in your gem to help your users define tools related
+to your gem&#39;s functionality.</p>
+
+<p>If this is your first time using Toys-Core, we recommend starting with the
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest">README</a>, which includes a
+tutorial that introduces how to create simple command line executables using
+Toys-Core, customize the behavior, and package your executable in a gem. You
+should also be familiar with Toys itself, including how to define tools by
+writing Toys files, how to interpret arguments and flags, and how to use the
+Toys execution environment. For background, please see the
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys README</a> and
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">Toys User&#39;s Guide</a>.
+Together, those resources will likely give you enough information to begin
+creating your own basic command line executables.</p>
+
+<p>This user&#39;s guide covers all the features of Toys-Core in much more depth. Read
+it when you&#39;re ready to unlock all the capabilities of Toys-Core to create
+sophisticated command line tools.</p>
+
+<p><strong>(This user&#39;s guide is still under construction.)</strong></p>
+
+<h2 id="conceptual-overview">Conceptual overview</h2>
+
+<p>Toys-Core is a <strong>command line framework</strong> in the traditional sense. It is
+intended as the core component of the Toys gem, but is designed generically for
+writing custom command line executables in Ruby. The framework provides common
+facilities such as argument parsing and online help. Your executable can then
+choose and configure those facilities, and implement the actual behavior.</p>
+
+<p>The entry point for Toys-Core is the <strong>cli object</strong>. Typically your executable
+script instantiates a CLI, configures it with the desired tool implementations,
+and runs it.</p>
+
+<p>An executable defines its functionality using the <strong>Toys DSL</strong> which can be
+written in <strong>toys files</strong> or in <strong>blocks</strong> passed to the CLI. It uses the same
+DSL used by Toys itself, and supports tools, subtools, flags, arguments, help
+text, and all the other features of Toys.</p>
+
+<p>An executable can customize its own facilities for writing tools by providing
+<strong>built-in mixins</strong> and <strong>built-in templates</strong>, and can implement default
+behavior across all tools by providing <strong>middleware</strong>.</p>
+
+<p>Most executables will provide a set of <strong>static tools</strong>, but it is possible to
+support user-provided tools as Toys does. Executables can customize how such
+tool definitions are searched and loaded from the file system.</p>
+
+<p>An executable can customize many aspects of its behavior, such as the
+<strong>logging output</strong>, <strong>error handling</strong>, and even shell <strong>tab completion</strong>.</p>
+
+<p>Finally, Toys-Core can also be used to publish <strong>Toys extensions</strong>, collections
+of mixins, templates, and predefined tools that can be distributed as gems to
+enhance Toys for other users.</p>
+
+<h2 id="using-the-cli-object">Using the CLI object</h2>
+
+<p>The <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span> object is the main entry point for Toys-Core. Most command line
+executables based on Toys-Core use it as follows:</p>
+
+<ul>
+<li> Instantiate a CLI object, passing configuration parameters to the
+<span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">constructor</a></span>.</li>
+<li> Define the functionality of the CLI, either inline by passing it blocks, or
+by providing paths to tool files.</li>
+<li> Call the <span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span> method, passing it the command line arguments
+(e.g. from <code>ARGV</code>).</li>
+<li> Handle the result code, normally by passing it to <code>Kernel#exit</code>.</li>
+</ul>
+
+<p>To get access to the CLI object, or any other Toys-Core classes, you first need
+to ensure that the <code>toys-core</code> gem is loaded, and <code>require &quot;toys-core&quot;</code>.</p>
+
+<p>Following is a simple &quot;hello world&quot; example using the CLI:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='comment'># Instantiate a CLI with the default options
+</span><span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'># Define the functionality
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Run the CLI, passing the command line arguments
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span>
+
+<span class='comment'># Handle the result code.
+</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<h3 id="cli-execution">CLI execution</h3>
+
+<p>This section provides some detail on how a CLI executes your code.</p>
+
+<p>When you call <span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span>, the CLI runs through three phases:</p>
+
+<ul>
+<li> <strong>Loading</strong> in which the CLI identifies which tool to run, and loads the
+tool from a tool <strong>source</strong>, which could be a block passed to the CLI, or a
+file loaded from the file system, git, or other location.</li>
+<li> <strong>Context building</strong>, in which the CLI parses the command-line arguments
+according to the flags and arguments declared by the tool, instantiates the
+tool, and populates the <span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Toys::Context</a></span> object (which is <code>self</code> when the
+tool is executed)</li>
+<li> <strong>Execution</strong>, which involves running any initializers defined on the tool,
+applying middleware, running the tool&#39;s code, and handling errors.</li>
+</ul>
+
+<h4 id="the-loader">The Loader</h4>
+
+<p>When the CLI needs the definition of a tool, it queries the <span class='object_link'><a href="Toys/Loader.html" title="Toys::Loader (class)">Toys::Loader</a></span>. The
+loader object is configured with a set of tool <em>sources</em> representing ways to
+define a tool. These sources may be blocks passed directly to the CLI, or
+directories and files loaded from the file system or even remote git
+repositories. When a tool is requested by name, the loader is responsible for
+locating the tool definition in those sources, and constructing the tool
+definition object, represented by <span class='object_link'><a href="Toys/ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span>.</p>
+
+<p>One important property of the loader is that it is <em>lazy</em>. It queries tool
+sources only when it has reason to believe that a tool it is looking for may be
+defined there. For example, if your tools are defined in a directory structure,
+a tool named <code>foo bar</code> might live in the file <code>foo/bar.rb</code>. The loader will
+open that file, if it exists, only when the <code>foo bar</code> tool is requested. If
+instead <code>foo qux</code> is requested, the <code>foo/bar.rb</code> file is never even opened.</p>
+
+<p>Perhaps more subtly, if you call <span class='object_link'><a href="Toys/CLI.html#add_config_block-instance_method" title="Toys::CLI#add_config_block (method)">Toys::CLI#add_config_block</a></span> to define tools,
+the block is stored in the loader object <em>but not called immediately</em>. Only
+when a tool is requested does the block actually execute. Furthermore, if you
+have <code>tool</code> blocks inside the block, the loader will execute only those that
+are relevant to a tool it wants. Hence:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>foo</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>foo called</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bar</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bar called</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>If only <code>foo</code> is requested, the loader will execute the <code>tool &quot;foo&quot; do</code> block
+to get that tool definition, but will not execute the <code>tool &quot;bar&quot; do</code> block.</p>
+
+<p>We will discuss more about the features of the loader below in the section on
+<a href="#Defining_functionality">defining functionality</a>.</p>
+
+<h4 id="building-context">Building context</h4>
+
+<p>Once a tool is defined, the CLI prepares it for execution by building a
+<span class='object_link'><a href="Toys/Context.html" title="Toys::Context (class)">Toys::Context</a></span> object. This object is <code>self</code> during tool runtime, and it
+includes:</p>
+
+<ul>
+<li> The tool&#39;s methods, including its <code>run</code> entrypoint method.</li>
+<li> Access to core tool functionality such as exit codes and logging.</li>
+<li> The results from parsing the command line arguments</li>
+<li> The runtime environment, including the tool&#39;s name, where the tool was
+defined, detailed results from argumet parsing, and so forth.</li>
+</ul>
+
+<p>Much of this information is stored in a data hash, whose keys are defined as
+constants under <span class='object_link'><a href="Toys/Context/Key.html" title="Toys::Context::Key (module)">Toys::Context::Key</a></span>.</p>
+
+<p>Argument parsing is directed by the <span class='object_link'><a href="Toys/ArgParser.html" title="Toys::ArgParser (class)">Toys::ArgParser</a></span> class. This class, for
+the most part, replicates the semantics of the standard Ruby OptionParser
+class, but it implements a few extra features and cleans up a few ambiguities.</p>
+
+<h4 id="tool-execution-and-error-handling">Tool execution and error handling</h4>
+
+<p>The execution phase involves:</p>
+
+<ul>
+<li> Running the tool&#39;s initializers, if any, in order.</li>
+<li> Running the tool&#39;s middleware. Each middleware &quot;wraps&quot; the execution of
+subsequent middleware and the final tool execution, and has the opportunity
+to inject functionality before and after the main execution, or even to
+forgo or replace the main functionality, similar to Rack middleware.</li>
+<li> Executing the tool itself by calling its <code>run</code> method.</li>
+</ul>
+
+<p>The CLI also implements error and signal handling, directing control either to
+the tool&#39;s callbacks or to fallback handlers that can be configured into the
+CLI itself. More on this later.</p>
+
+<h4 id="multiple-runs">Multiple runs</h4>
+
+<p>The <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span> object can be reused to run multiple tools. This may save on
+loading overhead, as the tools can be loaded just once and their definitions
+reused for multiple executions. It can even perform multiple executions
+concurrently in separate threads, assuming the tool implementations themselves
+are thread-safe.</p>
+
+<h3 id="configuring-the-cli">Configuring the CLI</h3>
+
+<p>Generally, you control CLI features by passing arguments to its constructor.
+These features include:</p>
+
+<ul>
+<li> How to find toys files and related code and data. See the section on
+<a href="#Defining_functionality">defining functionality</a>.</li>
+<li> Middleware, providing common behavior for all tools. See the section on
+<a href="#Customizing_default_behavior">customizing the middleware stack</a>.</li>
+<li> Common mixins and templates available to all tools. See the section on
+<a href="#Defining_mixins_and_templates">how to define mixins and templates</a>.</li>
+<li> How logs, errors, and signals are reported. See the section on
+<a href="#Customizing_tool_output">customizing tool output</a>.</li>
+<li> How the executable interacts with the shell, including setting up tab
+completion. See the
+<a href="#Shell_and_command_line_integration">corresponding section</a>.</li>
+</ul>
+
+<p>Each of the actual parameters is covered in detail in the documentation for
+<span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">Toys::CLI#initialize</a></span>. The configuration of a CLI cannot be changed once the
+CLI is constructed. If you need a CLI with modified configuration, use
+<span class='object_link'><a href="Toys/CLI.html#child-instance_method" title="Toys::CLI#child (method)">Toys::CLI#child</a></span>, which creates a <em>copy</em> of the CLI with any modifications you
+request.</p>
+
+<h2 id="defining-functionality">Defining functionality</h2>
+
+<p>Toys-Core uses (and indeed, provides the underlying implementation of) the
+familiar Toys DSL that you can read about in the
+<a href="https://dazuma.github.io/toys/gems/toys/latest">Toys README</a> and
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">Toys User&#39;s Guide</a>.
+This section assumes familiarity with those techniques for defining tools.</p>
+
+<p>Here we will cover how to use the Toys-Core interfaces to point to specific
+tool definition files or to load tool definitions programmatically. We&#39;ll also
+look more closely at how tool definition works, providing insights into lazy
+loading and the tool prioritization system.</p>
+
+<h3 id="writing-tools-in-blocks">Writing tools in blocks</h3>
+
+<p>If you are writing your own command line executable using Toys-Core, often the
+easiest way to define your tools is to use a block. The &quot;hello world&quot; example
+at the start of this guide uses this technique:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'># Define the functionality by passing a block to the CLI
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>The block simply contains Toys DSL syntax. The above example configures the
+&quot;root tool&quot;, that is, the functionality of the program if you do not pass a
+tool name on the command line. You can also include &quot;tool&quot; blocks to define
+named tools, just as you would in a normal Toys file.</p>
+
+<p>The reference documentation for <span class='object_link'><a href="Toys/CLI.html#add_config_block-instance_method" title="Toys::CLI#add_config_block (method)">Toys::CLI#add_config_block</a></span> lists several
+options that can be passed in. <code>:context_directory</code> lets you select a context
+directory for tools defined in the block. Normally, this is the directory
+containing the Toys files in which the tool is defined, but when tools are
+defined in a block, it must be set explicitly. (Otherwise, calling the
+<code>context_directory</code> from within the tool will return <code>nil</code>.) Similarly, the
+<code>:source_name</code>, normally the path to the Toys file that appears in error
+messages and documentation, can also be set explicitly.</p>
+
+<h3 id="writing-tool-files">Writing tool files</h3>
+
+<p>If you want to define tools in separate files, you can do so and pass the file
+paths to the CLI using <span class='object_link'><a href="Toys/CLI.html#add_config_path-instance_method" title="Toys::CLI#add_config_path (method)">Toys::CLI#add_config_path</a></span>.</p>
+
+<pre class="code ruby"><code class="ruby">#!/usr/bin/env ruby
+
+require &quot;toys-core&quot;
+
+cli = Toys::CLI.new
+
+# Load a file defining the functionality
+cli.add_config_path(&quot;/usr/local/share/my_tool.rb)
+
+result = cli.run(*ARGV)
+exit(result)
+</code></pre>
+
+<p>The contents of <code>/usr/local/share/my_tool.rb</code> could then be:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first executable!</span><span class='tstring_end'>&quot;</span></span>
+<span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+  <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>You can point to a specific file to load, or to a Toys directory, whose
+contents will be loaded similarly to how a <code>.toys</code> directory is loaded.</p>
+
+<p>The CLI also provides high-level lookup methods that search for files named
+<code>.toys.rb</code> or directories named <code>.toys</code>. (These names can also be configured
+by passing appropriate options to the CLI constructor.) These methods,
+<span class='object_link'><a href="Toys/CLI.html#add_search_path-instance_method" title="Toys::CLI#add_search_path (method)">Toys::CLI#add_search_path</a></span> and <span class='object_link'><a href="Toys/CLI.html#add_search_path_hierarchy-instance_method" title="Toys::CLI#add_search_path_hierarchy (method)">Toys::CLI#add_search_path_hierarchy</a></span>,
+implement the actual behavior of Toys in which it looks for any available files
+in the current directory or its parents.</p>
+
+<h3 id="tool-priority">Tool priority</h3>
+
+<p>It is possible to configure a CLI with multiple files, directories, and/or
+blocks with tool definitions. Indeed, this is how the <code>toys</code> gem itself is
+configured: loading tools from the current directory and its ancestry, from
+global directories, and from builtins. When a CLI is configured to load tools
+from multiple sources, it combines them. However, if multiple sources define a
+tool of the same name, only one definition will &quot;win&quot;, the one from the source
+with the highest priority.</p>
+
+<p>Each time a tool source is added to a CLI using <span class='object_link'><a href="Toys/CLI.html#add_config_block-instance_method" title="Toys::CLI#add_config_block (method)">Toys::CLI#add_config_block</a></span>,
+<span class='object_link'><a href="Toys/CLI.html#add_config_path-instance_method" title="Toys::CLI#add_config_path (method)">Toys::CLI#add_config_path</a></span>, or similar, that new source is added to a
+prioritized list. By default it is added to the end of the list, at a lower
+priority level than previously added sources. Thus, any tools defined in the
+new source would be overridden by tools of the same name defined in previously
+added sources.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='comment'># Add a block defining a tool called &quot;hello&quot;
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello from the first config block!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Add a lower-priority block defining a tool with the same name
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello from the second config block!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># Runs the tool defined in the first block
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>When defining tool blocks or loading tools from files, you can also add the new
+source at the <em>front</em> of the priority list by passing an argument:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># Add tools with the highest priority
+</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='label'>high_priority:</span> <span class='kw'>true</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello from the second config block!</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Priorities are used by the <code>toys</code> gem when loading tools from different
+directories. Any <code>.toys.rb</code> file or <code>.toys</code> directory is added to the CLI at
+the front of the list, with the highest priority. Parent directories are added
+at subsequently lower priorities, and common directories such as the home
+directory are loaded at the lowest priority.</p>
+
+<h3 id="changing-built-in-mixins-and-templates">Changing built-in mixins and templates</h3>
+
+<p>(TODO)</p>
+
+<h2 id="customizing-diagnostic-output">Customizing diagnostic output</h2>
+
+<p>Toys provides diagnostic logging and error reporting that can be customized by
+the CLI. This section explains how to control logging output and levels, and
+how to customize signal handling and exception reporting.</p>
+
+<p>Toys-Core provides a class called <span class='object_link'><a href="Toys/Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">Toys::Utils::StandardUI</a></span> that implements the
+diagnostic output format used by the <code>toys</code> gem. We&#39;ll look at how to use the
+StandardUI after discussing each type of diagnostic output.</p>
+
+<h3 id="logging">Logging</h3>
+
+<p>Toys provides a Logger for each tool execution. Tools can access this Logger by
+calling the <code>logger</code> method, or by getting the <code>Toys::Context::Key::LOGGER</code>
+context object.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'>#!/usr/bin/env ruby
+</span>
+<span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-core</span><span class='tstring_end'>&quot;</span></span>
+
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span>
+
+<span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_add_config_block'>add_config_block</span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+    <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+      <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>This log entry is displayed in verbose mode.</span><span class='tstring_end'>&quot;</span></span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<h4 id="log-level-and-verbosity">Log level and verbosity</h4>
+
+<p>The logging level is controlled by the <em>verbosity</em> setting when the tool is
+invoked. This built-in attribute starts at 0, and by convention can be
+increased or decreased by the user by passing the <code>--verbose</code> or <code>--quiet</code>
+flags. (These flags are not provided by the CLI itself, but are implemented by
+<em>middleware</em>, which we will cover later.) Its final setting is then mapped to a
+Logger level threshold.</p>
+
+<p>By default, a verbosity of 0 maps to log level <code>Logger::WARN</code>. Entries logged
+at level <code>Logger::WARN</code> or higher are displayed, whereas entries logged at
+<code>Logger::INFO</code> or <code>Logger::DEBUG</code> are suppressed. If the user increases the
+verbosity by passing <code>--verbose</code> or <code>-v</code>, a verbosity of 1 will move the log
+level threshold down to <code>Logger::INFO</code>.</p>
+
+<p>You can modify the <em>starting</em> verbosity value by passing it to <span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span>.
+Passing <code>verbosity: 1</code> will set the starting verbosity to 1, meaning
+<code>Logger::INFO</code> entries will display but <code>Logger::DEBUG</code> entries will not. If
+the invoker then provides an extra <code>--verbose</code> flag, the verbosity will further
+increase to 2, allowing <code>Logger::DEBUG</code> entries to appear.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='comment'># ...
+</span><span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='const'>ARGV</span><span class='comma'>,</span> <span class='label'>verbosity:</span> <span class='int'>1</span><span class='rparen'>)</span>
+<span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>You can also modify the log level that verbosity 0 maps to by passing the
+<code>base_level</code> argument to the CLI constructor. The following causes verbosity 0
+to map to <code>Logger::INFO</code> rather than <code>Logger::WARN</code>.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>base_level:</span> <span class='const'>Logger</span><span class='op'>::</span><span class='const'>INFO</span><span class='rparen'>)</span>
+</code></pre>
+
+<h4 id="customizing-the-logger">Customizing the logger</h4>
+
+<p>Toys-Core configures its default logger with the default logging formatter, and
+configures it to log to STDERR. If you want to change any of these settings,
+you can provide your own logger by passing a <code>logger</code> to the CLI constructor
+constructor.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_my_logger'>my_logger</span> <span class='op'>=</span> <span class='const'>Logger</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my_logfile.log</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>logger:</span> <span class='id identifier rubyid_my_logger'>my_logger</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>A logger passed directly to the CLI is <em>global</em>. The CLI will attempt to use it
+for every execution, even if multiple executions are happening concurrently. In
+the concurrent case, this might cause problems if those executions attempt to
+use different verbosity settings, as the log level thresholds will conflict. If
+your CLI might be run multiple times concurrently, we recommend instead passing
+a <code>logger_factory</code> to the CLI constructor. This is a Proc that will be invoked
+to create a new logger for each execution.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_my_logger_factory'>my_logger_factory</span> <span class='op'>=</span> <span class='const'>Proc</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>do</span>
+  <span class='const'>Logger</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>my_logfile.log</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
+<span class='kw'>end</span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>logger_factory:</span> <span class='id identifier rubyid_my_logger_factory'>my_logger_factory</span><span class='rparen'>)</span>
+</code></pre>
+
+<h4 id="standardui-logging">StandardUI logging</h4>
+
+<p><span class='object_link'><a href="Toys/Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">Toys::Utils::StandardUI</a></span> implements the logger used by the <code>toys</code> gem, which
+formats log entries with the severity and timestamp using ANSI coloring.</p>
+
+<p>You can use this logger by passing <span class='object_link'><a href="Toys/Utils/StandardUI.html#logger_factory-instance_method" title="Toys::Utils::StandardUI#logger_factory (method)">Toys::Utils::StandardUI#logger_factory</a></span> to
+the CLI constructor:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_standard_ui'>standard_ui</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Utils.html" title="Toys::Utils (module)">Utils</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">StandardUI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/Utils/StandardUI.html#initialize-instance_method" title="Toys::Utils::StandardUI#initialize (method)">new</a></span></span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>logger_factory:</span> <span class='id identifier rubyid_standard_ui'>standard_ui</span><span class='period'>.</span><span class='id identifier rubyid_logger_factory'>logger_factory</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>You can also customize the logger by subclassing StandardUI and overriding its
+methods or adjusting its parameters. In particular, you can alter the
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#log_header_severity_styles-instance_method" title="Toys::Utils::StandardUI#log_header_severity_styles (method)">Toys::Utils::StandardUI#log_header_severity_styles</a></span> mapping to adjust styling,
+or override <span class='object_link'><a href="Toys/Utils/StandardUI.html#logger_factory_impl-instance_method" title="Toys::Utils::StandardUI#logger_factory_impl (method)">Toys::Utils::StandardUI#logger_factory_impl</a></span> or
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#logger_formatter_impl-instance_method" title="Toys::Utils::StandardUI#logger_formatter_impl (method)">Toys::Utils::StandardUI#logger_formatter_impl</a></span> to adjust content and
+formatting.</p>
+
+<h3 id="handling-errors">Handling errors</h3>
+
+<p>If an unhandled exception (specifically an exception represented by a subclass
+of <code>StandardError</code> or <code>ScriptError</code>) occurs, or a signal such as an interrupt
+(represented by a <code>SignalException</code>) is received, during tool execution,
+Toys-Core first wraps the exception in a <span class='object_link'><a href="Toys/ContextualError.html" title="Toys::ContextualError (class)">Toys::ContextualError</a></span>. This error
+type provides various context fields such as an estimate of where in the tool
+source the error may have occurred. It also provides the original exception in
+the <code>cause</code> field.</p>
+
+<p>Then, Toys-Core invokes the error handler, a Proc that you can set as a
+configuration argument when constructing a CLI. An error handler takes the
+<span class='object_link'><a href="Toys/ContextualError.html" title="Toys::ContextualError (class)">Toys::ContextualError</a></span> wrapper as an argument and should perform any desired
+final handling of an unhandled exception, such as displaying the error to the
+terminal, or reraising the exception. The handler should then return the
+desired result code for the execution.</p>
+
+<pre class="code ruby"><code class="ruby">my_error_handler = Proc.new |wrapped_error| do
+  # Propagate signals out and let the Ruby VM handle them.
+  raise wrapped_error.cause if wrapped_error.cause.is_a?(SignalException)
+  # Handle any other exception types by printing a message.
+  $stderr.puts &quot;An error occurred. Please contact your administrator.&quot;
+  # Return the result code
+  255
+end
+cli = Toys::CLI.new(error_handler: my_error_handler)
+</code></pre>
+
+<p>If you do not set an error handler, the exception is raised out of the
+<span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span> call. In the case of signals, the <em>cause</em>, represented by a
+<code>SignalException</code>, is raised directly so that the Ruby VM can handle it
+normally. For other exceptions, however, the <span class='object_link'><a href="Toys/ContextualError.html" title="Toys::ContextualError (class)">Toys::ContextualError</a></span> wrapper
+will be raised so that a rescue block has access to the context information.</p>
+
+<h4 id="standardui-error-handling">StandardUI error handling</h4>
+
+<p><span class='object_link'><a href="Toys/Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">Toys::Utils::StandardUI</a></span> provides the error handler used by the <code>toys</code> gem.
+For normal exceptions, this standard handler displays the exception to STDERR,
+along with some contextual information such as the tool name and arguments and
+the location in the tool source where the error occurred, and returns an
+appropriate result code, typically 1. For signals, this standard handler
+displays a brief message noting the signal or interrupt, and returns the
+conventional result code of <code>128 + signo</code> (e.g. 130 for interrupts).</p>
+
+<p>You can use this error handler by passing
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#error_handler-instance_method" title="Toys::Utils::StandardUI#error_handler (method)">Toys::Utils::StandardUI#error_handler</a></span> to the CLI constructor:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_standard_ui'>standard_ui</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Utils.html" title="Toys::Utils (module)">Utils</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">StandardUI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/Utils/StandardUI.html#initialize-instance_method" title="Toys::Utils::StandardUI#initialize (method)">new</a></span></span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>error_handler:</span> <span class='id identifier rubyid_standard_ui'>standard_ui</span><span class='period'>.</span><span class='id identifier rubyid_error_handler'>error_handler</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>You can also customize the error handler by subclassing StandardUI and
+overriding its methods. In particular, you can alter what is displayed in
+response to errors or signals by overriding 
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#display_error_notice-instance_method" title="Toys::Utils::StandardUI#display_error_notice (method)">Toys::Utils::StandardUI#display_error_notice</a></span> or
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#display_signal_notice-instance_method" title="Toys::Utils::StandardUI#display_signal_notice (method)">Toys::Utils::StandardUI#display_signal_notice</a></span>, respectively, and you can
+alter how exit codes are generated by overriding
+<span class='object_link'><a href="Toys/Utils/StandardUI.html#exit_code_for-instance_method" title="Toys::Utils::StandardUI#exit_code_for (method)">Toys::Utils::StandardUI#exit_code_for</a></span>.</p>
+
+<h4 id="nonstandard-exceptions">Nonstandard exceptions</h4>
+
+<p>Toys-Core error handling handles normal exceptions that are subclasses of
+<code>StandardError</code>, errors coming from Ruby file loading and parsing that are
+subclasses of <code>ScriptError</code>, and signals that are subclasses of
+<code>SignalException</code>.</p>
+
+<p>Other exceptions such as <code>NoMemoryError</code> or <code>SystemStackError</code> are not handled
+by Toys, and are raised directly out of the <span class='object_link'><a href="Toys/CLI.html#run-instance_method" title="Toys::CLI#run (method)">Toys::CLI#run</a></span>.</p>
+
+<h2 id="customizing-default-behavior">Customizing default behavior</h2>
+
+<p>Command line tools often have a set of common behaviors, such as online help,
+flags that control verbosity, and handlers for option parsing errors and corner
+cases. In Toys-Core, a few of these common behaviors are built into the CLI
+class as described above, but others are implemented and configured using
+<strong>middleware</strong>.</p>
+
+<p>Toys Middleware is analogous to middleware in other frameworks. It is code that
+&quot;wraps&quot; tools defined in a Toys CLI and makes modifications. Middleware can,
+for example, modify the tool&#39;s properties such as its description or settings,
+modify the arguments accepted by the tool, and/or modify the execution of the
+tool, by injecting code before and/or after the tool&#39;s execution, or even
+replacing the execution altogether.</p>
+
+<h3 id="introducing-middleware">Introducing middleware</h3>
+
+<p>A middleware object must duck-type <span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Toys::Middleware</a></span>, although it does not
+necessarily need to include the module itself. <span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Toys::Middleware</a></span> defines two
+methods, <span class='object_link'><a href="Toys/Middleware.html#config-instance_method" title="Toys::Middleware#config (method)">Toys::Middleware#config</a></span> and <span class='object_link'><a href="Toys/Middleware.html#run-instance_method" title="Toys::Middleware#run (method)">Toys::Middleware#run</a></span>. The first is
+is called after a tool is defined, and lets the middleware modify the tool&#39;s
+definition, e.g. to modify or provide defaults for properties such as
+description and common flags. The second is called when a tool is executed, and
+lets the middleware modify the tool&#39;s execution.</p>
+
+<p>Middleware is arranged in a stack, where each middleware object &quot;wraps&quot; the
+objects below it. Each middleware object&#39;s methods can implement its own
+functionality, and then either pass control to the next middleware in the
+stack, or stop processing and disable the rest of the stack. In particular, if
+a middleware stops processing during the <span class='object_link'><a href="Toys/Middleware.html#run-instance_method" title="Toys::Middleware#run (method)">Toys::Middleware#run</a></span> call, the
+normal tool execution is also canceled; hence, middleware can even be used to
+replace normal tool execution.</p>
+
+<h3 id="configuring-middleware">Configuring middleware</h3>
+
+<p>Middleware is normally configured as part of the CLI object. Each CLI includes
+an ordered list, a <em>stack</em>, of middleware specifications, each represented by
+<span class='object_link'><a href="Toys/Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>. A middleware spec can be a specific middleware
+object, a class to instantiate, or a name that can be looked up from a
+directory of middleware class files. You can pass an array of these specs to a
+CLI object when you instantiate it.</p>
+
+<p>A useful example can be seen in the default Toys CLI behavior. If you do not
+provide a middleware stack when instantiating <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span>, the class uses a
+default stack that looks approximately like this:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='lbracket'>[</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:set_default_descriptions</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:show_help</span><span class='comma'>,</span> <span class='label'>help_flags:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>fallback_execution:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:handle_usage_errors</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:add_verbosity_flags</span><span class='rparen'>)</span><span class='comma'>,</span>
+<span class='rbracket'>]</span>
+</code></pre>
+
+<p>Each of the names, e.g. <code>:set_default_descriptions</code>, is the name of a Ruby
+file in the <code>toys-core</code> gem under <code>toys/standard_middleware</code>. You can configure
+the middleware system to recognize middleware by name, by providing a
+middleware lookup object, of type <span class='object_link'><a href="Toys/ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span>. This object is
+configured with one or more directories, and if you provide a name, it looks
+for an appropriate module of that name in a ruby file in those directories. By
+default, the middleware lookup in <span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span> looks for middleware in the
+<code>toys/standard_middleware</code> directory in the <code>toys-core</code> gem, but you can
+configure it to look elsewhere.</p>
+
+<p>Note also that, in the case of <code>:show_help</code>, the stack above also includes some
+options that are passed to the <span class='object_link'><a href="Toys/StandardMiddleware/ShowHelp.html" title="Toys::StandardMiddleware::ShowHelp (class)">Toys::StandardMiddleware::ShowHelp</a></span> middleware
+constructor when it is instantiated.</p>
+
+<p>You can also look at the middleware stack in the <code>Toys::StandardCLI</code> class in
+the <code>toys</code> gem to see the middleware as the <code>toys</code> executable configures it.</p>
+
+<h3 id="built-in-middlewares">Built-in middlewares</h3>
+
+<p>The <code>toys-core</code> gem provides several useful middleware classes that you can use
+when configuring your own CLI. These live in the <code>toys/standard_middlware</code>
+directory, and are available by name if you keep the default middleware lookup.
+These built-in middlewares include:</p>
+
+<ul>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/AddVerbosityFlags.html" title="Toys::StandardMiddleware::AddVerbosityFlags (class)">Toys::StandardMiddleware::AddVerbosityFlags</a></span> which adds the <code>--verbose</code>
+and <code>--quiet</code> flags that control verbosity.</li>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/ApplyConfig.html" title="Toys::StandardMiddleware::ApplyConfig (class)">Toys::StandardMiddleware::ApplyConfig</a></span> which is instantiated with a block,
+and includes that block when configuring all tools.</li>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/HandleUsageErrors.html" title="Toys::StandardMiddleware::HandleUsageErrors (class)">Toys::StandardMiddleware::HandleUsageErrors</a></span> which provides a standard
+behavior for handling usage errors. That is, it catches
+<span class='object_link'><a href="Toys/ArgParsingError.html" title="Toys::ArgParsingError (class)">Toys::ArgParsingError</a></span> and outputs the error along with usage info.</li>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/SetDefaultDescriptions.html" title="Toys::StandardMiddleware::SetDefaultDescriptions (class)">Toys::StandardMiddleware::SetDefaultDescriptions</a></span> which provides defaults
+for tool description and long description fields. It can handle various
+kinds of tools, including normal tools, namespaces, the root tool, and
+delegates.</li>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/ShowHelp.html" title="Toys::StandardMiddleware::ShowHelp (class)">Toys::StandardMiddleware::ShowHelp</a></span> which adds help flags (e.g. <code>--help</code>)
+to tools, and responds by showing the help page.</li>
+<li> <span class='object_link'><a href="Toys/StandardMiddleware/ShowRootVersion.html" title="Toys::StandardMiddleware::ShowRootVersion (class)">Toys::StandardMiddleware::ShowRootVersion</a></span> which displays a version string
+when the root tool is invoked with <code>--version</code>.</li>
+</ul>
+
+<h3 id="writing-your-own-middleware">Writing your own middleware</h3>
+
+<p>Writing your own middleware is as simple as writing a class that implements the
+<span class='object_link'><a href="Toys/Middleware.html#config-instance_method" title="Toys::Middleware#config (method)">Toys::Middleware#config</a></span> and/or <span class='object_link'><a href="Toys/Middleware.html#run-instance_method" title="Toys::Middleware#run (method)">Toys::Middleware#run</a></span> methods. The middleware
+class need not include the <span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Toys::Middleware</a></span> module; it merely needs to
+duck-type at least one of its methods. Your class can then be used in the stack
+of middleware specifications.</p>
+
+<h4 id="example-timingmiddleware">Example: TimingMiddleware</h4>
+
+<p>An example would probably do best to illustrate how to write middleware. The
+following is a simple middleware that adds the <code>--show-timing</code> flag to every
+tool. When the flag is set, the middleware displays how long the tool took to
+execute.</p>
+
+<pre class="code ruby"><code class="ruby"><span class='kw'>class</span> <span class='const'>TimingMiddleware</span>
+  <span class='comment'># This is a context key that will be used to store the &quot;--show-timing&quot;
+</span>  <span class='comment'># flag state. We can use `Object.new` to ensure that the key is unique
+</span>  <span class='comment'># across other middlewares and tool definitions.
+</span>  <span class='const'>KEY</span> <span class='op'>=</span> <span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+
+  <span class='comment'># This method intercepts tool configuration. We use it to add a flag that
+</span>  <span class='comment'># enables timing display.
+</span>  <span class='kw'>def</span> <span class='id identifier rubyid_config'>config</span><span class='lparen'>(</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid__loader'>_loader</span><span class='rparen'>)</span>
+    <span class='comment'># Add a flag to control this functionality. Suppress collisions, i.e.
+</span>    <span class='comment'># just silently do nothing if the tool has already added a flag called
+</span>    <span class='comment'># &quot;--show-timing&quot;.
+</span>    <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_add_flag'>add_flag</span><span class='lparen'>(</span><span class='const'>KEY</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--show-timing</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+
+    <span class='comment'># Calling yield passes control to the rest of the middleware stack.
+</span>    <span class='comment'># Normally you should call yield, to ensure that the remaining
+</span>    <span class='comment'># middleware can run. If you omit this, no additional middleware will
+</span>    <span class='comment'># be able to run tool configuration. Note you can also perform
+</span>    <span class='comment'># additional processing after the yield call, i.e. after the rest of
+</span>    <span class='comment'># the middleware stack has run.
+</span>    <span class='kw'>yield</span>
+  <span class='kw'>end</span>
+
+  <span class='comment'># This method intercepts tool execution. We use it to collect timing
+</span>  <span class='comment'># information, and display it if the flag has been provided in the
+</span>  <span class='comment'># command line arguments.
+</span>  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='id identifier rubyid_context'>context</span><span class='rparen'>)</span>
+    <span class='comment'># Read monotonic time at the start of execution.
+</span>    <span class='id identifier rubyid_start_time'>start_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
+
+    <span class='comment'># Call yield to run the rest of the middleware stack, including the
+</span>    <span class='comment'># actual tool execution. If you omit this, you will prevent the rest of
+</span>    <span class='comment'># the middleware stack, AND the actual tool execution, from running.
+</span>    <span class='comment'># So you could omit the yield call if your goal is to replace tool
+</span>    <span class='comment'># execution with your own code.
+</span>    <span class='kw'>yield</span>
+
+    <span class='comment'># Read monotonic time again after execution.
+</span>    <span class='id identifier rubyid_end_time'>end_time</span> <span class='op'>=</span> <span class='const'>Process</span><span class='period'>.</span><span class='id identifier rubyid_clock_gettime'>clock_gettime</span><span class='lparen'>(</span><span class='const'>Process</span><span class='op'>::</span><span class='const'>CLOCK_MONOTONIC</span><span class='rparen'>)</span>
+
+    <span class='comment'># Display the elapsed time, if the tool was passed the &quot;--show-timing&quot;
+</span>    <span class='comment'># flag.
+</span>    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tool took </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_end_time'>end_time</span> <span class='op'>-</span> <span class='id identifier rubyid_start_time'>start_time</span><span class='embexpr_end'>}</span><span class='tstring_content'> secs</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='id identifier rubyid_context'>context</span><span class='lbracket'>[</span><span class='const'>KEY</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>We can now insert our middleware into the stack when we create a CLI. Here
+we&#39;ll take that &quot;default&quot; stack we saw earlier and add our timing middleware at
+the top of the stack. We put it here so that its execution &quot;wraps&quot; all the
+other middleware, and thus its timing measurement includes the latency incurred
+by other middleware (including middleware that replaces execution such as
+<code>:show_help</code>).</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_my_middleware_stack'>my_middleware_stack</span> <span class='op'>=</span> <span class='lbracket'>[</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='const'>TimingMiddleware</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:set_default_descriptions</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:show_help</span><span class='comma'>,</span> <span class='label'>help_flags:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>fallback_execution:</span> <span class='kw'>true</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:handle_usage_errors</span><span class='rparen'>)</span><span class='comma'>,</span>
+  <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_spec'><span class='object_link'><a href="Toys/Middleware.html#spec-class_method" title="Toys::Middleware.spec (method)">spec</a></span></span><span class='lparen'>(</span><span class='symbol'>:add_verbosity_flags</span><span class='rparen'>)</span><span class='comma'>,</span>
+<span class='rbracket'>]</span>
+<span class='id identifier rubyid_cli'>cli</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Toys/CLI.html" title="Toys::CLI (class)">CLI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Toys/CLI.html#initialize-instance_method" title="Toys::CLI#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>middleware_stack:</span> <span class='id identifier rubyid_my_middleware_stack'>my_middleware_stack</span><span class='rparen'>)</span>
+</code></pre>
+
+<p>Now, every tool run by this CLI wil have the <code>--show-timing</code> flag and
+associated functionality.</p>
+
+<h4 id="changing-built-in-middleware">Changing built-in middleware</h4>
+
+<p>(TODO)</p>
+
+<h2 id="shell-and-command-line-integration">Shell and command line integration</h2>
+
+<p>(TODO)</p>
+
+<h3 id="interpreting-tool-names">Interpreting tool names</h3>
+
+<p>(TODO)</p>
+
+<h3 id="tab-completion">Tab completion</h3>
+
+<p>(TODO)</p>
+
+<h2 id="packaging-your-executable">Packaging your executable</h2>
+
+<p>(TODO)</p>
+
+<h2 id="extending-toys">Extending Toys</h2>
+
+<p>(TODO)</p>
+
+<h2 id="overview-of-toys-core-classes">Overview of Toys-Core classes</h2>
+
+<p>(TODO)</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Sun Oct 15 02:45:43 2023 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-3.2.2).
+</div>
+
+    </div>
+  </body>
+</html>

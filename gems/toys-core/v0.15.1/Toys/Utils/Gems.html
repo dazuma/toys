@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Utils::Gems
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Utils::Gems";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (G)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../Utils.html" title="Toys::Utils (module)">Utils</a></span></span>
+     &raquo; 
+    <span class="title">Gems</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Utils::Gems
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::Utils::Gems</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/utils/gems.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A helper class that activates and installs gems and sets up bundler.</p>
+
+<p>This class is not loaded by default. Before using it directly, you should
+<code>require &quot;toys/utils/gems&quot;</code></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="Gems/ActivationFailedError.html" title="Toys::Utils::Gems::ActivationFailedError (class)">ActivationFailedError</a></span>, <span class='object_link'><a href="Gems/AlreadyBundledError.html" title="Toys::Utils::Gems::AlreadyBundledError (class)">AlreadyBundledError</a></span>, <span class='object_link'><a href="Gems/BundleNotInstalledError.html" title="Toys::Utils::Gems::BundleNotInstalledError (class)">BundleNotInstalledError</a></span>, <span class='object_link'><a href="Gems/BundlerFailedError.html" title="Toys::Utils::Gems::BundlerFailedError (class)">BundlerFailedError</a></span>, <span class='object_link'><a href="Gems/GemfileNotFoundError.html" title="Toys::Utils::Gems::GemfileNotFoundError (class)">GemfileNotFoundError</a></span>, <span class='object_link'><a href="Gems/GemfileUpdateNeededError.html" title="Toys::Utils::Gems::GemfileUpdateNeededError (class)">GemfileUpdateNeededError</a></span>, <span class='object_link'><a href="Gems/IncompatibleToysError.html" title="Toys::Utils::Gems::IncompatibleToysError (class)">IncompatibleToysError</a></span>, <span class='object_link'><a href="Gems/InstallFailedError.html" title="Toys::Utils::Gems::InstallFailedError (class)">InstallFailedError</a></span>
+    
+  
+</p>
+
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="DEFAULT_GEMFILE_NAMES-constant" class="">DEFAULT_GEMFILE_NAMES =
+          <div class="docstring">
+  <div class="discussion">
+    <p>The gemfile names that are searched by default.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.gems.rb</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>gems.rb</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Gemfile</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#activate-class_method" title="activate (class method)">.<strong>activate</strong>(name, *requirements)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Activate the given gem.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#activate-instance_method" title="#activate (instance method)">#<strong>activate</strong>(name, *requirements)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Activate the given gem.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#bundle-instance_method" title="#bundle (instance method)">#<strong>bundle</strong>(groups: nil, gemfile_path: nil, search_dirs: nil, gemfile_names: nil, retries: nil)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Search for an appropriate Gemfile, and set up the bundle.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(on_missing: nil, on_conflict: nil, terminal: nil, input: nil, output: nil, suppress_confirm: nil, default_confirm: nil)  &#x21d2; Gems </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a new gem activator.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(on_missing: nil, on_conflict: nil, terminal: nil, input: nil, output: nil, suppress_confirm: nil, default_confirm: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::Utils::Gems (class)">Gems</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a new gem activator.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>on_missing</span>
+      
+      
+        <span class='type'>(<tt>:confirm</tt>, <tt>:error</tt>, <tt>:install</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>What to do if a needed gem
+is not installed. Possible values:</p>
+
+<ul>
+<li> <code>:confirm</code> - prompt the user on whether to install</li>
+<li> <code>:error</code> - raise an exception</li>
+<li> <code>:install</code> - just install the gem</li>
+</ul>
+
+<p>The default is <code>:confirm</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>on_conflict</span>
+      
+      
+        <span class='type'>(<tt>:error</tt>, <tt>:warn</tt>, <tt>:ignore</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>What to do if bundler has
+already been run with a different Gemfile. Possible values:</p>
+
+<ul>
+<li> <code>:error</code> - raise an exception</li>
+<li> <code>:ignore</code> - just silently proceed without bundling again</li>
+<li> <code>:warn</code> - print a warning and proceed without bundling again</li>
+</ul>
+
+<p>The default is <code>:error</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>terminal</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Terminal.html" title="Toys::Utils::Terminal (class)">Toys::Utils::Terminal</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Terminal to use (optional)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>input</span>
+      
+      
+        <span class='type'>(<tt>IO</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Input IO (optional, defaults to STDIN)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>output</span>
+      
+      
+        <span class='type'>(<tt>IO</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Output IO (optional, defaults to STDOUT)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>suppress_confirm</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Deprecated. Use <code>on_missing</code> instead.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default_confirm</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Deprecated. Use <code>on_missing</code> instead.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/gems.rb', line 118</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>on_missing:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>on_conflict:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>terminal:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>input:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>output:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>suppress_confirm:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>default_confirm:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rubygems</span><span class='tstring_end'>&quot;</span></span>
+  <span class='ivar'>@default_confirm</span> <span class='op'>=</span> <span class='id identifier rubyid_default_confirm'>default_confirm</span> <span class='op'>||</span> <span class='id identifier rubyid_default_confirm'>default_confirm</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span> <span class='op'>?</span> <span class='kw'>true</span> <span class='op'>:</span> <span class='kw'>false</span>
+  <span class='ivar'>@on_missing</span> <span class='op'>=</span> <span class='id identifier rubyid_on_missing'>on_missing</span> <span class='op'>||</span>
+                <span class='kw'>if</span> <span class='id identifier rubyid_suppress_confirm'>suppress_confirm</span>
+                  <span class='ivar'>@default_confirm</span> <span class='op'>?</span> <span class='symbol'>:install</span> <span class='op'>:</span> <span class='symbol'>:error</span>
+                <span class='kw'>else</span>
+                  <span class='symbol'>:confirm</span>
+                <span class='kw'>end</span>
+  <span class='ivar'>@on_conflict</span> <span class='op'>=</span> <span class='id identifier rubyid_on_conflict'>on_conflict</span> <span class='op'>||</span> <span class='symbol'>:error</span>
+  <span class='ivar'>@terminal</span> <span class='op'>=</span> <span class='id identifier rubyid_terminal'>terminal</span>
+  <span class='ivar'>@input</span> <span class='op'>=</span> <span class='id identifier rubyid_input'>input</span> <span class='op'>||</span> <span class='gvar'>$stdin</span>
+  <span class='ivar'>@output</span> <span class='op'>=</span> <span class='id identifier rubyid_output'>output</span> <span class='op'>||</span> <span class='gvar'>$stdout</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="activate-class_method">
+  
+    .<strong>activate</strong>(name, *requirements)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Activate the given gem. If it is not present, attempt to install it (or
+inform the user to update the bundle).</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Name of the gem</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>requirements</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Version requirements</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+87
+88
+89</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/gems.rb', line 87</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="activate-instance_method">
+  
+    #<strong>activate</strong>(name, *requirements)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Activate the given gem. If it is not present, attempt to install it (or
+inform the user to update the bundle).</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Name of the gem</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>requirements</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Version requirements</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+147
+148
+149
+150
+151
+152
+153
+154
+155</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/gems.rb', line 147</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="Toys::Utils::Gems (class)">Gems</a></span></span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='kw'>begin</span>
+      <span class='id identifier rubyid_gem'>gem</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
+    <span class='kw'>rescue</span> <span class='op'>::</span><span class='const'>Gem</span><span class='op'>::</span><span class='const'>LoadError</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_e'>e</span>
+      <span class='id identifier rubyid_handle_activation_error'>handle_activation_error</span><span class='lparen'>(</span><span class='id identifier rubyid_e'>e</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_requirements'>requirements</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="bundle-instance_method">
+  
+    #<strong>bundle</strong>(groups: nil, gemfile_path: nil, search_dirs: nil, gemfile_names: nil, retries: nil)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Search for an appropriate Gemfile, and set up the bundle.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>groups</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The groups to include in setup.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gemfile_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The path to the Gemfile to use. If <code>nil</code>
+or not given, the <code>:search_dirs</code> will be searched for a Gemfile.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>search_dirs</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Directories in which to
+search for a Gemfile, if gemfile_path is not given. You can provide
+a single directory or an array of directories.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gemfile_names</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>File names that are
+recognized as Gemfiles, when searching because gemfile_path is not
+given. Defaults to <span class='object_link'><a href="#DEFAULT_GEMFILE_NAMES-constant" title="Toys::Utils::Gems::DEFAULT_GEMFILE_NAMES (constant)">DEFAULT_GEMFILE_NAMES</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>retries</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Number of times to retry bundler operations.
+Optional.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Raises:</p>
+<ul class="raise">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Gems/GemfileNotFoundError.html" title="Toys::Utils::Gems::GemfileNotFoundError (class)">GemfileNotFoundError</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/utils/gems.rb', line 178</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_bundle'>bundle</span><span class='lparen'>(</span><span class='label'>groups:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+           <span class='label'>gemfile_path:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+           <span class='label'>search_dirs:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+           <span class='label'>gemfile_names:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+           <span class='label'>retries:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_search_dirs'>search_dirs</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_dir'>dir</span><span class='op'>|</span>
+    <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_gemfile_path'>gemfile_path</span>
+    <span class='id identifier rubyid_gemfile_path'>gemfile_path</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="" title="Toys::Utils::Gems (class)">Gems</a></span></span><span class='period'>.</span><span class='id identifier rubyid_find_gemfile'>find_gemfile</span><span class='lparen'>(</span><span class='id identifier rubyid_dir'>dir</span><span class='comma'>,</span> <span class='label'>gemfile_names:</span> <span class='id identifier rubyid_gemfile_names'>gemfile_names</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="Gems/GemfileNotFoundError.html" title="Toys::Utils::Gems::GemfileNotFoundError (class)">GemfileNotFoundError</a></span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Gemfile not found</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_gemfile_path'>gemfile_path</span>
+  <span class='id identifier rubyid_gemfile_path'>gemfile_path</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_absolute_path'>absolute_path</span><span class='lparen'>(</span><span class='id identifier rubyid_gemfile_path'>gemfile_path</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="Toys::Utils::Gems (class)">Gems</a></span></span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_configure_gemfile'>configure_gemfile</span><span class='lparen'>(</span><span class='id identifier rubyid_gemfile_path'>gemfile_path</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_activate'>activate</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bundler</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_bundler_version_requirements'>bundler_version_requirements</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>bundler</span><span class='tstring_end'>&quot;</span></span>
+      <span class='id identifier rubyid_setup_bundle'>setup_bundle</span><span class='lparen'>(</span><span class='id identifier rubyid_gemfile_path'>gemfile_path</span><span class='comma'>,</span> <span class='label'>groups:</span> <span class='id identifier rubyid_groups'>groups</span><span class='comma'>,</span> <span class='label'>retries:</span> <span class='id identifier rubyid_retries'>retries</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Sun Oct 15 02:45:45 2023 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-3.2.2).
+</div>
+
+    </div>
+  </body>
+</html>
