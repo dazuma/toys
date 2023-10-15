@@ -2,7 +2,7 @@
 
 ### v0.15.1 / 2023-10-15
 
-* FIXED: Clean up some requires
+* FIXED: Clean up some internal requires, which may improve performance with built-in gems.
 
 ### v0.15.0 / 2023-10-12
 
