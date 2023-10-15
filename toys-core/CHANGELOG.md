@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.1 / 2023-10-15
+
+* FIXED: Clean up some internal requires, which may improve performance with built-in gems.
+
 ### v0.15.0 / 2023-10-12
 
 Toys-Core 0.15.0 is a major release that overhauls error and signal handling, cleans up some warts around entrypoint and method definition, and fixes a few long-standing issues.
