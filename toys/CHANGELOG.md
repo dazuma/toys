@@ -2,7 +2,7 @@
 
 ### v0.15.2 / 2023-10-17
 
-* FIXED: Fix build template on Windows
+* FIXED: The gem_build template tried to use a badly formatted directory on Windows.
 
 ### v0.15.1 / 2023-10-15
 
