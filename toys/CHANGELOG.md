@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.2 / 2023-10-17
+
+* FIXED: The gem_build template tried to use a badly formatted directory on Windows.
+
 ### v0.15.1 / 2023-10-15
 
 * FIXED: Clean up some internal requires, which may improve performance with built-in gems.
