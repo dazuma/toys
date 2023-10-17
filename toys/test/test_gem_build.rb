@@ -27,6 +27,14 @@ describe "gem_build template" do
       assert_equal("toys", template.gem_name)
     end
 
+    it "handles the gem_name field with a context dir" do
+      assert_equal("toys", template.gem_name(toys_dir))
+      template.gem_name = "toys-core"
+      assert_equal("toys-core", template.gem_name(toys_dir))
+      template.gem_name = nil
+      assert_equal("toys", template.gem_name(toys_dir))
+    end
+
     it "handles the output field" do
       assert_nil(template.output)
       template.output = "/path/to/somewhere"
