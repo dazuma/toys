@@ -186,13 +186,16 @@ module Toys
       #
       def gem_name(context_dir = nil)
         return @gem_name if @gem_name
-        glob = "*.gemspec"
-        glob = ::File.join(context_dir, glob) if context_dir
-        candidates = ::Dir.glob(glob)
+        candidates =
+          if context_dir
+            Compat.glob_in_dir("*.gemspec", context_dir)
+          else
+            ::Dir.glob("*.gemspec")
+          end
         if candidates.empty?
           raise ToolDefinitionError, "Could not find a gemspec"
         end
-        candidates.first.sub(/\.gemspec$/, "")
+        ::File.basename(candidates.first, ".gemspec")
       end
 
       ##
