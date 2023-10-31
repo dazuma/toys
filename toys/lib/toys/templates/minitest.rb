@@ -305,7 +305,7 @@ module Toys
                 end
                 tests.uniq!
               end
-              code = ["require 'minitest/autorun'"] + tests.map { |file| "load '#{file}'" }
+              code = tests.map { |file| "load '#{file}'" } + ["require 'minitest/autorun'"]
               ruby_args << "-e" << code.join("\n")
 
               ruby_args << "--"
