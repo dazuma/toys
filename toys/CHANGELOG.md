@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.3 / 2023-10-31
+
+* FIXED: Minitest template defers calling autorun until after tests are loaded, which should eliminate stringio warnings when running Rails tests without bundler integration
+
 ### v0.15.2 / 2023-10-17
 
 * FIXED: The gem_build template tried to use a badly formatted directory on Windows.
