@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.3 / 2023-10-31
+
+* (No significant changes)
+
 ### v0.15.2 / 2023-10-17
 
 * (No significant changes)
