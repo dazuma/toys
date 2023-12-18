@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 ##
-# This module is a namespace for constant scopes. Whenever a configuration file
-# is parsed, a module is created under this parent for that file's constants.
+# This module is the root namespace for tool definitions loaded from files.
+# Whenever a toys configuration file is parsed, a module is created under this
+# parent for that file's contents. Tool classes defined in that file, along
+# with mixins and templates, and any other classes, modules, and constants
+# defined, are located within that file's module.
 #
 module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
   ##
