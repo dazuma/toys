@@ -1467,7 +1467,7 @@ module Toys
       #     tool "foo" do
       #       to_run :foo
       #       def foo
-      #         puts "The fool tool ran!"
+      #         puts "The foo tool ran!"
       #       end
       #     end
       #

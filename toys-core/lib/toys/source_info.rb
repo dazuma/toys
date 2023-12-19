@@ -5,17 +5,49 @@ module Toys
   # Information about the source of a tool, such as the file, git repository,
   # or block that defined it.
   #
+  # This object represents a source of tool information and definitions. Such a
+  # source could include:
+  #
+  # * A toys directory
+  # * A single toys file
+  # * A file or directory loaded from git
+  # * A config block passed directly to the CLI
+  # * A tool block within a toys file
+  #
+  # The SourceInfo provides information such as the tool's context directory,
+  # and locates data and lib directories appropriate to the tool. It also
+  # locates the tool's source code so it can be reported when an error occurs.
+  #
+  # Each tool has a unique SourceInfo with all the information specific to that
+  # tool. Additionally, SourceInfo objects are arranged in a containment
+  # hierarchy. For example, a SourceInfo object representing a toys files could
+  # have a parent representing a toys directory, and an object representing a
+  # tool block could have a parent representing an enclosing block or a file.
+  #
+  # Child SourceInfo objects generally inherit some attributes of their parent.
+  # For example, the `.toys` directory in a project directory defines the
+  # context directory as that project directory. Then all tools defined under
+  # that directory will share that context directory, so all SourceInfo objects
+  # descending from that root will inherit that value (unless it's changed
+  # explicitly).
+  #
+  # SourceInfo objects can be obtained in the DSL from
+  # {Toys::DSL::Tool#source_info} or at runtime by getting the
+  # {Toys::Context::Key::TOOL_SOURCE} key. However, they are created internally
+  # by the Loader and should not be created manually.
+  #
   class SourceInfo
     ##
     # The parent of this SourceInfo.
     #
     # @return [Toys::SourceInfo] The parent.
-    # @return [nil] if this SourceInfo is the root.
+    # @return [nil] if this SourceInfo is a root.
     #
     attr_reader :parent
 
     ##
-    # The root ancestor of this SourceInfo.
+    # The root ancestor of this SourceInfo. This generally represents a source
+    # that was added directly to a CLI in code.
     #
     # @return [Toys::SourceInfo] The root ancestor.
     #
@@ -33,14 +65,16 @@ module Toys
     # The context directory path (normally the directory containing the
     # toplevel toys file or directory).
     #
+    # This is not affected by setting a custom context directory for a tool.
+    #
     # @return [String] The context directory path.
-    # @return [nil] if there is no context directory (perhaps because the tool
-    #     is being defined from a block)
+    # @return [nil] if there is no context directory (perhaps because the root
+    #     source was a block)
     #
     attr_reader :context_directory
 
     ##
-    # The source, which may be a path or a proc.
+    # The source, which may be a path or a proc depending on the {#source_type}.
     #
     # @return [String] Path to the source file or directory.
     # @return [Proc] The block serving as the source.
@@ -48,7 +82,15 @@ module Toys
     attr_reader :source
 
     ##
-    # Return the type of source.
+    # The type of source. This could be:
+    #
+    # * `:file`, representing a single toys file. The {#source} will be the
+    #   filesystem path to that file.
+    # * `:directory`, representing a toys directory. The {#source} will be the
+    #   filesystem path to that directory.
+    # * `:proc`, representing a proc, which could be a toplevel block added
+    #   directly to a CLI, a `tool` block within a toys file, or a block within
+    #   another block. The {#source} will be the proc itself.
     #
     # @return [:file,:directory,:proc]
     #
@@ -57,13 +99,17 @@ module Toys
     ##
     # The path of the current source file or directory.
     #
+    # This could be set even if {#source_type} is `:proc`, if that proc is
+    # defined within a toys file. The only time this is not set is if the
+    # source is added directly to a CLI in a code block.
+    #
     # @return [String] The source path
     # @return [nil] if this source has no file system path.
     #
     attr_reader :source_path
 
     ##
-    # The source proc.
+    # The source proc. This is set if {#source_type} is `:proc`.
     #
     # @return [Proc] The source proc
     # @return [nil] if this source has no proc.
@@ -71,7 +117,8 @@ module Toys
     attr_reader :source_proc
 
     ##
-    # The git remote.
+    # The git remote. This is set if the source, or one of its ancestors, comes
+    # from git.
     #
     # @return [String] The git remote
     # @return [nil] if this source is not fron git.
@@ -79,7 +126,8 @@ module Toys
     attr_reader :git_remote
 
     ##
-    # The git path.
+    # The git path. This is set if the source, or one of its ancestors, comes
+    # from git.
     #
     # @return [String] The git path. This could be the empty string.
     # @return [nil] if this source is not fron git.
@@ -87,7 +135,8 @@ module Toys
     attr_reader :git_path
 
     ##
-    # The git commit.
+    # The git commit. This is set if the source, or one of its ancestors, comes
+    # from git.
     #
     # @return [String] The git commit.
     # @return [nil] if this source is not fron git.
@@ -95,7 +144,7 @@ module Toys
     attr_reader :git_commit
 
     ##
-    # The user-visible name of this source.
+    # A user-visible name of this source.
     #
     # @return [String]
     #
