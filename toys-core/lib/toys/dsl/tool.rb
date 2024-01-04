@@ -1820,7 +1820,7 @@ module Toys
         requirement = ::Gem::Requirement.new(*requirements)
         unless requirement.satisfied_by?(version)
           raise Toys::ToolDefinitionError,
-                "Toys version requirements #{requirement} not satisfied by {version}"
+                "Toys version requirements #{requirement} not satisfied by #{version}"
         end
         self
       end
