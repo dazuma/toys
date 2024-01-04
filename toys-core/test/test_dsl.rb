@@ -169,13 +169,13 @@ describe Toys::DSL::Tool do
     end
 
     it "doesn't execute the block if not needed" do
-      test = self
+      t = self
       loader.add_block do
         tool "foo" do
           long_desc "hello", "world"
         end
         tool "bar" do
-          test.fail
+          t.flunk
         end
       end
       tool, remaining = loader.lookup(["foo"])
@@ -396,10 +396,10 @@ describe Toys::DSL::Tool do
 
   describe "include directive" do
     it "supports normal modules" do
-      test = self
+      t = self
       loader.add_block do
         include ::FileUtils
-        test.assert_equal(true, include?(::FileUtils))
+        t.assert_equal(true, include?(::FileUtils))
       end
       tool, _remaining = loader.lookup([])
       assert_equal(true, tool.tool_class.include?(::FileUtils))
@@ -416,10 +416,10 @@ describe Toys::DSL::Tool do
     end
 
     it "does not allow multiple inclusion of the same module" do
-      test = self
+      t = self
       loader.add_block do
         include :terminal, styled: true
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           include :terminal, styled: false
         end
         def run
@@ -1488,19 +1488,19 @@ describe Toys::DSL::Tool do
     end
 
     it "prevents invoking flag and arg directives" do
-      test = self
+      t = self
       loader.add_block do
         disable_argument_parsing
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           flag :hello
         end
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           required_arg :hello
         end
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           optional_arg :hello
         end
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           remaining_args :hello
         end
       end
@@ -1508,10 +1508,10 @@ describe Toys::DSL::Tool do
     end
 
     it "cannot be invoked if a flag already exists" do
-      test = self
+      t = self
       loader.add_block do
         flag :hello
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           disable_argument_parsing
         end
       end
@@ -1519,10 +1519,10 @@ describe Toys::DSL::Tool do
     end
 
     it "cannot be invoked if an arg already exists" do
-      test = self
+      t = self
       loader.add_block do
         required_arg :hello
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           disable_argument_parsing
         end
       end
@@ -1540,10 +1540,10 @@ describe Toys::DSL::Tool do
     end
 
     it "cannot be invoked if argument parsing is disabled" do
-      test = self
+      t = self
       loader.add_block do
         disable_argument_parsing
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           enforce_flags_before_args
         end
       end
@@ -1574,14 +1574,14 @@ describe Toys::DSL::Tool do
     end
 
     it "cannot disable already-defined flags" do
-      test = self
+      t = self
       loader.add_block do
         flag :foo, "-a"
         flag :bar, "--bb", "--baa"
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           disable_flag "-a"
         end
-        test.assert_raises(Toys::ToolDefinitionError) do
+        t.assert_raises(Toys::ToolDefinitionError) do
           disable_flag "--bb"
         end
       end
@@ -1736,13 +1736,13 @@ describe Toys::DSL::Tool do
     end
 
     it "sets the source info within the block" do
-      test = self
+      t = self
       loader.add_block do
         tool "foo" do
           parent_source = source_info
           subtool_apply do
-            test.assert_equal(:proc, source_info.source_type)
-            test.assert_same(parent_source, source_info.parent)
+            t.assert_equal(:proc, source_info.source_type)
+            t.assert_same(parent_source, source_info.parent)
           end
           tool "bar" do
             # Empty tool
@@ -1755,12 +1755,12 @@ describe Toys::DSL::Tool do
 
   describe "truncate_load_path! directive" do
     it "removes lower-priority load paths" do
-      test = self
+      t = self
       loader.add_block do
         truncate_load_path!
       end
       loader.add_block do
-        test.flunk("Search was not stopped!")
+        t.flunk("Search was not stopped!")
       end
 
       loader.lookup(["tool-1"])
@@ -1893,21 +1893,21 @@ describe Toys::DSL::Tool do
 
   describe "settings directive" do
     it "returns the settings" do
-      test = self
+      t = self
       loader.add_block do
-        test.assert_equal(false, settings.propagate_helper_methods)
+        t.assert_equal(false, settings.propagate_helper_methods)
         settings.propagate_helper_methods = true
-        test.assert_equal(true, settings.propagate_helper_methods)
+        t.assert_equal(true, settings.propagate_helper_methods)
       end
       loader.lookup(["blah"])
     end
 
     it "inherits settings of parent tool" do
-      test = self
+      t = self
       loader.add_block do
         settings.propagate_helper_methods = true
         tool "tool-1" do
-          test.assert_equal(true, settings.propagate_helper_methods)
+          t.assert_equal(true, settings.propagate_helper_methods)
         end
       end
       loader.lookup(["blah"])
@@ -1916,21 +1916,23 @@ describe Toys::DSL::Tool do
 
   describe "toys_version directives" do
     it "checks versions" do
-      test = self
+      t = self
       loader.add_block do
-        test.assert(toys_version?("> 0.9", "< 100.0"))
-        test.refute(toys_version?("< 0.9"))
+        t.assert(toys_version?("> 0.9", "< 100.0"))
+        t.refute(toys_version?("< 0.9"))
       end
       loader.lookup([])
     end
 
     it "asserts versions" do
-      test = self
+      t = self
       loader.add_block do
         toys_version!("> 0.9", "< 100.0")
-        test.assert_raises(Toys::ToolDefinitionError) do
+        ex = t.assert_raises(Toys::ToolDefinitionError) do
           toys_version!("< 0.9")
         end
+        t.assert_equal("Toys version requirements < 0.9 not satisfied by #{Toys::Core::VERSION}",
+                       ex.message)
       end
       loader.lookup([])
     end
@@ -2003,12 +2005,12 @@ describe Toys::DSL::Tool do
     end
 
     it "is not allowed from a block" do
-      test = self
+      t = self
       loader.add_block do
-        ex = test.assert_raises(Toys::ToolDefinitionError) do
+        ex = t.assert_raises(Toys::ToolDefinitionError) do
           class Hello1 < Toys::Tool; end
         end
-        test.assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.message)
+        t.assert_match(/Toys::Tool cannot be subclassed inside a tool block/, ex.message)
       end
     end
 
