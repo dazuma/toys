@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: README
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "README";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: README</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="toys">Toys</h1>
+
+<p>Toys is a configurable command line tool. Write commands in Ruby using a simple
+DSL, and Toys will provide the command line executable and take care of all the
+details such as argument parsing, online help, and error reporting.</p>
+
+<p>Toys is designed for software developers, IT professionals, and other power
+users who want to write and organize scripts to automate their workflows. It
+can also be used as a replacement for Rake, providing a more natural command
+line interface for your project&#39;s build tasks.</p>
+
+<p>Unlike most command line frameworks, Toys is <em>not primarily</em> designed to help
+you build and ship a custom command line executable written in Ruby. However,
+you <em>can</em> use it in that way with the &quot;toys-core&quot; API, available as a separate
+gem. For more info on using toys-core, see
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest">its documentation</a>.</p>
+
+<h2 id="introductory-tutorial">Introductory tutorial</h2>
+
+<p>Here&#39;s a tutorial to help you get a feel of what Toys can do.</p>
+
+<h3 id="install-and-try-out-toys">Install and try out Toys</h3>
+
+<p>Install the <strong>toys</strong> gem using:</p>
+
+<pre class="code ruby"><code class="ruby">$ gem install toys
+</code></pre>
+
+<p>This installs the <code>toys</code> executable, along with some builtin tools and
+libraries. You can run the executable immediately:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys
+</code></pre>
+
+<p>This displays overall help for Toys. If you have <code>less</code> installed, Toys will
+use it to display the help screen. Press <code>q</code> to exit.</p>
+
+<p>You may notice that the help screen lists some tools that are preinstalled.
+Let&#39;s run one of them:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys system version
+</code></pre>
+
+<p>The <code>system version</code> tool displays the current version of the toys gem.</p>
+
+<p>Toys also provides optional tab completion for bash. To install it, execute the
+following command in your shell, or add it to your bash configuration file
+(e.g. <code>~/.bashrc</code>).</p>
+
+<pre class="code ruby"><code class="ruby">$(toys system bash-completion install)
+</code></pre>
+
+<p>Toys does not yet specially implement tab completion for zsh or other shells.
+However, if you are using zsh, installing bash completion using <code>bashcompinit</code>
+<em>mostly</em> works.</p>
+
+<h3 id="write-your-first-tool">Write your first tool</h3>
+
+<p>You can define tools by creating a <em>Toys file</em>. Go into any directory, and,
+using your favorite editor, create a new file called <code>.toys.rb</code> (note the
+leading period). Copy the following text into the file, and save it:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>greet</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>My first tool!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:whom</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>world</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Hello, </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_whom'>whom</span><span class='embexpr_end'>}</span><span class='tstring_content'>!</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>This defines a tool named &quot;greet&quot;. Try running it:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys greet
+</code></pre>
+
+<p>The tool also recognizes a flag on the command line. Try this:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys greet --whom=ruby
+</code></pre>
+
+<p>Toys provides a rich set of features for defining command line arguments and
+flags. It can also validate arguments. Try this:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys greet --bye
+</code></pre>
+
+<p>Notice that Toys automatically generated a usage summary for your tool. It also
+automatically generates a full help screen, which you can view using the
+<code>--help</code> flag:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys greet --help
+</code></pre>
+
+<p>Toys searches up the directory hierarchy for Toys files. So it will find this
+<code>.toys.rb</code> if you are located in this directory or any subdirectory. It will
+also read multiple files if it finds them, so you can &quot;scope&quot; your tools more
+specifically or generally by locating them in your directory hierarchy.</p>
+
+<p>If you want to define &quot;global&quot; tools that apply anywhere, write a Toys file
+either in your home directory, or in the system configuration directory
+(usually <code>/etc</code>). Toys always searches these locations.</p>
+
+<h3 id="a-more-sophisticated-example">A more sophisticated example</h3>
+
+<p>Let&#39;s take a look at another example that exercises some of the features you&#39;re
+likely to see in real-world usage. Add the following to your <code>.toys.rb</code> file.
+(You don&#39;t need to replace the greet tool you just wrote; just add this new
+tool to the end of the file.)</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>new-repo</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_desc'>desc</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Create a new git repo</span><span class='tstring_end'>&quot;</span></span>
+
+  <span class='id identifier rubyid_optional_arg'>optional_arg</span> <span class='symbol'>:name</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Name of the directory to create</span><span class='tstring_end'>&quot;</span></span>
+
+  <span class='id identifier rubyid_include'>include</span> <span class='symbol'>:exec</span><span class='comma'>,</span> <span class='label'>exit_on_nonzero_status:</span> <span class='kw'>true</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='symbol'>:fileutils</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='symbol'>:terminal</span>
+
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_nil?'>nil?</span>
+      <span class='id identifier rubyid_response'>response</span> <span class='op'>=</span> <span class='id identifier rubyid_ask'>ask</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Please enter a directory name: </span><span class='tstring_end'>&quot;</span></span>
+      <span class='id identifier rubyid_set'>set</span> <span class='symbol'>:name</span><span class='comma'>,</span> <span class='id identifier rubyid_response'>response</span>
+    <span class='kw'>end</span>
+    <span class='kw'>if</span> <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_exist?'>exist?</span> <span class='id identifier rubyid_name'>name</span>
+      <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Aborting because </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> already exists</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='symbol'>:red</span><span class='comma'>,</span> <span class='symbol'>:bold</span>
+      <span class='id identifier rubyid_exit'>exit</span> <span class='int'>1</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_logger'>logger</span><span class='period'>.</span><span class='id identifier rubyid_info'>info</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Creating new repo in directory </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'>...</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_mkdir'>mkdir</span> <span class='id identifier rubyid_name'>name</span>
+    <span class='id identifier rubyid_cd'>cd</span> <span class='id identifier rubyid_name'>name</span> <span class='kw'>do</span>
+      <span class='id identifier rubyid_create_repo'>create_repo</span>
+    <span class='kw'>end</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Created repo in </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='symbol'>:green</span><span class='comma'>,</span> <span class='symbol'>:bold</span>
+  <span class='kw'>end</span>
+
+  <span class='kw'>def</span> <span class='id identifier rubyid_create_repo'>create_repo</span>
+    <span class='id identifier rubyid_exec'>exec</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>git init</span><span class='tstring_end'>&quot;</span></span>
+    <span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_write'>write</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.gitignore</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='heredoc_beg'>&lt;&lt;~CONTENT</span>
+<span class='tstring_content'>      tmp
+</span><span class='tstring_content'>      .DS_Store
+</span><span class='heredoc_end'>    CONTENT
+</span>    <span class='comment'># You can add additional files here.
+</span>    <span class='id identifier rubyid_exec'>exec</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>git add .</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_exec'>exec</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>git commit -m &#39;Initial commit&#39;</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+</code></pre>
+
+<p>Now you should have an additional tool called <code>new-repo</code> available. Type:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys
+</code></pre>
+
+<p>The help screen lists both the <code>greet</code> tool we started with, and the new
+<code>new-repo</code> tool. This new tool creates a directory containing a newly created
+git repo. (It assumes you have <code>git</code> available on your path.) Try running it:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys new-repo foo
+</code></pre>
+
+<p>That should create a directory <code>foo</code>, initialize a git repository within it,
+and make a commit.</p>
+
+<p>Notice that this tool accepts a positional command line argument. Toys supports
+any combination of flags and required and optional arguments. This tool&#39;s
+argument is declared with a description string, which you can see if you view
+the tool&#39;s help:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys new-repo --help
+</code></pre>
+
+<p>The argument is marked as &quot;optional&quot; which means you can omit it. Notice that
+the tool&#39;s code detects that it has been omitted and responds by prompting you
+interactively for a directory name. You can also mark a positional argument as
+&quot;required&quot;, which causes Toys to report a usage error if it is omitted.</p>
+
+<p>Next, notice this tool includes two methods, <code>create_repo</code> as well as <code>run</code>.
+The &quot;entrypoint&quot; for a tool is always the <code>run</code> method, but each tool is
+actually a class under the hood, and you can add any helper methods you want.
+You can even define and include modules if you want to share code across tools.</p>
+
+<p>For our tool, notice that the three &quot;include&quot; lines are taking symbols rather
+than modules. These symbols are the names of some of Toys&#39;s built-in helper
+<em>mixins</em>, which are configurable modules that enhance your tool. They may
+provide methods your tool can call, or invoke other behavior. In our example:</p>
+
+<ul>
+<li>  The <code>:exec</code> mixin provides a variety of methods for running external
+commands. In this example, we use the <code>exec</code> method to run shell
+commands, but you can also signal and control these commands, capture
+and redirect streams, and so forth. Note that we pass the
+<code>:exit_on_nonzero_status</code> option, which configures the <code>:exec</code> mixin to
+abort the tool automatically if any of the external commands fails (similar
+to <code>set -e</code> in bash). This is a common pattern when writing tools that
+invoke external commands. (If you want more control, the <code>:exec</code> mixin also
+provides ways to respond to result codes individually.)</li>
+<li>  The <code>:fileutils</code> mixin provides the methods of the Ruby <code>FileUtils</code>
+library, such as <code>mkdir</code> and <code>cd</code> used in this example. It&#39;s effectively
+shorthand for <code>require &quot;fileutils&quot;; include ::FileUtils</code>.</li>
+<li>  The <code>:terminal</code> mixin provides styled output, as you can see with the style
+codes being passed to <code>puts</code>. It also provides some user interaction
+commands such as <code>ask</code>, as well as spinners and other controls. You can see
+operation of the <code>:terminal</code> mixin in the tool&#39;s output, which is styled
+either green (for success) or red (on error) when running on a supported
+tty.</li>
+</ul>
+
+<p>Now try running this:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys new-repo bar --verbose
+</code></pre>
+
+<p>You&#39;ll notice some diagnostic log output. Toys provides a standard Ruby Logger
+for each tool, and you can use it to emit diagnostic logs directly as
+demonstrated in the example. Some other Toys features might also emit log
+entries: the <code>:exec</code> mixin, for example, by default logs every external command
+it runs (although this can be customized).</p>
+
+<p>By default, only warnings and higher severity logs are displayed, but you can
+change that by applying the <code>--verbose</code> or <code>--quiet</code> flags as we have done
+here. These flags, like <code>--help</code>, are provided automatically to every tool.</p>
+
+<h3 id="a-better-rake">A better Rake?</h3>
+
+<p>Let&#39;s look at one more example. Traditionally, Ruby developers often use
+Rakefiles to write scripts for tasks such as build, test, and deploy. And Toys
+is similar to Rake in how it uses directory-scoped files to define tools.</p>
+
+<p>But Rake is really designed for dependency management, not for writing scripts.
+As a result, some features, such as passing arguments to a task, are very
+clumsy with Rake.</p>
+
+<p>If you have a project with a Rakefile, move into that directory and create a
+new file called <code>.toys.rb</code> in that same directory (next to the Rakefile). Add
+the following line to your <code>.toys.rb</code> file:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_expand'>expand</span> <span class='symbol'>:rake</span>
+</code></pre>
+
+<p>This syntax is called a &quot;template expansion.&quot; It&#39;s a way to generate tools
+programmatically. In this case, Toys provides the <code>:rake</code> template, which reads
+your Rakefile and generates Toys tools corresponding to all your Rake tasks!
+Now if you run:</p>
+
+<pre class="code ruby"><code class="ruby">$ toys
+</code></pre>
+
+<p>You&#39;ll see that you now have tools associated with each of your Rake tasks. So
+if you have a <code>rake test</code> task, you can run it using <code>toys test</code>.</p>
+
+<p>Note that if you normally run Rake with Bundler (e.g. <code>bundle exec rake test</code>),
+you may need to add Toys to your Gemfile and use Bundler to invoke Toys (i.e.
+<code>bundle exec toys test</code>). This is because Toys is just calling the Rake API to
+run your task, and the Rake task might require the bundle. However, when Toys
+is not wrapping Rake, typical practice is actually <em>not</em> to use <code>bundle exec</code>.
+Toys provides its own mechanisms to manage bundles or install gems for you.</p>
+
+<p>So far, we&#39;ve made Toys a front-end for your Rake tasks. This may be useful by
+itself. Toys lets you pass command line arguments &quot;normally&quot; to tools, whereas
+Rake requires a weird square bracket syntax (which may also require escaping
+depending on your shell.) Toys also provides more sophisticated online help
+than Rake does.</p>
+
+<p>But you also might find Toys a more natural way to <em>write</em> tasks, and indeed
+you can often rewrite an entire Rakefile as a Toys file and get quite a bit of
+benefit in readability and maintainability. For an example, see the
+<a href="https://github.com/dazuma/toys/blob/main/toys/.toys/.toys.rb">Toys file for the Toys gem itself</a>.
+It contains Toys scripts that I use to develop, test, and release Toys itself.
+Yes, Toys is self-hosted. You&#39;ll notice much of this Toys file consists of
+template expansions. Toys provides templates for a lot of common build, test,
+and release tasks for Ruby projects.</p>
+
+<p>If you&#39;re feeling adventurous, try translating some of your Rake tasks into
+native Toys tools. You can do so in your existing <code>.toys.rb</code> file. Keep the
+<code>expand :rake</code> line at the <em>end</em> of the file, and locate your tools (whether
+simple tools or template expansions) before it. That way, your Toys-native
+tools will take precedence, and <code>expand :rake</code> will proxy out to Rake only for
+the remaining tasks that haven&#39;t been ported explicitly.</p>
+
+<h3 id="learning-more">Learning more</h3>
+
+<p>This introduction should be enough to get you started. However, Toys is a deep
+tool with many more features, all explained in detail in the
+<a href="https://dazuma.github.io/toys/gems/toys/latest/file.guide.html">User Guide</a>.</p>
+
+<p>For example, Toys lets you create tool namespaces and &quot;subtools&quot;, and search
+for tools by name and description. There are various ways to validate and
+interpret command line arguments. You can create your own mixins and templates,
+and take advantage of a variety of third-party libraries such as Highline and
+TTY. Finally, if your <code>.toys.rb</code> files are growing too large or complicated,
+you can replace them with <code>.toys</code> directories that contain tool definitions in
+separate files. Such directories are versatile, letting you organize your tool
+definitions, along with shared code, normal Ruby classes, tests, and even data
+files for use by tools.</p>
+
+<p>You can find detailed usage information, including the entire DSL, in the
+<a href="https://dazuma.github.io/toys/gems/toys/latest/Toys.html">class reference documentation</a></p>
+
+<p>Unlike most command line frameworks, Toys is <em>not primarily</em> designed to help
+you build and ship a custom command line executable written in Ruby. However,
+you <em>can</em> use it in that way with the &quot;toys-core&quot; API, available as a separate
+gem. You would effectively write your command line executable using the same
+Toys DSL that you use to write <code>.toys.rb</code> files. For more info on using
+toys-core, see
+<a href="https://dazuma.github.io/toys/gems/toys-core/latest">its documentation</a>.</p>
+
+<h2 id="why-toys">Why Toys?</h2>
+
+<p>I originally wrote Toys because I was accumulating dozens of <em>ad hoc</em> Ruby
+scripts I had written to automate various tasks in my workflow, everything from
+refreshing credentials, to displaying git history in my favorite format, to
+running builds and tests of complex multi-component projects. It was becoming
+difficult to remember which scripts did what, and what arguments each required,
+and I was constantly digging back into their source just to remember how to use
+them. Furthermore, when writing new scripts, I was repeating the same
+OptionParser boilerplate and common functionality.</p>
+
+<p>Toys was designed to address those problems by providing a framework for
+writing and organizing your own command line scripts. You provide the actual
+functionality by writing Toys files, and Toys takes care of all the other
+details expected from a good command line tool. It provides a streamlined
+interface for defining and handling command line flags and positional
+arguments, and sensible ways to organize shared code. It automatically
+generates help text so you can see usage information at a glance, provides a
+search feature to help you find the script you need, and generates tab
+completion for your shell.</p>
+
+<p>Toys can also be used to share scripts. For example, it can be used instead of
+Rake to provide build and test scripts for a project. Unlike Rake tasks,
+scripts written for Toys can be invoked and passed arguments and flags using
+familiar unix command line conventions. The Toys github repo itself comes with
+Toys scripts instead of Rakefiles.</p>
+
+<h2 id="system-requirements">System requirements</h2>
+
+<p>Toys requires Ruby 2.4 or later.</p>
+
+<p>Most parts of Toys work on JRuby. However, JRuby is not recommended because of
+JVM boot latency, lack of support for Kernel#fork, and other issues.</p>
+
+<p>Most parts of Toys work on TruffleRuby. However, TruffleRuby is not recommended
+because it has a few known bugs that affect Toys.</p>
+
+<h2 id="license">License</h2>
+
+<p>Copyright 2019-2023 Daniel Azuma and the Toys contributors</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Thu Jan  4 20:01:14 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-3.3.0).
+</div>
+
+    </div>
+  </body>
+</html>
