@@ -1,5 +1,10 @@
 # Release History
 
+### v0.15.4 / 2024-01-04
+
+* FIXED: Fix error message when failing assertion of the toys version
+* DOCS: Various documentation improvements
+
 ### v0.15.3 / 2023-10-31
 
 * (No significant changes)

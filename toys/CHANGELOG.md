@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.4 / 2024-01-04
+
+* (No significant changes)
+
 ### v0.15.3 / 2023-10-31
 
 * FIXED: Minitest template defers calling autorun until after tests are loaded, which should eliminate stringio warnings when running Rails tests without bundler integration
