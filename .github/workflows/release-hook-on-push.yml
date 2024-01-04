@@ -9,7 +9,7 @@ jobs:
   release-update-open-requests:
     if: ${{ github.repository == 'dazuma/toys' }}
     env:
-      ruby_version: "3.2"
+      ruby_version: "3.3"
     runs-on: ubuntu-latest
     steps:
       - name: Install Ruby ${{ env.ruby_version }}
