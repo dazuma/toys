@@ -37,6 +37,9 @@ jobs:
             ruby: "3.2"
             tool: test
           - os: ubuntu-latest
+            ruby: "3.3"
+            tool: test
+          - os: ubuntu-latest
             ruby: "jruby"
             tool: test
           - os: ubuntu-latest
@@ -46,16 +49,16 @@ jobs:
             ruby: "2.4"
             tool: test
           - os: macos-latest
-            ruby: "3.2"
+            ruby: "3.3"
             tool: test
           - os: windows-latest
             ruby: "2.4"
             tool: test
           - os: windows-latest
-            ruby: "3.2"
+            ruby: "3.3"
             tool: test
           - os: ubuntu-latest
-            ruby: "3.2"
+            ruby: "3.3"
             tool: "rubocop , yardoc , build"
       fail-fast: false
     runs-on: ${{ matrix.os }}
