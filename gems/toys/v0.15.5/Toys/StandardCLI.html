@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::StandardCLI
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::StandardCLI";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (S)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">StandardCLI</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::StandardCLI
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName"><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">CLI</a></span></span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next"><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">CLI</a></span></li>
+          
+            <li class="next">Toys::StandardCLI</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/standard_cli.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Subclass of <code>Toys::CLI</code> configured for the behavior of the standard Toys
+executable. Specifically, this subclass:</p>
+
+<ul>
+<li>Configures the standard names of files and directories, such as the
+<code>.toys.rb</code> file for an &quot;index&quot; tool, and the <code>.data</code> and <code>.lib</code> directory
+names.</li>
+<li>Configures default descriptions for the root tool.</li>
+<li>Configures a default error handler and logger that provide ANSI-colored
+formatted output.</li>
+<li>Configures a set of middleware that implement online help, verbosity
+flags, and other features.</li>
+<li>Provides a set of standard templates for typical project build and
+maintenance scripts (suh as clean, test, and rubocop).</li>
+<li>Finds tool definitions in the standard Toys search path.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="CONFIG_DIR_NAME-constant" class="">CONFIG_DIR_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard toys configuration directory name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.toys</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="CONFIG_FILE_NAME-constant" class="">CONFIG_FILE_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard toys configuration file name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.toys.rb</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="INDEX_FILE_NAME-constant" class="">INDEX_FILE_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard index file name in a toys configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.toys.rb</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="PRELOAD_DIR_NAME-constant" class="">PRELOAD_DIR_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard preload directory name in a toys configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.preload</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="PRELOAD_FILE_NAME-constant" class="">PRELOAD_FILE_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard preload file name in a toys configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.preload.rb</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DATA_DIR_NAME-constant" class="">DATA_DIR_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard data directory name in a toys configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.data</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="LIB_DIR_NAME-constant" class="">LIB_DIR_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Standard lib directory name in a toys configuration.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.lib</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="EXECUTABLE_NAME-constant" class="">EXECUTABLE_NAME =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Name of the standard toys executable.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="EXTRA_DELIMITERS-constant" class="">EXTRA_DELIMITERS =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Delimiter characters recognized.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>:.</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT_ROOT_DESC-constant" class="">DEFAULT_ROOT_DESC =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Short description for the standard root tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Your personal command line tool</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT_ROOT_LONG_DESC-constant" class="">DEFAULT_ROOT_LONG_DESC =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Help text for the standard root tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Toys is your personal command line tool. You can write commands using a simple Ruby DSL,</span><span class='tstring_end'>&quot;</span></span> \
+<span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> and Toys will automatically organize them, parse arguments, and provide documentation.</span><span class='tstring_end'>&quot;</span></span> \
+<span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> Tools can be global or scoped to specific directories. You can also use Toys instead of</span><span class='tstring_end'>&quot;</span></span> \
+<span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> Rake to provide build and maintenance scripts for your projects.</span><span class='tstring_end'>&quot;</span></span> \
+<span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> For detailed information, see https://dazuma.github.io/toys</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="DEFAULT_VERSION_FLAG_DESC-constant" class="">DEFAULT_VERSION_FLAG_DESC =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Short description for the version flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Show the version of Toys.</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+        <dt id="TOYS_PATH_ENV-constant" class="">TOYS_PATH_ENV =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Name of the toys path environment variable.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>TOYS_PATH</span><span class='tstring_end'>&quot;</span></span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+  <h2>Instance Attribute Summary</h2>
+  
+  <h3 class="inherited">Attributes inherited from <span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">CLI</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="CLI.html#base_level-instance_method" title="Toys::CLI#base_level (method)">#base_level</a></span>, <span class='object_link'><a href="CLI.html#completion-instance_method" title="Toys::CLI#completion (method)">#completion</a></span>, <span class='object_link'><a href="CLI.html#executable_name-instance_method" title="Toys::CLI#executable_name (method)">#executable_name</a></span>, <span class='object_link'><a href="CLI.html#extra_delimiters-instance_method" title="Toys::CLI#extra_delimiters (method)">#extra_delimiters</a></span>, <span class='object_link'><a href="CLI.html#loader-instance_method" title="Toys::CLI#loader (method)">#loader</a></span>, <span class='object_link'><a href="CLI.html#logger-instance_method" title="Toys::CLI#logger (method)">#logger</a></span>, <span class='object_link'><a href="CLI.html#logger_factory-instance_method" title="Toys::CLI#logger_factory (method)">#logger_factory</a></span></p>
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(custom_paths: nil, include_builtins: true, cur_dir: nil)  &#x21d2; StandardCLI </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a standard CLI, configured with the appropriate paths and middleware.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods inherited from <span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">CLI</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="CLI.html#add_config_block-instance_method" title="Toys::CLI#add_config_block (method)">#add_config_block</a></span>, <span class='object_link'><a href="CLI.html#add_config_path-instance_method" title="Toys::CLI#add_config_path (method)">#add_config_path</a></span>, <span class='object_link'><a href="CLI.html#add_search_path-instance_method" title="Toys::CLI#add_search_path (method)">#add_search_path</a></span>, <span class='object_link'><a href="CLI.html#add_search_path_hierarchy-instance_method" title="Toys::CLI#add_search_path_hierarchy (method)">#add_search_path_hierarchy</a></span>, <span class='object_link'><a href="CLI.html#child-instance_method" title="Toys::CLI#child (method)">#child</a></span>, <span class='object_link'><a href="CLI.html#default_completion-class_method" title="Toys::CLI.default_completion (method)">default_completion</a></span>, <span class='object_link'><a href="CLI.html#default_error_handler-class_method" title="Toys::CLI.default_error_handler (method)">default_error_handler</a></span>, <span class='object_link'><a href="CLI.html#default_logger_factory-class_method" title="Toys::CLI.default_logger_factory (method)">default_logger_factory</a></span>, <span class='object_link'><a href="CLI.html#default_middleware_lookup-class_method" title="Toys::CLI.default_middleware_lookup (method)">default_middleware_lookup</a></span>, <span class='object_link'><a href="CLI.html#default_middleware_stack-class_method" title="Toys::CLI.default_middleware_stack (method)">default_middleware_stack</a></span>, <span class='object_link'><a href="CLI.html#default_mixin_lookup-class_method" title="Toys::CLI.default_mixin_lookup (method)">default_mixin_lookup</a></span>, <span class='object_link'><a href="CLI.html#default_template_lookup-class_method" title="Toys::CLI.default_template_lookup (method)">default_template_lookup</a></span>, <span class='object_link'><a href="CLI.html#load_tool-instance_method" title="Toys::CLI#load_tool (method)">#load_tool</a></span>, <span class='object_link'><a href="CLI.html#run-instance_method" title="Toys::CLI#run (method)">#run</a></span></p>
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(custom_paths: nil, include_builtins: true, cur_dir: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::StandardCLI (class)">StandardCLI</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a standard CLI, configured with the appropriate paths and
+middleware.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>custom_paths</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Custom paths to use. If set,
+the CLI uses only the given paths. If not, the CLI will search for
+paths from the current directory and global paths.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_builtins</span>
+      
+      
+        <span class='type'>(<tt>boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Add the builtin tools. Default is true.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>cur_dir</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Starting search directory for configs.
+Defaults to the current working directory.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_cli.rb', line 115</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>custom_paths:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>include_builtins:</span> <span class='kw'>true</span><span class='comma'>,</span>
+               <span class='label'>cur_dir:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys/utils/standard_ui</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_ui'>ui</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Utils.html" title="Toys::Utils (module)">Utils</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Utils/StandardUI.html" title="Toys::Utils::StandardUI (class)">StandardUI</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="Utils/StandardUI.html#initialize-instance_method" title="Toys::Utils::StandardUI#initialize (method)">new</a></span></span>
+  <span class='kw'>super</span><span class='lparen'>(</span>
+    <span class='label'>executable_name:</span> <span class='const'><span class='object_link'><a href="#EXECUTABLE_NAME-constant" title="Toys::StandardCLI::EXECUTABLE_NAME (constant)">EXECUTABLE_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>config_dir_name:</span> <span class='const'><span class='object_link'><a href="#CONFIG_DIR_NAME-constant" title="Toys::StandardCLI::CONFIG_DIR_NAME (constant)">CONFIG_DIR_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>config_file_name:</span> <span class='const'><span class='object_link'><a href="#CONFIG_FILE_NAME-constant" title="Toys::StandardCLI::CONFIG_FILE_NAME (constant)">CONFIG_FILE_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>index_file_name:</span> <span class='const'><span class='object_link'><a href="#INDEX_FILE_NAME-constant" title="Toys::StandardCLI::INDEX_FILE_NAME (constant)">INDEX_FILE_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>preload_file_name:</span> <span class='const'><span class='object_link'><a href="#PRELOAD_FILE_NAME-constant" title="Toys::StandardCLI::PRELOAD_FILE_NAME (constant)">PRELOAD_FILE_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>preload_dir_name:</span> <span class='const'><span class='object_link'><a href="#PRELOAD_DIR_NAME-constant" title="Toys::StandardCLI::PRELOAD_DIR_NAME (constant)">PRELOAD_DIR_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>data_dir_name:</span> <span class='const'><span class='object_link'><a href="#DATA_DIR_NAME-constant" title="Toys::StandardCLI::DATA_DIR_NAME (constant)">DATA_DIR_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>lib_dir_name:</span> <span class='const'><span class='object_link'><a href="#LIB_DIR_NAME-constant" title="Toys::StandardCLI::LIB_DIR_NAME (constant)">LIB_DIR_NAME</a></span></span><span class='comma'>,</span>
+    <span class='label'>extra_delimiters:</span> <span class='const'><span class='object_link'><a href="#EXTRA_DELIMITERS-constant" title="Toys::StandardCLI::EXTRA_DELIMITERS (constant)">EXTRA_DELIMITERS</a></span></span><span class='comma'>,</span>
+    <span class='label'>middleware_stack:</span> <span class='id identifier rubyid_default_middleware_stack'>default_middleware_stack</span><span class='comma'>,</span>
+    <span class='label'>template_lookup:</span> <span class='id identifier rubyid_default_template_lookup'>default_template_lookup</span><span class='comma'>,</span>
+    <span class='op'>**</span><span class='id identifier rubyid_ui'>ui</span><span class='period'>.</span><span class='id identifier rubyid_cli_args'>cli_args</span>
+  <span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_custom_paths'>custom_paths</span>
+    <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_custom_paths'>custom_paths</span><span class='rparen'>)</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_path'>path</span><span class='op'>|</span> <span class='id identifier rubyid_add_config_path'>add_config_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='kw'>else</span>
+    <span class='id identifier rubyid_add_current_directory_paths'>add_current_directory_paths</span><span class='lparen'>(</span><span class='id identifier rubyid_cur_dir'>cur_dir</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_add_builtins'>add_builtins</span> <span class='kw'>if</span> <span class='id identifier rubyid_include_builtins'>include_builtins</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Jan 31 22:53:19 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.34 (ruby-3.3.0).
+</div>
+
+    </div>
+  </body>
+</html>
