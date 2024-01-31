@@ -304,6 +304,13 @@ module Toys
       end
 
       def setup_bundle(gemfile_path, groups: nil, retries: nil)
+        # Ensure certain built-in gems that may be used by bundler/rubygems
+        # themselves are preloaded so they can be included in the modified
+        # gemfile. This prevents a gem version mismatch if bundler/rubygems
+        # loads a version of the gem during the bundler setup code (i.e. after
+        # the modified gemfile is created) but the gemfile lock itself calls
+        # for a different version.
+        require "uri"
         # Lock the bundler version, preventing bundler's SelfManager from
         # installing a different bundler and taking over the process.
         ::ENV["BUNDLER_VERSION"] = ::Bundler::VERSION
