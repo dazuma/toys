@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.5 / 2024-01-31
+
+* FIXED: Fix for uri version mismatch error in certain bundler integration cases
+
 ### v0.15.4 / 2024-01-04
 
 * FIXED: Fix error message when failing assertion of the toys version
