@@ -94,10 +94,7 @@ class ReleaseRequester
     end
 
     def analyze_messages
-      unless @last_version
-        @others << "Initial release."
-        return
-      end
+      return unless @last_version
       @utils.log("Analyzing commit messages since last version ...")
       dir = @utils.gem_directory(@gem_name)
       dir = "#{dir}/" unless dir.end_with?("/")
@@ -191,6 +188,10 @@ class ReleaseRequester
 
     def build_changelog_entries
       @changelog_entries = []
+      unless @last_version
+        @changelog_entries << "Initial release."
+        return
+      end
       unless @breaks.empty?
         @breaks.each do |line|
           @changelog_entries << "* BREAKING CHANGE: #{line}"
