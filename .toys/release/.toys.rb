@@ -1,5 +1,5 @@
-# frozen_string_literal: true
+# load_git remote: "https://github.com/dazuma/toys.git",
+#          path: "common-tools/release",
+#          update: true
 
-toys_version!("~> 0.11", ">= 0.11.1")
-
-desc "Release tools namespace"
+load "#{__dir__}/../../common-tools/release"

@@ -1,16 +1,12 @@
-name: Open release request
+name: "[release hook] Check commit messages"
 
 on:
-  workflow_dispatch:
-    inputs:
-      names:
-        description: Units to release (leave blank to release all units)
-        required: false
-        default: ""
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
 
 jobs:
-  release-request:
-    if: ${{ github.repository == 'dazuma/toys' }}
+  release-check-commits:
+    if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
       ruby_version: "3.3"
     runs-on: ubuntu-latest
@@ -21,13 +17,14 @@ jobs:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
       - name: Install Toys
         run: "gem install --no-document toys"
-      - name: Open release pull request
+      - name: Check commit messages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          toys release request --yes --verbose \
-            "--target-branch=${{ github.ref }}" \
-            ${{ github.event.inputs.names }} \
+          toys release _onopen --verbose \
+            "--event-path=${{ github.event_path }}" \
             < /dev/null

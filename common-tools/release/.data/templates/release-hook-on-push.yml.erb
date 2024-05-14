@@ -1,16 +1,13 @@
-name: Open release request
+name: "[release hook] Update open releases"
 
 on:
-  workflow_dispatch:
-    inputs:
-      names:
-        description: Units to release (leave blank to release all units)
-        required: false
-        default: ""
+  push:
+    branches:
+      - <%= @settings.main_branch %>
 
 jobs:
-  release-request:
-    if: ${{ github.repository == 'dazuma/toys' }}
+  release-update-open-requests:
+    if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
       ruby_version: "3.3"
     runs-on: ubuntu-latest
@@ -23,11 +20,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Toys
         run: "gem install --no-document toys"
-      - name: Open release pull request
+      - name: Update open releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          toys release request --yes --verbose \
-            "--target-branch=${{ github.ref }}" \
-            ${{ github.event.inputs.names }} \
+          toys release _onpush --verbose \
             < /dev/null
