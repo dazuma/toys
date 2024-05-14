@@ -451,7 +451,7 @@ module Toys
       case arg
       when "--"
         @flags_allowed = false
-      when /\A(--\w[?\w-]*)=(.*)\z/
+      when /\A(--\w[?\w-]*)=(.*)\z/m
         handle_valued_flag(::Regexp.last_match(1), ::Regexp.last_match(2))
       when /\A--.+\z/
         handle_plain_flag(arg)
