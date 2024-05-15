@@ -1,5 +1,9 @@
 # Release History
 
+### v0.15.6 / 2024-05-15
+
+* FIXED: Fixed argument parsing to allow a flag value with a newline delimited by =
+
 ### v0.15.5 / 2024-01-31
 
 * FIXED: Fix for uri version mismatch error in certain bundler integration cases
