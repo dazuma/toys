@@ -321,6 +321,22 @@ describe Toys::ArgParser do
         arg_parser.finish
         assert_errors_include('Flag "--aa" is missing a value.', arg_parser.errors)
       end
+
+      it "allows an = value with a newline" do
+        tool.add_flag(:a, ["-a", "--aa=VALUE"])
+        arg_parser.parse(["--aa=hi\nho"])
+        arg_parser.finish
+        assert_data_includes({a: "hi\nho"}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "allows a separate value with a newline" do
+        tool.add_flag(:a, ["-a", "--aa=VALUE"])
+        arg_parser.parse(["--aa", "hi\nho"])
+        arg_parser.finish
+        assert_data_includes({a: "hi\nho"}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
     end
 
     describe "optional value flag" do
