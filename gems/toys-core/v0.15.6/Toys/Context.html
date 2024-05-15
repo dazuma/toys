@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Context
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Context";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (C)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">Context</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Context
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::Context</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/context.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>This is the base class for tool execution. It represents <code>self</code> when your
+tool&#39;s methods (such as <code>run</code>) are called, and it defines the methods that
+can be called by your tool (such as <span class='object_link'><a href="#logger-instance_method" title="Toys::Context#logger (method)">#logger</a></span> and <span class='object_link'><a href="#exit-instance_method" title="Toys::Context#exit (method)">#exit</a></span>.)</p>
+
+<p>This class also manages the &quot;data&quot; available to your tool when it runs.
+This data is a hash of key-value pairs. It consists of values set by flags
+and arguments defined by the tool, plus some &quot;well-known&quot; values such as
+the logger and verbosity level.</p>
+
+<p>You can obtain a value from the data using the <span class='object_link'><a href="#get-instance_method" title="Toys::Context#get (method)">#get</a></span> method.
+Additionally, convenience methods are provided for many of the well-known
+keys. For instance, you can call <span class='object_link'><a href="#verbosity-instance_method" title="Toys::Context#verbosity (method)">#verbosity</a></span> to obtain the
+value for the key <span class='object_link'><a href="Context/Key.html#VERBOSITY-constant" title="Toys::Context::Key::VERBOSITY (constant)">Key::VERBOSITY</a></span>. Finally, flags and
+positional arguments that store their data here will also typically
+generate convenience methods. For example, an argument with key <code>:abc</code> will
+add a method called <code>abc</code> that you can call to get the value.</p>
+
+<p>By convention, flags and arguments defined by your tool should use strings
+or symbols as keys. Keys that are not strings or symbols should either be
+well-known keys such as <span class='object_link'><a href="Context/Key.html#VERBOSITY-constant" title="Toys::Context::Key::VERBOSITY (constant)">Key::VERBOSITY</a></span>, or should be used
+for internal private information needed by middleware and mixins. The
+module <span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span> defines a number of well-known keys as
+constants.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><div id="subclasses">
+  <h2>Direct Known Subclasses</h2>
+  <p class="children"><span class='object_link'><a href="Tool.html" title="Toys::Tool (class)">Tool</a></span></p>
+</div>
+<h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span>
+    
+  
+    
+  
+</p>
+
+
+
+
+
+
+
+  
+    <h2>
+      Class Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exit-class_method" title="exit (class method)">.<strong>exit</strong>(code = 0)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Exit immediately with the given status code.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#[]-instance_method" title="#[] (instance method)">#<strong>[]</strong>(key)  &#x21d2; Object </a>
+    
+
+    
+      (also: #get, #__get)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Fetch an option or other piece of data by key.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#[]=-instance_method" title="#[]= (instance method)">#<strong>[]=</strong>(key, value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set an option or other piece of context data by key.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#__exit-instance_method" title="#__exit (instance method)">#<strong>__exit</strong>  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Exit immediately with the given status code.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#args-instance_method" title="#args (instance method)">#<strong>args</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+      (also: #__args)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The raw arguments passed to the tool, as an array of strings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cli-instance_method" title="#cli (instance method)">#<strong>cli</strong>  &#x21d2; Toys::CLI </a>
+    
+
+    
+      (also: #__cli)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The currently running CLI.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_directory-instance_method" title="#context_directory (instance method)">#<strong>context_directory</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+      (also: #__context_directory)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Return the context directory for this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exit-instance_method" title="#exit (instance method)">#<strong>exit</strong>(code = 0)  &#x21d2; void </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Exit immediately with the given status code.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#find_data-instance_method" title="#find_data (instance method)">#<strong>find_data</strong>(path, type: nil)  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+      (also: #__find_data)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Find the given data file or directory in this tool&#39;s search path.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#logger-instance_method" title="#logger (instance method)">#<strong>logger</strong>  &#x21d2; Logger </a>
+    
+
+    
+      (also: #__logger)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The logger for this execution.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#options-instance_method" title="#options (instance method)">#<strong>options</strong>  &#x21d2; Hash </a>
+    
+
+    
+      (also: #__options)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The subset of the context that uses string or symbol keys.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#set-instance_method" title="#set (instance method)">#<strong>set</strong>(key, value = nil)  &#x21d2; self </a>
+    
+
+    
+      (also: #__set)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set one or more options or other context data by key.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tool_name-instance_method" title="#tool_name (instance method)">#<strong>tool_name</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+      (also: #__tool_name)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The full name of the tool being executed, as an array of strings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tool_source-instance_method" title="#tool_source (instance method)">#<strong>tool_source</strong>  &#x21d2; Toys::SourceInfo </a>
+    
+
+    
+      (also: #__tool_source)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The source of the tool being executed.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#usage_errors-instance_method" title="#usage_errors (instance method)">#<strong>usage_errors</strong>  &#x21d2; Array&lt;Toys::ArgParser::UsageError&gt; </a>
+    
+
+    
+      (also: #__usage_errors)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The (possibly empty) array of errors detected during argument parsing.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#verbosity-instance_method" title="#verbosity (instance method)">#<strong>verbosity</strong>  &#x21d2; Integer </a>
+    
+
+    
+      (also: #__verbosity)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The current verbosity setting as an integer.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="exit-class_method">
+  
+    .<strong>exit</strong>(code = 0)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Exit immediately with the given status code. This class method can be
+called if the instance method is or could be replaced by the tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>code</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>0</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The status code, which should be 0 for no error,
+or nonzero for an error condition. Default is 0.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+374
+375
+376
+377</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 374</span>
+
+<span class='kw'>def</span> <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='int'>0</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='op'>-</span><span class='int'>1</span> <span class='kw'>unless</span> <span class='id identifier rubyid_code'>code</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Integer</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_throw'>throw</span> <span class='symbol'>:result</span><span class='comma'>,</span> <span class='id identifier rubyid_code'>code</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="[]-instance_method">
+  
+    #<strong>[]</strong>(key)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='get-instance_method'>get</span>, <span id='__get-instance_method'>__get</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Fetch an option or other piece of data by key.</p>
+
+<p>If the <code>get</code> method is overridden by the tool, you can still access it
+using the name <code>__get</code> or the <code>[]</code> operator.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+270
+271
+272</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 270</span>
+
+<span class='kw'>def</span> <span class='op'>[]</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="[]=-instance_method">
+  
+    #<strong>[]=</strong>(key, value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set an option or other piece of context data by key.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+282
+283
+284</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 282</span>
+
+<span class='kw'>def</span> <span class='op'>[]=</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="__exit-instance_method">
+  
+    #<strong>__exit</strong>  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Exit immediately with the given status code.</p>
+
+<p>If the <code>exit</code> method is overridden by the tool, you can still access it
+using the name <code>__exit</code> or by calling <span class='object_link'><a href="#exit-class_method" title="Toys::Context.exit (method)">exit</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>code</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The status code, which should be 0 for no error,
+or nonzero for an error condition. Default is 0.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+364
+365
+366</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 364</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='int'>0</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="Toys::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exit'><span class='object_link'><a href="#exit-class_method" title="Toys::Context.exit (method)">exit</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="args-instance_method">
+  
+    #<strong>args</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__args-instance_method'>__args</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The raw arguments passed to the tool, as an array of strings.
+This does not include the tool name itself.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#ARGS-constant" title="Toys::Context::Key::ARGS (constant)">Toys::Context::Key::ARGS</a></span>.</p>
+
+<p>If the <code>args</code> method is overridden by the tool, you can still access it
+using the name <code>__args</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+147
+148
+149</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 147</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_args'>args</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#ARGS-constant" title="Toys::Context::Key::ARGS (constant)">ARGS</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="cli-instance_method">
+  
+    #<strong>cli</strong>  &#x21d2; <tt><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span></tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__cli-instance_method'>__cli</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The currently running CLI.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#CLI-constant" title="Toys::Context::Key::CLI (constant)">Toys::Context::Key::CLI</a></span>.</p>
+
+<p>If the <code>cli</code> method is overridden by the tool, you can still access it
+using the name <code>__cli</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+162
+163
+164</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 162</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cli'>cli</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#CLI-constant" title="Toys::Context::Key::CLI (constant)">CLI</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="context_directory-instance_method">
+  
+    #<strong>context_directory</strong>  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__context_directory-instance_method'>__context_directory</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Return the context directory for this tool. Generally, this defaults
+to the directory containing the toys config directory structure being
+read, but it may be changed by setting a different context directory
+for the tool.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#CONTEXT_DIRECTORY-constant" title="Toys::Context::Key::CONTEXT_DIRECTORY (constant)">Toys::Context::Key::CONTEXT_DIRECTORY</a></span>.</p>
+
+<p>If the <code>context_directory</code> method is overridden by the tool, you can
+still access it using the name <code>__context_directory</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Context directory path</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no context.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+181
+182
+183</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 181</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_directory'>context_directory</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#CONTEXT_DIRECTORY-constant" title="Toys::Context::Key::CONTEXT_DIRECTORY (constant)">CONTEXT_DIRECTORY</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exit-instance_method">
+  
+    #<strong>exit</strong>(code = 0)  &#x21d2; <tt>void</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p class="note returns_void">This method returns an undefined value.</p><p>Exit immediately with the given status code.</p>
+
+<p>If the <code>exit</code> method is overridden by the tool, you can still access it
+using the name <code>__exit</code> or by calling <span class='object_link'><a href="#exit-class_method" title="Toys::Context.exit (method)">exit</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>code</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>0</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The status code, which should be 0 for no error,
+or nonzero for an error condition. Default is 0.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+361
+362
+363</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 361</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span> <span class='op'>=</span> <span class='int'>0</span><span class='rparen'>)</span>
+  <span class='const'><span class='object_link'><a href="" title="Toys::Context (class)">Context</a></span></span><span class='period'>.</span><span class='id identifier rubyid_exit'><span class='object_link'><a href="#exit-class_method" title="Toys::Context.exit (method)">exit</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_code'>code</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="find_data-instance_method">
+  
+    #<strong>find_data</strong>(path, type: nil)  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__find_data-instance_method'>__find_data</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Find the given data file or directory in this tool&#39;s search path.</p>
+
+<p>If the <code>find_data</code> method is overridden by the tool, you can still access
+it using the name <code>__find_data</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The path to find</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>type</span>
+      
+      
+        <span class='type'>(<tt>nil</tt>, <tt>:file</tt>, <tt>:directory</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Type of file system object to find,
+or nil to return any type.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Absolute path of the result</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the data was not found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+346
+347
+348</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 346</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_find_data'>find_data</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>type:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#TOOL_SOURCE-constant" title="Toys::Context::Key::TOOL_SOURCE (constant)">TOOL_SOURCE</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_find_data'>find_data</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>type:</span> <span class='id identifier rubyid_type'>type</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="logger-instance_method">
+  
+    #<strong>logger</strong>  &#x21d2; <tt>Logger</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__logger-instance_method'>__logger</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The logger for this execution.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#LOGGER-constant" title="Toys::Context::Key::LOGGER (constant)">Toys::Context::Key::LOGGER</a></span>.</p>
+
+<p>If the <code>logger</code> method is overridden by the tool, you can still access it
+using the name <code>__logger</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Logger</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+196
+197
+198</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 196</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_logger'>logger</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#LOGGER-constant" title="Toys::Context::Key::LOGGER (constant)">LOGGER</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="options-instance_method">
+  
+    #<strong>options</strong>  &#x21d2; <tt>Hash</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__options-instance_method'>__options</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The subset of the context that uses string or symbol keys. By convention,
+this includes keys that are set by tool flags and arguments, but does not
+include well-known context values such as verbosity or private context
+values used by middleware or mixins.</p>
+
+<p>If the <code>options</code> method is overridden by the tool, you can still access
+it using the name <code>__options</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+326
+327
+328
+329
+330</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 326</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_options'>options</span>
+  <span class='ivar'>@__data</span><span class='period'>.</span><span class='id identifier rubyid_select'>select</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_k'>k</span><span class='comma'>,</span> <span class='id identifier rubyid__v'>_v</span><span class='op'>|</span>
+    <span class='id identifier rubyid_k'>k</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Symbol</span><span class='rparen'>)</span> <span class='op'>||</span> <span class='id identifier rubyid_k'>k</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="set-instance_method">
+  
+    
+      <span class="overload">#<strong>set</strong>(key, value)  &#x21d2; <tt>self</tt> </span>
+    
+      <span class="overload">#<strong>set</strong>(hash)  &#x21d2; <tt>self</tt> </span>
+    
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__set-instance_method'>__set</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set one or more options or other context data by key.</p>
+
+<p>If the <code>set</code> method is overridden by the tool, you can still access it
+using the name <code>__set</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <p class="tag_title">Overloads:</p>
+  <ul class="overload">
+    
+      
+      <li class="overload_item">
+        <span class="signature">#<strong>set</strong>(key, value)  &#x21d2; <tt>self</tt> </span>
+        <div class="docstring">
+  <div class="discussion">
+    <p>Set an option or other piece of context data by key.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+      </li>
+    
+      
+      <li class="overload_item">
+        <span class="signature">#<strong>set</strong>(hash)  &#x21d2; <tt>self</tt> </span>
+        <div class="docstring">
+  <div class="discussion">
+    <p>Set multiple content data keys and values</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>hash</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The keys and values to set</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+      </li>
+    
+  </ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+305
+306
+307
+308
+309
+310
+311
+312</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 305</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_set'>set</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_value'>value</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_key'>key</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Hash</span><span class='rparen'>)</span>
+    <span class='ivar'>@__data</span><span class='period'>.</span><span class='id identifier rubyid_merge!'>merge!</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='rparen'>)</span>
+  <span class='kw'>else</span>
+    <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='id identifier rubyid_key'>key</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tool_name-instance_method">
+  
+    #<strong>tool_name</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__tool_name-instance_method'>__tool_name</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The full name of the tool being executed, as an array of strings.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#TOOL_NAME-constant" title="Toys::Context::Key::TOOL_NAME (constant)">Toys::Context::Key::TOOL_NAME</a></span>.</p>
+
+<p>If the <code>tool_name</code> method is overridden by the tool, you can still access
+it using the name <code>__tool_name</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+211
+212
+213</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 211</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tool_name'>tool_name</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#TOOL_NAME-constant" title="Toys::Context::Key::TOOL_NAME (constant)">TOOL_NAME</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tool_source-instance_method">
+  
+    #<strong>tool_source</strong>  &#x21d2; <tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__tool_source-instance_method'>__tool_source</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The source of the tool being executed.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#TOOL_SOURCE-constant" title="Toys::Context::Key::TOOL_SOURCE (constant)">Toys::Context::Key::TOOL_SOURCE</a></span>.</p>
+
+<p>If the <code>tool_source</code> method is overridden by the tool, you can still
+access it using the name <code>__tool_source</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+226
+227
+228</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 226</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tool_source'>tool_source</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#TOOL_SOURCE-constant" title="Toys::Context::Key::TOOL_SOURCE (constant)">TOOL_SOURCE</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="usage_errors-instance_method">
+  
+    #<strong>usage_errors</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="ArgParser/UsageError.html" title="Toys::ArgParser::UsageError (class)">Toys::ArgParser::UsageError</a></span>&gt;</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__usage_errors-instance_method'>__usage_errors</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The (possibly empty) array of errors detected during argument parsing.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#USAGE_ERRORS-constant" title="Toys::Context::Key::USAGE_ERRORS (constant)">Toys::Context::Key::USAGE_ERRORS</a></span>.</p>
+
+<p>If the <code>usage_errors</code> method is overridden by the tool, you can still
+access it using the name <code>__usage_errors</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="ArgParser/UsageError.html" title="Toys::ArgParser::UsageError (class)">Toys::ArgParser::UsageError</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+241
+242
+243</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 241</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_usage_errors'>usage_errors</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#USAGE_ERRORS-constant" title="Toys::Context::Key::USAGE_ERRORS (constant)">USAGE_ERRORS</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="verbosity-instance_method">
+  
+    #<strong>verbosity</strong>  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='__verbosity-instance_method'>__verbosity</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The current verbosity setting as an integer.</p>
+
+<p>This is a convenience getter for <span class='object_link'><a href="Context/Key.html#VERBOSITY-constant" title="Toys::Context::Key::VERBOSITY (constant)">Toys::Context::Key::VERBOSITY</a></span>.</p>
+
+<p>If the <code>verbosity</code> method is overridden by the tool, you can still access
+it using the name <code>__verbosity</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+256
+257
+258</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/context.rb', line 256</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_verbosity'>verbosity</span>
+  <span class='ivar'>@__data</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="Context/Key.html" title="Toys::Context::Key (module)">Key</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="Context/Key.html#VERBOSITY-constant" title="Toys::Context::Key::VERBOSITY (constant)">VERBOSITY</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed May 15 05:58:23 2024 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.36 (ruby-3.3.1).
+</div>
+
+    </div>
+  </body>
+</html>
