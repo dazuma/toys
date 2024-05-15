@@ -45,12 +45,12 @@ def load_minitest_gems
   gem "minitest", minitest_version
   require "minitest"
   if minitest_focus
-    minitest_focus = "~> 1.0" if minitest_focus == true
+    set :minitest_focus, "~> 1.0" if minitest_focus == true
     gem "minitest-focus", minitest_focus
     require "minitest/focus"
   end
   if minitest_rg
-    minitest_rg = "~> 5.0" if minitest_rg == true
+    set :minitest_rg, "~> 5.0" if minitest_rg == true
     gem "minitest-rg", minitest_rg
     require "minitest/rg"
   end
@@ -82,14 +82,15 @@ end
 
 def ruby_code
   code = []
-  code << "gem 'minitest', '= #{::Minitest::VERSION}'"
+  code << "gem 'minitest', #{minitest_version.inspect}"
   code << "require 'minitest/autorun'"
   if minitest_focus
     code << "gem 'minitest-focus', '= #{::Minitest::Test::Focus::VERSION}'"
     code << "require 'minitest/focus'"
   end
   if minitest_rg
-    code << "gem 'minitest-rg', '= #{::MiniTest::RG::VERSION}'"
+    version = defined?(::Minitest::RG::VERSION) ? ::Minitest::RG::VERSION : ::MiniTest::RG::VERSION
+    code << "gem 'minitest-rg', '= #{version}'"
     code << "require 'minitest/rg'"
   end
   code << "require 'toys'"

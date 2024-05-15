@@ -46,7 +46,7 @@ jobs:
             ruby: "truffleruby"
             tool: test
           - os: macos-latest
-            ruby: "2.4"
+            ruby: "2.6"
             tool: test
           - os: macos-latest
             ruby: "3.3"
