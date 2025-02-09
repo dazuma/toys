@@ -13,6 +13,9 @@ module Toys
     ruby_version = parts[0].to_i * 10000 + parts[1].to_i * 100 + parts[2].to_i
 
     # @private
+    RUBY_VERSION_CODE = ruby_version
+
+    # @private
     def self.jruby?
       ::RUBY_ENGINE == "jruby"
     end
@@ -25,6 +28,11 @@ module Toys
     # @private
     def self.windows?
       ::RbConfig::CONFIG["host_os"] =~ /mswin|msys|mingw|cygwin|bccwin|wince|emc/
+    end
+
+    # @private
+    def self.macos?
+      ::RbConfig::CONFIG["host_os"] =~ /darwin/
     end
 
     # @private

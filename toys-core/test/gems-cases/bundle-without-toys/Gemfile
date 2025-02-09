@@ -2,4 +2,5 @@
 
 source "https://rubygems.org"
 
+gem "abbrev"
 gem "highline", "2.0.2"

@@ -174,6 +174,8 @@ describe Toys::Utils::Gems do
 
     it "updates the bundle if install fails due to conflicts" do
       skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      # Problem installing jaro_winkler on Mac Ruby 3.4
+      skip if Toys::Compat.macos? && Toys::Compat::RUBY_VERSION_CODE >= 30_400
       skip if exec_service.capture(["gem", "list", "rubocop"]).include?("0.81.0")
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")

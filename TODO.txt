@@ -4,6 +4,14 @@ This is a dumping ground of possible ideas and future directions for Toys.
 These items are all tentative or under investigation. Finalized to-do items
 are covered in github issues (https://github.com/dazuma/toys/issues).
 
+## Definitely todo
+
+* Add Ruby 3.4 to CI
+* Provide a way to make the git cache deletable so cleanup tasks don't fail
+* gem mixin should allow flags like on_missing: :install on the gem method (not just on the include)
+* Support gem-based tool installs. Maybe load_gem directive that works similar to load_git. We may need to ensure that any gems so loaded get included in any subsequent bundles.
+* Handlers should let you build state more flexibly, in particular giving you access to other fields as context. So you can say `--start-context=FOO --add-to-context=1 --add-to-context=2 --start-context=BAR --add-to-context=3` and be able to distinguish which contexts to add to.
+
 ## Ideas under investigation
 
 * Allow override when doing data lookup (for subdirectory-specific configuration)
