@@ -3,6 +3,7 @@ inherit_from: "../.rubocop-common.yml"
 AllCops:
   Exclude:
     - "test/gems-cases/bundle-with-vendored-path/vendor/**/*"
+    - "test-data/**/*"
 
 # Apparent Rubocop bug on Ruby 3.1
 Layout/BlockAlignment:
