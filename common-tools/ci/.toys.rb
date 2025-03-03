@@ -98,6 +98,7 @@ template "toys-ci" do
                  fail_fast_flag: nil,
                  fail_fast_default: false)
     @jobs = []
+    @collections = []
     @all_flag = all_flag
     @only_flag = only_flag
     @jobs_disabled_by_default = jobs_disabled_by_default
@@ -106,17 +107,21 @@ template "toys-ci" do
     @prerun = nil
   end
 
-  def job(name, flag: nil, tool: nil, exec: nil, env: nil, chdir: nil, &block)
+  def job(description, flag: nil, tool: nil, exec: nil, env: nil, chdir: nil, &block)
     @jobs <<
       if block && !tool && !exec
-        [:block, name, flag, block]
+        [:block, description, flag, block]
       elsif !block && tool && !exec
-        [:tool, name, flag, tool, env, chdir]
+        [:tool, description, flag, tool, env, chdir]
       elsif !block && !tool && exec
-        [:exec, name, flag, exec, env, chdir]
+        [:exec, description, flag, exec, env, chdir]
       else
         raise Toys::ToolDefinitionError, "add_job must take a tool, exec, or block"
       end
+  end
+
+  def collection(description, flag, job_flags: nil)
+    @collections << [description, flag, job_flags]
   end
 
   def on_prerun(&block)
@@ -125,7 +130,7 @@ template "toys-ci" do
 
   attr_writer :all_flag, :only_flag, :jobs_disabled_by_default, :fail_fast_flag, :fail_fast_default
 
-  attr_reader :jobs, :prerun, :jobs_disabled_by_default, :fail_fast_default
+  attr_reader :jobs, :collections, :prerun, :jobs_disabled_by_default, :fail_fast_default
 
   def all_flag?
     !@all_flag.nil? && @all_flag != false
@@ -208,6 +213,32 @@ template "toys-ci" do
       end
     end
 
+    unless template.collections.empty?
+      flag_group(desc: "Collections") do
+        template.collections.each do |collection|
+          Array(collection[2]).each do |job_flag|
+            if template.jobs.none? { |job| job[2] == job_flag }
+              raise Toys::ToolDefinitionError,
+                    "Collection #{collection[0].inspect} referenced nonexistent job flag: #{job_flag}"
+            end
+          end
+          flag(collection[1]) do
+            hyphenated_flag = collection[1].to_s.tr("_", "-")
+            if template.all_flag? || template.only_flag?
+              flags "--[no-]#{hyphenated_flag}"
+              desc "Run or omit all \"#{collection[0]}\"."
+            elsif template.jobs_disabled_by_default
+              flags "--#{hyphenated_flag}"
+              desc "Run all \"#{collection[0]}\"."
+            else
+              flags "--no-#{hyphenated_flag}"
+              desc "Omit all \"#{collection[0]}\"."
+            end
+          end
+        end
+      end
+    end
+
     static :toys_ci_template, template
 
     include "toys-ci"
@@ -216,17 +247,8 @@ template "toys-ci" do
       ::Dir.chdir(context_directory)
       instance_eval(&toys_ci_template.prerun) if toys_ci_template.prerun
       toys_ci_init(fail_fast: toys_ci_fail_fast_value)
-      toys_ci_template.jobs.each do |job|
-        enabled = toys_ci_enabled_value(job)
-        case job[0]
-        when :tool
-          toys_ci_job(job[1], enabled: enabled, tool: job[3], env: job[4], chdir: job[5])
-        when :exec
-          toys_ci_job(job[1], enabled: enabled, exec: job[3], env: job[4], chdir: job[5])
-        when :block
-          toys_ci_job(job[1], enabled: enabled, &job[3])
-        end
-      end
+      toys_ci_resolve_collections
+      toys_ci_run_all_jobs
       toys_ci_report_results
     end
 
@@ -238,8 +260,32 @@ template "toys-ci" do
       end
     end
 
-    def toys_ci_enabled_value(job)
-      flag_value = self[job[2]] if job[2]
+    def toys_ci_resolve_collections
+      toys_ci_template.collections.each do |collection|
+        value = self[collection[1]]
+        next if value.nil?
+        Array(collection[2]).each do |job_flag|
+          set(job_flag, value) if self[job_flag].nil?
+        end
+      end
+    end
+
+    def toys_ci_run_all_jobs
+      toys_ci_template.jobs.each do |job|
+        enabled = toys_ci_enabled_value(job[2])
+        case job[0]
+        when :tool
+          toys_ci_job(job[1], enabled: enabled, tool: job[3], env: job[4], chdir: job[5])
+        when :exec
+          toys_ci_job(job[1], enabled: enabled, exec: job[3], env: job[4], chdir: job[5])
+        when :block
+          toys_ci_job(job[1], enabled: enabled, &job[3])
+        end
+      end
+    end
+
+    def toys_ci_enabled_value(flag)
+      flag_value = self[flag] if flag
       unless flag_value.nil?
         if toys_ci_template.all_flag? || toys_ci_template.only_flag?
           return flag_value
