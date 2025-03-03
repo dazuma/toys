@@ -78,6 +78,7 @@ jobs:
         shell: bash
         env:
           TOYS_TEST_INTEGRATION: "1"
+          GH_TOKEN: ${{ github.token }}
         run: |
           unset JAVA_TOOL_OPTIONS
           ./toys-dev do ci init , ${{ matrix.tool }} < /dev/null

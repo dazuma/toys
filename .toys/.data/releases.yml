@@ -1,9 +1,6 @@
 repo: dazuma/toys
 git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
-pre_builder_tool: [copy-core-docs]
-docs_builder_tool: [yardoc]
-coordinate_versions: true
 required_checks_timeout: 1800
 commit_lint:
   fail_checks: true
@@ -14,6 +11,15 @@ gems:
     version_rb_path: lib/toys/core.rb
     gh_pages_directory: gems/toys-core
     gh_pages_version_var: version
+    pre_builder_tool: [copy-core-docs]
   - name: toys
     gh_pages_directory: gems/toys
     gh_pages_version_var: version
+
+components:
+  - name: common-tools
+    version_rb_path: .lib/version.rb
+    version_constant: Toys::CommonTools::VERSION
+
+coordination_groups:
+  - [toys-core, toys]
