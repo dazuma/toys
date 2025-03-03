@@ -147,5 +147,18 @@ module Toys
           klass.private_instance_methods(false).include?(name)
       end
     end
+
+    # Array#to_h with a block requires Ruby 2.6 or later.
+    if ruby_version >= 20600
+      # @private
+      def self.array_to_h_with_block(array, &block)
+        array.to_h(&block)
+      end
+    else
+      # @private
+      def self.array_to_h_with_block(array, &block)
+        array.map(&block).to_h
+      end
+    end
   end
 end
