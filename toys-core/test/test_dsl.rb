@@ -18,9 +18,7 @@ describe Toys::DSL::Tool do
                   index_file_name: ".toys.rb", data_dir_name: ".data")
   }
   let(:loader) { cli.loader }
-  let(:cases_dir) {
-    File.join(__dir__, "lookup-cases")
-  }
+  let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
 
   describe "tool directive" do
     it "creates a tool" do
@@ -1839,8 +1837,8 @@ describe Toys::DSL::Tool do
     end
 
     let(:git_remote) { "https://github.com/dazuma/toys.git" }
-    let(:git_file_path) { "toys-core/test/lookup-cases/config-items/.toys.rb" }
-    let(:git_dir_path) { "toys-core/test/lookup-cases/config-items/.toys" }
+    let(:git_file_path) { "toys-core/test-data/lookup-cases/config-items/.toys.rb" }
+    let(:git_dir_path) { "toys-core/test-data/lookup-cases/config-items/.toys" }
 
     it "loads a file into the current namespace" do
       remote = git_remote

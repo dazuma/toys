@@ -1,47 +1,29 @@
 # frozen_string_literal: true
 
-desc "CI target that runs all tests for both gems"
+load "#{__dir__}/../common-tools/ci"
 
-long_desc "The CI tool runs all CI checks for both gems, including unit" \
-            " tests, rubocop, and documentation checks. It is useful for" \
-            " running tests in normal development, as well as being the" \
-            " entrypoint for CI systems. Any failure will result in a" \
-            " nonzero result code."
+desc "CI target that runs all CI jobs for the entire repo"
 
 flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
+flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
 
-include :terminal
-include :exec
-
-def handle_gem(gem_name)
-  puts("**** CHECKING #{gem_name.upcase} GEM...", :bold, :cyan)
-  env = {}
-  env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-  result = exec_separate_tool("ci", env: env, chdir: gem_name)
-  if result.success?
-    puts("**** #{gem_name.upcase} GEM OK.", :bold, :cyan)
-  else
-    puts("**** #{gem_name.upcase} GEM FAILED!", :red, :bold)
-    exit(result.exit_code)
-  end
-end
-
-def root_rubocop
-  puts("**** RUNNING ROOT RUBOCOP...", :bold, :cyan)
-  result = exec_separate_tool(["rubocop", "_root"])
-  if result.success?
-    puts("**** ROOT RUBOCOP OK.", :bold, :cyan)
-  else
-    puts("**** ROOT RUBOCOP FAILED!", :red, :bold)
-    exit(result.exit_code)
-  end
-end
+include "toys-ci"
 
 def run
-  ::Dir.chdir(context_directory)
-  root_rubocop
-  handle_gem("toys-core")
-  handle_gem("toys")
+  ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+  ci_init
+  ci_job("Rubocop for toys-core", ["rubocop"], chdir: "toys-core")
+  ci_job("Rubocop for toys", ["rubocop"], chdir: "toys")
+  ci_job("Rubocop for the repo tools and common tools", ["rubocop", "_root"])
+  ci_job("Tests for toys-core", ["test"], chdir: "toys-core")
+  ci_job("Tests for toys", ["test"], chdir: "toys")
+  ci_job("Tests for builtin commands", ["test-builtins"], chdir: "toys")
+  ci_job("Tests for common-tools", ["system", "test", "-d", "."], chdir: "common-tools")
+  ci_job("Yardoc generation for toys-core", ["yardoc-test"], chdir: "toys-core")
+  ci_job("Yardoc generation for toys", ["yardoc-test"], chdir: "toys")
+  ci_job("Build toys-core", ["build"], chdir: "toys-core")
+  ci_job("Build toys", ["build"], chdir: "toys")
+  ci_report_results
 end
 
 tool "init" do

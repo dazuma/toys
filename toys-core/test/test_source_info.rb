@@ -3,16 +3,16 @@
 require "helper"
 
 describe Toys::SourceInfo do
-  let(:lookup_cases_dir) { File.join(__dir__, "lookup-cases") }
+  let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
   let(:directory_path) { File.join(lookup_cases_dir, "config-items") }
   let(:file_path) { File.join(directory_path, ".toys.rb") }
   let(:path_with_data) { File.join(lookup_cases_dir, "data-finder") }
   let(:bad_path) { File.join(lookup_cases_dir, "doesnotexist") }
   let(:git_remote) { "https://github.com/dazuma/toys.git" }
   let(:git_commit) { "main" }
-  let(:git_directory_path) { "toys-core/test/lookup-cases/config-items" }
-  let(:git_file_path) { "toys-core/test/lookup-cases/config-items/.toys.rb" }
-  let(:git_path_with_data) { "toys-core/test/lookup-cases/data-finder" }
+  let(:git_directory_path) { "toys-core/test-data/lookup-cases/config-items" }
+  let(:git_file_path) { "toys-core/test-data/lookup-cases/config-items/.toys.rb" }
+  let(:git_path_with_data) { "toys-core/test-data/lookup-cases/data-finder" }
   let(:my_proc) { proc { :a } }
   let(:my_proc2) { proc { :b } }
   let(:data_dir_name) { ".data" }

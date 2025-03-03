@@ -12,7 +12,7 @@ describe Toys::Testing do
   let(:empty_testing) { class_testing.new }
   let(:configured_testing) do
     testing = empty_testing
-    testing.class.toys_custom_paths(File.join(__dir__, "testing-cases"))
+    testing.class.toys_custom_paths(File.join(File.dirname(__dir__), "test-data", "testing-cases"))
     testing.class.toys_include_builtins(false)
     testing
   end

@@ -29,7 +29,7 @@ tool "test-builtins" do
   def run
     ::Dir.chdir(context_directory)
     exec_separate_tool(["system", "test", "-d", "builtins",
-                        "--minitest-focus", "--minitest-rg", "--minitest-compat"])
+                        "--minitest-focus", "--minitest-rg"])
   end
 end
 
@@ -59,11 +59,15 @@ tool "yardoc-test" do
 
   def run
     puts "Running yardoc on unoptimized input..."
-    unoptimized_result = exec_tool(["yardoc", "--no-optimize"], out: [:tee, :inherit, :controller])
+    unoptimized_result = exec_tool(["yardoc", "--no-optimize"], out: [:tee, :inherit, :capture])
     puts "Running yardoc on optimized input..."
-    optimized_result = exec_tool(["yardoc", "--optimize"], out: [:tee, :inherit, :controller])
+    optimized_result = exec_tool(["yardoc", "--optimize"], out: [:tee, :inherit, :capture])
     unless unoptimized_result.captured_out == optimized_result.captured_out
       puts "Output changed!", :red
+      exit 1
+    end
+    if unoptimized_result.captured_out.empty? || optimized_result.captured_out.empty?
+      puts "Yardoc output empty!", :red
       exit 1
     end
   end

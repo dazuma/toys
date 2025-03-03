@@ -1,19 +1,16 @@
 # frozen_string_literal: true
 
+load "#{__dir__}/../common-tools/ci"
+
 desc "Generates yardoc for both gems"
 
-flag :test
+flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
 
-include :terminal
-include :exec, exit_on_nonzero_status: true
+include "toys-ci"
 
 def run
-  ::Dir.chdir(context_directory)
-  tool = [test ? "yardoc-test" : "yardoc"]
-
-  puts("**** Generating Yardoc for toys-core...", :bold, :cyan)
-  exec_separate_tool(tool, chdir: "toys-core")
-
-  puts("**** Generating Yardoc for toys...", :bold, :cyan)
-  exec_separate_tool(tool, chdir: "toys")
+  ci_init
+  ci_job("Yardoc generation for toys-core", ["yardoc"], chdir: "toys-core")
+  ci_job("Yardoc generation for toys", ["yardoc"], chdir: "toys")
+  ci_report_results
 end

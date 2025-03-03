@@ -2,7 +2,6 @@ inherit_from: "../.rubocop-common.yml"
 
 AllCops:
   Exclude:
-    - "test/gems-cases/bundle-with-vendored-path/vendor/**/*"
     - "test-data/**/*"
 
 # Apparent Rubocop bug on Ruby 3.1
@@ -30,7 +29,6 @@ Metrics/BlockNesting:
     - "test/**/*"
 Naming/FileName:
   Exclude:
-    - "test/lookup-cases/**/*"
     - "lib/toys-core.rb"
     - "examples/**/*"
 Naming/MethodParameterName:
@@ -49,7 +47,6 @@ Style/DocumentationMethod:
     - "test/**/*"
 Style/GlobalVars:
   Exclude:
-    - "test/lookup-cases/preloads/**/*.rb"
     - "test/test_loader.rb"
 Style/NumericLiterals:
   Exclude:

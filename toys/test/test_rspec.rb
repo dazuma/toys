@@ -156,7 +156,7 @@ describe "rspec template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
-    let(:cases_dir) { File.join(__dir__, "rspec-cases") }
+    let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "rspec-cases") }
     let(:exec_service) { Toys::Utils::Exec.new }
 
     it "executes a successful spec" do

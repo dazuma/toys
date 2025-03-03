@@ -13,8 +13,8 @@ describe Toys::Utils::XDG do
   let(:workspace_dir) { File.join(root_dir, "workspace") }
   let(:env) { { "HOME" => home_dir } }
   let(:xdg) { Toys::Utils::XDG.new(env: env) }
-  let(:base_dir) { File.dirname(__dir__) }
-  let(:data1_dir) { File.join(base_dir, "data") }
+  let(:base_dir) { File.join(File.dirname(File.dirname(__dir__)), "test-data") }
+  let(:data1_dir) { File.join(base_dir, "data1") }
   let(:data2_dir) { File.join(base_dir, "data2") }
   let(:default_data_home) { File.join(home_dir, ".local", "share") }
   let(:default_config_home) { File.join(home_dir, ".config") }

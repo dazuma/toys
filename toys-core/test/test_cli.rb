@@ -24,6 +24,7 @@ describe Toys::CLI do
       extra_delimiters: ":"
     )
   }
+  let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
 
   describe "execution" do
     it "returns the exit value" do
@@ -156,13 +157,13 @@ describe Toys::CLI do
     end
 
     it "accesses data from run" do
-      cli.loader.add_path(File.join(__dir__, "lookup-cases", "data-finder"))
+      cli.loader.add_path(File.join(lookup_cases_dir, "data-finder"))
       assert_equal(0, cli.run("ns-1", "ns-1a", "foo"))
     end
 
     it "accesses lib directory" do
       skip unless Toys::Compat.allow_fork?
-      cli.loader.add_path(File.join(__dir__, "lookup-cases", "lib-dirs"))
+      cli.loader.add_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("foo")
       end
@@ -172,7 +173,7 @@ describe Toys::CLI do
 
     it "accesses lib directory with overrides" do
       skip unless Toys::Compat.allow_fork?
-      cli.loader.add_path(File.join(__dir__, "lookup-cases", "lib-dirs"))
+      cli.loader.add_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("ns", "bar")
       end
@@ -217,7 +218,7 @@ describe Toys::CLI do
         9
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
+      my_cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
       assert_equal(9, my_cli.run("definition"))
     end
 
@@ -229,7 +230,7 @@ describe Toys::CLI do
         10
       end
       my_cli = cli.child(error_handler: my_handler)
-      my_cli.loader.add_path(File.join(__dir__, "lookup-cases", "errors"))
+      my_cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
       assert_equal(10, my_cli.run("runtime", "hello"))
     end
 

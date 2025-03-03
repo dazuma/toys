@@ -2,8 +2,7 @@ inherit_from: "../.rubocop-common.yml"
 
 AllCops:
   Exclude:
-    - "test/rubocop-cases/**/*"
-    - "test/rspec-cases/**/*"
+    - "test-data/**/*"
     - "core-docs/**/*"
 Layout/LineLength:
   Exclude:

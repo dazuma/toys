@@ -82,10 +82,13 @@ describe "rake template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
+    let(:rakefiles_dir) { File.join(File.dirname(__dir__), "test-data", "rakefiles") }
+    let(:rake_dirs_dir) { File.join(File.dirname(__dir__), "test-data", "rake-dirs") }
 
     it "creates tools" do
+      rakefile_path = File.join(rakefiles_dir, "Rakefile1")
       loader.add_block do
-        expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile1")
+        expand :rake, rakefile_path: rakefile_path
       end
       tool, remaining = loader.lookup(["foo1", "bar"])
       assert_equal(["foo1"], tool.full_name)
@@ -98,11 +101,12 @@ describe "rake template" do
     end
 
     it "does not replace existing tools" do
+      rakefile_path = File.join(rakefiles_dir, "Rakefile1")
       loader.add_block do
         tool "foo1" do
           desc "Real foo1 description"
         end
-        expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile1")
+        expand :rake, rakefile_path: rakefile_path
       end
       tool, remaining = loader.lookup(["foo1", "bar"])
       assert_equal(["foo1"], tool.full_name)
@@ -115,11 +119,13 @@ describe "rake template" do
     end
 
     it "creates tools from multiple rakefiles" do
+      rakefile1_path = File.join(rakefiles_dir, "Rakefile1")
+      rakefile2_path = File.join(rakefiles_dir, "Rakefile2")
       loader.add_block do
-        expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile2")
+        expand :rake, rakefile_path: rakefile2_path
       end
       loader.add_block do
-        expand :rake, rakefile_path: File.join(__dir__, "rakefiles/Rakefile1")
+        expand :rake, rakefile_path: rakefile1_path
       end
       tool, remaining = loader.lookup(["foo1", "bar"])
       assert_equal(["foo1"], tool.full_name)
@@ -132,7 +138,7 @@ describe "rake template" do
     end
 
     it "executes tools honoring rake dependencies" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile2")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile2")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path
       end
@@ -142,7 +148,7 @@ describe "rake template" do
     end
 
     it "creates and executes a tool with arguments" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile3")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path
       end
@@ -157,7 +163,7 @@ describe "rake template" do
     end
 
     it "creates and executes a tool with flags for arguments" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile3")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path, use_flags: true
       end
@@ -172,7 +178,7 @@ describe "rake template" do
     end
 
     it "allows dashes in flags" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile3")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path, use_flags: true
       end
@@ -182,7 +188,7 @@ describe "rake template" do
     end
 
     it "creates tools without a description by default" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile3")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path
       end
@@ -192,7 +198,7 @@ describe "rake template" do
     end
 
     it "does not creates tools without a description if requested" do
-      rakefile_path = File.join(__dir__, "rakefiles/Rakefile3")
+      rakefile_path = File.join(rakefiles_dir, "Rakefile3")
       loader.add_block do
         expand :rake, rakefile_path: rakefile_path, only_described: true
       end
@@ -202,13 +208,12 @@ describe "rake template" do
     end
 
     it "searches up the directory tree for rakefiles" do
-      base_dir = __dir__
-      Dir.chdir(File.join(base_dir, "rake-dirs", "dir1", "dir2")) do
-        loader.add_path(File.join(base_dir, "rake-dirs", ".toys.rb"))
+      Dir.chdir(File.join(rake_dirs_dir, "dir1", "dir2")) do
+        loader.add_path(File.join(rake_dirs_dir, ".toys.rb"))
         tool, remaining = loader.lookup(["foo1", "bar"])
         assert_equal(["foo1"], tool.full_name)
         assert_equal(["bar"], remaining)
-        rakefile_path = File.join(base_dir, "rake-dirs", "dir1", "Rakefile")
+        rakefile_path = File.join(rake_dirs_dir, "dir1", "Rakefile")
         expected_comments = [
           "Foo1 description", "",
           "Defined as a Rake task in #{rakefile_path}"
@@ -218,9 +223,8 @@ describe "rake template" do
     end
 
     it "sets the current working directory to the Rakefile directory" do
-      base_dir = __dir__
-      Dir.chdir(File.join(base_dir, "rake-dirs", "dir1", "dir2")) do
-        loader.add_path(File.join(base_dir, "rake-dirs", ".toys.rb"))
+      Dir.chdir(File.join(rake_dirs_dir, "dir1", "dir2")) do
+        loader.add_path(File.join(rake_dirs_dir, ".toys.rb"))
         assert_output("Found = true\n") do
           cli.run("foo1")
         end
@@ -229,7 +233,7 @@ describe "rake template" do
 
     it "honors context_directory argument" do
       basedir = __dir__
-      subdir = File.join(basedir, "rake-dirs", "dir1", "dir2")
+      subdir = File.join(rake_dirs_dir, "dir1", "dir2")
       loader.add_block do
         set_context_directory subdir
         expand :rake, context_directory: basedir

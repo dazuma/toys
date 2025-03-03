@@ -239,7 +239,7 @@ describe "yardoc template" do
     let(:loader) { cli.loader }
 
     it "runs yardoc" do
-      input_dir = File.join(__dir__, "doc-case")
+      input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
       loader.add_block do
@@ -253,7 +253,7 @@ describe "yardoc template" do
     end
 
     it "honors context_directory setting" do
-      input_dir = File.join(__dir__, "doc-case")
+      input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
       loader.add_block do

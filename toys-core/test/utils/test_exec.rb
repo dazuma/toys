@@ -10,8 +10,9 @@ describe Toys::Utils::Exec do
   let(:logger_stringio) { ::StringIO.new }
   let(:logger) { ::Logger.new(logger_stringio) }
   let(:exec) { Toys::Utils::Exec.new(logger: logger) }
-  let(:tmp_dir) { ::File.join(::File.dirname(::File.dirname(__dir__)), "tmp") }
-  let(:input_path) { ::File.join(::File.dirname(__dir__), "data", "input.txt") }
+  let(:gem_base_dir) { ::File.dirname(::File.dirname(__dir__)) }
+  let(:tmp_dir) { ::File.join(gem_base_dir, "tmp") }
+  let(:input_path) { ::File.join(gem_base_dir, "test-data", "data1", "input.txt") }
   let(:output_path) { ::File.join(tmp_dir, "output.txt") }
   let(:output2_path) { ::File.join(tmp_dir, "output2.txt") }
   let(:simple_exec_timeout) { 5 }

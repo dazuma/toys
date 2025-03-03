@@ -7,7 +7,8 @@ require "toys/utils/exec"
 require "toys/utils/gems"
 
 describe Toys::Utils::Gems do
-  let(:gems_cases_dir) { File.join(File.dirname(__dir__), "gems-cases") }
+  let(:gem_base_dir) { File.dirname(File.dirname(__dir__)) }
+  let(:gems_cases_dir) { File.join(gem_base_dir, "test-data", "gems-cases") }
   let(:exec_service) { Toys::Utils::Exec.new }
 
   def setup_case(name, tmp_vendor: true, timeout: 60, &block)
