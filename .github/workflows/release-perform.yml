@@ -3,8 +3,8 @@ name: Force release
 on:
   workflow_dispatch:
     inputs:
-      gem:
-        description: Gem to release
+      name:
+        description: Unit to release
         required: true
       version:
         description: Version to release
@@ -32,11 +32,11 @@ jobs:
       - name: Perform release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: |
           toys release perform --yes --verbose \
             "--enable-releases=${{ secrets.ENABLE_RELEASES }}" \
-            "--release-sha=${{ github.sha }}" \
-            "--rubygems-api-key=${{ secrets.RUBYGEMS_API_KEY }}" \
+            "--release-ref=${{ github.sha }}" \
             ${{ github.event.inputs.flags }} \
-            "${{ github.event.inputs.gem }}" "${{ github.event.inputs.version }}" \
+            "${{ github.event.inputs.name }}" "${{ github.event.inputs.version }}" \
             < /dev/null
