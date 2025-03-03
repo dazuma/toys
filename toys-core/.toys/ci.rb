@@ -1,32 +1,20 @@
 # frozen_string_literal: true
 
-desc "Run all CI checks"
+load "#{__dir__}/../../common-tools/ci"
 
-long_desc "The CI tool runs all CI checks for the toys-core gem, including" \
-            " unit tests, rubocop, and documentation checks. It is useful" \
-            " for running tests in normal development, as well as being" \
-            " the entrypoint for CI systems. Any failure will result in a" \
-            " nonzero result code."
+desc "Run all CI checks for the toys-core gem"
 
 flag :integration_tests, desc: "Enable integration tests"
+flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
 
-include :exec, result_callback: :handle_result
-include :terminal
-
-def handle_result(result)
-  if result.success?
-    puts("** #{result.name} passed\n\n", :green, :bold)
-  else
-    puts("** CI terminated: #{result.name} failed!", :red, :bold)
-    exit(1)
-  end
-end
+include "toys-ci"
 
 def run
-  env = {}
-  env["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-  exec_tool(["test"], name: "Tests", env: env)
-  exec_tool(["rubocop"], name: "Style checker")
-  exec_tool(["yardoc-test"], name: "Docs generation")
-  exec_tool(["build"], name: "Gem build")
+  ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+  ci_init
+  ci_job("Rubocop", ["rubocop"])
+  ci_job("Tests", ["test"])
+  ci_job("Docs generation", ["yardoc-test"])
+  ci_job("Gem build", ["build"])
+  ci_report_results
 end

@@ -109,7 +109,7 @@ describe "toys system tools" do
       system_tool = result["tools"].find { |t| t["name"] == "system" }
       assert_nil(system_tool)
       ci_tool = result["tools"].find { |t| t["name"] == "ci" }
-      assert_equal("Run all CI checks", ci_tool["desc"])
+      assert_equal("Run all CI checks for the toys gem", ci_tool["desc"])
       assert(ci_tool["runnable"])
     end
 
@@ -117,7 +117,7 @@ describe "toys system tools" do
       dir = "#{toys_gem_dir}/.toys"
       result = capture_system_tools_output(["list", "--recursive", "--local", "--dir", dir])
       ci_tool = result["tools"].find { |t| t["name"] == "ci" }
-      assert_equal("Run all CI checks", ci_tool["desc"])
+      assert_equal("Run all CI checks for the toys gem", ci_tool["desc"])
       assert(ci_tool["runnable"])
     end
 
@@ -161,7 +161,7 @@ describe "toys system tools" do
 
     it "displays the correct error if --dir points inside a toys dir" do
       out, err = capture_subprocess_io do
-        cmd = ["system", "tools", "list", "--local", "--dir", "#{toys_repo_dir}/.toys/release"]
+        cmd = ["system", "tools", "list", "--local", "--dir", "#{toys_gem_dir}/.toys/_testing"]
         status = toys_run_tool(cmd)
         assert_equal(1, status)
       end
@@ -205,7 +205,7 @@ describe "toys system tools" do
     it "shows a local tool from a directory" do
       result = capture_system_tools_output(["show", "--local", "--dir", toys_gem_dir, "ci"])
       assert_equal("ci", result["name"])
-      assert_equal("Run all CI checks", result["desc"])
+      assert_equal("Run all CI checks for the toys gem", result["desc"])
       assert(result["runnable"])
       assert(result["exists"])
     end

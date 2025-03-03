@@ -1,2 +1,0 @@
-This is a foo line.
-This is another foo line.

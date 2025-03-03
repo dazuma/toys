@@ -12,7 +12,7 @@ describe Toys::Loader do
                      extra_delimiters: ":",
                      git_cache: git_cache)
   }
-  let(:cases_dir) { File.join(__dir__, "lookup-cases") }
+  let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
   let(:git_remote) { "https://github.com/dazuma/toys.git" }
   let(:git_commit) { "main" }
 
@@ -150,8 +150,8 @@ describe Toys::Loader do
   describe "config from git sources" do
     before do
       skip unless ENV["TOYS_TEST_INTEGRATION"]
-      loader.add_git(git_remote, "toys-core/test/lookup-cases/config-items/.toys", git_commit)
-      loader.add_git(git_remote, "toys-core/test/lookup-cases/config-items/.toys.rb", git_commit)
+      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys", git_commit)
+      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
     end
 
     it "finds a tool directly defined in a config file" do

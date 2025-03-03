@@ -46,7 +46,7 @@ describe "clean template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
-    let(:workspace_dir) { File.join(__dir__, "clean-workspace") }
+    let(:workspace_dir) { File.join(File.dirname(__dir__), "test-data", "clean-workspace") }
 
     def clean_workspace
       Dir.foreach(workspace_dir) do |child|

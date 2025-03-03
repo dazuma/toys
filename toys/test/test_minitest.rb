@@ -136,7 +136,7 @@ describe "minitest template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
-    let(:cases_dir) { File.join(__dir__, "minitest-cases") }
+    let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "minitest-cases") }
     let(:exec_service) { Toys::Utils::Exec.new }
 
     it "runs passing tests" do

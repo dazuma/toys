@@ -97,10 +97,12 @@ describe "rubocop template" do
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
     let(:loader) { cli.loader }
+    let(:rubocop_cases_dir) { File.join(File.dirname(__dir__), "test-data", "rubocop-cases") }
 
     it "runs passing tests" do
+      cases_dir = rubocop_cases_dir
       loader.add_block do
-        set_context_directory File.join(__dir__, "rubocop-cases", "passing")
+        set_context_directory File.join(cases_dir, "passing")
         expand :rubocop, options: ["--config", "config.yml"]
       end
       out, _err = capture_subprocess_io do
@@ -110,8 +112,9 @@ describe "rubocop template" do
     end
 
     it "runs failing tests" do
+      cases_dir = rubocop_cases_dir
       loader.add_block do
-        set_context_directory File.join(__dir__, "rubocop-cases", "failing")
+        set_context_directory File.join(cases_dir, "failing")
         expand :rubocop, options: ["--config", "config.yml"]
       end
       out, _err = capture_subprocess_io do
@@ -121,7 +124,7 @@ describe "rubocop template" do
     end
 
     it "honors context_directory setting" do
-      dir = File.join(__dir__, "rubocop-cases", "passing")
+      dir = File.join(rubocop_cases_dir, "passing")
       loader.add_block do
         expand :rubocop, options: ["--config", "config.yml"], context_directory: dir
       end

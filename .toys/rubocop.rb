@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
-desc "Runs rubocop in both gems"
+load "#{__dir__}/../common-tools/ci"
 
-include :terminal
-include :exec, exit_on_nonzero_status: true
+desc "Runs rubocop for the entire repo"
+
+flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
+
+include "toys-ci"
 
 def run
-  ::Dir.chdir(context_directory)
-
-  puts("**** Running rubocop on repo root...", :bold, :cyan)
-  exec_separate_tool(["rubocop", "_root"])
-
-  puts("**** Running rubocop on toys-core...", :bold, :cyan)
-  exec_separate_tool(["rubocop"], chdir: "toys-core")
-
-  puts("**** Running rubocop on toys...", :bold, :cyan)
-  exec_separate_tool(["rubocop"], chdir: "toys")
+  ci_init
+  ci_job("Rubocop for toys-core", ["rubocop"], chdir: "toys-core")
+  ci_job("Rubocop for toys", ["rubocop"], chdir: "toys")
+  ci_job("Rubocop for the repo tools and common tools", ["rubocop", "_root"])
+  ci_report_results
 end
 
 expand :rubocop do |t|
