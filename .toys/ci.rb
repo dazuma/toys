@@ -37,10 +37,20 @@ expand("toys-ci") do |toys_ci|
               tool: ["yardoc-test"], chdir: "toys-core")
   toys_ci.job("Yardoc generation for toys", flag: :yard_toys,
               tool: ["yardoc-test"], chdir: "toys")
-  toys_ci.job("Build toys-core", flag: :build_core,
+  toys_ci.job("Build toys-core gem", flag: :build_core,
               tool: ["build"], chdir: "toys-core")
-  toys_ci.job("Build toys", flag: :build_toys,
+  toys_ci.job("Build toys gem", flag: :build_toys,
               tool: ["build"], chdir: "toys")
+  toys_ci.collection("Bundle jobs", :bundle_all,
+                     job_flags: [:bundle_root, :bundle_core, :bundle_toys])
+  toys_ci.collection("Rubocop jobs", :rubocop_all,
+                     job_flags: [:rubocop_core, :rubocop_toys, :rubocop_root])
+  toys_ci.collection("Test jobs", :test_all,
+                     job_flags: [:test_core, :test_toys, :test_builtins, :test_tools])
+  toys_ci.collection("Yardoc generation jobs", :yard_all,
+                     job_flags: [:yard_core, :yard_toys])
+  toys_ci.collection("Gem build jobs", :build_all,
+                     job_flags: [:build_core, :build_toys])
 end
 
 tool "init" do
