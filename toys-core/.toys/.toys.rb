@@ -31,7 +31,7 @@ expand :yardoc do |t|
   t.bundler = true
 end
 
-alias_tool "yardoc-test", "yardoc"
+tool "yardoc-test", delegate_to: "yardoc"
 
 expand :rdoc, output_dir: "doc", bundler: true
 

@@ -23,13 +23,11 @@ tool "test" do
 end
 
 tool "test-builtins" do
-  include :exec, e: true
-  include :bundler
-
   def run
     ::Dir.chdir(context_directory)
-    exec_separate_tool(["system", "test", "-d", "builtins",
-                        "--minitest-focus", "--minitest-rg"])
+    code = cli.run("system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg",
+                   verbosity: verbosity)
+    exit(code)
   end
 end
 
