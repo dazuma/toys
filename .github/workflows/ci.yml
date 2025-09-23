@@ -45,9 +45,10 @@ jobs:
           - os: ubuntu-latest
             ruby: "jruby"
             tool: test
-          - os: ubuntu-latest
-            ruby: "truffleruby"
-            tool: test
+          # TEMPORARY: Disable truffleruby due to some issues with bundler
+          # - os: ubuntu-latest
+          #   ruby: "truffleruby"
+          #   tool: test
           - os: macos-latest
             ruby: "2.6"
             tool: test

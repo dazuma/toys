@@ -120,10 +120,11 @@ module Toys
   CORE_LIB_PATH = __dir__
 end
 
+require "toys/compat"
+
 require "toys/acceptor"
 require "toys/arg_parser"
 require "toys/cli"
-require "toys/compat"
 require "toys/completion"
 require "toys/context"
 require "toys/core"

@@ -18,7 +18,9 @@ def run
   ci_job("Tests for toys-core", ["test"], chdir: "toys-core")
   ci_job("Tests for toys", ["test"], chdir: "toys")
   ci_job("Tests for builtin commands", ["test-builtins"], chdir: "toys")
-  ci_job("Tests for common-tools", ["system", "test", "-d", "."], chdir: "common-tools")
+  ci_job("Tests for common-tools",
+         ["system", "test", "-d", ".", "--minitest-focus", "--minitest-rg"],
+         chdir: "common-tools")
   ci_job("Yardoc generation for toys-core", ["yardoc-test"], chdir: "toys-core")
   ci_job("Yardoc generation for toys", ["yardoc-test"], chdir: "toys")
   ci_job("Build toys-core", ["build"], chdir: "toys-core")
