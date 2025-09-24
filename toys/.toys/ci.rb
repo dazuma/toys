@@ -4,18 +4,24 @@ load "#{__dir__}/../../common-tools/ci"
 
 desc "Run all CI checks for the toys gem"
 
-flag :integration_tests, desc: "Enable integration tests"
-flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
+flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
 
-include "toys-ci"
-
-def run
-  ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-  ci_init
-  ci_job("Rubocop", ["rubocop"])
-  ci_job("Tests", ["test"])
-  ci_job("Builtins Tests", ["test-builtins"])
-  ci_job("Docs generation", ["yardoc-test"])
-  ci_job("Gem build", ["build"])
-  ci_report_results
+expand("toys-ci") do |toys_ci|
+  toys_ci.all_flag = :all
+  toys_ci.fail_fast_flag = :fail_fast
+  toys_ci.on_prerun do
+    ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+  end
+  toys_ci.job("Bundle", enable_flag: :bundle,
+              exec: ["bundle", "update"])
+  toys_ci.job("Rubocop", enable_flag: :rubocop,
+              tool: ["rubocop"],)
+  toys_ci.job("Tests for toys", enable_flag: :test,
+              tool: ["test"])
+  toys_ci.job("Tests for builtin commands", enable_flag: :builtins_test,
+              tool: ["test-builtins"])
+  toys_ci.job("Yardoc generation", enable_flag: :yard,
+              tool: ["yardoc-test"])
+  toys_ci.job("Gem build", enable_flag: :build,
+              tool: ["build"])
 end

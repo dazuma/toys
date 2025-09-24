@@ -5,6 +5,7 @@ AllCops:
     - ".toys/**/*.rb"
     - ".toys/**/.toys.rb"
     - ".toys/**/.lib/**/*.rb"
+    - "common-tools/**/.toys.rb"
   Exclude:
     - "toys/**/*"
     - "toys-core/**/*"

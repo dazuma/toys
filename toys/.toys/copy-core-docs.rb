@@ -30,6 +30,7 @@ def run
       File.open(path, "w") { |file| file.write(content) }
     end
   end
+  puts "Copied core docs"
 end
 
 def copy_files

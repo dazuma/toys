@@ -43,11 +43,11 @@ end
 tool "yardoc" do
   flag :optimize, "--[no-]optimize", default: true, desc: "Remove unused code (default is true)"
 
-  alias_method :run_orig, :run
+  to_run :run_with_copy_core_docs
 
-  def run
+  def run_with_copy_core_docs
     cli.run("copy-core-docs", optimize ? "--optimize" : "--no-optimize")
-    run_orig
+    run
   end
 end
 
@@ -68,6 +68,7 @@ tool "yardoc-test" do
       puts "Yardoc output empty!", :red
       exit 1
     end
+    puts "Optimization is clean", :green
   end
 end
 
@@ -76,32 +77,32 @@ expand :rdoc, output_dir: "doc", bundler: true
 expand :gem_build
 
 tool "build" do
-  alias_method :run_orig, :run
+  to_run :run_with_copy_core_docs
 
-  def run
+  def run_with_copy_core_docs
     cli.run("copy-core-docs")
-    run_orig
+    run
   end
 end
 
 expand :gem_build, name: "release", push_gem: true
 
 tool "release" do
-  alias_method :run_orig, :run
+  to_run :run_with_copy_core_docs
 
-  def run
+  def run_with_copy_core_docs
     cli.run("copy-core-docs")
-    run_orig
+    run
   end
 end
 
 expand :gem_build, name: "install", install_gem: true
 
 tool "install" do
-  alias_method :run_orig, :run
+  to_run :run_with_copy_core_docs
 
-  def run
+  def run_with_copy_core_docs
     cli.run("copy-core-docs")
-    run_orig
+    run
   end
 end
