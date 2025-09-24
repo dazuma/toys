@@ -4,13 +4,11 @@ load "#{__dir__}/../common-tools/ci"
 
 desc "Checks build for both gems"
 
-flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
-
-include "toys-ci"
-
-def run
-  ci_init
-  ci_job("Build toys-core", ["build"], chdir: "toys-core")
-  ci_job("Build toys", ["build"], chdir: "toys")
-  ci_report_results
+expand("toys-ci") do |toys_ci|
+  toys_ci.all_flag = :all
+  toys_ci.fail_fast_flag = :fail_fast
+  toys_ci.job("Build toys-core", enable_flag: :core,
+              tool: ["build"], chdir: "toys-core")
+  toys_ci.job("Build toys", enable_flag: :toys,
+              tool: ["build"], chdir: "toys")
 end

@@ -4,16 +4,15 @@ load "#{__dir__}/../common-tools/ci"
 
 desc "Runs rubocop for the entire repo"
 
-flag :fail_fast, "--[no-]fail-fast", desc: "Terminate CI as soon as a job fails"
-
-include "toys-ci"
-
-def run
-  ci_init
-  ci_job("Rubocop for toys-core", ["rubocop"], chdir: "toys-core")
-  ci_job("Rubocop for toys", ["rubocop"], chdir: "toys")
-  ci_job("Rubocop for the repo tools and common tools", ["rubocop", "_root"])
-  ci_report_results
+expand("toys-ci") do |toys_ci|
+  toys_ci.all_flag = :all
+  toys_ci.fail_fast_flag = :fail_fast
+  toys_ci.job("Rubocop for toys-core", enable_flag: :core,
+              tool: ["rubocop"], chdir: "toys-core")
+  toys_ci.job("Rubocop for toys", enable_flag: :toys,
+              tool: ["rubocop"], chdir: "toys")
+  toys_ci.job("Rubocop for the repo tools and common tools", enable_flag: :root,
+              tool: ["rubocop", "_root"])
 end
 
 expand :rubocop do |t|
