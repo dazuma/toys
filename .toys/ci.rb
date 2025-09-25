@@ -7,39 +7,39 @@ desc "CI target that runs all CI jobs for the entire repo"
 flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
 
 expand("toys-ci") do |toys_ci|
-  toys_ci.all_flag = :all
-  toys_ci.fail_fast_flag = :fail_fast
+  toys_ci.only_flag = true
+  toys_ci.fail_fast_flag = true
   toys_ci.on_prerun do
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
   end
-  toys_ci.job("Bundle for the root directory", enable_flag: :bundle_root,
+  toys_ci.job("Bundle for the root directory", flag: :bundle_root,
               exec: ["bundle", "update"])
-  toys_ci.job("Bundle for toys-core", enable_flag: :bundle_core,
+  toys_ci.job("Bundle for toys-core", flag: :bundle_core,
               exec: ["bundle", "update"], chdir: "toys-core")
-  toys_ci.job("Bundle for toys", enable_flag: :bundle_toys,
+  toys_ci.job("Bundle for toys", flag: :bundle_toys,
               exec: ["bundle", "update"], chdir: "toys")
-  toys_ci.job("Rubocop for toys-core", enable_flag: :core_rubocop,
+  toys_ci.job("Rubocop for toys-core", flag: :rubocop_core,
               tool: ["rubocop"], chdir: "toys-core")
-  toys_ci.job("Rubocop for toys", enable_flag: :toys_rubocop,
+  toys_ci.job("Rubocop for toys", flag: :rubocop_toys,
               tool: ["rubocop"], chdir: "toys")
-  toys_ci.job("Rubocop for the repo tools and common tools", enable_flag: :root_rubocop,
+  toys_ci.job("Rubocop for the repo tools and common tools", flag: :rubocop_root,
               tool: ["rubocop", "_root"])
-  toys_ci.job("Tests for toys-core", enable_flag: :core_test,
+  toys_ci.job("Tests for toys-core", flag: :test_core,
               tool: ["test"], chdir: "toys-core")
-  toys_ci.job("Tests for toys", enable_flag: :toys_test,
+  toys_ci.job("Tests for toys", flag: :test_toys,
               tool: ["test"], chdir: "toys")
-  toys_ci.job("Tests for builtin commands", enable_flag: :builtins_test,
+  toys_ci.job("Tests for builtin commands", flag: :test_builtins,
               tool: ["test-builtins"], chdir: "toys")
-  toys_ci.job("Tests for common-tools", enable_flag: :tools_test,
+  toys_ci.job("Tests for common-tools", flag: :test_tools,
               tool: ["system", "test", "-d", ".", "--minitest-focus", "--minitest-rg"],
               chdir: "common-tools")
-  toys_ci.job("Yardoc generation for toys-core", enable_flag: :core_yard,
+  toys_ci.job("Yardoc generation for toys-core", flag: :yard_core,
               tool: ["yardoc-test"], chdir: "toys-core")
-  toys_ci.job("Yardoc generation for toys", enable_flag: :toys_yard,
+  toys_ci.job("Yardoc generation for toys", flag: :yard_toys,
               tool: ["yardoc-test"], chdir: "toys")
-  toys_ci.job("Build toys-core", enable_flag: :core_build,
+  toys_ci.job("Build toys-core", flag: :build_core,
               tool: ["build"], chdir: "toys-core")
-  toys_ci.job("Build toys", enable_flag: :toys_build,
+  toys_ci.job("Build toys", flag: :build_toys,
               tool: ["build"], chdir: "toys")
 end
 

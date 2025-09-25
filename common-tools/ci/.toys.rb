@@ -39,7 +39,11 @@ mixin "toys-ci" do
 
   def toys_ci_report_results
     raise "Not initialized" unless @toys_ci_job_count
-    if @toys_ci_failed_jobs.empty?
+    if @toys_ci_job_count.zero?
+      puts("**** CI: NO JOBS RUN", :yellow, :bold)
+      puts("Try passing --help to see how to activate CI jobs.")
+      exit(2)
+    elsif @toys_ci_failed_jobs.empty?
       puts("**** CI: ALL #{@toys_ci_job_count} JOBS SUCCEEDED", :green, :bold)
     else
       puts("**** CI: FAILED #{@toys_ci_failed_jobs.size} OF #{@toys_ci_job_count} JOBS:", :red, :bold)
@@ -88,26 +92,28 @@ mixin "toys-ci" do
 end
 
 template "toys-ci" do
-  def initialize(all_flag: "all",
-                 all_default: true,
-                 fail_fast_flag: "fail_fast",
+  def initialize(all_flag: nil,
+                 only_flag: nil,
+                 jobs_disabled_by_default: nil,
+                 fail_fast_flag: nil,
                  fail_fast_default: false)
     @jobs = []
     @all_flag = all_flag
-    @all_default = all_default
+    @only_flag = only_flag
+    @jobs_disabled_by_default = jobs_disabled_by_default
     @fail_fast_flag = fail_fast_flag
     @fail_fast_default = fail_fast_default
     @prerun = nil
   end
 
-  def job(name, enable_flag: nil, tool: nil, exec: nil, env: nil, chdir: nil, &block)
+  def job(name, flag: nil, tool: nil, exec: nil, env: nil, chdir: nil, &block)
     @jobs <<
       if block && !tool && !exec
-        [:block, name, enable_flag, block]
+        [:block, name, flag, block]
       elsif !block && tool && !exec
-        [:tool, name, enable_flag, tool, env, chdir]
+        [:tool, name, flag, tool, env, chdir]
       elsif !block && !tool && exec
-        [:exec, name, enable_flag, exec, env, chdir]
+        [:exec, name, flag, exec, env, chdir]
       else
         raise Toys::ToolDefinitionError, "add_job must take a tool, exec, or block"
       end
@@ -117,33 +123,86 @@ template "toys-ci" do
     @prerun = block
   end
 
-  attr_accessor :all_flag, :all_default, :fail_fast_flag, :fail_fast_default
+  attr_writer :all_flag, :only_flag, :jobs_disabled_by_default, :fail_fast_flag, :fail_fast_default
 
-  attr_reader :jobs, :prerun
+  attr_reader :jobs, :prerun, :jobs_disabled_by_default, :fail_fast_default
+
+  def all_flag?
+    !@all_flag.nil? && @all_flag != false
+  end
+
+  def only_flag?
+    !@only_flag.nil? && @only_flag != false
+  end
+
+  def fail_fast_flag?
+    !@fail_fast_flag.nil? && @fail_fast_flag != false
+  end
+
+  def all_flag(format = :symbol)
+    value = @all_flag == true ? :all : @all_flag
+    format == :hyphenated ? value.to_s.tr("_", "-") : value
+  end
+
+  def only_flag(format = :symbol)
+    value = @only_flag == true ? :only : @only_flag
+    format == :hyphenated ? value.to_s.tr("_", "-") : value
+  end
+
+  def fail_fast_flag(format = :symbol)
+    value = @fail_fast_flag == true ? :fail_fast : @fail_fast_flag
+    format == :hyphenated ? value.to_s.tr("_", "-") : value
+  end
 
   on_expand do |template|
-    if template.all_flag
+    if template.all_flag? && !template.only_flag? && template.jobs_disabled_by_default.nil?
+      template.jobs_disabled_by_default = true
       flag(template.all_flag) do
-        flags "--[no-]#{template.all_flag.to_s.tr('_', '-')}"
-        default template.all_default
-        desc "Run all jobs by default (default is #{template.all_default})"
+        flags "--#{template.all_flag(:hyphenated)}"
+        desc "Run all jobs unless explicitly disabled by their flags. (If not set, only explicitly enabled jobs run.)"
       end
+    elsif !template.all_flag? && template.only_flag? && template.jobs_disabled_by_default.nil?
+      template.jobs_disabled_by_default = false
+      flag(template.only_flag) do
+        flags "--#{template.only_flag(:hyphenated)}"
+        desc "Run only jobs explicitly enabled by their flags. (If not set, all jobs run unless explicitly disabled.)"
+      end
+    elsif !template.all_flag? && !template.only_flag?
+      template.jobs_disabled_by_default ||= false
+    else
+      raise Toys::ToolDefinitionError, "all_flag, only_flag, and jobs_disabled_by_default are mutually exclusive"
     end
 
-    if template.fail_fast_flag
+    if template.fail_fast_flag?
       flag(template.fail_fast_flag) do
-        flags "--[no-]#{template.fail_fast_flag.to_s.tr('_', '-')}"
+        flags "--[no-]#{template.fail_fast_flag(:hyphenated)}"
         default template.fail_fast_default
-        desc "Terminate CI as soon as a job fails (default is #{template.fail_fast_default})"
+        desc "Terminate CI as soon as any job fails (default is #{template.fail_fast_default})"
       end
     end
 
     flag_group(desc: "Jobs") do
       template.jobs.each do |job|
-        if job[2]
-          flag(job[2]) do
-            flags "--[no-]#{job[2].to_s.tr('_', '-')}"
-            desc "Run or omit the job \"#{job[0]}\""
+        job_flag = job[2]
+        if job_flag
+          flag(job_flag) do
+            hyphenated_flag = job_flag.to_s.tr("_", "-")
+            if template.all_flag? || template.only_flag?
+              flags "--[no-]#{hyphenated_flag}"
+              suffix =
+                if template.all_flag?
+                  "(Job runs by default if --#{template.all_flag(:hyphenated)} is set.)"
+                else
+                  "(Job runs by default unless --#{template.only_flag(:hyphenated)} is set.)"
+                end
+              desc "Run or omit the job \"#{job[1]}\". #{suffix}"
+            elsif template.jobs_disabled_by_default
+              flags "--#{hyphenated_flag}"
+              desc "Run the job \"#{job[1]}\"."
+            else
+              flags "--no-#{hyphenated_flag}"
+              desc "Omit the job \"#{job[1]}\"."
+            end
           end
         end
       end
@@ -172,7 +231,7 @@ template "toys-ci" do
     end
 
     def toys_ci_fail_fast_value
-      if toys_ci_template.fail_fast_flag
+      if toys_ci_template.fail_fast_flag?
         self[toys_ci_template.fail_fast_flag]
       else
         toys_ci_template.fail_fast_default
@@ -180,12 +239,20 @@ template "toys-ci" do
     end
 
     def toys_ci_enabled_value(job)
-      enabled = self[job[2]] if job[2]
-      return enabled unless enabled.nil?
-      if toys_ci_template.all_flag
+      flag_value = self[job[2]] if job[2]
+      unless flag_value.nil?
+        if toys_ci_template.all_flag? || toys_ci_template.only_flag?
+          return flag_value
+        else
+          return !flag_value ^ toys_ci_template.jobs_disabled_by_default
+        end
+      end
+      if toys_ci_template.all_flag?
         self[toys_ci_template.all_flag]
+      elsif toys_ci_template.only_flag?
+        !self[toys_ci_template.only_flag]
       else
-        toys_ci_template.all_default
+        !toys_ci_template.jobs_disabled_by_default
       end
     end
   end
