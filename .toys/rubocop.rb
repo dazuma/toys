@@ -5,13 +5,13 @@ load "#{__dir__}/../common-tools/ci"
 desc "Runs rubocop for the entire repo"
 
 expand("toys-ci") do |toys_ci|
-  toys_ci.all_flag = :all
-  toys_ci.fail_fast_flag = :fail_fast
-  toys_ci.job("Rubocop for toys-core", enable_flag: :core,
+  toys_ci.only_flag = true
+  toys_ci.fail_fast_flag = true
+  toys_ci.job("Rubocop for toys-core", flag: :core,
               tool: ["rubocop"], chdir: "toys-core")
-  toys_ci.job("Rubocop for toys", enable_flag: :toys,
+  toys_ci.job("Rubocop for toys", flag: :toys,
               tool: ["rubocop"], chdir: "toys")
-  toys_ci.job("Rubocop for the repo tools and common tools", enable_flag: :root,
+  toys_ci.job("Rubocop for the repo tools and common tools", flag: :root,
               tool: ["rubocop", "_root"])
 end
 
