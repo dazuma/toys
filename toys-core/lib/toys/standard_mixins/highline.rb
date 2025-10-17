@@ -48,43 +48,43 @@ module Toys
       ##
       # Calls [HighLine#agree](https://www.rubydoc.info/gems/highline/HighLine:agree)
       #
-      def agree(*args, &block)
-        self[KEY].agree(*args, &block)
+      def agree(...)
+        self[KEY].agree(...)
       end
 
       ##
       # Calls [HighLine#ask](https://www.rubydoc.info/gems/highline/HighLine:ask)
       #
-      def ask(*args, &block)
-        self[KEY].ask(*args, &block)
+      def ask(...)
+        self[KEY].ask(...)
       end
 
       ##
       # Calls [HighLine#choose](https://www.rubydoc.info/gems/highline/HighLine:choose)
       #
-      def choose(*args, &block)
-        self[KEY].choose(*args, &block)
+      def choose(...)
+        self[KEY].choose(...)
       end
 
       ##
       # Calls [HighLine#list](https://www.rubydoc.info/gems/highline/HighLine:list)
       #
-      def list(*args, &block)
-        self[KEY].list(*args, &block)
+      def list(...)
+        self[KEY].list(...)
       end
 
       ##
       # Calls [HighLine#say](https://www.rubydoc.info/gems/highline/HighLine:say)
       #
-      def say(*args, &block)
-        self[KEY].say(*args, &block)
+      def say(...)
+        self[KEY].say(...)
       end
 
       ##
       # Calls [HighLine#indent](https://www.rubydoc.info/gems/highline/HighLine:indent)
       #
-      def indent(*args, &block)
-        self[KEY].indent(*args, &block)
+      def indent(...)
+        self[KEY].indent(...)
       end
 
       ##

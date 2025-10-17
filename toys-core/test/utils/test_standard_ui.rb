@@ -22,80 +22,68 @@ describe Toys::Utils::StandardUI do
 
   describe "error_handler" do
     it "generates expected exception output" do
-      begin
-        Toys::ContextualError.capture(banner, tool_name: tool_name, tool_args: tool_args) do
-          raise "foobar"
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        default_ui.error_handler.call(e)
-        assert_includes(output_content, "foobar")
-        assert_includes(output_content, banner)
-        assert_includes(output_content, "tool1 tool2")
-        assert_includes(output_content, '["arg1", "arg2"]')
+      Toys::ContextualError.capture(banner, tool_name: tool_name, tool_args: tool_args) do
+        raise "foobar"
       end
+      flunk
+    rescue Toys::ContextualError => e
+      default_ui.error_handler.call(e)
+      assert_includes(output_content, "foobar")
+      assert_includes(output_content, banner)
+      assert_includes(output_content, "tool1 tool2")
+      assert_includes(output_content, '["arg1", "arg2"]')
     end
 
     it "returns the exit code for RuntimeError" do
-      begin
-        Toys::ContextualError.capture(banner) do
-          raise "foobar"
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        result = default_ui.error_handler.call(e)
-        assert_equal(1, result)
+      Toys::ContextualError.capture(banner) do
+        raise "foobar"
       end
+      flunk
+    rescue Toys::ContextualError => e
+      result = default_ui.error_handler.call(e)
+      assert_equal(1, result)
     end
 
     it "returns the exit code for ArgParsingError" do
-      begin
-        Toys::ContextualError.capture(banner) do
-          raise Toys::ArgParsingError, []
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        result = default_ui.error_handler.call(e)
-        assert_equal(2, result)
+      Toys::ContextualError.capture(banner) do
+        raise Toys::ArgParsingError, []
       end
+      flunk
+    rescue Toys::ContextualError => e
+      result = default_ui.error_handler.call(e)
+      assert_equal(2, result)
     end
 
     it "returns the exit code for NotRunnableError" do
-      begin
-        Toys::ContextualError.capture(banner) do
-          raise Toys::NotRunnableError
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        result = default_ui.error_handler.call(e)
-        assert_equal(126, result)
+      Toys::ContextualError.capture(banner) do
+        raise Toys::NotRunnableError
       end
+      flunk
+    rescue Toys::ContextualError => e
+      result = default_ui.error_handler.call(e)
+      assert_equal(126, result)
     end
 
     it "handles Interrupted exceptions" do
-      begin
-        Toys::ContextualError.capture(banner) do
-          raise Interrupt
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        result = default_ui.error_handler.call(e)
-        assert_equal(130, result)
-        assert_equal("\nINTERRUPTED\n", output_content)
+      Toys::ContextualError.capture(banner) do
+        raise Interrupt
       end
+      flunk
+    rescue Toys::ContextualError => e
+      result = default_ui.error_handler.call(e)
+      assert_equal(130, result)
+      assert_equal("\nINTERRUPTED\n", output_content)
     end
 
     it "handles SignalException" do
-      begin
-        Toys::ContextualError.capture(banner) do
-          raise SignalException, 15
-        end
-        flunk
-      rescue Toys::ContextualError => e
-        result = default_ui.error_handler.call(e)
-        assert_equal(143, result)
-        assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
+      Toys::ContextualError.capture(banner) do
+        raise SignalException, 15
       end
+      flunk
+    rescue Toys::ContextualError => e
+      result = default_ui.error_handler.call(e)
+      assert_equal(143, result)
+      assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
     end
   end
 

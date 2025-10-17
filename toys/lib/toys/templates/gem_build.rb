@@ -188,7 +188,7 @@ module Toys
         return @gem_name if @gem_name
         candidates =
           if context_dir
-            Compat.glob_in_dir("*.gemspec", context_dir)
+            ::Dir.glob("*.gemspec", base: context_dir)
           else
             ::Dir.glob("*.gemspec")
           end

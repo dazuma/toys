@@ -246,20 +246,20 @@ describe Toys::Utils::GitCache do
       assert(File.directory?(File.join(repo_info.base_dir, "repo")))
       assert(File.file?(File.join(repo_info.base_dir, "repo.lock")))
       assert_equal(local_remote, repo_info.remote)
-      assert(repo_info.last_accessed >= time1 && repo_info.last_accessed <= time2)
+      assert(repo_info.last_accessed.between?(time1, time2))
 
       assert_equal(1, repo_info.refs.size)
       ref_info = repo_info.refs.first
       assert_equal("HEAD", ref_info.ref)
-      assert(ref_info.last_accessed >= time1 && ref_info.last_accessed <= time2)
-      assert(ref_info.last_updated >= time1 && ref_info.last_updated <= time2)
+      assert(ref_info.last_accessed.between?(time1, time2))
+      assert(ref_info.last_updated.between?(time1, time2))
 
       assert_equal(1, repo_info.sources.size)
       source_info = repo_info.sources.first
       assert_equal(ref_info.sha, source_info.sha)
       assert_equal(file_name, source_info.git_path)
       assert_equal(found_path, source_info.source)
-      assert(source_info.last_accessed >= time1 && source_info.last_accessed <= time2)
+      assert(source_info.last_accessed.between?(time1, time2))
     end
 
     it "gets source info for multiple accesses" do
@@ -278,11 +278,11 @@ describe Toys::Utils::GitCache do
       assert_equal(repo_info.refs.first.sha, source_info1.sha)
       assert_equal(".", source_info1.git_path)
       assert_equal(found_path1, source_info1.source)
-      assert(source_info1.last_accessed >= time1 && source_info1.last_accessed <= time2)
+      assert(source_info1.last_accessed.between?(time1, time2))
       assert_equal(repo_info.refs.first.sha, source_info2.sha)
       assert_equal(file_name, source_info2.git_path)
       assert_equal(found_path2, source_info2.source)
-      assert(source_info2.last_accessed >= time1 && source_info2.last_accessed <= time2)
+      assert(source_info2.last_accessed.between?(time1, time2))
     end
 
     it "gets ref info for multiple accesses" do
@@ -305,12 +305,12 @@ describe Toys::Utils::GitCache do
       assert_equal(2, repo_info.refs.size)
       ref_info1, ref_info2 = repo_info.refs
       assert_equal(branch1, ref_info1.ref)
-      assert(ref_info1.last_accessed >= time1 && ref_info1.last_accessed <= time2)
-      assert(ref_info1.last_updated >= time1 && ref_info1.last_updated <= time2)
+      assert(ref_info1.last_accessed.between?(time1, time2))
+      assert(ref_info1.last_updated.between?(time1, time2))
       assert_includes(found_path1, ref_info1.sha)
       assert_equal(branch2, ref_info2.ref)
-      assert(ref_info2.last_accessed >= time1 && ref_info2.last_accessed <= time2)
-      assert(ref_info2.last_updated >= time1 && ref_info2.last_updated <= time2)
+      assert(ref_info2.last_accessed.between?(time1, time2))
+      assert(ref_info2.last_updated.between?(time1, time2))
       assert_includes(found_path2, ref_info2.sha)
     end
 

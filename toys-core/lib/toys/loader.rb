@@ -288,7 +288,7 @@ module Toys
       found_tools = all_cur_definitions.find_all do |tool|
         name = tool.full_name
         name.length > len && name.slice(0, len) == words &&
-          (include_hidden || name[len..-1].none? { |word| word.start_with?("_") })
+          (include_hidden || name[len..].none? { |word| word.start_with?("_") })
       end
       found_tools.sort_by!(&:full_name)
       found_tools = filter_non_runnable_tools(found_tools, include_namespaces, include_non_runnable)
@@ -303,7 +303,7 @@ module Toys
     # @param words [Array<String>] The name of the parent tool
     # @return [Boolean]
     #
-    def has_subtools?(words) # rubocop:disable Naming/PredicateName
+    def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
       load_for_prefix(words)
       len = words.length
       all_cur_definitions.any? do |tool|

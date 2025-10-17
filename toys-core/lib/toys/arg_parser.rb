@@ -465,7 +465,7 @@ module Toys
 
     def handle_single_flags(str)
       until str.empty?
-        str = handle_plain_flag("-#{str[0]}", str[1..-1])
+        str = handle_plain_flag("-#{str[0]}", str[1..])
       end
     end
 
@@ -521,7 +521,7 @@ module Toys
 
     def find_flag(name)
       flag_result = @tool.resolve_flag(name)
-      if flag_result.not_found? || @require_exact_flag_match && !flag_result.found_exact?
+      if flag_result.not_found? || (@require_exact_flag_match && !flag_result.found_exact?)
         @errors << FlagUnrecognizedError.new(
           value: name, suggestions: Compat.suggestions(name, @tool.used_flags)
         )

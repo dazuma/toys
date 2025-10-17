@@ -155,12 +155,10 @@ module Toys
       #
       def write(str = "", *styles)
         @output_mutex.synchronize do
-          begin
-            output&.write(apply_styles(str.to_s, *styles))
-            output&.flush
-          rescue ::IOError
-            nil
-          end
+          output&.write(apply_styles(str.to_s, *styles))
+          output&.flush
+        rescue ::IOError
+          nil
         end
         self
       end
@@ -173,11 +171,9 @@ module Toys
       #
       def readline
         @input_mutex.synchronize do
-          begin
-            input&.gets
-          rescue ::IOError
-            nil
-          end
+          input&.gets
+        rescue ::IOError
+          nil
         end
       end
 
@@ -470,7 +466,7 @@ module Toys
                 @terminal.write(@frames[@cur_frame][0])
                 @cond.wait(@frame_length)
                 size = @frames[@cur_frame][1]
-                @terminal.write("\b" * size + " " * size + "\b" * size)
+                @terminal.write(("\b" * size) + (" " * size) + ("\b" * size))
                 @cur_frame += 1
                 @cur_frame = 0 if @cur_frame >= @frames.size
               end

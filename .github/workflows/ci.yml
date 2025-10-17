@@ -16,15 +16,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            ruby: "2.4"
-            tool: test
-          - os: ubuntu-latest
-            ruby: "2.5"
-            tool: test
-          - os: ubuntu-latest
-            ruby: "2.6"
-            tool: test
-          - os: ubuntu-latest
             ruby: "2.7"
             tool: test
           - os: ubuntu-latest
@@ -50,13 +41,13 @@ jobs:
           #   ruby: "truffleruby"
           #   tool: test
           - os: macos-latest
-            ruby: "2.6"
+            ruby: "2.7"
             tool: test
           - os: macos-latest
             ruby: "3.4"
             tool: test
           - os: windows-latest
-            ruby: "2.4"
+            ruby: "2.7"
             tool: test
           - os: windows-latest
             ruby: "3.4"

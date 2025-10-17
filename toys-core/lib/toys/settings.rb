@@ -769,10 +769,19 @@ module Toys
       attr_reader :default
       attr_reader :group_class
 
+      ##
+      # @return [boolean] Whether the field is a group
+      #
       def group?
         !@group_class.nil?
       end
 
+      ##
+      # Validate the given value.
+      #
+      # @return [Object] The validated value
+      # @raise [FieldError] If the value cannot be validated
+      #
       def validate(value)
         validated_value = @type.call(value)
         if validated_value == ILLEGAL_VALUE
@@ -877,8 +886,8 @@ module Toys
           raise ::ArgumentError, "Illegal settings field name: #{name}"
         end
         existing = public_instance_methods(false)
-        if existing.include?(name.to_sym) || existing.include?("#{name}=".to_sym) ||
-           existing.include?("#{name}_set?".to_sym) || existing.include?("#{name}_unset!".to_sym)
+        if existing.include?(name.to_sym) || existing.include?(:"#{name}=") ||
+           existing.include?(:"#{name}_set?") || existing.include?(:"#{name}_unset!")
           raise ::ArgumentError, "Settings field already exists: #{name}"
         end
         name.to_sym

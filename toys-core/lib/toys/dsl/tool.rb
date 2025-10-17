@@ -504,7 +504,7 @@ module Toys
         if template_class.nil?
           raise ToolDefinitionError, "Template not found: #{name.inspect}"
         end
-        template = Compat.instantiate(template_class, args, kwargs, nil)
+        template = template_class.new(*args, **kwargs)
         yield template if block_given?
         class_exec(template, &template_class.expansion)
         self

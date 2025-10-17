@@ -807,7 +807,7 @@ describe Toys::ArgParser do
     it "errors on runnable tool if there are too many arguments" do
       tool.add_optional_arg(:b)
       tool.add_required_arg(:a)
-      tool.run_handler = proc { nil }
+      tool.run_handler = proc {}
       arg_parser.parse(["foo", "bar", "baz"])
       arg_parser.finish
       assert_errors_include('Extra arguments: "baz".', arg_parser.errors)
@@ -824,7 +824,7 @@ describe Toys::ArgParser do
     end
 
     it "includes tool suggestions" do
-      tool.run_handler = proc { nil }
+      tool.run_handler = proc {}
       root_arg_parser.parse(["fop"])
       root_arg_parser.finish
       assert_errors_include('Tool not found: "fop"', root_arg_parser.errors)

@@ -15,11 +15,11 @@
 
   spec.files = ::Dir.glob("*.md") + ::Dir.glob("bin/*") +
                ::Dir.glob("lib/**/*.rb") + ::Dir.glob("tools/**/*.rb")
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 2.7.0"
   spec.require_paths = ["lib"]
 
   spec.bindir = "bin"
   spec.executables = ["toys-core-multi-file-example"]
 
-  spec.add_dependency "toys-core", ">= 0.14.7"
+  spec.add_dependency "toys-core", ">= 0.15.6"
 end

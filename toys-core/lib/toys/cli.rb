@@ -628,17 +628,15 @@ module Toys
 
     def build_executor(tool, context)
       executor = proc do
-        begin
-          if !context[Context::Key::USAGE_ERRORS].empty?
-            handle_usage_errors(context, tool)
-          elsif !tool.runnable?
-            raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
-          else
-            yield context
-          end
-        rescue ::SignalException => e
-          handle_signal_by_tool(context, tool, e)
+        if !context[Context::Key::USAGE_ERRORS].empty?
+          handle_usage_errors(context, tool)
+        elsif !tool.runnable?
+          raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
+        else
+          yield context
         end
+      rescue ::SignalException => e
+        handle_signal_by_tool(context, tool, e)
       end
       tool.built_middleware.reverse_each do |middleware|
         executor = make_executor(middleware, context, executor)

@@ -260,7 +260,7 @@ module Toys
 
       def validate_dir_env(name)
         path = @env[name].to_s
-        !path.empty? && Compat.absolute_path?(path) ? path : nil
+        !path.empty? && ::File.absolute_path?(path) ? path : nil
       end
 
       def validate_dirs_env(name)
@@ -268,7 +268,7 @@ module Toys
       end
 
       def validate_dirs(paths)
-        paths = paths.find_all { |path| Compat.absolute_path?(path) }
+        paths = paths.find_all { |path| ::File.absolute_path?(path) }
         paths.empty? ? nil : paths
       end
 

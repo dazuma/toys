@@ -304,7 +304,7 @@ module Toys
           if cmd.is_a?(::Array)
             if cmd.size > 1
               binary = canonical_binary_spec(cmd.first, exec_opts)
-              [binary] + cmd[1..-1].map(&:to_s)
+              [binary] + cmd[1..].map(&:to_s)
             else
               [canonical_binary_spec(Array(cmd.first), exec_opts)]
             end
@@ -521,14 +521,12 @@ module Toys
         def capture(which)
           stream = stream_for(which)
           @join_threads << ::Thread.new do
-            begin
-              data = stream.read
-              @mutex.synchronize do
-                @captures[which] = data
-              end
-            ensure
-              stream.close
+            data = stream.read
+            @mutex.synchronize do
+              @captures[which] = data
             end
+          ensure
+            stream.close
           end
           self
         end
@@ -577,16 +575,14 @@ module Toys
           end
           stream = stream_for(which, allow_in: true)
           @join_threads << ::Thread.new do
-            begin
-              if which == :in
-                ::IO.copy_stream(io, stream)
-              else
-                ::IO.copy_stream(stream, io)
-              end
-            ensure
-              stream.close
-              io.close
+            if which == :in
+              ::IO.copy_stream(io, stream)
+            else
+              ::IO.copy_stream(stream, io)
             end
+          ensure
+            stream.close
+            io.close
           end
           self
         end
@@ -1065,7 +1061,7 @@ module Toys
             else
               cmd_binary = @spawn_cmd.first
               cmd_binary = cmd_binary.first if cmd_binary.is_a?(::Array)
-              "exec: #{([cmd_binary] + @spawn_cmd[1..-1]).inspect}"
+              "exec: #{([cmd_binary] + @spawn_cmd[1..]).inspect}"
             end
           end
         end
@@ -1218,7 +1214,7 @@ module Toys
 
         def interpret_in_array(setting)
           if setting.first.is_a?(::Symbol)
-            setup_in_stream_of_type(setting.first, setting[1..-1])
+            setup_in_stream_of_type(setting.first, setting[1..])
           elsif setting.first.is_a?(::String)
             setup_in_stream_of_type(:file, setting)
           elsif setting.size == 2 && setting.first.is_a?(::IO) && setting.last.is_a?(::IO)
@@ -1292,7 +1288,7 @@ module Toys
 
         def interpret_out_array(key, setting)
           if setting.first.is_a?(::Symbol)
-            setup_out_stream_of_type(key, setting.first, setting[1..-1])
+            setup_out_stream_of_type(key, setting.first, setting[1..])
           elsif setting.first.is_a?(::String)
             setup_out_stream_of_type(key, :file, setting)
           elsif setting.size == 2 && setting.first.is_a?(::IO) && setting.last.is_a?(::IO)
@@ -1381,7 +1377,7 @@ module Toys
              (arg.first == :autoclose || arg.first.is_a?(::IO))
             [arg.last, :close]
           else
-            arg = arg[1..-1] if arg.first == :file
+            arg = arg[1..] if arg.first == :file
             if arg.empty? || !arg.first.is_a?(::String)
               raise "Expected file name for #{key} tee argument"
             end
@@ -1498,49 +1494,41 @@ module Toys
         def write_string_thread(string)
           stream = make_in_pipe
           @join_threads << ::Thread.new do
-            begin
-              stream.write string
-            ensure
-              stream.close
-            end
+            stream.write string
+          ensure
+            stream.close
           end
         end
 
         def copy_to_in_thread(io)
           stream = make_in_pipe
           @join_threads << ::Thread.new do
-            begin
-              ::IO.copy_stream(io, stream)
-            ensure
-              stream.close
-              io.close
-            end
+            ::IO.copy_stream(io, stream)
+          ensure
+            stream.close
+            io.close
           end
         end
 
         def copy_from_out_thread(key, io)
           stream = make_out_pipe(key)
           @join_threads << ::Thread.new do
-            begin
-              ::IO.copy_stream(stream, io)
-            ensure
-              stream.close
-              io.close
-            end
+            ::IO.copy_stream(stream, io)
+          ensure
+            stream.close
+            io.close
           end
         end
 
         def capture_stream_thread(key)
           stream = make_out_pipe(key)
           @join_threads << ::Thread.new do
-            begin
-              data = stream.read
-              @mutex.synchronize do
-                @captures[key] = data
-              end
-            ensure
-              stream.close
+            data = stream.read
+            @mutex.synchronize do
+              @captures[key] = data
             end
+          ensure
+            stream.close
           end
         end
       end

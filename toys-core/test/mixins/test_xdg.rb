@@ -26,6 +26,6 @@ describe Toys::StandardMixins::XDG do
     out, _err = capture_subprocess_io do
       assert_equal(0, cli.run("foo"))
     end
-    assert_equal(File.join(ENV["HOME"], ".config"), out.strip)
+    assert_equal(File.join(ENV["HOME"], ".config"), out.strip) # rubocop:disable Style/EnvHome
   end
 end
