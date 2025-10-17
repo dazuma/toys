@@ -135,7 +135,7 @@ module Toys
           #
           def dir_children(dir)
             ::Dir.entries(dir)
-                 .reject { |entry| entry =~ /^\.\.?$/ }
+                 .grep_v(/^\.\.?$/)
                  .sort
                  .map { |entry| ::File.join(dir, entry) }
           end

@@ -3,7 +3,7 @@
 mixin "tool-methods" do
   def format_tool(tool, namespace, detailed: false)
     output = {
-      "name" => tool.full_name[namespace.length..-1].join(" "),
+      "name" => tool.full_name[namespace.length..].join(" "),
       "desc" => tool.desc.to_s,
       "runnable" => tool.runnable?,
     }

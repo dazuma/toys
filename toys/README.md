@@ -316,7 +316,7 @@ Toys scripts instead of Rakefiles.
 
 ## System requirements
 
-Toys requires Ruby 2.4 or later.
+Toys requires Ruby 2.7 or later.
 
 Most parts of Toys work on JRuby. However, JRuby is not recommended because of
 JVM boot latency, lack of support for Kernel#fork, and other issues.
@@ -326,7 +326,7 @@ because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2023 Daniel Azuma and the Toys contributors
+Copyright 2019-2025 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

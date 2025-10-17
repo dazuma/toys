@@ -12,8 +12,8 @@ module Toys
       # @private A list of method names to avoid using as getters
       #
       AVOID_GETTERS = (::Object.instance_methods + [:run, :initialize])
-                      .find_all { |name| /^[a-z]\w*$/.match?(name) }
-                      .map { |name| [name, true] }.to_h
+                      .grep(/^[a-z]\w*$/)
+                      .to_h { |name| [name, true] }
                       .freeze
 
       class << self
@@ -109,7 +109,8 @@ module Toys
           when nil
             return if !/^[a-zA-Z]\w*[!?]?$/.match?(key.to_s) ||
                       AVOID_GETTERS.key?(key) ||
-                      Compat.method_defined_without_ancestors?(tool_class, key)
+                      tool_class.method_defined?(key, false) ||
+                      tool_class.private_method_defined?(key, false)
           end
           tool_class.class_eval do
             define_method(key) do

@@ -146,11 +146,9 @@ module Toys
       #
       def activate(name, *requirements)
         Gems.synchronize do
-          begin
-            gem(name, *requirements)
-          rescue ::Gem::LoadError => e
-            handle_activation_error(e, name, requirements)
-          end
+          gem(name, *requirements)
+        rescue ::Gem::LoadError => e
+          handle_activation_error(e, name, requirements)
         end
       end
 
@@ -395,7 +393,7 @@ module Toys
         modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
         if ::File.readable?(lockfile_path)
           lockfile_content = ::File.read(lockfile_path)
-          ::File.open(modified_lockfile_path, "w") { |file| file.write(lockfile_content) }
+          ::File.write(modified_lockfile_path, lockfile_content)
         end
         modified_gemfile_path
       end
@@ -423,9 +421,11 @@ module Toys
       end
 
       def delete_modified_gemfile(modified_gemfile_path)
+        # rubocop:disable Lint/NonAtomicFileOperation
         ::File.delete(modified_gemfile_path) if ::File.exist?(modified_gemfile_path)
         modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
         ::File.delete(modified_lockfile_path) if ::File.exist?(modified_lockfile_path)
+        # rubocop:enable Lint/NonAtomicFileOperation
       end
 
       def restore_toys_libs
@@ -465,7 +465,7 @@ module Toys
         return if result.success?
         terminal.puts("Failed to update. Trying update with clean lockfile...")
         lockfile_path = find_lockfile_path(gemfile_path)
-        ::File.delete(lockfile_path) if ::File.exist?(lockfile_path)
+        ::File.delete(lockfile_path) if ::File.exist?(lockfile_path) # rubocop:disable Lint/NonAtomicFileOperation
         result = exec_util.exec_ruby([bundler_bin, "update"] + args)
         return if result.success?
         raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"

@@ -26,7 +26,7 @@ describe Toys::StandardMixins::GitCache do
     out, _err = capture_subprocess_io do
       assert_equal(0, cli.run("foo"))
     end
-    expected = File.expand_path(File.join(".cache", "toys", "git"), ENV["HOME"])
+    expected = File.expand_path(File.join(".cache", "toys", "git"), ::Dir.home)
     assert_equal(expected, out.strip)
   end
 end

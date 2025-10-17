@@ -8,7 +8,7 @@ require "toys/utils/xdg"
 describe Toys::Utils::XDG do
   include Toys::TestHelper
 
-  let(:root_dir) { Toys::Compat.absolute_path?("/usr") ? "/" : "c:" }
+  let(:root_dir) { ::File.absolute_path?("/usr") ? "/" : "c:" }
   let(:home_dir) { File.join(root_dir, "home") }
   let(:workspace_dir) { File.join(root_dir, "workspace") }
   let(:env) { { "HOME" => home_dir } }

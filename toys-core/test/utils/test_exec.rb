@@ -525,11 +525,9 @@ describe Toys::Utils::Exec do
     it "closes stdin" do
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
-          begin
-            puts gets.inspect
-          rescue ::IOError
-            exit 1
-          end
+          puts gets.inspect
+        rescue ::IOError
+          exit 1
         end
         result = exec.exec_proc(func, in: :close)
         assert_equal(1, result.exit_code)
@@ -539,11 +537,9 @@ describe Toys::Utils::Exec do
     it "closes stdout" do
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
-          begin
-            puts "hi"
-          rescue ::IOError
-            exit 1
-          end
+          puts "hi"
+        rescue ::IOError
+          exit 1
         end
         result = exec.exec_proc(func, out: :close)
         assert_equal(1, result.exit_code)
@@ -553,13 +549,11 @@ describe Toys::Utils::Exec do
     it "closes stderr" do
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
-          begin
-            # Need to use stderr.puts instead of warn here because warn doesn't
-            # crash if the stream is closed.
-            $stderr.puts "hi" # rubocop:disable Style/StderrPuts
-          rescue ::IOError
-            exit 1
-          end
+          # Need to use stderr.puts instead of warn here because warn doesn't
+          # crash if the stream is closed.
+          $stderr.puts "hi" # rubocop:disable Style/StderrPuts
+        rescue ::IOError
+          exit 1
         end
         result = exec.exec_proc(func, err: :close)
         assert_equal(1, result.exit_code)

@@ -1624,7 +1624,7 @@ describe Toys::DSL::Tool do
     it "supports complex symbols paths" do
       loader.add_block do
         tool :foo do
-          delegate_to :'bar:baz'
+          delegate_to :"bar:baz"
         end
       end
       tool, _remaining = loader.lookup(["foo"])

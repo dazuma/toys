@@ -312,7 +312,7 @@ module Toys
           remaining_doc = desc
           if initial.size <= @indent + @left_column_width
             @lines << "#{initial} #{desc.first}"
-            remaining_doc = desc[1..-1] || []
+            remaining_doc = desc[1..] || []
           else
             @lines << initial
           end
@@ -398,7 +398,7 @@ module Toys
           else
             desc = wrap_indent_indent2(WrappableString.new(["#{prefix} -"] + desc.fragments))
             @lines << indent_str(desc[0])
-            desc[1..-1].each do |line|
+            desc[1..].each do |line|
               @lines << indent2_str(line)
             end
           end
@@ -523,7 +523,7 @@ module Toys
               desc += delegate.long_desc
             end
           end
-          desc = desc[1..-1] if desc.first == ""
+          desc = desc[1..] if desc.first == ""
           desc = wrap_indent(desc)
           return if desc.empty?
           @lines << ""
@@ -728,7 +728,7 @@ module Toys
           else
             desc = wrap_indent(WrappableString.new(["#{prefix} -"] + desc.fragments))
             @lines << desc[0]
-            desc[1..-1].each do |line|
+            desc[1..].each do |line|
               @lines << indent_str(line)
             end
           end

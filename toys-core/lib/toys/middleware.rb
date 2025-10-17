@@ -204,7 +204,7 @@ module Toys
         else
           klass = @name
         end
-        Compat.instantiate(klass, @args, @kwargs, @block)
+        klass.new(*@args, **@kwargs, &@block)
       end
 
       ##

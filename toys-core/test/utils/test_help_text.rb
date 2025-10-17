@@ -11,7 +11,7 @@ describe Toys::Utils::HelpText do
   let(:subtool_one_name) { tool_name + ["one"] }
   let(:subtool_two_name) { tool_name + ["two"] }
   let(:hidden_subtool_name) { tool_name + ["_three"] }
-  let(:runnable) { proc { nil } }
+  let(:runnable) { proc {} }
 
   let(:single_loader) {
     loader = Toys::Loader.new

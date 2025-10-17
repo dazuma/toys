@@ -545,7 +545,7 @@ module Toys
         repo_dir = ::File.join(dir, REPO_DIR_NAME)
         is_sha = commit =~ /^[0-9a-f]{40}$/
         update = repo_lock.ref_stale?(commit, update) unless is_sha
-        if update && !is_sha || !commit_exists?(repo_dir, local_commit)
+        if (update && !is_sha) || !commit_exists?(repo_dir, local_commit)
           git(repo_dir, ["fetch", "--depth=1", "--force", "origin", "#{commit}:#{local_commit}"],
               error_message: "Unable to fetch commit: #{commit}")
           repo_lock.update_ref!(commit)
@@ -579,7 +579,7 @@ module Toys
         repo_path = ::File.join(dir, REPO_DIR_NAME)
         ::FileUtils.mkdir_p(into)
         ::FileUtils.chmod_R("u+w", into, force: true)
-        Compat.dir_children(into).each { |child| ::FileUtils.rm_rf(::File.join(into, child)) }
+        ::Dir.children(into).each { |child| ::FileUtils.rm_rf(::File.join(into, child)) }
         result = copy_from_repo(repo_path, into, sha, path)
         repo_lock.access_repo!
         result
@@ -588,7 +588,7 @@ module Toys
       def copy_from_repo(repo_dir, into, sha, path)
         git(repo_dir, ["checkout", sha])
         if path == "."
-          Compat.dir_children(repo_dir).each do |entry|
+          ::Dir.children(repo_dir).each do |entry|
             next if entry == ".git"
             to_path = ::File.join(into, entry)
             unless ::File.exist?(to_path)
@@ -746,6 +746,9 @@ module Toys
           @data["sources"][sha]&.fetch(path, nil)
         end
 
+        ##
+        # @private
+        #
         def find_sources(paths: nil, shas: nil)
           results = []
           @data["sources"].each do |sha, sha_data|

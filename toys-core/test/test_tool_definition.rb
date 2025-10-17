@@ -938,7 +938,7 @@ describe Toys::ToolDefinition do
     end
 
     it "errors if the tool is already runnable" do
-      tool.run_handler = proc { nil }
+      tool.run_handler = proc {}
       assert_raises(Toys::ToolDefinitionError) do
         tool.delegate_to(["bar"])
       end
@@ -1039,7 +1039,7 @@ describe Toys::ToolDefinition do
 
   describe "interrupt handler" do
     it "sets from a proc" do
-      handler = proc { nil }
+      handler = proc {}
       refute(tool.handles_interrupts?)
       refute(tool.handles_signal?(2))
       tool.interrupt_handler = handler
@@ -1067,7 +1067,7 @@ describe Toys::ToolDefinition do
 
   describe "signal handler" do
     it "sets from a proc" do
-      handler = proc { nil }
+      handler = proc {}
       refute(tool.handles_signal?(4))
       tool.set_signal_handler(4, handler)
       assert_same(handler, tool.signal_handler(4))
@@ -1089,14 +1089,14 @@ describe Toys::ToolDefinition do
     end
 
     it "recognizes the interrupt signal" do
-      handler = proc { nil }
+      handler = proc {}
       refute(tool.handles_interrupts?)
       tool.set_signal_handler(2, handler)
       assert(tool.handles_interrupts?)
     end
 
     it "recognizes signals by name" do
-      handler = proc { nil }
+      handler = proc {}
       handler2 = :my_handler
       refute(tool.handles_signal?(15))
       refute(tool.handles_signal?("SIGTERM"))
@@ -1115,7 +1115,7 @@ describe Toys::ToolDefinition do
     end
 
     it "checks for illegal signals" do
-      handler = proc { nil }
+      handler = proc {}
       assert_raises(ArgumentError) do
         tool.set_signal_handler("SIGNIFICANT", handler)
       end
@@ -1130,7 +1130,7 @@ describe Toys::ToolDefinition do
 
   describe "usage error handler" do
     it "sets from a proc" do
-      handler = proc { nil }
+      handler = proc {}
       refute(tool.handles_usage_errors?)
       tool.usage_error_handler = handler
       assert_same(handler, tool.usage_error_handler)

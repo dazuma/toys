@@ -49,7 +49,7 @@ module Toys
       # @return [Toys::Completion::Context]
       #
       def with(**delta_params)
-        Context.new(**@params.merge(delta_params))
+        Context.new(**@params, **delta_params)
       end
 
       ##
@@ -195,7 +195,7 @@ module Toys
       # @private
       #
       def hash
-        string.hash ^ (partial? ? 1 : 0)
+        [@string, @partial].hash
       end
 
       ##
@@ -295,7 +295,7 @@ module Toys
         return [] unless ::File.directory?(dir)
         prefix = nil if [".", ""].include?(prefix)
         omits = [".", "..", ""]
-        children = Compat.glob_in_dir(name, dir).find_all do |child|
+        children = ::Dir.glob(name, base: dir).find_all do |child|
           !omits.include?(child)
         end
         children += ::Dir.entries(dir).find_all do |child|

@@ -103,7 +103,7 @@ describe Toys::StandardMixins::Exec do
           Toys.stub(:executable_path, "toys-temp") do
             my_spawn = proc do |*args|
               cmd = args.find_all { |a| a.is_a?(::String) }
-              if cmd[1..-1] == ["--disable=gems", "toys-temp", "bar"]
+              if cmd[1..] == ["--disable=gems", "toys-temp", "bar"]
                 nil
               else
                 ::RuntimeError.new "Wrong args: #{args}"
@@ -114,7 +114,7 @@ describe Toys::StandardMixins::Exec do
             end
           end
           if result.exception
-            puts result.exception.to_s
+            puts result.exception
             exit(1)
           elsif result.status
             exit(2)

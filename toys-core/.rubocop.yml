@@ -4,6 +4,10 @@ AllCops:
   Exclude:
     - "test-data/**/*"
 
+Bundler/GemFilename:
+  Exclude:
+    - "lib/toys/**/gems.rb"
+
 # Apparent Rubocop bug on Ruby 3.1
 Layout/BlockAlignment:
   Exclude:
@@ -11,9 +15,13 @@ Layout/BlockAlignment:
     - "test/**/*.gemspec"
     - "test/**/*.rb"
 
+Layout/EmptyLinesAfterModuleInclusion: # new in 1.79
+  Exclude:
+    - "test/**/*.rb"
 Layout/EmptyLinesAroundAttributeAccessor:
   Exclude:
     - "test/**/*.rb"
+
 Lint/ConstantDefinitionInBlock:
   Exclude:
     - "test/**/*.rb"

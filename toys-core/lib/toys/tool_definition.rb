@@ -552,9 +552,8 @@ module Toys
     # @return [true,false]
     #
     def runnable?
-      @run_handler.is_a?(::Symbol) &&
-        tool_class.public_instance_methods(false).include?(@run_handler) ||
-        @run_handler.is_a?(::Proc)
+      @run_handler.is_a?(::Proc) ||
+        (@run_handler.is_a?(::Symbol) && tool_class.public_instance_methods(false).include?(@run_handler))
     end
 
     ##
@@ -690,7 +689,7 @@ module Toys
     # @return [nil] if no acceptor of the given name is found.
     #
     def lookup_acceptor(name)
-      @acceptors.fetch(name.to_s) { |k| @parent ? @parent.lookup_acceptor(k) : nil }
+      @acceptors.fetch(name.to_s) { |k| @parent&.lookup_acceptor(k) }
     end
 
     ##
@@ -701,7 +700,7 @@ module Toys
     # @return [nil] if no template of the given name is found.
     #
     def lookup_template(name)
-      @templates.fetch(name.to_s) { |k| @parent ? @parent.lookup_template(k) : nil }
+      @templates.fetch(name.to_s) { |k| @parent&.lookup_template(k) }
     end
 
     ##
@@ -712,7 +711,7 @@ module Toys
     # @return [nil] if no mixin of the given name is found.
     #
     def lookup_mixin(name)
-      @mixins.fetch(name.to_s) { |k| @parent ? @parent.lookup_mixin(k) : nil }
+      @mixins.fetch(name.to_s) { |k| @parent&.lookup_mixin(k) }
     end
 
     ##
@@ -723,7 +722,7 @@ module Toys
     # @return [nil] if no completion of the given name is found.
     #
     def lookup_completion(name)
-      @completions.fetch(name.to_s) { |k| @parent ? @parent.lookup_completion(k) : nil }
+      @completions.fetch(name.to_s) { |k| @parent&.lookup_completion(k) }
     end
 
     ##
@@ -1393,7 +1392,7 @@ module Toys
     def finish_definition(loader)
       unless @definition_finished
         ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
-          config_proc = proc { nil }
+          config_proc = proc {}
           @built_middleware.reverse_each do |middleware|
             config_proc = make_config_proc(middleware, loader, config_proc)
           end
@@ -1493,7 +1492,7 @@ module Toys
       case signal
       when ::String, ::Symbol
         sigstr = signal.to_s
-        sigstr = sigstr[3..-1] if sigstr.start_with?("SIG")
+        sigstr = sigstr[3..] if sigstr.start_with?("SIG")
         signo = ::Signal.list[sigstr]
         return signo if signo
       when ::Integer
