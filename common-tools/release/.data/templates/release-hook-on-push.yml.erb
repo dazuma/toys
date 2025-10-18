@@ -3,11 +3,11 @@ name: "[release hook] Update open releases"
 on:
   push:
     branches:
-      - main
+      - <%= @settings.main_branch %>
 
 jobs:
   release-update-open-requests:
-    if: ${{ github.repository == 'dazuma/toys' }}
+    if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
       ruby_version: "3.4"
     runs-on: ubuntu-latest

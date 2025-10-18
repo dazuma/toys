@@ -10,9 +10,9 @@ on:
 
 jobs:
   release-request:
-    if: ${{ github.repository == 'dazuma/toys' }}
+    if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
-      ruby_version: "3.4"
+      ruby_version: "3.3"
     runs-on: ubuntu-latest
     steps:
       - name: Install Ruby ${{ env.ruby_version }}
@@ -20,7 +20,7 @@ jobs:
         with:
           ruby-version: ${{ env.ruby_version }}
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
       - name: Install Toys
         run: "gem install --no-document toys"
       - name: Open release pull request

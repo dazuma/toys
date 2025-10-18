@@ -5,7 +5,9 @@ AllCops:
     - ".toys/**/*.rb"
     - ".toys/**/.toys.rb"
     - ".toys/**/.lib/**/*.rb"
+    - "common-tools/**/*.rb"
     - "common-tools/**/.toys.rb"
+    - "common-tools/**/.lib/*.rb"
   Exclude:
     - "toys/**/*"
     - "toys-core/**/*"
@@ -14,11 +16,13 @@ AllCops:
 Metrics/BlockLength:
   Enabled: false
 Metrics/CyclomaticComplexity:
-  Max: 15
+  Max: 20
 Naming/FileName:
   Enabled: false
+Metrics/MethodLength:
+  Max: 30
 Metrics/PerceivedComplexity:
-  Max: 15
+  Max: 20
 Style/Documentation:
   Enabled: false
 Style/DocumentationMethod:
