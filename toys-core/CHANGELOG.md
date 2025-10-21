@@ -1,5 +1,10 @@
 # Release History
 
+### v0.16.0 / 2025-10-21
+
+* ADDED: Implement flexible CI system
+* ADDED: Updated minimum Ruby version to 2.7
+
 ### v0.15.6 / 2024-05-15
 
 * FIXED: Fixed argument parsing to allow a flag value with a newline delimited by =
