@@ -183,16 +183,19 @@ module Toys
           bundler_settings = template.bundler_settings
           include :bundler, **bundler_settings if bundler_settings
 
+          disable_argument_parsing
+
           # @private
           def run
             gem "rubocop", *gem_version
 
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               logger.info "Running RuboCop..."
+              rubocop_args = rubocop_options + args
               code = <<~CODE
                 gem 'rubocop', *#{gem_version.inspect}
                 require 'rubocop'
-                exit(::RuboCop::CLI.new.run(#{rubocop_options.inspect}))
+                exit(::RuboCop::CLI.new.run(#{rubocop_args.inspect}))
               CODE
               result = exec_ruby(["-e", code])
               if result.error?

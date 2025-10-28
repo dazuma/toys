@@ -1,2 +1,4 @@
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.7
+  SuggestExtensions: false
+  NewCops: disable

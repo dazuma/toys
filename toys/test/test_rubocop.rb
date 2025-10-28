@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "helper"
+require "tmpdir"
+require "fileutils"
 
 describe "rubocop template" do
   let(:template_lookup) { Toys::ModuleLookup.new.add_path("toys/templates") }
@@ -108,7 +110,7 @@ describe "rubocop template" do
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("rubocop"))
       end
-      assert_match(/no offenses/, out)
+      assert_includes(out, "no offenses")
     end
 
     it "runs failing tests" do
@@ -120,7 +122,30 @@ describe "rubocop template" do
       out, _err = capture_subprocess_io do
         assert_equal(1, cli.run("rubocop"))
       end
-      refute_match(/no offenses/, out)
+      refute_includes(out, "no offenses")
+      assert_includes(out, "Layout/DefEndAlignment")
+    end
+
+    it "runs failing tests with autocorrect" do
+      cases_dir = rubocop_cases_dir
+      Dir.mktmpdir do |dir|
+        src_dir = File.join(dir, "failing")
+        FileUtils.cp_r(File.join(cases_dir, "failing"), src_dir)
+        broken = File.read(File.join(src_dir, "foo.rb"))
+        refute_includes(broken, "\nend")
+        loader.add_block do
+          set_context_directory src_dir
+          expand :rubocop, options: ["--config", "config.yml"]
+        end
+        out, _err = capture_subprocess_io do
+          assert_equal(0, cli.run("rubocop", "-a"))
+        end
+        refute_includes(out, "no offenses")
+        assert_includes(out, "Layout/DefEndAlignment")
+        assert_includes(out, "corrected")
+        fixed = File.read(File.join(src_dir, "foo.rb"))
+        assert_includes(fixed, "\nend")
+      end
     end
 
     it "honors context_directory setting" do
@@ -131,7 +156,7 @@ describe "rubocop template" do
       out, _err = capture_subprocess_io do
         assert_equal(0, cli.run("rubocop"))
       end
-      assert_match(/no offenses/, out)
+      assert_includes(out, "no offenses")
     end
   end
 end
