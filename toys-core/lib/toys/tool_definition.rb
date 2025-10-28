@@ -607,8 +607,7 @@ module Toys
     # @return [true,false]
     #
     def includes_arguments?
-      !default_data.empty? || !flags.empty? ||
-        !required_args.empty? || !optional_args.empty? ||
+      !flags.empty? || !required_args.empty? || !optional_args.empty? ||
         !remaining_arg.nil? || flags_before_args_enforced?
     end
 
@@ -618,7 +617,7 @@ module Toys
     #
     def includes_definition?
       includes_arguments? || runnable? || argument_parsing_disabled? ||
-        includes_modules? || includes_description?
+        includes_modules? || includes_description? || !default_data.empty?
     end
 
     ##
@@ -1346,15 +1345,10 @@ module Toys
               "Cannot delegate tool #{display_name.inspect} to #{target.join(' ')} because it" \
               " already delegates to \"#{@delegate_target.join(' ')}\"."
       end
-      if includes_arguments?
+      if includes_arguments? || runnable? || includes_modules? || !default_data.empty?
         raise ToolDefinitionError,
               "Cannot delegate tool #{display_name.inspect} because" \
-              " arguments have already been defined."
-      end
-      if runnable?
-        raise ToolDefinitionError,
-              "Cannot delegate tool #{display_name.inspect} because" \
-              " the run method has already been defined."
+              " some implementation has already been created for it."
       end
       disable_argument_parsing
       self.run_handler = make_delegation_run_handler(target)

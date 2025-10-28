@@ -56,6 +56,37 @@ describe Toys::ToolDefinition do
       tool.add_flag(:a, ["-a", "--aa"], desc: "hi there")
       assert_equal(true, tool.includes_definition?)
     end
+
+    it "is set when positional arguments are present" do
+      tool.add_required_arg(:a, desc: "hi there")
+      assert_equal(true, tool.includes_definition?)
+    end
+
+    it "is set if default data is present" do
+      tool.default_data[:a] = "foo"
+      assert_equal(true, tool.includes_definition?)
+    end
+  end
+
+  describe "includes_arguments state" do
+    it "begins without arguments" do
+      assert_equal(false, tool.includes_arguments?)
+    end
+
+    it "is set when flags are present" do
+      tool.add_flag(:a, ["-a", "--aa"], desc: "hi there")
+      assert_equal(true, tool.includes_arguments?)
+    end
+
+    it "is set when positional arguments are present" do
+      tool.add_required_arg(:a, desc: "hi there")
+      assert_equal(true, tool.includes_arguments?)
+    end
+
+    it "is not set if just default data is present" do
+      tool.default_data[:a] = "foo"
+      assert_equal(false, tool.includes_arguments?)
+    end
   end
 
   describe "name field" do
