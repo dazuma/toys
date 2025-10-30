@@ -55,6 +55,10 @@ describe ToysReleaser::Repository do
     refute(repository.release_related_branch?("release/hello"))
   end
 
+  it "simplifies a branch name" do
+    assert_equal("main", repository.simplify_branch_name("refs/heads/main"))
+  end
+
   it "switches SHA" do
     skip unless ENV["TOYS_TEST_INTEGRATION"]
     skip unless repository.git_clean?
