@@ -1,5 +1,14 @@
 # Release History
 
+### v0.16.0 / 2025-10-30
+
+* ADDED: Implement flexible CI system
+* ADDED: New release script implementation
+* ADDED: Release scripts support non-gem releasable units
+* ADDED: Release scripts support more flexible coordination grouping
+* ADDED: Update Ruby and action versions in GitHub Actions workflows
+* ADDED: Provide release tools to create gh-pages
+
 ### v0.15.5.1 / 2024-02-07
 
 * FIXED: Fixed crash when requesting release of a new gem
