@@ -244,11 +244,11 @@ module ToysReleaser
     def verify_version(version)
       @utils.accumulate_errors("Requested #{name} version #{version} doesn't match existing files.") do
         changelog_version = changelog_file.current_version
-        if version != changelog_version
+        if version.to_s != changelog_version.to_s
           @utils.error("#{changelog_file.path} reports version #{changelog_version}.")
         end
         constant_version = version_rb_file.current_version
-        if version != constant_version
+        if version.to_s != constant_version.to_s
           @utils.error("#{version_rb_file.path} reports version #{constant_version}.")
         end
       end

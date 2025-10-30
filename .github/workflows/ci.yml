@@ -17,44 +17,44 @@ jobs:
         include:
           - os: ubuntu-latest
             ruby: "2.7"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.0"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.1"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.2"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.3"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.4"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "jruby"
-            tool: test
+            steps: "--test-all"
           # TEMPORARY: Disable truffleruby due to some issues with bundler
           # - os: ubuntu-latest
           #   ruby: "truffleruby"
-          #   tool: test
+          #   steps: "--test-all"
           - os: macos-latest
             ruby: "2.7"
-            tool: test
+            steps: "--test-all"
           - os: macos-latest
             ruby: "3.4"
-            tool: test
+            steps: "--test-all"
           - os: windows-latest
             ruby: "2.7"
-            tool: test
+            steps: "--test-all"
           - os: windows-latest
             ruby: "3.4"
-            tool: test
+            steps: "--test-all"
           - os: ubuntu-latest
             ruby: "3.4"
-            tool: "rubocop , yardoc-test , build"
+            steps: "--rubocop-all --yard-all --build-all"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -65,11 +65,11 @@ jobs:
           bundler: none
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Run ${{ matrix.tool || 'test' }}
+      - name: Run ${{ matrix.steps || '--test-all' }}
         shell: bash
         env:
           TOYS_TEST_INTEGRATION: "1"
           GH_TOKEN: ${{ github.token }}
         run: |
           unset JAVA_TOOL_OPTIONS
-          ./toys-dev do ci init , ${{ matrix.tool }} < /dev/null
+          ./toys-dev do ci init , ci --only ${{ matrix.steps }} < /dev/null
