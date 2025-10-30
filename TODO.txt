@@ -6,7 +6,6 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 
 ## Definitely todo
 
-* Add Ruby 3.4 to CI
 * Provide a way to make the git cache deletable so cleanup tasks don't fail
 * gem mixin should allow flags like on_missing: :install on the gem method (not just on the include)
 * Support gem-based tool installs. Maybe load_gem directive that works similar to load_git. We may need to ensure that any gems so loaded get included in any subsequent bundles.
@@ -19,7 +18,7 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 * Should it be possible to set require_exact_flag_match per-flag?
 * toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
-* Line length limit for Terminal
+* Line length limit for Terminal (there's a gem for unicode line length)
 * Generalized classes for generating output formats
 * Namespace clearing/locking
 * Additional ways to find terminal size
