@@ -2,12 +2,13 @@
 
 ### v0.16.0 / 2025-10-30
 
-* ADDED: Implement flexible CI system
+* ADDED: Included flexible CI system
 * ADDED: New release script implementation
 * ADDED: Release scripts support non-gem releasable units
 * ADDED: Release scripts support more flexible coordination grouping
-* ADDED: Update Ruby and action versions in GitHub Actions workflows
-* ADDED: Provide release tools to create gh-pages
+* ADDED: Release configuration supports more fine grained customization of build steps
+* ADDED: Provided release tools to create gh-pages
+* ADDED: Updated Ruby and action versions in GitHub Actions workflows
 
 ### v0.15.5.1 / 2024-02-07
 
