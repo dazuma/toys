@@ -288,7 +288,7 @@ module ToysReleaser
     # @return [String] The actual branch
     #
     def git_prepare_branch(remote, branch: nil)
-      branch = sipmlify_branch_name(branch)
+      branch = simplify_branch_name(branch)
       git_unshallow(remote, branch: branch)
       @utils.exec(["git", "fetch", remote, "--tags"], e: true)
       if branch && branch != current_branch
@@ -323,7 +323,7 @@ module ToysReleaser
     # @param branch [String,nil] input ref
     # @return [String,nil] normalized branch name
     #
-    def sipmlify_branch_name(branch)
+    def simplify_branch_name(branch)
       return if branch.nil?
       match = %r{^refs/heads/([^/\s]+)$}.match(branch)
       return match[1] if match

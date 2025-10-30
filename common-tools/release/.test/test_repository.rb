@@ -56,7 +56,7 @@ describe ToysReleaser::Repository do
   end
 
   it "simplifies a branch name" do
-    assert_equal("main", repository.sipmlify_branch_name("refs/heads/main"))
+    assert_equal("main", repository.simplify_branch_name("refs/heads/main"))
   end
 
   it "switches SHA" do
