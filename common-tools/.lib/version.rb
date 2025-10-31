@@ -6,6 +6,6 @@ module Toys
     # Current version of the Toys common tools.
     # @return [String]
     #
-    VERSION = "0.16.1"
+    VERSION = "0.16.2"
   end
 end
