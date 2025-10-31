@@ -2,7 +2,7 @@
 
 ### v0.15.6 / 2024-05-15
 
-* FIXED: Fixed argument parsing to allow a flag value with a newline delimited by =
+* FIXED: Fixed argument parsing so flags with value delimited by "=" will support values containing newlines
 
 ### v0.15.5 / 2024-01-31
 
