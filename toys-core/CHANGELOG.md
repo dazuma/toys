@@ -1,5 +1,10 @@
 # Release History
 
+### v0.16.0 / 2025-10-31
+
+* ADDED: Updated minimum Ruby version to 2.7
+* FIXED: ToolDefinition#includes_arguments no longer returns true if only default data is set
+
 ### v0.15.6 / 2024-05-15
 
 * FIXED: Fixed argument parsing so flags with value delimited by "=" will support values containing newlines
