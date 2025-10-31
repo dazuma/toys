@@ -1,5 +1,9 @@
 # Release History
 
+### v0.16.1 / 2025-10-31
+
+* FIXED: Release performer no longer reports spurious github check errors
+
 ### v0.16.0 / 2025-10-31
 
 * ADDED: Included flexible CI system
