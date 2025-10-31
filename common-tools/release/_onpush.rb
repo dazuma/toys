@@ -49,7 +49,7 @@ def build_pr_message
     WARNING: An additional commit was added while this release PR was open.
     You may need to add to the changelog, or close this PR and prepare a new one.
 
-    Commit link: https://github.com/#{@repository.repo_path}/commit/#{@repository.current_sha}
+    Commit link: https://github.com/#{@settings.repo_path}/commit/#{@repository.current_sha}
 
     Message:
     #{commit_message}

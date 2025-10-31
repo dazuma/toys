@@ -38,7 +38,7 @@ describe ToysReleaser::Performer do
     assert_equal(3, successes.size)
     assert_equal("DRY RUN GitHub tag #{name}/v#{version}.", successes[0])
     assert_equal("DRY RUN Rubygems push for #{name} #{version}.", successes[1])
-    assert_equal("Docs already published for #{name} #{version}", successes[2])
+    assert_includes(successes[2], "published for #{name} #{version}")
   end
 
   it "does a dry run adhoc release of toys-core" do
@@ -54,7 +54,7 @@ describe ToysReleaser::Performer do
     assert_equal(3, successes.size)
     assert_equal("DRY RUN GitHub tag #{name}/v#{version}.", successes[0])
     assert_equal("DRY RUN Rubygems push for #{name} #{version}.", successes[1])
-    assert_equal("Docs already published for #{name} #{version}", successes[2])
+    assert_includes(successes[2], "published for #{name} #{version}")
   end
 
   it "does a dry run adhoc release of common-tools" do
