@@ -614,7 +614,7 @@ module ToysReleaser
         @utils.warning("Release branch references nonexistent component #{component_name.inspect}")
         return nil
       end
-      version = component.current_version(at: pull_request.merge_commit_sha)
+      version = component.current_changelog_version(at: pull_request.merge_commit_sha)
       @utils.log("Found single component to release: #{component_name} #{version}.")
       { component_name => version }
     end
@@ -622,7 +622,7 @@ module ToysReleaser
     ##
     # Get components and versions from the pull request content
     #
-    def multiple_released_gems_and_versions(pull_request)
+    def multiple_released_components_and_versions(pull_request)
       merge_sha = pull_request.merge_commit_sha
       output = @utils.capture(["git", "diff", "--name-only", "#{merge_sha}^..#{merge_sha}"], e: true)
       files = output.split("\n")
@@ -631,7 +631,7 @@ module ToysReleaser
         files.any? { |file| file.start_with?(dir) }
       end
       components.each_with_object({}) do |component, result|
-        result[component.name] = version = component.current_version(at: merge_sha)
+        result[component.name] = version = component.current_changelog_version(at: merge_sha)
         @utils.log("Releasing gem due to file changes: #{component.name} #{version}.")
       end
     end

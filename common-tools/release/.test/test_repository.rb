@@ -94,4 +94,25 @@ describe ToysReleaser::Repository do
       end
     end
   end
+
+  it "determines single released component and version from pull request" do
+    pull_request = ToysReleaser::Tests::FakePullRequest.new(
+      merge_commit_sha: "1a29ad36ff214d314ec3fd2da727fb25cc5f7a66",
+      head_ref: "release/component/toys-core/main"
+    )
+    data = repository.released_components_and_versions(pull_request)
+    assert_equal(1, data.size)
+    assert_equal(::Gem::Version.new("0.15.5"), data["toys-core"])
+  end
+
+  it "determines multiple released component and version from pull request" do
+    pull_request = ToysReleaser::Tests::FakePullRequest.new(
+      merge_commit_sha: "1a29ad36ff214d314ec3fd2da727fb25cc5f7a66",
+      head_ref: "release/multi/20251030192335-123456/main"
+    )
+    data = repository.released_components_and_versions(pull_request)
+    assert_equal(2, data.size)
+    assert_equal(::Gem::Version.new("0.15.5"), data["toys-core"])
+    assert_equal(::Gem::Version.new("0.15.5"), data["toys"])
+  end
 end

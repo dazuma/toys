@@ -23,6 +23,8 @@ module ToysReleaser
       ::ENV["TOYS_RELEASER_TESTING"] = "true"
     end
 
+    FakePullRequest = ::Struct.new(:merge_commit_sha, :head_ref, keyword_init: true)
+
     class FakeToolContext
       class FakeExit < ::StandardError
       end
