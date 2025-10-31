@@ -90,11 +90,11 @@ end
 
 def handle_release_merged
   setup_git
-  performer = create_performer
   github_check_errors = @repository.wait_github_checks
   unless github_check_errors.empty?
     @utils.error("GitHub checks failed", *github_check_errors)
   end
+  performer = create_performer
   performer.perform_pr_releases
   performer.report_results
   if performer.error?
