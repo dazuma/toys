@@ -318,7 +318,7 @@ module ToysReleaser
           repository.git_commit("Generated docs for #{component.name} #{release_version}",
                                 signoff: repository.settings.signoff_commits?)
           if dry_run?
-            performer_result.successes << "DRY RUN documentation publish for #{component.name} #{release_version}."
+            performer_result.successes << "DRY RUN documentation published for #{component.name} #{release_version}."
             utils.log("DRY RUN: Documentation not actually published to gh-pages.")
           else
             result = utils.exec(["git", "push", git_remote, "gh-pages"], out: [:child, :err])

@@ -35,23 +35,23 @@ jobs:
             steps: "--test-all"
           - os: ubuntu-latest
             ruby: "jruby"
-            steps: "--test-all"
+            steps: "--test-all --no-test-tools"
           # TEMPORARY: Disable truffleruby due to some issues with bundler
           # - os: ubuntu-latest
           #   ruby: "truffleruby"
-          #   steps: "--test-all"
+          #   steps: "--test-all --no-test-tools"
           - os: macos-latest
             ruby: "2.7"
-            steps: "--test-all"
+            steps: "--test-all --no-test-tools"
           - os: macos-latest
             ruby: "3.4"
-            steps: "--test-all"
+            steps: "--test-all --no-test-tools"
           - os: windows-latest
             ruby: "2.7"
-            steps: "--test-all"
+            steps: "--test-all --no-test-tools"
           - os: windows-latest
             ruby: "3.4"
-            steps: "--test-all"
+            steps: "--test-all --no-test-tools"
           - os: ubuntu-latest
             ruby: "3.4"
             steps: "--rubocop-all --yard-all --build-all"

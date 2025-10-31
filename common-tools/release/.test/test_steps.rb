@@ -328,7 +328,7 @@ describe ToysReleaser::Steps do
         step.run
       end
       assert_equal(1, performer_result.successes.size)
-      assert_equal("DRY RUN documentation publish for toys #{version}.", performer_result.successes.first)
+      assert_equal("DRY RUN documentation published for toys #{version}.", performer_result.successes.first)
       path = ::File.join(artifact_dir.get("gh-pages"), "gems", "toys", "v#{version}", "index.html")
       assert(::File.file?(path), "Expected docs to be copied into gh-pages")
       content = ::File.read(::File.join(artifact_dir.get("gh-pages"), "404.html"))
