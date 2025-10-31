@@ -63,9 +63,8 @@ describe ToysReleaser::Component do
         assert_match(/^\d+\.\d+\.\d+(?:\.\w+)*$/, component.current_constant_version.to_s)
       end
 
-      it "verifies the latest tag version" do
-        tag_version = component.latest_tag_version
-        component.verify_version(tag_version)
+      it "verifies the current changelog version" do
+        component.verify_version(component.current_changelog_version)
       end
 
       it "errors on verifying the wrong version" do
