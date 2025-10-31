@@ -1,5 +1,11 @@
 # Release History
 
+### v0.16.0 / 2025-10-31
+
+* ADDED: Implement flexible CI system
+* ADDED: Updated minimum Ruby version to 2.7
+* ADDED: Rubocop template now creates tools that respond to Rubocop command line flags and arguments
+
 ### v0.15.6 / 2024-05-15
 
 * FIXED: Fixed argument parsing to allow a flag values delimited by "=" to contain newlines
