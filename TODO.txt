@@ -18,10 +18,10 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 * Should it be possible to set require_exact_flag_match per-flag?
 * toys system new: Create toys files and gems
 * toys system lint: Check toys file structure and practices
-* Line length limit for Terminal (there's a gem for unicode line length)
+* Line length limit for Terminal
 * Generalized classes for generating output formats
 * Namespace clearing/locking
-* Additional ways to find terminal size
+* Additional ways to find terminal size (there's a gem for unicode line length)
 
 ## Other ideas we probably won't do
 
