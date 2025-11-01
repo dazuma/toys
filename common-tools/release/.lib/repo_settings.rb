@@ -73,8 +73,8 @@ module ToysReleaser
     def initialize(repo_settings, info, has_multiple_components)
       @name = info["name"]
       @type = info["type"] || "component"
-      @directory = info["directory"] || (has_multiple_components ? name : ".")
 
+      read_path_info(info, has_multiple_components)
       read_file_modification_info(info)
       read_gh_pages_info(repo_settings, info, has_multiple_components)
       read_steps_info(repo_settings, info)
@@ -96,6 +96,17 @@ module ToysReleaser
     #     is located
     #
     attr_reader :directory
+
+    ##
+    # @return [Array<String>] Extra globs that should be checked for changes
+    #
+    attr_reader :extra_change_globs
+
+    ##
+    # @return [Array<String>] Globs that should be ignored when checking for
+    #     changes
+    #
+    attr_reader :ignore_change_globs
 
     ##
     # @return [String] Path to the changelog relative to the component's
@@ -144,6 +155,12 @@ module ToysReleaser
     end
 
     private
+
+    def read_path_info(info, has_multiple_components)
+      @directory = info["directory"] || (has_multiple_components ? name : ".")
+      @extra_change_globs = Array(info["extra_change_globs"])
+      @ignore_change_globs = Array(info["ignore_change_globs"])
+    end
 
     def read_file_modification_info(info)
       segments = info["name"].split("-")
