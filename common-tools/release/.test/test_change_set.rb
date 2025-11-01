@@ -135,7 +135,7 @@ describe ToysReleaser::ChangeSet do
   end
 
   it "reflects a semver-change" do
-    change_set.add_message("12345", "feat!: Breaking feature\nsemver-change: minor\nfeat!: Another break\n")
+    change_set.add_message("12345", "feat!: Breaking feature\nsemver-change: minor (#123)\nfeat!: Another break\n")
     change_set.finish
     assert_equal(ToysReleaser::Semver::MINOR, change_set.semver)
     groups = change_set.change_groups
@@ -147,7 +147,7 @@ describe ToysReleaser::ChangeSet do
   it "reflects a revert message reverting a feature but leaving a fix" do
     change_set.add_message("12345", "feat: Feat 1")
     change_set.add_message("23456", "fix: Fix 2")
-    change_set.add_message("67890", "chore: Revert feat 1\nrevert-commit: 12345")
+    change_set.add_message("67890", "chore: Revert feat 1\nrevert-commit: 12345 (#123)")
     change_set.finish
     assert_equal(ToysReleaser::Semver::PATCH, change_set.semver)
     groups = change_set.change_groups
