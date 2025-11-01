@@ -1,5 +1,9 @@
 # Release History
 
+### v0.16.2 / 2025-10-31
+
+* FIXED: Fix crash in the additional change notification
+
 ### v0.16.1 / 2025-10-31
 
 * FIXED: Release performer no longer reports spurious github check errors
