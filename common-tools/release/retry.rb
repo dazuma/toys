@@ -12,14 +12,6 @@ required_arg :release_pr, accept: Integer do
   desc "Release pull request number. Required."
 end
 flag_group desc: "Flags" do
-  flag :enable_releases, "--enable-releases=VAL" do
-    default "true"
-    desc "Control dry run mode."
-    long_desc \
-      "If set to any value other than `true` (the default), run in dry-run" \
-      " mode as if `--dry-run` were passed. This is used to control dry-run" \
-      " mode from a github action where we need to control a value."
-  end
   flag :dry_run, "--[no-]dry-run" do
     desc "Run in dry-run mode."
     long_desc \
@@ -47,12 +39,6 @@ flag_group desc: "Flags" do
       " changes are needed to fix the release. If not given, the merge SHA" \
       " of the pull request is used."
   end
-  flag :rubygems_api_key, "--rubygems-api-key=VAL" do
-    desc "Set the Rubygems API key"
-    long_desc \
-      "Use the given Rubygems API key when pushing to Rubygems. Deprecated;" \
-      " prefer just setting the `GEM_HOST_API_KEY` environment variable."
-  end
   flag :enable_prechecks, "--[no-]enable-prechecks" do
     default true
     desc "Enables pre-release checks. Enabled by default."
@@ -63,6 +49,15 @@ flag_group desc: "Flags" do
   end
   flag :yes, "--yes", "-y" do
     desc "Automatically answer yes to all confirmations"
+  end
+  flag :rubygems_api_key, "--rubygems-api-key=VAL" do
+    desc "Set the Rubygems API key"
+    long_desc \
+      "Use the given Rubygems API key when pushing to Rubygems. Deprecated;" \
+      " prefer just setting the `GEM_HOST_API_KEY` environment variable."
+  end
+  flag :enable_releases, "--enable-releases=VAL" do
+    desc "Deprecated and unused"
   end
 end
 
@@ -111,7 +106,7 @@ def setup_params
     set(key, nil) if get(key).to_s.empty?
   end
   ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
-  set(:dry_run, /^t/i =~ enable_releases.to_s ? false : true) if dry_run.nil?
+  set(:dry_run, /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)) if dry_run.nil?
   set :release_ref, @repository.current_sha(release_ref || @pr_info["merge_commit_sha"])
 end
 
