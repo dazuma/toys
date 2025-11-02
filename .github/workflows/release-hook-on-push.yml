@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write # required for pushing changes
+  pull-requests: write # required for updating open release PRs
+
 jobs:
   release-update-open-requests:
     if: ${{ github.repository == 'dazuma/toys' }}
