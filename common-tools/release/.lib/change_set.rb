@@ -177,9 +177,9 @@ module ToysReleaser
       when /^BREAKING[\s_-]CHANGE$/
         input.apply_breaking_change(match[3])
       when /^semver-change$/i
-        input.apply_semver_change(match[3])
+        input.apply_semver_change(match[3].split.first)
       when /^revert-commit$/i
-        @inputs.delete_if { |elem| elem.sha.start_with?(match[3]) }
+        @inputs.delete_if { |elem| elem.sha.start_with?(match[3].split.first) }
       else
         tag_info = @release_commit_tags[match[1]]
         input.apply_commit(tag_info, match[2], match[3])
