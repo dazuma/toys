@@ -37,14 +37,6 @@ remaining_args :components do
 end
 
 flag_group desc: "Flags" do
-  flag :enable_releases, "--enable-releases=VAL" do
-    default "true"
-    desc "Control dry run mode."
-    long_desc \
-      "If set to any value other than `true` (the default), run in dry-run" \
-      " mode as if `--dry-run` were passed. This is used to control dry-run" \
-      " mode from a github action where we need to control a value."
-  end
   flag :dry_run, "--[no-]dry-run" do
     desc "Run in dry-run mode."
     long_desc \
@@ -97,6 +89,9 @@ flag_group desc: "Flags" do
       "Use the given GitHub token when pushing to GitHub. Deprecated; prefer" \
       " just setting the `GITHUB_TOKEN` environment variable."
   end
+  flag :enable_releases, "--enable-releases=VAL" do
+    desc "Deprecated and unused"
+  end
 end
 
 include :exec
@@ -135,7 +130,7 @@ def setup_arguments
   ].each do |key|
     set(key, nil) if get(key).to_s.empty?
   end
-  set(:dry_run, true) if dry_run.nil? && enable_releases != "true"
+  set(:dry_run, /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)) if dry_run.nil?
   ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
   ::ENV["GITHUB_TOKEN"] = gh_token if gh_token
 end

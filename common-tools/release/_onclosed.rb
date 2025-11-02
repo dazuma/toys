@@ -10,16 +10,6 @@ long_desc \
     " is marked as aborted. This tool also ensures that release branches are" \
     " deleted once their PRs are closed."
 
-flag :enable_releases, "--enable-releases=VAL" do
-  default "true"
-  desc "Control whether to enable releases."
-  long_desc \
-    "If set to 'true', releases will be enabled. Any other value will" \
-    " result in dry-run mode, meaning it will go through the motions," \
-    " create a GitHub release, and update the release pull request if" \
-    " applicable, but will not actually push the gem to Rubygems or push" \
-    " the docs to gh-pages."
-end
 flag :event_path, "--event-path=VAL" do
   default ::ENV["GITHUB_EVENT_PATH"]
   desc "Path to the pull request closed event JSON file"
@@ -29,6 +19,9 @@ flag :rubygems_api_key, "--rubygems-api-key=VAL" do
   long_desc \
     "Use the given Rubygems API key when pushing to Rubygems. Deprecated;" \
     " prefer just setting the `GEM_HOST_API_KEY` environment variable."
+end
+flag :enable_releases, "--enable-releases=VAL" do
+  desc "Deprecated and unused"
 end
 
 include :exec
@@ -112,7 +105,7 @@ end
 
 def create_performer
   require "performer"
-  dry_run = /^t/i =~ enable_releases.to_s ? false : true
+  dry_run = /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)
   ToysReleaser::Performer.new(@repository,
                               release_pr: @pull_request,
                               git_remote: "origin",
