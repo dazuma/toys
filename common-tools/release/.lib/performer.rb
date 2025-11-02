@@ -236,20 +236,11 @@ module ToysReleaser
     # @return [String]
     #
     def build_report_text
-      finish_time = ::Time.now.utc
       lines = [
         "## Release job results",
         "",
-        "* Job started #{@start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC",
-        "* Job finished #{finish_time.strftime('%Y-%m-%d %H:%M:%S')} UTC",
       ]
-      lines << "* Release SHA: #{@release_sha}" if @release_sha
-      lines << "* Release pull request: #{@pull_request.url}" if @pull_request
-      lines << if error?
-                 "* **Release job completed with errors.**"
-               else
-                 "* **All releases completed successfully.**"
-               end
+      lines.concat(main_report_lines)
       unless @init_result.empty?
         lines << ""
         lines << "### Setup"
@@ -269,6 +260,28 @@ module ToysReleaser
     end
 
     private
+
+    def main_report_lines
+      lines = [
+        "* Job started #{@start_time.strftime('%Y-%m-%d %H:%M:%S')} UTC",
+        "* Job finished #{::Time.now.utc.strftime('%Y-%m-%d %H:%M:%S')} UTC",
+      ]
+      lines << "* Release SHA: #{@release_sha}" if @release_sha
+      lines << "* Release pull request: #{@pull_request.url}" if @pull_request
+      lines << if error?
+                 "* **Release job completed with errors.**"
+               else
+                 "* **All releases completed successfully.**"
+               end
+      if (server_url = ::ENV["GITHUB_SERVER_URL"])
+        if (repo = ::ENV["GITHUB_REPOSITORY"])
+          if (run_id = ::ENV["GITHUB_RUN_ID"])
+            lines << "* Run logs: #{server_url}/#{repo}/actions/runs/#{run_id}"
+          end
+        end
+      end
+      lines
+    end
 
     def resolve_ref_and_pr(ref, pr_info)
       @pull_request = nil
