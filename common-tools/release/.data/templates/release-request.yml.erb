@@ -8,6 +8,10 @@ on:
         required: false
         default: ""
 
+permissions:
+  contents: write # required for pushing changes
+  pull-requests: write # required for creating release PRs
+
 jobs:
   release-request:
     if: ${{ github.repository == '<%= @settings.repo_path %>' }}

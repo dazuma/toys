@@ -11,6 +11,11 @@ on:
         required: false
         default: ""
 
+permissions:
+  contents: write # required for creating releases
+  pull-requests: write # required for updating label on PR, posting comments
+  issues: write # required for creating new issues on failed releases
+
 jobs:
   release-retry:
     if: ${{ github.repository == 'dazuma/toys' }}
