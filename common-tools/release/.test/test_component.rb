@@ -79,4 +79,39 @@ describe ToysReleaser::Component do
       end
     end
   end
+
+  describe "#touched_message" do
+    let(:sha) { "e774119e798f7efc30d9d0e469b7a88e7f54251c" }
+
+    it "finds a change to common-tools with the actual settings" do
+      tools_component = ToysReleaser::Component.build(repo_settings, "common-tools", environment_utils)
+      refute_nil(tools_component.touched_message(sha))
+      core_component = ToysReleaser::Component.build(repo_settings, "toys-core", environment_utils)
+      assert_nil(core_component.touched_message(sha))
+      toys_component = ToysReleaser::Component.build(repo_settings, "toys", environment_utils)
+      assert_nil(toys_component.touched_message(sha))
+    end
+
+    it "supports include_globs" do
+      repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
+      tools_component = ToysReleaser::Component.build(repo_settings, "common-tools", environment_utils)
+      refute_nil(tools_component.touched_message(sha))
+      core_component = ToysReleaser::Component.build(repo_settings, "toys-core", environment_utils)
+      refute_nil(core_component.touched_message(sha))
+      toys_component = ToysReleaser::Component.build(repo_settings, "toys", environment_utils)
+      assert_nil(toys_component.touched_message(sha))
+    end
+
+    it "supports exclude_globs" do
+      repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
+      repo_settings.component_settings("toys-core").exclude_globs << "common-tools/release/_*.rb"
+      repo_settings.component_settings("common-tools").exclude_globs << "common-tools/release/_*.rb"
+      tools_component = ToysReleaser::Component.build(repo_settings, "common-tools", environment_utils)
+      assert_nil(tools_component.touched_message(sha))
+      core_component = ToysReleaser::Component.build(repo_settings, "toys-core", environment_utils)
+      assert_nil(core_component.touched_message(sha))
+      toys_component = ToysReleaser::Component.build(repo_settings, "toys", environment_utils)
+      assert_nil(toys_component.touched_message(sha))
+    end
+  end
 end

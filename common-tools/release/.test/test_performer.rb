@@ -9,7 +9,6 @@ describe ToysReleaser::Performer do
   let(:environment_utils) { ToysReleaser::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
   let(:repo_settings) { ToysReleaser::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { ToysReleaser::Repository.new(environment_utils, repo_settings) }
-  let(:sample_release_version) { Gem::Version.new("0.99.99") }
   let(:performer) { ToysReleaser::Performer.new(repository, enable_prechecks: false, dry_run: true) }
 
   def stub_existence_checks(name, version)
@@ -69,5 +68,27 @@ describe ToysReleaser::Performer do
     successes = performer.component_results.first.successes
     assert_equal(1, successes.size)
     assert_equal("DRY RUN GitHub tag #{name}/v#{version}.", successes[0])
+  end
+
+  it "builds a report" do
+    performer.init_result.successes << "Init success"
+    performer.init_result.errors << "Init error 1"
+    performer.init_result.errors << "Init error 2"
+    toys_version = repository.component_named("toys").current_changelog_version
+    toys_result = ToysReleaser::Performer::Result.new("toys", toys_version)
+    toys_result.successes << "Toys success"
+    core_version = repository.component_named("toys-core").current_changelog_version
+    core_result = ToysReleaser::Performer::Result.new("toys-core", core_version)
+    core_result.successes << "Toys-Core success"
+    core_result.errors << "Toys-Core error"
+    performer.component_results << core_result << toys_result
+    report = performer.build_report_text
+    assert_includes(report, "**Release job completed with errors.**")
+    assert_includes(report, "\n\n* ERROR: Init error 1\n* ERROR: Init error 2\n* Init success")
+    assert_includes(report, "\n\n* ERROR: Toys-Core error\n* Toys-Core success")
+    assert_includes(report, "\n\n* Toys success")
+    if ::ENV["GITHUB_RUN_ID"]
+      assert_match(%r{\n\* Run logs: https://github\.com/dazuma/toys/actions/runs/\d+\n}, report)
+    end
   end
 end
