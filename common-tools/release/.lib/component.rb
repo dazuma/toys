@@ -264,20 +264,14 @@ module ToysReleaser
     # @return [ChangeSet]
     #
     def make_change_set(from: :default, to: nil)
-      dir = settings.directory
-      dir = "#{dir}/" unless dir.end_with?("/")
       to ||= "HEAD"
       from = latest_tag(ref: to) if from == :default
       commits = from ? "#{from}..#{to}" : to
       changeset = ChangeSet.new(@repo_settings)
       shas = @utils.capture(["git", "log", commits, "--format=%H"], e: true).split("\n")
       shas.reverse_each do |sha|
-        message = @utils.capture(["git", "log", "#{sha}^..#{sha}", "--format=%B"], e: true)
-        if dir != "./" && message !~ /(^|\n)touch-component: #{name}/i
-          files = @utils.capture(["git", "diff", "--name-only", "#{sha}^..#{sha}"], e: true)
-          next unless files.split("\n").any? { |file| file.start_with?(dir) }
-        end
-        changeset.add_message(sha, message)
+        message = touched_message(sha)
+        changeset.add_message(sha, message) if message
       end
       changeset.finish
     end
@@ -291,6 +285,29 @@ module ToysReleaser
         @utils.error("Bundle install failed for #{name}.") unless exec_result.success?
       end
       self
+    end
+
+    ##
+    # Checks if the given sha touches this component. If so, returns the commit
+    # message, otherwise returns nil.
+    #
+    # @return [String] if the given commit touches this component
+    # @return [nil] if the given commit does not touch this component
+    #
+    def touched_message(sha)
+      dir = settings.directory
+      dir = "#{dir}/" unless dir.end_with?("/")
+
+      message = @utils.capture(["git", "log", "#{sha}^..#{sha}", "--format=%B"], e: true)
+      return message if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(message)
+
+      files = @utils.capture(["git", "diff", "--name-only", "#{sha}^..#{sha}"], e: true)
+      files.split("\n").each do |file|
+        return message if (file.start_with?(dir) ||
+                           settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&
+                          settings.exclude_globs.none? { |pattern| ::File.fnmatch?(pattern, file) }
+      end
+      nil
     end
 
     # @private
