@@ -9,39 +9,42 @@ module ToysReleaser
   # How to handle a conventional commit tag
   #
   class CommitTagSettings
+    # @private
+    ScopeInfo = ::Struct.new(:semver, :header)
+
     ##
     # Create a CommitTagSettings from either a tag name string (which will
     # default to patch releases) or a hash with fields.
     #
     def initialize(input)
-      semver_name = nil
+      @scopes = {}
       case input
       when ::String
         @tag = input
+        @header = @tag.upcase
+        @semver = Semver::PATCH
       when ::Hash
         if input.size == 1
           key = input.keys.first
           value = input.values.first
           if value.is_a?(::Hash)
             @tag = key
-            @header = value["header"] || value["label"]
-            semver_name = value["semver"]
+            load_hash(value)
           elsif key == "tag"
             @tag = value
+            @header = @tag.upcase
+            @semver = Semver::PATCH
           else
             @tag = key
-            semver_name = value
+            @header = @tag.upcase
+            @semver = load_semver(value)
           end
         else
           @tag = input["tag"]
-          @header = input["header"] || input["label"]
-          semver_name = input["semver"]
+          raise "tag missing in #{input}" unless @tag
+          load_hash(input)
         end
       end
-      raise "tag missing in #{input}" unless @tag
-      @header ||= @tag.upcase
-      @semver = Semver.for_name(semver_name || "patch")
-      raise "unknown semver: #{semver_name} in #{input}" unless @semver
     end
 
     ##
@@ -50,14 +53,96 @@ module ToysReleaser
     attr_reader :tag
 
     ##
-    # @return [String] A header describing this type of change in a changelog
+    # Return the semver type for this tag and scope.
     #
-    attr_reader :header
+    # @param scope [String,nil] The scope, or nil for no scope
+    # @return [ToysReleaser::Semver] The semver type
+    #
+    def semver(scope = nil)
+      @scopes[scope]&.semver || @semver
+    end
 
     ##
-    # @return [ToysReleaser::Semver] The semver type for this tag.
+    # Return a header describing this type of change in a changelog.
     #
-    attr_reader :semver
+    # @param scope [String,nil] The scope, or nil for no scope
+    # @return [String] The header
+    # @return [:hidden] if this type of change should not appear in the changelog
+    #
+    def header(scope = nil)
+      @scopes[scope]&.header || @header
+    end
+
+    ##
+    # Return an array of all headers used by this tag
+    #
+    # @return [Array<String>]
+    #
+    def all_headers
+      @all_headers ||= begin
+        result = []
+        result << @header unless @header == :hidden
+        @scopes.each_value do |scope_info|
+          result << scope_info.header unless scope_info.header.nil? || scope_info.header == :hidden
+        end
+        result.uniq
+      end
+    end
+
+    ##
+    # Make specified modifications to the settings
+    #
+    # @param input [Hash] Modifications
+    #
+    def modify(input)
+      if input.key?("header") || input.key?("label")
+        @header = input.fetch("header", input["label"]) || :hidden
+      end
+      if input.key?("semver")
+        @semver = load_semver(input["semver"])
+      end
+      input["scopes"]&.each do |key, value|
+        if value.nil?
+          @scopes.delete(key)
+        else
+          scope_info = load_scope(key, value)
+          @scopes[key] = scope_info if scope_info
+        end
+      end
+    end
+
+    private
+
+    def load_hash(input)
+      @header = input.fetch("header", input.fetch("label", @tag.upcase)) || :hidden
+      @semver = load_semver(input.fetch("semver", "patch"))
+      input["scopes"]&.each do |key, value|
+        scope_info = load_scope(key, value)
+        @scopes[key] = scope_info if scope_info
+      end
+    end
+
+    def load_scope(key, value)
+      case value
+      when ::String
+        semver = load_semver(value, key)
+        ScopeInfo.new(semver, nil)
+      when ::Hash
+        semver = load_semver(value["semver"], key) if value.key?("semver")
+        header = value.fetch("header", value.fetch("label", :inherit)) || :hidden
+        header = nil if header == :inherit
+        ScopeInfo.new(semver, header)
+      end
+    end
+
+    def load_semver(value, scope = nil)
+      result = Semver.for_name(value || "none")
+      unless result
+        tag = scope ? "#{@tag}(#{scope})" : @tag
+        raise "Unknown semver: #{value} for tag #{tag}"
+      end
+      result
+    end
   end
 
   ##
@@ -662,13 +747,25 @@ module ToysReleaser
     end
 
     def read_commit_tag_info(info)
-      release_commit_tag_data = info["release_commit_tags"] || DEFAULT_RELEASE_COMMIT_TAGS
-      @release_commit_tags = release_commit_tag_data.to_h do |value|
+      @release_commit_tags = read_commit_tag_info_set(info["release_commit_tags"] || DEFAULT_RELEASE_COMMIT_TAGS)
+      info["modify_release_commit_tags"]&.each do |tag, data|
+        if data.nil?
+          @release_commit_tags.delete(tag)
+        elsif (tag_settings = @release_commit_tags[tag])
+          tag_settings.modify(data)
+        end
+      end
+      @release_commit_tags = read_commit_tag_info_set(info["prepend_release_commit_tags"]).merge(@release_commit_tags)
+      @release_commit_tags.merge!(read_commit_tag_info_set(info["append_release_commit_tags"]))
+      @breaking_change_header = info["breaking_change_header"] || DEFAULT_BREAKING_CHANGE_HEADER
+      @no_significant_updates_notice = info["no_significant_updates_notice"] || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
+    end
+
+    def read_commit_tag_info_set(input)
+      input.to_h do |value|
         settings = CommitTagSettings.new(value)
         [settings.tag, settings]
       end
-      @breaking_change_header = info["breaking_change_header"] || DEFAULT_BREAKING_CHANGE_HEADER
-      @no_significant_updates_notice = info["no_significant_updates_notice"] || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
     end
 
     def read_default_step_info(info) # rubocop:disable Metrics/AbcSize

@@ -91,4 +91,221 @@ describe ToysReleaser::RepoSettings do
     assert_equal("DOCS", docs_tag_settings.header)
     assert_equal(ToysReleaser::Semver::PATCH, docs_tag_settings.semver)
   end
+
+  describe "CommitTagSettings" do
+    it "loads a hidden header" do
+      input = {
+        "release_commit_tags" => [
+          {
+            "tag" => "internal",
+            "header" => nil,
+          },
+        ],
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["internal"]
+      assert_equal("internal", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver)
+    end
+
+    it "loads a scope" do
+      input = {
+        "release_commit_tags" => [
+          {
+            "tag" => "chore",
+            "header" => nil,
+            "semver" => nil,
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDENCIES",
+                "semver" => "patch",
+              },
+            },
+          },
+        ],
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["chore"]
+      assert_equal("chore", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("foo"))
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver("foo"))
+      assert_equal("DEPENDENCIES", tag_settings.header("deps"))
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver("deps"))
+    end
+
+    it "modifies header and semver of an existing tag" do
+      input = {
+        "modify_release_commit_tags" => {
+          "feat" => {
+            "header" => "FEATURE",
+            "semver" => "major",
+          },
+        },
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["feat"]
+      assert_equal("feat", tag_settings.tag)
+      assert_equal("FEATURE", tag_settings.header)
+      assert_equal(ToysReleaser::Semver::MAJOR, tag_settings.semver)
+    end
+
+    it "adds a scope to an existing tag" do
+      input = {
+        "modify_release_commit_tags" => {
+          "feat" => {
+            "scopes" => {
+              "internal" => {
+                "header" => nil,
+                "semver" => "patch",
+              }
+            }
+          },
+        },
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["feat"]
+      assert_equal("feat", tag_settings.tag)
+      assert_equal("ADDED", tag_settings.header)
+      assert_equal(ToysReleaser::Semver::MINOR, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("internal"))
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver("internal"))
+    end
+
+    it "modifies an existing scope" do
+      input = {
+        "release_commit_tags" => [
+          {
+            "tag" => "chore",
+            "header" => nil,
+            "semver" => nil,
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDENCIES",
+                "semver" => "patch",
+              },
+            },
+          },
+        ],
+        "modify_release_commit_tags" => {
+          "chore" => {
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDS ON",
+                "semver" => "patch",
+              },
+            },
+          },
+        },
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["chore"]
+      assert_equal("chore", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("foo"))
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver("foo"))
+      assert_equal("DEPENDS ON", tag_settings.header("deps"))
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver("deps"))
+    end
+
+    it "deletes an existing scope" do
+      input = {
+        "release_commit_tags" => [
+          {
+            "tag" => "chore",
+            "header" => nil,
+            "semver" => nil,
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDENCIES",
+                "semver" => "patch",
+              },
+            },
+          },
+        ],
+        "modify_release_commit_tags" => {
+          "chore" => {
+            "scopes" => {
+              "deps" => nil,
+            }
+          },
+        },
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      tag_settings = settings.release_commit_tags["chore"]
+      assert_equal("chore", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("deps"))
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver("deps"))
+    end
+
+    it "deletes an existing tag" do
+      input = {
+        "modify_release_commit_tags" => {
+          "feat" => nil,
+        },
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      assert_equal(false, settings.release_commit_tags.key?("feat"))
+    end
+
+    it "appends a tag" do
+      input = {
+        "append_release_commit_tags" => [
+          "chore" => {
+            "header" => nil,
+            "semver" => nil,
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDENCIES",
+                "semver" => "patch",
+              },
+            }
+          },
+        ],
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      assert_equal("chore", settings.release_commit_tags.keys.last)
+      tag_settings = settings.release_commit_tags["chore"]
+      assert_equal("chore", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("foo"))
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver("foo"))
+      assert_equal("DEPENDENCIES", tag_settings.header("deps"))
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver("deps"))
+    end
+
+    it "prepends a tag" do
+      input = {
+        "prepend_release_commit_tags" => [
+          {
+            "tag" => "chore",
+            "header" => nil,
+            "semver" => nil,
+            "scopes" => {
+              "deps" => {
+                "header" => "DEPENDENCIES",
+                "semver" => "patch",
+              },
+            }
+          },
+        ],
+      }
+      settings = ToysReleaser::RepoSettings.new(input)
+      assert_equal("chore", settings.release_commit_tags.keys.first)
+      tag_settings = settings.release_commit_tags["chore"]
+      assert_equal("chore", tag_settings.tag)
+      assert_equal(:hidden, tag_settings.header)
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver)
+      assert_equal(:hidden, tag_settings.header("foo"))
+      assert_equal(ToysReleaser::Semver::NONE, tag_settings.semver("foo"))
+      assert_equal("DEPENDENCIES", tag_settings.header("deps"))
+      assert_equal(ToysReleaser::Semver::PATCH, tag_settings.semver("deps"))
+    end
+  end
 end

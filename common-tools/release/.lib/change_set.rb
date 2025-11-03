@@ -44,19 +44,24 @@ module ToysReleaser
     # Finish constructing a change set. After this method, new commit messages
     # cannot be added.
     #
-    def finish
+    def finish # rubocop:disable Metrics/AbcSize
       raise "ChangeSet locked" if finished?
       @semver = Semver::NONE
       change_groups = {breaking: Group.new(@breaking_change_header)}
-      @release_commit_tags.each { |tag, tag_info| change_groups[tag] = Group.new(tag_info.header) }
+      @release_commit_tags.each_value do |tag_info|
+        tag_info.all_headers.each { |header| change_groups[header] = Group.new(header) }
+      end
       @inputs.each do |input|
         @semver = input.semver if input.semver > @semver
-        input.changes.each do |(tag, change)|
-          change_groups.fetch(tag, nil)&.add([change])
+        input.changes.each do |(header, change)|
+          change_groups.fetch(header, nil)&.add([change])
         end
         change_groups[:breaking].add(input.breaks)
       end
       @change_groups = change_groups.values.find_all { |group| !group.empty? }
+      if @change_groups.empty? && @semver != Semver::NONE
+        @change_groups << Group.new(nil).add(@no_significant_updates_notice)
+      end
       @inputs = nil
       self
     end
@@ -171,18 +176,18 @@ module ToysReleaser
     private
 
     def analyze_line(line, input)
-      match = /^([\w-]+|BREAKING CHANGE)(?:\([^()]+\))?(!?):\s+(.*)$/.match(line)
+      match = /^(?<tag>[\w-]+|BREAKING CHANGE)(?:\((?<scope>[^()]+)\))?(?<bang>!?):\s+(?<content>.*)$/.match(line)
       return unless match
-      case match[1]
+      case match[:tag]
       when /^BREAKING[\s_-]CHANGE$/
-        input.apply_breaking_change(match[3])
+        input.apply_breaking_change(match[:content])
       when /^semver-change$/i
-        input.apply_semver_change(match[3].split.first)
+        input.apply_semver_change(match[:content].split.first)
       when /^revert-commit$/i
-        @inputs.delete_if { |elem| elem.sha.start_with?(match[3].split.first) }
+        @inputs.delete_if { |elem| elem.sha.start_with?(match[:content].split.first) }
       else
-        tag_info = @release_commit_tags[match[1]]
-        input.apply_commit(tag_info, match[2], match[3])
+        tag_info = @release_commit_tags[match[:tag]]
+        input.apply_commit(tag_info, match[:scope], match[:bang], match[:content])
       end
     end
 
@@ -220,14 +225,16 @@ module ToysReleaser
         self
       end
 
-      def apply_commit(tag_info, tag_suffix, description)
+      def apply_commit(tag_info, scope, bang, description)
         description = normalize_description(description, delete_pr_number: true)
         if tag_info
-          @changes << [tag_info.tag, description]
-          @semver = tag_info.semver if !semver_locked && (tag_info.semver > semver)
+          commit_header = tag_info.header(scope)
+          commit_semver = tag_info.semver(scope)
+          @changes << [commit_header, description] if commit_header
+          @semver = commit_semver if !@semver_locked && (commit_semver > @semver)
         end
-        if tag_suffix == "!"
-          @semver = Semver::MAJOR unless semver_locked
+        if bang == "!"
+          @semver = Semver::MAJOR unless @semver_locked
           @breaks << description
         end
         self
