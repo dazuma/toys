@@ -45,12 +45,17 @@ remaining_args :components do
       " be released only if at least one significant releasable commit tag" \
       " (such as 'feat:', 'fix:', or 'docs:') is found.",
     "",
-    "The special name 'all' can be used to specify all components with the" \
-      " same version specification.",
-    "",
     "Note that any coordination groups are honored. If you release at least" \
       " one component within a group, all components in the group will be" \
-      " forced to release with the same version."
+      " forced to release with the same version.",
+    "",
+    "The special name 'all' can be used to specify all components. You can" \
+      " also provide a version to force all components to be released with" \
+      " that version, e.g. 'all=1.2.3'.",
+    "",
+    "If no components are provided, all components with releasable changes" \
+      " are released. That is, not providing any components is equivalent to" \
+      " specifying 'all' without a version."
 end
 
 flag :git_remote, "--git-remote=VAL" do
@@ -107,6 +112,7 @@ end
 
 def build_request_spec
   request_spec = ToysReleaser::RequestSpec.new(@utils)
+  set(:components, ["all"]) if components.empty?
   components.each do |component_spec|
     component_spec = component_spec.split(/[:=]/)
     name = component_spec[0]
