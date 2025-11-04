@@ -1,5 +1,9 @@
 # Release History
 
+### v0.17.1 / 2025-11-04
+
+* FIXED: Toys release request covers all releasable components if no components are specified
+
 ### v0.17.0 / 2025-11-04
 
 * ADDED: Support for include_globs and exclude_globs
