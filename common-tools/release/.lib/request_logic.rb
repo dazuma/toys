@@ -14,10 +14,10 @@ module ToysReleaser
     end
 
     def verify_component_status
+      if @request_spec.empty?
+        @utils.error("No components to release.")
+      end
       @utils.accumulate_errors("One or more components was in an inconsistent state") do
-        if @request_spec.empty?
-          @utils.error("No components to release.")
-        end
         @request_spec.resolved_components.each do |component_spec|
           component = @repository.component_named(component_spec.component_name)
           changelog_version = component.changelog_file.current_version
