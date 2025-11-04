@@ -2,8 +2,9 @@ require_relative "../.lib/change_set"
 require_relative "../.lib/repo_settings"
 
 describe ToysReleaser::ChangeSet do
-  let(:default_settings) { ToysReleaser::RepoSettings.new({}) }
-  let(:change_set) { ToysReleaser::ChangeSet.new(default_settings) }
+  let(:settings_customization) { {} }
+  let(:repo_settings) { ToysReleaser::RepoSettings.new(settings_customization) }
+  let(:change_set) { ToysReleaser::ChangeSet.new(repo_settings) }
 
   describe "#suggested_version" do
     it "suggests a patch bump from an existing version" do
@@ -161,5 +162,42 @@ describe ToysReleaser::ChangeSet do
     change_set.finish
     assert_equal(ToysReleaser::Semver::NONE, change_set.semver)
     assert_empty(change_set.change_groups)
+  end
+
+  it "reflects a scope change to the header and semver" do
+    settings_customization["modify_release_commit_tags"] = {
+      "feat" => {
+        "scopes" => {
+          "internal" => {
+            "header" => "INTERNAL",
+            "semver" => "patch",
+          },
+        },
+      },
+    }
+    change_set.add_message("12345", "feat(internal): Feature 1")
+    change_set.finish
+    assert_equal(ToysReleaser::Semver::PATCH, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["INTERNAL: Feature 1"], groups[0].prefixed_changes)
+  end
+
+  it "reflects a scope removal of the change description" do
+    settings_customization["modify_release_commit_tags"] = {
+      "feat" => {
+        "scopes" => {
+          "internal" => {
+            "header" => nil,
+          },
+        },
+      },
+    }
+    change_set.add_message("12345", "feat(internal): Feature 1")
+    change_set.finish
+    assert_equal(ToysReleaser::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["No significant updates."], groups[0].prefixed_changes)
   end
 end
