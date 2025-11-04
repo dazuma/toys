@@ -1,5 +1,15 @@
 # Release History
 
+### v0.17.0 / 2025-11-04
+
+* ADDED: Support for include_globs and exclude_globs
+* ADDED: Included the github logs link in release reports
+* ADDED: Remove --enable-releases flag and use TOYS_RELEASE_DRY_RUN environment variable instead
+* ADDED: Add more fine-grained permissions settings to release action workflows
+* ADDED: Support for custom behavior for commit scopes
+* ADDED: Support for modifying commit tag configuration
+* FIXED: Ignore extra text on revert-commit and semver-change tags
+
 ### v0.16.2 / 2025-10-31
 
 * FIXED: Fix crash in the additional change notification
