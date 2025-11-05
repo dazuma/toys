@@ -439,7 +439,7 @@ module Toys
       # @param update [Boolean,Integer] Whether and when to force-fetch from
       #     the remote (unless the commit is a SHA). Force-fetching will ensure
       #     that symbolic commits, such as branch names or HEAD, are up to date.
-      #     You can pass `true` or `falce` to specify whether to update, or an
+      #     You can pass `true` or `false` to specify whether to update, or an
       #     integer to update if the last update was done at least that many
       #     seconds ago. Default is false.
       #
