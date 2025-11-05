@@ -71,6 +71,8 @@ describe ToysReleaser::Performer do
   end
 
   it "builds a report" do
+    # Silence output from constructing and prevalidating the performer
+    capture_subprocess_io { performer }
     performer.init_result.successes << "Init success"
     performer.init_result.errors << "Init error 1"
     performer.init_result.errors << "Init error 2"
