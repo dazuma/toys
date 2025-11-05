@@ -789,10 +789,10 @@ describe Toys::DSL::Tool do
 
     it "does not define a getter if the name collides with an Object method" do
       loader.add_block do
-        flag(:object_id)
+        flag(:display)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -841,10 +841,10 @@ describe Toys::DSL::Tool do
 
     it "forces defining a getter" do
       loader.add_block do
-        flag(:object_id, add_method: true)
+        flag(:display, add_method: true)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -1140,12 +1140,64 @@ describe Toys::DSL::Tool do
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "forces defining a getter" do
+    it "does not define a getter if the name collides with an Object method" do
       loader.add_block do
-        required(:object_id, add_method: true)
+        required(:display)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the run method" do
+      loader.add_block do
+        required(:run)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:run))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the initialize method" do
+      loader.add_block do
+        required(:initialize)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:initialize))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter if the method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        required(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.hello)
+    end
+
+    it "does not define a getter if a private method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        private :hello
+        required(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.send(:hello))
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        required(:display, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -1238,12 +1290,64 @@ describe Toys::DSL::Tool do
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "forces defining a getter" do
+    it "does not define a getter if the name collides with an Object method" do
       loader.add_block do
-        optional(:object_id, add_method: true)
+        optional(:display)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the run method" do
+      loader.add_block do
+        optional(:run)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:run))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the initialize method" do
+      loader.add_block do
+        optional(:initialize)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:initialize))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter if the method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        optional(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.hello)
+    end
+
+    it "does not define a getter if a private method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        private :hello
+        optional(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.send(:hello))
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        optional(:display, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -1336,12 +1440,64 @@ describe Toys::DSL::Tool do
       assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "forces defining a getter" do
+    it "does not define a getter if the name collides with an Object method" do
       loader.add_block do
-        remaining(:object_id, add_method: true)
+        remaining(:display)
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the run method" do
+      loader.add_block do
+        remaining(:run)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:run))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter for the initialize method" do
+      loader.add_block do
+        remaining(:initialize)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.tool_class.public_method_defined?(:initialize))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
+    end
+
+    it "does not define a getter if the method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        remaining(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.hello)
+    end
+
+    it "does not define a getter if a private method already exists" do
+      loader.add_block do
+        def hello
+          20
+        end
+        private :hello
+        remaining(:hello)
+      end
+      tool, _remaining = loader.lookup([])
+      context = tool.tool_class.new(hello: 10)
+      assert_equal(20, context.send(:hello))
+    end
+
+    it "forces defining a getter" do
+      loader.add_block do
+        remaining(:display, add_method: true)
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
@@ -1423,10 +1579,10 @@ describe Toys::DSL::Tool do
 
     it "defines a getter even if the key collides with an Object method" do
       loader.add_block do
-        static(:object_id, "hi")
+        static(:display, "hi")
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:object_id))
+      assert_equal(true, tool.tool_class.public_method_defined?(:display))
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
