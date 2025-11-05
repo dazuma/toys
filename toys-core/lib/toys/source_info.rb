@@ -11,6 +11,7 @@ module Toys
   # * A toys directory
   # * A single toys file
   # * A file or directory loaded from git
+  # * A file or directory loaded from a gem
   # * A config block passed directly to the CLI
   # * A tool block within a toys file
   #
@@ -144,6 +145,32 @@ module Toys
     attr_reader :git_commit
 
     ##
+    # The gem name. This is set if the source, or one of its ancestors, comes
+    # from a gem.
+    #
+    # @return [String] The gem name.
+    # @return [nil] if this source is not from a gem.
+    #
+    attr_reader :gem_name
+
+    ##
+    # The gem version. This is set if the source, or one of its ancestors,
+    # comes from a gem.
+    #
+    # @return [Gem::Version] The gem version.
+    # @return [nil] if this source is not from a gem.
+    #
+    attr_reader :gem_version
+
+    ##
+    # The path within the gem, including the toys root directory in the gem.
+    #
+    # @return [String] The path.
+    # @return [nil] if this source is not from a gem.
+    #
+    attr_reader :gem_path
+
+    ##
     # A user-visible name of this source.
     #
     # @return [String]
@@ -191,8 +218,10 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def initialize(parent, priority, context_directory, source_type, source_path, source_proc,
-                   git_remote, git_path, git_commit, source_name, data_dir_name, lib_dir_name)
+    def initialize(parent, priority, context_directory,
+                   source_type, source_path, source_proc,
+                   git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+                   source_name, data_dir_name, lib_dir_name)
       @parent = parent
       @root = parent&.root || self
       @priority = priority
@@ -204,7 +233,10 @@ module Toys
       @git_remote = git_remote
       @git_path = git_path
       @git_commit = git_commit
-      @source_name = source_name
+      @gem_name = gem_name
+      @gem_version = gem_version
+      @gem_path = gem_path
+      @source_name = source_name || default_source_name
       @data_dir_name = data_dir_name
       @lib_dir_name = lib_dir_name
       @data_dir = find_special_dir(data_dir_name)
@@ -220,18 +252,12 @@ module Toys
       unless source_type == :directory
         raise LoaderError, "relative_child is valid only on a directory source"
       end
-      child_path = ::File.join(source_path, filename)
-      child_path, type = SourceInfo.check_path(child_path, true)
+      child_path, type = SourceInfo.check_path(::File.join(source_path, filename), true)
       return nil unless child_path
-      child_git_path = ::File.join(git_path, filename) if git_path
-      source_name ||=
-        if git_path
-          "git(remote=#{git_remote} path=#{child_git_path} commit=#{git_commit})"
-        else
-          child_path
-        end
+      child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
+      child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
       SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     git_remote, child_git_path, git_commit,
+                     git_remote, child_git_path, git_commit, gem_name, gem_version, child_gem_path,
                      source_name, @data_dir_name, @lib_dir_name)
     end
 
@@ -242,8 +268,8 @@ module Toys
     #
     def absolute_child(child_path, source_name: nil)
       child_path, type = SourceInfo.check_path(child_path, false)
-      source_name ||= child_path
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil, nil, nil, nil,
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
+                     nil, nil, nil, nil, nil, nil,
                      source_name, @data_dir_name, @lib_dir_name)
     end
 
@@ -252,13 +278,22 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def git_child(child_git_remote, child_git_path, child_git_commit, child_path,
-                  source_name: nil)
+    def git_child(child_git_remote, child_git_path, child_git_commit, child_path, source_name: nil)
       child_path, type = SourceInfo.check_path(child_path, false)
-      source_name ||=
-        "git(remote=#{child_git_remote} path=#{child_git_path} commit=#{child_git_commit})"
       SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     child_git_remote, child_git_path, child_git_commit,
+                     child_git_remote, child_git_path, child_git_commit, nil, nil, nil,
+                     source_name, @data_dir_name, @lib_dir_name)
+    end
+
+    ##
+    # Create a child SourceInfo with a gem source.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def gem_child(child_gem_name, child_gem_version, child_gem_path, child_path, source_name: nil)
+      child_path, type = SourceInfo.check_path(child_path, false)
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
+                     nil, nil, nil, child_gem_name, child_gem_version, child_gem_path,
                      source_name, @data_dir_name, @lib_dir_name)
     end
 
@@ -270,7 +305,7 @@ module Toys
     def proc_child(child_proc, source_name: nil)
       source_name ||= self.source_name
       SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc,
-                     git_remote, git_path, git_commit,
+                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
                      source_name, @data_dir_name, @lib_dir_name)
     end
 
@@ -291,8 +326,8 @@ module Toys
       when :path
         context_directory = source_path
       end
-      source_name ||= source_path
-      new(nil, priority, context_directory, type, source_path, nil, nil, nil, nil,
+      new(nil, priority, context_directory, type, source_path, nil,
+          nil, nil, nil, nil, nil, nil,
           source_name, data_dir_name, lib_dir_name)
     end
 
@@ -307,9 +342,25 @@ module Toys
                              lib_dir_name: nil,
                              source_name: nil)
       source_path, type = check_path(source_path, false)
-      source_name ||= "git(remote=#{git_remote} path=#{git_path} commit=#{git_commit})"
-      new(nil, priority, context_directory, type, source_path, nil, git_remote,
-          git_path, git_commit, source_name, data_dir_name, lib_dir_name)
+      new(nil, priority, context_directory, type, source_path, nil,
+          git_remote, git_path, git_commit, nil, nil, nil,
+          source_name, data_dir_name, lib_dir_name)
+    end
+
+    ##
+    # Create a root source info for a loaded gem.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def self.create_gem_root(gem_name, gem_version, gem_path, source_path, priority,
+                             context_directory: nil,
+                             data_dir_name: nil,
+                             lib_dir_name: nil,
+                             source_name: nil)
+      source_path, type = check_path(source_path, false)
+      new(nil, priority, context_directory, type, source_path, nil,
+          nil, nil, nil, gem_name, gem_version, gem_path,
+          source_name, data_dir_name, lib_dir_name)
     end
 
     ##
@@ -322,9 +373,9 @@ module Toys
                               data_dir_name: nil,
                               lib_dir_name: nil,
                               source_name: nil)
-      source_name ||= "(code block #{source_proc.object_id})"
-      new(nil, priority, context_directory, :proc, nil, source_proc, nil, nil,
-          nil, source_name, data_dir_name, lib_dir_name)
+      new(nil, priority, context_directory, :proc, nil, source_proc,
+          nil, nil, nil, nil, nil, nil,
+          source_name, data_dir_name, lib_dir_name)
     end
 
     ##
@@ -353,6 +404,18 @@ module Toys
     end
 
     private
+
+    def default_source_name
+      if @git_remote
+        "git(remote=#{@git_remote} path=#{@git_path} commit=#{@git_commit})"
+      elsif @gem_name
+        "gem(name=#{@gem_name} version=#{@gem_version} path=#{@gem_path})"
+      elsif @source_type == :proc
+        "(code block #{@source_proc.object_id})"
+      else
+        @source_path
+      end
+    end
 
     def find_special_dir(dir_name)
       return nil if @source_type != :directory || dir_name.nil?

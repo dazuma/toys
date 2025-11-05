@@ -13,6 +13,11 @@ describe Toys::SourceInfo do
   let(:git_directory_path) { "toys-core/test-data/lookup-cases/config-items" }
   let(:git_file_path) { "toys-core/test-data/lookup-cases/config-items/.toys.rb" }
   let(:git_path_with_data) { "toys-core/test-data/lookup-cases/data-finder" }
+  let(:gem_name) { "my-gem" }
+  let(:gem_version) { Gem::Version.new("1.2.3") }
+  let(:gem_directory_path) { "toys/config-items" }
+  let(:gem_file_path) { "toys/config-items/.toys.rb" }
+  let(:gem_path_with_data) { "toys/data-finder" }
   let(:my_proc) { proc { :a } }
   let(:my_proc2) { proc { :b } }
   let(:data_dir_name) { ".data" }
@@ -37,6 +42,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(directory_path, si.source_name)
     end
 
@@ -56,6 +64,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(file_path, si.source_name)
     end
 
@@ -75,6 +86,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(custom_source_name, si.source_name)
     end
 
@@ -94,7 +108,33 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_directory_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "creates a gem root pointing to a directory" do
+      si = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_directory_path,
+                                            directory_path, priority,
+                                            data_dir_name: data_dir_name,
+                                            lib_dir_name: lib_dir_name)
+      assert_nil(si.parent)
+      assert_equal(si, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_directory_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
 
@@ -125,6 +165,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(file_path, si.source_name)
     end
 
@@ -145,7 +188,34 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_file_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "creates a relative child of a gem root" do
+      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_directory_path,
+                                                directory_path, priority,
+                                                data_dir_name: data_dir_name,
+                                                lib_dir_name: lib_dir_name)
+      si = parent.relative_child(".toys.rb")
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(file_path, si.source)
+      assert_equal(:file, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_file_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path})",
                    si.source_name)
     end
 
@@ -187,6 +257,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(file_path, si.source_name)
     end
 
@@ -207,6 +280,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(file_path, si.source_name)
     end
   end
@@ -229,6 +305,9 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_directory_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -250,6 +329,33 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_directory_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
+      assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "creates a git child of a gem root" do
+      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_path_with_data,
+                                                directory_path, priority,
+                                                data_dir_name: data_dir_name,
+                                                lib_dir_name: lib_dir_name)
+      si = parent.git_child(git_remote, git_directory_path, git_commit, directory_path)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_equal(git_remote, si.git_remote)
+      assert_equal(git_directory_path, si.git_path)
+      assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
                    si.source_name)
     end
@@ -271,7 +377,108 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_directory_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_directory_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+  end
+
+  describe "#gem_child" do
+    it "creates a gem child of a file system root" do
+      parent = Toys::SourceInfo.create_path_root(path_with_data, priority,
+                                                 context_directory: lookup_cases_dir,
+                                                 data_dir_name: data_dir_name,
+                                                 lib_dir_name: lib_dir_name)
+      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_equal(lookup_cases_dir, si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_directory_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
+                   si.source_name)
+    end
+
+    it "creates a gem child of a git root" do
+      parent = Toys::SourceInfo.create_git_root(git_remote, git_path_with_data, git_commit,
+                                                path_with_data, priority,
+                                                data_dir_name: data_dir_name,
+                                                lib_dir_name: lib_dir_name)
+      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_directory_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
+                   si.source_name)
+    end
+
+    it "creates a gem child of a gem root" do
+      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_path_with_data,
+                                                directory_path, priority,
+                                                data_dir_name: data_dir_name,
+                                                lib_dir_name: lib_dir_name)
+      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_directory_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
+                   si.source_name)
+    end
+
+    it "creates a gem child of a proc root" do
+      parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
+                                                 source_name: custom_source_name,
+                                                 data_dir_name: data_dir_name,
+                                                 lib_dir_name: lib_dir_name)
+      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(directory_path, si.source)
+      assert_equal(:directory, si.source_type)
+      assert_equal(directory_path, si.source_path)
+      assert_nil(si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_directory_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_directory_path})",
                    si.source_name)
     end
   end
@@ -294,6 +501,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(file_path, si.source_name)
     end
 
@@ -314,7 +524,34 @@ describe Toys::SourceInfo do
       assert_equal(git_remote, si.git_remote)
       assert_equal(git_file_path, si.git_path)
       assert_equal(git_commit, si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=#{git_commit})",
+                   si.source_name)
+    end
+
+    it "creates a proc child of a gem root" do
+      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_file_path,
+                                                file_path, priority,
+                                                data_dir_name: data_dir_name,
+                                                lib_dir_name: lib_dir_name)
+      si = parent.proc_child(my_proc)
+      assert_equal(parent, si.parent)
+      assert_equal(parent, si.root)
+      assert_equal(priority, si.priority)
+      assert_nil(si.context_directory)
+      assert_equal(my_proc, si.source)
+      assert_equal(:proc, si.source_type)
+      assert_equal(file_path, si.source_path)
+      assert_equal(my_proc, si.source_proc)
+      assert_nil(si.git_remote)
+      assert_nil(si.git_path)
+      assert_nil(si.git_commit)
+      assert_equal(gem_name, si.gem_name)
+      assert_equal(gem_version, si.gem_version)
+      assert_equal(gem_file_path, si.gem_path)
+      assert_equal("gem(name=#{gem_name} version=#{gem_version} path=#{gem_file_path})",
                    si.source_name)
     end
 
@@ -335,6 +572,9 @@ describe Toys::SourceInfo do
       assert_nil(si.git_remote)
       assert_nil(si.git_path)
       assert_nil(si.git_commit)
+      assert_nil(si.gem_name)
+      assert_nil(si.gem_version)
+      assert_nil(si.gem_path)
       assert_equal(custom_source_name, si.source_name)
     end
   end

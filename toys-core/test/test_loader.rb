@@ -182,6 +182,53 @@ describe Toys::Loader do
     end
   end
 
+  describe "config from gem sources" do
+    let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
+
+    before do
+      # Using directories in the local toys-core source in git, which is
+      # referenced as a gem in the bundle.
+      # These directories aren't part of the released gem.
+      loader.add_gem("toys-core", [], ".toys", gem_toys_dir: gem_toys_dir)
+      loader.add_gem("toys-core", [], ".toys.rb", gem_toys_dir: gem_toys_dir)
+    end
+
+    it "finds a tool directly defined in a config file" do
+      tool, remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(true, tool.definition_finished?)
+      assert_equal([], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "finds a subtool directly defined in a config file" do
+      tool, remaining = loader.lookup(["namespace-1", "tool-1-1"])
+      assert_equal("file tool-1-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1", "tool-1-1"], tool.full_name)
+      assert_equal([], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "finds a namespace directly defined in a config file" do
+      tool, remaining = loader.lookup(["namespace-1"])
+      assert_equal("file namespace-1 short description", tool.desc.to_s)
+      assert_equal(["namespace-1"], tool.full_name)
+      assert_equal([], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "finds a tool defined in a file in a config directory" do
+      tool, remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal([], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys/tool-2\.rb\)},
+                   tool.source_info.source_name)
+    end
+  end
+
   describe "config path with some hierarchical files" do
     before do
       loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))

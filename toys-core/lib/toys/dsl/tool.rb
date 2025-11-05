@@ -436,9 +436,12 @@ module Toys
       #     current commit if already loading from git, or to `HEAD`.
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     configuration will be loaded into the current namespace.
-      # @param update [Boolean] Force-fetch from the remote (unless the commit
-      #     is a SHA). This will ensure that symbolic commits, such as branch
-      #     names, are up to date. Default is false.
+      # @param update [Boolean,Integer] Whether and when to force-fetch from
+      #     the remote (unless the commit is a SHA). Force-fetching will ensure
+      #     that symbolic commits, such as branch names or HEAD, are up to date.
+      #     You can pass `true` or `falce` to specify whether to update, or an
+      #     integer to update if the last update was done at least that many
+      #     seconds ago. Default is false.
       #
       # @return [self]
       #
@@ -453,9 +456,35 @@ module Toys
         raise ToolDefinitionError, "Git remote not specified" unless remote
         path ||= ""
         commit ||= source_info.git_commit || "HEAD"
-        @__loader.load_git(source_info, remote, path, commit,
-                           @__words, @__remaining_words, @__priority,
-                           update: update)
+        @__loader.load_git(source_info, remote, path, commit, update,
+                           @__words, @__remaining_words, @__priority)
+        self
+      end
+
+      ##
+      # Load configuration from a gem, as if its contents were inserted at the
+      # current location.
+      #
+      # @param name [String] Name of the gem
+      # @param version [String,Array<String>] Version requirements for the gem.
+      # @param path [String] Optional path within the gem to the file or
+      #     directory to load. Defaults to the root of the gem's toys directory.
+      # @param toys_dir [String] Optional override for the gem's toys
+      #     directory name. If not specified, the default specified by the gem
+      #     will be used.
+      # @param as [String] Load into the given tool/namespace. If omitted,
+      #     configuration will be loaded into the current namespace.
+      #
+      def load_gem(name, version: nil, path: nil, toys_dir: nil, as: nil)
+        if as
+          tool(as) do
+            load_gem(name, version: version, path: path, toys_dir: toys_dir)
+          end
+          return self
+        end
+        path ||= ""
+        @__loader.load_gem(source_info, name, version, toys_dir, path,
+                           @__words, @__remaining_words, @__priority)
         self
       end
 
