@@ -49,7 +49,8 @@ module Toys
                    mixin_lookup: nil,
                    middleware_lookup: nil,
                    template_lookup: nil,
-                   git_cache: nil)
+                   git_cache: nil,
+                   gems_util: nil)
       if index_file_name && ::File.extname(index_file_name) != ".rb"
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
@@ -73,6 +74,7 @@ module Toys
       @middleware_stack = Middleware.stack(middleware_stack)
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       @git_cache = git_cache
+      @gems_util = gems_util
       get_tool([], -999_999)
     end
 
@@ -204,12 +206,48 @@ module Toys
                 high_priority: false,
                 update: false,
                 context_directory: nil)
-      git_cache = @git_cache || Loader.default_git_cache
-      path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
+      path = resolve_git_path(git_remote, git_path, git_commit, update)
       @mutex.synchronize do
         raise "Cannot add a git source after tool loading has started" if @loading_started
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
+                                            context_directory: context_directory,
+                                            data_dir_name: @data_dir_name,
+                                            lib_dir_name: @lib_dir_name)
+        @roots_by_priority[priority] = source
+        @worklist << [source, [], priority]
+      end
+      self
+    end
+
+    ##
+    # Add a configuration gem source to the loader.
+    #
+    # @param gem_name [String] The name of the gem
+    # @param gem_version [String,Array<String>] The version requirements
+    # @param gem_path [String] The path from the gem's toys directory to the
+    #     relevant file or directory. Specify the empty string to use the
+    #     entire toys directory.
+    # @param high_priority [Boolean] If true, add this path at the top of the
+    #     priority list. Defaults to false, indicating the new path should be
+    #     at the bottom of the priority list.
+    # @param gem_toys_dir [String] The name of the toys directory. Optional.
+    #     Defaults to the directory specified in the gem's metadata, or the
+    #     value "toys".
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this source. You can pass a directory path as a string,
+    #     or `nil` to denote no context. Defaults to `nil`.
+    # @return [self]
+    #
+    def add_gem(gem_name, gem_version, gem_path,
+                high_priority: false,
+                gem_toys_dir: nil,
+                context_directory: nil)
+      gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
+      @mutex.synchronize do
+        raise "Cannot add a gem source after tool loading has started" if @loading_started
+        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+        source = SourceInfo.create_gem_root(gem_name, gem_version, gem_path, path, priority,
                                             context_directory: context_directory,
                                             data_dir_name: @data_dir_name,
                                             lib_dir_name: @lib_dir_name)
@@ -439,8 +477,7 @@ module Toys
     #
     def load_path(parent_source, path, words, remaining_words, priority)
       if parent_source.git_remote
-        raise LoaderError,
-              "Git source #{parent_source.source_name} tried to load from the local file system"
+        raise LoaderError, "Git source #{parent_source.source_name} tried to load from the local file system"
       end
       source = parent_source.absolute_child(path)
       @mutex.synchronize do
@@ -454,11 +491,25 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def load_git(parent_source, git_remote, git_path, git_commit, words, remaining_words, priority,
-                 update: false)
-      git_cache = @git_cache || Loader.default_git_cache
-      path = git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
+    def load_git(parent_source, git_remote, git_path, git_commit, update,
+                 words, remaining_words, priority)
+      path = resolve_git_path(git_remote, git_path, git_commit, update)
       source = parent_source.git_child(git_remote, git_path, git_commit, path)
+      @mutex.synchronize do
+        load_validated_path(source, words, remaining_words, priority)
+      end
+    end
+
+    ##
+    # Load configuration from the given gem. This is called from the `load_gem`
+    # directive in the DSL.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def load_gem(parent_source, gem_name, gem_version, gem_toys_dir, gem_path,
+                 words, remaining_words, priority)
+      gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
+      source = parent_source.gem_child(gem_name, gem_version, gem_path, path)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
@@ -478,6 +529,7 @@ module Toys
 
     @git_cache_mutex = ::Mutex.new
     @default_git_cache = nil
+    @default_gems_util = nil
 
     ##
     # Get a global default GitCache.
@@ -489,6 +541,20 @@ module Toys
         @default_git_cache ||= begin
           require "toys/utils/git_cache"
           Utils::GitCache.new
+        end
+      end
+    end
+
+    ##
+    # Get a global default Gems utility.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def self.default_gems_util
+      @git_cache_mutex.synchronize do
+        @default_gems_util ||= begin
+          require "toys/utils/gems"
+          Utils::Gems.new
         end
       end
     end
@@ -639,6 +705,28 @@ module Toys
     end
 
     private
+
+    ##
+    # Resolve the file system path to the given object in the git cache
+    #
+    def resolve_git_path(git_remote, git_path, git_commit, update)
+      git_cache = @git_cache || Loader.default_git_cache
+      git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
+    end
+
+    ##
+    # Resolve information for a gem source.
+    #
+    def resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
+      gems_util = @gems_util || Loader.default_gems_util
+      gems_util.activate(gem_name, *Array(gem_version))
+      gem_spec = ::Gem.loaded_specs[gem_name]
+      raise LoaderError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
+      gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
+      gem_path = gem_path ? ::File.join(gem_toys_dir, gem_path) : gem_toys_dir
+      path = ::File.join(gem_spec.gem_dir, gem_path)
+      [gem_spec.version, gem_path, path]
+    end
 
     ##
     # Return a snapshot of all the current tool definitions that have been

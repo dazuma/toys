@@ -1851,6 +1851,7 @@ describe Toys::DSL::Tool do
       tool, remaining = loader.lookup(["ns-1", "tool-1", "hello"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal(["hello"], remaining)
+      assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=HEAD)", tool.source_info.to_s)
     end
 
     it "loads a directory into the current namespace" do
@@ -1864,6 +1865,7 @@ describe Toys::DSL::Tool do
       tool, remaining = loader.lookup(["ns-1", "tool-2", "hello"])
       assert_equal("directory tool-2 short description", tool.desc.to_s)
       assert_equal(["hello"], remaining)
+      assert_equal("git(remote=#{git_remote} path=#{git_dir_path}/tool-2.rb commit=HEAD)", tool.source_info.to_s)
     end
 
     it "loads a file as a name" do
@@ -1875,6 +1877,7 @@ describe Toys::DSL::Tool do
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
       assert_equal(["hello"], remaining)
+      assert_equal("git(remote=#{git_remote} path=#{git_file_path} commit=HEAD)", tool.source_info.to_s)
     end
 
     it "loads a directory as a name" do
@@ -1886,6 +1889,63 @@ describe Toys::DSL::Tool do
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
       assert_equal("directory tool-2 short description", tool.desc.to_s)
       assert_equal(["hello"], remaining)
+      assert_equal("git(remote=#{git_remote} path=#{git_dir_path}/tool-2.rb commit=HEAD)", tool.source_info.to_s)
+    end
+  end
+
+  describe "load_gem directive" do
+    let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
+
+    it "loads a file into the current namespace" do
+      toys_dir = gem_toys_dir
+      loader.add_block do
+        tool "ns-1" do
+          load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "loads a directory into the current namespace" do
+      toys_dir = gem_toys_dir
+      loader.add_block do
+        tool "ns-1" do
+          load_gem("toys-core", path: ".toys", toys_dir: toys_dir)
+        end
+      end
+      tool, remaining = loader.lookup(["ns-1", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys/tool-2\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "loads a file as a name" do
+      toys_dir = gem_toys_dir
+      loader.add_block do
+        load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "loads a directory as a name" do
+      toys_dir = gem_toys_dir
+      loader.add_block do
+        load_gem("toys-core", path: ".toys", toys_dir: toys_dir, as: "ns1 ns2")
+      end
+      tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+      assert_equal(["hello"], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys/tool-2\.rb\)},
+                   tool.source_info.source_name)
     end
   end
 
