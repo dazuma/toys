@@ -22,8 +22,8 @@ module Toys
     #
     #     tool "my_tool" do
     #       include :gems
-    #       gem "nokogiri", "~> 1.15"
     #       def run
+    #         gem "nokogiri", "~> 1.15"
     #         # Do stuff with Nokogiri
     #       end
     #     end
@@ -32,6 +32,18 @@ module Toys
     # to initialize settings for the gem install process. For example:
     #
     #     include :gems, on_missing: :error
+    #
+    # You can also pass options to the {#gem} mixin method itself:
+    #
+    #     tool "my_tool" do
+    #       include :gems
+    #       def run
+    #         # If the gem is not installed, error out instead of asking to
+    #         # install it.
+    #         gem "nokogiri", "~> 1.15", on_missing: :error
+    #         # Do stuff with Nokogiri
+    #       end
+    #     end
     #
     # See {Toys::Utils::Gems#initialize} for a list of supported options.
     #
@@ -54,8 +66,8 @@ module Toys
       # @param requirements [String...] Version requirements
       # @return [void]
       #
-      def gem(name, *requirements)
-        self.class.gems.activate(name, *requirements)
+      def gem(name, *requirements, **options)
+        self.class.gem(name, *requirements, **options)
       end
 
       on_include do |**opts|
@@ -76,8 +88,15 @@ module Toys
         ##
         # @private
         #
-        def self.gem(name, *requirements)
-          gems.activate(name, *requirements)
+        def self.gem(name, *requirements, **options)
+          gems_util =
+            if options.empty?
+              gems
+            else
+              require "toys/utils/gems"
+              Utils::Gems.new(**options)
+            end
+          gems_util.activate(name, *requirements)
         end
       end
     end
