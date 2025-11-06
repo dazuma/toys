@@ -1012,15 +1012,16 @@ module Toys
     # @param default [Object] The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
-    # @param handler [Proc,nil,:set,:push] An optional handler for
-    #     setting/updating the value. A handler is a proc taking two
-    #     arguments, the given value and the previous value, returning the
-    #     new value that should be set. You may also specify a predefined
-    #     named handler. The `:set` handler (the default) replaces the
-    #     previous value (effectively `-> (val, _prev) { val }`). The
-    #     `:push` handler expects the previous value to be an array and
-    #     pushes the given value onto it; it should be combined with setting
-    #     `default: []` and is intended for "multi-valued" flags.
+    # @param handler [Proc,nil,:set,:push] An optional handler that customizes
+    #     how a value is set or updated. A handler is a proc that takes up to
+    #     three arguments: the given value, the previous value, and a hash
+    #     containing all the data collected so far during argument parsing. It
+    #     must return the new value that should be set. You may also specify a
+    #     predefined named handler. The `:set` handler (the default) replaces
+    #     the previous value (effectively `-> (val) { val }`). The `:push`
+    #     handler expects the previous value to be an array and pushes the
+    #     given value onto it; it should be combined with setting `default: []`
+    #     and is intended for "multi-valued" flags.
     # @param complete_flags [Object] A specifier for shell tab completion
     #     for flag names associated with this flag. By default, a
     #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
