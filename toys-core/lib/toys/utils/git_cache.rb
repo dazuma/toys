@@ -275,6 +275,21 @@ module Toys
       end
 
       ##
+      # Returns whether shared source files are writable by default.
+      # Normally, shared sources are made read-only to protect them from being
+      # modified accidentally since multiple clients may be accessing them.
+      # However, you can disable this feature by setting the environment
+      # variable `TOYS_GIT_CACHE_WRITABLE` to any non-empty value. This can be
+      # useful in environments that want to clean up temporary directories and
+      # are being hindered by read-only files.
+      #
+      # @return [boolean]
+      #
+      def self.sources_writable?
+        !::ENV["TOYS_GIT_CACHE_WRITABLE"].to_s.empty?
+      end
+
+      ##
       # Access a git cache.
       #
       # @param cache_dir [String] The path to the cache directory. Defaults to
@@ -569,7 +584,7 @@ module Toys
           ::FileUtils.mkdir_p(source_path)
           ::FileUtils.chmod_R("u+w", source_path, force: true)
           copy_from_repo(repo_path, source_path, sha, path)
-          ::FileUtils.chmod_R("a-w", source_path, force: true)
+          ::FileUtils.chmod_R("a-w", source_path, force: true) unless GitCache.sources_writable?
         end
         repo_lock.access_source!(sha, path)
         path == "." ? source_path : ::File.join(source_path, path)
