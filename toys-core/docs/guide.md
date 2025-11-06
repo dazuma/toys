@@ -159,7 +159,7 @@ If only `foo` is requested, the loader will execute the `tool "foo" do` block
 to get that tool definition, but will not execute the `tool "bar" do` block.
 
 We will discuss more about the features of the loader below in the section on
-[defining functionality](#defining_functionality).
+[defining functionality](#defining-functionality).
 
 #### Building context
 
@@ -209,16 +209,16 @@ Generally, you control CLI features by passing arguments to its constructor.
 These features include:
 
  *  How to find toys files and related code and data. See the section on
-    [defining functionality](#defining_functionality).
+    [defining functionality](#defining-functionality).
  *  Middleware, providing common behavior for all tools. See the section on
-    [customizing the middleware stack](#customizing_default_behavior).
+    [customizing the middleware stack](#customizing-default-behavior).
  *  Common mixins and templates available to all tools. See the section on
-    [how to define mixins and templates](#defining_mixins_and_templates).
+    [how to define mixins and templates](#defining-mixins-and-templates).
  *  How logs, errors, and signals are reported. See the section on
-    [customizing tool output](#customizing_tool_output).
+    [customizing tool output](#customizing-tool-output).
  *  How the executable interacts with the shell, including setting up tab
     completion. See the
-    [corresponding section](#shell_and_command_line_integration).
+    [corresponding section](#shell-and-command-line-integration).
 
 Each of the actual parameters is covered in detail in the documentation for
 {Toys::CLI#initialize}. The configuration of a CLI cannot be changed once the
