@@ -222,7 +222,7 @@ flag, but it has no additional effect.) Namespaces also support the following
 additional flags:
 
 *   `--all` which displays all subtools, including
-    [hidden subtools](#hidden_tools) and namespaces.
+    [hidden subtools](#hidden-tools) and namespaces.
 *   `--no-recursive` which displays only immediate subtools, instead of the
     default behavior of showing all subtools recursively.
 *   `--search=TERM` which displays only subtools whose name or description
@@ -268,7 +268,7 @@ you could do this:
     $ toys do build --staging , test --help
 
 Each tool can choose which behavior it will support, whether or not to enforce
-[flags before positional args](#enforcing_flags_before_args).
+[flags before positional args](#enforcing-flags-before-args).
 
 You can also, of course, stop recognizing flags on the command line by passing
 `--` as an argument.
@@ -276,7 +276,7 @@ You can also, of course, stop recognizing flags on the command line by passing
 ### Tab completion
 
 If you are using the Bash shell, Toys provides custom tab completion. See
-[this section](#installing_tab_completion_for_bash) for instructions on
+[this section](#installing-tab-completion-for-bash) for instructions on
 installing tab completion.
 
 Toys will complete tool and subtool names, flags, values passed to flags, and
@@ -512,7 +512,7 @@ an example:
                  long_desc: ["Long descriptions can have multiple lines.",
                              "This is the second line."]
 
-See the [above section on Descriptions](#tool_descriptions) for more
+See the [above section on Descriptions](#tool-descriptions) for more
 information on how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -557,7 +557,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You can also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom_acceptors) for more information.
+[section below on Custom Acceptors](#custom-acceptors) for more information.
 
 #### Argument completions
 
@@ -769,7 +769,7 @@ and
 [OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
 
 You can also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom_acceptors) for more information.
+[section below on Custom Acceptors](#custom-acceptors) for more information.
 
 #### Defaults and handlers
 
@@ -838,7 +838,7 @@ Note that both flags affect the same option name,
 {Toys::Context::Key::VERBOSITY}. The first increments it each time it appears,
 and the second decrements it. A tool can query this option and get an integer
 telling the requested verbosity level, as you will see
-[below](#logging_and_verbosity).
+[below](#logging-and-verbosity).
 
 Toys provides a few built-in handlers that can be specified by name. We already
 discussed the default handler that can be specified by its name `:set` or by
@@ -866,7 +866,7 @@ directive. The `desc:` argument takes a single string description, while the
          long_desc: ["Long descriptions can have multiple lines.",
                      "This is the second line."]
 
-See the [above section on Descriptions](#tool_descriptions) for more information on
+See the [above section on Descriptions](#tool-descriptions) for more information on
 how descriptions are rendered and word wrapped.
 
 Because long descriptions may be unwieldly to write as a hash argument in this
@@ -989,7 +989,7 @@ your tools.
 
 Note: If you do not define the `run` method for a tool, Toys provides a default
 implementation that displays the tool's help screen. This is typically used for
-namespaces, as we shall see [below](#namespaces_and_subtools). Most tools,
+namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
 however, should define `run`.
 
 Let's revisit the "greet" example we covered earlier.
@@ -1171,7 +1171,7 @@ our greet tool would look like as a class:
 Defining tools as clases is useful if you want your Toys files to look a bit
 more like normal Ruby or you want to avoid long blocks. Additionally, they can
 be useful to scope constants, which otherwise would be visible throughout the
-entire file, as noted in the [section on using constants](#using_constants).
+entire file, as noted in the [section on using constants](#using-constants).
 
 When you define a tool as a class, Toys infers the tool name by converting the
 class name to "kebab-case". For example, the `Greet` class above would define a
@@ -1242,7 +1242,7 @@ styles. Define tools either as classes or as blocks, not both.
 ## Understanding Toys files
 
 Toys commands are defined in Toys files. We covered the basic syntax for these
-files in the [above section on defining tools](#defining_tools). In this
+files in the [above section on defining tools](#defining-tools). In this
 section, we will take a deeper look at what you can do with Toys files.
 
 ### Toys directories
@@ -1347,7 +1347,7 @@ in the separate file `.toys/test/unit.rb`.
 Toys also loads the index file in a directory *before* any other files in that
 directory. This means they are convenient places to define shared code that can
 be used by all the subtools defined in that directory, as we shall see later in
-the [section on sharing code](#sharing_code).
+the [section on sharing code](#sharing-code).
 
 ### The Toys search path
 
@@ -1404,7 +1404,7 @@ so, use the directive {Toys::DSL::Tool#truncate_load_path!}. This directive
 removes all directories further down the search path. It can be used, for
 example, to disable global tools when you run Toys from the current directory.
 It can also be useful if you are using
-[Bundler integration](#using_bundler_with_a_tool) to prevent bundle conflicts
+[Bundler integration](#using-bundler-with-a-tool) to prevent bundle conflicts
 with parent directories, by disabling tools from parent directories.
 
 The `truncate_load_path!` directive works only if no tools from further down
@@ -1413,7 +1413,7 @@ if it fails to truncate the load path. In most cases, Toys is very smart about
 loading tools only when needed, but there are exceptions. To minimize the
 chance of problems, if you need to use `truncate_load_path!`, locate it as
 early as possible in your Toys files, typically at the top of the
-[index file](#index_files).
+[index file](#index-files).
 
 ### Sharing tool definitions
 
@@ -1681,7 +1681,7 @@ integer context value that you can retrieve using the `VERBOSITY` context key
 or {Toys::Context#verbosity}. The verbosity is set to 0 by default. This
 corresponds to a logger level of `WARN`. That is, warnings, errors, and fatals
 are displayed, while infos and debugs are not. However,
-[as we saw earlier](#standard_flags), most tools automatically respond to the
+[as we saw earlier](#standard-flags), most tools automatically respond to the
 `--verbose` and `--quiet` flags, (or `-v` and `-q`), which increment and
 decrement the verbosity value, respectively. If you pass `-v` to a tool, the
 verbosity is incremented to 1, and the logger level is set to `INFO`. If you
@@ -1707,14 +1707,14 @@ execute, and return a process status code (i.e. 0 for success, and nonzero for
 error). Make sure you handle the exit status. For example, in most cases, you
 should probably exit if the tool you are calling returns a nonzero code.
 
-You can also use the `exec` mixin [described below](#executing_subprocesses) to
+You can also use the `exec` mixin [described below](#executing-subprocesses) to
 run a tool in a separate process. This is particularly useful if you need to
 capture or manipulate that tool's input or output stream.
 
 ### Helper methods and mixins
 
 The methods of {Toys::Context} are not the only methods available for your tool
-to call. We [saw earlier](#tool_execution_basics) that a tool can define
+to call. We [saw earlier](#tool-execution-basics) that a tool can define
 additional methods that you can use as helpers.
 
 You can also include **mixins**, which are modules that bring in a whole set of
@@ -1738,7 +1738,7 @@ For details on the built-in mixins provided by Toys, see the modules under
 mixins below. Built-in mixins have names that are symbols.
 
 You can also define your own mixins, as we will see in the
-[upcoming section on defining mixins](#defining_mixins).
+[upcoming section on defining mixins](#defining-mixins).
 
 ### Executing subprocesses
 
@@ -1798,7 +1798,7 @@ underlying library {Toys::Utils::Pager}.
 
 You can also use other third-party gems such as
 [tty](https://github.com/piotrmurach/tty). The section below on
-[useful gems](#useful_gems) provides some examples.
+[useful gems](#useful-gems) provides some examples.
 
 ### Standard base directories
 
@@ -1837,7 +1837,7 @@ classes, and constants, that you might define in your tools.
 
 ### Defining mixins
 
-We [saw earlier](#helper_methods_and_mixins) that you can mix a module (with
+We [saw earlier](#helper-methods-and-mixins) that you can mix a module (with
 all its methods) into your tool using the `include` directive. You can specify
 a module itself, or the name of a built-in mixin such as `:exec` or
 `:terminal`. But you can also define your own mixin using the `mixin`
@@ -1852,7 +1852,7 @@ includes the mixin, in the same way that you can include a Ruby module.
 
 (Note that, unlike full modules, mixins allow only methods to be shared. Mixins
 do not support constants. See the next section on
-[using constants](#using_constants) to learn how Toys handles constants.)
+[using constants](#using-constants) to learn how Toys handles constants.)
 
 Here's an example. Suppose you had common setup code that you wanted to share
 among your testing tools.
@@ -1891,7 +1891,7 @@ descendant tools defined in that same directory, but not in a different `.toys`
 directory.
 
 A common technique, for example, would be to define a mixin in the
-[index file](#index_files) in a Toys directory. You can then include it from
+[index file](#index-files) in a Toys directory. You can then include it from
 any subtools defined in other files in that same directory.
 
 #### Mixin initializers
@@ -2071,7 +2071,7 @@ development, including templates that generate build, test, and documentation
 tools. The `:minitest` template illustrated above is one of these built-in
 templates. Like built-in mixins, built-in template names are always symbols.
 You can read more about them in the next section on using
-[Toys as a Rake replacement](#toys_as_a_rake_replacement).
+[Toys as a Rake replacement](#toys-as-a-rake-replacement).
 
 You can also write your own templates. Here's how...
 
@@ -2185,11 +2185,11 @@ classes as helpers. Toys provides a way to write Ruby code outside of its DSL
 and `require` the code from your tool, using `.lib` directories.
 
 Note: If you are writing tools for distribution in a Ruby gem as described
-[earlier](#publishing_a_tools_ruby_gem), consider simply defining your Ruby
+[earlier](#publishing-a-tools-ruby-gem), consider simply defining your Ruby
 modules and classes in the gem's lib directory instead of using this mechanism.
 
 To use `.lib` directories, you must define your tools inside a
-[Toys directory](#toys_directories). When a tool is executed, it looks for
+[Toys directory](#toys-directories). When a tool is executed, it looks for
 directories called `.lib` in the Toys directory, and adds them to the Ruby load
 path. Your tool can thus call `require` to load helpers from any Ruby files in
 a `.lib` directory.
@@ -2280,7 +2280,7 @@ classes, modules, and other code. But preloaded files *automatically* loaded
 (i.e. you do not `require` them explicitly) *before* your tools are defined.
 
 To use preloaded files, you must define your tools inside a
-[Toys directory](#toys_directories). Before any tools inside a directory are
+[Toys directory](#toys-directories). Before any tools inside a directory are
 loaded, any file named `.preload.rb` in the directory is automatically
 required. Next, any Ruby files inside a subdirectory called `.preload` are also
 automatically required.
@@ -2336,7 +2336,7 @@ tests, and a set of helpers that make it easy to test tools and parts of tools.
 
 Toys integrates with [Minitest](https://github.com/seattlerb/minitest) to
 provide a testing framework for your tools. To write tests, you must define
-your tools inside a [Toys directory](#toys_directories). Create a directory
+your tools inside a [Toys directory](#toys-directories). Create a directory
 called `.test` inside that directory. You can then write Minitest tests in
 files within that directory with names matching `test_*.rb`. You can also
 provide other files that do not match that name pattern, as fixture data or
@@ -2702,7 +2702,7 @@ flexible tool than Rake, and it covers two cases that are not well served by
 
 First, Toys lets you define *global tools* that are defined in your home
 directory or system config directory. (See the previous section on
-[the Toys search path](#the_toys_search_path).) These tools are global, and can
+[the Toys search path](#the-toys-search-path).) These tools are global, and can
 be called from anywhere. But if they have gem dependencies, it might not be
 feasible for their Gemfiles to be present in every directory from which you
 might want to run them.
@@ -2740,7 +2740,7 @@ Simply `include :bundler` in your tool definition:
     end
 
 When the `:bundler` mixin is included in a tool, it installs a
-[mixin initializer](#mixin_initializers) that calls `Bundler.setup` when the
+[mixin initializer](#mixin-initializers) that calls `Bundler.setup` when the
 tool is *executed*. This assumes the bundle is already installed, and brings
 the appropriate gems into the Ruby load path. That is, it's basically the same
 as `bundle exec`, but it applies only to the running tool.
@@ -2768,14 +2768,14 @@ your tools. For example:
     end
 
 See the section on
-[applying directives to multiple tools](#applying_directives_to_multiple_tools)
+[applying directives to multiple tools](#applying-directives-to-multiple-tools)
 for more information on `subtool_apply`.
 
 #### Bundler options
 
 By default, the `:bundler` mixin will look for a `Gemfile` within the `.toys`
 directory (if your tool is defined in one), and if one is not found there,
-within the [context directory](#the_context_directory) (the directory
+within the [context directory](#the-context-directory) (the directory
 containing your `.toys` directory or `.toys.rb` file), and if one still is not
 found, in the current working directory. You can change this behavior by
 passing an option to the `:bundler` mixin. For example, you can search only the
@@ -2871,7 +2871,7 @@ tools:
 There is a big caveat to using `static: true`, which is that you are setting up
 a bundle immediately, and as a result any subsequent attempt to set up or use a
 different bundle will fail. (See the section on
-[bundle conflicts](#solving_bundle_conflicts) for a discussion of other reasons
+[bundle conflicts](#solving-bundle-conflicts) for a discussion of other reasons
 this can happen.) As a result, it's best not to use `static: true` unless you
 *really* need it to define tools. If you do run into this problem, here are two
 things you could try:
@@ -2884,7 +2884,7 @@ things you could try:
  2. Failing that, if you need a particular gem in order to define a tool, you
     could consider activating the gem directly rather than as part of a bundle.
     See the following section on
-    [Activating gems directly](#activating_gems_directly) for details on this
+    [Activating gems directly](#activating-gems-directly) for details on this
     technique.
 
 ### Activating gems directly
@@ -3793,7 +3793,7 @@ like we did with the test tool above.
 
 If you need to access information from enclosing scopes, consider instead
 setting options using the {Toys::DSL::Tool#static} directive, as illustrated
-earlier when we discussed [defining templates](#defining_templates).
+earlier when we discussed [defining templates](#defining-templates).
 
     tool "def-time" do
       # Grab the time during tool definition and set it as a static option. 
@@ -3812,7 +3812,7 @@ provides a convenient place to put data files that can be looked up by tools
 either during definition or runtime.
 
 To use data files, you must define your tools inside a
-[Toys directory](#toys_directories). Within the Toys directory, create a
+[Toys directory](#toys-directories). Within the Toys directory, create a
 directory named `.data` and copy your data files there.
 
 You mcanay then "find" a data file by providing the relative path to the file from
@@ -3967,7 +3967,7 @@ the entire toys directory structure. So if your tool definition is inside a
 
 This technique is particularly useful for build tools. Indeed, all the build
 tools described in the section on
-[Toys as a Rake Replacement](#toys_as_a_rake_replacement) automatically move
+[Toys as a Rake Replacement](#toys-as-a-rake-replacement) automatically move
 into the context directory when they execute.
 
 #### Changing the context directory
