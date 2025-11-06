@@ -114,17 +114,20 @@ module Toys
       end
 
       ##
-      # Set the optional handler for setting/updating the value when a flag is
-      # parsed. A handler should be a Proc taking two arguments, the new given
-      # value and the previous value, and it should return the new value that
-      # should be set. You may pass the handler as a Proc (or an object
-      # responding to the `call` method) or you may pass a block.
+      # Set the optional handler that customizes how a value is set or updated
+      # when the flag is parsed.
       #
-      # You can also pass one of the special values `:set` or `:push` as the
-      # handler. The `:set` handler replaces the previous value (equivalent to
-      # `-> (val, _prev) { val }`.) The `:push` handler expects the previous
-      # value to be an array and pushes the given value onto it; it should be
-      # combined with setting the default value to `[]` and is intended for
+      # A handler is a proc that takes up to three arguments: the given value,
+      # the previous value, and a hash containing all the data collected so far
+      # during argument parsing. It must return the new value for the flag. You
+      # You may pass the handler as a Proc (or an object responding to the
+      # `call` method) or you may provide a block.
+      #
+      # You may also specify a predefined named handler. The `:set` handler
+      # (the default) replaces the previous value (effectively
+      # `-> (val) { val }`). The `:push` handler expects the previous value to
+      # be an array and pushes the given value onto it; it should be combined
+      # with setting the default value to `[]` and is intended for
       # "multi-valued" flags.
       #
       # @param handler [Proc,:set,:push]

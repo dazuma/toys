@@ -187,7 +187,7 @@ describe Toys::ToolDefinition do
         assert_equal(Toys::Acceptor::DEFAULT, flag.acceptor)
         assert_equal("", flag.desc.to_s)
         assert_equal([], flag.long_desc)
-        assert_equal(1, flag.handler.call(1, 2))
+        assert_equal(1, flag.handler.call(1, 2, {}))
         assert_equal(true, flag.active?)
       end
 

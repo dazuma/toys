@@ -416,7 +416,7 @@ module Toys
     private
 
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
-    ARG_HANDLER = ->(val, _prev) { val }
+    ARG_HANDLER = ->(val) { val }
     private_constant :REMAINING_HANDLER, :ARG_HANDLER
 
     def initial_data(cli, tool, default_data)
@@ -551,7 +551,12 @@ module Toys
         value = accept.convert(*Array(match))
       end
       if handler
-        value = handler.call(value, @data[key])
+        args = [value, @data[key], @data]
+        if handler.lambda?
+          limit = handler.arity.negative? ? -handler.arity - 1 : handler.arity
+          args = args[...limit]
+        end
+        value = handler.call(*args)
       end
       @data[key] = value
     end

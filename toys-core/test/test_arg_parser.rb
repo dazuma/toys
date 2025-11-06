@@ -292,11 +292,20 @@ describe Toys::ArgParser do
         assert_empty(arg_parser.errors)
       end
 
-      it "honors a proc handler" do
+      it "honors a proc handler with two arguments" do
         tool.add_flag(:a, ["-a", "--aa=VALUE"], default: "hi", handler: ->(v, c) { "#{c}#{v}" })
         arg_parser.parse(["--aa", "ho"])
         arg_parser.finish
         assert_data_includes({a: "hiho"}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "honors a proc handler with three arguments" do
+        tool.add_flag(:name, ["--name=VALUE"])
+        tool.add_flag(:a, ["-a", "--aa=VALUE"], handler: ->(v, _c, h) { h[h[:name]] = v })
+        arg_parser.parse(["--name", "foo", "-a", "fooval", "--name", "bar", "-a", "barval"])
+        arg_parser.finish
+        assert_data_includes({"foo" => "fooval", "bar" => "barval", a: "barval"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 
@@ -305,6 +314,14 @@ describe Toys::ArgParser do
         arg_parser.parse(["--aa", "hi", "-a", "ho"])
         arg_parser.finish
         assert_data_includes({a: ["hi", "ho"]}, arg_parser.data)
+        assert_empty(arg_parser.errors)
+      end
+
+      it "honors the set handler" do
+        tool.add_flag(:a, ["-a", "--aa=VALUE"], handler: :set)
+        arg_parser.parse(["--aa", "hi", "-a", "ho"])
+        arg_parser.finish
+        assert_data_includes({a: "ho"}, arg_parser.data)
         assert_empty(arg_parser.errors)
       end
 

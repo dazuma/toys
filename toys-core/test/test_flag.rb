@@ -461,19 +461,19 @@ describe Toys::Flag do
   it "defaults to the set handler" do
     flag = Toys::Flag.create(:abc)
     assert_equal(Toys::Flag::SET_HANDLER, flag.handler)
-    assert_equal(1, flag.handler.call(1, 2))
+    assert_equal(1, flag.handler.call(1, 2, {}))
   end
 
   it "recognizes the set handler" do
     flag = Toys::Flag.create(:abc, handler: :set)
     assert_equal(Toys::Flag::SET_HANDLER, flag.handler)
-    assert_equal(1, flag.handler.call(1, 2))
+    assert_equal(1, flag.handler.call(1, 2, {}))
   end
 
   it "recognizes the push handler" do
     flag = Toys::Flag.create(:abc, handler: :push)
     assert_equal(Toys::Flag::PUSH_HANDLER, flag.handler)
-    assert_equal([1, 2], flag.handler.call(2, [1]))
+    assert_equal([1, 2], flag.handler.call(2, [1], {}))
   end
 
   describe "#resolve" do
