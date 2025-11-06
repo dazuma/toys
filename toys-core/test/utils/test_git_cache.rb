@@ -118,12 +118,24 @@ describe Toys::Utils::GitCache do
       assert_equal(bad_target, content)
     end
 
-    it "makes source files read-only" do
+    it "makes source files read-only by default" do
       file_name = "file1.txt"
       commit_file(file_name)
       found_path = git_cache.get(local_remote, path: file_name)
       assert_raises(Errno::EACCES) do
-        File.open(found_path, "w") { |file| file.puts "whoops" }
+        File.write(found_path, "changed")
+      end
+    end
+
+    it "makes source files writable if the environment variable is set" do
+      file_name = "file1.txt"
+      commit_file(file_name)
+      begin
+        ::ENV["TOYS_GIT_CACHE_WRITABLE"] = "true"
+        found_path = git_cache.get(local_remote, path: file_name)
+        File.write(found_path, "changed")
+      ensure
+        ::ENV["TOYS_GIT_CACHE_WRITABLE"] = nil
       end
     end
 
