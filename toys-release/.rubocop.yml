@@ -1,0 +1,30 @@
+inherit_from: "../.rubocop-common.yml"
+
+AllCops:
+  Exclude:
+    - "test-data/**/*"
+
+Layout/LineLength:
+  Exclude:
+    - "*.gemspec"
+
+Metrics/BlockLength:
+  Exclude:
+    - "test/**/*"
+    - "toys/*"
+    - "*.gemspec"
+Metrics/BlockNesting:
+  Exclude:
+    - "test/**/*"
+
+Naming/FileName:
+  Exclude:
+    - "lib/toys-release.rb"
+    - "toys/*.rb"
+    - "toys/.toys.rb"
+
+Style/DocumentationMethod:
+  Exclude:
+    - "test/**/*"
+    - "toys/*"
+    - "toys/.toys.rb"

@@ -1,0 +1,11 @@
+--no-private
+--title=Toys Release System
+--markup=markdown
+--markup-provider redcarpet
+--main=README.md
+./lib/**/*.rb
+-
+README.md
+LICENSE.md
+CHANGELOG.md
+docs/guide.md
