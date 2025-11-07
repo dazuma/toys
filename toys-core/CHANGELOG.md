@@ -1,5 +1,9 @@
 # Release History
 
+### v0.17.1 / 2025-11-07
+
+* FIXED: Rolled back dependency on the logger gem because it is causing some issues with bundler integration
+
 ### v0.17.0 / 2025-11-07
 
 Toys-Core 0.17 supports several significant new pieces of functionality:

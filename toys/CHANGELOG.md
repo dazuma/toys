@@ -1,5 +1,9 @@
 # Release History
 
+### v0.17.1 / 2025-11-07
+
+* No significant updates.
+
 ### v0.17.0 / 2025-11-07
 
 Toys 0.17 includes several significant new pieces of functionality:
