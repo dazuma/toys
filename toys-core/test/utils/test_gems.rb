@@ -53,7 +53,6 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle with compatible toys" do
-      skip # TEMP
       setup_case("bundle-with-compatible-toys") do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
