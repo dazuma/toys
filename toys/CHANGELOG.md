@@ -14,7 +14,7 @@ Additional new features:
 
 Other fixes and documentation:
 
-* Added the standard logger gem to the the toys-core dependencies to silence Ruby 3.5 warnings.
+* Added the standard logger gem to the toys-core dependencies to silence Ruby 3.5 warnings.
 * Updated the user guide to cover new features and fix some internal links
 
 ### v0.16.0 / 2025-10-31
