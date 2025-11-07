@@ -1,5 +1,22 @@
 # Release History
 
+### v0.17.0 / 2025-11-07
+
+Toys 0.17 includes several significant new pieces of functionality:
+
+* Support for loading tools from Rubygems. The load_gem directive loads tools from the "toys" directory in a gem, installing the gem if necessary. This makes it easy to distribute tools, securely and versioned, as gems.
+* Flag handlers can now take an optional third argument, the entire options hash. This enables significantly more powerful behavior during flag parsing, such as letting flags affect the behavior of other flags.
+
+Additional new features:
+
+* When using the :gems mixin, you can now specify installation options such as on_missing not only when you include the mixin, but also when you declare the gem.
+* Added support for an environment variable `TOYS_GIT_CACHE_WRITABLE` to disable the read-only behavior of git cache sources. This improves compatibility with environments that want to delete caches.
+
+Other fixes and documentation:
+
+* Added the standard logger gem to the toys-core dependencies to silence Ruby 3.5 warnings.
+* Updated the user guide to cover new features and fix some internal links
+
 ### v0.16.0 / 2025-10-31
 
 * ADDED: Updated minimum Ruby version to 2.7
