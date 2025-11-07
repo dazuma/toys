@@ -22,8 +22,6 @@ require "toys/core"
   spec.required_ruby_version = ">= 2.7.0"
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "logger", "~> 1.4"
-
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://dazuma.github.io/toys/gems/toys-core/v#{::Toys::Core::VERSION}/file.CHANGELOG.html"
     spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/main/toys-core"
