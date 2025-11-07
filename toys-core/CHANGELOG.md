@@ -1,5 +1,15 @@
 # Release History
 
+### v0.17.0 / 2025-11-07
+
+* ADDED: Support loading tools from a gem
+* ADDED: Support for a third argument to flag handlers
+* ADDED: Support for specifying installation options on individual gem installs via the gems mixin
+* ADDED: Support for an environment variable to make git-cache sources writable
+* FIXED: Added standard logger gem to the gemspec to silence Ruby 3.5 warnings
+* DOCS: Updated user guide to cover git and gem loading, and flag handler improvements
+* DOCS: Fixed some internal links in the user's guide
+
 ### v0.16.0 / 2025-10-31
 
 * ADDED: Updated minimum Ruby version to 2.7

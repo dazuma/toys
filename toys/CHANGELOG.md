@@ -1,5 +1,10 @@
 # Release History
 
+### v0.17.0 / 2025-11-07
+
+* DOCS: Updated user guide to cover git and gem loading, and flag handler improvements
+* DOCS: Fixed some internal links in the user's guide
+
 ### v0.16.0 / 2025-10-31
 
 * ADDED: Updated minimum Ruby version to 2.7
