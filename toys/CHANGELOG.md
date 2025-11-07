@@ -2,7 +2,7 @@
 
 ### v0.17.1 / 2025-11-07
 
-* No significant updates.
+* FIXED: Rolled back dependency on the logger gem because it is causing some issues with bundler integration
 
 ### v0.17.0 / 2025-11-07
 
