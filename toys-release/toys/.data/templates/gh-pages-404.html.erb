@@ -5,21 +5,21 @@
   </head>
   <body>
     <p>
-      <a href="https://<%= @url_base %>/index.html">Main documentation page</a>
+      <a href="https://<%= @comp_info.first.first %>/index.html">Main documentation page</a>
     </p>
   </body>
   <script>
-<% @relevant_component_settings.map { |comp| comp.gh_pages_version_var }.uniq.each do |version_var| %>    var <%= version_var %> = "0.0.0";
+<% @comp_info.values.uniq.each do |version_var| %>    var <%= version_var %> = "0.0.0";
 <% end %>    var location_updated = false;
-<% @relevant_component_settings.each do |component_settings| %>    if (!location_updated && window.location.href.includes("//<%= @url_base %>/<%= component_settings.gh_pages_directory %>/latest")) {
+<% @comp_info.each do |(url_base, version_var)| %>    if (!location_updated && window.location.href.includes("//<%= url_base %>/latest")) {
       var loc = window.location.href.replace(
-        "//<%= @url_base %>/<%= component_settings.gh_pages_directory %>/latest",
-        "//<%= @url_base %>/<%= component_settings.gh_pages_directory %>/v" + <%= component_settings.gh_pages_version_var %>);
+        "//<%= url_base %>/latest",
+        "//<%= url_base %>/v" + <%= version_var %>);
       window.location.replace(loc);
       location_updated = true;
     }
 <% end %>    if (!location_updated) {
-      window.location.replace("<%= @default_url %>");
+      window.location.replace("https://<%= @comp_info.first.first %>/latest");
     }
   </script>
 </html>
