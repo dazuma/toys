@@ -63,26 +63,28 @@ end
 def generate_gh_pages
   relevant_component_settings = @settings.all_component_settings.find_all(&:gh_pages_enabled)
   url_base = "#{@settings.repo_owner}.github.io/#{@settings.repo_name}"
-  default_url = "https://#{url_base}/#{relevant_component_settings.first.gh_pages_directory}/latest"
+  comp_info = relevant_component_settings.to_h do |comp|
+    [
+      comp.gh_pages_directory == "." ? url_base : "#{url_base}/#{comp.gh_pages_directory}",
+      comp.gh_pages_version_var,
+    ]
+  end
 
   ::Dir.chdir(@gh_pages_dir) do
     ::File.write(".nojekyll", "")
     generate_file("gh-pages-gitignore.erb", ".gitignore", {})
 
-    data = {
-      relevant_component_settings: relevant_component_settings,
-      url_base: url_base,
-      default_url: default_url,
-    }
-    generate_file("gh-pages-404.html.erb", "404.html", data) do |content, old_content|
+    generate_file("gh-pages-404.html.erb", "404.html",
+                  {comp_info: comp_info}) do |content, old_content|
       update_versions(content, old_content)
     end
 
-    generate_file("gh-pages-index.html.erb", "index.html", {default_url: default_url})
+    generate_file("gh-pages-index.html.erb", "index.html",
+                  {default_url: "https://#{comp_info.first.first}/latest"})
 
     relevant_component_settings.each do |component_settings|
       generate_file("gh-pages-empty.html.erb", "#{component_settings.gh_pages_directory}/v0.0.0/index.html",
-                    {component_settings: component_settings}, remove_dir: true)
+                    {name: component_settings.name}, remove_dir: true)
     end
   end
   puts "Files generated into #{@gh_pages_dir}", :bold
@@ -90,6 +92,10 @@ end
 
 def push_gh_pages
   ::Dir.chdir(@gh_pages_dir) do
+    if @repository.git_clean?
+      puts "No changes made to gh-pages.", :yellow, :bold
+      return
+    end
     @repository.git_commit("Generated initial gh-pages", signoff: @settings.signoff_commits?)
     if dry_run
       puts "DRY RUN: Skipped git push.", :green, :bold
