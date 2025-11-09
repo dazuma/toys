@@ -375,7 +375,7 @@ module Toys
       #
       def last_commit_message(ref: nil)
         ref ||= "HEAD"
-        @utils.capture(["git", "log", "#{ref}^..#{ref}", "--format=%B"], e: true).strip
+        @utils.capture(["git", "log", ref, "--max-count=1", "--format=%B"], e: true).strip
       end
 
       ##

@@ -19,12 +19,10 @@ describe Toys::Release::Repository do
   end
 
   it "defines the Toys coordination groups" do
-    assert_equal(2, repository.coordination_groups.size)
-    assert_equal(2, repository.coordination_groups[0].size)
-    assert_equal("toys", repository.coordination_groups[0][0].name)
-    assert_equal("toys-core", repository.coordination_groups[0][1].name)
-    assert_equal(1, repository.coordination_groups[1].size)
-    assert_equal("common-tools", repository.coordination_groups[1][0].name)
+    assert_equal(3, repository.coordination_groups.size)
+    assert_equal(["toys", "toys-core"], repository.coordination_groups[0].map(&:name))
+    assert_equal(["toys-release"], repository.coordination_groups[1].map(&:name))
+    assert_equal(["common-tools"], repository.coordination_groups[2].map(&:name))
   end
 
   it "sets the Toys coordination groups on their components" do

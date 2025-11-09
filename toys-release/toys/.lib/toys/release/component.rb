@@ -298,10 +298,17 @@ module Toys
         dir = settings.directory
         dir = "#{dir}/" unless dir.end_with?("/")
 
-        message = @utils.capture(["git", "log", "#{sha}^..#{sha}", "--format=%B"], e: true)
+        message = @utils.capture(["git", "log", sha, "--max-count=1", "--format=%B"], e: true)
         return message if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(message)
 
-        files = @utils.capture(["git", "diff", "--name-only", "#{sha}^..#{sha}"], e: true)
+        result = @utils.exec(["git", "rev-parse", "#{sha}^"], out: :capture, err: :null)
+        parent_sha =
+          if result.success?
+            result.captured_out.strip
+          else
+            @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], in: :null).strip
+          end
+        files = @utils.capture(["git", "diff", "--name-only", "#{parent_sha}..#{sha}"], e: true)
         files.split("\n").each do |file|
           return message if (file.start_with?(dir) ||
                             settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&

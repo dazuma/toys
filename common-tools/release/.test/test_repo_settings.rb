@@ -42,8 +42,8 @@ describe ToysReleaser::RepoSettings do
     assert_equal(true, settings.enable_release_automation?)
     assert_equal(true, settings.commit_lint_fail_checks?)
     assert_equal(true, settings.commit_lint_active?)
-    assert_equal(["toys", "toys-core", "common-tools"], settings.all_component_names)
-    assert_equal(["toys", "toys-core", "common-tools"], settings.all_component_settings.map(&:name))
+    assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
+    assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
     assert_equal([["toys", "toys-core"]], settings.coordination_groups)
 
     toys_core_settings = settings.component_settings("toys-core")
