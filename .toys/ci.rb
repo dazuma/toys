@@ -18,10 +18,14 @@ expand("toys-ci") do |toys_ci|
               exec: ["bundle", "update"], chdir: "toys-core")
   toys_ci.job("Bundle for toys", flag: :bundle_toys,
               exec: ["bundle", "update"], chdir: "toys")
+  toys_ci.job("Bundle for toys-release", flag: :bundle_release,
+              exec: ["bundle", "update"], chdir: "toys-release")
   toys_ci.job("Rubocop for toys-core", flag: :rubocop_core,
               tool: ["rubocop"], chdir: "toys-core")
   toys_ci.job("Rubocop for toys", flag: :rubocop_toys,
               tool: ["rubocop"], chdir: "toys")
+  toys_ci.job("Rubocop for toys-release", flag: :rubocop_release,
+              tool: ["rubocop"], chdir: "toys-release")
   toys_ci.job("Rubocop for the repo tools and common tools", flag: :rubocop_root,
               tool: ["rubocop", "_root"])
   toys_ci.job("Tests for toys-core", flag: :test_core,
@@ -30,6 +34,9 @@ expand("toys-ci") do |toys_ci|
               tool: ["test"], chdir: "toys")
   toys_ci.job("Tests for builtin commands", flag: :test_builtins,
               tool: ["test-builtins"], chdir: "toys")
+  toys_ci.job("Tests for toys-release", flag: :test_release,
+              tool: ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"],
+              chdir: "toys-release")
   toys_ci.job("Tests for common-tools", flag: :test_tools,
               tool: ["system", "test", "-d", ".", "--minitest-focus", "--minitest-rg"],
               chdir: "common-tools")
@@ -37,20 +44,24 @@ expand("toys-ci") do |toys_ci|
               tool: ["yardoc-test"], chdir: "toys-core")
   toys_ci.job("Yardoc generation for toys", flag: :yard_toys,
               tool: ["yardoc-test"], chdir: "toys")
+  toys_ci.job("Yardoc generation for toys-release", flag: :yard_release,
+              tool: ["yardoc-test"], chdir: "toys-release")
   toys_ci.job("Build toys-core gem", flag: :build_core,
               tool: ["build"], chdir: "toys-core")
   toys_ci.job("Build toys gem", flag: :build_toys,
               tool: ["build"], chdir: "toys")
+  toys_ci.job("Build toys-release gem", flag: :build_release,
+              tool: ["build"], chdir: "toys-release")
   toys_ci.collection("Bundle jobs", :bundle_all,
-                     job_flags: [:bundle_root, :bundle_core, :bundle_toys])
+                     job_flags: [:bundle_root, :bundle_core, :bundle_toys, :bundle_release])
   toys_ci.collection("Rubocop jobs", :rubocop_all,
-                     job_flags: [:rubocop_core, :rubocop_toys, :rubocop_root])
+                     job_flags: [:rubocop_core, :rubocop_toys, :rubocop_release, :rubocop_root])
   toys_ci.collection("Test jobs", :test_all,
-                     job_flags: [:test_core, :test_toys, :test_builtins, :test_tools])
+                     job_flags: [:test_core, :test_toys, :test_builtins, :test_release, :test_tools])
   toys_ci.collection("Yardoc generation jobs", :yard_all,
-                     job_flags: [:yard_core, :yard_toys])
+                     job_flags: [:yard_core, :yard_toys, :yard_release])
   toys_ci.collection("Gem build jobs", :build_all,
-                     job_flags: [:build_core, :build_toys])
+                     job_flags: [:build_core, :build_toys, :build_release])
 end
 
 tool "init" do

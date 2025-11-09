@@ -11,8 +11,7 @@ AllCops:
   Exclude:
     - "toys/**/*"
     - "toys-core/**/*"
-    - ".toys/release/**/*.rb" # TEMP
-    - ".toys/release/.lib/*.rb" # TEMP
+    - "toys-release/**/*"
 Metrics/BlockLength:
   Enabled: false
 Metrics/CyclomaticComplexity:

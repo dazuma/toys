@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0; url=<%= @default_url %>">
+  </head>
+  <body>
+    <p>
+      <a href="<%= @default_url %>">Documentation for latest version</a>
+    </p>
+  </body>
+  <script>
+    window.location.replace("<%= @default_url %>");
+  </script>
+</html>
