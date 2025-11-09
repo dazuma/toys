@@ -83,6 +83,7 @@ describe Toys::Release::Component do
 
   describe "#touched_message" do
     let(:sha) { "e774119e798f7efc30d9d0e469b7a88e7f54251c" }
+    let(:initial_sha) { "21dcf727b0f5b2f235a05a9d144a8b6a378a1aeb" }
 
     it "finds a change to common-tools with the actual settings" do
       tools_component = Toys::Release::Component.build(repo_settings, "common-tools", environment_utils)
@@ -113,6 +114,11 @@ describe Toys::Release::Component do
       assert_nil(core_component.touched_message(sha))
       toys_component = Toys::Release::Component.build(repo_settings, "toys", environment_utils)
       assert_nil(toys_component.touched_message(sha))
+    end
+
+    it "supports the initial commit" do
+      release_component = Toys::Release::Component.build(repo_settings, "toys-release", environment_utils)
+      assert_nil(release_component.touched_message(initial_sha))
     end
   end
 end
