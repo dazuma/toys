@@ -104,7 +104,7 @@ def setup_git
 end
 
 def create_performer
-  require "performer"
+  require "toys/release/performer"
   dry_run = /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)
   Toys::Release::Performer.new(@repository,
                                release_pr: @pull_request,
