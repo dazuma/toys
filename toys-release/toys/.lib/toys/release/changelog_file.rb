@@ -7,6 +7,11 @@ module Toys
     #
     class ChangelogFile
       ##
+      # @return [String] The default header used when there is no changelog.
+      #
+      DEFAULT_HEADER = "# Changelog\n"
+
+      ##
       # Create a changelog file object given a file path
       #
       # @param path [String] File path
@@ -31,9 +36,10 @@ module Toys
 
       ##
       # @return [String] Current contents of the changelog
+      # @return [nil] if the changelog file doesn't exist
       #
       def content
-        ::File.read(@path)
+        ::File.file?(path) ? ::File.read(path) : nil
       end
 
       ##
@@ -106,7 +112,11 @@ module Toys
           new_entry.concat(group.prefixed_changes.map { |line| "* #{line}" })
         end
         new_entry = new_entry.join("\n")
-        new_content = content.sub(%r{^(### v\S+ / \d\d\d\d-\d\d-\d\d)$}, "#{new_entry}\n\n\\1")
+        old_content = content || DEFAULT_HEADER
+        new_content = old_content.sub(%r{^(### v\S+ / \d\d\d\d-\d\d-\d\d)$}, "#{new_entry}\n\n\\1")
+        if new_content == old_content
+          new_content = old_content.sub(/\n+\z/, "\n\n#{new_entry}\n")
+        end
         ::File.write(path, new_content)
         self
       end

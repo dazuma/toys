@@ -14,6 +14,7 @@ describe Toys::Release::ChangelogFile do
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context) }
   let(:changelog1_path) { File.join(__dir__, ".data", "changelog1.md") }
   let(:changelog2_path) { File.join(__dir__, ".data", "changelog2.md") }
+  let(:changelog3_path) { File.join(__dir__, ".data", "changelog3.md") }
   let(:nonexistent_path) { File.join(__dir__, ".data", "nonexistent.md") }
   let(:default_settings) { Toys::Release::RepoSettings.new({}) }
   let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
@@ -72,6 +73,22 @@ describe Toys::Release::ChangelogFile do
       file.append(change_set, "0.15.6", date: "2024-05-15")
       file1 = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
       assert_equal(file1.content, file.content)
+    end
+  end
+
+  it "appends to an empty file" do
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      FileUtils.cp(changelog3_path, changelog_path)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      change_set.add_message(
+        "abcde1",
+        "fix: fix for uri version mismatch error in certain bundler integration cases"
+      )
+      change_set.finish
+      file.append(change_set, "0.15.5", date: "2024-01-31")
+      file2 = Toys::Release::ChangelogFile.new(changelog2_path, environment_utils)
+      assert_equal(file2.content, file.content)
     end
   end
 end
