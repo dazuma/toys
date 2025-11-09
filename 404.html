@@ -5,22 +5,35 @@
   </head>
   <body>
     <p>
-      <a href="https://dazuma.github.io/toys/index.html">Toys documentation</a>
+      <a href="https://dazuma.github.io/toys/index.html">Main documentation page</a>
     </p>
   </body>
   <script>
     var version = "0.17.1";
-    if (window.location.href.includes("//dazuma.github.io/toys/gems/toys/latest")) {
+    var version_toys_release = "0.0.0";
+    var location_updated = false;
+    if (!location_updated && window.location.href.includes("//dazuma.github.io/toys/gems/toys/latest")) {
       var loc = window.location.href.replace(
         "//dazuma.github.io/toys/gems/toys/latest",
         "//dazuma.github.io/toys/gems/toys/v" + version);
       window.location.replace(loc);
-    } else if (window.location.href.includes("//dazuma.github.io/toys/gems/toys-core/latest")) {
+      location_updated = true;
+    }
+    if (!location_updated && window.location.href.includes("//dazuma.github.io/toys/gems/toys-core/latest")) {
       var loc = window.location.href.replace(
         "//dazuma.github.io/toys/gems/toys-core/latest",
         "//dazuma.github.io/toys/gems/toys-core/v" + version);
       window.location.replace(loc);
-    } else {
+      location_updated = true;
+    }
+    if (!location_updated && window.location.href.includes("//dazuma.github.io/toys/gems/toys-release/latest")) {
+      var loc = window.location.href.replace(
+        "//dazuma.github.io/toys/gems/toys-release/latest",
+        "//dazuma.github.io/toys/gems/toys-release/v" + version_toys_release);
+      window.location.replace(loc);
+      location_updated = true;
+    }
+    if (!location_updated) {
       window.location.replace("https://dazuma.github.io/toys/gems/toys/latest");
     }
   </script>
