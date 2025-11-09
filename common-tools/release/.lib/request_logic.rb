@@ -21,7 +21,7 @@ module ToysReleaser
         @request_spec.resolved_components.each do |component_spec|
           component = @repository.component_named(component_spec.component_name)
           changelog_version = component.changelog_file.current_version
-          if changelog_version >= component_spec.version
+          if changelog_version && changelog_version >= component_spec.version
             @utils.error("Cannot add version #{component_spec.version} to #{component.name} changelog because the" \
               " existing changelog already contains version #{changelog_version}.")
           end
