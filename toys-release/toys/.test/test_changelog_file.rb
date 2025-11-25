@@ -5,10 +5,6 @@ require "tmpdir"
 
 require_relative "helper"
 
-require "toys/release/changelog_file"
-require "toys/release/change_set"
-require "toys/release/environment_utils"
-
 describe Toys::Release::ChangelogFile do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context) }

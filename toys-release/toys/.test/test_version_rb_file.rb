@@ -5,9 +5,6 @@ require "tmpdir"
 
 require_relative "helper"
 
-require "toys/release/environment_utils"
-require "toys/release/version_rb_file"
-
 describe Toys::Release::VersionRbFile do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context) }

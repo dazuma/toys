@@ -2,8 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/semver"
-
 describe Toys::Release::Semver do
   def version(str)
     Gem::Version.new(str)

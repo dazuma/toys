@@ -2,11 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/environment_utils"
-require "toys/release/performer"
-require "toys/release/repo_settings"
-require "toys/release/repository"
-
 describe Toys::Release::Performer do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
@@ -45,6 +40,22 @@ describe Toys::Release::Performer do
 
   it "does a dry run adhoc release of toys-core" do
     name = "toys-core"
+    component = repository.component_named(name)
+    version = component.current_changelog_version
+    stub_existence_checks(name, version)
+    capture_subprocess_io do
+      performer.perform_adhoc_release(name)
+    end
+    assert_equal(1, performer.component_results.size)
+    successes = performer.component_results.first.successes
+    assert_equal(3, successes.size)
+    assert_equal("DRY RUN GitHub tag #{name}/v#{version}.", successes[0])
+    assert_equal("DRY RUN Rubygems push for #{name} #{version}.", successes[1])
+    assert_includes(successes[2], "published for #{name} #{version}")
+  end
+
+  it "does a dry run adhoc release of toys-release" do
+    name = "toys-release"
     component = repository.component_named(name)
     version = component.current_changelog_version
     stub_existence_checks(name, version)

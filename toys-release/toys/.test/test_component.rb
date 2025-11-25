@@ -2,10 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/component"
-require "toys/release/environment_utils"
-require "toys/release/repo_settings"
-
 describe Toys::Release::Component do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :raise) }
@@ -30,7 +26,7 @@ describe Toys::Release::Component do
 
       it "knows the directory" do
         assert_equal(component_name, component.directory)
-        assert_equal(::File.join(environment_utils.context_directory, component_name),
+        assert_equal(::File.join(environment_utils.repo_root_directory, component_name),
                      component.directory(from: :absolute))
       end
 

@@ -75,6 +75,13 @@ module Toys
       end
 
       ##
+      # @return [String] Absolute path to the repo root directory
+      #
+      def repo_root_directory
+        @repo_root ||= capture(["git", "rev-parse", "--show-toplevel"], chdir: context_directory).strip
+      end
+
+      ##
       # Log a message at INFO level
       #
       # @param message [String] Message to log
@@ -120,10 +127,13 @@ module Toys
       #
       def accumulate_errors(main_message = nil)
         previous_list = @error_list
-        @error_list = []
-        result = yield
-        current_list = @error_list
-        @error_list = previous_list
+        @error_list = current_list = []
+        result =
+          begin
+            yield
+          ensure
+            @error_list = previous_list
+          end
         unless current_list.empty?
           current_list.unshift(main_message) if main_message
           error(*current_list)
@@ -141,11 +151,11 @@ module Toys
       # @return [Object] The block's result if success
       # @return [nil] if errors happened
       #
-      def capture_errors(errors = nil)
+      def capture_errors(errors = nil, &block)
         return yield unless errors
         previous_option = on_error_option
         @on_error_option = :raise
-        yield
+        accumulate_errors(&block)
       rescue ReleaseError => e
         errors.concat(e.all_messages)
         nil

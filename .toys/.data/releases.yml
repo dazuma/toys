@@ -2,17 +2,21 @@ repo: dazuma/toys
 git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
 required_checks_timeout: 1800
-commit_lint:
-  fail_checks: true
-  merge: squash
 
 gems:
   - name: toys
     gh_pages_directory: gems/toys
     gh_pages_version_var: version
+    prepend_steps:
+      - name: copy_core_docs
+        type: tool
+        tool: [copy-core-docs]
+        outputs: [core-docs]
     modify_steps:
-      - name: build-yard
-        pre_tool: [copy-core-docs]
+      - name: build_gem
+        inputs: [copy_core_docs]
+      - name: build_yard
+        inputs: [copy_core_docs]
   - name: toys-core
     version_rb_path: lib/toys/core.rb
     gh_pages_directory: gems/toys-core

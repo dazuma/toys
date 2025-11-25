@@ -2,9 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/change_set"
-require "toys/release/repo_settings"
-
 describe Toys::Release::ChangeSet do
   let(:settings_customization) { {} }
   let(:repo_settings) { Toys::Release::RepoSettings.new(settings_customization) }

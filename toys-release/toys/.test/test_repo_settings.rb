@@ -2,8 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/repo_settings"
-
 describe Toys::Release::CommitTagSettings do
   it "reads a simple tag setting" do
     setting = Toys::Release::CommitTagSettings.new("docs")
@@ -38,13 +36,9 @@ describe Toys::Release::RepoSettings do
     assert_equal("toys", settings.default_component_name)
     assert_equal(//, settings.required_checks_regexp)
     assert_equal(1800, settings.required_checks_timeout)
-    assert_equal(["squash"], settings.commit_lint_merge)
-    assert_nil(settings.commit_lint_allowed_types)
     assert_equal("dazuma", settings.repo_owner)
     assert_equal(false, settings.signoff_commits?)
     assert_equal(true, settings.enable_release_automation?)
-    assert_equal(true, settings.commit_lint_fail_checks?)
-    assert_equal(true, settings.commit_lint_active?)
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
     assert_equal([["toys", "toys-core"]], settings.coordination_groups)
@@ -58,7 +52,8 @@ describe Toys::Release::RepoSettings do
     assert_equal("gems/toys-core", toys_core_settings.gh_pages_directory)
     assert_equal("version", toys_core_settings.gh_pages_version_var)
     assert_equal("lib/toys/core.rb", toys_core_settings.version_rb_path)
-    assert_nil(toys_core_settings.step_named("build-yard").options["pre_tool"])
+    assert_nil(toys_core_settings.step_named("copy_core_docs"))
+    assert_empty(toys_core_settings.step_named("build_yard").inputs)
 
     toys_settings = settings.component_settings("toys")
     assert_equal("toys", toys_settings.name)
@@ -69,7 +64,11 @@ describe Toys::Release::RepoSettings do
     assert_equal("gems/toys", toys_settings.gh_pages_directory)
     assert_equal("version", toys_settings.gh_pages_version_var)
     assert_equal("lib/toys/version.rb", toys_settings.version_rb_path)
-    assert_equal(["copy-core-docs"], toys_settings.step_named("build-yard").options["pre_tool"])
+    assert_equal(["copy-core-docs"], toys_settings.step_named("copy_core_docs").options["tool"])
+    assert_equal(1, toys_settings.step_named("build_yard").inputs.size)
+    assert_equal("copy_core_docs", toys_settings.step_named("build_yard").inputs.first.step_name)
+    assert_equal(1, toys_settings.step_named("copy_core_docs").outputs.size)
+    assert_equal("core-docs", toys_settings.step_named("copy_core_docs").outputs.first.source_path)
 
     toys_release_settings = settings.component_settings("toys-release")
     assert_equal("toys-release", toys_release_settings.name)
@@ -80,7 +79,8 @@ describe Toys::Release::RepoSettings do
     assert_equal("gems/toys-release", toys_release_settings.gh_pages_directory)
     assert_equal("version_toys_release", toys_release_settings.gh_pages_version_var)
     assert_equal("lib/toys/release/version.rb", toys_release_settings.version_rb_path)
-    assert_nil(toys_release_settings.step_named("build-yard").options["pre_tool"])
+    assert_nil(toys_release_settings.step_named("copy_core_docs"))
+    assert_empty(toys_release_settings.step_named("build_yard").inputs)
 
     common_tools_settings = settings.component_settings("common-tools")
     assert_equal("common-tools", common_tools_settings.name)
@@ -89,7 +89,7 @@ describe Toys::Release::RepoSettings do
     assert_equal("CHANGELOG.md", common_tools_settings.changelog_path)
     assert_equal(["Toys", "CommonTools", "VERSION"], common_tools_settings.version_constant)
     assert_equal(".lib/version.rb", common_tools_settings.version_rb_path)
-    assert_nil(common_tools_settings.step_named("build-yard"))
+    assert_nil(common_tools_settings.step_named("build_yard"))
 
     commit_tag_settings = settings.release_commit_tags
     feat_tag_settings = commit_tag_settings["feat"]

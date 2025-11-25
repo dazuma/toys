@@ -320,14 +320,13 @@ module Toys
         artifact_dir = Toys::Release::ArtifactDir.new(@work_dir)
         begin
           component.cd do
-            component.settings.steps.each do |step_settings|
-              result_code = Toys::Release::Steps.run(
-                type: step_settings.type, name: step_settings.name, options: step_settings.options,
-                repository: @repository, component: component, version: version, performer_result: result,
-                artifact_dir: artifact_dir, dry_run: @dry_run, git_remote: @git_remote
-              )
-              break if result_code == :abort
-            end
+            pipeline = Toys::Release::Pipeline.new(
+              repository: @repository, component: component, version: version, performer_result: result,
+              artifact_dir: artifact_dir, dry_run: @dry_run, git_remote: @git_remote
+            )
+            component.settings.steps.each { |step_settings| pipeline.add_step(step_settings) }
+            pipeline.resolve_run
+            pipeline.run
           end
         ensure
           artifact_dir.cleanup

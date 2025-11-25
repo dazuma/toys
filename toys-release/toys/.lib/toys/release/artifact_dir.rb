@@ -41,6 +41,24 @@ module Toys
       end
 
       ##
+      # Get the path to the output directory for the given step name.
+      #
+      # @param name [String] Step name
+      #
+      def output(name)
+        get("out-#{name}")
+      end
+
+      ##
+      # Get the path to the temp directory for the given step name.
+      #
+      # @param name [String] Step name
+      #
+      def temp(name)
+        get("temp-#{name}")
+      end
+
+      ##
       # Perform cleanup, removing the directories if they were created under a
       # temporary directory.
       #
