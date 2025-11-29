@@ -4,10 +4,6 @@ This is a dumping ground of possible ideas and future directions for Toys.
 These items are all tentative or under investigation. Finalized to-do items
 are covered in github issues (https://github.com/dazuma/toys/issues).
 
-## Definitely todo
-
-* Provide a way to make the git cache deletable so cleanup tasks don't fail
-
 ## Ideas under investigation
 
 * Allow override when doing data lookup (for subdirectory-specific configuration)
@@ -19,6 +15,7 @@ are covered in github issues (https://github.com/dazuma/toys/issues).
 * Generalized classes for generating output formats
 * Namespace clearing/locking
 * Additional ways to find terminal size (there's a gem for unicode line length)
+* Should it be possible to auto-terminate an exec at the end of a controller block?
 
 ## Other ideas we probably won't do
 
