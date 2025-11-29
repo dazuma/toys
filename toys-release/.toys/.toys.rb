@@ -42,6 +42,5 @@ tool "copy-core-docs" do
 
   flag :optimize, "--[no-]optimize"
 
-  def run
-  end
+  def run; end
 end

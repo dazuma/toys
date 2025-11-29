@@ -66,8 +66,7 @@ module Toys
           step_context.log("Running tool #{tool.inspect}...")
           result = step_context.utils.exec_separate_tool(tool, out: [:child, :err])
           unless result.success?
-            step_context.exit_step("Tool failed: #{tool.inspect}. Check the logs for details.",
-                                   abort_pipeline: step_context.option("abort_pipeline_on_error"))
+            step_context.abort_pipeline("Tool failed: #{tool.inspect}. Check the logs for details.")
           end
           step_context.log("Completed tool")
         end
@@ -86,8 +85,7 @@ module Toys
           step_context.log("Running command #{command.inspect}...")
           result = step_context.utils.exec(command, out: [:child, :err])
           unless result.success?
-            step_context.exit_step("Command failed: #{command.inspect}. Check the logs for details.",
-                                   abort_pipeline: step_context.option("abort_pipeline_on_error"))
+            step_context.abort_pipeline("Command failed: #{command.inspect}. Check the logs for details.")
           end
           step_context.log("Completed command")
         end
@@ -126,7 +124,8 @@ module Toys
             out: [:child, :err]
           )
           unless result.success?
-            step_context.exit_step("Gem build failed for #{step_context.release_description}. Check the logs for details.")
+            step_context.abort_pipeline("Gem build failed for #{step_context.release_description}." \
+                                        " Check the logs for details.")
           end
           step_context.log("Gem built to #{pkg_path}.")
           step_context.log("Completed gem build.")
@@ -152,7 +151,8 @@ module Toys
           CODE
           result = step_context.utils.ruby(code, out: [:child, :err])
           if !result.success? || !::File.directory?(doc_dir)
-            step_context.exit_step("Yard build failed for #{step_context.release_description}. Check the logs for details.")
+            step_context.abort_pipeline("Yard build failed for #{step_context.release_description}." \
+                                        " Check the logs for details.")
           end
           step_context.log("Docs built to #{doc_dir}.")
           step_context.log("Completed yard build.")
@@ -208,7 +208,7 @@ module Toys
           source_dir = step_context.output_dir(step_name)
           source_path = ::File.join(source_dir, "pkg", step_context.gem_package_name)
           unless ::File.file?(source_path)
-            step_context.exit_step("The output of step #{step_name} did not include a built gem at #{source_path}")
+            step_context.abort_pipeline("The output of step #{step_name} did not include a built gem at #{source_path}")
           end
           source_path
         end
@@ -222,9 +222,8 @@ module Toys
           step_context.log("Pushing gem: #{step_context.release_description}...")
           result = step_context.utils.exec(["gem", "push", pkg_path], out: [:child, :err])
           unless result.success?
-            step_context.exit_step(
-              "Rubygems push failed for #{step_context.release_description}. Check the logs for details."
-            )
+            step_context.abort_pipeline("Rubygems push failed for #{step_context.release_description}." \
+                                        " Check the logs for details.")
           end
           step_context.add_success("Rubygems push for #{step_context.release_description}.")
           step_context.log("Gem push successful.")
@@ -271,7 +270,7 @@ module Toys
           gh_pages_dir = step_context.repository.checkout_separate_dir(
             branch: "gh-pages", remote: step_context.git_remote, dir: step_context.temp_dir, gh_token: gh_token
           )
-          step_context.exit_step("Unable to access the gh-pages branch.") unless gh_pages_dir
+          step_context.abort_pipeline("Unable to access the gh-pages branch.") unless gh_pages_dir
           step_context.log("Checked out gh-pages")
           gh_pages_dir
         end
@@ -289,7 +288,7 @@ module Toys
           step_name = source_step(step_context)
           source_dir = ::File.join(step_context.output_dir(step_name), "doc")
           unless ::File.directory?(source_dir)
-            step_context.exit_step("The output of step #{step_name} did not include built docs at #{source_dir}")
+            step_context.abort_pipeline("The output of step #{step_name} did not include built docs at #{source_dir}")
           end
           ::FileUtils.mkdir_p(::File.dirname(dest_dir))
           ::FileUtils.cp_r(source_dir, dest_dir)
@@ -304,7 +303,7 @@ module Toys
           ::File.write(path, content)
         end
 
-        def push_docs_to_git(step_context, gh_pages_dir) # rubocop:disable Metrics/AbcSize
+        def push_docs_to_git(step_context, gh_pages_dir)
           ::Dir.chdir(gh_pages_dir) do
             step_context.repository.git_commit("Generated docs for #{step_context.release_description}",
                                                signoff: step_context.repository.settings.signoff_commits?)
@@ -315,8 +314,8 @@ module Toys
               result = step_context.utils.exec(["git", "push", step_context.git_remote, "gh-pages"],
                                                out: [:child, :err])
               unless result.success?
-                step_context.exit_step("Docs publication failed for #{step_context.release_description}." \
-                                       " Check the logs for details.")
+                step_context.abort_pipeline("Docs publication failed for #{step_context.release_description}." \
+                                            " Check the logs for details.")
               end
               step_context.add_success("Published documentation for #{step_context.release_description}.")
               step_context.log("Documentation publish successful.")
@@ -358,7 +357,7 @@ module Toys
           step_context.log("GitHub tag #{tag_name} has not yet been created.")
         end
 
-        def push_tag(step_context) # rubocop:disable Metrics/AbcSize
+        def push_tag(step_context)
           tag_name = step_context.tag_name
           repo_path = step_context.repository.settings.repo_path
           step_context.log("Creating GitHub release #{tag_name}...")
@@ -377,7 +376,7 @@ module Toys
                    "-H", "Accept: application/vnd.github.v3+json"]
             result = step_context.utils.exec(cmd, in: [:string, body], out: :null)
             unless result.success?
-              step_context.exit_step("Unable to create release #{tag_name}. Check the logs for details.")
+              step_context.abort_pipeline("Unable to create release #{tag_name}. Check the logs for details.")
             end
             step_context.add_success("Created release with tag #{tag_name} on GitHub.")
             step_context.log("GitHub release successful.")

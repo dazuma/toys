@@ -145,9 +145,9 @@ describe Toys::Release::Pipeline do
 
   it "marks a step as runnable when declared as an input" do
     step1 = pipeline.add_step(make_step_settings)
-    step2 = pipeline.add_step(make_step_settings(
-      {"name" => "step2", "type" => "noop", "run" => true, "inputs" => [{"name" => "noop"}]}
-    ))
+    step2 = pipeline.add_step(
+      make_step_settings({"name" => "step2", "type" => "noop", "run" => true, "inputs" => [{"name" => "noop"}]})
+    )
     pipeline.resolve_run
     assert(step1.will_run?)
     assert(step2.will_run?)
@@ -251,17 +251,9 @@ describe Toys::Release::Pipeline do
       assert_equal("Stopped early", ex.message)
     end
 
-    it "exits a step with abort flag" do
-      step = pipeline.add_step(make_step_settings)
-      ex = assert_raises(Toys::Release::Pipeline::AbortingExit) do
-        step.exit_step("Aborted pipeline", abort_pipeline: true)
-      end
-      assert_equal("Aborted pipeline", ex.message)
-    end
-
     it "aborts the pipeline" do
       step = pipeline.add_step(make_step_settings)
-      ex = assert_raises(Toys::Release::Pipeline::AbortingExit) do
+      ex = assert_raises(Toys::Release::Pipeline::PipelineExit) do
         step.abort_pipeline("Aborted pipeline 2")
       end
       assert_equal("Aborted pipeline 2", ex.message)
@@ -272,7 +264,7 @@ describe Toys::Release::Pipeline do
       assert_equal("val1", step.option("opt1"))
       assert_nil(step.option("opt3"))
       assert_equal("val3", step.option("opt3", default: "val3"))
-      assert_raises(Toys::Release::Pipeline::AbortingExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         step.option("opt3", required: true)
       end
     end

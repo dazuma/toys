@@ -96,7 +96,7 @@ module Toys
           @separate_tool_stubs = {}
           @prevent_real_exec_prefixes = []
           self.logger = ::Logger.new(@log_io)
-          self.logger.level = ::Logger::INFO
+          logger.level = ::Logger::INFO
           self.allow_passthru_exec = allow_passthru_exec
           self.context_directory = context_directory || REPO_DIR
           self.repo_root_directory = REPO_DIR
