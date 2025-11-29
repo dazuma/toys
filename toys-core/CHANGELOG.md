@@ -1,5 +1,9 @@
 # Release History
 
+### v0.17.2 / 2025-11-29
+
+* FIXED: Minor formatting fix in the gem install prompt
+
 ### v0.17.1 / 2025-11-07
 
 * FIXED: Rolled back dependency on the logger gem because it is causing some issues with bundler integration
