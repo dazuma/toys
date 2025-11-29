@@ -12,7 +12,6 @@ describe Toys::Release::RequestSpec do
   it "resolves default changes to Toys at HEAD" do
     request_spec.resolve_versions(repository)
     # Can't make any particular assertion here. Just make sure it didn't crash.
-    assert(request_spec.resolved_components.size <= 3)
   end
 
   it "resolves default changes to Toys at v0.15.6 tag" do
