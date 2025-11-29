@@ -250,7 +250,7 @@ module Toys
       end
 
       def gem_requirements_text(name, requirements)
-        "#{name.inspect}, #{requirements.map(&:inspect).join(', ')}"
+        ([name] + requirements).map(&:inspect).join(", ")
       end
 
       def confirm_and_install_gem(name, requirements)
