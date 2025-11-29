@@ -78,7 +78,7 @@ module Toys
       # @return [String] Absolute path to the repo root directory
       #
       def repo_root_directory
-        @repo_root ||= capture(["git", "rev-parse", "--show-toplevel"], chdir: context_directory).strip
+        @repo_root_directory ||= capture(["git", "rev-parse", "--show-toplevel"], chdir: context_directory).strip
       end
 
       ##

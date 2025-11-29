@@ -21,7 +21,7 @@ module Toys
       # the pipeline should be aborted.
       # @private
       #
-      class AbortingExit < ::StandardError
+      class PipelineExit < ::StandardError
       end
 
       ##
@@ -35,10 +35,10 @@ module Toys
           type_name = step_settings.type
           type_name = type_name.upcase unless type_name =~ /^[A-Z]/
           @step_impl = begin
-                         ::Toys::Release::Steps.const_get(type_name)
-                       rescue ::NameError
-                         pipeline.repository.utils.error("Unknown step type: #{type_name}")
-                       end
+            ::Toys::Release::Steps.const_get(type_name)
+          rescue ::NameError
+            pipeline.repository.utils.error("Unknown step type: #{type_name}")
+          end
           @step_impl = @step_impl.new if @step_impl.is_a?(::Class)
           @will_run = false
         end
@@ -174,11 +174,10 @@ module Toys
         # If an error message is given, it is added to the error stream.
         #
         # @param error_message [String] Optional error message
-        # @param abort_pipeline [boolean] Abort the pipeline if true
         #
-        def exit_step(error_message = nil, abort_pipeline: false)
+        def exit_step(error_message = nil)
           utils.error(error_message) if error_message
-          raise (abort_pipeline ? AbortingExit : StepExit), error_message
+          raise StepExit, error_message
         end
 
         ##
@@ -189,7 +188,7 @@ module Toys
         #
         def abort_pipeline(error_message)
           utils.error(error_message)
-          raise AbortingExit, error_message
+          raise PipelineExit, error_message
         end
 
         ##
@@ -297,12 +296,12 @@ module Toys
 
         # @private
         def primary?
-          @step_impl&.respond_to?(:primary?) && @step_impl.primary?(self)
+          @step_impl.respond_to?(:primary?) && @step_impl.primary?(self)
         end
 
         # @private
         def dependencies
-          if @step_impl&.respond_to?(:dependencies)
+          if @step_impl.respond_to?(:dependencies)
             Array(@step_impl.dependencies(self))
           else
             []
@@ -311,7 +310,7 @@ module Toys
 
         # @private
         def run!
-          @step_impl.run(self) if @step_impl&.respond_to?(:run)
+          @step_impl.run(self) if @step_impl.respond_to?(:run)
         end
       end
 
@@ -389,9 +388,9 @@ module Toys
           rescue StepExit => e
             @utils.log("Exited step #{step.name}: #{e.message}")
             # Continue
-          rescue AbortingExit => e
+          rescue PipelineExit => e
             @utils.log("Aborted pipeline: #{e.message}")
-            return
+            return nil
           end
         end
       end
@@ -432,7 +431,7 @@ module Toys
           dep_index = @steps[...index].find_index { |item| item.name == input_settings.step_name }
           unless dep_index
             @utils.error("Input dependency #{input_settings.name} not found before step #{step.name}")
-            return
+            return nil
           end
           @utils.log("Step #{@steps[dep_index].name} requested as a depeendency of #{step.name}")
           mark_step_index(dep_index)
@@ -441,7 +440,7 @@ module Toys
           dep_index = @steps[...index].find_index { |item| item.name == dep_name }
           unless dep_index
             @utils.error("Dependency #{dep_name} not found before step #{step.name}")
-            return
+            return nil
           end
           @utils.log("Step #{dep_name} requested as a depeendency of #{step.name}")
           mark_step_index(dep_index)

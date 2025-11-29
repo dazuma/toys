@@ -50,18 +50,8 @@ describe Toys::Release::Steps do
 
     it "runs a failing tool" do
       fake_tool_context.stub_separate_tool(["sample-tool-failure"], result_code: 1, output: "Tool run failed.")
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         Toys::Release::Steps::TOOL.run(make_context(["sample-tool-failure"]))
-      end
-      assert_includes(fake_tool_context.console_output, "Tool run failed.")
-      assert_includes(fake_tool_context.console_output,
-                      "Tool failed: [\"sample-tool-failure\"]. Check the logs for details.")
-    end
-
-    it "runs a failing tool and aborts the pipeline" do
-      fake_tool_context.stub_separate_tool(["sample-tool-failure"], result_code: 1, output: "Tool run failed.")
-      assert_raises(Toys::Release::Pipeline::AbortingExit) do
-        Toys::Release::Steps::TOOL.run(make_context(["sample-tool-failure"], abort_pipeline_on_error: true))
       end
       assert_includes(fake_tool_context.console_output, "Tool run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -84,18 +74,8 @@ describe Toys::Release::Steps do
 
     it "runs a failing command" do
       fake_tool_context.stub_exec(["command-failure"], result_code: 1, output: "Command run failed.")
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         Toys::Release::Steps::COMMAND.run(make_context(["command-failure"]))
-      end
-      assert_includes(fake_tool_context.console_output, "Command run failed.")
-      assert_includes(fake_tool_context.console_output,
-                      "Command failed: [\"command-failure\"]. Check the logs for details.")
-    end
-
-    it "runs a failing command and aborts the pipeline" do
-      fake_tool_context.stub_exec(["command-failure"], result_code: 1, output: "Command run failed.")
-      assert_raises(Toys::Release::Pipeline::AbortingExit) do
-        Toys::Release::Steps::COMMAND.run(make_context(["command-failure"], abort_pipeline_on_error: true))
       end
       assert_includes(fake_tool_context.console_output, "Command run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -241,7 +221,7 @@ describe Toys::Release::Steps do
     it "aborts dry run if the package file cannot be found" do
       stub_version_check(false)
       step_context = make_context(dry_run: true)
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       end
       assert_empty(performer_result.successes)
@@ -271,7 +251,7 @@ describe Toys::Release::Steps do
       make_dummy_pkg
       fake_tool_context.stub_exec(["gem", "push", pkg_path], result_code: 1)
       step_context = make_context(dry_run: false)
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       end
       assert_empty(performer_result.successes)
@@ -358,7 +338,7 @@ describe Toys::Release::Steps do
       make_dummy_docs
       step_context = make_context(dry_run: false)
       fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"], result_code: 1)
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         capture_subprocess_io do
           ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
         end
@@ -429,7 +409,7 @@ describe Toys::Release::Steps do
       stub_version_check(false)
       step_context = make_context(dry_run: false)
       stub_release_creation(1)
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+      assert_raises(Toys::Release::Pipeline::PipelineExit) do
         ::Toys::Release::Steps::RELEASE_GITHUB.run(step_context)
       end
       assert_empty(performer_result.successes)

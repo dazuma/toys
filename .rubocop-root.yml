@@ -4,7 +4,6 @@ AllCops:
   Include:
     - ".toys/**/*.rb"
     - ".toys/**/.toys.rb"
-    - ".toys/**/.lib/**/*.rb"
     - "common-tools/**/*.rb"
     - "common-tools/**/.toys.rb"
     - "common-tools/**/.lib/*.rb"

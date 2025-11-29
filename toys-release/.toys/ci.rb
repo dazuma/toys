@@ -15,7 +15,7 @@ expand("toys-ci") do |toys_ci|
   toys_ci.job("Bundle", flag: :bundle,
               exec: ["bundle", "update"])
   toys_ci.job("Rubocop", flag: :rubocop,
-              tool: ["rubocop"],)
+              tool: ["rubocop"])
   toys_ci.job("Tests", flag: :test,
               tool: ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"])
   toys_ci.job("Yardoc generation", flag: :yard,

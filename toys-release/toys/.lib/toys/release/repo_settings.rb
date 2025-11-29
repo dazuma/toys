@@ -763,8 +763,7 @@ module Toys
         after = steps
         case info
         when ::Hash
-          before_name = info["before"]
-          if before_name
+          if (before_name = info["before"])
             before_index = steps.find_index { |step| step.name == before_name }
             if before_index
               before = steps[...before_index]
@@ -773,8 +772,7 @@ module Toys
               @errors << "Unable to find step named #{before_name} in prepend_steps.before"
             end
           end
-          steps_info = info["steps"]
-          if steps_info.is_a?(::Array)
+          if (steps_info = info["steps"]).is_a?(::Array)
             insert = read_steps(steps_info)
           else
             @errors << "steps expected in prepend_steps"
@@ -794,18 +792,16 @@ module Toys
         after = []
         case info
         when ::Hash
-          after_name = info["after"]
-          if after_name
+          if (after_name = info["after"])
             after_index = steps.find_index { |step| step.name == after_name }
             if after_index
               before = steps[..after_index]
-              after = steps[(after_index+1)..]
+              after = steps[(after_index + 1)..]
             else
               @errors << "Unable to find step named #{after_name} in append_steps.after"
             end
           end
-          steps_info = info["steps"]
-          if steps_info.is_a?(::Array)
+          if (steps_info = info["steps"]).is_a?(::Array)
             insert = read_steps(steps_info)
           else
             @errors << "steps expected in append_steps"
@@ -836,7 +832,7 @@ module Toys
       DEFAULT_MAIN_BRAMCH = "main"
       private_constant :DEFAULT_MAIN_BRAMCH
 
-      DEFAULT_RELEASE_COMMIT_TAGS = ::YAML.load(<<~STRING)
+      DEFAULT_RELEASE_COMMIT_TAGS = ::YAML.load(<<~STRING) # rubocop:disable Security/YAMLLoad
         - tag: feat
           header: ADDED
           semver: minor
@@ -846,7 +842,7 @@ module Toys
       STRING
       private_constant :DEFAULT_RELEASE_COMMIT_TAGS
 
-      DEFAULT_STEPS = ::YAML.load(<<~STRING)
+      DEFAULT_STEPS = ::YAML.load(<<~STRING) # rubocop:disable Security/YAMLLoad
         component:
           - name: release_github
         gem:
