@@ -2,12 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/environment_utils"
-require "toys/release/repository"
-require "toys/release/repo_settings"
-require "toys/release/request_logic"
-require "toys/release/request_spec"
-
 describe Toys::Release::RequestLogic do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context) }

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "toys/utils/gems"
 
 module Toys
   module Release
@@ -9,294 +10,66 @@ module Toys
     #
     module Steps
       ##
-      # Entrypoint for running a step.
+      # The interface that steps must implement.
       #
-      # @param type [String] Name of the step class
-      # @param name [String,nil] An optional unique name for the step
-      # @param options [Hash{String=>String}] Options to pass to the step
-      # @param repository [Toys::Release::Repository]
-      # @param component [Toys::Release::Component] The component to release
-      # @param version [Gem::Version] The version to release
-      # @param artifact_dir [Toys::Release::ArtifactDir]
-      # @param dry_run [boolean] Whether to do a dry run release
-      # @param git_remote [String] The git remote to push gh-pages to
+      # This module is primarily for documentation. It need not actually be
+      # included in a step implementation.
       #
-      # @return [:continue] if the step finished and the next step should run
-      # @return [:abort] if the pipeline should be aborted
-      #
-      def self.run(type:, name:, options:,
-                   repository:, component:, version:, performer_result:,
-                   artifact_dir:, dry_run:, git_remote:)
-        step_class = nil
-        begin
-          step_class = const_get(type)
-        rescue ::NameError
-          repository.utils.error("Unknown step type: #{type}")
-          return
-        end
-        step = step_class.new(repository: repository, component: component, version: version,
-                              artifact_dir: artifact_dir, dry_run: dry_run, git_remote: git_remote,
-                              name: name, options: options, performer_result: performer_result)
-        begin
-          step.run
-          :continue
-        rescue StepExit
-          :continue
-        rescue AbortingExit
-          :abort
-        end
-      end
-
-      ##
-      # Internal exception signaling that the step should end immediately but
-      # the pipeline should continue.
-      # @private
-      #
-      class StepExit < ::StandardError
-      end
-
-      ##
-      # Internal exception signaling that the step should end immediately and
-      # the pipeline should be aborted.
-      # @private
-      #
-      class AbortingExit < ::StandardError
-      end
-
-      ##
-      # Base class for steps
-      #
-      class Base
+      module Interface
         ##
-        # Construct a base step.
-        # @private
+        # Whether this step is a primary step (i.e. always runs.)
         #
-        def initialize(repository:, component:, version:, performer_result:,
-                       artifact_dir:, dry_run:, git_remote:, name:, options:)
-          @repository = repository
-          @component = component
-          @release_version = version
-          @performer_result = performer_result
-          @artifact_dir = artifact_dir
-          @dry_run = dry_run
-          @git_remote = git_remote || "origin"
-          @utils = repository.utils
-          @repo_settings = repository.settings
-          @component_settings = component.settings
-          @name = name
-          @options = options
+        # @param step_context [Toys::Release::Pipeline::StepContext] Context
+        #     provided for the step
+        # @return [boolean]
+        #
+        def primary?(step_context)
+          raise "Unimplemented #{step_context}"
         end
 
         ##
-        # Get the option with the given key.
+        # Return the names of the standard dependencies of this step
         #
-        # @param key [String] Option name to fetch
-        # @param required [boolean] Whether to exit with an error if the option
-        #     is not set. Defaults to false, which instead returns the default.
-        # @param default [Object] Default value to return if the option is not
-        #     set and required is set to false.
+        # @param step_context [Toys::Release::Pipeline::StepContext] Context
+        #     provided for the step
+        # @return [Array<String>]
         #
-        # @return [Object] The option value
-        #
-        def option(key, required: false, default: nil)
-          value = @options[key]
-          if !value.nil?
-            value
-          elsif required
-            exit_step("Missing option: #{key.inspect} for step #{self.class} (name = #{name.inspect})")
-          else
-            default
-          end
+        def dependencies(step_context)
+          raise "Unimplemented #{step_context}"
         end
-
-        ##
-        # Exit the step immediately. If an error message is given, it is added
-        # to the error stream.
-        # Raises an error and not return.
-        #
-        # @param error_message [String] Optional error message
-        # @param abort_pipeline [boolean] Whether to abort the pipeline.
-        #     Default is false.
-        #
-        def exit_step(error_message = nil, abort_pipeline: false)
-          utils.error(error_message) if error_message
-          if abort_pipeline
-            raise AbortingExit
-          else
-            raise StepExit
-          end
-        end
-
-        ##
-        # Get the path to an artifact directory for this step.
-        #
-        # @param name [String] Optional name that can be used to point to the
-        #     same directory from multiple steps. If not specified, the step
-        #     name is used.
-        #
-        def artifact_dir(name = nil)
-          @artifact_dir.get(name || self.name)
-        end
-
-        ##
-        # Run any pre-tool configured using the `"pre_tool"` option.
-        # The option value must be an array of strings representing the command.
-        #
-        def pre_tool
-          cmd = option("pre_tool")
-          return unless cmd
-          utils.log("Running pre-build tool...")
-          result = utils.exec_separate_tool(cmd, out: [:child, :err])
-          unless result.success?
-            exit_step("Pre-build tool failed: #{cmd}. Check the logs for details.")
-          end
-          utils.log("Completed pre-build tool.")
-        end
-
-        ##
-        # Run any pre-command configured using the `"pre_command"` option.
-        # The option value must be an array of strings representing the command.
-        #
-        def pre_command
-          cmd = option("pre_command")
-          return unless cmd
-          utils.log("Running pre-build command...")
-          result = utils.exec(cmd, out: [:child, :err])
-          unless result.success?
-            exit_step("Pre-build command failed: #{cmd.inspect}. Check the logs for details.")
-          end
-          utils.log("Completed pre-build command.")
-        end
-
-        ##
-        # Clean any files not part of the git repository, unless the `"clean"`
-        # option is explicitly set to false.
-        #
-        def pre_clean
-          return if option("clean") == false
-          count = clean_gitignored(".")
-          utils.log("Cleaned #{count} gitignored items")
-        end
-
-        ##
-        # Check whether gh_pages is enabled for this component. If not enabled
-        # and the step requires it, exit the step.
-        #
-        # @param required [boolean] Force this step to require gh_pages. If
-        #     false, the `"require_gh_pages_enabled"` option can still specify
-        #     that the step requires gh_pages.
-        #
-        def check_gh_pages_enabled(required:)
-          if (required || option("require_gh_pages_enabled")) && !component_settings.gh_pages_enabled
-            utils.log("Skipping step #{name.inspect} because gh_pages is not enabled.")
-            exit_step
-          end
-        end
-
-        ##
-        # @return [boolean] Whether this step is being run in dry run mode
-        #
-        def dry_run?
-          @dry_run
-        end
-
-        ##
-        # @return [Toys::Release::Repository]
-        #
-        attr_reader :repository
-
-        ##
-        # @return [Toys::Release::Component]
-        #
-        attr_reader :component
-
-        ##
-        # @return [Toys::Release::RepoSettings]
-        #
-        attr_reader :repo_settings
-
-        ##
-        # @return [Toys::Release::ComponentSettings]
-        #
-        attr_reader :component_settings
-
-        ##
-        # @return [Toys::Release::EnvironmentUtils]
-        #
-        attr_reader :utils
-
-        ##
-        # @return [Gem::Version]
-        #
-        attr_reader :release_version
-
-        ##
-        # @return [Toys::Release::Performer::Result]
-        #
-        attr_reader :performer_result
-
-        ##
-        # @return [String]
-        #
-        attr_reader :name
-
-        ##
-        # @return [String]
-        #
-        attr_reader :git_remote
 
         ##
         # Run the step.
-        # This method must be overridden in a subclass.
         #
-        def run
-          raise "Cannot run base step"
-        end
-
-        private
-
-        def clean_gitignored(dir)
-          count = 0
-          children = dir_children(dir)
-          result = utils.exec(["git", "check-ignore", "--stdin"], in: :controller, out: :capture) do |controller|
-            children.each { |child| controller.in.puts(child) }
-          end
-          result.captured_out.split("\n").each do |path|
-            ::FileUtils.rm_rf(path)
-            utils.log("Cleaning: #{path}")
-            count += 1
-          end
-          dir_children(dir).each do |child|
-            count += clean_gitignored(child) if ::File.directory?(child)
-          end
-          count
-        end
-
-        def dir_children(dir)
-          ::Dir.entries(dir)
-               .grep_v(/^\.\.?$/)
-               .sort
-               .map { |entry| ::File.join(dir, entry) }
+        # @param step_context [Toys::Release::Pipeline::StepContext] Context
+        #     provided for the step
+        #
+        def run(step_context)
+          raise "Unimplemented #{step_context}"
         end
       end
+
+      ##
+      # A step that does nothing.
+      #
+      NOOP = ::Object.new
 
       ##
       # A step that runs a toys tool.
       # The tool must be specified as a string array in the `"tool"` option.
       #
-      class Tool < Base
-        ##
-        # Run this step
-        #
-        def run
-          tool = Array(option("tool", required: true))
-          utils.log("Running tool #{tool.inspect}...")
-          result = utils.exec_separate_tool(tool, out: [:child, :err])
+      TOOL = ::Object.new
+      class << TOOL
+        # @private
+        def run(step_context)
+          tool = Array(step_context.option("tool", required: true))
+          step_context.log("Running tool #{tool.inspect}...")
+          result = step_context.utils.exec_separate_tool(tool, out: [:child, :err])
           unless result.success?
-            exit_step("Tool failed: #{tool.inspect}. Check the logs for details.",
-                      abort_pipeline: option("abort_pipeline_on_error"))
+            step_context.exit_step("Tool failed: #{tool.inspect}. Check the logs for details.",
+                                   abort_pipeline: step_context.option("abort_pipeline_on_error"))
           end
-          utils.log("Completed tool")
+          step_context.log("Completed tool")
         end
       end
 
@@ -305,33 +78,33 @@ module Toys
       # The command must be specified as a string array in the `"command"`
       # option.
       #
-      class Command < Base
-        ##
-        # Run this step
-        #
-        def run
-          command = Array(option("command", required: true))
-          utils.log("Running command #{command.inspect}...")
-          result = utils.exec(command, out: [:child, :err])
+      COMMAND = ::Object.new
+      class << COMMAND
+        # @private
+        def run(step_context)
+          command = Array(step_context.option("command", required: true))
+          step_context.log("Running command #{command.inspect}...")
+          result = step_context.utils.exec(command, out: [:child, :err])
           unless result.success?
-            exit_step("Command failed: #{command.inspect}. Check the logs for details.",
-                      abort_pipeline: option("abort_pipeline_on_error"))
+            step_context.exit_step("Command failed: #{command.inspect}. Check the logs for details.",
+                                   abort_pipeline: step_context.option("abort_pipeline_on_error"))
           end
-          utils.log("Completed command")
+          step_context.log("Completed command")
         end
       end
 
       ##
       # A step that runs bundler
       #
-      class Bundle < Base
-        ##
-        # Run this step
-        #
-        def run
-          utils.log("Running bundler for #{component.name} ...")
+      BUNDLE = ::Object.new
+      class << BUNDLE
+        # @private
+        def run(step_context)
+          component = step_context.component
+          step_context.log("Running bundler for #{component.name} ...")
           component.bundle
-          utils.log("Completed bundler for #{component.name}")
+          step_context.log("Completed bundler for #{component.name}")
+          step_context.copy_to_output(source_path: "Gemfile.lock")
         end
       end
 
@@ -340,22 +113,23 @@ module Toys
       # artifact directory. This step can also run a pre_command and/or a
       # pre_tool.
       #
-      class BuildGem < Base
-        ##
-        # Run this step
-        #
-        def run
-          pre_clean
-          utils.log("Building gem: #{component.name} #{release_version}...")
-          pre_command
-          pre_tool
-          pkg_path = ::File.join(artifact_dir, "#{component.name}-#{release_version}.gem")
-          result = utils.exec(["gem", "build", "#{component.name}.gemspec", "-o", pkg_path], out: [:child, :err])
+      BUILD_GEM = ::Object.new
+      class << BUILD_GEM
+        # @private
+        def run(step_context)
+          step_context.log("Building gem: #{step_context.release_description}...")
+          pkg_dir = ::File.join(step_context.output_dir, "pkg")
+          ::FileUtils.mkdir_p(pkg_dir)
+          pkg_path = ::File.join(pkg_dir, step_context.gem_package_name)
+          result = step_context.utils.exec(
+            ["gem", "build", "#{step_context.component.name}.gemspec", "-o", pkg_path],
+            out: [:child, :err]
+          )
           unless result.success?
-            exit_step("Gem build failed for #{component.name} #{release_version}. Check the logs for details.")
+            step_context.exit_step("Gem build failed for #{step_context.release_description}. Check the logs for details.")
           end
-          utils.log("Gem built to #{pkg_path}.")
-          utils.log("Completed gem build.")
+          step_context.log("Gem built to #{pkg_path}.")
+          step_context.log("Completed gem build.")
         end
       end
 
@@ -364,26 +138,24 @@ module Toys
       # the step's artifact directory. This step can also run a pre_command
       # and/or a pre_tool.
       #
-      class BuildYard < Base
-        ##
-        # Run this step
-        #
-        def run
-          check_gh_pages_enabled(required: false)
-          pre_clean
-          utils.log("Building yard: #{component.name} #{release_version}...")
-          pre_command
-          pre_tool
-          ::FileUtils.rm_rf(".yardoc")
-          ::FileUtils.rm_rf("doc")
-          result = utils.exec(["bundle", "exec", "yard", "doc"], out: [:child, :err])
-          if !result.success? || !::File.directory?("doc")
-            exit_step("Yard build failed for #{component.name} #{release_version}. Check the logs for details.")
+      BUILD_YARD = ::Object.new
+      class << BUILD_YARD
+        # @private
+        def run(step_context)
+          step_context.log("Building yard: #{step_context.release_description}...")
+          doc_dir = ::File.join(step_context.output_dir, "doc")
+          ::Toys::Utils::Gems.activate("yard")
+          code = <<~CODE
+            gem 'yard'
+            require 'yard'
+            ::YARD::CLI::Yardoc.run("--no-cache", "-o", "#{doc_dir}")
+          CODE
+          result = step_context.utils.ruby(code, out: [:child, :err])
+          if !result.success? || !::File.directory?(doc_dir)
+            step_context.exit_step("Yard build failed for #{step_context.release_description}. Check the logs for details.")
           end
-          dest_path = ::File.join(artifact_dir, "doc")
-          ::FileUtils.mv("doc", dest_path)
-          utils.log("Docs built to #{dest_path}.")
-          utils.log("Completed yard build.")
+          step_context.log("Docs built to #{doc_dir}.")
+          step_context.log("Completed yard build.")
         end
       end
 
@@ -392,51 +164,70 @@ module Toys
       # `"input"` option provides the name of the artifact directory containing
       # the built gem.
       #
-      class ReleaseGem < Base
-        ##
-        # Run this step
-        #
-        def run
-          check_existence
-          if dry_run?
-            push_dry_run
+      RELEASE_GEM = ::Object.new
+      class << RELEASE_GEM
+        # @private
+        def primary?(_step_context)
+          true
+        end
+
+        # @private
+        def dependencies(step_context)
+          [source_step(step_context)]
+        end
+
+        # @private
+        def run(step_context)
+          check_existence(step_context)
+          pkg_path = find_package(step_context)
+          if step_context.dry_run?
+            push_dry_run(step_context)
           else
-            push_gem
+            push_gem(step_context, pkg_path)
           end
         end
 
         private
 
-        def check_existence
-          utils.log("Checking whether #{component.name} #{release_version} already exists...")
-          if component.version_released?(release_version)
-            utils.warning("Gem already pushed for #{component.name} #{release_version}. Skipping.")
-            performer_result.successes << "Gem already pushed for #{component.name} #{release_version}"
-            exit_step
-          end
-          utils.log("Gem has not yet been released.")
+        def source_step(step_context)
+          step_context.option("source", default: "build_gem")
         end
 
-        def push_dry_run
-          unless ::File.file?(pkg_path)
-            exit_step("DRY RUN: Package not found at #{pkg_path}")
+        def check_existence(step_context)
+          step_context.log("Checking whether #{step_context.release_description} already exists...")
+          if step_context.component.version_released?(step_context.release_version)
+            step_context.warning("Gem already pushed for #{step_context.release_description}. Skipping.")
+            step_context.add_success("Gem already pushed for #{step_context.release_description}")
+            step_context.exit_step
           end
-          performer_result.successes << "DRY RUN Rubygems push for #{component.name} #{release_version}."
-          utils.log("DRY RUN: Gem not actually pushed to Rubygems.")
+          step_context.log("Gem has not yet been released.")
         end
 
-        def push_gem
-          utils.log("Pushing gem: #{component.name} #{release_version}...")
-          result = utils.exec(["gem", "push", pkg_path], out: [:child, :err])
+        def find_package(step_context)
+          step_name = source_step(step_context)
+          source_dir = step_context.output_dir(step_name)
+          source_path = ::File.join(source_dir, "pkg", step_context.gem_package_name)
+          unless ::File.file?(source_path)
+            step_context.exit_step("The output of step #{step_name} did not include a built gem at #{source_path}")
+          end
+          source_path
+        end
+
+        def push_dry_run(step_context)
+          step_context.add_success("DRY RUN Rubygems push for #{step_context.release_description}.")
+          step_context.log("DRY RUN: Gem not actually pushed to Rubygems.")
+        end
+
+        def push_gem(step_context, pkg_path)
+          step_context.log("Pushing gem: #{step_context.release_description}...")
+          result = step_context.utils.exec(["gem", "push", pkg_path], out: [:child, :err])
           unless result.success?
-            exit_step("Rubygems push failed for #{component.name} #{release_version}. Check the logs for details.")
+            step_context.exit_step(
+              "Rubygems push failed for #{step_context.release_description}. Check the logs for details."
+            )
           end
-          performer_result.successes << "Rubygems push for #{component.name} #{release_version}."
-          utils.log("Gem push successful.")
-        end
-
-        def pkg_path
-          @pkg_path ||= ::File.join(artifact_dir(option("input")), "#{component.name}-#{release_version}.gem")
+          step_context.add_success("Rubygems push for #{step_context.release_description}.")
+          step_context.log("Gem push successful.")
         end
       end
 
@@ -445,134 +236,152 @@ module Toys
       # BuildYard. The `"input"` option provides the name of the artifact
       # directory containing the built documentation.
       #
-      class PushGhPages < Base
-        ##
-        # Run this step
-        #
-        def run
-          check_gh_pages_enabled(required: true)
-          setup_gh_pages_dir
-          check_existence
-          copy_docs_dir
-          update_docs_404_page
-          push_docs_to_git
+      PUSH_GH_PAGES = ::Object.new
+      class << PUSH_GH_PAGES
+        # @private
+        def primary?(step_context)
+          step_context.component.settings.gh_pages_enabled
+        end
+
+        # @private
+        def dependencies(step_context)
+          [source_step(step_context)]
+        end
+
+        # @private
+        def run(step_context)
+          gh_pages_dir = setup_gh_pages_dir(step_context)
+          component_dir = ::File.expand_path(step_context.component.settings.gh_pages_directory, gh_pages_dir)
+          dest_dir = ::File.join(component_dir, "v#{step_context.release_version}")
+          check_existence(step_context, dest_dir)
+          copy_docs_dir(step_context, dest_dir)
+          update_docs_404_page(step_context, gh_pages_dir)
+          push_docs_to_git(step_context, gh_pages_dir)
         end
 
         private
 
-        def setup_gh_pages_dir
-          utils.log("Setting up gh-pages access ...")
+        def source_step(step_context)
+          step_context.option("source", default: "build_yard")
+        end
+
+        def setup_gh_pages_dir(step_context)
+          step_context.log("Setting up gh-pages access ...")
           gh_token = ::ENV["GITHUB_TOKEN"]
-          @gh_pages_dir = repository.checkout_separate_dir(
-            branch: "gh-pages", remote: git_remote, dir: artifact_dir("gh-pages"), gh_token: gh_token
+          gh_pages_dir = step_context.repository.checkout_separate_dir(
+            branch: "gh-pages", remote: step_context.git_remote, dir: step_context.temp_dir, gh_token: gh_token
           )
-          exit_step("Unable to access the gh-pages branch.") unless @gh_pages_dir
-          utils.log("Checked out gh-pages")
+          step_context.exit_step("Unable to access the gh-pages branch.") unless gh_pages_dir
+          step_context.log("Checked out gh-pages")
+          gh_pages_dir
         end
 
-        def check_existence
+        def check_existence(step_context, dest_dir)
           if ::File.directory?(dest_dir)
-            utils.warning("Docs already published for #{component.name} #{release_version}. Skipping.")
-            performer_result.successes << "Docs already published for #{component.name} #{release_version}"
-            exit_step
+            step_context.warning("Docs already published for #{step_context.release_description}. Skipping.")
+            step_context.add_success("Docs already published for #{step_context.release_description}")
+            step_context.exit_step
           end
-          utils.log("Verified docs not yet published for #{component.name} #{release_version}")
+          step_context.log("Verified docs not yet published for #{step_context.release_description}")
         end
 
-        def copy_docs_dir
-          from_dir = ::File.join(artifact_dir(option("input")), "doc")
-          ::FileUtils.mkdir_p(component_dir)
-          ::FileUtils.cp_r(from_dir, dest_dir)
+        def copy_docs_dir(step_context, dest_dir)
+          step_name = source_step(step_context)
+          source_dir = ::File.join(step_context.output_dir(step_name), "doc")
+          unless ::File.directory?(source_dir)
+            step_context.exit_step("The output of step #{step_name} did not include built docs at #{source_dir}")
+          end
+          ::FileUtils.mkdir_p(::File.dirname(dest_dir))
+          ::FileUtils.cp_r(source_dir, dest_dir)
         end
 
-        def update_docs_404_page
-          path = ::File.join(@gh_pages_dir, "404.html")
+        def update_docs_404_page(step_context, gh_pages_dir)
+          path = ::File.join(gh_pages_dir, "404.html")
           content = ::File.read(path)
-          content.sub!(/#{component.settings.gh_pages_version_var} = "[\w.]+";/,
-                       "#{component.settings.gh_pages_version_var} = \"#{release_version}\";")
+          version_var = step_context.component.settings.gh_pages_version_var
+          content.sub!(/#{version_var} = "[\w.]+";/,
+                       "#{version_var} = \"#{step_context.release_version}\";")
           ::File.write(path, content)
         end
 
-        def push_docs_to_git # rubocop:disable Metrics/AbcSize
-          ::Dir.chdir(@gh_pages_dir) do
-            repository.git_commit("Generated docs for #{component.name} #{release_version}",
-                                  signoff: repository.settings.signoff_commits?)
-            if dry_run?
-              performer_result.successes << "DRY RUN documentation published for #{component.name} #{release_version}."
-              utils.log("DRY RUN: Documentation not actually published to gh-pages.")
+        def push_docs_to_git(step_context, gh_pages_dir) # rubocop:disable Metrics/AbcSize
+          ::Dir.chdir(gh_pages_dir) do
+            step_context.repository.git_commit("Generated docs for #{step_context.release_description}",
+                                               signoff: step_context.repository.settings.signoff_commits?)
+            if step_context.dry_run?
+              step_context.add_success("DRY RUN documentation published for #{step_context.release_description}.")
+              step_context.log("DRY RUN: Documentation not actually published to gh-pages.")
             else
-              result = utils.exec(["git", "push", git_remote, "gh-pages"], out: [:child, :err])
+              result = step_context.utils.exec(["git", "push", step_context.git_remote, "gh-pages"],
+                                               out: [:child, :err])
               unless result.success?
-                exit_step("Docs publication failed for #{component.name} #{release_version}." \
-                          " Check the logs for details.")
+                step_context.exit_step("Docs publication failed for #{step_context.release_description}." \
+                                       " Check the logs for details.")
               end
-              performer_result.successes << "Published documentation for #{component.name} #{release_version}."
-              utils.log("Documentation publish successful.")
+              step_context.add_success("Published documentation for #{step_context.release_description}.")
+              step_context.log("Documentation publish successful.")
             end
           end
-        end
-
-        def component_dir
-          @component_dir ||= ::File.expand_path(component.settings.gh_pages_directory, @gh_pages_dir)
-        end
-
-        def dest_dir
-          @dest_dir ||= ::File.join(component_dir, "v#{release_version}")
         end
       end
 
       ##
       # A step that creates a GitHub tag and release.
       #
-      class GitHubRelease < Base
-        ##
-        # Run this step
-        #
-        def run
-          check_existence
-          push_tag
+      RELEASE_GITHUB = ::Object.new
+      class << RELEASE_GITHUB
+        # @private
+        def primary?(_step_context)
+          true
+        end
+
+        # @private
+        def run(step_context)
+          check_existence(step_context)
+          push_tag(step_context)
         end
 
         private
 
-        def check_existence
-          utils.log("Checking whether #{tag_name} already exists...")
-          cmd = ["gh", "api", "repos/#{repo_settings.repo_path}/releases/tags/#{tag_name}",
+        def check_existence(step_context)
+          tag_name = step_context.tag_name
+          repo_path = step_context.repository.settings.repo_path
+          step_context.log("Checking whether #{tag_name} already exists...")
+          cmd = ["gh", "api", "repos/#{repo_path}/releases/tags/#{tag_name}",
                  "-H", "Accept: application/vnd.github.v3+json"]
-          result = utils.exec(cmd, out: :null, err: :null)
+          result = step_context.utils.exec(cmd, out: :null, err: :null)
           if result.success?
-            utils.warning("GitHub tag #{tag_name} already exists. Skipping.")
-            performer_result.successes << "GitHub tag #{tag_name} already exists."
-            exit_step
+            step_context.warning("GitHub tag #{tag_name} already exists. Skipping.")
+            step_context.add_success("GitHub tag #{tag_name} already exists.")
+            step_context.exit_step
           end
-          utils.log("GitHub tag #{tag_name} has not yet been created.")
+          step_context.log("GitHub tag #{tag_name} has not yet been created.")
         end
 
-        def push_tag # rubocop:disable Metrics/AbcSize
-          utils.log("Creating GitHub release #{tag_name}...")
-          changelog_content = component.changelog_file.read_and_verify_latest_entry(release_version)
-          release_sha = repository.current_sha
+        def push_tag(step_context) # rubocop:disable Metrics/AbcSize
+          tag_name = step_context.tag_name
+          repo_path = step_context.repository.settings.repo_path
+          step_context.log("Creating GitHub release #{tag_name}...")
+          changelog_file = step_context.component.changelog_file
+          changelog_content = changelog_file.read_and_verify_latest_entry(step_context.release_version)
+          release_sha = step_context.repository.current_sha
           body = ::JSON.dump(tag_name: tag_name,
                              target_commitish: release_sha,
-                             name: "#{component.name} #{release_version}",
+                             name: step_context.release_description,
                              body: changelog_content)
-          if dry_run?
-            performer_result.successes << "DRY RUN GitHub tag #{tag_name}."
-            utils.log("DRY RUN: GitHub tag #{tag_name} not actually created.")
+          if step_context.dry_run?
+            step_context.add_success("DRY RUN GitHub tag #{tag_name}.")
+            step_context.log("DRY RUN: GitHub tag #{tag_name} not actually created.")
           else
-            cmd = ["gh", "api", "repos/#{repo_settings.repo_path}/releases", "--input", "-",
+            cmd = ["gh", "api", "repos/#{repo_path}/releases", "--input", "-",
                    "-H", "Accept: application/vnd.github.v3+json"]
-            result = utils.exec(cmd, in: [:string, body], out: :null)
+            result = step_context.utils.exec(cmd, in: [:string, body], out: :null)
             unless result.success?
-              exit_step("Unable to create release #{tag_name}. Check the logs for details.")
+              step_context.exit_step("Unable to create release #{tag_name}. Check the logs for details.")
             end
-            performer_result.successes << "Created release with tag #{tag_name} on GitHub."
-            utils.log("GitHub release successful.")
+            step_context.add_success("Created release with tag #{tag_name} on GitHub.")
+            step_context.log("GitHub release successful.")
           end
-        end
-
-        def tag_name
-          "#{component.name}/v#{release_version}"
         end
       end
     end

@@ -14,6 +14,7 @@ module Toys
       ScopeInfo = ::Struct.new(:semver, :header)
 
       ##
+      # @private
       # Create a CommitTagSettings from either a tag name string (which will
       # default to patch releases) or a hash with fields.
       #
@@ -160,6 +161,7 @@ module Toys
     #
     class ComponentSettings
       ##
+      # @private
       # Create a ComponentSettings from input data structures
       #
       # @param info [Hash] Nested hash input
@@ -299,13 +301,134 @@ module Toys
     end
 
     ##
+    # Configuration of input settings for a step.
+    # An input declares a dependency on a step, and copies any files output by
+    # that dependency.
+    #
+    class InputSettings
+      ##
+      # @private
+      # Construct input settings
+      #
+      # @param info [Hash,String] Config data
+      #
+      def initialize(info)
+        @step_name = @dest = @source_path = @dest_path = nil
+        case info
+        when ::String
+          @step_name = info
+          @dest = "component"
+        when ::Hash
+          @step_name = info["name"]
+          @dest = info.fetch("dest", "component")
+          @dest = "none" if @dest == false
+          @source_path = info["source_path"]
+          @dest_path = info["dest_path"]
+        end
+      end
+
+      ##
+      # @return [String] Name of the step to copy data from.
+      #
+      attr_reader :step_name
+
+      ##
+      # @return [String,false] Where to copy data to. Possible values are
+      #     "component", "repo_root", "output", "temp", and "none". If "none",
+      #     no copying is performed and this input declares a dependency only.
+      #
+      attr_reader :dest
+
+      ##
+      # @return [String,nil] Path in the source to copy from. Can be a path to
+      #     a file or a directory. If nil, copy everything from the input.
+      #
+      attr_reader :source_path
+
+      ##
+      # @return [String,nil] Path in the destination to copy to, relative to
+      #     the destination. If nil, uses the source path.
+      #
+      attr_reader :dest_path
+
+      ##
+      # @return [Hash] the hash representation
+      #
+      def to_h
+        {
+          "name" => step_name,
+          "dest" => dest,
+          "source_path" => source_path,
+          "dest_path" => dest_path,
+        }
+      end
+    end
+
+    ##
+    # Configuration of output info for a step.
+    # An output automatically copies files from the repo directory to this
+    # step's output where they can be imported by another step.
+    #
+    class OutputSettings
+      ##
+      # @private
+      # Construct output settings
+      #
+      # @param info [Hash,String] Config data
+      #
+      def initialize(info)
+        @source = @source_path = @dest_path = nil
+        case info
+        when ::String
+          @source_path = info
+          @source = "component"
+        when ::Hash
+          @source = info.fetch("source", "component")
+          @source_path = info["source_path"]
+          @dest_path = info["dest_path"]
+        end
+      end
+
+      ##
+      # @return [String] Where to copy data from. Possible values are
+      #     "component", "repo_root", and "temp".
+      #
+      attr_reader :source
+
+      ##
+      # @return [String,nil] Path to copy from, relative to the source. Can be
+      #     a file or a directory. If nil, copy everything in the source.
+      #
+      attr_reader :source_path
+
+      ##
+      # @return [String,nil] Path in the step's output to copy to.
+      #     If nil, uses the source path.
+      #
+      attr_reader :dest_path
+
+      ##
+      # @return [Hash] the hash representation
+      #
+      def to_h
+        {
+          "source" => source,
+          "source_path" => source_path,
+          "dest_path" => dest_path,
+        }
+      end
+    end
+
+    ##
+    # @private
     # Configuration of a step
     #
     class StepSettings
-      def initialize(name, type, options)
-        @name = name
-        @type = type
-        @options = options
+      ##
+      # Create a StepSettings
+      #
+      def initialize(info)
+        from_h(info.dup)
       end
 
       ##
@@ -319,9 +442,39 @@ module Toys
       attr_reader :type
 
       ##
+      # @return [boolean] Whether this step is explicitly requested
+      #
+      def requested?
+        @requested
+      end
+
+      ##
+      # @return [Array<InputSettings>] Inputs for this step
+      #
+      attr_reader :inputs
+
+      ##
+      # @return [Array<OutputSettings>] Extra outputs for this step
+      #
+      attr_reader :outputs
+
+      ##
       # @return [Hash{String=>Object}] Options for this step
       #
       attr_reader :options
+
+      ##
+      # @return [Hash] the hash representation
+      #
+      def to_h
+        {
+          "name" => name,
+          "type" => type,
+          "run" => requested?,
+          "inputs" => inputs.map(&:to_h),
+          "outputs" => outputs.map(&:to_h),
+        }.merge(RepoSettings.deep_copy(options))
+      end
 
       ##
       # Make a deep copy
@@ -329,7 +482,21 @@ module Toys
       # @return [StepSettings] A deep copy
       #
       def deep_copy
-        StepSettings.new(name, type, RepoSettings.deep_copy(options))
+        StepSettings.new(to_h)
+      end
+
+      ##
+      # @private
+      # Initialize the step from the given hash.
+      # The hash will be deconstructed in place.
+      #
+      def from_h(info)
+        @type = info.delete("type") || info["name"] || "noop"
+        @name = info.delete("name") || "_anon_#{@type}_#{object_id}"
+        @requested = info.delete("run") ? true : false
+        @inputs = Array(info.delete("inputs")).map { |input_info| InputSettings.new(input_info) }
+        @outputs = Array(info.delete("outputs")).map { |output_info| OutputSettings.new(output_info) }
+        @options = info
       end
     end
 
@@ -368,6 +535,7 @@ module Toys
       end
 
       ##
+      # @private
       # Create a repo configuration object.
       #
       # @param info [Hash] Configuration hash read from JSON.
@@ -378,7 +546,6 @@ module Toys
         @default_component_name = nil
         read_global_info(info)
         read_label_info(info)
-        read_commit_lint_info(info)
         read_commit_tag_info(info)
         read_default_step_info(info)
         read_component_info(info)
@@ -453,18 +620,6 @@ module Toys
       attr_reader :gh_pages_enabled
 
       ##
-      # @return [Array<String>] The merge strategies allowed when linting
-      #     commit messages.
-      #
-      attr_reader :commit_lint_merge
-
-      ##
-      # @return [Array<String>] The allowed conventional commit types when
-      #     linting commit messages.
-      #
-      attr_reader :commit_lint_allowed_types
-
-      ##
       # @return [Hash{String=>CommitTagSettings}] The conventional commit types
       #     recognized as release-triggering, along with the type of change they
       #     map to.
@@ -536,21 +691,6 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether conventional commit linting errors should fail
-      #     GitHub checks.
-      #
-      def commit_lint_fail_checks?
-        @commit_lint_fail_checks
-      end
-
-      ##
-      # @return [boolean] Whether to perform conventional commit linting.
-      #
-      def commit_lint_active?
-        @commit_lint_active
-      end
-
-      ##
       # @return [Array<String>] A list of all component names.
       #
       def all_component_names
@@ -587,18 +727,7 @@ module Toys
 
       # @private
       def read_steps(info)
-        steps = []
-        info.each do |step_info|
-          step_info = step_info.dup
-          name = step_info.delete("name")
-          type = step_info.delete("type")
-          if type
-            steps << StepSettings.new(name, type, step_info)
-          else
-            @errors << "No step type provided for step #{name.inspect}"
-          end
-        end
-        steps
+        info.map { |step_info| StepSettings.new(step_info) }
       end
 
       # @private
@@ -610,14 +739,15 @@ module Toys
           steps.each do |step|
             next if (mod_name && step.name != mod_name) || (mod_type && step.type != mod_type)
             count += 1
-            opts = step.options
+            modified_info = step.to_h
             mod_data.each do |key, value|
               if value.nil?
-                opts.delete(key)
+                modified_info.delete(key)
               else
-                opts[key] = value
+                modified_info[key] = value
               end
             end
+            step.from_h(modified_info)
           end
           if count.zero?
             @errors << "Unable to find step to modify for name=#{mod_name.inspect} and type=#{mod_type.inspect}."
@@ -628,14 +758,64 @@ module Toys
 
       # @private
       def prepend_steps(steps, info)
-        pre_steps = read_steps(info)
-        pre_steps + steps
+        before = []
+        insert = []
+        after = steps
+        case info
+        when ::Hash
+          before_name = info["before"]
+          if before_name
+            before_index = steps.find_index { |step| step.name == before_name }
+            if before_index
+              before = steps[...before_index]
+              after = steps[before_index..]
+            else
+              @errors << "Unable to find step named #{before_name} in prepend_steps.before"
+            end
+          end
+          steps_info = info["steps"]
+          if steps_info.is_a?(::Array)
+            insert = read_steps(steps_info)
+          else
+            @errors << "steps expected in prepend_steps"
+          end
+        when ::Array
+          insert = read_steps(info)
+        else
+          @errors << "prepend_steps expected a hash or array"
+        end
+        before + insert + after
       end
 
       # @private
       def append_steps(steps, info)
-        post_steps = read_steps(info)
-        steps + post_steps
+        before = steps
+        insert = []
+        after = []
+        case info
+        when ::Hash
+          after_name = info["after"]
+          if after_name
+            after_index = steps.find_index { |step| step.name == after_name }
+            if after_index
+              before = steps[..after_index]
+              after = steps[(after_index+1)..]
+            else
+              @errors << "Unable to find step named #{after_name} in append_steps.after"
+            end
+          end
+          steps_info = info["steps"]
+          if steps_info.is_a?(::Array)
+            insert = read_steps(steps_info)
+          else
+            @errors << "steps expected in append_steps"
+          end
+        when ::Array
+          insert = read_steps(info)
+        else
+          @errors << "append_steps expected a hash or array"
+        end
+        before + insert + after
       end
 
       # @private
@@ -656,57 +836,28 @@ module Toys
       DEFAULT_MAIN_BRAMCH = "main"
       private_constant :DEFAULT_MAIN_BRAMCH
 
-      DEFAULT_RELEASE_COMMIT_TAGS = [
-        {
-          "tag" => "feat",
-          "header" => "ADDED",
-          "semver" => "minor",
-        }.freeze,
-        {
-          "tag" => "fix",
-          "header" => "FIXED",
-        }.freeze,
-        "docs",
-      ].freeze
+      DEFAULT_RELEASE_COMMIT_TAGS = ::YAML.load(<<~STRING)
+        - tag: feat
+          header: ADDED
+          semver: minor
+        - tag: fix
+          header: FIXED
+        - docs
+      STRING
       private_constant :DEFAULT_RELEASE_COMMIT_TAGS
 
-      DEFAULT_STEPS = {
-        "component" => [
-          {
-            "name" => "github-release",
-            "type" => "GitHubRelease",
-          }.freeze,
-        ].freeze,
-        "gem" => [
-          {
-            "name" => "bundle",
-            "type" => "Bundle",
-          }.freeze,
-          {
-            "name" => "build-gem",
-            "type" => "BuildGem",
-          }.freeze,
-          {
-            "name" => "build-yard",
-            "type" => "BuildYard",
-            "require_gh_pages_enabled" => true,
-          }.freeze,
-          {
-            "name" => "github-release",
-            "type" => "GitHubRelease",
-          }.freeze,
-          {
-            "name" => "release-gem",
-            "type" => "ReleaseGem",
-            "input" => "build-gem",
-          }.freeze,
-          {
-            "name" => "push-gh-pages",
-            "type" => "PushGhPages",
-            "input" => "build-yard",
-          }.freeze,
-        ].freeze,
-      }.freeze
+      DEFAULT_STEPS = ::YAML.load(<<~STRING)
+        component:
+          - name: release_github
+        gem:
+          - name: build_gem
+          - name: build_yard
+          - name: release_github
+          - name: release_gem
+            source: build_gem
+          - name: push_gh_pages
+            source: build_yard
+      STRING
       private_constant :DEFAULT_STEPS
 
       DEFAULT_BREAKING_CHANGE_HEADER = "BREAKING CHANGE"
@@ -748,18 +899,6 @@ module Toys
         @release_error_label = info["release_error_label"] || DEFAULT_RELEASE_ERROR_LABEL
         @release_aborted_label = info["release_aborted_label"] || DEFAULT_RELEASE_ABORTED_LABEL
         @release_complete_label = info["release_complete_label"] || DEFAULT_RELEASE_COMPLETE_LABEL
-      end
-
-      def read_commit_lint_info(info)
-        info = info["commit_lint"]
-        @commit_lint_active = !info.nil?
-        info = {} unless info.is_a?(::Hash)
-        @commit_lint_fail_checks = info["fail_checks"] ? true : false
-        @commit_lint_merge = Array(info["merge"] || ["squash", "merge", "rebase"])
-        @commit_lint_allowed_types = info["allowed_types"]
-        if @commit_lint_allowed_types
-          @commit_lint_allowed_types = Array(@commit_lint_allowed_types).map(&:downcase)
-        end
       end
 
       def read_commit_tag_info(info)

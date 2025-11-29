@@ -83,17 +83,17 @@ module Toys
 
       ##
       # Returns the directory path. It can be returned either as a relative path
-      # from the context directory or an absolute path.
+      # from the repo root directory or an absolute path.
       #
-      # @param from [:context,:absolute] From where (defaults to `:context`)
+      # @param from [:repo_root,:absolute] From where (defaults to `:repo_root`)
       # @return [String] The directory path
       #
-      def directory(from: :context)
+      def directory(from: :repo_root)
         case from
-        when :context
+        when :repo_root
           settings.directory
         when :absolute
-          ::File.expand_path(settings.directory, @utils.context_directory)
+          ::File.expand_path(settings.directory, @utils.repo_root_directory)
         else
           raise ArgumentError, "Unknown from value: #{from.inspect}"
         end
@@ -101,10 +101,10 @@ module Toys
 
       ##
       # Returns the path to a given file. It can be returned as a relative path
-      # from the component directory, a relative path from the context
+      # from the component directory, a relative path from the repo root
       # directory, or an absolute path.
       #
-      # @param from [:directory,:context,:absolute] From where (defaults to
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
       #     `:directory`)
       # @return [String] The path to the file
       #
@@ -112,7 +112,7 @@ module Toys
         case from
         when :directory
           path
-        when :context
+        when :repo_root
           ::File.join(directory, path)
         when :absolute
           ::File.expand_path(path, directory(from: :absolute))
@@ -123,10 +123,10 @@ module Toys
 
       ##
       # Returns the path to the changelog. It can be returned as a relative
-      # path from the component directory, a relative path from the context
+      # path from the component directory, a relative path from the repo root
       # directory, or an absolute path.
       #
-      # @param from [:directory,:context,:absolute] From where (defaults to
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
       #     `:directory`)
       # @return [String] The path to the changelog
       #
@@ -136,10 +136,10 @@ module Toys
 
       ##
       # Returns the path to the version.rb. It can be returned as a relative
-      # path from the component directory, a relative path from the context
+      # path from the component directory, a relative path from the repo root
       # directory, or an absolute path.
       #
-      # @param from [:directory,:context,:absolute] From where (defaults to
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
       #     `:directory`)
       # @return [String] The path to the `version.rb` file
       #
@@ -213,7 +213,7 @@ module Toys
       #
       def current_changelog_version(at: nil)
         if at
-          path = changelog_path(from: :context)
+          path = changelog_path(from: :repo_root)
           content = @utils.capture(["git", "show", "#{at}:#{path}"], e: true)
           return ChangelogFile.current_version_from_content(content)
         end
@@ -228,7 +228,7 @@ module Toys
       #
       def current_constant_version(at: nil)
         if at
-          path = version_rb_path(from: :context)
+          path = version_rb_path(from: :repo_root)
           content = @utils.capture(["git", "show", "#{at}:#{path}"], e: true)
           return VersionRbFile.current_version_from_content(content)
         end
@@ -338,10 +338,10 @@ module Toys
     class GemComponent < Component
       ##
       # Returns the path to the gemspec. It can be returned as a relative path
-      # from the component directory, a relative path from the context
+      # from the component directory, a relative path from the repo root
       # directory, or an absolute path.
       #
-      # @param from [:directory,:context,:absolute] From where (defaults to
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
       #     `:directory`)
       # @return [String] The path to the gemspec file
       #

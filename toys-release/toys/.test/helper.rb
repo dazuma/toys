@@ -13,6 +13,22 @@ require "toys/standard_mixins/exec"
 
 $LOAD_PATH.unshift(::File.join(::File.dirname(__dir__), ".lib"))
 
+require "toys/release/artifact_dir"
+require "toys/release/change_set"
+require "toys/release/changelog_file"
+require "toys/release/component"
+require "toys/release/environment_utils"
+require "toys/release/performer"
+require "toys/release/pipeline"
+require "toys/release/pull_request"
+require "toys/release/repo_settings"
+require "toys/release/repository"
+require "toys/release/request_logic"
+require "toys/release/request_spec"
+require "toys/release/semver"
+require "toys/release/steps"
+require "toys/release/version_rb_file"
+
 module Toys
   module Release
     module Tests
@@ -47,21 +63,26 @@ module Toys
         class ResultInfo
           FakeStatus = ::Struct.new(:exitstatus, :termsig)
 
-          def initialize(result_code, console_output: "", captured_output: nil)
+          def initialize(result_code, console_output: "", captured_output: nil, block: nil)
             status = FakeStatus.new(result_code)
             @result = Toys::Utils::Exec::Result.new("", captured_output, nil, status, nil)
             @console_output = console_output
+            @block = block
           end
 
           attr_reader :result
           attr_reader :console_output
 
-          def self.create(result_code, output: "")
-            new(result_code, console_output: output)
+          def call
+            @block&.call
           end
 
-          def self.create_capture(result_code, output: "")
-            new(result_code, captured_output: output)
+          def self.create(result_code, output: "", block: nil)
+            new(result_code, console_output: output, block: block)
+          end
+
+          def self.create_capture(result_code, output: "", block: nil)
+            new(result_code, captured_output: output, block: block)
           end
         end
 
@@ -75,13 +96,17 @@ module Toys
           @separate_tool_stubs = {}
           @prevent_real_exec_prefixes = []
           self.logger = ::Logger.new(@log_io)
+          self.logger.level = ::Logger::INFO
           self.allow_passthru_exec = allow_passthru_exec
           self.context_directory = context_directory || REPO_DIR
+          self.repo_root_directory = REPO_DIR
         end
 
         attr_accessor :logger
 
         attr_accessor :context_directory
+
+        attr_accessor :repo_root_directory
 
         def puts(message, *_args)
           @console_io.puts(message)
@@ -142,28 +167,30 @@ module Toys
           @exec_service = setting ? ::Toys::Utils::Exec.new : nil
         end
 
-        def stub_exec(cmd, result_code: 0, output: "")
-          (@exec_stubs[cmd] ||= []).push(ResultInfo.create(result_code, output: output))
+        def stub_exec(cmd, result_code: 0, output: "", &block)
+          (@exec_stubs[cmd] ||= []).push(ResultInfo.create(result_code, output: output, block: block))
           self
         end
 
-        def stub_capture(cmd, result_code: 0, output: "")
-          (@capture_stubs[cmd] ||= []).push(ResultInfo.create_capture(result_code, output: output))
+        def stub_capture(cmd, result_code: 0, output: "", &block)
+          (@capture_stubs[cmd] ||= []).push(ResultInfo.create_capture(result_code, output: output, block: block))
           self
         end
 
-        def stub_ruby(script, result_code: 0, output: "")
-          (@ruby_stubs[script] ||= []).push(ResultInfo.create(result_code, output: output))
+        def stub_ruby(script, result_code: 0, output: "", &block)
+          (@ruby_stubs[script] ||= []).push(ResultInfo.create(result_code, output: output, block: block))
           self
         end
 
-        def stub_capture_ruby(script, result_code: 0, output: "")
-          (@capture_ruby_stubs[script] ||= []).push(ResultInfo.create_capture(result_code, output: output))
+        def stub_capture_ruby(script, result_code: 0, output: "", &block)
+          (@capture_ruby_stubs[script] ||= []).push(
+            ResultInfo.create_capture(result_code, output: output, block: block)
+          )
           self
         end
 
-        def stub_separate_tool(tool, result_code: 0, output: "")
-          (@separate_tool_stubs[tool] ||= []).push(ResultInfo.create(result_code, output: output))
+        def stub_separate_tool(tool, result_code: 0, output: "", &block)
+          (@separate_tool_stubs[tool] ||= []).push(ResultInfo.create(result_code, output: output, block: block))
           self
         end
 
@@ -171,6 +198,7 @@ module Toys
           stub_results = instance_variable_get("@#{name}")[cmd]
           if stub_results && !stub_results.empty?
             result_info = stub_results.shift
+            result_info.call
             @console_io.puts(result_info.console_output)
             capture ? result_info.result.captured_out : result_info.result
           else

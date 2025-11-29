@@ -2,14 +2,6 @@
 
 require_relative "helper"
 
-require "toys/release/artifact_dir"
-require "toys/release/component"
-require "toys/release/environment_utils"
-require "toys/release/performer"
-require "toys/release/repo_settings"
-require "toys/release/repository"
-require "toys/release/steps"
-
 describe Toys::Release::Steps do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
@@ -20,76 +12,46 @@ describe Toys::Release::Steps do
   let(:tools_component) { Toys::Release::Component.build(repo_settings, "common-tools", environment_utils) }
   let(:artifact_dir) { Toys::Release::ArtifactDir.new }
   let(:sample_release_version) { Gem::Version.new("0.99.99") }
-  let(:step_name) { "my-step" }
 
   def make_basic_result(component, version)
     Toys::Release::Performer::Result.new(component.name, version)
   end
 
-  def make_basic_step(type, component: nil, version: nil, dry_run: true, options: {}, performer_result: nil)
+  def make_pipeline(component: nil, version: nil, dry_run: true, performer_result: nil)
     component ||= toys_component
     version ||= sample_release_version
     performer_result ||= make_basic_result(component, version)
-    Toys::Release::Steps.const_get(type).new(
+    Toys::Release::Pipeline.new(
       repository: repository, component: component, version: version, performer_result: performer_result,
-      artifact_dir: artifact_dir, dry_run: dry_run, git_remote: "origin", name: step_name, options: options
+      artifact_dir: artifact_dir, dry_run: dry_run, git_remote: "origin"
     )
   end
 
   def in_component_directory(component, &block)
-    ::Dir.chdir("#{fake_tool_context.context_directory}/#{component.name}", &block)
+    ::Dir.chdir(::File.join(fake_tool_context.repo_root_directory, component.name), &block)
   end
 
   after do
     artifact_dir.cleanup
   end
 
-  describe "Base" do
-    def make_step(options)
-      make_basic_step("Base", options: options)
-    end
-
-    it "gets options" do
-      step = make_step({"foo" => "bar"})
-      assert_equal("bar", step.option("foo"))
-    end
-
-    it "Runs a successful command" do
-      fake_tool_context.stub_exec(["command_success"], output: "command was run")
-      step = make_step({"pre_command" => ["command_success"]})
-      step.pre_command
-      assert_includes(fake_tool_context.console_output, "command was run")
-    end
-
-    it "Runs a failing command" do
-      fake_tool_context.stub_exec(["command_failure"], output: "command run failed", result_code: 1)
-      step = make_step({"pre_command" => ["command_failure"]})
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.pre_command
-      end
-      assert_includes(fake_tool_context.console_output, "command run failed")
-      assert_includes(fake_tool_context.console_output,
-                      "Pre-build command failed: [\"command_failure\"]. Check the logs for details.")
-    end
-  end
-
-  describe "Tool" do
-    def make_step(tool, abort_pipeline_on_error: false)
-      make_basic_step("Tool", options: {"tool" => tool, "abort_pipeline_on_error" => abort_pipeline_on_error})
+  describe "TOOL" do
+    def make_context(tool, abort_pipeline_on_error: false)
+      settings = Toys::Release::StepSettings.new({"name" => "tool", "tool" => tool,
+                                                  "abort_pipeline_on_error" => abort_pipeline_on_error})
+      Toys::Release::Pipeline::StepContext.new(make_pipeline, settings)
     end
 
     it "runs a succeeding tool" do
       fake_tool_context.stub_separate_tool(["sample-tool-success"], output: "This is a sample tool.")
-      step = make_step(["sample-tool-success"])
-      step.run
+      Toys::Release::Steps::TOOL.run(make_context(["sample-tool-success"]))
       assert_includes(fake_tool_context.console_output, "This is a sample tool.")
     end
 
     it "runs a failing tool" do
       fake_tool_context.stub_separate_tool(["sample-tool-failure"], result_code: 1, output: "Tool run failed.")
-      step = make_step(["sample-tool-failure"])
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        Toys::Release::Steps::TOOL.run(make_context(["sample-tool-failure"]))
       end
       assert_includes(fake_tool_context.console_output, "Tool run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -98,9 +60,8 @@ describe Toys::Release::Steps do
 
     it "runs a failing tool and aborts the pipeline" do
       fake_tool_context.stub_separate_tool(["sample-tool-failure"], result_code: 1, output: "Tool run failed.")
-      step = make_step(["sample-tool-failure"], abort_pipeline_on_error: true)
-      assert_raises(Toys::Release::Steps::AbortingExit) do
-        step.run
+      assert_raises(Toys::Release::Pipeline::AbortingExit) do
+        Toys::Release::Steps::TOOL.run(make_context(["sample-tool-failure"], abort_pipeline_on_error: true))
       end
       assert_includes(fake_tool_context.console_output, "Tool run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -108,23 +69,23 @@ describe Toys::Release::Steps do
     end
   end
 
-  describe "Command" do
-    def make_step(command, abort_pipeline_on_error: false)
-      make_basic_step("Command", options: {"command" => command, "abort_pipeline_on_error" => abort_pipeline_on_error})
+  describe "COMMAND" do
+    def make_context(command, abort_pipeline_on_error: false)
+      settings = Toys::Release::StepSettings.new({"name" => "command", "command" => command,
+                                                  "abort_pipeline_on_error" => abort_pipeline_on_error})
+      Toys::Release::Pipeline::StepContext.new(make_pipeline, settings)
     end
 
     it "runs a succeeding command" do
       fake_tool_context.stub_exec(["command-success"], output: "This is a sample command.")
-      step = make_step(["command-success"])
-      step.run
+      Toys::Release::Steps::COMMAND.run(make_context(["command-success"]))
       assert_includes(fake_tool_context.console_output, "This is a sample command.")
     end
 
     it "runs a failing command" do
       fake_tool_context.stub_exec(["command-failure"], result_code: 1, output: "Command run failed.")
-      step = make_step(["command-failure"])
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        Toys::Release::Steps::COMMAND.run(make_context(["command-failure"]))
       end
       assert_includes(fake_tool_context.console_output, "Command run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -133,9 +94,8 @@ describe Toys::Release::Steps do
 
     it "runs a failing command and aborts the pipeline" do
       fake_tool_context.stub_exec(["command-failure"], result_code: 1, output: "Command run failed.")
-      step = make_step(["command-failure"], abort_pipeline_on_error: true)
-      assert_raises(Toys::Release::Steps::AbortingExit) do
-        step.run
+      assert_raises(Toys::Release::Pipeline::AbortingExit) do
+        Toys::Release::Steps::COMMAND.run(make_context(["command-failure"], abort_pipeline_on_error: true))
       end
       assert_includes(fake_tool_context.console_output, "Command run failed.")
       assert_includes(fake_tool_context.console_output,
@@ -143,43 +103,58 @@ describe Toys::Release::Steps do
     end
   end
 
-  describe "BuildGem" do
-    def make_step(component)
-      make_basic_step("BuildGem", component: component)
-    end
+  describe "BUNDLE" do
+    let(:step_settings) { ::Toys::Release::StepSettings.new({"name" => "bundle"}) }
+    let(:step_context) { ::Toys::Release::Pipeline::StepContext.new(make_pipeline, step_settings) }
 
-    it "builds the toys gem" do
-      step = make_step(toys_component)
+    it "runs bundler" do
+      fake_tool_context.stub_exec(["bundle", "install"], output: "Bundle installed.") do
+        ::FileUtils.touch("Gemfile.lock")
+      end
       in_component_directory(toys_component) do
-        _out, err = capture_subprocess_io do
-          step.run
-        end
-        assert_includes(err, "Successfully built RubyGem")
+        ::Toys::Release::Steps::BUNDLE.run(step_context)
       end
-      dir = artifact_dir.get(step_name)
-      assert(::File.file?("#{dir}/toys-#{sample_release_version}.gem"), "Expected gem file to be generated")
-    end
-
-    it "builds the toys-core gem" do
-      step = make_step(core_component)
-      in_component_directory(core_component) do
-        _out, err = capture_subprocess_io do
-          step.run
-        end
-        assert_includes(err, "Successfully built RubyGem")
-      end
-      dir = artifact_dir.get(step_name)
-      assert(::File.file?("#{dir}/toys-core-#{sample_release_version}.gem"), "Expected gem file to be generated")
+      assert_includes(fake_tool_context.console_output, "Bundle installed.")
+      lockfile_path = ::File.join(artifact_dir.output("bundle"), "Gemfile.lock")
+      assert(::File.file?(lockfile_path), "Expected lockfile to be generated")
     end
   end
 
-  describe "BuildYard" do
-    def make_bundle_step(component)
-      make_basic_step("Bundle", component: component)
+  describe "BUILD_GEM" do
+    def make_context(component)
+      settings = ::Toys::Release::StepSettings.new({"name" => "build_gem"})
+      ::Toys::Release::Pipeline::StepContext.new(make_pipeline(component: component), settings)
     end
 
-    def make_step(component, pre_tool: nil)
-      make_basic_step("BuildYard", component: component, options: {"pre_tool" => pre_tool})
+    it "builds the toys gem" do
+      step_context = make_context(toys_component)
+      in_component_directory(toys_component) do
+        _out, err = capture_subprocess_io do
+          ::Toys::Release::Steps::BUILD_GEM.run(step_context)
+        end
+        assert_includes(err, "Successfully built RubyGem")
+      end
+      pkg_path = ::File.join(step_context.output_dir, "pkg", "toys-#{sample_release_version}.gem")
+      assert(::File.file?(pkg_path), "Expected gem file to be generated")
+    end
+
+    it "builds the toys-core gem" do
+      step_context = make_context(core_component)
+      in_component_directory(core_component) do
+        _out, err = capture_subprocess_io do
+          ::Toys::Release::Steps::BUILD_GEM.run(step_context)
+        end
+        assert_includes(err, "Successfully built RubyGem")
+      end
+      pkg_path = ::File.join(step_context.output_dir, "pkg", "toys-core-#{sample_release_version}.gem")
+      assert(::File.file?(pkg_path), "Expected gem file to be generated")
+    end
+  end
+
+  describe "BUILD_YARD" do
+    def make_context(component)
+      settings = ::Toys::Release::StepSettings.new({"name" => "build_yard"})
+      ::Toys::Release::Pipeline::StepContext.new(make_pipeline(component: component), settings)
     end
 
     before do
@@ -188,46 +163,41 @@ describe Toys::Release::Steps do
     end
 
     it "builds docs for the toys-core gem" do
-      bundle_step = make_bundle_step(core_component)
-      step = make_step(core_component)
+      step_context = make_context(core_component)
       in_component_directory(core_component) do
-        capture_subprocess_io do
-          bundle_step.run
-        end
         _out, err = capture_subprocess_io do
-          step.run
+          ::Toys::Release::Steps::BUILD_YARD.run(step_context)
         end
         assert_includes(err, "documented")
       end
-      dir = artifact_dir.get(step_name)
-      assert(::File.file?("#{dir}/doc/index.html"), "Expected yardocs to be generated")
+      path = ::File.join(step_context.output_dir, "doc", "Toys", "Core.html")
+      assert(::File.file?(path), "Expected yardocs to be generated")
     end
 
     it "builds docs for the toys gem with a pre-tool" do
-      bundle_step = make_bundle_step(toys_component)
-      step = make_step(toys_component, pre_tool: ["copy-core-docs"])
+      step_context = make_context(toys_component)
       in_component_directory(toys_component) do
-        capture_subprocess_io do
-          bundle_step.run
-        end
         _out, err = capture_subprocess_io do
-          step.run
+          ::Toys::Release::Steps::BUILD_YARD.run(step_context)
         end
         assert_includes(err, "documented")
       end
-      dir = artifact_dir.get(step_name)
-      assert(::File.file?("#{dir}/doc/Toys/Core.html"), "Expected yardocs to be generated")
+      path = ::File.join(step_context.output_dir, "doc", "Toys", "StandardCLI.html")
+      assert(::File.file?(path), "Expected yardocs to be generated")
     end
   end
 
-  describe "ReleaseGem" do
+  describe "RELEASE_GEM" do
     let(:performer_result) { make_basic_result(toys_component, sample_release_version) }
-    let(:build_step_name) { "my-build-step" }
-    let(:pkg_path) { ::File.join(artifact_dir.get(build_step_name), "toys-#{sample_release_version}.gem") }
+    let(:pkg_dir) { ::File.join(artifact_dir.output("build_gem"), "pkg") }
+    let(:pkg_path) { ::File.join(pkg_dir, "toys-#{sample_release_version}.gem") }
 
-    def make_step(dry_run: true)
-      make_basic_step("ReleaseGem", component: toys_component, dry_run: dry_run, performer_result: performer_result,
-                      options: {"input" => build_step_name})
+    def make_context(dry_run: true, source: nil)
+      settings_hash = {"name" => "release_gem"}
+      settings_hash["source"] = source if source
+      settings = ::Toys::Release::StepSettings.new(settings_hash)
+      pipeline = make_pipeline(dry_run: dry_run, performer_result: performer_result)
+      ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end
 
     def stub_version_check(exists)
@@ -236,11 +206,33 @@ describe Toys::Release::Steps do
       fake_tool_context.stub_capture(cmd, output: output)
     end
 
+    def make_dummy_pkg
+      ::FileUtils.mkdir_p(pkg_dir)
+      ::File.write(pkg_path, "hello")
+    end
+
+    before do
+      fake_tool_context.prevent_real_exec_prefix(["gem", "push"])
+    end
+
+    it "is primary" do
+      assert(::Toys::Release::Steps::RELEASE_GEM.primary?(make_context))
+    end
+
+    it "has a default dependency" do
+      assert_equal(["build_gem"], ::Toys::Release::Steps::RELEASE_GEM.dependencies(make_context))
+    end
+
+    it "sets the dependency from the source" do
+      step_context = make_context(source: "custom_build")
+      assert_equal(["custom_build"], ::Toys::Release::Steps::RELEASE_GEM.dependencies(step_context))
+    end
+
     it "aborts if gem exists" do
       stub_version_check(true)
-      step = make_step
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      step_context = make_context(dry_run: true)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       end
       assert_equal(1, performer_result.successes.size)
       assert_equal("Gem already pushed for toys #{sample_release_version}", performer_result.successes.first)
@@ -248,58 +240,60 @@ describe Toys::Release::Steps do
 
     it "aborts dry run if the package file cannot be found" do
       stub_version_check(false)
-      step = make_step(dry_run: true)
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      step_context = make_context(dry_run: true)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       end
       assert_empty(performer_result.successes)
     end
 
     it "does a dry run release" do
       stub_version_check(false)
-      ::File.write(pkg_path, "hello")
-      step = make_step(dry_run: true)
-      step.run
+      make_dummy_pkg
+      step_context = make_context(dry_run: true)
+      ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       assert_equal(1, performer_result.successes.size)
       assert_equal("DRY RUN Rubygems push for toys #{sample_release_version}.", performer_result.successes.first)
     end
 
     it "does a real release" do
       stub_version_check(false)
+      make_dummy_pkg
       fake_tool_context.stub_exec(["gem", "push", pkg_path])
-      fake_tool_context.prevent_real_exec_prefix(["gem", "push"])
-      step = make_step(dry_run: false)
-      step.run
+      step_context = make_context(dry_run: false)
+      ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       assert_equal(1, performer_result.successes.size)
       assert_equal("Rubygems push for toys #{sample_release_version}.", performer_result.successes.first)
     end
 
     it "fails at a release" do
       stub_version_check(false)
+      make_dummy_pkg
       fake_tool_context.stub_exec(["gem", "push", pkg_path], result_code: 1)
-      fake_tool_context.prevent_real_exec_prefix(["gem", "push"])
-      step = make_step(dry_run: false)
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      step_context = make_context(dry_run: false)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        ::Toys::Release::Steps::RELEASE_GEM.run(step_context)
       end
       assert_empty(performer_result.successes)
     end
   end
 
-  describe "PushGhPages" do
-    let(:build_step_name) { "my-build-step" }
+  describe "PUSH_GH_PAGES" do
+    let(:unreleased_version) { "0.99.99" }
+    let(:released_version) { "0.15.6" }
 
-    def make_performer_result(version)
-      make_basic_result(toys_component, Gem::Version.new(version))
-    end
-
-    def make_step(version, performer_result, dry_run: true)
-      make_basic_step("PushGhPages", component: toys_component, dry_run: dry_run, performer_result: performer_result,
-                      version: Gem::Version.new(version), options: {"input" => build_step_name})
+    def make_context(version: nil, dry_run: true, source: nil)
+      version = Gem::Version.new(version || unreleased_version)
+      @performer_result = make_basic_result(toys_component, version)
+      settings_hash = {"name" => "push_gh_pages"}
+      settings_hash["source"] = source if source
+      settings = ::Toys::Release::StepSettings.new(settings_hash)
+      pipeline = make_pipeline(dry_run: dry_run, performer_result: @performer_result, version: version)
+      ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end
 
     def make_dummy_docs
-      ::Dir.chdir(artifact_dir.get(build_step_name)) do
+      ::Dir.chdir(artifact_dir.output("build_yard")) do
         ::FileUtils.mkdir("doc")
         ::File.write("doc/index.html", "Hello\n")
       end
@@ -307,73 +301,79 @@ describe Toys::Release::Steps do
 
     before do
       skip unless ENV["TOYS_TEST_INTEGRATION"]
+      fake_tool_context.prevent_real_exec_prefix(["git", "push"])
+    end
+
+    it "is primary if gh pages is enabled" do
+      assert(::Toys::Release::Steps::PUSH_GH_PAGES.primary?(make_context))
+    end
+
+    it "has a default dependency" do
+      assert_equal(["build_yard"], ::Toys::Release::Steps::PUSH_GH_PAGES.dependencies(make_context))
+    end
+
+    it "sets the dependency from the source" do
+      step_context = make_context(source: "custom_build")
+      assert_equal(["custom_build"], ::Toys::Release::Steps::PUSH_GH_PAGES.dependencies(step_context))
     end
 
     it "aborts if docs exist" do
-      version = "0.15.6"
-      performer_result = make_performer_result(version)
-      step = make_step(version, performer_result)
-      assert_raises(Toys::Release::Steps::StepExit) do
+      make_dummy_docs
+      step_context = make_context(version: released_version)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
         capture_subprocess_io do
-          step.run
+          ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
         end
       end
-      assert_equal(1, performer_result.successes.size)
-      assert_equal("Docs already published for toys #{version}", performer_result.successes.first)
+      assert_equal(1, @performer_result.successes.size)
+      assert_equal("Docs already published for toys #{released_version}", @performer_result.successes.first)
     end
 
     it "does a dry run publish" do
-      version = "0.99.99"
       make_dummy_docs
-      performer_result = make_performer_result(version)
-      step = make_step(version, performer_result, dry_run: true)
+      step_context = make_context(dry_run: true)
       capture_subprocess_io do
-        step.run
+        ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
       end
-      assert_equal(1, performer_result.successes.size)
-      assert_equal("DRY RUN documentation published for toys #{version}.", performer_result.successes.first)
-      path = ::File.join(artifact_dir.get("gh-pages"), "gems", "toys", "v#{version}", "index.html")
+      assert_equal(1, @performer_result.successes.size)
+      assert_equal("DRY RUN documentation published for toys #{unreleased_version}.", @performer_result.successes.first)
+      path = ::File.join(step_context.temp_dir, "gems", "toys", "v#{unreleased_version}", "index.html")
       assert(::File.file?(path), "Expected docs to be copied into gh-pages")
-      content = ::File.read(::File.join(artifact_dir.get("gh-pages"), "404.html"))
-      assert_includes(content, 'version = "0.99.99";')
+      content = ::File.read(::File.join(step_context.temp_dir, "404.html"))
+      assert_includes(content, "version = #{unreleased_version.inspect};")
     end
 
     it "does a real publish" do
-      version = "0.99.99"
       make_dummy_docs
-      performer_result = make_performer_result(version)
-      step = make_step(version, performer_result, dry_run: false)
-      fake_tool_context.stub_exec(["git", "push", step.git_remote, "gh-pages"])
-      fake_tool_context.prevent_real_exec_prefix(["git", "push"])
+      step_context = make_context(dry_run: false)
+      fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"])
       capture_subprocess_io do
-        step.run
+        ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
       end
-      assert_equal(1, performer_result.successes.size)
-      assert_equal("Published documentation for toys #{version}.", performer_result.successes.first)
+      assert_equal(1, @performer_result.successes.size)
+      assert_equal("Published documentation for toys #{unreleased_version}.", @performer_result.successes.first)
     end
 
     it "fails to publish" do
-      version = "0.99.99"
       make_dummy_docs
-      performer_result = make_performer_result(version)
-      step = make_step(version, performer_result, dry_run: false)
-      fake_tool_context.stub_exec(["git", "push", step.git_remote, "gh-pages"], result_code: 1)
-      fake_tool_context.prevent_real_exec_prefix(["git", "push"])
-      assert_raises(Toys::Release::Steps::StepExit) do
+      step_context = make_context(dry_run: false)
+      fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"], result_code: 1)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
         capture_subprocess_io do
-          step.run
+          ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
         end
       end
-      assert_empty(performer_result.successes)
+      assert_empty(@performer_result.successes)
     end
   end
 
-  describe "GitHubRelease" do
+  describe "RELEASE_GITHUB" do
     let(:performer_result) { make_basic_result(toys_component, sample_release_version) }
-    let(:build_step_name) { "my-build-step" }
 
-    def make_step(dry_run: true)
-      make_basic_step("GitHubRelease", component: toys_component, dry_run: dry_run, performer_result: performer_result)
+    def make_context(dry_run: true)
+      settings = ::Toys::Release::StepSettings.new({"name" => "github_release"})
+      pipeline = make_pipeline(dry_run: dry_run, performer_result: performer_result)
+      ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end
 
     def stub_version_check(exists)
@@ -389,11 +389,19 @@ describe Toys::Release::Steps do
       fake_tool_context.stub_exec(cmd, result_code: result_code)
     end
 
+    before do
+      fake_tool_context.prevent_real_exec_prefix(["gh", "api"])
+    end
+
+    it "is primary" do
+      assert(::Toys::Release::Steps::RELEASE_GITHUB.primary?(make_context))
+    end
+
     it "aborts if tag exists" do
       stub_version_check(true)
-      step = make_step
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      step_context = make_context(dry_run: true)
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        ::Toys::Release::Steps::RELEASE_GITHUB.run(step_context)
       end
       assert_equal(1, performer_result.successes.size)
       assert_equal("GitHub tag toys/v#{sample_release_version} already exists.", performer_result.successes.first)
@@ -401,18 +409,17 @@ describe Toys::Release::Steps do
 
     it "does a dry run release" do
       stub_version_check(false)
-      step = make_step(dry_run: true)
-      step.run
+      step_context = make_context(dry_run: true)
+      ::Toys::Release::Steps::RELEASE_GITHUB.run(step_context)
       assert_equal(1, performer_result.successes.size)
       assert_equal("DRY RUN GitHub tag toys/v#{sample_release_version}.", performer_result.successes.first)
     end
 
     it "does a real release" do
       stub_version_check(false)
-      step = make_step(dry_run: false)
+      step_context = make_context(dry_run: false)
       stub_release_creation(0)
-      fake_tool_context.prevent_real_exec_prefix(["gh", "api"])
-      step.run
+      ::Toys::Release::Steps::RELEASE_GITHUB.run(step_context)
       assert_equal(1, performer_result.successes.size)
       assert_equal("Created release with tag toys/v#{sample_release_version} on GitHub.",
                    performer_result.successes.first)
@@ -420,11 +427,10 @@ describe Toys::Release::Steps do
 
     it "fails to do a real release" do
       stub_version_check(false)
-      step = make_step(dry_run: false)
+      step_context = make_context(dry_run: false)
       stub_release_creation(1)
-      fake_tool_context.prevent_real_exec_prefix(["gh", "api"])
-      assert_raises(Toys::Release::Steps::StepExit) do
-        step.run
+      assert_raises(Toys::Release::Pipeline::StepExit) do
+        ::Toys::Release::Steps::RELEASE_GITHUB.run(step_context)
       end
       assert_empty(performer_result.successes)
     end
