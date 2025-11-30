@@ -15,11 +15,13 @@ module Toys
       # @param base_dir [String] Optional base directory, within which all the
       #     artifact directories will be created. If not provided, a temporary
       #     directory will be used.
+      # @param auto_cleanup [boolean] Whether to cleanup automatically at_exit.
       #
-      def initialize(base_dir = nil)
+      def initialize(base_dir = nil, auto_cleanup: false)
         @base_dir = base_dir
         @needs_cleanup = false
         @initialized = {}
+        at_exit { cleanup } if auto_cleanup
       end
 
       ##

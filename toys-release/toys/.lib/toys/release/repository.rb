@@ -3,9 +3,9 @@
 require "base64"
 require "fileutils"
 require "json"
-require "tmpdir"
 require "yaml"
 
+require "toys/release/artifact_dir"
 require "toys/release/component"
 require "toys/release/pull_request"
 
@@ -493,8 +493,7 @@ module Toys
           ::FileUtils.remove_entry(dir, true)
           ::FileUtils.mkdir_p(dir)
         else
-          dir = ::Dir.mktmpdir
-          at_exit { ::FileUtils.remove_entry(dir, true) }
+          dir = ArtifactDir.new(auto_cleanup: true).get
         end
         dir
       end
