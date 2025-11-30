@@ -2,7 +2,7 @@
 
 This is a dumping ground of possible ideas and future directions for Toys.
 These items are all tentative or under investigation. Finalized to-do items
-are covered in github issues (https://github.com/dazuma/toys/issues).
+are covered in GitHub issues (https://github.com/dazuma/toys/issues).
 
 ## Ideas under investigation
 

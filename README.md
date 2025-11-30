@@ -30,7 +30,7 @@ Install the **toys** gem using:
 
     $ gem install toys
 
-This installs the `toys` executable, along with some builtin tools and
+This installs the `toys` executable, along with some built-in tools and
 libraries. You can run the executable immediately:
 
     $ toys
@@ -38,7 +38,7 @@ libraries. You can run the executable immediately:
 This displays overall help for Toys. If you have `less` installed, Toys will
 use it to display the help screen. Press `q` to exit.
 
-You may notice that the help screen lists some tools that are preinstalled.
+You may notice that the help screen lists some tools that are pre-installed.
 Let's run one of them:
 
     $ toys system version
@@ -316,12 +316,12 @@ completion for your shell.
 Toys can also be used to share scripts. For example, it can be used instead of
 Rake to provide build and test scripts for a project. Unlike Rake tasks,
 scripts written for Toys can be invoked and passed arguments and flags using
-familiar unix command line conventions. The Toys github repo itself comes with
+familiar Unix command line conventions. The Toys GitHub repo itself comes with
 Toys scripts instead of Rakefiles.
 
 ## System requirements
 
-Toys requires Ruby 2.4 or later.
+Toys requires Ruby 2.7 or later.
 
 Most parts of Toys work on JRuby. However, JRuby is not recommended because of
 JVM boot latency, lack of support for Kernel#fork, and other issues.
@@ -331,7 +331,7 @@ because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2023 Daniel Azuma and the Toys contributors
+Copyright 2019-2025 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

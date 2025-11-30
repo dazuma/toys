@@ -3,7 +3,7 @@
 Thank you for your interest in contributing to Toys!
 
 Toys is open source, MIT-licensed. Community contributions are welcome. The
-Toys source is hosted on Github at
+Toys source is hosted on GitHub at
 [https://github.com/dazuma/toys](https://github.com/dazuma/toys), and
 development is done in the open via commits and pull requests.
 
@@ -23,12 +23,12 @@ comment providing any additional information you have.
 However, do not add comments to an _already-closed_ issue, even if it looks
 like the same or similar issue. Instead, open a new issue, and reference the
 closed issue if it looks like it could be related. (We're not saying this to be
-difficult or pedantic. Github makes it difficult to see changes made to closed
+difficult or pedantic. GitHub makes it difficult to see changes made to closed
 issues, so your message will simply be more visible if you open a new issue.)
 
 ## Code contributions
 
-Patches are welcome. Feel free to open a pull request on Github at
+Patches are welcome. Feel free to open a pull request on GitHub at
 [https://github.com/dazuma/toys/pulls](https://github.com/dazuma/toys/pulls),
 and a maintainer will get in touch with you. When considering pull requests,
 please keep the following in mind:
@@ -40,10 +40,10 @@ please keep the following in mind:
     fits into the tool, and get agreement from the maintainers before actually
     writing code. In general, the maintainers reserve the right to refuse any
     code contribution, with or without a stated reason.
- *  All new and changed functionality must include tests. Toys uses minitest
+ *  All new and changed functionality must include tests. Toys uses Minitest
     "spec" style tests, but with assertions instead of expectations. See the
     existing tests for examples of how to format your tests.
- *  All pull requests must pass CI, which includes tests, Rubocop, and
+ *  All pull requests must pass CI, which includes tests, RuboCop, and
     documentation coverage. You can run CI locally using `toys ci`.
  *  By contributing code, you agree that your modifications will be covered
     under the Toys copyright notice and MIT license. If you require credit for
