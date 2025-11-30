@@ -106,11 +106,13 @@ def run
 
   setup_arguments
   setup_performer
-  components.each do |component_spec|
-    name, version = component_spec.split(/[:=]/, 2)
-    confirmation_ui(name, version)
-    gem_version = version ? ::Gem::Version.new(version) : nil
-    @performer.perform_adhoc_release(name, assert_version: gem_version)
+  unless @performer.error?
+    components.each do |component_spec|
+      name, version = component_spec.split(/[:=]/, 2)
+      confirmation_ui(name, version)
+      gem_version = version ? ::Gem::Version.new(version) : nil
+      @performer.perform_adhoc_release(name, assert_version: gem_version)
+    end
   end
   puts @performer.build_report_text
 end
