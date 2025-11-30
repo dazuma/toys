@@ -2,8 +2,6 @@
 
 require "json"
 
-require_relative "semver"
-
 module Toys
   module Release
     ##

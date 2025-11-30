@@ -2,7 +2,7 @@
 
 require "yaml"
 
-require_relative "semver"
+require "toys/release/semver"
 
 module Toys
   module Release

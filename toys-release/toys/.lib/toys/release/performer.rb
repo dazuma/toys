@@ -3,8 +3,9 @@
 require "fileutils"
 require "json"
 
-require_relative "artifact_dir"
-require_relative "steps"
+require "toys/release/artifact_dir"
+require "toys/release/pipeline"
+require "toys/release/steps"
 
 module Toys
   module Release
@@ -317,10 +318,10 @@ module Toys
 
       def internal_perform_release(component, version, result)
         component_prechecks(component, version) if @enable_prechecks
-        artifact_dir = Toys::Release::ArtifactDir.new(@work_dir)
+        artifact_dir = ArtifactDir.new(@work_dir)
         begin
           component.cd do
-            pipeline = Toys::Release::Pipeline.new(
+            pipeline = Pipeline.new(
               repository: @repository, component: component, version: version, performer_result: result,
               artifact_dir: artifact_dir, dry_run: @dry_run, git_remote: @git_remote
             )

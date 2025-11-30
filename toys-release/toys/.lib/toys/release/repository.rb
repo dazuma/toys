@@ -6,8 +6,8 @@ require "json"
 require "tmpdir"
 require "yaml"
 
-require_relative "component"
-require_relative "pull_request"
+require "toys/release/component"
+require "toys/release/pull_request"
 
 module Toys
   module Release

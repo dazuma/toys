@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "semver"
+require "toys/release/semver"
 
 module Toys
   module Release
