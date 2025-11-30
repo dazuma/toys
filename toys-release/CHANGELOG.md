@@ -1,5 +1,10 @@
 # Release History
 
+### v0.2.1 / 2025-11-30
+
+* FIXED: Fixed some typos in the release pipeline logs
+* DOCS: Fixed minor typos in readme files
+
 ### v0.2.0 / 2025-11-30
 
 * BREAKING CHANGE: Reworked pipeline design and normalized how steps communicate
