@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "change_set"
-require_relative "changelog_file"
-require_relative "version_rb_file"
+require "toys/release/change_set"
+require "toys/release/changelog_file"
+require "toys/release/version_rb_file"
 
 module Toys
   module Release
