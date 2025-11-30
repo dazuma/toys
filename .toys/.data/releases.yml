@@ -3,6 +3,11 @@ git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
 required_checks_timeout: 1800
 
+modify_default_steps:
+  gem:
+    - name: build_yard
+      uses_gems: redcarpet
+
 gems:
   - name: toys
     gh_pages_directory: gems/toys

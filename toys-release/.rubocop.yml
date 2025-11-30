@@ -10,6 +10,7 @@ AllCops:
     - "**/.toys/.toys.rb"
   Exclude:
     - "**/.data/**/*"
+    - "tmp/**/*"
 
 Layout/LineLength:
   Exclude:

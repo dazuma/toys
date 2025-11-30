@@ -846,6 +846,7 @@ module Toys
         component:
           - name: release_github
         gem:
+          - name: bundle
           - name: build_gem
           - name: build_yard
           - name: release_github

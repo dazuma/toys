@@ -140,22 +140,51 @@ module Toys
       BUILD_YARD = ::Object.new
       class << BUILD_YARD
         # @private
+        def dependencies(step_context)
+          if step_context.option("uses_gems")
+            []
+          else
+            ["bundle"]
+          end
+        end
+
+        # @private
         def run(step_context)
           step_context.log("Building yard: #{step_context.release_description}...")
           doc_dir = ::File.join(step_context.output_dir, "doc")
-          ::Toys::Utils::Gems.activate("yard")
-          code = <<~CODE
-            gem 'yard'
-            require 'yard'
-            ::YARD::CLI::Yardoc.run("--no-cache", "-o", "#{doc_dir}")
-          CODE
-          result = step_context.utils.ruby(code, out: [:child, :err])
+          code_lines = setup_gems(step_context) + [
+            "require 'yard'",
+            "::YARD::CLI::Yardoc.run('--no-cache', '-o', '#{doc_dir}')",
+          ]
+          result = step_context.utils.ruby(code_lines.join("\n"), out: [:child, :err])
           if !result.success? || !::File.directory?(doc_dir)
             step_context.abort_pipeline("Yard build failed for #{step_context.release_description}." \
                                         " Check the logs for details.")
           end
           step_context.log("Docs built to #{doc_dir}.")
           step_context.log("Completed yard build.")
+        end
+
+        private
+
+        def setup_gems(step_context)
+          if (uses_gems = step_context.option("uses_gems"))
+            ::Toys::Utils::Gems.activate("yard")
+            Array(uses_gems).each do |gem_info|
+              ::Toys::Utils::Gems.activate(*Array(gem_info))
+            end
+            [
+              "gem 'yard'",
+              "puts 'Loading gems explicitly: #{uses_gems.inspect}'",
+            ]
+          else
+            step_context.copy_from_input("bundle")
+            [
+              "require 'bundler'",
+              "puts 'Running with bundler'",
+              "Bundler.ui.silence { Bundler.setup }",
+            ]
+          end
         end
       end
 
