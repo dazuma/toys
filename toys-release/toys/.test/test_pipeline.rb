@@ -179,7 +179,7 @@ describe Toys::Release::Pipeline do
     pipeline.resolve_run
     refute(step1.will_run?)
     refute(step2.will_run?)
-    refute(step3.will_run?)
+    assert(step3.will_run?)
     assert(step4.will_run?)
     assert(step5.will_run?)
     assert(step6.will_run?)

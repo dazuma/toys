@@ -132,8 +132,8 @@ describe Toys::Release::Steps do
   end
 
   describe "BUILD_YARD" do
-    def make_context(component)
-      settings = ::Toys::Release::StepSettings.new({"name" => "build_yard"})
+    def make_build_context(component, uses_gems)
+      settings = ::Toys::Release::StepSettings.new({"name" => "build_yard", "uses_gems" => uses_gems})
       ::Toys::Release::Pipeline::StepContext.new(make_pipeline(component: component), settings)
     end
 
@@ -142,25 +142,40 @@ describe Toys::Release::Steps do
       skip if ::Toys::Compat.jruby?
     end
 
-    it "builds docs for the toys-core gem" do
-      step_context = make_context(core_component)
+    it "sets dependencies in bundle mode" do
+      step_context = make_build_context(core_component, nil)
+      assert_equal(["bundle"], ::Toys::Release::Steps::BUILD_YARD.dependencies(step_context))
+    end
+
+    it "sets dependencies in uses_gems mode" do
+      step_context = make_build_context(core_component, "redcarpet")
+      assert_empty(::Toys::Release::Steps::BUILD_YARD.dependencies(step_context))
+    end
+
+    it "builds docs for the toys-core gem in uses_gems mode" do
+      step_context = make_build_context(core_component, "redcarpet")
       in_component_directory(core_component) do
         _out, err = capture_subprocess_io do
           ::Toys::Release::Steps::BUILD_YARD.run(step_context)
         end
         assert_includes(err, "documented")
+        assert_includes(err, "Loading gems explicitly: \"redcarpet\"")
       end
       path = ::File.join(step_context.output_dir, "doc", "Toys", "Core.html")
       assert(::File.file?(path), "Expected yardocs to be generated")
     end
 
-    it "builds docs for the toys gem with a pre-tool" do
-      step_context = make_context(toys_component)
+    it "builds docs for the toys gem in bundle mode" do
+      step_context = make_build_context(toys_component, nil)
       in_component_directory(toys_component) do
+        capture_subprocess_io do
+          toys_component.bundle
+        end
         _out, err = capture_subprocess_io do
           ::Toys::Release::Steps::BUILD_YARD.run(step_context)
         end
         assert_includes(err, "documented")
+        assert_includes(err, "Running with bundler")
       end
       path = ::File.join(step_context.output_dir, "doc", "Toys", "StandardCLI.html")
       assert(::File.file?(path), "Expected yardocs to be generated")
