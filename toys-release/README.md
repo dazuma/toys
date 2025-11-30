@@ -7,7 +7,7 @@ based on semantic versioning, and supports fine tuning and approval of releases
 using GitHub pull requests.
 
 Out of the box, Toys-Release knows how to tag GitHub releases, build and push
-gems to Rubygems, and build and publish documentation to gh-pages. You can also
+gems to RubyGems, and build and publish documentation to gh-pages. You can also
 customize the build pipeline and many aspects of its behavior.
 
 ## Description
@@ -62,11 +62,11 @@ by closing the pull request without merging.
 Toys-Release requires Ruby 2.7 or later, and Toys 0.17 or later. We recommend
 the latest version of the standard C implementation of Ruby. (JRuby or
 TruffleRuby _may_ work, but are unsupported.) The Ruby provided by the standard
-setup-ruby GitHub Action is sufficient.
+`setup-ruby` GitHub Action is sufficient.
 
 ## License
 
-Copyright 2019-2025 Daniel Azuma and the Toys contributors
+Copyright 2025 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

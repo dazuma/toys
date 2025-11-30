@@ -22,7 +22,7 @@ executable using Toys-Core.
 It assumes basic familiarity with Toys, so, if you have not done so, I
 recommend first walking through the tutorial in the
 [Toys README](https://dazuma.github.io/toys/gems/toys/latest). It also assumes
-you are running a unix-like system such as Linux or macOS. Some commands might
+you are running a Unix-like system such as Linux or macOS. Some commands might
 need to be modified if you're running on Windows.
 
 ### Install Toys-Core
@@ -37,7 +37,7 @@ dependency.
 ### Create a new executable
 
 We'll start by creating an executable Ruby script. Using your favorite text
-editor, create new a file called `mycmd` with the following contents:
+editor, create a new file called `mycmd` with the following contents:
 
     #!/usr/bin/env ruby
 
@@ -237,8 +237,8 @@ no longer present.
 
 We've also omitted the middleware that provides default execution behavior
 (i.e. displaying the help screen) when there is no `run` method. Now, since we
-haven't defined a toplevel `run` method in this last example, invoking the root
-tool will cause an error:
+haven't defined a top-level `run` method in this last example, invoking the
+root tool will cause an error:
 
     $ ./mycmd
 
@@ -276,7 +276,7 @@ directory, run:
     $ toys install
 
 Once the gem has successfully installed, you can run the executable, which
-Rubygems should have added to your path. (Note: if you are using a ruby
+RubyGems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
@@ -308,7 +308,7 @@ Try it out now. From the `examples/multi-file-gem` directory, run:
     $ toys install
 
 Once the gem has successfully installed, you can run the executable, which
-Rubygems should have added to your path. (Note: if you are using a ruby
+RubyGems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
@@ -334,7 +334,7 @@ templates, and middleware, in the
 [Toys-Core User Guide](https://dazuma.github.io/toys/gems/toys-core/latest/file.guide.html).
 
 Detailed usage information can be found in the
-[class reference documentation](https://dazuma.github.io/toys/gems/toys-core/lateset/Toys.html)
+[class reference documentation](https://dazuma.github.io/toys/gems/toys-core/latest/Toys.html)
 
 ## System requirements
 
