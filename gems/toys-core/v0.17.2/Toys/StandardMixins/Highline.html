@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Toys::StandardMixins::Highline
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::StandardMixins::Highline";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (H)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../StandardMixins.html" title="Toys::StandardMixins (module)">StandardMixins</a></span></span>
+     &raquo; 
+    <span class="title">Highline</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Toys::StandardMixins::Highline
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd><span class='object_link'><a href="../Mixin.html" title="Toys::Mixin (module)">Mixin</a></span></dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/standard_mixins/highline.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A mixin that provides access to the capabilities of the highline gem.</p>
+
+<p>This mixin requires the highline gem, version 2.0 or later. It will
+attempt to install the gem if it is not available.</p>
+
+<p>You may make these methods available to your tool by including the
+following directive in your tool configuration:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:highline</span>
+</code></pre>
+
+<p>A HighLine object will then be available by calling the <span class='object_link'><a href="#highline-instance_method" title="Toys::StandardMixins::Highline#highline (method)">#highline</a></span>
+method. For information on using this object, see the
+<a href="https://www.rubydoc.info/gems/highline">Highline documentation</a>. Some of
+the most common HighLine methods, such as <code>say</code>, are also mixed into the
+tool and can be called directly.</p>
+
+<p>You can configure the HighLine object by passing options to the <code>include</code>
+directive. For example:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_include'>include</span> <span class='symbol'>:highline</span><span class='comma'>,</span> <span class='id identifier rubyid_my_stdin'>my_stdin</span><span class='comma'>,</span> <span class='id identifier rubyid_my_stdout'>my_stdout</span>
+</code></pre>
+
+<p>The arguments will be passed on to the
+<a href="https://www.rubydoc.info/gems/highline/HighLine:initialize">HighLine constructor</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+  
+    <h2>
+      Constant Summary
+      <small><a href="#" class="constants_summary_toggle">collapse</a></small>
+    </h2>
+
+    <dl class="constants">
+      
+        <dt id="KEY-constant" class="">KEY =
+          <div class="docstring">
+  <div class="discussion">
+    <p>Context key for the highline object.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='op'>::</span><span class='const'>Object</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+    </dl>
+  
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#agree-instance_method" title="#agree (instance method)">#<strong>agree</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:agree">HighLine#agree</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#ask-instance_method" title="#ask (instance method)">#<strong>ask</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:ask">HighLine#ask</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#choose-instance_method" title="#choose (instance method)">#<strong>choose</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:choose">HighLine#choose</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#color-instance_method" title="#color (instance method)">#<strong>color</strong>(*args)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:color">HighLine#color</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#color_code-instance_method" title="#color_code (instance method)">#<strong>color_code</strong>(*args)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:color_code">HighLine#color_code</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#highline-instance_method" title="#highline (instance method)">#<strong>highline</strong>  &#x21d2; ::HighLine </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A tool-wide <a href="https://www.rubydoc.info/gems/highline/HighLine">HighLine</a> instance.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#indent-instance_method" title="#indent (instance method)">#<strong>indent</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:indent">HighLine#indent</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#list-instance_method" title="#list (instance method)">#<strong>list</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:list">HighLine#list</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#new_scope-instance_method" title="#new_scope (instance method)">#<strong>new_scope</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:new_scope">HighLine#new_scope</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#newline-instance_method" title="#newline (instance method)">#<strong>newline</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:newline">HighLine#newline</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#puts-instance_method" title="#puts (instance method)">#<strong>puts</strong>(*args)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:puts">HighLine#puts</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#say-instance_method" title="#say (instance method)">#<strong>say</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:say">HighLine#say</a>.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#uncolor-instance_method" title="#uncolor (instance method)">#<strong>uncolor</strong>(*args)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:uncolor">HighLine#uncolor</a>.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="../Mixin.html" title="Toys::Mixin (module)">Mixin</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="../Mixin.html#create-class_method" title="Toys::Mixin.create (method)">create</a></span></p>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="agree-instance_method">
+  
+    #<strong>agree</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:agree">HighLine#agree</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+51
+52
+53</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 51</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_agree'>agree</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_agree'>agree</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="ask-instance_method">
+  
+    #<strong>ask</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:ask">HighLine#ask</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+58
+59
+60</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 58</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_ask'>ask</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_ask'>ask</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="choose-instance_method">
+  
+    #<strong>choose</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:choose">HighLine#choose</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+65
+66
+67</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 65</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_choose'>choose</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_choose'>choose</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="color-instance_method">
+  
+    #<strong>color</strong>(*args)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:color">HighLine#color</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+107
+108
+109</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 107</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_color'>color</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_color'>color</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="color_code-instance_method">
+  
+    #<strong>color_code</strong>(*args)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:color_code">HighLine#color_code</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+114
+115
+116</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 114</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_color_code'>color_code</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_color_code'>color_code</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="highline-instance_method">
+  
+    #<strong>highline</strong>  &#x21d2; <tt>::HighLine</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A tool-wide <a href="https://www.rubydoc.info/gems/highline/HighLine">HighLine</a>
+instance</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>::HighLine</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+44
+45
+46</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 44</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_highline'>highline</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="indent-instance_method">
+  
+    #<strong>indent</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:indent">HighLine#indent</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+86
+87
+88</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 86</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_indent'>indent</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_indent'>indent</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="list-instance_method">
+  
+    #<strong>list</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:list">HighLine#list</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+72
+73
+74</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 72</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_list'>list</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_list'>list</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="new_scope-instance_method">
+  
+    #<strong>new_scope</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:new_scope">HighLine#new_scope</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+128
+129
+130</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 128</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_new_scope'>new_scope</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_new_scope'>new_scope</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="newline-instance_method">
+  
+    #<strong>newline</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:newline">HighLine#newline</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+93
+94
+95</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 93</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_newline'>newline</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_newline'>newline</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="puts-instance_method">
+  
+    #<strong>puts</strong>(*args)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:puts">HighLine#puts</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+100
+101
+102</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 100</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_puts'>puts</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="say-instance_method">
+  
+    #<strong>say</strong>  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:say">HighLine#say</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+79
+80
+81</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 79</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_say'>say</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_say'>say</span><span class='lparen'>(</span><span class='op'>...</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="uncolor-instance_method">
+  
+    #<strong>uncolor</strong>(*args)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Calls <a href="https://www.rubydoc.info/gems/highline/HighLine:uncolor">HighLine#uncolor</a></p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+121
+122
+123</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/standard_mixins/highline.rb', line 121</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_uncolor'>uncolor</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='kw'>self</span><span class='lbracket'>[</span><span class='const'><span class='object_link'><a href="#KEY-constant" title="Toys::StandardMixins::Highline::KEY (constant)">KEY</a></span></span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_uncolor'>uncolor</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Sun Nov 30 17:24:31 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.37 (ruby-3.4.7).
+</div>
+
+    </div>
+  </body>
+</html>
