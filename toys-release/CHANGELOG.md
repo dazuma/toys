@@ -1,5 +1,10 @@
 # Release History
 
+### v0.2.0 / 2025-11-30
+
+* BREAKING CHANGE: Reworked pipeline design and normalized how steps communicate
+* BREAKING CHANGE: Removed defunct commit linter
+
 ### v0.1.1 / 2025-11-09
 
 * FIXED: The gen-gh-pages script now generates the correct redirect paths on a non-monorepo with the default directory structure
