@@ -18,12 +18,13 @@ flag_group desc: "Flags" do
       "Run in dry-run mode, where checks are made and releases are built" \
       " but are not pushed."
   end
-  flag :gh_pages_dir, "--gh-pages-dir=VAL" do
-    desc "The directory to use for the gh-pages branch"
+  flag :work_dir, "--work-dir=VAL" do
+    desc "The directory to use for artifacts and temporary files"
     long_desc \
-      "Set to the path of a directory to use as the gh-pages workspace when" \
-      " building and pushing gem documentation. If left unset, a temporary" \
-      " directory will be created (and removed when finished)."
+      "If provided, the given directory path is used for artifacts and" \
+        " temporary files, and is left intact after the release so the" \
+        " artifacts can be inspected. If omitted, a new temporary directory" \
+        " is created, and is automatically deleted after the release."
   end
   flag :git_remote, "--git-remote=VAL" do
     default "origin"
@@ -84,13 +85,13 @@ def setup_objects
   @repo_settings = Toys::Release::RepoSettings.load_from_environment(@utils)
   @repository = Toys::Release::Repository.new(@utils, @repo_settings)
   @repository.git_set_user_info
+  @pull_request = @repository.load_pr(release_pr)
 end
 
 def verify_release_pr
-  @pr_info = @repository.load_pr(release_pr)
-  @utils.error("Could not load pull request ##{release_pr}") unless @pr_info
+  @utils.error("Could not load pull request ##{release_pr}") unless @pull_request
   expected_labels = [@repo_settings.release_pending_label, @repo_settings.release_error_label]
-  return if @pr_info["labels"].any? { |label| expected_labels.include?(label["name"]) }
+  return if @pull_request.labels.any? { |label| expected_labels.include?(label) }
   warning = "PR #{release_pr} doesn't have the release pending or release error label."
   if yes
     logger.warn(warning)
@@ -102,12 +103,17 @@ def verify_release_pr
 end
 
 def setup_params
-  [:gh_pages_dir, :rubygems_api_key].each do |key|
+  [
+    :git_remote,
+    :release_ref,
+    :rubygems_api_key,
+    :work_dir,
+  ].each do |key|
     set(key, nil) if get(key).to_s.empty?
   end
-  ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
   set(:dry_run, /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)) if dry_run.nil?
-  set :release_ref, @repository.current_sha(release_ref || @pr_info["merge_commit_sha"])
+  ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
+  set :release_ref, @repository.current_sha(release_ref || @pull_request.merge_commit_sha)
 end
 
 def create_performer
@@ -116,14 +122,14 @@ def create_performer
                                release_pr: release_pr,
                                enable_prechecks: enable_prechecks,
                                git_remote: git_remote,
-                               gh_pages_dir: gh_pages_dir,
+                               work_dir: work_dir,
                                dry_run: dry_run)
 end
 
 def perform_pending_releases
-  @repository.wait_github_checks(release_ref) if enable_prechecks
+  @repository.wait_github_checks(ref: release_ref) if enable_prechecks
   performer = create_performer
-  performer.perform_pr_releases
+  performer.perform_pr_releases unless performer.error?
   performer.report_results
   if performer.error?
     @utils.error("Releases reported failure")

@@ -88,7 +88,7 @@ def handle_release_merged
     @utils.error("GitHub checks failed", *github_check_errors)
   end
   performer = create_performer
-  performer.perform_pr_releases
+  performer.perform_pr_releases unless performer.error?
   performer.report_results
   if performer.error?
     @utils.error("Releases reported failure")

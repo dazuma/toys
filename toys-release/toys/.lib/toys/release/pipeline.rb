@@ -468,6 +468,7 @@ module Toys
       def clean_tree(subdir)
         count = 0
         ::Dir.children(subdir || ".").each do |child|
+          next if child == ".git"
           child = ::File.join(subdir, child) if subdir
           if ::File.directory?(child)
             clean_tree(child)

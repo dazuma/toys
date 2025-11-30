@@ -31,10 +31,10 @@ module Toys
         end
 
         ##
-        # @return [boolean] Whether the result is capturing errors
+        # @return [boolean] Whether there were no errors
         #
-        def capture_errors?
-          !@errors.nil?
+        def succeeded?
+          @errors.empty?
         end
 
         ##
@@ -206,28 +206,13 @@ module Toys
       #
       def report_results
         report_text = build_report_text
-        if @pull_request
-          @utils.log("Updating release pull request #{@pull_request.url} ...")
-          label = error? ? @settings.release_error_label : @settings.release_complete_label
-          @pull_request.update(labels: label)
-          @pull_request.add_comment(report_text)
-          @utils.log("Updated release pull request #{@pull_request.url}")
-        end
-        if error?
-          @utils.log("Opening a new issue to report the failure ...")
-          body = <<~STR
-            A release job failed.
-
-            Release PR: #{@pull_request&.url || 'unknown'}
-            Commit: https://github.com/#{@settings.repo_path}/commit/#{@release_sha}
-
-            ----
-
-            #{report_text}
-          STR
-          title = "Release PR ##{@pull_request&.number || 'unknown'} failed with errors"
-          issue_number = @repository.open_issue(title, body)["number"]
-          @utils.log("Issue ##{issue_number} opened")
+        puts report_text
+        if @dry_run
+          @utils.warning("DRY RUN: Skipped updating pull request #{@pull_request.url}") if @pull_request
+          @utils.warning("DRY RUN: Skipped opening release failure issue") if error?
+        else
+          update_pull_request(report_text) if @pull_request
+          open_error_issue(report_text) if error?
         end
         self
       end
@@ -340,6 +325,31 @@ module Toys
         component.verify_version(version)
         @utils.log("Completed prechecks for #{component.name.inspect}")
         self
+      end
+
+      def update_pull_request(report_text)
+        @utils.log("Updating release pull request #{@pull_request.url} ...")
+        label = error? ? @settings.release_error_label : @settings.release_complete_label
+        @pull_request.update(labels: label)
+        @pull_request.add_comment(report_text)
+        @utils.log("Updated release pull request #{@pull_request.url}")
+      end
+
+      def open_error_issue(report_text)
+        @utils.log("Opening a new issue to report the failure ...")
+        body = <<~STR
+          A release job failed.
+
+          Release PR: #{@pull_request&.url || 'unknown'}
+          Commit: https://github.com/#{@settings.repo_path}/commit/#{@release_sha}
+
+          ----
+
+          #{report_text}
+        STR
+        title = "Release PR ##{@pull_request&.number || 'unknown'} failed with errors"
+        issue_number = @repository.open_issue(title, body)["number"]
+        @utils.log("Issue ##{issue_number} opened")
       end
     end
   end
