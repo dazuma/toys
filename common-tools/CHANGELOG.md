@@ -3,8 +3,6 @@
 ### v0.18.0 / 2025-11-30
 
 * BREAKING CHANGE: Removed release tooling from common-tools; use the toys-release gem instead
-* ADDED: Removed release tooling from common-tools; use the toys-release gem instead
-* FIXED: Fixes for initial release
 
 ### v0.17.1 / 2025-11-04
 
