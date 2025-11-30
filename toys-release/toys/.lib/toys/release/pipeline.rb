@@ -375,7 +375,7 @@ module Toys
       def run
         @steps.each do |step|
           unless step.will_run?
-            @utils.log("Skpping step #{step.name}")
+            @utils.log("Skipping step #{step.name}")
             next
           end
           begin
@@ -433,7 +433,7 @@ module Toys
             @utils.error("Input dependency #{input_settings.name} not found before step #{step.name}")
             return nil
           end
-          @utils.log("Step #{@steps[dep_index].name} requested as a depeendency of #{step.name}")
+          @utils.log("Step #{@steps[dep_index].name} requested as a dependency of #{step.name}")
           mark_step_index(dep_index)
         end
         step.dependencies.each do |dep_name|
@@ -442,7 +442,7 @@ module Toys
             @utils.error("Dependency #{dep_name} not found before step #{step.name}")
             return nil
           end
-          @utils.log("Step #{dep_name} requested as a depeendency of #{step.name}")
+          @utils.log("Step #{dep_name} requested as a dependency of #{step.name}")
           mark_step_index(dep_index)
         end
       end
