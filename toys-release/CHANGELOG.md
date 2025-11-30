@@ -4,8 +4,6 @@
 
 * BREAKING CHANGE: Reworked pipeline design and normalized how steps communicate
 * BREAKING CHANGE: Removed defunct commit linter
-* ADDED: Reworked pipeline design and normalized how steps communicate
-* FIXED: Removed defunct commit linter
 
 ### v0.1.1 / 2025-11-09
 
