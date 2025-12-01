@@ -289,7 +289,9 @@ describe Toys::Release::Pipeline do
     step6 = pipeline.add_step(make_step_settings({"name" => "release_gem"}))
     step7 = pipeline.add_step(make_step_settings({"name" => "push_gh_pages"}))
     step8 = pipeline.add_step(make_step_settings({"name" => "release_github"}))
-    pipeline.resolve_run
+    Dir.chdir(component_dir) do
+      pipeline.resolve_run
+    end
     refute(step1.will_run?)
     refute(step2.will_run?)
     assert(step3.will_run?)

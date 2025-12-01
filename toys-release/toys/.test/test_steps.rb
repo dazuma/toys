@@ -12,6 +12,7 @@ describe Toys::Release::Steps do
   let(:tools_component) { Toys::Release::Component.new(repo_settings, "common-tools", environment_utils) }
   let(:artifact_dir) { Toys::Release::ArtifactDir.new }
   let(:sample_release_version) { Gem::Version.new("0.99.99") }
+  let(:repo_root_dir) { File.dirname(File.dirname(File.dirname(__dir__))) }
 
   def make_basic_result(component, version)
     Toys::Release::Performer::Result.new(component.name, version)
@@ -212,8 +213,16 @@ describe Toys::Release::Steps do
       fake_tool_context.prevent_real_exec_prefix(["gem", "push"])
     end
 
-    it "is primary" do
-      assert(::Toys::Release::Steps::RELEASE_GEM.primary?(make_context))
+    it "is primary if run from where there is a gemspec" do
+      Dir.chdir(File.join(repo_root_dir, "toys")) do
+        assert(::Toys::Release::Steps::RELEASE_GEM.primary?(make_context))
+      end
+    end
+
+    it "is not primary if there is no gemspec" do
+      Dir.chdir(File.join(repo_root_dir, "toys-core")) do
+        refute(::Toys::Release::Steps::RELEASE_GEM.primary?(make_context))
+      end
     end
 
     it "has a default dependency" do

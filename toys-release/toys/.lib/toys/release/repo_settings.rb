@@ -929,7 +929,6 @@ module Toys
         @release_branch_prefix = info.delete("release_branch_prefix") || "release"
         @git_user_name = info.delete("git_user_name")
         @git_user_email = info.delete("git_user_email")
-        @errors << "Repo key missing from releases.yml" unless @repo_path
       end
 
       def read_required_checks_info(info)
