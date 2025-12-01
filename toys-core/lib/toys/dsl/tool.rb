@@ -466,7 +466,9 @@ module Toys
       # current location.
       #
       # @param name [String] Name of the gem
-      # @param version [String,Array<String>] Version requirements for the gem.
+      # @param versions [Array<String>] Version requirements for the gem.
+      # @param version [String,Array<String>] An alternate way to specify
+      #     version requirements for the gem.
       # @param path [String] Optional path within the gem to the file or
       #     directory to load. Defaults to the root of the gem's toys directory.
       # @param toys_dir [String] Optional override for the gem's toys
@@ -475,7 +477,8 @@ module Toys
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     configuration will be loaded into the current namespace.
       #
-      def load_gem(name, version: nil, path: nil, toys_dir: nil, as: nil)
+      def load_gem(name, *versions, version: nil, path: nil, toys_dir: nil, as: nil)
+        version = versions + Array(version)
         if as
           tool(as) do
             load_gem(name, version: version, path: path, toys_dir: toys_dir)
