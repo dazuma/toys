@@ -26,6 +26,7 @@ describe Toys::Release::Pipeline do
   let(:step1_dir) { artifact_dir.output("step1") }
   let(:noop_output_dir) { artifact_dir.output("noop") }
   let(:noop_temp_dir) { artifact_dir.temp("noop") }
+  let(:existing_content) { "# Existing file\n" }
 
   def make_step_settings(options = {})
     Toys::Release::StepSettings.new({"name" => "noop", "clean" => false}.merge(options))
@@ -98,6 +99,72 @@ describe Toys::Release::Pipeline do
     assert(File.exist?(File.join(noop_temp_dir, "changelog1.md")))
   end
 
+  it "merges directories when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+    File.write(File.join(noop_temp_dir, "dir1", "file1a.md"), existing_content)
+    pipeline.run
+    assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                 File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+    assert_equal(existing_content, File.read(File.join(noop_temp_dir, "dir1", "file1a.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
+  end
+
+  it "errors on file-on-file collision when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+    File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
+  end
+
+  it "errors on directory-on-file collision when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+    File.write(File.join(noop_temp_dir, "dir1", "subdir1"), existing_content)
+    pipeline.run
+    assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/subdir1")
+  end
+
+  it "errors on file-on-directory collision when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1", "file1.md"))
+    File.write(File.join(noop_temp_dir, "dir1", "file1.md", "file1a.md"), existing_content)
+    pipeline.run
+    assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
+  end
+
+  it "replaces on file-on-file collision when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp", "collisions" => "replace"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+    File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                 File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
+  end
+
+  it "keeps on file-on-file collision when pulling input" do
+    step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp", "collisions" => "keep"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(step1_dir)
+    FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+    File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_equal(existing_content, File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
+  end
+
   it "pushes specific input and output path from the component directory" do
     step_opts = {"outputs" => [{"source_path" => "tmp/dir1/subdir1", "dest_path" => "dir1/subdir1"}]}
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
@@ -125,6 +192,52 @@ describe Toys::Release::Pipeline do
     pipeline.run
     assert(File.exist?(File.join(noop_output_dir, "dir1", "subdir1", "file11.md")))
     assert(File.exist?(File.join(noop_output_dir, "changelog1.md")))
+  end
+
+  it "merges directories when pushing output" do
+    step_opts = {"outputs" => [{"source" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(noop_temp_dir)
+    FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+    File.write(File.join(noop_output_dir, "dir1", "file1a.md"), existing_content)
+    pipeline.run
+    assert_equal(File.read(File.join(noop_temp_dir, "dir1", "file1.md")),
+                 File.read(File.join(noop_output_dir, "dir1", "file1.md")))
+    assert_equal(existing_content, File.read(File.join(noop_output_dir, "dir1", "file1a.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
+  end
+
+  it "errors on collision when pushing output" do
+    step_opts = {"outputs" => [{"source" => "temp"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(noop_temp_dir)
+    FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+    File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
+  end
+
+  it "replaces on collision when pushing output" do
+    step_opts = {"outputs" => [{"source" => "temp", "collisions" => "replace"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(noop_temp_dir)
+    FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+    File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_equal(File.read(File.join(noop_temp_dir, "dir1", "file1.md")),
+                 File.read(File.join(noop_output_dir, "dir1", "file1.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
+  end
+
+  it "keeps on collision when pushing output" do
+    step_opts = {"outputs" => [{"source" => "temp", "collisions" => "keep"}]}
+    pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
+    copy_data(noop_temp_dir)
+    FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+    File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    pipeline.run
+    assert_equal(existing_content, File.read(File.join(noop_output_dir, "dir1", "file1.md")))
+    refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
   end
 
   it "defaults steps not to run" do
@@ -301,6 +414,47 @@ describe Toys::Release::Pipeline do
       assert(File.exist?(File.join(noop_temp_dir, "changelog1.md")))
     end
 
+    it "merges directories when copying input" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(step1_dir)
+      FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+      File.write(File.join(noop_temp_dir, "dir1", "file1a.md"), existing_content)
+      step.copy_from_input("step1", dest: :temp)
+      assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                   File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+      assert_equal(existing_content, File.read(File.join(noop_temp_dir, "dir1", "file1a.md")))
+    end
+
+    it "errors on collision when copying input" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(step1_dir)
+      FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+      File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+      ex = assert_raises(Toys::Release::Pipeline::PipelineExit) do
+        step.copy_from_input("step1", dest: :temp)
+      end
+      assert_includes(ex.message, "Unable to copy ./dir1/file1.md")
+    end
+
+    it "replaces on collision when copying input" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(step1_dir)
+      FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+      File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+      step.copy_from_input("step1", dest: :temp, collisions: :replace)
+      assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                   File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+    end
+
+    it "keeps on collision when copying input" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(step1_dir)
+      FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
+      File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+      step.copy_from_input("step1", dest: :temp, collisions: :keep)
+      assert_equal(existing_content, File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
+    end
+
     it "copies specific input and output path from the component directory" do
       step = pipeline.add_step(make_step_settings)
       FileUtils.rm_rf(component_tmp_dir)
@@ -325,6 +479,47 @@ describe Toys::Release::Pipeline do
       step.copy_to_output(source: :temp)
       assert(File.exist?(File.join(noop_output_dir, "dir1", "subdir1", "file11.md")))
       assert(File.exist?(File.join(noop_output_dir, "changelog1.md")))
+    end
+
+    it "merges directories when copying output" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(noop_temp_dir)
+      FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+      File.write(File.join(noop_output_dir, "dir1", "file1a.md"), existing_content)
+      step.copy_to_output(source: :temp)
+      assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                   File.read(File.join(noop_output_dir, "dir1", "file1.md")))
+      assert_equal(existing_content, File.read(File.join(noop_output_dir, "dir1", "file1a.md")))
+    end
+
+    it "errors on collision when copying output" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(noop_temp_dir)
+      FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+      File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+      ex = assert_raises(Toys::Release::Pipeline::PipelineExit) do
+        step.copy_to_output(source: :temp)
+      end
+      assert_includes(ex.message, "Unable to copy ./dir1/file1.md")
+    end
+
+    it "replaces on collision when copying output" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(noop_temp_dir)
+      FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+      File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+      step.copy_to_output(source: :temp, collisions: :replace)
+      assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
+                   File.read(File.join(noop_output_dir, "dir1", "file1.md")))
+    end
+
+    it "keeps on collision when copying output" do
+      step = pipeline.add_step(make_step_settings)
+      copy_data(noop_temp_dir)
+      FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
+      File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+      step.copy_to_output(source: :temp, collisions: :keep)
+      assert_equal(existing_content, File.read(File.join(noop_output_dir, "dir1", "file1.md")))
     end
   end
 end
