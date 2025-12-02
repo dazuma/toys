@@ -324,6 +324,7 @@ module Toys
           @dest = "none" if @dest == false
           @source_path = info["source_path"]
           @dest_path = info["dest_path"]
+          @collisions = info.fetch("collisions", "error")
         end
       end
 
@@ -352,6 +353,12 @@ module Toys
       attr_reader :dest_path
 
       ##
+      # @return [String] What to do if a collision occurs. Possible values are
+      #     "error", "replace", and "keep".
+      #
+      attr_reader :collisions
+
+      ##
       # @return [Hash] the hash representation
       #
       def to_h
@@ -360,6 +367,7 @@ module Toys
           "dest" => dest,
           "source_path" => source_path,
           "dest_path" => dest_path,
+          "collisions" => collisions,
         }
       end
     end
@@ -386,6 +394,7 @@ module Toys
           @source = info.fetch("source", "component")
           @source_path = info["source_path"]
           @dest_path = info["dest_path"]
+          @collisions = info.fetch("collisions", "error")
         end
       end
 
@@ -408,6 +417,12 @@ module Toys
       attr_reader :dest_path
 
       ##
+      # @return [String] What to do if a collision occurs. Possible values are
+      #     "error", "replace", and "keep".
+      #
+      attr_reader :collisions
+
+      ##
       # @return [Hash] the hash representation
       #
       def to_h
@@ -415,6 +430,7 @@ module Toys
           "source" => source,
           "source_path" => source_path,
           "dest_path" => dest_path,
+          "collisions" => collisions,
         }
       end
     end

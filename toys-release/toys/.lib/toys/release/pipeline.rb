@@ -236,9 +236,13 @@ module Toys
         # @param source_step [String] Name of the source step
         # @param source_path [String] Path to the file or directory to copy
         # @param dest [:component,:repo_root,:temp,:output] Symbolic destination
-        # @param dest_path [String] Path in the destination
+        # @param dest_path [String,nil] Path in the destination, if different
+        #     from the source
+        # @param collisions [:error,:replace,:keep] What to do if a collision
+        #     occurs
         #
-        def copy_from_input(source_step, source_path: nil, dest: :component, dest_path: nil)
+        def copy_from_input(source_step, source_path: nil, dest: :component, dest_path: nil, collisions: nil)
+          collisions ||= "error"
           source_dir = output_dir(source_step)
           source_path ||= "."
           dest_path ||= source_path
@@ -258,16 +262,21 @@ module Toys
           source = ::File.expand_path(source_path, source_dir)
           dest = ::File.expand_path(dest_path, dest_dir)
           utils.log("Copying #{source_path.inspect} from step #{source_step.inspect}")
-          @pipeline.copy_tree(self, source, dest, source_path)
+          @pipeline.copy_tree(self, source, dest, source_path, collisions.to_s)
         end
 
         ##
         # Copy the given item to the output directory
         #
-        # @param source_path [String] Path to the file or directory to copy
         # @param source [:component,:repo_root,:temp] Symbolic source
+        # @param source_path [String] Path to the file or directory to copy
+        # @param dest_path [String,nil] Path in the destination, if different
+        #     from the source
+        # @param collisions [:error,:replace,:keep] What to do if a collision
+        #     occurs
         #
-        def copy_to_output(source: :component, source_path: nil, dest_path: nil)
+        def copy_to_output(source: :component, source_path: nil, dest_path: nil, collisions: nil)
+          collisions ||= "error"
           source_path ||= "."
           dest_path ||= source_path
           source_dir =
@@ -284,7 +293,7 @@ module Toys
           source = ::File.expand_path(source_path, source_dir)
           dest = ::File.expand_path(dest_path, output_dir)
           utils.log("Copying #{source_path.inspect} to output")
-          @pipeline.copy_tree(self, source, dest, source_path)
+          @pipeline.copy_tree(self, source, dest, source_path, collisions.to_s)
         end
 
         # ---- called internally from the pipeline ----
@@ -367,6 +376,7 @@ module Toys
             mark_step_index(index)
           end
         end
+        self
       end
 
       ##
@@ -393,23 +403,25 @@ module Toys
             return nil
           end
         end
+        self
       end
 
       ##
       # @private
       #
-      def copy_tree(step, src, dest, src_name)
+      def copy_tree(step, src, dest, src_name, collisions)
         if ::File.directory?(src)
           if ::File.exist?(dest) && !::File.directory?(dest)
-            step.abort_pipeline("Unable to copy #{src_name} because a non-directory exists at the destination")
+            return if handle_copy_collision(step, collisions, dest, src_name) == :keep
           end
           ::FileUtils.mkdir_p(dest)
           ::Dir.children(src).each do |child|
-            copy_tree(step, ::File.join(src, child), ::File.join(dest, child), ::File.join(src_name, child))
+            copy_tree(step, ::File.join(src, child), ::File.join(dest, child),
+                      ::File.join(src_name, child), collisions)
           end
         elsif ::File.exist?(src)
           if ::File.exist?(dest)
-            step.abort_pipeline("Unable to copy #{src_name} because something already exists at the destination")
+            return if handle_copy_collision(step, collisions, dest, src_name) == :keep
           end
           ::FileUtils.copy_entry(src, dest)
         else
@@ -514,7 +526,7 @@ module Toys
             end
           dest = ::File.expand_path(dest_path, dest_dir)
           @utils.log("Copying #{source_path.inspect} from step #{input.step_name.inspect}")
-          copy_tree(step, source, dest, source_path)
+          copy_tree(step, source, dest, source_path, input.collisions)
         end
       end
 
@@ -540,7 +552,24 @@ module Toys
           source = ::File.expand_path(source_path, source_dir)
           dest = ::File.expand_path(dest_path, step.output_dir)
           @utils.log("Copying #{source_path.inspect} to output")
-          copy_tree(step, source, dest, source_path)
+          copy_tree(step, source, dest, source_path, output.collisions)
+        end
+      end
+
+      ##
+      # @private
+      # Handle a collision during copy_tree.
+      # Returns :keep or :replace
+      #
+      def handle_copy_collision(step, collisions, dest, src_name)
+        case collisions
+        when "keep"
+          :keep
+        when "replace"
+          ::FileUtils.remove_entry(dest)
+          :replace
+        else
+          step.abort_pipeline("Unable to copy #{src_name} because it already exists at the destination")
         end
       end
     end

@@ -106,7 +106,7 @@ describe Toys::Release::RepoSettings do
     assert_equal(Toys::Release::Semver::PATCH, docs_tag_settings.semver)
   end
 
-  describe "CommitTagSettings" do
+  describe "with commit tag modifications" do
     it "loads a hidden header" do
       input = {
         "release_commit_tags" => [
