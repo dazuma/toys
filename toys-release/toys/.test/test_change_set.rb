@@ -166,16 +166,19 @@ describe Toys::Release::ChangeSet do
   end
 
   it "reflects a scope change to the header and semver" do
-    settings_customization["modify_release_commit_tags"] = {
-      "feat" => {
-        "scopes" => {
-          "internal" => {
+    settings_customization["commit_tags"] = [
+      {
+        "tag" => "feat",
+        "semver" => "minor",
+        "scopes" => [
+          {
+            "scope" => "internal",
             "header" => "INTERNAL",
             "semver" => "patch",
           },
-        },
+        ],
       },
-    }
+    ]
     change_set.add_message("12345", "feat(internal): Feature 1")
     change_set.finish
     assert_equal(Toys::Release::Semver::PATCH, change_set.semver)
@@ -185,15 +188,18 @@ describe Toys::Release::ChangeSet do
   end
 
   it "reflects a scope removal of the change description" do
-    settings_customization["modify_release_commit_tags"] = {
-      "feat" => {
-        "scopes" => {
-          "internal" => {
+    settings_customization["commit_tags"] = [
+      {
+        "tag" => "feat",
+        "semver" => "minor",
+        "scopes" => [
+          {
+            "scope" => "internal",
             "header" => nil,
           },
-        },
+        ],
       },
-    }
+    ]
     change_set.add_message("12345", "feat(internal): Feature 1")
     change_set.finish
     assert_equal(Toys::Release::Semver::MINOR, change_set.semver)

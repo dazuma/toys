@@ -3,12 +3,11 @@ git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
 required_checks_timeout: 1800
 
-modify_default_steps:
-  gem:
-    - name: build_yard
-      uses_gems: redcarpet
+modify_steps:
+  - name: build_yard
+    uses_gems: redcarpet
 
-gems:
+components:
   - name: toys
     gh_pages_directory: gems/toys
     gh_pages_version_var: version
@@ -28,11 +27,11 @@ gems:
     gh_pages_version_var: version
   - name: toys-release
     gh_pages_directory: gems/toys-release
-
-components:
   - name: common-tools
     version_rb_path: .lib/version.rb
     version_constant: Toys::CommonTools::VERSION
+    steps:
+      - name: release_github
 
 coordination_groups:
   - [toys, toys-core]

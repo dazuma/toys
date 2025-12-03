@@ -7,9 +7,9 @@ describe Toys::Release::Steps do
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
-  let(:toys_component) { Toys::Release::Component.build(repo_settings, "toys", environment_utils) }
-  let(:core_component) { Toys::Release::Component.build(repo_settings, "toys-core", environment_utils) }
-  let(:tools_component) { Toys::Release::Component.build(repo_settings, "common-tools", environment_utils) }
+  let(:toys_component) { Toys::Release::Component.new(repo_settings, "toys", environment_utils) }
+  let(:core_component) { Toys::Release::Component.new(repo_settings, "toys-core", environment_utils) }
+  let(:tools_component) { Toys::Release::Component.new(repo_settings, "common-tools", environment_utils) }
   let(:artifact_dir) { Toys::Release::ArtifactDir.new }
   let(:sample_release_version) { Gem::Version.new("0.99.99") }
 
@@ -37,8 +37,9 @@ describe Toys::Release::Steps do
 
   describe "TOOL" do
     def make_context(tool, abort_pipeline_on_error: false)
-      settings = Toys::Release::StepSettings.new({"name" => "tool", "tool" => tool,
-                                                  "abort_pipeline_on_error" => abort_pipeline_on_error})
+      settings = Toys::Release::StepSettings.new(
+        {"name" => "tool", "tool" => tool, "abort_pipeline_on_error" => abort_pipeline_on_error}, []
+      )
       Toys::Release::Pipeline::StepContext.new(make_pipeline, settings)
     end
 
@@ -61,8 +62,9 @@ describe Toys::Release::Steps do
 
   describe "COMMAND" do
     def make_context(command, abort_pipeline_on_error: false)
-      settings = Toys::Release::StepSettings.new({"name" => "command", "command" => command,
-                                                  "abort_pipeline_on_error" => abort_pipeline_on_error})
+      settings = Toys::Release::StepSettings.new(
+        {"name" => "command", "command" => command, "abort_pipeline_on_error" => abort_pipeline_on_error}, []
+      )
       Toys::Release::Pipeline::StepContext.new(make_pipeline, settings)
     end
 
@@ -84,7 +86,7 @@ describe Toys::Release::Steps do
   end
 
   describe "BUNDLE" do
-    let(:step_settings) { ::Toys::Release::StepSettings.new({"name" => "bundle"}) }
+    let(:step_settings) { ::Toys::Release::StepSettings.new({"name" => "bundle"}, []) }
     let(:step_context) { ::Toys::Release::Pipeline::StepContext.new(make_pipeline, step_settings) }
 
     it "runs bundler" do
@@ -102,7 +104,7 @@ describe Toys::Release::Steps do
 
   describe "BUILD_GEM" do
     def make_context(component)
-      settings = ::Toys::Release::StepSettings.new({"name" => "build_gem"})
+      settings = ::Toys::Release::StepSettings.new({"name" => "build_gem"}, [])
       ::Toys::Release::Pipeline::StepContext.new(make_pipeline(component: component), settings)
     end
 
@@ -133,7 +135,7 @@ describe Toys::Release::Steps do
 
   describe "BUILD_YARD" do
     def make_build_context(component, uses_gems)
-      settings = ::Toys::Release::StepSettings.new({"name" => "build_yard", "uses_gems" => uses_gems})
+      settings = ::Toys::Release::StepSettings.new({"name" => "build_yard", "uses_gems" => uses_gems}, [])
       ::Toys::Release::Pipeline::StepContext.new(make_pipeline(component: component), settings)
     end
 
@@ -190,7 +192,7 @@ describe Toys::Release::Steps do
     def make_context(dry_run: true, source: nil)
       settings_hash = {"name" => "release_gem"}
       settings_hash["source"] = source if source
-      settings = ::Toys::Release::StepSettings.new(settings_hash)
+      settings = ::Toys::Release::StepSettings.new(settings_hash, [])
       pipeline = make_pipeline(dry_run: dry_run, performer_result: performer_result)
       ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end
@@ -282,7 +284,7 @@ describe Toys::Release::Steps do
       @performer_result = make_basic_result(toys_component, version)
       settings_hash = {"name" => "push_gh_pages"}
       settings_hash["source"] = source if source
-      settings = ::Toys::Release::StepSettings.new(settings_hash)
+      settings = ::Toys::Release::StepSettings.new(settings_hash, [])
       pipeline = make_pipeline(dry_run: dry_run, performer_result: @performer_result, version: version)
       ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end
@@ -366,7 +368,7 @@ describe Toys::Release::Steps do
     let(:performer_result) { make_basic_result(toys_component, sample_release_version) }
 
     def make_context(dry_run: true)
-      settings = ::Toys::Release::StepSettings.new({"name" => "github_release"})
+      settings = ::Toys::Release::StepSettings.new({"name" => "github_release"}, [])
       pipeline = make_pipeline(dry_run: dry_run, performer_result: performer_result)
       ::Toys::Release::Pipeline::StepContext.new(pipeline, settings)
     end

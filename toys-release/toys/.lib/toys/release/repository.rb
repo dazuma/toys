@@ -512,7 +512,7 @@ module Toys
         @components = {}
         @utils.accumulate_errors("Errors while validating components") do
           settings.all_component_names.each do |name|
-            releasable = Component.build(settings, name, @utils)
+            releasable = Component.new(settings, name, @utils)
             releasable.validate
             @components[releasable.name] = releasable
           end
@@ -594,7 +594,7 @@ module Toys
         results << "No GitHub checks found for #{ref}" if checks.empty?
         checks.each do |check|
           name = check["name"]
-          next if @settings.release_jobs_regexp.match(name)
+          next if name.start_with?("release-")
           next unless @settings.required_checks_regexp.match(name)
           if check["status"] != "completed"
             results << "GitHub check #{name.inspect} is not complete"
@@ -612,7 +612,7 @@ module Toys
       def single_released_component_and_version(pull_request)
         component_name =
           if @settings.all_component_names.size == 1
-            @settings.default_component_name
+            @settings.all_component_names.first
           else
             component_name_from_release_branch(pull_request.head_ref)
           end

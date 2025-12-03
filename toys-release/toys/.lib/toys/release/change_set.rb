@@ -14,12 +14,12 @@ module Toys
       ##
       # Create a new ChangeSet
       #
-      # @param settings [RepoSettings] the repo settings
+      # @param component_settings [ComponentSettings] the component settings
       #
-      def initialize(settings)
-        @release_commit_tags = settings.release_commit_tags
-        @breaking_change_header = settings.breaking_change_header
-        @no_significant_updates_notice = settings.no_significant_updates_notice
+      def initialize(component_settings)
+        @commit_tags = component_settings.commit_tags
+        @breaking_change_header = component_settings.breaking_change_header
+        @no_significant_updates_notice = component_settings.no_significant_updates_notice
         @semver = Semver::NONE
         @change_groups = nil
         @inputs = []
@@ -49,7 +49,7 @@ module Toys
         raise "ChangeSet locked" if finished?
         @semver = Semver::NONE
         change_groups = {breaking: Group.new(@breaking_change_header)}
-        @release_commit_tags.each_value do |tag_info|
+        @commit_tags.each do |tag_info|
           tag_info.all_headers.each { |header| change_groups[header] = Group.new(header) }
         end
         @inputs.each do |input|
@@ -187,7 +187,7 @@ module Toys
         when /^revert-commit$/i
           @inputs.delete_if { |elem| elem.sha.start_with?(match[:content].split.first) }
         else
-          tag_info = @release_commit_tags[match[:tag]]
+          tag_info = @commit_tags.find { |tag| tag.tag == match[:tag] }
           input.apply_commit(tag_info, match[:scope], match[:bang], match[:content])
         end
       end
