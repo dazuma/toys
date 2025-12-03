@@ -14,17 +14,31 @@ module Toys
       ScopeInfo = ::Struct.new(:semver, :header)
 
       ##
-      # @private
-      # Create a CommitTagSettings from either a tag name string (which will
-      # default to patch releases) or a hash with fields.
+      # Create an empty settings for an unknown tag
       #
-      def initialize(input)
+      # @param tag [String] Conventional commit tag
+      # @return [CommitTagSettings]
+      #
+      def self.empty(tag)
+        new({"tag" => tag, "header" => nil}, [])
+      end
+
+      ##
+      # @private
+      # Create a CommitTagSettings from an input hash.
+      #
+      def initialize(info, errors)
+        @tag = info.delete("tag").to_s
+        errors << "Commit tag missing : #{info}" if @tag.empty?
+        @header = info.fetch("header", @tag.upcase) || :hidden
+        info.delete("header")
+        @semver = load_semver(info.delete("semver"), errors)
         @scopes = {}
-        case input
-        when ::String
-          init_from_string(input)
-        when ::Hash
-          init_from_hash(input)
+        info.delete("scopes")&.each do |scope_info|
+          load_scope(scope_info, errors)
+        end
+        info.each_key do |key|
+          errors << "Unknown key #{key.inspect} in configuration of tag #{@tag.inspect}"
         end
       end
 
@@ -71,86 +85,27 @@ module Toys
         end
       end
 
-      ##
-      # Make specified modifications to the settings
-      #
-      # @param input [Hash] Modifications
-      #
-      def modify(input)
-        if input.key?("header") || input.key?("label")
-          @header = input.fetch("header", input["label"]) || :hidden
-        end
-        if input.key?("semver")
-          @semver = load_semver(input["semver"])
-        end
-        input["scopes"]&.each do |key, value|
-          if value.nil?
-            @scopes.delete(key)
-          else
-            scope_info = load_scope(key, value)
-            @scopes[key] = scope_info if scope_info
-          end
-        end
-      end
-
       private
 
-      def init_from_string(input)
-        @tag = input
-        @header = @tag.upcase
-        @semver = Semver::PATCH
-      end
-
-      def init_from_hash(input)
-        if input.size == 1
-          key = input.keys.first
-          value = input.values.first
-          if value.is_a?(::Hash)
-            @tag = key
-            load_hash(value)
-          elsif key == "tag"
-            @tag = value
-            @header = @tag.upcase
-            @semver = Semver::PATCH
-          else
-            @tag = key
-            @header = @tag.upcase
-            @semver = load_semver(value)
-          end
-        else
-          @tag = input["tag"]
-          raise "tag missing in #{input}" unless @tag
-          load_hash(input)
+      def load_scope(info, errors)
+        scope = info.delete("scope").to_s
+        errors << "Commit tag scope missing under tag #{@tag.inspect} : #{info}" if scope.empty?
+        scope_semver = load_semver(info.delete("semver"), errors, scope) if info.key?("semver")
+        scope_header = info.fetch("header", :inherit) || :hidden
+        info.delete("header")
+        scope_header = nil if scope_header == :inherit
+        @scopes[scope] = ScopeInfo.new(scope_semver, scope_header)
+        info.each_key do |key|
+          errors << "Unknown key #{key.inspect} in configuration of tag \"#{@tag}(#{scope})\""
         end
       end
 
-      def load_hash(input)
-        @header = input.fetch("header", input.fetch("label", @tag.upcase)) || :hidden
-        @semver = load_semver(input.fetch("semver", "patch"))
-        input["scopes"]&.each do |key, value|
-          scope_info = load_scope(key, value)
-          @scopes[key] = scope_info if scope_info
-        end
-      end
-
-      def load_scope(key, value)
-        case value
-        when ::String
-          semver = load_semver(value, key)
-          ScopeInfo.new(semver, nil)
-        when ::Hash
-          semver = load_semver(value["semver"], key) if value.key?("semver")
-          header = value.fetch("header", value.fetch("label", :inherit)) || :hidden
-          header = nil if header == :inherit
-          ScopeInfo.new(semver, header)
-        end
-      end
-
-      def load_semver(value, scope = nil)
+      def load_semver(value, errors, scope = nil)
         result = Semver.for_name(value || "none")
         unless result
           tag = scope ? "#{@tag}(#{scope})" : @tag
-          raise "Unknown semver: #{value} for tag #{tag}"
+          errors << "Unknown semver: #{value} for tag #{tag}"
+          result = Semver::NONE
         end
         result
       end
@@ -169,25 +124,19 @@ module Toys
       #     components
       #
       def initialize(repo_settings, info, has_multiple_components)
-        @name = info["name"]
-        @type = info["type"] || "component"
-
+        @name = info.delete("name").to_s
         read_path_info(info, has_multiple_components)
         read_file_modification_info(info)
         read_gh_pages_info(repo_settings, info, has_multiple_components)
         read_steps_info(repo_settings, info)
+        read_commit_tag_info(repo_settings, info)
+        check_problems(repo_settings, info)
       end
 
       ##
       # @return [String] The name of the component
       #
       attr_reader :name
-
-      ##
-      # @return [String] The type of component. Default is `"component"`.
-      #     Subclasses may define other types.
-      #
-      attr_reader :type
 
       ##
       # @return [String] The directory within the repo in which the component
@@ -248,47 +197,93 @@ module Toys
       attr_reader :steps
 
       ##
+      # @return [Array<CommitTagSettings>] The conventional commit types
+      #     recognized as release-triggering, along with information on the
+      #     change they map to.
+      #
+      attr_reader :commit_tags
+
+      ##
+      # @return [String] Header for breaking changes in a changelog
+      #
+      attr_reader :breaking_change_header
+
+      ##
+      # @return [String] Notice displayed in the changelog when there are
+      #     otherwise no significant updates in the release
+      #
+      attr_reader :no_significant_updates_notice
+
+      ##
       # @return [StepSettings,nil] The unique step with the given name
       #
       def step_named(name)
         steps.find { |t| t.name == name }
       end
 
+      ##
+      # Look up the settings for the given named tag.
+      #
+      # @param tag [String] Conventional commit tag to look up
+      # @return [CommitTagSettings] The commit tag settings for the given tag
+      #
+      def commit_tag_named(tag)
+        commit_tags.find { |elem| elem.tag == tag } || CommitTagSettings.empty(tag)
+      end
+
       private
 
       def read_path_info(info, has_multiple_components)
-        @directory = info["directory"] || (has_multiple_components ? name : ".")
-        @include_globs = Array(info["include_globs"])
-        @exclude_globs = Array(info["exclude_globs"])
+        @directory = info.delete("directory") || (has_multiple_components ? name : ".")
+        @include_globs = Array(info.delete("include_globs"))
+        @exclude_globs = Array(info.delete("exclude_globs"))
       end
 
       def read_file_modification_info(info)
-        segments = info["name"].split("-")
+        segments = @name.split("-")
         name_path = segments.join("/")
-        @version_rb_path = info["version_rb_path"] || "lib/#{name_path}/version.rb"
-        @version_constant = info["version_constant"] ||
+        @version_rb_path = info.delete("version_rb_path") || "lib/#{name_path}/version.rb"
+        @version_constant = info.delete("version_constant") ||
                             (segments.map { |seg| camelize(seg) } + ["VERSION"])
         @version_constant = @version_constant.split("::") if @version_constant.is_a?(::String)
-        @changelog_path = info["changelog_path"] || "CHANGELOG.md"
+        @changelog_path = info.delete("changelog_path") || "CHANGELOG.md"
       end
 
       def read_gh_pages_info(repo_settings, info, has_multiple_components)
-        @gh_pages_directory = info["gh_pages_directory"] || (has_multiple_components ? name : ".")
-        @gh_pages_version_var = info["gh_pages_version_var"] ||
-                                (has_multiple_components ? "version_#{name}".tr("-", "_") : "version")
         @gh_pages_enabled = info.fetch("gh_pages_enabled") do |_key|
           repo_settings.gh_pages_enabled ||
             info.key?("gh_pages_directory") ||
             info.key?("gh_pages_version_var")
         end
+        info.delete("gh_pages_enabled")
+        @gh_pages_directory = info.delete("gh_pages_directory") || (has_multiple_components ? name : ".")
+        @gh_pages_version_var = info.delete("gh_pages_version_var") ||
+                                (has_multiple_components ? "version_#{name}".tr("-", "_") : "version")
       end
 
       def read_steps_info(repo_settings, info)
-        @steps = info["steps"] ? repo_settings.read_steps(info["steps"]) : repo_settings.default_steps(@type)
-        @steps = repo_settings.modify_steps(@steps, info["modify_steps"] || [])
-        @steps = repo_settings.prepend_steps(@steps, info["prepend_steps"] || [])
-        @steps = repo_settings.append_steps(@steps, info["append_steps"] || [])
-        @steps = repo_settings.delete_steps(@steps, info["delete_steps"] || [])
+        @steps =
+          if info.key?("steps")
+            repo_settings.read_steps(info.delete("steps"))
+          else
+            repo_settings.steps.map(&:deep_copy)
+          end
+        @steps = repo_settings.modify_steps(@steps, info.delete("modify_steps") || [])
+        @steps = repo_settings.prepend_steps(@steps, info.delete("prepend_steps") || [])
+        @steps = repo_settings.append_steps(@steps, info.delete("append_steps") || [])
+        @steps = repo_settings.delete_steps(@steps, info.delete("delete_steps") || [])
+      end
+
+      def read_commit_tag_info(repo_settings, info)
+        @commit_tags =
+          if info.key?("commit_tags")
+            repo_settings.read_commit_tags(info.delete("commit_tags"))
+          else
+            repo_settings.commit_tags.dup
+          end
+        @breaking_change_header = info.delete("breaking_change_header") || repo_settings.breaking_change_header
+        @no_significant_updates_notice =
+          info.delete("no_significant_updates_notice") || repo_settings.no_significant_updates_notice
       end
 
       def camelize(str)
@@ -297,6 +292,13 @@ module Toys
            .sub(/_$/, "")
            .gsub(/_+/, "_")
            .gsub(/(?:^|_)([a-zA-Z])/) { ::Regexp.last_match(1).upcase }
+      end
+
+      def check_problems(repo_settings, info)
+        info.each_key do |key|
+          repo_settings.errors << "Unknown key #{key.inspect} in component #{@name.inspect}"
+        end
+        repo_settings.errors << 'Component is missing required key "name"' if @name.empty?
       end
     end
 
@@ -312,19 +314,29 @@ module Toys
       #
       # @param info [Hash,String] Config data
       #
-      def initialize(info)
+      def initialize(info, errors, containing_step_name)
         @step_name = @dest = @source_path = @dest_path = nil
         case info
         when ::String
           @step_name = info
           @dest = "component"
         when ::Hash
-          @step_name = info["name"]
-          @dest = info.fetch("dest", "component")
-          @dest = "none" if @dest == false
-          @source_path = info["source_path"]
-          @dest_path = info["dest_path"]
-          @collisions = info.fetch("collisions", "error")
+          @step_name = info.delete("name").to_s
+          if @step_name.empty?
+            errors << "Missing required key \"name\" in input for step #{containing_step_name.inspect}"
+          end
+          @dest = info.delete("dest")
+          if @dest == false
+            @dest = "none"
+          elsif @dest.nil?
+            @dest = "component"
+          end
+          @source_path = info.delete("source_path")
+          @dest_path = info.delete("dest_path")
+          @collisions = info.delete("collisions") || "error"
+          info.each_key do |key|
+            errors << "Unknown key #{key.inspect} in input for step #{containing_step_name.inspect}"
+          end
         end
       end
 
@@ -384,17 +396,20 @@ module Toys
       #
       # @param info [Hash,String] Config data
       #
-      def initialize(info)
+      def initialize(info, errors, containing_step_name)
         @source = @source_path = @dest_path = nil
         case info
         when ::String
           @source_path = info
           @source = "component"
         when ::Hash
-          @source = info.fetch("source", "component")
-          @source_path = info["source_path"]
-          @dest_path = info["dest_path"]
-          @collisions = info.fetch("collisions", "error")
+          @source = info.delete("source") || "component"
+          @source_path = info.delete("source_path")
+          @dest_path = info.delete("dest_path")
+          @collisions = info.delete("collisions") || "error"
+          info.each_key do |key|
+            errors << "Unknown key #{key.inspect} in output for step #{containing_step_name.inspect}"
+          end
         end
       end
 
@@ -443,8 +458,8 @@ module Toys
       ##
       # Create a StepSettings
       #
-      def initialize(info)
-        from_h(info.dup)
+      def initialize(info, errors)
+        from_h(info.dup, errors)
       end
 
       ##
@@ -498,7 +513,7 @@ module Toys
       # @return [StepSettings] A deep copy
       #
       def deep_copy
-        StepSettings.new(to_h)
+        StepSettings.new(to_h, [])
       end
 
       ##
@@ -506,12 +521,16 @@ module Toys
       # Initialize the step from the given hash.
       # The hash will be deconstructed in place.
       #
-      def from_h(info)
+      def from_h(info, errors)
         @type = info.delete("type") || info["name"] || "noop"
         @name = info.delete("name") || "_anon_#{@type}_#{object_id}"
         @requested = info.delete("run") ? true : false
-        @inputs = Array(info.delete("inputs")).map { |input_info| InputSettings.new(input_info) }
-        @outputs = Array(info.delete("outputs")).map { |output_info| OutputSettings.new(output_info) }
+        @inputs = Array(info.delete("inputs")).map do |input_info|
+          InputSettings.new(input_info, errors, @name)
+        end
+        @outputs = Array(info.delete("outputs")).map do |output_info|
+          OutputSettings.new(output_info, errors, @name)
+        end
         @options = info
       end
     end
@@ -559,13 +578,14 @@ module Toys
       def initialize(info)
         @warnings = []
         @errors = []
-        @default_component_name = nil
         read_global_info(info)
+        read_required_checks_info(info)
         read_label_info(info)
-        read_commit_tag_info(info)
+        read_default_commit_tag_info(info)
         read_default_step_info(info)
         read_component_info(info)
         read_coordination_info(info)
+        check_global_problems(info)
       end
 
       ##
@@ -601,11 +621,6 @@ module Toys
       attr_reader :git_user_email
 
       ##
-      # @return [String] The name of the default component to release
-      #
-      attr_reader :default_component_name
-
-      ##
       # @return [Array<Array<String>>] An array of groups of component names
       #     whose releases should be coordinated.
       #
@@ -619,12 +634,6 @@ module Toys
       attr_reader :required_checks_regexp
 
       ##
-      # @return [Regexp,nil] A regular expression identifying all the
-      #     release-related GitHub checks
-      #
-      attr_reader :release_jobs_regexp
-
-      ##
       # @return [Numeric] The number of seconds that releases will wait for
       #     checks to complete.
       #
@@ -636,11 +645,18 @@ module Toys
       attr_reader :gh_pages_enabled
 
       ##
-      # @return [Hash{String=>CommitTagSettings}] The conventional commit types
-      #     recognized as release-triggering, along with the type of change they
-      #     map to.
+      # @return [Array<CommitTagSettings>] The conventional commit types
+      #     recognized as release-triggering, along with information on the
+      #     change they map to.
       #
-      attr_reader :release_commit_tags
+      attr_reader :commit_tags
+
+      ##
+      # Get the build step pipeline
+      #
+      # @return [Array<StepSettings>] Step pipeline
+      #
+      attr_reader :steps
 
       ##
       # @return [String] Header for breaking changes in a changelog
@@ -648,7 +664,8 @@ module Toys
       attr_reader :breaking_change_header
 
       ##
-      # @return [String] No significant updates notice
+      # @return [String] Notice displayed in the changelog when there are
+      #     otherwise no significant updates in the release
       #
       attr_reader :no_significant_updates_notice
 
@@ -676,6 +693,16 @@ module Toys
       # @return [String] Prefix for release branches
       #
       attr_reader :release_branch_prefix
+
+      ##
+      # Look up the settings for the given named tag.
+      #
+      # @param tag [String] Conventional commit tag to look up
+      # @return [CommitTagSettings] The commit tag settings for the given tag
+      #
+      def commit_tag_named(tag)
+        commit_tags.find { |elem| elem.tag == tag } || CommitTagSettings.empty(tag)
+      end
 
       ##
       # @return [String] The owner of the repo
@@ -731,23 +758,17 @@ module Toys
         @components[name]
       end
 
-      ##
-      # Get the default step pipeline settings for a component type
-      #
-      # @param component_type [String] Type of component
-      # @return [Array<StepSettings>] Step pipeline
-      #
-      def default_steps(component_type)
-        (@default_steps[component_type] || @default_steps["component"]).map(&:deep_copy)
-      end
-
       # @private
       def read_steps(info)
-        info.map { |step_info| StepSettings.new(step_info) }
+        Array(info).map { |step_info| StepSettings.new(step_info, @errors) }
       end
 
       # @private
-      def modify_steps(steps, modifications)
+      def modify_steps(steps, modifications) # rubocop:disable Metrics/MethodLength
+        unless modifications.is_a?(::Array)
+          @errors << "modify_steps expected an array of modification dictionaries"
+          return steps
+        end
         modifications.each do |mod_data|
           mod_name = mod_data.delete("name")
           mod_type = mod_data.delete("type")
@@ -763,7 +784,7 @@ module Toys
                 modified_info[key] = value
               end
             end
-            step.from_h(modified_info)
+            step.from_h(modified_info, @errors)
           end
           if count.zero?
             @errors << "Unable to find step to modify for name=#{mod_name.inspect} and type=#{mod_type.inspect}."
@@ -832,15 +853,24 @@ module Toys
 
       # @private
       def delete_steps(steps, info)
-        info.each do |del_name|
-          index = steps.find_index { |step| step.name == del_name }
-          if index
-            steps.delete_at(index)
-          else
-            @errors << "Unable to find step named #{del_name} to delete."
+        if info.is_a?(::Array)
+          info.each do |del_name|
+            index = steps.find_index { |step| step.name == del_name }
+            if index
+              steps.delete_at(index)
+            else
+              @errors << "Unable to find step named #{del_name} to delete."
+            end
           end
+        else
+          @errors << "delete_steps expected an array of names"
         end
         steps
+      end
+
+      # @private
+      def read_commit_tags(info)
+        Array(info).map { |tag_info| CommitTagSettings.new(tag_info, @errors) }
       end
 
       private
@@ -848,30 +878,29 @@ module Toys
       DEFAULT_MAIN_BRAMCH = "main"
       private_constant :DEFAULT_MAIN_BRAMCH
 
-      DEFAULT_RELEASE_COMMIT_TAGS = ::YAML.load(<<~STRING) # rubocop:disable Security/YAMLLoad
+      DEFAULT_COMMIT_TAGS_YAML = <<~STRING
         - tag: feat
-          header: ADDED
           semver: minor
+          header: ADDED
         - tag: fix
+          semver: patch
           header: FIXED
-        - docs
+        - tag: docs
+          semver: patch
       STRING
-      private_constant :DEFAULT_RELEASE_COMMIT_TAGS
+      private_constant :DEFAULT_COMMIT_TAGS_YAML
 
-      DEFAULT_STEPS = ::YAML.load(<<~STRING) # rubocop:disable Security/YAMLLoad
-        component:
-          - name: release_github
-        gem:
-          - name: bundle
-          - name: build_gem
-          - name: build_yard
-          - name: release_github
-          - name: release_gem
-            source: build_gem
-          - name: push_gh_pages
-            source: build_yard
+      DEFAULT_STEPS_YAML = <<~STRING
+        - name: bundle
+        - name: build_gem
+        - name: build_yard
+        - name: release_github
+        - name: release_gem
+          source: build_gem
+        - name: push_gh_pages
+          source: build_yard
       STRING
-      private_constant :DEFAULT_STEPS
+      private_constant :DEFAULT_STEPS_YAML
 
       DEFAULT_BREAKING_CHANGE_HEADER = "BREAKING CHANGE"
       private_constant :DEFAULT_BREAKING_CHANGE_HEADER
@@ -892,102 +921,72 @@ module Toys
       private_constant :DEFAULT_RELEASE_COMPLETE_LABEL
 
       def read_global_info(info)
-        @main_branch = info["main_branch"] || DEFAULT_MAIN_BRAMCH
-        @repo_path = info["repo"]
-        @signoff_commits = info["signoff_commits"] ? true : false
-        @gh_pages_enabled = info["gh_pages_enabled"] ? true : false
-        @enable_release_automation = info["enable_release_automation"] != false
-        required_checks = info["required_checks"]
-        @required_checks_regexp = required_checks == false ? nil : ::Regexp.new(required_checks.to_s)
-        @required_checks_timeout = info["required_checks_timeout"] || 900
-        @release_jobs_regexp = ::Regexp.new(info["release_jobs_regexp"] || "^release-")
-        @release_branch_prefix = info["release_branch_prefix"] || "release"
-        @git_user_name = info["git_user_name"]
-        @git_user_email = info["git_user_email"]
+        @main_branch = info.delete("main_branch") || DEFAULT_MAIN_BRAMCH
+        @repo_path = info.delete("repo")
+        @signoff_commits = info.delete("signoff_commits") ? true : false
+        @gh_pages_enabled = info.delete("gh_pages_enabled") ? true : false
+        @enable_release_automation = info.delete("enable_release_automation") != false
+        @release_branch_prefix = info.delete("release_branch_prefix") || "release"
+        @git_user_name = info.delete("git_user_name")
+        @git_user_email = info.delete("git_user_email")
         @errors << "Repo key missing from releases.yml" unless @repo_path
       end
 
-      def read_label_info(info)
-        @release_pending_label = info["release_pending_label"] || DEFAULT_RELEASE_PENDING_LABEL
-        @release_error_label = info["release_error_label"] || DEFAULT_RELEASE_ERROR_LABEL
-        @release_aborted_label = info["release_aborted_label"] || DEFAULT_RELEASE_ABORTED_LABEL
-        @release_complete_label = info["release_complete_label"] || DEFAULT_RELEASE_COMPLETE_LABEL
-      end
-
-      def read_commit_tag_info(info)
-        @release_commit_tags = read_commit_tag_info_set(info["release_commit_tags"] || DEFAULT_RELEASE_COMMIT_TAGS)
-        info["modify_release_commit_tags"]&.each do |tag, data|
-          if data.nil?
-            @release_commit_tags.delete(tag)
-          elsif (tag_settings = @release_commit_tags[tag])
-            tag_settings.modify(data)
+      def read_required_checks_info(info)
+        required_checks = info.delete("required_checks")
+        @required_checks_regexp =
+          case required_checks
+          when false
+            nil
+          when true
+            //
+          else
+            ::Regexp.new(required_checks.to_s)
           end
-        end
-        @release_commit_tags = read_commit_tag_info_set(info["prepend_release_commit_tags"]).merge(@release_commit_tags)
-        @release_commit_tags.merge!(read_commit_tag_info_set(info["append_release_commit_tags"]))
-        @breaking_change_header = info["breaking_change_header"] || DEFAULT_BREAKING_CHANGE_HEADER
-        @no_significant_updates_notice = info["no_significant_updates_notice"] || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
+        @required_checks_timeout = info.delete("required_checks_timeout") || 900
       end
 
-      def read_commit_tag_info_set(input)
-        input.to_h do |value|
-          settings = CommitTagSettings.new(value)
-          [settings.tag, settings]
-        end
+      def read_label_info(info)
+        @release_pending_label = info.delete("release_pending_label") || DEFAULT_RELEASE_PENDING_LABEL
+        @release_error_label = info.delete("release_error_label") || DEFAULT_RELEASE_ERROR_LABEL
+        @release_aborted_label = info.delete("release_aborted_label") || DEFAULT_RELEASE_ABORTED_LABEL
+        @release_complete_label = info.delete("release_complete_label") || DEFAULT_RELEASE_COMPLETE_LABEL
       end
 
-      def read_default_step_info(info) # rubocop:disable Metrics/AbcSize
-        default_step_data = info["default_steps"] || DEFAULT_STEPS
-        @default_steps = {}
-        default_step_data.each do |key, data|
-          @default_steps[key] = read_steps(data)
-        end
-        (info["modify_default_steps"] || {}).each do |key, data|
-          @default_steps[key] = modify_steps(@default_steps[key], data)
-        end
-        (info["append_default_steps"] || {}).each do |key, data|
-          @default_steps[key] = append_steps(@default_steps[key], data)
-        end
-        (info["prepend_default_steps"] || {}).each do |key, data|
-          @default_steps[key] = prepend_steps(@default_steps[key], data)
-        end
-        (info["delete_default_steps"] || {}).each do |key, data|
-          @default_steps[key] = delete_steps(@default_steps[key], data)
-        end
+      def read_default_commit_tag_info(info)
+        @commit_tags = read_commit_tags(info.delete("commit_tags") || ::YAML.load(DEFAULT_COMMIT_TAGS_YAML))
+        @breaking_change_header = info.delete("breaking_change_header") || DEFAULT_BREAKING_CHANGE_HEADER
+        @no_significant_updates_notice =
+          info.delete("no_significant_updates_notice") || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
+      end
+
+      def read_default_step_info(info)
+        @steps = read_steps(info.delete("steps") || ::YAML.load(DEFAULT_STEPS_YAML))
+        @steps = modify_steps(@steps, info.delete("modify_steps") || [])
+        @steps = prepend_steps(@steps, info.delete("prepend_steps") || [])
+        @steps = append_steps(@steps, info.delete("append_steps") || [])
+        @steps = delete_steps(@steps, info.delete("delete_steps") || [])
       end
 
       def read_component_info(info)
         @components = {}
-        @default_component_name = nil
-        @has_multiple_components = (info["components"]&.size.to_i + info["gems"]&.size.to_i) > 1
-        info["gems"]&.each do |component_info|
-          component_info["type"] = "gem"
-          read_component_settings(component_info)
-        end
-        info["components"]&.each do |component_info|
-          read_component_settings(component_info)
+        component_info_array = Array(info.delete("components")) + Array(info.delete("gems"))
+        @has_multiple_components = component_info_array.size > 1
+        component_info_array.each do |component_info|
+          component = ComponentSettings.new(self, component_info, @has_multiple_components)
+          if component.name.empty?
+            @errors << "A component is missing a name"
+          elsif @components[component.name]
+            @errors << "Duplicate component #{component.name.inspect}"
+          else
+            @components[component.name] = component
+          end
         end
         @errors << "No components found" if @components.empty?
       end
 
-      def read_component_settings(component_info)
-        component = ComponentSettings.new(self, component_info, @has_multiple_components)
-        if component.name.empty?
-          @errors << "A component is missing a name"
-        elsif @components[component.name]
-          @errors << "Duplicate component #{component.name.inspect}"
-        else
-          @components[component.name] = component
-          @default_component_name ||= component.name
-        end
-      end
-
       def read_coordination_info(info)
-        if info["coordinate_versions"]
-          @coordination_groups = [@components.keys]
-          return
-        end
-        @coordination_groups = Array(info["coordination_groups"])
+        @coordination_groups = Array(info.delete("coordination_groups"))
         @coordination_groups = [@coordination_groups] if @coordination_groups.first.is_a?(::String)
         seen = {}
         @coordination_groups.each do |group|
@@ -1001,6 +1000,18 @@ module Toys
             end
           end
         end
+        if info.delete("coordinate_versions") && @coordination_groups.empty?
+          @coordination_groups = [@components.keys]
+        end
+      end
+
+      def check_global_problems(info)
+        info.each_key do |key|
+          @errors << "Unknown top level key #{key.inspect} in releases.yml"
+        end
+        @errors << 'Required key "repo" missing from releases.yml' unless @repo_path
+        @errors << 'Required key "git_user_name" missing from releases.yml' unless @git_user_name
+        @errors << 'Required key "git_user_email" missing from releases.yml' unless @git_user_email
       end
     end
   end

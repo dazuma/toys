@@ -8,7 +8,7 @@ describe Toys::Release::Pipeline do
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
-  let(:component) { Toys::Release::Component.build(repo_settings, component_name, environment_utils) }
+  let(:component) { Toys::Release::Component.new(repo_settings, component_name, environment_utils) }
   let(:repo_root_dir) { File.dirname(File.dirname(File.dirname(__dir__))) }
   let(:component_dir) { File.join(repo_root_dir, component_name) }
   let(:repo_tmp_dir) { File.join(repo_root_dir, "tmp") }
@@ -29,7 +29,7 @@ describe Toys::Release::Pipeline do
   let(:existing_content) { "# Existing file\n" }
 
   def make_step_settings(options = {})
-    Toys::Release::StepSettings.new({"name" => "noop", "clean" => false}.merge(options))
+    Toys::Release::StepSettings.new({"name" => "noop", "clean" => false}.merge(options), [])
   end
 
   def copy_data(dest_dir)

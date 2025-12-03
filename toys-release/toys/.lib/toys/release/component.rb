@@ -11,25 +11,15 @@ module Toys
     #
     class Component
       ##
-      # Factory method
+      # Constructor
       #
       # @param repo_settings [Toys::Release::RepoSettings] the repo settings
       # @param name [String] The component name
       # @param environment_utils [Toys::Release::EnvironmentUtils] env utils
       #
-      def self.build(repo_settings, name, environment_utils)
-        settings = repo_settings.component_settings(name)
-        if settings.type == "gem"
-          GemComponent.new(repo_settings, settings, environment_utils)
-        else
-          Component.new(repo_settings, settings, environment_utils)
-        end
-      end
-
-      # @private
-      def initialize(repo_settings, settings, environment_utils)
+      def initialize(repo_settings, name, environment_utils)
         @repo_settings = repo_settings
-        @settings = settings
+        @settings = repo_settings.component_settings(name)
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils, @settings.version_constant)
@@ -267,7 +257,7 @@ module Toys
         to ||= "HEAD"
         from = latest_tag(ref: to) if from == :default
         commits = from ? "#{from}..#{to}" : to
-        changeset = ChangeSet.new(@repo_settings)
+        changeset = ChangeSet.new(@settings)
         shas = @utils.capture(["git", "log", commits, "--format=%H"], e: true).split("\n")
         shas.reverse_each do |sha|
           message = touched_message(sha)
@@ -329,59 +319,6 @@ module Toys
       # @private
       def hash
         name.hash
-      end
-    end
-
-    ##
-    # Subclass for Gem components
-    #
-    class GemComponent < Component
-      ##
-      # Returns the path to the gemspec. It can be returned as a relative path
-      # from the component directory, a relative path from the repo root
-      # directory, or an absolute path.
-      #
-      # @param from [:directory,:repo_root,:absolute] From where (defaults to
-      #     `:directory`)
-      # @return [String] The path to the gemspec file
-      #
-      def gemspec_path(from: :directory)
-        file_path("#{name}.gemspec", from: from)
-      end
-
-      ##
-      # Validates the component and reports any errors.
-      # Includes both errors from the base class and gem-specific errors.
-      #
-      def validate
-        super do
-          path = gemspec_path(from: :absolute)
-          @utils.error("Missing gemspec #{path} for #{name}") unless ::File.file?(path)
-        end
-      end
-
-      ##
-      # Return a list of released versions
-      #
-      # @return [Array<::Gem::Version>]
-      #
-      def released_versions
-        content = @utils.capture(["gem", "info", "-r", "-a", name], e: true)
-        match = /#{name} \(([\w., ]+)\)/.match(content)
-        return [] unless match
-        match[1].split(/,\s+/).map { |str| ::Gem::Version.new(str) }
-      end
-
-      ##
-      # Determines if a version has been released
-      #
-      # @param version [::Gem::Version,String] The version to check
-      # @return [boolean] Whether the version has been released
-      #
-      def version_released?(version)
-        cmd = ["gem", "search", name, "--exact", "--remote", "--version", version.to_s]
-        content = @utils.capture(cmd)
-        content.include?("#{name} (#{version})")
       end
     end
   end

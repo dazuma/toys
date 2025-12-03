@@ -224,7 +224,10 @@ module Toys
 
         def check_existence(step_context)
           step_context.log("Checking whether #{step_context.release_description} already exists...")
-          if step_context.component.version_released?(step_context.release_version)
+          gem_name = step_context.component.name
+          gem_version = step_context.release_version.to_s
+          cmd = ["gem", "search", gem_name, "--exact", "--remote", "--version", gem_version]
+          if step_context.utils.capture(cmd).include?("#{gem_name} (#{gem_version})")
             step_context.warning("Gem already pushed for #{step_context.release_description}. Skipping.")
             step_context.add_success("Gem already pushed for #{step_context.release_description}")
             step_context.exit_step

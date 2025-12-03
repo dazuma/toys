@@ -16,9 +16,4 @@ are covered in GitHub issues (https://github.com/dazuma/toys/issues).
 * Namespace clearing/locking
 * Additional ways to find terminal size (there's a gem for unicode line length)
 * Should it be possible to auto-terminate an exec at the end of a controller block?
-
-## Other ideas we probably won't do
-
-* toys system clean: Clean old installations of toys. Probably not a good idea because other versions may be in bundles.
-* Customize the value to set when not providing a value to an optional-value flag. Probably not worth it since normal boolean flags are always set to `true`, and the handler can be used to customize it already.
-* Tool archives: We implemented tool loading over git which is probably better.
+* Should toys-release auto-initialize gh-pages during the release pipeline?
