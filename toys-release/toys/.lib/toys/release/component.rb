@@ -269,12 +269,14 @@ module Toys
       ##
       # Run bundler
       #
+      # @return [Toys::Utils::Exec::Result]
+      #
       def bundle
         cd do
           exec_result = @utils.exec(["bundle", "install"])
           @utils.error("Bundle install failed for #{name}.") unless exec_result.success?
+          exec_result
         end
-        self
       end
 
       ##

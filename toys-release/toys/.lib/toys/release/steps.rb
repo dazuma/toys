@@ -63,10 +63,16 @@ module Toys
         # @private
         def run(step_context)
           tool = Array(step_context.option("tool", required: true))
+          chdir = step_context.option("chdir", default: ".")
           step_context.log("Running tool #{tool.inspect}...")
-          result = step_context.utils.exec_separate_tool(tool, out: [:child, :err])
+          result = step_context.utils.exec_separate_tool(tool, chdir: chdir, out: [:child, :err])
           unless result.success?
-            step_context.abort_pipeline("Tool failed: #{tool.inspect}. Check the logs for details.")
+            if step_context.option("continue_on_error")
+              step_context.warning("Tool failed: #{tool.inspect}.")
+              step_context.exit_step
+            else
+              step_context.abort_pipeline("Tool failed: #{tool.inspect}. Check the logs for details.")
+            end
           end
           step_context.log("Completed tool")
         end
@@ -82,10 +88,16 @@ module Toys
         # @private
         def run(step_context)
           command = Array(step_context.option("command", required: true))
+          chdir = step_context.option("chdir", default: ".")
           step_context.log("Running command #{command.inspect}...")
-          result = step_context.utils.exec(command, out: [:child, :err])
+          result = step_context.utils.exec(command, chdir: chdir, out: [:child, :err])
           unless result.success?
-            step_context.abort_pipeline("Command failed: #{command.inspect}. Check the logs for details.")
+            if step_context.option("continue_on_error")
+              step_context.warning("Command failed: #{command.inspect}.")
+              step_context.exit_step
+            else
+              step_context.abort_pipeline("Command failed: #{command.inspect}. Check the logs for details.")
+            end
           end
           step_context.log("Completed command")
         end
@@ -98,18 +110,23 @@ module Toys
       class << BUNDLE
         # @private
         def run(step_context)
+          chdir = step_context.option("chdir", default: ".")
           component = step_context.component
           step_context.log("Running bundler for #{component.name} ...")
-          component.bundle
+          ::Dir.chdir(chdir) do
+            result = component.bundle
+            unless result.success?
+              step_context.abort_pipeline("Bundle failed for #{component.name}. Check the logs for details.")
+            end
+          end
           step_context.log("Completed bundler for #{component.name}")
           step_context.copy_to_output(source_path: "Gemfile.lock")
         end
       end
 
       ##
-      # A step that builds the gem, and leaves the built gem file in the step's
-      # artifact directory. This step can also run a pre_command and/or a
-      # pre_tool.
+      # A step that builds the gem, and leaves the built gem package file in
+      # the step's output directory.
       #
       BUILD_GEM = ::Object.new
       class << BUILD_GEM
@@ -133,9 +150,8 @@ module Toys
       end
 
       ##
-      # A step that builds yardocs, and leaves the built documentation file in
-      # the step's artifact directory. This step can also run a pre_command
-      # and/or a pre_tool.
+      # A step that builds yardocs, and leaves the built documentation in the
+      # step's output directory.
       #
       BUILD_YARD = ::Object.new
       class << BUILD_YARD
@@ -144,7 +160,7 @@ module Toys
           if step_context.option("uses_gems")
             []
           else
-            ["bundle"]
+            [step_context.option("bundle_step", default: "bundle")]
           end
         end
 
@@ -169,10 +185,10 @@ module Toys
 
         def setup_gems(step_context)
           if (uses_gems = step_context.option("uses_gems"))
-            ::Toys::Utils::Gems.activate("yard")
             Array(uses_gems).each do |gem_info|
               ::Toys::Utils::Gems.activate(*Array(gem_info))
             end
+            ::Toys::Utils::Gems.activate("yard")
             [
               "gem 'yard'",
               "puts 'Loading gems explicitly: #{uses_gems.inspect}'",
@@ -189,15 +205,14 @@ module Toys
       end
 
       ##
-      # A step that releases a gem built by a previous run of BuildGem. The
-      # `"input"` option provides the name of the artifact directory containing
-      # the built gem.
+      # A step that releases a gem built by a previous step, normally a
+      # run of BUILD_GEM.
       #
       RELEASE_GEM = ::Object.new
       class << RELEASE_GEM
         # @private
-        def primary?(_step_context)
-          true
+        def primary?(step_context)
+          ::File.file?("#{step_context.component.name}.gemspec")
         end
 
         # @private
@@ -263,9 +278,8 @@ module Toys
       end
 
       ##
-      # A step that pushes to gh-pages documentation built by a previous run of
-      # BuildYard. The `"input"` option provides the name of the artifact
-      # directory containing the built documentation.
+      # A step that pushes to gh-pages documentation built by a previous step,
+      # normally an instance of BUILD_YARD.
       #
       PUSH_GH_PAGES = ::Object.new
       class << PUSH_GH_PAGES
