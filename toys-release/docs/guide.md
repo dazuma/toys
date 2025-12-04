@@ -31,7 +31,7 @@ Toys-Release depends on the repository utilizing the **conventional commits**
 standard (https://conventionalcommits.org) to describe the changes made in each
 commit to the repository. Using this information, it automatically generates
 **changelog** entries and chooses a new package version to release, according
-to the **sematic versioning** standard (https://semver.org/).
+to the **semantic versioning** standard (https://semver.org/).
 
 Releases are requested explicitly by a repository maintainer by running a
 command line tool or triggering a GitHub action. Toys-Release will configure
@@ -115,7 +115,7 @@ Commit and push this change to your repository.
 ### Write the configuration file
 
 Next you will provide a configuration file for releases. This file is located
-in you repository at `.toys/.data/releases.yml` (note the leading periods) and
+in your repository at `.toys/.data/releases.yml` (note the leading periods) and
 lists all the releasable components (such as RubyGems packages) in your
 repository, along with any customizations to the build/release process and
 pipeline behavior.
@@ -237,7 +237,7 @@ changes when you merge it. It is important that the entire pull request is
 expressed in a single commit, because the automation will look only at the
 changes in the most recent commit after merge.
 
-You will also notice that the pull request opened by the "Open relese request"
+You will also notice that the pull request opened by the "Open release request"
 workflow will have the `release: pending` label applied. This label signals the
 release automation that this is a release pull request. If you remove this
 label, the automation will not process the release.
@@ -400,7 +400,7 @@ required. The rest are optional.
   The prefix for all release branch names. Defaults to `release`.
 
 * **release_aborted_label**: *string* (optional) --
-  The name of the GitHub issue label that identifie aborted release pull
+  The name of the GitHub issue label that identifies aborted release pull
   requests. Defaults to `release: aborted`.
 
 * **release_complete_label**: *string* (optional) --
@@ -501,7 +501,7 @@ documented here.
 * **append_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
   A list of build steps to append to the end of this component's build
   pipeline. This can be used to modify the build pipeline instead of redefining
-  the the entire pipeline using the **steps** key.
+  the entire pipeline using the **steps** key.
 
 * **changelog_path**: *string* (optional) --
   The path to the component's changelog file, relative to the component's
@@ -553,7 +553,7 @@ documented here.
 * **prepend_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
   A list of build steps to prepend to the start of this component's build
   pipeline. This can be used to modify the build pipeline instead of redefining
-  the the entire pipeline using the **steps** key.
+  the entire pipeline using the **steps** key.
 
 * **steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
   A way to override the complete build pipeline for this component. If not
