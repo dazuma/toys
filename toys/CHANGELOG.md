@@ -1,5 +1,9 @@
 # Release History
 
+### v0.18.0 / 2025-12-05
+
+* ADDED: The load_gem directive can now take version requirements as positional arguments
+* 
 ### v0.17.2 / 2025-11-30
 
 * DOCS: Fixed minor typos in readme files
