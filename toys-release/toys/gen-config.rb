@@ -14,7 +14,7 @@ flag :git_user, "--git-user=NAME" do
   default ""
   desc "User name for git commits (defaults to the git user.name config)"
 end
-flag :git_email, "--git-email=NAME" do
+flag :git_email, "--git-email=EMAIL" do
   default ""
   desc "User email for git commits (defaults to the git user.email config)"
 end
