@@ -83,7 +83,7 @@ def interpret_git_user
       puts "Unable to determine git user.email. Using a hard-coded fallback", :yellow
       set(:git_email, "hello@example.com")
     else
-      puts "Using the the current git user.email of #{git_email}"
+      puts "Using the current git user.email of #{git_email}"
     end
   end
 end
