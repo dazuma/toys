@@ -260,13 +260,8 @@ module Toys
                  else
                    "* **All releases completed successfully.**"
                  end
-        if (server_url = ::ENV["GITHUB_SERVER_URL"])
-          if (repo = ::ENV["GITHUB_REPOSITORY"])
-            if (run_id = ::ENV["GITHUB_RUN_ID"])
-              lines << "* Run logs: #{server_url}/#{repo}/actions/runs/#{run_id}"
-            end
-          end
-        end
+        url = @utils.current_workflow_run_url
+        lines << "* Run logs: #{url}" if url
         lines
       end
 

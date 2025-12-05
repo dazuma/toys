@@ -83,6 +83,7 @@ end
 
 def handle_release_merged
   setup_git
+  report_release_starting
   github_check_errors = @repository.wait_github_checks
   unless github_check_errors.empty?
     @utils.error("GitHub checks failed", *github_check_errors)
@@ -101,6 +102,13 @@ def setup_git
   exec(["git", "fetch", "--depth=2", "origin", "+#{@pull_request.merge_commit_sha}:refs/heads/release/current"],
        e: true)
   exec(["git", "switch", "release/current"], e: true)
+end
+
+def report_release_starting
+  reports = ["Starting release automation."]
+  url = @utils.current_workflow_run_url
+  reports << "See #{url} for execution logs." if url
+  @pull_request.add_comment(reports.join(" "))
 end
 
 def create_performer

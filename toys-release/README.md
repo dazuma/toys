@@ -59,7 +59,7 @@ by closing the pull request without merging.
 
 ### System requirements
 
-Toys-Release requires Ruby 2.7 or later, and Toys 0.17 or later. We recommend
+Toys-Release requires Ruby 2.7 or later, and Toys 0.18 or later. We recommend
 the latest version of the standard C implementation of Ruby. (JRuby or
 TruffleRuby _may_ work, but are unsupported.) The Ruby provided by the standard
 `setup-ruby` GitHub Action is sufficient.
