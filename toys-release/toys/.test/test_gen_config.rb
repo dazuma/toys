@@ -50,11 +50,19 @@ describe "toys release gen-config" do
     end
 
     it "writes custom settings with sorted gems" do
-      toys_load_tool(["gen-config", "--repo=hello/world"]) do |tool|
+      tool_command = [
+        "gen-config",
+        "--repo", "hello/world",
+        "--git-user", "Toys Rocks",
+        "--git-email", "toys@example.com"
+      ]
+      toys_load_tool(tool_command) do |tool|
         io = StringIO.new
         tool.write_settings(io, [["foo", "foo1"], ["bar", "bar2"]])
         expected_yaml = {
           "repo" => "hello/world",
+          "git_user_name" => "Toys Rocks",
+          "git_user_email" => "toys@example.com",
           "gems" => [
             {
               "name" => "bar",
@@ -101,7 +109,10 @@ describe "toys release gen-config" do
           },
         ],
       }
-      assert_equal(expected_yaml, ::YAML.load_file(file_path))
+      created_yaml = ::YAML.load_file(file_path)
+      refute(created_yaml.delete("git_user_name").empty?)
+      refute(created_yaml.delete("git_user_email").empty?)
+      assert_equal(expected_yaml, created_yaml)
       assert_includes(out, "Wrote initial config file to #{file_path}")
     end
   end
