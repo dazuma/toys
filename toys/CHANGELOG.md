@@ -1,5 +1,9 @@
 # Release History
 
+### v0.18.0 / 2025-12-05
+
+* No significant updates.
+
 ### v0.17.2 / 2025-11-30
 
 * DOCS: Fixed minor typos in readme files
