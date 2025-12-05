@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::Loader
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Loader";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (L)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">Loader</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::Loader
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::Loader</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/loader.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>The Loader service loads tools from configuration files, and finds the
+appropriate tool given a set of command line arguments.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_block-instance_method" title="#add_block (instance method)">#<strong>add_block</strong>(high_priority: false, source_name: nil, context_directory: nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a configuration block to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_gem-instance_method" title="#add_gem (instance method)">#<strong>add_gem</strong>(gem_name, gem_version, gem_path, high_priority: false, gem_toys_dir: nil, context_directory: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a configuration gem source to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_git-instance_method" title="#add_git (instance method)">#<strong>add_git</strong>(git_remote, git_path, git_commit, high_priority: false, update: false, context_directory: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a configuration git source to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_path-instance_method" title="#add_path (instance method)">#<strong>add_path</strong>(path, high_priority: false, source_name: nil, context_directory: :parent)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a configuration file/directory to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_path_set-instance_method" title="#add_path_set (instance method)">#<strong>add_path_set</strong>(root_path, relative_paths, high_priority: false, context_directory: :path)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a set of configuration files/directories from a common directory to the loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#has_subtools%3F-instance_method" title="#has_subtools? (instance method)">#<strong>has_subtools?</strong>(words)  &#x21d2; Boolean </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if the given path has at least one subtool, even if they are hidden or non-runnable.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(index_file_name: nil, preload_dir_name: nil, preload_file_name: nil, data_dir_name: nil, lib_dir_name: nil, middleware_stack: [], extra_delimiters: &quot;&quot;, mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil, git_cache: nil, gems_util: nil)  &#x21d2; Loader </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a Loader.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#list_subtools-instance_method" title="#list_subtools (instance method)">#<strong>list_subtools</strong>(words, recursive: false, include_hidden: false, include_namespaces: false, include_non_runnable: false)  &#x21d2; Array&lt;Toys::ToolDefinition&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns a list of subtools for the given path, loading from the configuration if necessary.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup-instance_method" title="#lookup (instance method)">#<strong>lookup</strong>(args)  &#x21d2; Array(Toys::ToolDefinition,Array&lt;String&gt;) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Given a list of command line arguments, find the appropriate tool to handle the command, loading it from the configuration if necessary.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_specific-instance_method" title="#lookup_specific (instance method)">#<strong>lookup_specific</strong>(words)  &#x21d2; Toys::ToolDefinition<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Given a tool name, looks up the specific tool, loading it from the configuration if necessary.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#split_path-instance_method" title="#split_path (instance method)">#<strong>split_path</strong>(str)  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Splits the given path using the delimiters configured in this Loader.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <h3 class="signature first" id="initialize-instance_method">
+  
+    #<strong>initialize</strong>(index_file_name: nil, preload_dir_name: nil, preload_file_name: nil, data_dir_name: nil, lib_dir_name: nil, middleware_stack: [], extra_delimiters: &quot;&quot;, mixin_lookup: nil, middleware_lookup: nil, template_lookup: nil, git_cache: nil, gems_util: nil)  &#x21d2; <tt><span class='object_link'><a href="" title="Toys::Loader (class)">Loader</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a Loader</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>index_file_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A file with this name that appears
+in any configuration directory (not just a toplevel directory) is
+loaded first as a standalone configuration file. If not provided,
+standalone configuration files are disabled.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>preload_file_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A file with this name that appears
+in any configuration directory is preloaded before any tools in that
+configuration directory are defined.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>preload_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that
+appears in any configuration directory is searched for Ruby files,
+which are preloaded before any tools in that configuration directory
+are defined.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>data_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears
+in any configuration directory is added to the data directory search
+path for any tool file in that directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>lib_dir_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A directory with this name that appears
+in any configuration directory is added to the Ruby load path for any
+tool file in that directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>middleware_stack</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of
+middleware that will be used by default for all tools loaded by this
+loader.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>extra_delimiters</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>&quot;&quot;</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A string containing characters that can
+function as delimiters in a tool name. Defaults to empty. Allowed
+characters are period, colon, and slash.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>mixin_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for well-known
+mixin modules. Defaults to an empty lookup.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>middleware_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for
+well-known middleware classes. Defaults to an empty lookup.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>template_lookup</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">Toys::ModuleLookup</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A lookup for
+well-known template classes. Defaults to an empty lookup.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 42</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>index_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>preload_file_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>data_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>lib_dir_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>middleware_stack:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+               <span class='label'>extra_delimiters:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span>
+               <span class='label'>mixin_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>middleware_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>template_lookup:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>git_cache:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+               <span class='label'>gems_util:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_index_file_name'>index_file_name</span> <span class='op'>&amp;&amp;</span> <span class='op'>::</span><span class='const'>File</span><span class='period'>.</span><span class='id identifier rubyid_extname'>extname</span><span class='lparen'>(</span><span class='id identifier rubyid_index_file_name'>index_file_name</span><span class='rparen'>)</span> <span class='op'>!=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>.rb</span><span class='tstring_end'>&quot;</span></span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Illegal index file name </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index_file_name'>index_file_name</span><span class='period'>.</span><span class='id identifier rubyid_inspect'>inspect</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_require'>require</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>monitor</span><span class='tstring_end'>&quot;</span></span>
+  <span class='ivar'>@mutex</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Monitor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span>
+  <span class='ivar'>@mixin_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_mixin_lookup'>mixin_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span>
+  <span class='ivar'>@template_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_template_lookup'>template_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span>
+  <span class='ivar'>@middleware_lookup</span> <span class='op'>=</span> <span class='id identifier rubyid_middleware_lookup'>middleware_lookup</span> <span class='op'>||</span> <span class='const'><span class='object_link'><a href="ModuleLookup.html" title="Toys::ModuleLookup (class)">ModuleLookup</a></span></span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="ModuleLookup.html#initialize-instance_method" title="Toys::ModuleLookup#initialize (method)">new</a></span></span>
+  <span class='ivar'>@index_file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_index_file_name'>index_file_name</span>
+  <span class='ivar'>@preload_file_name</span> <span class='op'>=</span> <span class='id identifier rubyid_preload_file_name'>preload_file_name</span>
+  <span class='ivar'>@preload_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_preload_dir_name'>preload_dir_name</span>
+  <span class='ivar'>@data_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_data_dir_name'>data_dir_name</span>
+  <span class='ivar'>@lib_dir_name</span> <span class='op'>=</span> <span class='id identifier rubyid_lib_dir_name'>lib_dir_name</span>
+  <span class='ivar'>@loading_started</span> <span class='op'>=</span> <span class='kw'>false</span>
+  <span class='ivar'>@worklist</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
+  <span class='ivar'>@tool_data</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='ivar'>@roots_by_priority</span> <span class='op'>=</span> <span class='lbrace'>{</span><span class='rbrace'>}</span>
+  <span class='ivar'>@max_priority</span> <span class='op'>=</span> <span class='ivar'>@min_priority</span> <span class='op'>=</span> <span class='int'>0</span>
+  <span class='ivar'>@stop_priority</span> <span class='op'>=</span> <span class='op'>-</span><span class='int'>999_999</span>
+  <span class='ivar'>@min_loaded_priority</span> <span class='op'>=</span> <span class='int'>999_999</span>
+  <span class='ivar'>@middleware_stack</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Middleware</a></span></span><span class='period'>.</span><span class='id identifier rubyid_stack'><span class='object_link'><a href="Middleware.html#stack-class_method" title="Toys::Middleware.stack (method)">stack</a></span></span><span class='lparen'>(</span><span class='id identifier rubyid_middleware_stack'>middleware_stack</span><span class='rparen'>)</span>
+  <span class='ivar'>@delimiter_handler</span> <span class='op'>=</span> <span class='const'>DelimiterHandler</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_extra_delimiters'>extra_delimiters</span><span class='rparen'>)</span>
+  <span class='ivar'>@git_cache</span> <span class='op'>=</span> <span class='id identifier rubyid_git_cache'>git_cache</span>
+  <span class='ivar'>@gems_util</span> <span class='op'>=</span> <span class='id identifier rubyid_gems_util'>gems_util</span>
+  <span class='id identifier rubyid_get_tool'>get_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='op'>-</span><span class='int'>999_999</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="add_block-instance_method">
+  
+    #<strong>add_block</strong>(high_priority: false, source_name: nil, context_directory: nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a configuration block to the loader.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, add this block at the top of the
+priority list. Defaults to false, indicating the block should be at
+the bottom of the priority list.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>source_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The source name that will be shown in
+documentation for tools defined in this block. If omitted, a default
+unique string will be generated.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The block of configuration, executed in the context
+of the tool DSL <span class='object_link'><a href="DSL/Tool.html" title="Toys::DSL::Tool (module)">DSL::Tool</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory for tools
+loaded from this block. You can pass a directory path as a string, or
+<code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 169</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_block'>add_block</span><span class='lparen'>(</span><span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+              <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='label'>context_directory:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+              <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a block after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
+    <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_proc_root'>create_proc_root</span><span class='lparen'>(</span><span class='id identifier rubyid_block'>block</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
+                                         <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                                         <span class='label'>source_name:</span> <span class='id identifier rubyid_source_name'>source_name</span><span class='comma'>,</span>
+                                         <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+                                         <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@roots_by_priority</span><span class='lbracket'>[</span><span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_source'>source</span>
+    <span class='ivar'>@worklist</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_gem-instance_method">
+  
+    #<strong>add_gem</strong>(gem_name, gem_version, gem_path, high_priority: false, gem_toys_dir: nil, context_directory: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a configuration gem source to the loader.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>gem_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the gem</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gem_version</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The version requirements</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gem_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The path from the gem&#39;s toys directory to the
+relevant file or directory. Specify the empty string to use the
+entire toys directory.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, add this path at the top of the
+priority list. Defaults to false, indicating the new path should be
+at the bottom of the priority list.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>gem_toys_dir</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the toys directory. Optional.
+Defaults to the directory specified in the gem&#39;s metadata, or the
+value &quot;toys&quot;.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory for tools
+loaded from this source. You can pass a directory path as a string,
+or <code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 242</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_gem'>add_gem</span><span class='lparen'>(</span><span class='id identifier rubyid_gem_name'>gem_name</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_version'>gem_version</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_path'>gem_path</span><span class='comma'>,</span>
+            <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+            <span class='label'>gem_toys_dir:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+            <span class='label'>context_directory:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_gem_version'>gem_version</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_path'>gem_path</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_resolve_gem_info'>resolve_gem_info</span><span class='lparen'>(</span><span class='id identifier rubyid_gem_name'>gem_name</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_version'>gem_version</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_toys_dir'>gem_toys_dir</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_path'>gem_path</span><span class='rparen'>)</span>
+  <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a gem source after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
+    <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_gem_root'>create_gem_root</span><span class='lparen'>(</span><span class='id identifier rubyid_gem_name'>gem_name</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_version'>gem_version</span><span class='comma'>,</span> <span class='id identifier rubyid_gem_path'>gem_path</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
+                                        <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                                        <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+                                        <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@roots_by_priority</span><span class='lbracket'>[</span><span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_source'>source</span>
+    <span class='ivar'>@worklist</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_git-instance_method">
+  
+    #<strong>add_git</strong>(git_remote, git_path, git_commit, high_priority: false, update: false, context_directory: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a configuration git source to the loader.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>git_remote</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The git repo URL</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>git_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The path to the relevant file or directory in
+the repo. Specify the empty string to use the entire repo.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>git_commit</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The git ref (i.e. SHA, tag, or branch name)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, add this path at the top of the
+priority list. Defaults to false, indicating the new path should be
+at the bottom of the priority list.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>update</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If the commit is not a SHA, pulls any updates
+from the remote. Defaults to false, which uses a local cache and does
+not update if the commit has been fetched previously.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory for tools
+loaded from this source. You can pass a directory path as a string,
+or <code>nil</code> to denote no context. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 205</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_git'>add_git</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span>
+            <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+            <span class='label'>update:</span> <span class='kw'>false</span><span class='comma'>,</span>
+            <span class='label'>context_directory:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_path'>path</span> <span class='op'>=</span> <span class='id identifier rubyid_resolve_git_path'>resolve_git_path</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span> <span class='id identifier rubyid_update'>update</span><span class='rparen'>)</span>
+  <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a git source after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
+    <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_git_root'>create_git_root</span><span class='lparen'>(</span><span class='id identifier rubyid_git_remote'>git_remote</span><span class='comma'>,</span> <span class='id identifier rubyid_git_path'>git_path</span><span class='comma'>,</span> <span class='id identifier rubyid_git_commit'>git_commit</span><span class='comma'>,</span> <span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
+                                        <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                                        <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+                                        <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@roots_by_priority</span><span class='lbracket'>[</span><span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_source'>source</span>
+    <span class='ivar'>@worklist</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_path-instance_method">
+  
+    #<strong>add_path</strong>(path, high_priority: false, source_name: nil, context_directory: :parent)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a configuration file/directory to the loader.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A single path to add.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, add this path at the top of the
+priority list. Defaults to false, indicating the new path should be
+at the bottom of the priority list.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>source_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A custom name for the root source. Optional.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>, <tt>:path</tt>, <tt>:parent</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:parent</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory
+for tools loaded from this path. You can pass a directory path as a
+string, <code>:path</code> to denote the given path, <code>:parent</code> to denote the
+given path&#39;s parent directory, or <code>nil</code> to denote no context.
+Defaults to <code>:parent</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 96</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_path'>add_path</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span>
+             <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+             <span class='label'>source_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+             <span class='label'>context_directory:</span> <span class='symbol'>:parent</span><span class='rparen'>)</span>
+  <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a path after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
+    <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_path_root'>create_path_root</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
+                                         <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                                         <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+                                         <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='comma'>,</span>
+                                         <span class='label'>source_name:</span> <span class='id identifier rubyid_source_name'>source_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@roots_by_priority</span><span class='lbracket'>[</span><span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_source'>source</span>
+    <span class='ivar'>@worklist</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_path_set-instance_method">
+  
+    #<strong>add_path_set</strong>(root_path, relative_paths, high_priority: false, context_directory: :path)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a set of configuration files/directories from a common directory to
+the loader. The set of paths will be added at the same priority level and
+will share a root.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>root_path</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A root path to be seen as the root source. This
+should generally be a directory containing the paths to add.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>relative_paths</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>One or more paths to add, as
+relative paths from the common root.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>high_priority</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, add the paths at the top of the
+priority list. Defaults to false, indicating the new paths should be
+at the bottom of the priority list.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>context_directory</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>nil</tt>, <tt>:path</tt>, <tt>:parent</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:path</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The context directory
+for tools loaded from this path. You can pass a directory path as a
+string, <code>:path</code> to denote the given root path, <code>:parent</code> to denote
+the given root path&#39;s parent directory, or <code>nil</code> to denote no context.
+Defaults to <code>:path</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 133</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_path_set'>add_path_set</span><span class='lparen'>(</span><span class='id identifier rubyid_root_path'>root_path</span><span class='comma'>,</span> <span class='id identifier rubyid_relative_paths'>relative_paths</span><span class='comma'>,</span>
+                 <span class='label'>high_priority:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                 <span class='label'>context_directory:</span> <span class='symbol'>:path</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_relative_paths'>relative_paths</span> <span class='op'>=</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_relative_paths'>relative_paths</span><span class='rparen'>)</span>
+  <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Cannot add a path after tool loading has started</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@loading_started</span>
+    <span class='id identifier rubyid_priority'>priority</span> <span class='op'>=</span> <span class='id identifier rubyid_high_priority'>high_priority</span> <span class='op'>?</span> <span class='lparen'>(</span><span class='ivar'>@max_priority</span> <span class='op'>+=</span> <span class='int'>1</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='lparen'>(</span><span class='ivar'>@min_priority</span> <span class='op'>-=</span> <span class='int'>1</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_root_source'>root_source</span> <span class='op'>=</span> <span class='const'><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">SourceInfo</a></span></span><span class='period'>.</span><span class='id identifier rubyid_create_path_root'>create_path_root</span><span class='lparen'>(</span><span class='id identifier rubyid_root_path'>root_path</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='comma'>,</span>
+                                              <span class='label'>context_directory:</span> <span class='id identifier rubyid_context_directory'>context_directory</span><span class='comma'>,</span>
+                                              <span class='label'>data_dir_name:</span> <span class='ivar'>@data_dir_name</span><span class='comma'>,</span>
+                                              <span class='label'>lib_dir_name:</span> <span class='ivar'>@lib_dir_name</span><span class='rparen'>)</span>
+    <span class='ivar'>@roots_by_priority</span><span class='lbracket'>[</span><span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span> <span class='op'>=</span> <span class='id identifier rubyid_root_source'>root_source</span>
+    <span class='id identifier rubyid_relative_paths'>relative_paths</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='id identifier rubyid_individual_name'>individual_name</span><span class='op'>|</span>
+      <span class='id identifier rubyid_source'>source</span> <span class='op'>=</span> <span class='id identifier rubyid_root_source'>root_source</span><span class='period'>.</span><span class='id identifier rubyid_relative_child'>relative_child</span><span class='lparen'>(</span><span class='id identifier rubyid_path'>path</span><span class='comma'>,</span> <span class='label'>source_name:</span> <span class='id identifier rubyid_individual_name'>individual_name</span><span class='rparen'>)</span>
+      <span class='ivar'>@worklist</span> <span class='op'>&lt;&lt;</span> <span class='lbracket'>[</span><span class='id identifier rubyid_source'>source</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='id identifier rubyid_priority'>priority</span><span class='rbracket'>]</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="has_subtools?-instance_method">
+  
+    #<strong>has_subtools?</strong>(words)  &#x21d2; <tt>Boolean</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if the given path has at least one subtool, even if they are
+hidden or non-runnable. Loads from the configuration if necessary.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>words</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the parent tool</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+344
+345
+346
+347
+348
+349
+350
+351</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 344</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_has_subtools?'>has_subtools?</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span> <span class='comment'># rubocop:disable Naming/PredicatePrefix
+</span>  <span class='id identifier rubyid_load_for_prefix'>load_for_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_len'>len</span> <span class='op'>=</span> <span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span>
+  <span class='id identifier rubyid_all_cur_definitions'>all_cur_definitions</span><span class='period'>.</span><span class='id identifier rubyid_any?'>any?</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tool'>tool</span><span class='op'>|</span>
+    <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_full_name'>full_name</span>
+    <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>&gt;</span> <span class='id identifier rubyid_len'>len</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_slice'>slice</span><span class='lparen'>(</span><span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_len'>len</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='id identifier rubyid_words'>words</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="list_subtools-instance_method">
+  
+    #<strong>list_subtools</strong>(words, recursive: false, include_hidden: false, include_namespaces: false, include_non_runnable: false)  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns a list of subtools for the given path, loading from the
+configuration if necessary. The list will be sorted by name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>words</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the parent tool</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>recursive</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, return all subtools recursively
+rather than just the immediate children (the default)</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_hidden</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, include hidden subtools,
+i.e. names beginning with underscores. Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_namespaces</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, include namespaces,
+i.e. tools that are not runnable but have descendents that would have
+been listed by the current filters. Defaults to false.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>include_non_runnable</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If true, include tools that have
+no children and are not runnable. Defaults to false.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span>&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of subtools.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 319</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_list_subtools'>list_subtools</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='comma'>,</span>
+                  <span class='label'>recursive:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                  <span class='label'>include_hidden:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                  <span class='label'>include_namespaces:</span> <span class='kw'>false</span><span class='comma'>,</span>
+                  <span class='label'>include_non_runnable:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_load_for_prefix'>load_for_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_len'>len</span> <span class='op'>=</span> <span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span>
+  <span class='id identifier rubyid_found_tools'>found_tools</span> <span class='op'>=</span> <span class='id identifier rubyid_all_cur_definitions'>all_cur_definitions</span><span class='period'>.</span><span class='id identifier rubyid_find_all'>find_all</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tool'>tool</span><span class='op'>|</span>
+    <span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_full_name'>full_name</span>
+    <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>&gt;</span> <span class='id identifier rubyid_len'>len</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_name'>name</span><span class='period'>.</span><span class='id identifier rubyid_slice'>slice</span><span class='lparen'>(</span><span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_len'>len</span><span class='rparen'>)</span> <span class='op'>==</span> <span class='id identifier rubyid_words'>words</span> <span class='op'>&amp;&amp;</span>
+      <span class='lparen'>(</span><span class='id identifier rubyid_include_hidden'>include_hidden</span> <span class='op'>||</span> <span class='id identifier rubyid_name'>name</span><span class='lbracket'>[</span><span class='id identifier rubyid_len'>len</span><span class='op'>..</span><span class='rbracket'>]</span><span class='period'>.</span><span class='id identifier rubyid_none?'>none?</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_word'>word</span><span class='op'>|</span> <span class='id identifier rubyid_word'>word</span><span class='period'>.</span><span class='id identifier rubyid_start_with?'>start_with?</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>_</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='rbrace'>}</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='id identifier rubyid_found_tools'>found_tools</span><span class='period'>.</span><span class='id identifier rubyid_sort_by!'>sort_by!</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:full_name</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_found_tools'>found_tools</span> <span class='op'>=</span> <span class='id identifier rubyid_filter_non_runnable_tools'>filter_non_runnable_tools</span><span class='lparen'>(</span><span class='id identifier rubyid_found_tools'>found_tools</span><span class='comma'>,</span> <span class='id identifier rubyid_include_namespaces'>include_namespaces</span><span class='comma'>,</span> <span class='id identifier rubyid_include_non_runnable'>include_non_runnable</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_found_tools'>found_tools</span><span class='period'>.</span><span class='id identifier rubyid_select!'>select!</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_tool'>tool</span><span class='op'>|</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_full_name'>full_name</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span> <span class='op'>==</span> <span class='id identifier rubyid_len'>len</span> <span class='op'>+</span> <span class='int'>1</span> <span class='rbrace'>}</span> <span class='kw'>unless</span> <span class='id identifier rubyid_recursive'>recursive</span>
+  <span class='id identifier rubyid_found_tools'>found_tools</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup-instance_method">
+  
+    #<strong>lookup</strong>(args)  &#x21d2; <tt>Array(<span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span>,Array&lt;String&gt;)</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Given a list of command line arguments, find the appropriate tool to
+handle the command, loading it from the configuration if necessary.
+This always returns a tool. If the specific tool path is not defined and
+cannot be found in any configuration, it finds the nearest namespace that
+<em>would</em> contain that tool, up to the root tool.</p>
+
+<p>Returns a tuple of the found tool, and the array of remaining arguments
+that are not part of the tool name and should be passed as tool args.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Command line arguments</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array(<span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span>,Array&lt;String&gt;)</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+273
+274
+275
+276
+277
+278
+279
+280
+281</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 273</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_orig_prefix'>orig_prefix</span><span class='comma'>,</span> <span class='id identifier rubyid_args'>args</span> <span class='op'>=</span> <span class='ivar'>@delimiter_handler</span><span class='period'>.</span><span class='id identifier rubyid_find_orig_prefix'>find_orig_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_args'>args</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_prefix'>prefix</span> <span class='op'>=</span> <span class='id identifier rubyid_orig_prefix'>orig_prefix</span>
+  <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
+    <span class='id identifier rubyid_tool'>tool</span> <span class='op'>=</span> <span class='id identifier rubyid_lookup_specific'>lookup_specific</span><span class='lparen'>(</span><span class='id identifier rubyid_prefix'>prefix</span><span class='rparen'>)</span>
+    <span class='kw'>return</span> <span class='lbracket'>[</span><span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_args'>args</span><span class='period'>.</span><span class='id identifier rubyid_slice'>slice</span><span class='lparen'>(</span><span class='id identifier rubyid_prefix'>prefix</span><span class='period'>.</span><span class='id identifier rubyid_length'>length</span><span class='op'>..</span><span class='op'>-</span><span class='int'>1</span><span class='rparen'>)</span><span class='rbracket'>]</span> <span class='kw'>if</span> <span class='id identifier rubyid_tool'>tool</span>
+    <span class='id identifier rubyid_prefix'>prefix</span> <span class='op'>=</span> <span class='id identifier rubyid_prefix'>prefix</span><span class='period'>.</span><span class='id identifier rubyid_slice'>slice</span><span class='lparen'>(</span><span class='int'>0</span><span class='op'>..</span><span class='op'>-</span><span class='int'>2</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_specific-instance_method">
+  
+    #<strong>lookup_specific</strong>(words)  &#x21d2; <tt><span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Given a tool name, looks up the specific tool, loading it from the
+configuration if necessary.</p>
+
+<p>If there is an active tool, returns it; otherwise, returns the highest
+priority tool that has been defined. If no tool has been defined with
+the given name, returns <code>nil</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>words</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The tool name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ToolDefinition.html" title="Toys::ToolDefinition (class)">Toys::ToolDefinition</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the tool was found</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no such tool exists</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+295
+296
+297
+298
+299
+300
+301</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 295</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_specific'>lookup_specific</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_words'>words</span> <span class='op'>=</span> <span class='ivar'>@delimiter_handler</span><span class='period'>.</span><span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_first'>first</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_words'>words</span><span class='period'>.</span><span class='id identifier rubyid_size'>size</span> <span class='op'>==</span> <span class='int'>1</span>
+  <span class='id identifier rubyid_load_for_prefix'>load_for_prefix</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_tool'>tool</span> <span class='op'>=</span> <span class='ivar'>@mutex</span><span class='period'>.</span><span class='id identifier rubyid_synchronize'>synchronize</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_get_tool_data'>get_tool_data</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='comma'>,</span> <span class='kw'>false</span><span class='rparen'>)</span><span class='op'>&amp;.</span><span class='id identifier rubyid_cur_definition'>cur_definition</span> <span class='rbrace'>}</span>
+  <span class='id identifier rubyid_finish_definitions_in_tree'>finish_definitions_in_tree</span><span class='lparen'>(</span><span class='id identifier rubyid_words'>words</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_tool'>tool</span>
+  <span class='id identifier rubyid_tool'>tool</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="split_path-instance_method">
+  
+    #<strong>split_path</strong>(str)  &#x21d2; <tt>Array&lt;String&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Splits the given path using the delimiters configured in this Loader.
+You may pass in either an array of strings, or a single string possibly
+delimited by path separators. Always returns an array of strings.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>str</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>, <tt>Array&lt;String,Symbol&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The path to split.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+361
+362
+363
+364</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/loader.rb', line 361</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='rparen'>)</span>
+  <span class='kw'>return</span> <span class='id identifier rubyid_str'>str</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:to_s</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_str'>str</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>Array</span><span class='rparen'>)</span>
+  <span class='ivar'>@delimiter_handler</span><span class='period'>.</span><span class='id identifier rubyid_split_path'>split_path</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='period'>.</span><span class='id identifier rubyid_to_s'>to_s</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Fri Dec  5 21:54:57 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-3.4.7).
+</div>
+
+    </div>
+  </body>
+</html>
