@@ -10,6 +10,14 @@ long_desc \
 flag :repo, "--repo=REPO" do
   desc "GitHub repo owner and name (e.g. dazuma/toys)"
 end
+flag :git_user, "--git-user=NAME" do
+  default ""
+  desc "User name for git commits (defaults to the git user.name config)"
+end
+flag :git_email, "--git-email=NAME" do
+  default ""
+  desc "User email for git commits (defaults to the git user.email config)"
+end
 flag :file_path, "-o PATH", "--output=PATH" do
   desc "Output file path (defaults to .toys/.data/releases.yml)"
 end
@@ -24,6 +32,7 @@ include :fileutils
 def run
   setup
   interpret_github_repo
+  interpret_git_user
   check_file_path
   gems_and_dirs = find_gems
   confirm_with_user
@@ -56,6 +65,27 @@ def interpret_github_repo
   puts "GitHub repository inferred to be #{current_guess}."
   puts "If this is incorrect, specify the correct repo using the --repo= flag."
   set(:repo, current_guess)
+end
+
+def interpret_git_user
+  if git_user.empty?
+    set(:git_user, capture(["git", "config", "get", "user.name"]).strip)
+    if git_user.empty?
+      puts "Unable to determine git user.name. Using a hard-coded fallback", :yellow
+      set(:git_user, "Example User")
+    else
+      puts "Using the current git user.name of #{git_user}"
+    end
+  end
+  if git_email.empty?
+    set(:git_email, capture(["git", "config", "get", "user.email"]).strip)
+    if git_email.empty?
+      puts "Unable to determine git user.email. Using a hard-coded fallback", :yellow
+      set(:git_email, "hello@example.com")
+    else
+      puts "Using the the current git user.email of #{git_email}"
+    end
+  end
 end
 
 def check_file_path
@@ -94,6 +124,8 @@ end
 
 def write_settings(file, gems_and_dirs)
   file.puts("repo: #{repo}")
+  file.puts("git_user_name: #{git_user}")
+  file.puts("git_user_email: #{git_email}")
   file.puts("# Insert additional repo-level settings here.")
   file.puts
   file.puts("gems:")
