@@ -1,5 +1,18 @@
 # Release History
 
+### v0.3.0 / 2025-12-06
+
+This release includes fairly substantial changes, a few of them breaking, to the configuration mechanism:
+* Component types have been removed. You can customize the pipeline for specific components, but there are no longer any predefined "categories" of components.
+* Commit tag handling can be overridden for specific components.
+* Added a configuration to control how collisions during file copies (in inputs and outputs) are resolved.
+* Unknown or misspelled keys in the configuration now trigger an error.
+
+Aditional changes:
+* Renamed the gen-settings tool to gen-config and expanded its capabilities, including generating git_user_name and git_user_email.
+* When the release automation starts, it posts a comment on the release pull request with a link to its logs.
+* Initial work on the users guide.
+
 ### v0.2.2 / 2025-11-30
 
 * FIXED: Fixed several crashes in the retry tool
