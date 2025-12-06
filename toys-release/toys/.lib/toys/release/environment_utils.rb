@@ -241,6 +241,19 @@ module Toys
         tool_context.exec_separate_tool(cmd, **opts, &block)
       end
 
+      ##
+      # Returns the URL for the current GitHub Actions workflow run.
+      #
+      # @return [String] Current workflow run URL
+      # @return [nil] If not called from within a workflow run
+      #
+      def current_workflow_run_url
+        return nil unless (server_url = ::ENV["GITHUB_SERVER_URL"])
+        return nil unless (repo = ::ENV["GITHUB_REPOSITORY"])
+        return nil unless (run_id = ::ENV["GITHUB_RUN_ID"])
+        "#{server_url}/#{repo}/actions/runs/#{run_id}"
+      end
+
       private
 
       def modify_exec_opts(opts, cmd)
