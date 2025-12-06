@@ -1,5 +1,17 @@
 # Release History
 
+### v0.3.0 / 2025-12-06
+
+* BREAKING CHANGE: Remove component types to simplify configuration mechanism
+* ADDED: Provided a gen-config tool
+* ADDED: Support different options for handling collisions during file copies
+* ADDED: Support for per-component overrides of commit tag behavior
+* ADDED: Remove component types to simplify configuration mechanism
+* ADDED: Check for unknown or misspelled keys when loading configuration
+* ADDED: The gen-config tool now generates git_user_name and git_user_email fields
+* ADDED: Update the release pull request when the release automation starts
+* DOCS: Initial work on the users guide
+
 ### v0.2.2 / 2025-11-30
 
 * FIXED: Fixed several crashes in the retry tool
