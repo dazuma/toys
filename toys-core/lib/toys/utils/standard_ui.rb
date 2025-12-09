@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "logger"
+
 module Toys
   module Utils
     ##
@@ -28,7 +30,6 @@ module Toys
       #     terminal output. Default is `$stderr`.
       #
       def initialize(output: nil)
-        require "logger"
         require "toys/utils/terminal"
         @terminal = output || $stderr
         @terminal = Terminal.new(output: @terminal) unless @terminal.is_a?(Terminal)

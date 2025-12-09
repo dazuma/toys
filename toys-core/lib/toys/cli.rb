@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "logger"
+
 module Toys
   ##
   # A Toys-based CLI.
@@ -562,7 +564,6 @@ module Toys
       # @return [Proc]
       #
       def default_logger_factory
-        require "logger"
         proc do
           logger = ::Logger.new($stderr)
           logger.level = ::Logger::WARN
