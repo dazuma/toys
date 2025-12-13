@@ -4,4 +4,4 @@ source "https://rubygems.org"
 
 gem "abbrev"
 gem "highline", "~> 2.0"
-gem "toys", ">= 0.10.0"
+gem "toys", ">= 0.16.0"
