@@ -9,10 +9,10 @@ users who want to write and organize scripts to automate their workflows. It
 can also be used as a replacement for Rake, providing a more natural command
 line interface for your project's build tasks.
 
-Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line executable written in Ruby. However,
-you *can* use it in that way with the "toys-core" API, available as a separate
-gem. For more info on using toys-core, see
+Unlike most command line frameworks, Toys is *not primarily* designed for
+building and shipping a custom command line executable written in Ruby.
+However, you *can* use it in that way with the "toys-core" API, available as a
+separate gem. For more info on using toys-core, see
 [its documentation](https://dazuma.github.io/toys/gems/toys-core/latest).
 
 ## Introductory tutorial

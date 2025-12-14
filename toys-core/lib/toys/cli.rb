@@ -127,7 +127,7 @@ module Toys
     #     Optional. If not provided, defaults to the set of standard template
     #     classes provided by toys core, as defined by
     #     {Toys::CLI.default_template_lookup}. If you explicitly want no
-    #     standard tenokates, pass an empty instance of {Toys::ModuleLookup}.
+    #     standard templates, pass an empty instance of {Toys::ModuleLookup}.
     #
     # @param config_dir_name [String] A directory with this name that appears
     #     in the loader path, is treated as a configuration directory whose
