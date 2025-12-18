@@ -13,10 +13,10 @@ users who want to write and organize scripts to automate their workflows. It
 can also be used as a replacement for Rake, providing a more natural command
 line interface for your project's build tasks.
 
-Unlike most command line frameworks, Toys is *not primarily* designed to help
-you build and ship a custom command line executable written in Ruby. Rather, it
-provides a single executable called `toys` whose functionality you can define
-by writing configuration files. (You can, however, build your own custom
+Unlike most command line frameworks, Toys is *not primarily* designed for
+building and shipping a custom command line executable written in Ruby. Rather,
+it provides a single executable called `toys` whose functionality you can
+define by writing configuration files. (You can, however, build your own custom
 command line executable using the related **toys-core** library.)
 
 If this is your first time using Toys, we recommend starting with the
@@ -122,7 +122,7 @@ This displays the **online help screen** for the `system` namespace, which
 includes a list of all its subtools and what they do.
 
 It is also legitimate for the tool name to be empty. This invokes the **root
-tool**, the toplevel namespace:
+tool**, the top level namespace:
 
     $ toys
 
@@ -133,7 +133,7 @@ One last example:
 
     $ toys frodo
 
-If there is no tool called `frodo` in the toplevel namespace, then once again,
+If there is no tool called `frodo` in the top level namespace, then once again,
 `frodo` is interpreted as an argument to the root tool. The root tool responds
 by printing an error message that the `frodo` tool does not exist.
 
@@ -145,7 +145,7 @@ options for a tool.
 Each tool recognizes a specific set of flags. If you pass an unknown flag to a
 tool, the tool will generally display an error message.
 
-Toys follows the typical unix conventions for flags, specifically those covered
+Toys follows the typical Unix conventions for flags, specifically those covered
 by Ruby's OptionParser library. You can provide short (single-character) flags
 with a single hyphen, or long flags with a double hyphen. Some flags can also
 take **values**. Following are a few examples.
@@ -1366,7 +1366,7 @@ When Toys runs, it looks for tools in a **search path**. Specifically:
 3.  It looks in a list of *global directories*, specified in the environment
     variable `TOYS_PATH`. This variable can contain a colon-delimited list of
     directory paths. If the variable is not set, the current user's *home
-    directory*, and the system configuration directory (`/etc` on unix systems)
+    directory*, and the system configuration directory (`/etc` on Unix systems)
     are used by default. Toys does *not* search parents of global directories.
 
 It uses the *first* implementation that it finds for the requested tool. For
@@ -1608,8 +1608,8 @@ set the gem's `"toys_dir"` metadata to a different directory name. If this
 metadata is set, `load_gem` will use it as the toys top level directory for
 that gem.
 
-Additionally, you can pass a top level directory name in the `load_gem`
-directive itself. This can be useful if a gem has multiple toys directories:
+You can also specify a different toys top level directory in the `load_gem`
+directive. This can be useful if a gem has multiple toys directories:
 
     # .toys.rb
     load_gem "my-tools", toys_dir: "uncommon-tools"
@@ -1623,6 +1623,13 @@ Another benefit of distributing tools via Ruby gem is that the gem's library
 files can be used in the tools' implementations. When `load_gem` is run, the
 gem is activated so its library directory is made available in the require
 path. This may be simpler than using `.lib` directories as described later.
+
+By default, the `load_gem` mechanism expects toys files to live inside the
+`toys` top level directory of the gem. Although this is not recommended, if you
+need to change this default, you can set the gem's `"toys_dir"` metadata to a
+different directory name. If this metadata is set, `load_gem` will use it as
+the toys top level directory for that gem. In either case, the caller of the
+`load_gem` directive can still override it by passing the `:toys_dir` argument.
 
 ## The execution environment
 
@@ -2672,14 +2679,14 @@ focus on a few tests.
 ## Using third-party gems
 
 The toys executable itself uses only two gems: **toys** and **toys-core**. It
-has no other gem dependencies. However, the Ruby community has developed many
-resources for building command line tools, including a variety of gems that
-provide alternate command line parsing, control of the ANSI terminal, formatted
-output such as trees and tables, and effects such as hidden input, progress
-bars, various ways to spawn and control subprocesses, and so forth. You may
-find some of these gems useful when writing your tools. Additionally, if you
-are using Toys for your project's build scripts, it might be necessary to
-install your bundle when running some tools.
+has no other gem dependencies besides standard gems bundled with Ruby. However,
+the Ruby community has developed many resources for building command line
+tools, including a variety of gems that provide alternate command line parsing,
+control of the ANSI terminal, formatted output such as trees and tables, and
+effects such as hidden input, progress bars, various ways to spawn and control
+subprocesses, and so forth. You may find some of these gems useful when writing
+your tools. Additionally, if you are using Toys for your project's build
+scripts, it might be necessary to install your bundle when running some tools.
 
 This section describes how to manage and use external gems with Toys. Note that
 running Toys with `bundle exec` is generally *not* recommended. We'll discuss
@@ -3054,7 +3061,7 @@ how to use Toys for some of the things traditionally done with Rake.
 Although Toys and Rake serve many of the same use cases, they have very
 different design goals, and it is useful to understand the differences.
 
-Rake's design is based on the classic "make" tool often provided in unix
+Rake's design is based on the classic "make" tool often provided in Unix
 development environments. This design focuses on *targets* and *dependencies*,
 and is meant for a world where you invoke an external compiler tool whenever
 changes are made to an individual source file or any of its dependencies. This
@@ -3075,10 +3082,10 @@ syntax for describing targets and dependencies, since we generally don't have
 them in Ruby programs. Instead, it is optimized for writing imperative tools.
 
 For example, Rake provides a primitive mechanism for passing arguments to a
-task, but it is clumsy and quite different from most unix programs. However, to
+task, but it is clumsy and quite different from most Unix programs. However, to
 do otherwise would clash with Rake's design goal of treating tasks as targets
 and dependencies. Toys does not have those design goals, so it is able to
-embrace the familiar unix conventions for command line arguments.
+embrace the familiar Unix conventions for command line arguments.
 
 Toys actually borrows some of its design from the "mix" build tool used for
 Elixir and Erlang programs. Unlike C, the Erlang and Elixir compilers do their
@@ -3559,7 +3566,7 @@ simplified excerpt from the implementation that tool:
 
 ### Requiring exact flag matches
 
-By default, tools will recognized "shortened" forms of long flags. For example,
+By default, tools will recognize "shortened" forms of long flags. For example,
 most suppose you are defining a tool with long flags:
 
     tool "my-tool" do
@@ -3645,8 +3652,9 @@ following takes place:
 
 1.  Ruby will terminate the tool's `run` method by raising a `SignalException`
     Any `ensure` blocks in the tool will be called.
-2.  Toys will call the signal handler, either a method or a block. If the
-    handler takes an argument, Toys will pass it the `SignalException` object.
+2.  Toys will rescue the `SignalException` and call the signal handler, either
+    a method or a block. If the handler takes an argument, Toys will pass it
+    the `SignalException` object.
 3.  The signal handler is then responsible for tool execution from that
     point. It can terminate execution by returning or calling `exit`, or it can
     restart or resume processing (perhaps by calling the `run` method again).
@@ -3902,7 +3910,7 @@ overriding file under `.toys/test/.data`.
 
 ### The context directory
 
-The **context directory** for a tool is the directory containing the toplevel
+The **context directory** for a tool is the directory containing the top level
 `.toys.rb` file or the `.toys` directory within which the tool is defined. It
 is sometimes useful for tools that expect to be run from a specific working
 directory.
@@ -3942,7 +3950,7 @@ directory containing the `.toys.rb` file, i.e. the `my-project` directory.)
 
     tool "list-tests" do
       def run
-        Dir.chdir context_directory do
+        Dir.chdir(context_directory) do
           puts Dir.glob("test/**/*.rb").join("\n")
         end
       end
@@ -4008,8 +4016,8 @@ context directory to `my-repo/gem1`. Here's what that could look like:
     # .toys.rb content
 
     require "pathname"
-    base_dir = Pathname.new context_directory
-    cur_dir = Pathname.new Dir.getwd
+    base_dir = Pathname.new(context_directory)
+    cur_dir = Pathname.new(Dir.getwd)
 
     # The gem name is the first segment of the relative path from the context
     # directory to the current directory.
@@ -4020,7 +4028,7 @@ context directory to `my-repo/gem1`. Here's what that could look like:
     if gem_name && gem_name != "." && gem_name != ".."
 
       # Now set the context directory to the gem directory.
-      set_context_directory base_dir.join(gem_name).to_s
+      set_context_directory(base_dir.join(gem_name).to_s)
 
       # Define the build tools. Each of these uses the custom context directory
       # set above, and thus runs for the selected gem.
@@ -4065,8 +4073,8 @@ To update Toys to the latest released version, run:
 This will determine the latest version from Rubygems, and update your Toys
 installation if it is not already current.
 
-Normall it asks you for confirmation before downloading. To disable interactive
-confirmation, pass the `--yes` flag.
+Normally it asks you for confirmation before downloading. To disable
+interactive confirmation, pass the `--yes` flag.
 
 A similar effect can of course be obtained by running `gem install toys`.
 
@@ -4125,6 +4133,13 @@ information about cache status, and deleting old data.
 To display general information and a list of tools, run:
 
     toys system git-cache --help
+
+By default, files in the Git Cache are read-only. This is to prevent code that
+uses the cache from modifying those files in place and thus causing problems
+for other users of the cache. However, some environments that auto-delete cache
+directories might have a problem with this behavior, so the Git Cache supports
+an environment variable `TOYS_GIT_CACHE_WRITABLE` which, if set to a nonempty
+value, causes cache files to be writable.
 
 ## Writing your own CLI using Toys
 

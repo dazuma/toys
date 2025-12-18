@@ -59,8 +59,8 @@ An executable can customize many aspects of its behavior, such as the
 **logging output**, **error handling**, and even shell **tab completion**.
 
 Finally, Toys-Core can also be used to publish **Toys extensions**, collections
-of mixins, templates, and predefined tools that can be distributed as gems to
-enhance Toys for other users.
+of mixins, templates, and/or predefined tools that can be distributed as gems
+to enhance Toys for other users.
 
 ## Using the CLI object
 
@@ -123,10 +123,10 @@ When you call {Toys::CLI#run}, the CLI runs through three phases:
 When the CLI needs the definition of a tool, it queries the {Toys::Loader}. The
 loader object is configured with a set of tool _sources_ representing ways to
 define a tool. These sources may be blocks passed directly to the CLI, or
-directories and files loaded from the file system or even remote git
-repositories. When a tool is requested by name, the loader is responsible for
-locating the tool definition in those sources, and constructing the tool
-definition object, represented by {Toys::ToolDefinition}.
+directories and files loaded from the file system, from gems, or even from
+remote git repositories. When a tool is requested by name, the loader is
+responsible for locating the tool definition in those sources, and constructing
+the tool definition object, represented by {Toys::ToolDefinition}.
 
 One important property of the loader is that it is _lazy_. It queries tool
 sources only when it has reason to believe that a tool it is looking for may be
@@ -184,7 +184,7 @@ class, but it implements a few extra features and cleans up a few ambiguities.
 
 The execution phase involves:
 
- *  Running the tool's initializers, if any, in order.
+ *  Running the tool's initializers (if any) in order.
  *  Running the tool's middleware. Each middleware "wraps" the execution of
     subsequent middleware and the final tool execution, and has the opportunity
     to inject functionality before and after the main execution, or even to
@@ -266,7 +266,7 @@ at the start of this guide uses this technique:
 The block simply contains Toys DSL syntax. The above example configures the
 "root tool", that is, the functionality of the program if you do not pass a
 tool name on the command line. You can also include "tool" blocks to define
-named tools, just as you would in a normal Toys file.
+named tools and subtools, just as you would in a normal Toys file.
 
 The reference documentation for {Toys::CLI#add_config_block} lists several
 options that can be passed in. `:context_directory` lets you select a context
@@ -289,7 +289,7 @@ paths to the CLI using {Toys::CLI#add_config_path}.
     cli = Toys::CLI.new
 
     # Load a file defining the functionality
-    cli.add_config_path("/usr/local/share/my_tool.rb)
+    cli.add_config_path("/usr/local/share/my_tool.rb")
 
     result = cli.run(*ARGV)
     exit(result)
@@ -375,9 +375,82 @@ the front of the list, with the highest priority. Parent directories are added
 at subsequently lower priorities, and common directories such as the home
 directory are loaded at the lowest priority.
 
-### Changing built-in mixins and templates
+### Customizing built-in mixins and templates
 
-(TODO)
+Mixins and templates are two of the most useful mechanisms for sharing code and
+generating code for tools. In the main Toys gem, a certain set of mixins are
+built-in and can be referenced via symbols. For example, the *exec* mixin that
+provides facilities for running and controlling external processes, can be
+included using `include :exec`. In this section, we see how to define your own
+"built-in" mixins and templates that can be referenced via symbol.
+
+"Built-in" mixins and templates (and middleware, which we shall cover later)
+are provided via the {Toys::ModuleLookup} mechanism. ModuleLookup lets you
+select a directory for "standard" instances. By default, Toys-Core establishes
+the `toys/standard_mixins` directory in the gem as the standard directory for
+mixins, and whenever you reference a mixin by symbol, it is used to determine
+the name of a file to open and the name of a module to load. You can, however,
+change this directory and provide a different ModuleLookup when constructing a
+CLI object.
+
+Suppose, for example, you are writing a gem `my_tools` that uses Toys-Core, and
+you have a directory in your gem's `lib` called `my_tools/mixins` where you
+want your standard mixins to live. You could define mixins there:
+
+    # This file is my_tools/mixins/foo_mixin.rb
+
+    require "toys-core"
+
+    module MyTools
+      module Mixins
+        module FooMixin
+          include Toys::Mixin
+
+          def foo
+            puts "Foo was called"
+          end
+        end
+      end
+    end
+
+Here is how you could configure a CLI to load standard mixins from that
+directory, and then use the above mixin.
+
+    # This file is my_tools.rb
+
+    require "toys-core"
+
+    my_mixin_lookup = Toys::ModuleLookup.new.add_path("my_tools/mixins")
+    cli = Toys::CLI.new(mixin_lookup: my_mixin_lookup)
+
+    cli.add_config_block do
+      def run
+        include :foo_mixin
+        foo
+      end
+    end
+
+When you configure a ModuleLookup, you provide one or more paths, which are
+path prefixes that are used in a `require` statement. In the above example,
+we used the path `my_tools/mixins` for the ModuleLookup. Now when the CLI uses
+this ModuleLookup to find a mixin called `:foo_mixin`, it will attempt to
+`require "my_tools/mixins/foo_mixin"`, which matches the file where we defined
+our mixin.
+
+Notice also that `foo_mixin.rb` above defines FooMixin within a specific module
+hierarchy, corresponding to the file name `my_tools/mixins/foo_mixin.rb`
+according to standard Ruby naming conventions. The fully-qualified module name
+for the mixin must match this expected name, constructed from the path provided
+to the ModuleLookup and the name of the mixin. You can change the way this name
+mapping occurs, by providing the `:module_base` argument to the ModuleLookup
+constructor.
+
+Template lookup happens similarly. Toys-Core does not provide a set of default
+templates, but the Toys gem does; the `StandardCLI` class used by Toys sets the
+`:template_lookup` to point to the `toys/templates` directory in that gem's
+library. If you want to customize the default template lookup for your
+Toys-based library, you can similarly provide your own ModuleLookup. This will
+let you control how templates are resolved when specified by symbol.
 
 ## Customizing diagnostic output
 
@@ -588,7 +661,7 @@ replace normal tool execution.
 
 Middleware is normally configured as part of the CLI object. Each CLI includes
 an ordered list, a _stack_, of middleware specifications, each represented by
-{Toys::Middleware::Spec}. A middleware spec can be a specific middleware
+{Toys::Middleware::Spec}. A middleware spec can reference a specific middleware
 object, a class to instantiate, or a name that can be looked up from a
 directory of middleware class files. You can pass an array of these specs to a
 CLI object when you instantiate it.
@@ -723,10 +796,6 @@ by other middleware (including middleware that replaces execution such as
 
 Now, every tool run by this CLI wil have the `--show-timing` flag and
 associated functionality.
-
-#### Changing built-in middleware
-
-(TODO)
 
 ## Shell and command line integration
 
