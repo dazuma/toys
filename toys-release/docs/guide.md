@@ -404,7 +404,7 @@ they were already created.
 ### Documentation publication
 
 One of the optional features of the release pipeline is publication of Yardoc
-reference documentation to GitHub Pages. This lets lets you host reference
+reference documentation to GitHub Pages. This lets you host reference
 documentation for your Ruby gem on your GitHub Pages site, under github.io. As
 an example, of what this looks like you can see the reference documentation for
 the Toys gem at https://dazuma.github.io/toys/gems/toys.
