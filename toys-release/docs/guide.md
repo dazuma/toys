@@ -363,7 +363,7 @@ fail for a number of reasons, including:
 
 * The GitHub checks for the commit representing the merge of the release pull
   request, have failed or did not complete in a timely manner.
-* An failure during the release pipeline, such as an error during the build or
+* A failure during the release pipeline, such as an error during the build or
   publication of a release artifact.
 * An intermittent failure of the release pipeline infrastructure, such as a
   failure to obtain a VM to execute a GitHub Actions workflow.
