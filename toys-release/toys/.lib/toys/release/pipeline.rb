@@ -471,6 +471,7 @@ module Toys
         @utils.log("Pre-cleaning the repo for step #{step.name}")
         count = clean_tree(nil)
         @utils.log("Cleaned #{count} items") if count.positive?
+        @utils.exec(["git", "reset", "--hard"])
       end
 
       ##
