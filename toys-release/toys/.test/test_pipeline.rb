@@ -41,6 +41,10 @@ describe Toys::Release::Pipeline do
     end
   end
 
+  def disable_git_reset
+    fake_tool_context.stub_exec(["git", "reset", "--hard"])
+  end
+
   after do
     artifact_dir.cleanup
   end
@@ -53,6 +57,9 @@ describe Toys::Release::Pipeline do
       "dir1/file1.md",
     ]
     fake_tool_context.stub_capture(["git", "ls-files"], output: allowed.join("\n"))
+    fake_tool_context.stub_exec(["git", "reset", "--hard"]) do
+      FileUtils.touch("version9.rb")
+    end
     copy_data(temp_dir)
     Dir.chdir(temp_dir) do
       pipeline.run
@@ -60,6 +67,7 @@ describe Toys::Release::Pipeline do
       refute(File.exist?("changelog2.md"))
       assert(File.exist?("dir1/file1.md"))
       refute(File.exist?("dir2/file2.md"))
+      assert(File.exist?("version9.rb"))
     end
   end
 
@@ -68,6 +76,7 @@ describe Toys::Release::Pipeline do
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     copy_data(step1_dir)
     FileUtils.rm_rf(component_tmp_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(component_tmp_dir, "file11.md")))
   end
@@ -77,6 +86,7 @@ describe Toys::Release::Pipeline do
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     copy_data(step1_dir)
     FileUtils.rm_rf(repo_tmp_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(repo_tmp_dir, "tmp.md")))
   end
@@ -85,6 +95,7 @@ describe Toys::Release::Pipeline do
     step_opts = {"inputs" => [{"name" => "step1", "dest" => "output"}]}
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     copy_data(step1_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(noop_output_dir, "dir1", "subdir1", "file11.md")))
     assert(File.exist?(File.join(noop_output_dir, "changelog1.md")))
@@ -94,6 +105,7 @@ describe Toys::Release::Pipeline do
     step_opts = {"inputs" => [{"name" => "step1", "dest" => "temp"}]}
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     copy_data(step1_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(noop_temp_dir, "dir1", "subdir1", "file11.md")))
     assert(File.exist?(File.join(noop_temp_dir, "changelog1.md")))
@@ -105,6 +117,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
     File.write(File.join(noop_temp_dir, "dir1", "file1a.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
                  File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
@@ -118,6 +131,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
     File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
   end
@@ -128,6 +142,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
     File.write(File.join(noop_temp_dir, "dir1", "subdir1"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/subdir1")
   end
@@ -138,6 +153,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1", "file1.md"))
     File.write(File.join(noop_temp_dir, "dir1", "file1.md", "file1a.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
   end
@@ -148,6 +164,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
     File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(File.read(File.join(orig_data_dir, "dir1", "file1.md")),
                  File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
@@ -160,6 +177,7 @@ describe Toys::Release::Pipeline do
     copy_data(step1_dir)
     FileUtils.mkdir_p(File.join(noop_temp_dir, "dir1"))
     File.write(File.join(noop_temp_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(existing_content, File.read(File.join(noop_temp_dir, "dir1", "file1.md")))
     refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
@@ -170,6 +188,7 @@ describe Toys::Release::Pipeline do
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     FileUtils.rm_rf(component_tmp_dir)
     copy_data(component_tmp_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(noop_output_dir, "dir1", "subdir1", "file11.md")))
     refute(File.exist?(File.join(noop_output_dir, "changelog1.md")))
@@ -180,6 +199,7 @@ describe Toys::Release::Pipeline do
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     FileUtils.rm_rf(repo_tmp_dir)
     copy_data(repo_tmp_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(noop_output_dir, "tmp", "dir2", "file2.md")))
     refute(File.exist?(File.join(noop_output_dir, "tmp", "dir1", "file1.md")))
@@ -189,6 +209,7 @@ describe Toys::Release::Pipeline do
     step_opts = {"outputs" => [{"source" => "temp"}]}
     pipeline.add_step(make_step_settings(step_opts)).mark_will_run!
     copy_data(noop_temp_dir)
+    disable_git_reset
     pipeline.run
     assert(File.exist?(File.join(noop_output_dir, "dir1", "subdir1", "file11.md")))
     assert(File.exist?(File.join(noop_output_dir, "changelog1.md")))
@@ -200,6 +221,7 @@ describe Toys::Release::Pipeline do
     copy_data(noop_temp_dir)
     FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
     File.write(File.join(noop_output_dir, "dir1", "file1a.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(File.read(File.join(noop_temp_dir, "dir1", "file1.md")),
                  File.read(File.join(noop_output_dir, "dir1", "file1.md")))
@@ -213,6 +235,7 @@ describe Toys::Release::Pipeline do
     copy_data(noop_temp_dir)
     FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
     File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_includes(fake_tool_context.log_output, "Aborted pipeline: Unable to copy ./dir1/file1.md")
   end
@@ -223,6 +246,7 @@ describe Toys::Release::Pipeline do
     copy_data(noop_temp_dir)
     FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
     File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(File.read(File.join(noop_temp_dir, "dir1", "file1.md")),
                  File.read(File.join(noop_output_dir, "dir1", "file1.md")))
@@ -235,6 +259,7 @@ describe Toys::Release::Pipeline do
     copy_data(noop_temp_dir)
     FileUtils.mkdir_p(File.join(noop_output_dir, "dir1"))
     File.write(File.join(noop_output_dir, "dir1", "file1.md"), existing_content)
+    disable_git_reset
     pipeline.run
     assert_equal(existing_content, File.read(File.join(noop_output_dir, "dir1", "file1.md")))
     refute_includes(fake_tool_context.log_output, "Aborted pipeline:")
