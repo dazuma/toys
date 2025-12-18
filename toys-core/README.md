@@ -101,7 +101,7 @@ flags, and functionality directly in the configuration block. This configures
 the "root tool", i.e. what happens when you run the executable without passing
 a tool name to it. (In fact, it's technically legal to do this in Toys as well,
 by setting functionality at the "top level" of a `.toys.rb` file without any
-any `tool` block, although you probably won't actually want to do so.)
+`tool` block, although you probably won't actually want to do so.)
 
 ### Tool-based executables
 
