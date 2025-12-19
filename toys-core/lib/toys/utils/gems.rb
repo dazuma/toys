@@ -344,7 +344,7 @@ module Toys
         elsif ::RUBY_VERSION < "3"
           [">= 2.2", "< 2.5"]
         else
-          ["~> 2.2"]
+          [">= 2.2", "< 5"]
         end
       end
 

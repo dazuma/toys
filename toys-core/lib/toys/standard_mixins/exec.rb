@@ -817,7 +817,7 @@ module Toys
       def self._setup_clean_process(cmd)
         raise ::ArgumentError, "Toys process is unknown" unless ::Toys.executable_path
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-        cmd = [::RbConfig.ruby, "--disable=gems", ::Toys.executable_path] + cmd
+        cmd = [::RbConfig.ruby, ::Toys.executable_path] + cmd
         if defined?(::Bundler)
           if ::Bundler.respond_to?(:with_unbundled_env)
             ::Bundler.with_unbundled_env { yield(cmd) }

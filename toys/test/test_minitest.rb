@@ -225,7 +225,7 @@ describe "minitest template" do
 
     it "supports input streams" do
       dir = "#{cases_dir}/stream"
-      args = ["--disable=gems", Toys.executable_path, "test"]
+      args = [Toys.executable_path, "test"]
       result = exec_service.exec_ruby(args, chdir: dir,
                                       in: :controller, out: :capture) do |controller|
         controller.in.puts "hello"

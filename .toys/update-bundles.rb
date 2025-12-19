@@ -8,9 +8,9 @@ expand("toys-ci") do |toys_ci|
   toys_ci.only_flag = true
   toys_ci.fail_fast_flag = true
   toys_ci.job("Bundle for the root directory", flag: :root,
-              exec: ["bundle", "update"])
+              exec: ["bundle", "update", "--all"])
   toys_ci.job("Bundle for toys-core", flag: :core,
-              exec: ["bundle", "update"], chdir: "toys-core")
+              exec: ["bundle", "update", "--all"], chdir: "toys-core")
   toys_ci.job("Bundle for toys", flag: :toys,
-              exec: ["bundle", "update"], chdir: "toys")
+              exec: ["bundle", "update", "--all"], chdir: "toys")
 end
