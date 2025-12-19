@@ -5,4 +5,4 @@ export TOYS_DEV=true
 export TOYS_LIB_PATH="$dir/toys/lib"
 export TOYS_CORE_LIB_PATH="$dir/toys-core/lib"
 export TOYS_BIN_PATH="$dir/toys/bin/toys"
-exec ruby --disable=gems "$TOYS_BIN_PATH" "$@"
+exec ruby "$TOYS_BIN_PATH" "$@"

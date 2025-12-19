@@ -196,7 +196,7 @@ describe "rspec template" do
 
     it "supports input streams" do
       dir = "#{cases_dir}/stream"
-      args = ["--disable=gems", Toys.executable_path, "spec"]
+      args = [Toys.executable_path, "spec"]
       result = exec_service.exec_ruby(args, chdir: dir,
                                       in: :controller, out: :capture) do |controller|
         controller.in.puts "foo"

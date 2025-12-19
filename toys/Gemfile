@@ -12,6 +12,7 @@ gem "base64"
 did_you_mean_versions = ::RUBY_VERSION < "3.1" ? ["~> 1.0", "< 1.6"] : [">= 1.6", "< 3"]
 gem "did_you_mean", *did_you_mean_versions
 gem "highline", "~> 2.0"
+gem "irb" # Required by yard
 gem "minitest", "~> 5.26"
 gem "minitest-focus", "~> 1.4"
 gem "minitest-rg", "~> 5.3"
@@ -20,4 +21,4 @@ gem "rdoc", "~> 6.15"
 gem "redcarpet", "~> 3.6" unless ::RUBY_PLATFORM == "java"
 gem "rspec", "~> 3.13"
 gem "rubocop", "~> 1.81"
-gem "yard", "~> 0.9.37"
+gem "yard", "~> 0.9.38"

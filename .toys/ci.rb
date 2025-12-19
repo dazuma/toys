@@ -13,13 +13,13 @@ expand("toys-ci") do |toys_ci|
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
   end
   toys_ci.job("Bundle for the root directory", flag: :bundle_root,
-              exec: ["bundle", "update"])
+              exec: ["bundle", "update", "--all"])
   toys_ci.job("Bundle for toys-core", flag: :bundle_core,
-              exec: ["bundle", "update"], chdir: "toys-core")
+              exec: ["bundle", "update", "--all"], chdir: "toys-core")
   toys_ci.job("Bundle for toys", flag: :bundle_toys,
-              exec: ["bundle", "update"], chdir: "toys")
+              exec: ["bundle", "update", "--all"], chdir: "toys")
   toys_ci.job("Bundle for toys-release", flag: :bundle_release,
-              exec: ["bundle", "update"], chdir: "toys-release")
+              exec: ["bundle", "update", "--all"], chdir: "toys-release")
   toys_ci.job("Rubocop for toys-core", flag: :rubocop_core,
               tool: ["rubocop"], chdir: "toys-core")
   toys_ci.job("Rubocop for toys", flag: :rubocop_toys,
@@ -68,22 +68,26 @@ tool "init" do
   desc "Initialize the environment for CI systems"
 
   include :exec
-  include :terminal
+  include :fileutils
 
   def run
     changed = false
     if exec(["git", "config", "--global", "--get", "user.email"], out: :null).error?
+      puts "CI init: Initializing user.email"
       exec(["git", "config", "--global", "user.email", "hello@example.com"], e: true)
       changed = true
     end
     if exec(["git", "config", "--global", "--get", "user.name"], out: :null).error?
+      puts "CI init: Initializing user.name"
       exec(["git", "config", "--global", "user.name", "Hello Ruby"], e: true)
       changed = true
     end
-    if changed
-      puts("**** Environment is now set up for CI", :bold, :green)
-    else
-      puts("**** Environment was already set up for CI", :bold, :yellow)
+    gems_dir = File.join(Gem.dir, "gems")
+    if (File.stat(gems_dir).mode & 0o1777) == 0o777
+      puts "CI init: Setting sticky bit on gems directory"
+      chmod("a+t", gems_dir)
+      changed = true
     end
+    puts "CI init: No changes needed" unless changed
   end
 end
