@@ -13,7 +13,7 @@ expand("toys-ci") do |toys_ci|
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
   end
   toys_ci.job("Bundle", flag: :bundle,
-              exec: ["bundle", "update"])
+              exec: ["bundle", "update", "--all"])
   toys_ci.job("Rubocop", flag: :rubocop,
               tool: ["rubocop"])
   toys_ci.job("Tests", flag: :test,

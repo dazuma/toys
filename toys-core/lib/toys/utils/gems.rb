@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "monitor"
 
 module Toys
@@ -193,9 +194,7 @@ module Toys
         end
       end
 
-      ##
       # @private
-      #
       def self.find_gemfile(search_dir, gemfile_names: nil)
         gemfile_names ||= DEFAULT_GEMFILE_NAMES
         Array(gemfile_names).each do |file|
@@ -207,11 +206,16 @@ module Toys
 
       @global_mutex = ::Monitor.new
 
-      ##
       # @private
-      #
       def self.synchronize(&block)
         @global_mutex.synchronize(&block)
+      end
+
+      # @private
+      def self.delete_at_exit(path)
+        # Call this from a class method so it doesn't hold onto the instance
+        # for the duration of the Ruby process
+        at_exit { ::FileUtils.rm_f(path) }
       end
 
       private
@@ -421,11 +425,10 @@ module Toys
       end
 
       def delete_modified_gemfile(modified_gemfile_path)
-        # rubocop:disable Lint/NonAtomicFileOperation
-        ::File.delete(modified_gemfile_path) if ::File.exist?(modified_gemfile_path)
+        ::FileUtils.rm_f(modified_gemfile_path)
         modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
-        ::File.delete(modified_lockfile_path) if ::File.exist?(modified_lockfile_path)
-        # rubocop:enable Lint/NonAtomicFileOperation
+        ::FileUtils.rm_f(modified_lockfile_path)
+        Gems.delete_at_exit(modified_lockfile_path)
       end
 
       def restore_toys_libs
