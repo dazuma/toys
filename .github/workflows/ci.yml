@@ -34,6 +34,9 @@ jobs:
             ruby: "3.4"
             steps: "--test-all"
           - os: ubuntu-latest
+            ruby: "4.0.0-preview3"
+            steps: "--test-all"
+          - os: ubuntu-latest
             ruby: "jruby"
             steps: "--test-all --no-test-tools --no-test-release"
           # TEMPORARY: Disable truffleruby due to some issues with bundler
