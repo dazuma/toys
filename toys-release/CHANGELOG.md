@@ -3,7 +3,6 @@
 ### v0.3.1 / 2025-12-22
 
 * FIXED: Reset the local repository prior to each pipeline step
-* FIXED: Bundler integration does a better job of cleaning up temporary lockfiles under bundler 4
 * DOCS: Updates to readmes and users guides
 
 ### v0.3.0 / 2025-12-06
