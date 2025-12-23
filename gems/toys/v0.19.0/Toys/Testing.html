@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Module: Toys::Testing
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::Testing";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">Testing</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Module: Toys::Testing
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/testing.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>Helpers for writing tool tests.</p>
+
+<p>EXPERIMENTAL: Interfaces are subject to change.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+      <strong class="modules">Modules:</strong> <span class='object_link'><a href="Testing/ClassMethods.html" title="Toys::Testing::ClassMethods (module)">ClassMethods</a></span>
+    
+  
+    
+  
+</p>
+
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#toys_cli-instance_method" title="#toys_cli (instance method)">#<strong>toys_cli</strong>  &#x21d2; Toys::CLI </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns the Toys CLI for this test class.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#toys_exec_tool-instance_method" title="#toys_exec_tool (instance method)">#<strong>toys_exec_tool</strong>(cmd, cli: nil, **opts) {|controller| ... } &#x21d2; Toys::Utils::Exec::Result </a>
+    
+
+    
+      (also: #exec_tool)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Runs the tool corresponding to the given command line, in a separate forked process, and returns a Exec::Result.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#toys_load_tool-instance_method" title="#toys_load_tool (instance method)">#<strong>toys_load_tool</strong>(cmd, cli: nil) {|tool| ... } &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Prepares the tool corresponding to the given command line, but instead of running it, yields the execution context to the given block.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#toys_run_tool-instance_method" title="#toys_run_tool (instance method)">#<strong>toys_run_tool</strong>(cmd, cli: nil)  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Runs the tool corresponding to the given command line, in-process, and returns the result code.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="toys_cli-instance_method">
+  
+    #<strong>toys_cli</strong>  &#x21d2; <tt><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns the Toys CLI for this test class. By default, a single CLI and
+Loader are shared by all tests in a given class (or <em>describe</em> block).</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="CLI.html" title="Toys::CLI (class)">Toys::CLI</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+18
+19
+20</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/testing.rb', line 18</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toys_cli'>toys_cli</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_toys_cli'>toys_cli</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="toys_exec_tool-instance_method">
+  
+    #<strong>toys_exec_tool</strong>(cmd, cli: nil, **opts) {|controller| ... } &#x21d2; <tt><span class='object_link'><a href="Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='exec_tool-instance_method'>exec_tool</span></span>
+    </span>
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Runs the tool corresponding to the given command line, in a separate
+forked process, and returns a Exec::Result. You can either
+provide a block to control the process, or simply let it run and capture
+its output.</p>
+
+<p>By default, a single CLI is shared among the tests in each test class or
+<em>describe</em> block. Thus, tools are loaded only once, and the loader is
+shared across the tests. If you need to isolate loading for a test,
+create a separate CLI and pass it in using the <code>:cli</code> keyword argument.</p>
+
+<p>All other keyword arguments are the same as those defined by the
+<span class='object_link'><a href="Utils/Exec.html" title="Toys::Utils::Exec (class)">Utils::Exec</a></span> class. If a block is given, all streams are directed
+to a <span class='object_link'><a href="Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Utils::Exec::Controller</a></span> which is yielded to the block. If no
+block is given, the output and error streams are captured and the input
+stream is closed.</p>
+
+<p>This method uses &quot;fork&quot; to isolate the run of the tool. It will not work
+on environments such as JRuby or Ruby on Windows that do not support
+process forking.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='comment'># Given the following tool:
+</span>
+<span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:shout</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_message'>message</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_message'>message</span>
+    <span class='id identifier rubyid_shout'>shout</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># You can test the tool&#39;s output as follows:
+</span>
+<span class='kw'>class</span> <span class='const'>MyTest</span> <span class='op'>&lt;</span> <span class='const'>Minitest</span><span class='op'>::</span><span class='const'>Test</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='const'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys::Testing (module)">Testing</a></span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_output_without_shout'>test_output_without_shout</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_toys_exec_tool'>toys_exec_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello\n</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_captured_out'>captured_out</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_with_shout'>test_with_shout</span>
+    <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_toys_exec_tool'>toys_exec_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--shout</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO\n</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='period'>.</span><span class='id identifier rubyid_captured_out'>captured_out</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>opts</span>
+      
+      
+        <span class='type'>(<tt>keywords</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command options.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>controller</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Utils/Exec/Controller.html" title="Toys::Utils::Exec::Controller (class)">Toys::Utils::Exec::Controller</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A controller
+for the subprocess streams.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Utils/Exec/Result.html" title="Toys::Utils::Exec::Result (class)">Toys::Utils::Exec::Result</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The process result.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/testing.rb', line 188</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toys_exec_tool'>toys_exec_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='label'>cli:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span> <span class='op'>||=</span> <span class='id identifier rubyid_toys_cli'>toys_cli</span>
+  <span class='id identifier rubyid_cmd'>cmd</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Shellwords</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_opts'>opts</span> <span class='op'>=</span>
+    <span class='kw'>if</span> <span class='id identifier rubyid_block'>block</span>
+      <span class='lbrace'>{</span>
+        <span class='label'>out:</span> <span class='symbol'>:controller</span><span class='comma'>,</span>
+        <span class='label'>err:</span> <span class='symbol'>:controller</span><span class='comma'>,</span>
+        <span class='label'>in:</span> <span class='symbol'>:controller</span><span class='comma'>,</span>
+      <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+    <span class='kw'>else</span>
+      <span class='lbrace'>{</span>
+        <span class='label'>out:</span> <span class='symbol'>:capture</span><span class='comma'>,</span>
+        <span class='label'>err:</span> <span class='symbol'>:capture</span><span class='comma'>,</span>
+        <span class='label'>in:</span> <span class='symbol'>:close</span><span class='comma'>,</span>
+      <span class='rbrace'>}</span><span class='period'>.</span><span class='id identifier rubyid_merge'>merge</span><span class='lparen'>(</span><span class='id identifier rubyid_opts'>opts</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_loader'>loader</span><span class='period'>.</span><span class='id identifier rubyid_lookup'>lookup</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_tool_caller'>tool_caller</span> <span class='op'>=</span> <span class='id identifier rubyid_proc'>proc</span> <span class='lbrace'>{</span> <span class='op'>::</span><span class='const'>Kernel</span><span class='period'>.</span><span class='id identifier rubyid_exit'>exit</span><span class='lparen'>(</span><span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
+  <span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_toys_exec'>toys_exec</span><span class='period'>.</span><span class='id identifier rubyid_exec_proc'>exec_proc</span><span class='lparen'>(</span><span class='id identifier rubyid_tool_caller'>tool_caller</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_opts'>opts</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="toys_load_tool-instance_method">
+  
+    #<strong>toys_load_tool</strong>(cmd, cli: nil) {|tool| ... } &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Prepares the tool corresponding to the given command line, but instead of
+running it, yields the execution context to the given block. This can be
+used to test individual methods in a tool.</p>
+
+<p>By default, a single CLI is shared among the tests in each test class or
+<em>describe</em> block. Thus, tools are loaded only once, and the loader is
+shared across the tests. If you need to isolate loading for a test,
+create a separate CLI and pass it in using the <code>:cli</code> keyword argument.</p>
+
+<p>Note: this method runs the given block in-process. This means you can
+test assertions within the block, but any input or output performed by
+the tool&#39;s methods that you call, will manifest during your test. If this
+is a problem, you might consider redirecting the standard streams when
+calling this method, for example by using
+<a href="https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io">capture_subprocess_io</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='comment'># Given the following tool:
+</span>
+<span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:shout</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_message'>message</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_message'>message</span>
+    <span class='id identifier rubyid_shout'>shout</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># You can test the `message` method in isolation as follows:
+</span>
+<span class='kw'>class</span> <span class='const'>MyTest</span> <span class='op'>&lt;</span> <span class='const'>Minitest</span><span class='op'>::</span><span class='const'>Test</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='const'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys::Testing (module)">Testing</a></span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_message_without_shout'>test_message_without_shout</span>
+    <span class='id identifier rubyid_toys_load_tool'>toys_load_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tool'>tool</span><span class='op'>|</span>
+      <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_message_with_shout'>test_message_with_shout</span>
+    <span class='id identifier rubyid_toys_load_tool'>toys_load_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--shout</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_tool'>tool</span><span class='op'>|</span>
+      <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='period'>.</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Yield Parameters:</p>
+<ul class="yieldparam">
+  
+    <li>
+      
+        <span class='name'>tool</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Context.html" title="Toys::Context (class)">Toys::Context</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The tool context.</p>
+</div>
+      
+    </li>
+  
+</ul>
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The value returned from the block.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+72
+73
+74
+75
+76</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/testing.rb', line 72</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toys_load_tool'>toys_load_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='label'>cli:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span> <span class='op'>||=</span> <span class='id identifier rubyid_toys_cli'>toys_cli</span>
+  <span class='id identifier rubyid_cmd'>cmd</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Shellwords</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_load_tool'>load_tool</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="toys_run_tool-instance_method">
+  
+    #<strong>toys_run_tool</strong>(cmd, cli: nil)  &#x21d2; <tt>Integer</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Runs the tool corresponding to the given command line, in-process, and
+returns the result code.</p>
+
+<p>By default, a single CLI is shared among the tests in each test class or
+<em>describe</em> block. Thus, tools are loaded only once, and the loader is
+shared across the tests. If you need to isolate loading for a test,
+create a separate CLI and pass it in using the <code>:cli</code> keyword argument.</p>
+
+<p>Note: This method runs the tool in-process. This is often faster than
+running it in a separate process with <span class='object_link'><a href="#toys_exec_tool-instance_method" title="Toys::Testing#toys_exec_tool (method)">#toys_exec_tool</a></span>, but it also
+means any input or output performed by the tool, will manifest during
+your test. If this is a problem, you might consider redirecting the
+standard streams when calling this method, for example by using
+<a href="https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io">capture_subprocess_io</a>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code><span class='comment'># Given the following tool:
+</span>
+<span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='id identifier rubyid_flag'>flag</span> <span class='symbol'>:shout</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_run'>run</span>
+    <span class='id identifier rubyid_puts'>puts</span> <span class='id identifier rubyid_message'>message</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_message'>message</span>
+    <span class='id identifier rubyid_shout'>shout</span> <span class='op'>?</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO</span><span class='tstring_end'>&quot;</span></span> <span class='op'>:</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span>
+
+<span class='comment'># You can test the tool&#39;s output as follows:
+</span>
+<span class='kw'>class</span> <span class='const'>MyTest</span> <span class='op'>&lt;</span> <span class='const'>Minitest</span><span class='op'>::</span><span class='const'>Test</span>
+  <span class='id identifier rubyid_include'>include</span> <span class='const'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="" title="Toys::Testing (module)">Testing</a></span></span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_output_without_shout'>test_output_without_shout</span>
+    <span class='id identifier rubyid_assert_output'>assert_output</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>do</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_toys_run_tool'>toys_run_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+  <span class='kw'>def</span> <span class='id identifier rubyid_test_with_shout'>test_with_shout</span>
+    <span class='id identifier rubyid_assert_output'>assert_output</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>HELLO\n</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span> <span class='kw'>do</span>
+      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_toys_run_tool'>toys_run_tool</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>hello</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>--shout</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='rparen'>)</span>
+      <span class='id identifier rubyid_assert_equal'>assert_equal</span><span class='lparen'>(</span><span class='int'>0</span><span class='comma'>,</span> <span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+    <span class='kw'>end</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+<p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to execute.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The integer result code (i.e. 0 for success).</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+128
+129
+130
+131
+132</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/testing.rb', line 128</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_toys_run_tool'>toys_run_tool</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='label'>cli:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span> <span class='op'>||=</span> <span class='id identifier rubyid_toys_cli'>toys_cli</span>
+  <span class='id identifier rubyid_cmd'>cmd</span> <span class='op'>=</span> <span class='op'>::</span><span class='const'>Shellwords</span><span class='period'>.</span><span class='id identifier rubyid_split'>split</span><span class='lparen'>(</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='op'>::</span><span class='const'>String</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_cli'>cli</span><span class='period'>.</span><span class='id identifier rubyid_run'>run</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_cmd'>cmd</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Tue Dec 23 17:51:47 2025 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-3.4.8).
+</div>
+
+    </div>
+  </body>
+</html>
