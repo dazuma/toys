@@ -1,5 +1,15 @@
 # Release History
 
+### v0.19.0 / 2025-12-22
+
+Compatibility update for Ruby 4.0, including:
+
+* The logger gem is now an explicit dependency
+* Calling a tool via exec no longer disables rubygems
+* Bundler integration does a better job of cleaning up temporary lockfiles under bundler 4
+
+Additionally, this release includes updates to readmes and users guides
+
 ### v0.18.0 / 2025-12-05
 
 * ADDED: The load_gem directive can now take version requirements as positional arguments
