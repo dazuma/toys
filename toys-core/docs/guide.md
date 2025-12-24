@@ -80,27 +80,29 @@ to ensure that the `toys-core` gem is loaded, and `require "toys-core"`.
 
 Following is a simple "hello world" example using the CLI:
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    # Instantiate a CLI with the default options
-    cli = Toys::CLI.new
+# Instantiate a CLI with the default options
+cli = Toys::CLI.new
 
-    # Define the functionality
-    cli.add_config_block do
-      desc "My first executable!"
-      flag :whom, default: "world"
-      def run
-        puts "Hello, #{whom}!"
-      end
-    end
+# Define the functionality
+cli.add_config_block do
+  desc "My first executable!"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
 
-    # Run the CLI, passing the command line arguments
-    result = cli.run(*ARGV)
+# Run the CLI, passing the command line arguments
+result = cli.run(*ARGV)
 
-    # Handle the result code.
-    exit(result)
+# Handle the result code.
+exit(result)
+```
 
 ### CLI execution
 
@@ -141,19 +143,21 @@ when a tool is requested does the block actually execute. Furthermore, if you
 have `tool` blocks inside the block, the loader will execute only those that
 are relevant to a tool it wants. Hence:
 
-    cli.add_config_block do
-      tool "foo" do
-        def run
-          puts "foo called"
-        end
-      end
-
-      tool "bar" do
-        def run
-          puts "bar called"
-        end
-      end
+```ruby
+cli.add_config_block do
+  tool "foo" do
+    def run
+      puts "foo called"
     end
+  end
+
+  tool "bar" do
+    def run
+      puts "bar called"
+    end
+  end
+end
+```
 
 If only `foo` is requested, the loader will execute the `tool "foo" do` block
 to get that tool definition, but will not execute the `tool "bar" do` block.
@@ -245,23 +249,25 @@ If you are writing your own command line executable using Toys-Core, often the
 easiest way to define your tools is to use a block. The "hello world" example
 at the start of this guide uses this technique:
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    # Define the functionality by passing a block to the CLI
-    cli.add_config_block do
-      desc "My first executable!"
-      flag :whom, default: "world"
-      def run
-        puts "Hello, #{whom}!"
-      end
-    end
+# Define the functionality by passing a block to the CLI
+cli.add_config_block do
+  desc "My first executable!"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
 
-    result = cli.run(*ARGV)
-    exit(result)
+result = cli.run(*ARGV)
+exit(result)
+```
 
 The block simply contains Toys DSL syntax. The above example configures the
 "root tool", that is, the functionality of the program if you do not pass a
@@ -282,25 +288,29 @@ messages and documentation, can also be set explicitly.
 If you want to define tools in separate files, you can do so and pass the file
 paths to the CLI using {Toys::CLI#add_config_path}.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    # Load a file defining the functionality
-    cli.add_config_path("/usr/local/share/my_tool.rb")
+# Load a file defining the functionality
+cli.add_config_path("/usr/local/share/my_tool.rb")
 
-    result = cli.run(*ARGV)
-    exit(result)
+result = cli.run(*ARGV)
+exit(result)
+```
 
 The contents of `/usr/local/share/my_tool.rb` could then be:
 
-    desc "My first executable!"
-    flag :whom, default: "world"
-    def run
-      puts "Hello, #{whom}!"
-    end
+```ruby
+desc "My first executable!"
+flag :whom, default: "world"
+def run
+  puts "Hello, #{whom}!"
+end
+```
 
 You can point to a specific file to load, or to a Toys directory, whose
 contents will be loaded similarly to how a `.toys` directory is loaded.
@@ -329,45 +339,49 @@ priority level than previously added sources. Thus, any tools defined in the
 new source would be overridden by tools of the same name defined in previously
 added sources.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    # Add a block defining a tool called "hello"
-    cli.add_config_block do
-      tool "hello" do
-        def run
-          puts "Hello from the first config block!"
-        end
-      end
+# Add a block defining a tool called "hello"
+cli.add_config_block do
+  tool "hello" do
+    def run
+      puts "Hello from the first config block!"
     end
+  end
+end
 
-    # Add a lower-priority block defining a tool with the same name
-    cli.add_config_block do
-      tool "hello" do
-        def run
-          puts "Hello from the second config block!"
-        end
-      end
+# Add a lower-priority block defining a tool with the same name
+cli.add_config_block do
+  tool "hello" do
+    def run
+      puts "Hello from the second config block!"
     end
+  end
+end
 
-    # Runs the tool defined in the first block
-    result = cli.run("hello")
-    exit(result)
+# Runs the tool defined in the first block
+result = cli.run("hello")
+exit(result)
+```
 
 When defining tool blocks or loading tools from files, you can also add the new
 source at the *front* of the priority list by passing an argument:
 
-    # Add tools with the highest priority
-    cli.add_config_block high_priority: true do
-      tool "hello" do
-        def run
-          puts "Hello from the second config block!"
-        end
-      end
+```ruby
+# Add tools with the highest priority
+cli.add_config_block high_priority: true do
+  tool "hello" do
+    def run
+      puts "Hello from the second config block!"
     end
+  end
+end
+```
 
 Priorities are used by the `toys` gem when loading tools from different
 directories. Any `.toys.rb` file or `.toys` directory is added to the CLI at
@@ -397,38 +411,42 @@ Suppose, for example, you are writing a gem `my_tools` that uses Toys-Core, and
 you have a directory in your gem's `lib` called `my_tools/mixins` where you
 want your standard mixins to live. You could define mixins there:
 
-    # This file is my_tools/mixins/foo_mixin.rb
+```ruby
+# This file is my_tools/mixins/foo_mixin.rb
 
-    require "toys-core"
+require "toys-core"
 
-    module MyTools
-      module Mixins
-        module FooMixin
-          include Toys::Mixin
+module MyTools
+  module Mixins
+    module FooMixin
+      include Toys::Mixin
 
-          def foo
-            puts "Foo was called"
-          end
-        end
+      def foo
+        puts "Foo was called"
       end
     end
+  end
+end
+```
 
 Here is how you could configure a CLI to load standard mixins from that
 directory, and then use the above mixin.
 
-    # This file is my_tools.rb
+```ruby
+# This file is my_tools.rb
 
-    require "toys-core"
+require "toys-core"
 
-    my_mixin_lookup = Toys::ModuleLookup.new.add_path("my_tools/mixins")
-    cli = Toys::CLI.new(mixin_lookup: my_mixin_lookup)
+my_mixin_lookup = Toys::ModuleLookup.new.add_path("my_tools/mixins")
+cli = Toys::CLI.new(mixin_lookup: my_mixin_lookup)
 
-    cli.add_config_block do
-      def run
-        include :foo_mixin
-        foo
-      end
-    end
+cli.add_config_block do
+  def run
+    include :foo_mixin
+    foo
+  end
+end
+```
 
 When you configure a ModuleLookup, you provide one or more paths, which are
 path prefixes that are used in a `require` statement. In the above example,
@@ -468,22 +486,24 @@ Toys provides a Logger for each tool execution. Tools can access this Logger by
 calling the `logger` method, or by getting the `Toys::Context::Key::LOGGER`
 context object.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    cli.add_config_block do
-      tool "hello" do
-        def run
-          logger.info "This log entry is displayed in verbose mode."
-        end
-      end
+cli.add_config_block do
+  tool "hello" do
+    def run
+      logger.info "This log entry is displayed in verbose mode."
     end
+  end
+end
 
-    result = cli.run(*ARGV)
-    exit(result)
+result = cli.run(*ARGV)
+exit(result)
+```
 
 #### Log level and verbosity
 
@@ -506,15 +526,19 @@ Passing `verbosity: 1` will set the starting verbosity to 1, meaning
 the invoker then provides an extra `--verbose` flag, the verbosity will further
 increase to 2, allowing `Logger::DEBUG` entries to appear.
 
-    # ...
-    result = cli.run(*ARGV, verbosity: 1)
-    exit(result)
+```ruby
+# ...
+result = cli.run(*ARGV, verbosity: 1)
+exit(result)
+```
 
 You can also modify the log level that verbosity 0 maps to by passing the
 `base_level` argument to the CLI constructor. The following causes verbosity 0
 to map to `Logger::INFO` rather than `Logger::WARN`.
 
-    cli = Toys::CLI.new(base_level: Logger::INFO)
+```ruby
+cli = Toys::CLI.new(base_level: Logger::INFO)
+```
 
 #### Customizing the logger
 
@@ -523,8 +547,10 @@ configures it to log to STDERR. If you want to change any of these settings,
 you can provide your own logger by passing a `logger` to the CLI constructor
 constructor.
 
-    my_logger = Logger.new("my_logfile.log")
-    cli = Toys::CLI.new(logger: my_logger)
+```ruby
+my_logger = Logger.new("my_logfile.log")
+cli = Toys::CLI.new(logger: my_logger)
+```
 
 A logger passed directly to the CLI is *global*. The CLI will attempt to use it
 for every execution, even if multiple executions are happening concurrently. In
@@ -534,10 +560,12 @@ your CLI might be run multiple times concurrently, we recommend instead passing
 a `logger_factory` to the CLI constructor. This is a Proc that will be invoked
 to create a new logger for each execution.
 
-    my_logger_factory = Proc.new do
-      Logger.new("my_logfile.log")
-    end
-    cli = Toys::CLI.new(logger_factory: my_logger_factory)
+```ruby
+my_logger_factory = Proc.new do
+  Logger.new("my_logfile.log")
+end
+cli = Toys::CLI.new(logger_factory: my_logger_factory)
+```
 
 #### StandardUI logging
 
@@ -547,8 +575,10 @@ formats log entries with the severity and timestamp using ANSI coloring.
 You can use this logger by passing {Toys::Utils::StandardUI#logger_factory} to
 the CLI constructor:
 
-    standard_ui = Toys::Utils::StandardUI.new
-    cli = Toys::CLI.new(logger_factory: standard_ui.logger_factory)
+```ruby
+standard_ui = Toys::Utils::StandardUI.new
+cli = Toys::CLI.new(logger_factory: standard_ui.logger_factory)
+```
 
 You can also customize the logger by subclassing StandardUI and overriding its
 methods or adjusting its parameters. In particular, you can alter the
@@ -574,15 +604,17 @@ final handling of an unhandled exception, such as displaying the error to the
 terminal, or reraising the exception. The handler should then return the
 desired result code for the execution.
 
-    my_error_handler = Proc.new |wrapped_error| do
-      # Propagate signals out and let the Ruby VM handle them.
-      raise wrapped_error.cause if wrapped_error.cause.is_a?(SignalException)
-      # Handle any other exception types by printing a message.
-      $stderr.puts "An error occurred. Please contact your administrator."
-      # Return the result code
-      255
-    end
-    cli = Toys::CLI.new(error_handler: my_error_handler)
+```ruby
+my_error_handler = Proc.new |wrapped_error| do
+  # Propagate signals out and let the Ruby VM handle them.
+  raise wrapped_error.cause if wrapped_error.cause.is_a?(SignalException)
+  # Handle any other exception types by printing a message.
+  $stderr.puts "An error occurred. Please contact your administrator."
+  # Return the result code
+  255
+end
+cli = Toys::CLI.new(error_handler: my_error_handler)
+```
 
 If you do not set an error handler, the exception is raised out of the
 {Toys::CLI#run} call. In the case of signals, the *cause*, represented by a
@@ -603,8 +635,10 @@ conventional result code of `128 + signo` (e.g. 130 for interrupts).
 You can use this error handler by passing
 {Toys::Utils::StandardUI#error_handler} to the CLI constructor:
 
-    standard_ui = Toys::Utils::StandardUI.new
-    cli = Toys::CLI.new(error_handler: standard_ui.error_handler)
+```ruby
+standard_ui = Toys::Utils::StandardUI.new
+cli = Toys::CLI.new(error_handler: standard_ui.error_handler)
+```
 
 You can also customize the error handler by subclassing StandardUI and
 overriding its methods. In particular, you can alter what is displayed in
@@ -670,12 +704,14 @@ A useful example can be seen in the default Toys CLI behavior. If you do not
 provide a middleware stack when instantiating {Toys::CLI}, the class uses a
 default stack that looks approximately like this:
 
-    [
-      Toys::Middleware.spec(:set_default_descriptions),
-      Toys::Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
-      Toys::Middleware.spec(:handle_usage_errors),
-      Toys::Middleware.spec(:add_verbosity_flags),
-    ]
+```ruby
+[
+  Toys::Middleware.spec(:set_default_descriptions),
+  Toys::Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
+  Toys::Middleware.spec(:handle_usage_errors),
+  Toys::Middleware.spec(:add_verbosity_flags),
+]
+```
 
 Each of the names, e.g. `:set_default_descriptions`, is the name of a Ruby
 file in the `toys-core` gem under `toys/standard_middleware`. You can configure
@@ -732,51 +768,53 @@ following is a simple middleware that adds the `--show-timing` flag to every
 tool. When the flag is set, the middleware displays how long the tool took to
 execute.
 
-    class TimingMiddleware
-      # This is a context key that will be used to store the "--show-timing"
-      # flag state. We can use `Object.new` to ensure that the key is unique
-      # across other middlewares and tool definitions.
-      KEY = Object.new.freeze
+```ruby
+class TimingMiddleware
+  # This is a context key that will be used to store the "--show-timing"
+  # flag state. We can use `Object.new` to ensure that the key is unique
+  # across other middlewares and tool definitions.
+  KEY = Object.new.freeze
 
-      # This method intercepts tool configuration. We use it to add a flag that
-      # enables timing display.
-      def config(tool, _loader)
-        # Add a flag to control this functionality. Suppress collisions, i.e.
-        # just silently do nothing if the tool has already added a flag called
-        # "--show-timing".
-        tool.add_flag(KEY, "--show-timing", report_collisions: false)
+  # This method intercepts tool configuration. We use it to add a flag that
+  # enables timing display.
+  def config(tool, _loader)
+    # Add a flag to control this functionality. Suppress collisions, i.e.
+    # just silently do nothing if the tool has already added a flag called
+    # "--show-timing".
+    tool.add_flag(KEY, "--show-timing", report_collisions: false)
 
-        # Calling yield passes control to the rest of the middleware stack.
-        # Normally you should call yield, to ensure that the remaining
-        # middleware can run. If you omit this, no additional middleware will
-        # be able to run tool configuration. Note you can also perform
-        # additional processing after the yield call, i.e. after the rest of
-        # the middleware stack has run.
-        yield
-      end
+    # Calling yield passes control to the rest of the middleware stack.
+    # Normally you should call yield, to ensure that the remaining
+    # middleware can run. If you omit this, no additional middleware will
+    # be able to run tool configuration. Note you can also perform
+    # additional processing after the yield call, i.e. after the rest of
+    # the middleware stack has run.
+    yield
+  end
 
-      # This method intercepts tool execution. We use it to collect timing
-      # information, and display it if the flag has been provided in the
-      # command line arguments.
-      def run(context)
-        # Read monotonic time at the start of execution.
-        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  # This method intercepts tool execution. We use it to collect timing
+  # information, and display it if the flag has been provided in the
+  # command line arguments.
+  def run(context)
+    # Read monotonic time at the start of execution.
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Call yield to run the rest of the middleware stack, including the
-        # actual tool execution. If you omit this, you will prevent the rest of
-        # the middleware stack, AND the actual tool execution, from running.
-        # So you could omit the yield call if your goal is to replace tool
-        # execution with your own code.
-        yield
+    # Call yield to run the rest of the middleware stack, including the
+    # actual tool execution. If you omit this, you will prevent the rest of
+    # the middleware stack, AND the actual tool execution, from running.
+    # So you could omit the yield call if your goal is to replace tool
+    # execution with your own code.
+    yield
 
-        # Read monotonic time again after execution.
-        end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    # Read monotonic time again after execution.
+    end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-        # Display the elapsed time, if the tool was passed the "--show-timing"
-        # flag.
-        puts "Tool took #{end_time - start_time} secs" if context[KEY]
-      end
-    end
+    # Display the elapsed time, if the tool was passed the "--show-timing"
+    # flag.
+    puts "Tool took #{end_time - start_time} secs" if context[KEY]
+  end
+end
+```
 
 We can now insert our middleware into the stack when we create a CLI. Here
 we'll take that "default" stack we saw earlier and add our timing middleware at
@@ -785,14 +823,16 @@ other middleware, and thus its timing measurement includes the latency incurred
 by other middleware (including middleware that replaces execution such as
 `:show_help`).
 
-    my_middleware_stack = [
-      Toys::Middleware.spec(TimingMiddleware),
-      Toys::Middleware.spec(:set_default_descriptions),
-      Toys::Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
-      Toys::Middleware.spec(:handle_usage_errors),
-      Toys::Middleware.spec(:add_verbosity_flags),
-    ]
-    cli = Toys::CLI.new(middleware_stack: my_middleware_stack)
+```ruby
+my_middleware_stack = [
+  Toys::Middleware.spec(TimingMiddleware),
+  Toys::Middleware.spec(:set_default_descriptions),
+  Toys::Middleware.spec(:show_help, help_flags: true, fallback_execution: true),
+  Toys::Middleware.spec(:handle_usage_errors),
+  Toys::Middleware.spec(:add_verbosity_flags),
+]
+cli = Toys::CLI.new(middleware_stack: my_middleware_stack)
+```
 
 Now, every tool run by this CLI wil have the `--show-timing` flag and
 associated functionality.

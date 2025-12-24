@@ -53,11 +53,11 @@ RubyGem, but does not require familiarity with Toys.
 
 Toys-Release must be installed into a GitHub repository. This involves:
 
-* Installing a Toys tool;
-* Writing a configuration file;
-* Defining a set of GitHub Actions workflows and a set of GitHub labels
-  (a tool is provided to perform this step); and
-* Providing necessary credentials.
+ *  Installing a Toys tool;
+ *  Writing a configuration file;
+ *  Defining a set of GitHub Actions workflows and a set of GitHub labels
+    (a tool is provided to perform this step); and
+ *  Providing necessary credentials.
 
 ### Prerequisites
 
@@ -286,12 +286,16 @@ appending the version to the component name, separated by a colon.
 For example, to request releases of the `toys` and `toys-release` components,
 you can enter the following text into "Components to release":
 
-    toys toys-release
+```sh
+toys toys-release
+```
 
 To make the above request but specifically request version 0.3.0 of the
 `toys-release` component:
 
-    toys toys-release:0.3.0
+```sh
+toys toys-release:0.3.0
+```
 
 ### Managing release pull requests
 
@@ -315,10 +319,10 @@ label, the automation will not process the release.
 Finally, you can even create a release pull request manually, or using your own
 tools or processes. You must simply ensure that:
 
-* The pull request has the `release: pending` label applied
-* The pull request merges as a single commit (i.e. "squashed")
-* For each component you want to release, the version and changelog are
-  updated appropriately.
+ *  The pull request has the `release: pending` label applied
+ *  The pull request merges as a single commit (i.e. "squashed")
+ *  For each component you want to release, the version and changelog are
+    updated appropriately.
 
 If you close a release pull request without merging, the release will be
 canceled. The automation will apply the `release: aborted` label to indicate
@@ -342,18 +346,18 @@ Most of the useful workflow logs will appear in the "Process release request"
 job under the workflow. If you follow the logs, you will see the release goes
 through the following stages:
 
-* First, it publishes a comment to the pull request indicating that the release
-  is starting.
-* Second, it polls the GitHub checks for the merge commit. Toys-Release will
-  perform a release only if all required checks pass, so the release job will
-  wait for them to complete. If any checks fail, the release will fail.
-* Third, it runs a set of sanity checks, for example that it is looking at the
-  correct repository and commit, that there are no locally modified files, and
-  that the version numbers are set as expected.
-* Next, it runs the release pipeline itself. It first does an analysis of which
-  steps in the pipeline should run, then runs those steps in order.
-* Finally, it publishes a comment to the pull request reporting the final
-  result of the release.
+ *  First, it publishes a comment to the pull request indicating that the
+    release is starting.
+ *  Second, it polls the GitHub checks for the merge commit. Toys-Release will
+    perform a release only if all required checks pass, so the release job will
+    wait for them to complete. If any checks fail, the release will fail.
+ *  Third, it runs a set of sanity checks, for example that it is looking at
+    the correct repository and commit, that there are no locally modified
+    files, and that the version numbers are set as expected.
+ *  Next, it runs the release pipeline itself. It first does an analysis of
+    which steps in the pipeline should run, then runs those steps in order.
+ *  Finally, it publishes a comment to the pull request reporting the final
+    result of the release.
 
 ### Troubleshooting and retrying releases
 
@@ -361,12 +365,12 @@ If a release fails, generally an issue will be opened in the repository, and
 the pull request will have the `release: error` label applied. Releases can
 fail for a number of reasons, including:
 
-* The GitHub checks for the commit representing the merge of the release pull
-  request, have failed or did not complete in a timely manner.
-* A failure during the release pipeline, such as an error during the build or
-  publication of a release artifact.
-* An intermittent failure of the release pipeline infrastructure, such as a
-  failure to obtain a VM to execute a GitHub Actions workflow.
+ *  The GitHub checks for the commit representing the merge of the release pull
+    request, have failed or did not complete in a timely manner.
+ *  A failure during the release pipeline, such as an error during the build or
+    publication of a release artifact.
+ *  An intermittent failure of the release pipeline infrastructure, such as a
+    failure to obtain a VM to execute a GitHub Actions workflow.
 
 If a failure occurs, the release workflow may have published some basic
 information on the cause, to the release pull request. You can also find more
@@ -411,35 +415,37 @@ the Toys gem at https://dazuma.github.io/toys/gems/toys.
 
 The features of this system are:
 
-* Host generated Yardoc (or rdoc) documentation for every version of the gem.
-* Host documentation for multiple gems per repository.
-* Permanent GitHub Pages (github.io) URL for each gem, which redirects to the
-  documentation for the latest version.
-* Automatically publish documentation with each release.
+ *  Host generated Yardoc (or rdoc) documentation for every version of the gem.
+ *  Host documentation for multiple gems per repository.
+ *  Permanent GitHub Pages (github.io) URL for each gem, which redirects to the
+    documentation for the latest version.
+ *  Automatically publish documentation with each release.
 
 #### Setting up documentation publication
 
 To set up documentation, do the following:
 
-* [Install the release tool](#install-the-release-tool) as documented in the
-  main setup procedure. This provides access to the Toys-Release command line.
+ *  [Install the release tool](#install-the-release-tool) as documented in the
+    main setup procedure. This provides access to the Toys-Release command line.
 
-* Make sure you have a release config file. See the section on
-  [writing the configuration file](#write-the-configuration-file) for how to
-  get started here.
+ *  Make sure you have a release config file. See the section on
+    [writing the configuration file](#write-the-configuration-file) for how to
+    get started here.
 
-* For each gem that you want documented, include the configuration setting
-  `gh_pages_enabled: true` in the component's configuration. Alternately, you
-  can set `gh_pages_enabled: true` at the top level of the configuration file
-  to enable documenting for all components.
+ *  For each gem that you want documented, include the configuration setting
+    `gh_pages_enabled: true` in the component's configuration. Alternately, you
+    can set `gh_pages_enabled: true` at the top level of the configuration file
+    to enable documenting for all components.
 
-* Create a starting gh-pages branch by running:
+ *  Create a starting gh-pages branch by running:
 
-      toys release gen-gh-pages
+    ```sh
+    toys release gen-gh-pages
+    ```
 
-  This will generate the gh-pages branch and push some key files to it, notably
-  a `404.html` that does the redirecting to the latest documentation version.
-  This may clobber any other gh-pages that you have present.
+    This will generate the gh-pages branch and push some key files to it,
+    notably a `404.html` that does the redirecting to the latest documentation
+    version. This may clobber any other gh-pages that you have present.
 
 From this point on, any releases you do should also publish documentation to
 your page. To find the page, use the URL
@@ -454,20 +460,20 @@ previously.
 
 There are a few configuration fields that affect documentation publication.
 
-* **gh_pages_directory** is the directory name for this component in the
-  documentation URL. This takes the place of the `<component-name>` in the URL.
-  For example, if you set `gh_pages_directory: foo/bar` for your component, the
-  documentation will be generated under the URL:
-  `https://<github-user>.github.io/<repo-name>/foo/bar`.
+ *  **gh_pages_directory** is the directory name for this component in the
+    documentation URL. This takes the place of the `<component-name>` in the
+    URL. For example, if you set `gh_pages_directory: foo/bar` for your
+    component, the documentation will be generated under the URL:
+    `https://<github-user>.github.io/<repo-name>/foo/bar`.
 
-  Note that if you modify this field after previously generating documentation
-  for some releases, you will need to manually move the previous documentation
-  into the new directory.
+    Note that if you modify this field after previously generating
+    documentation for some releases, you will need to manually move the
+    previous documentation into the new directory.
 
-* **gh_pages_version_var** is the name of the Javascript variable in the
-  `404.html` file that stores the latest version of this component's release.
-  You will generally not need to modify this unless the automatically-generated
-  variable name isn't unique for some reason.
+ *  **gh_pages_version_var** is the name of the Javascript variable in the
+    `404.html` file that stores the latest version of this component's release.
+    You will generally not need to modify this unless the
+    automatically-generated variable name isn't unique for some reason.
 
 See the [component configuration](#component-configuration) section for more
 details.
@@ -478,31 +484,35 @@ Several special cases can be handled via commit tags that are defined by
 Toys-Release. These conventional commit messages can appear in a commit message
 and affect the behavior of that and other commits.
 
-* **semver-change:** This tag forces a certain semver change to apply to this
-  commit even if other commit tags say otherwise. For example, if a commit
-  describes a new feature, but you want it released as a patch version bump
-  rather than a minor version bump, you can include `semver-change: patch` in
-  the commit message. The full commit message might read thus:
+ *  **semver-change:** This tag forces a certain semver change to apply to this
+    commit even if other commit tags say otherwise. For example, if a commit
+    describes a new feature, but you want it released as a patch version bump
+    rather than a minor version bump, you can include `semver-change: patch` in
+    the commit message. The full commit message might read thus:
 
-      feat: Add a small button that doesn't do a lot
-      semver-change: patch
+    ```
+    feat: Add a small button that doesn't do a lot
+    semver-change: patch
+    ```
 
-  Valid values for semver-change are `patch`, `minor`, `major`, and `none`.
+    Valid values for semver-change are `patch`, `minor`, `major`, and `none`.
 
-  The semver-change tag affects only the commit it is part of. If multiple
-  commits are included in a release, other commits in the release might still
-  upgrade the version bump to minor or higher.
+    The semver-change tag affects only the commit it is part of. If multiple
+    commits are included in a release, other commits in the release might still
+    upgrade the version bump to minor or higher.
 
-* **revert-commit:** This tag indicates that the commit reverts, and thus
-  nullifies the effect of, an earlier commit, thus removing any version bump
-  and any changelog entries that would otherwise have been generated. Use the
-  SHA of the earlier commit as the content of the tag. For example:
+ *  **revert-commit:** This tag indicates that the commit reverts, and thus
+    nullifies the effect of, an earlier commit, thus removing any version bump
+    and any changelog entries that would otherwise have been generated. Use the
+    SHA of the earlier commit as the content of the tag. For example:
 
-      revert-commit: b10c6fb3363bd1335dcfbd671bdceae53cd55716
+    ```
+    revert-commit: b10c6fb3363bd1335dcfbd671bdceae53cd55716
+    ```
 
-  A commit can combine revert-commit with other conventional commit tags. It
-  can even include multiple revert-commit tags if the commit reverts more than
-  one previous commit.
+    A commit can combine revert-commit with other conventional commit tags. It
+    can even include multiple revert-commit tags if the commit reverts more than
+    one previous commit.
 
 ### Running on the command line
 
@@ -524,23 +534,25 @@ usage information. For example: `toys release request --help`. You can also run
 The following are the available command line tools. You may recognize some of
 these as tools you used during the [installation](#installation) procedure.
 
-* **create-labels** Creates the GitHub labels used by the release system
+ *  **create-labels** Creates the GitHub labels used by the release system
 
-* **gen-config** Generates an initial release configuration file
+ *  **gen-config** Generates an initial release configuration file
 
-* **gen-gh-pages** Initializes the gh-pages branch for publishing documentation
+ *  **gen-gh-pages** Initializes the gh-pages branch for publishing
+    documentation
 
-* **gen-workflows** Generates the GitHub Actions workflows used by Toys-Release
+ *  **gen-workflows** Generates the GitHub Actions workflows used by
+    Toys-Release
 
-* **perform** Runs the release pipeline from the command line. Assumes you have
-  already updated the version number and the changelog.
+ *  **perform** Runs the release pipeline from the command line. Assumes you
+    have already updated the version number and the changelog.
 
-* **request** Analyzes the repository history and opens a release pull request
-  including any pending releases. This is the command line tool used by the
-  "Open release request" GitHub Action.
+ *  **request** Analyzes the repository history and opens a release pull
+    request including any pending releases. This is the command line tool used
+    by the "Open release request" GitHub Action.
 
-* **retry** Retries a failed release. This is the command line tool used by the
-  "Retry release" GitHub Action.
+ *  **retry** Retries a failed release. This is the command line tool used by
+    the "Retry release" GitHub Action.
 
 There are also internal (hidden) subtools called "_onclosed" and "_onpush".
 These are the tools called by GitHub Actions automation in response to pull
@@ -551,9 +563,9 @@ request events, and you should generally not call them directly.
 Toys-Release features a highly configurable build pipeline. By default it is
 configured to handle most RubyGems packages, and will:
 
-* Tag and post a GitHub Release
-* Build a RubyGems package and push it to rubygems.org
-* Optionally build Yardoc documentation and push it to GitHub Pages
+ *  Tag and post a GitHub Release
+ *  Build a RubyGems package and push it to rubygems.org
+ *  Optionally build Yardoc documentation and push it to GitHub Pages
 
 The pipeline system, however, lets you customize any aspect of the process, and
 even replace it with an entirely different process altogether, possibly even
@@ -670,29 +682,29 @@ step never runs at all.
 The default release pipeline illustrates the above features of steps. It
 includes the following steps:
 
-* **bundle**: Installs the bundle, and copies the `Gemfile.lock` to its output
-  directory. This step runs because the later step **build_yard** declares it
-  as a dependency and accesses the `Gemfile.lock`.
-* **build_gem**: Builds the gem package, and copies the package file to its
-  output directory. This step runs because the later step **release_gem**
-  declares it as a dependency and accesses the built package.
-* **build_yard**: Builds the Yardoc documentation. By default, this step uses
-  the `yard` gem from the bundle, and thus depends on the earlier **bundle**
-  step. It copies the `Gemfile.lock` output by the earlier step. After building
-  the documentation into the `doc` directory, it copies that directory to its
-  output directory. This step runs *if* the later step **push_gh_pages**, which
-  lists it as a dependency, runs.
-* **release_github**: Pushes a release tag to GitHub and creates a GitHub
-  release. This step always runs and has no dependencies.
-* **release_gem**: Pushes the built gem package to rubygems.org. This step
-  lists the earlier **build_gem** step as a dependency, and copies the built
-  gem package from that step's output.
-* **push_gh_pages**: Pushes the built documentation to the `gh-pages` branch so
-  it shows up on the repository's GitHub Pages site. This step runs only if the
-  repository actually has a `gh-pages` branch and the release configuration
-  specifies that it should be pushed to. If this step does run, it lists the
-  earlier **build_yard** step as a dependency, and copies the built
-  documentation from that step's output.
+ *  **bundle**: Installs the bundle, and copies the `Gemfile.lock` to its
+    output directory. This step runs because the later step **build_yard**
+    declares it as a dependency and accesses the `Gemfile.lock`.
+ *  **build_gem**: Builds the gem package, and copies the package file to its
+    output directory. This step runs because the later step **release_gem**
+    declares it as a dependency and accesses the built package.
+ *  **build_yard**: Builds the Yardoc documentation. By default, this step uses
+    the `yard` gem from the bundle, and thus depends on the earlier **bundle**
+    step. It copies the `Gemfile.lock` output by the earlier step. After
+    building the documentation into the `doc` directory, it copies that
+    directory to its output directory. This step runs *if* the later step
+    **push_gh_pages**, which lists it as a dependency, runs.
+ *  **release_github**: Pushes a release tag to GitHub and creates a GitHub
+    release. This step always runs and has no dependencies.
+ *  **release_gem**: Pushes the built gem package to rubygems.org. This step
+    lists the earlier **build_gem** step as a dependency, and copies the built
+    gem package from that step's output.
+ *  **push_gh_pages**: Pushes the built documentation to the `gh-pages` branch
+    so it shows up on the repository's GitHub Pages site. This step runs only
+    if the repository actually has a `gh-pages` branch and the release
+    configuration specifies that it should be pushed to. If this step does run,
+    it lists the earlier **build_yard** step as a dependency, and copies the
+    built documentation from that step's output.
 
 Ultimately, this pipeline will create a GitHub release, push a RubyGems
 package, and optionally push documentation.
@@ -708,18 +720,18 @@ the [top level configuration reference](#top-level-configuration)) or
 underneath a particular component's configuration (see the
 [component configuration reference](#component-configuration)).
 
-* To insert new steps, at the beginning or end of the pipeline, or before or
-  after specific named steps, use the **append_steps** and **prepend_steps**
-  configurations.
-* To modify existing steps, use the **modify_steps** configuration. See the
-  reference on [build step modification](#build-step-modification).
-* There is no specific way to delete an existing step. This is because a step
-  might be referenced by other steps. To ensure a step does not run, you can
-  modify it to change its type to `noop` (which has no behavior and does not
-  run by default) and ensure that no step depends on it.
-* If your changes are more complex than can reasonably be expressed by
-  modifying the default pipeline, you can replace the pipeline completely using
-  the **steps** configuration.
+ *  To insert new steps, at the beginning or end of the pipeline, or before or
+    after specific named steps, use the **append_steps** and **prepend_steps**
+    configurations.
+ *  To modify existing steps, use the **modify_steps** configuration. See the
+    reference on [build step modification](#build-step-modification).
+ *  There is no specific way to delete an existing step. This is because a step
+    might be referenced by other steps. To ensure a step does not run, you can
+    modify it to change its type to `noop` (which has no behavior and does not
+    run by default) and ensure that no step depends on it.
+ *  If your changes are more complex than can reasonably be expressed by
+    modifying the default pipeline, you can replace the pipeline completely
+    using the **steps** configuration.
 
 #### Pipeline modification example
 
@@ -814,132 +826,137 @@ The top level of the yaml file is a dictionary that can include the following
 keys. Out of these, **repo**, **git_user_name**, and **git_user_email** are all
 required. The rest are optional.
 
-* **append_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  A list of build steps to append to the end of the default build pipeline.
-  This can be used to modify the default build pipeline instead of redefining
-  the entire pipeline using the **steps** key.
+ *  **append_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    A list of build steps to append to the end of the default build pipeline.
+    This can be used to modify the default build pipeline instead of redefining
+    the entire pipeline using the **steps** key.
 
-* **breaking_change_header**: *string* (optional) --
-  A changelog entry prefix that appears when a change is marked as breaking.
-  Default is `BREAKING CHANGE`.
+ *  **breaking_change_header**: *string* (optional) --
+    A changelog entry prefix that appears when a change is marked as breaking.
+    Default is `BREAKING CHANGE`.
 
-* **commit_tags**: *array of [CommitTagConfig](#commit-tag-configuration)* (optional) --
-  A set of configurations defining how to interpret
-  [conventional commit](https://conventionalcommits.org) tags, including how
-  they trigger releases, bump versions, and generate changelog entries. See
-  [commit tag configuration](#commit-tag-configuration) for details.
-  If not included, Toys-Release will use a default configuration as follows:
+ *  **commit_tags**: *array of [CommitTagConfig](#commit-tag-configuration)* (optional) --
+    A set of configurations defining how to interpret
+    [conventional commit](https://conventionalcommits.org) tags, including how
+    they trigger releases, bump versions, and generate changelog entries. See
+    [commit tag configuration](#commit-tag-configuration) for details.
+    If not included, Toys-Release will use a default configuration as follows:
 
-      - tag: feat
-        semver: minor
-        header: ADDED
-      - tag: fix
-        semver: patch
-        header: FIXED
-      - tag: docs
-        semver: patch
+    ```yaml
+    - tag: feat
+      semver: minor
+      header: ADDED
+    - tag: fix
+      semver: patch
+      header: FIXED
+    - tag: docs
+      semver: patch
+    ```
 
-* **components**: *array of [ComponentConfig](#component-configuration)* (optional) --
-  An array of releasable components, usually RubyGems packages. See
-  [Component Configuration](#component-configuration) for details on the format
-  of each component. You can also use the name **gems** for this config key.
+ *  **components**: *array of [ComponentConfig](#component-configuration)* (optional) --
+    An array of releasable components, usually RubyGems packages. See
+    [Component Configuration](#component-configuration) for details on the
+    format of each component. You can also use the name **gems** for this
+    config key.
 
-* **coordinate_versions**: *boolean* (optional) --
-  If set to true, this is a shorthand for setting up a coordination group
-  containing all components in this repository. Defaults to *false*.
+ *  **coordinate_versions**: *boolean* (optional) --
+    If set to true, this is a shorthand for setting up a coordination group
+    containing all components in this repository. Defaults to *false*.
 
-* **coordination_groups**: *array of array of string* (optional) --
-  A list of disjoint sets of component names. Each set defines a group of
-  components that will always be released together with the same version
-  number. That is, if one or more components in a set are released, the entire
-  set is released, even components with no changes. This is useful for sets of
-  gems, such as the Rails gems, that are always released together.
+ *  **coordination_groups**: *array of array of string* (optional) --
+    A list of disjoint sets of component names. Each set defines a group of
+    components that will always be released together with the same version
+    number. That is, if one or more components in a set are released, the
+    entire set is released, even components with no changes. This is useful for
+    sets of gems, such as the Rails gems, that are always released together.
 
-* **enable_release_automation**: *boolean* (optional) --
-  When enabled, the release pipeline runs automatically when a release pull
-  request is merged. Defaults to *true*.
+ *  **enable_release_automation**: *boolean* (optional) --
+    When enabled, the release pipeline runs automatically when a release pull
+    request is merged. Defaults to *true*.
 
-* **gh_pages_enabled**: *boolean* (optional) --
-  Whether to globally enable gh-pages publication for all releases. Defaults to
-  *false*.
+ *  **gh_pages_enabled**: *boolean* (optional) --
+    Whether to globally enable gh-pages publication for all releases. Defaults
+    to *false*.
 
-* **git_user_email**: *string* (required) --
-  The git `user.email` setting to use when making git commits.
+ *  **git_user_email**: *string* (required) --
+    The git `user.email` setting to use when making git commits.
 
-* **git_user_name**: *string* (required) --
-  The git `user.name` setting to use when making git commits.
+ *  **git_user_name**: *string* (required) --
+    The git `user.name` setting to use when making git commits.
 
-* **main_branch**: *string* (optional) --
-  The name of the main branch. Defaults to `main` if not provided.
+ *  **main_branch**: *string* (optional) --
+    The name of the main branch. Defaults to `main` if not provided.
 
-* **modify_steps**: *array of [BuildStepModification](#build-step-modification)* (optional) --
-  A set of modifications to the default build steps. This can be used to modify
-  the default build pipeline instead of redefining the entire pipeline using
-  the **steps** key.
+ *  **modify_steps**: *array of [BuildStepModification](#build-step-modification)* (optional) --
+    A set of modifications to the default build steps. This can be used to
+    modify the default build pipeline instead of redefining the entire pipeline
+    using the **steps** key.
 
-* **no_significant_updates_notice**: *string* (optional) --
-  A notice that appears in a changelog when a release is done but no other
-  changelog entries are present. Default is `No significant updates.`
+ *  **no_significant_updates_notice**: *string* (optional) --
+    A notice that appears in a changelog when a release is done but no other
+    changelog entries are present. Default is `No significant updates.`
 
-* **prepend_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  A list of build steps to prepend to the start of the default build pipeline.
-  This can be used to modify the default build pipeline instead of redefining
-  the entire pipeline using the **steps** key.
+ *  **prepend_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    A list of build steps to prepend to the start of the default build
+    pipeline. This can be used to modify the default build pipeline instead of
+    redefining the entire pipeline using the **steps** key.
 
-* **release_branch_prefix**: *string* (optional) --
-  The prefix for all release branch names. Defaults to `release`.
+ *  **release_branch_prefix**: *string* (optional) --
+    The prefix for all release branch names. Defaults to `release`.
 
-* **release_aborted_label**: *string* (optional) --
-  The name of the GitHub issue label that identifies aborted release pull
-  requests. Defaults to `release: aborted`.
+ *  **release_aborted_label**: *string* (optional) --
+    The name of the GitHub issue label that identifies aborted release pull
+    requests. Defaults to `release: aborted`.
 
-* **release_complete_label**: *string* (optional) --
-  The name of the GitHub issue label that identifies successfully completed
-  release pull requests. Defaults to `release: complete`.
+ *  **release_complete_label**: *string* (optional) --
+    The name of the GitHub issue label that identifies successfully completed
+    release pull requests. Defaults to `release: complete`.
 
-* **release_error_label**: *string* (optional) --
-  The name of the GitHub issue label that identifies release pull requests in
-  an error state. Defaults to `release: error`.
+ *  **release_error_label**: *string* (optional) --
+    The name of the GitHub issue label that identifies release pull requests in
+    an error state. Defaults to `release: error`.
 
-* **release_pending_label**: *string* (optional) --
-  The name of the GitHub issue label that identifies pending release pull
-  requests. Defaults to `release: pending`.
+ *  **release_pending_label**: *string* (optional) --
+    The name of the GitHub issue label that identifies pending release pull
+    requests. Defaults to `release: pending`.
 
-* **repo**: *string* (required) --
-  The GitHub repository name in the form `owner/repo`. For example, the Toys
-  repo is `dazuma/toys`.
+ *  **repo**: *string* (required) --
+    The GitHub repository name in the form `owner/repo`. For example, the Toys
+    repo is `dazuma/toys`.
 
-* **required_checks**: *regexp/boolean* (optional) --
-  Identifies which GitHub checks must pass as a prerequisite for a release. If
-  a string is provided, it is interpreted as a Ruby regexp (PCRE) and
-  identifies the check names. A boolean value of *true* (the default) means all
-  checks must pass. A boolean value of *false* disables checking.
+ *  **required_checks**: *regexp/boolean* (optional) --
+    Identifies which GitHub checks must pass as a prerequisite for a release.
+    If a string is provided, it is interpreted as a Ruby regexp (PCRE) and
+    identifies the check names. A boolean value of *true* (the default) means
+    all checks must pass. A boolean value of *false* disables checking.
 
-* **required_checks_timeout**: *integer* (optional) --
-  The time to wait, in seconds, for required checks to pass during release
-  processing. Defaults to 900 (i.e. 15 minutes).
+ *  **required_checks_timeout**: *integer* (optional) --
+    The time to wait, in seconds, for required checks to pass during release
+    processing. Defaults to 900 (i.e. 15 minutes).
 
-* **signoff_commits**: *boolean* (optional) --
-  Whether to make commits with `--signoff`. Set this to true if your repository
-  has a policy that commits require signoff. Defaults to *false*.
+ *  **signoff_commits**: *boolean* (optional) --
+    Whether to make commits with `--signoff`. Set this to true if your
+    repository has a policy that commits require signoff. Defaults to *false*.
 
-* **steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  The build pipeline as a list of build steps. See
-  [build step configuration](#build-step-configuration) for details on how to
-  define the pipeline. If this is not included, Toys-Release will use a default
-  pipeline as follows:
+ *  **steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    The build pipeline as a list of build steps. See
+    [build step configuration](#build-step-configuration) for details on how to
+    define the pipeline. If this is not included, Toys-Release will use a
+    default pipeline as follows:
 
-      - name: bundle
-      - name: build_gem
-      - name: build_yard
-      - name: release_github
-      - name: release_gem
-        source: build_gem
-      - name: push_gh_pages
-        source: build_yard
+    ```yaml
+    - name: bundle
+    - name: build_gem
+    - name: build_yard
+    - name: release_github
+    - name: release_gem
+      source: build_gem
+    - name: push_gh_pages
+      source: build_yard
+    ```
 
-  See the earlier section on [the standard pipeline](#the-standard-pipeline)
-  for a detailed description of the behavior of this default pipeline.
+    See the earlier section on [the standard pipeline](#the-standard-pipeline)
+    for a detailed description of the behavior of this default pipeline.
 
 ### Commit tag configuration
 
@@ -950,19 +967,19 @@ and how it should appear in the changelog. The format of the configuration is a
 dictionary with the keys documented here. The **tag** key is required; the
 remaining keys are optional and have defaults.
 
-* **header**: *string,null* (optional) --
-  A prefix that appears before each changelog entry generated by this tag. The
-  special value *null* suppresses changelog entry generation for this scope.
-  Defaults to the tag itself in all caps.
+ *  **header**: *string,null* (optional) --
+    A prefix that appears before each changelog entry generated by this tag.
+    The special value *null* suppresses changelog entry generation for this
+    scope. Defaults to the tag itself in all caps.
 
-* **scopes**: *array of [ScopeConfig](#scope-configuration)* (optional) --
-  Overrides for conventional commit scopes.
+ *  **scopes**: *array of [ScopeConfig](#scope-configuration)* (optional) --
+    Overrides for conventional commit scopes.
 
-* **semver**: *string* (optional) --
-  The semver version bump implied by changes of this type. Possible values are
-  `patch`, `minor`, `major`, and `none`. Default is `none`.
+ *  **semver**: *string* (optional) --
+    The semver version bump implied by changes of this type. Possible values
+    are `patch`, `minor`, `major`, and `none`. Default is `none`.
 
-* **tag**: *string* (required) -- The conventional commit tag.
+ *  **tag**: *string* (required) -- The conventional commit tag.
 
 #### Scope configuration
 
@@ -973,17 +990,17 @@ dependency-updating bots. Typically, `chore:` does not indicate a significant
 change that should trigger a release or appear in a changelog, but you might
 choose different behavior for dependency changes.
 
-* **header**: *string,null* (optional) --
-  A prefix that appears before each changelog entry generated by this tag. The
-  special value *null* suppresses changelog entry generation for this scope.
-  Defaults to the same setting used by the tag.
+ *  **header**: *string,null* (optional) --
+    A prefix that appears before each changelog entry generated by this tag.
+    The special value *null* suppresses changelog entry generation for this
+    scope. Defaults to the same setting used by the tag.
 
-* **scope**: *string* (required) -- The scope name.
+ *  **scope**: *string* (required) -- The scope name.
 
-* **semver**: *string* (optional) -- 
-  The semver version bump implied by changes of this type. Possible values are
-  `patch`, `minor`, `major`, and `none`. Defaults to the same setting used by
-  the tag.
+ *  **semver**: *string* (optional) -- 
+    The semver version bump implied by changes of this type. Possible values
+    are `patch`, `minor`, `major`, and `none`. Defaults to the same setting
+    used by the tag.
 
 ### Component configuration
 
@@ -991,87 +1008,90 @@ A component configuration specifies how a particular component (often a
 RubyGems package) should be released. Its format is a dictionary with the keys
 documented here.
 
-* **append_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  A list of build steps to append to the end of this component's build
-  pipeline. This can be used to modify the build pipeline instead of redefining
-  the entire pipeline using the **steps** key.
+ *  **append_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    A list of build steps to append to the end of this component's build
+    pipeline. This can be used to modify the build pipeline instead of
+    redefining the entire pipeline using the **steps** key.
 
-* **changelog_path**: *string* (optional) --
-  The path to the component's changelog file, relative to the component's
-  directory. Default is `CHANGELOG.md`.
+ *  **changelog_path**: *string* (optional) --
+    The path to the component's changelog file, relative to the component's
+    directory. Default is `CHANGELOG.md`.
 
-* **directory**: *string* (optional) --
-  The directory within the repository where this component is located. Defaults
-  to the component name, unless there is exactly one component in this
-  repository, in which case the default is the root of the repository, i.e.
-  "`.`". This directory is used to identify when files related to this
-  component have been changed, and is also used as a base directory for other
-  paths related to the component.
+ *  **directory**: *string* (optional) --
+    The directory within the repository where this component is located.
+    Defaults to the component name, unless there is exactly one component in
+    this repository, in which case the default is the root of the repository,
+    i.e. "`.`". This directory is used to identify when files related to this
+    component have been changed, and is also used as a base directory for other
+    paths related to the component.
 
-* **exclude_globs**: *array of string* (optional) --
-  An array of globs identifying files or directories that should be ignored
-  when identifying changes to this component. These paths are relative to the
-  repo root.
+ *  **exclude_globs**: *array of string* (optional) --
+    An array of globs identifying files or directories that should be ignored
+    when identifying changes to this component. These paths are relative to the
+    repo root.
 
-* **gh_pages_directory**: *string* (optional) --
-  The directory in the `gh-pages` branch under which this component's
-  documentation is published. The default is the component name.
+ *  **gh_pages_directory**: *string* (optional) --
+    The directory in the `gh-pages` branch under which this component's
+    documentation is published. The default is the component name.
 
-* **gh_pages_enabled**: *boolean* (optional) --
-  Whether gh-pages documentation publishing is enabled for this component.
-  Default is *true* if either **gh_pages_directory** or **gh_pages_version_var**
-  is set explicitly; otherwise *false*.
+ *  **gh_pages_enabled**: *boolean* (optional) --
+    Whether gh-pages documentation publishing is enabled for this component.
+    Default is *true* if either **gh_pages_directory** or
+    **gh_pages_version_var** is set explicitly; otherwise *false*.
 
-* **gh_pages_version_var**: *string* (optional) --
-  The name of a Javascript variable within the `404.html` page under gh-pages
-  that identifies the latest release of this component. Defaults to a variable
-  name corresponding to the component name.
+ *  **gh_pages_version_var**: *string* (optional) --
+    The name of a Javascript variable within the `404.html` page under gh-pages
+    that identifies the latest release of this component. Defaults to an
+    auto-generated variable name corresponding to the component name.
 
-* **include_globs**: *array of string* (optional) --
-  An array of globs identifying additional files or directories, not located in
-  the component's directory itself, that should signal changes to this
-  component. This can be used, for example, if the repo has global files shared
-  by multiple components, where a change in such a file should trigger releases
-  for all those components. These paths are relative to the repo root.
+ *  **include_globs**: *array of string* (optional) --
+    An array of globs identifying additional files or directories, not located
+    in the component's directory itself, that should signal changes to this
+    component. This can be used, for example, if the repo has global files
+    shared by multiple components, where a change in such a file should trigger
+    releases for all those components. These paths are relative to the repo
+    root.
 
-* **modify_steps**: *array of [BuildStepModification](#build-step-modification)* (optional) --
-  A set of modifications to this component's build steps. This can be used to
-  modify the build pipeline instead of redefining the entire pipeline using
-  the **steps** key.
+ *  **modify_steps**: *array of [BuildStepModification](#build-step-modification)* (optional) --
+    A set of modifications to this component's build steps. This can be used to
+    modify the build pipeline instead of redefining the entire pipeline using
+    the **steps** key.
 
-* **name**: *string* (required) --
-  The name of the component, e.g. the name of the RubyGems package if this
-  component represents a gem.
+ *  **name**: *string* (required) --
+    The name of the component, e.g. the name of the RubyGems package if this
+    component represents a gem.
 
-* **prepend_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  A list of build steps to prepend to the start of this component's build
-  pipeline. This can be used to modify the build pipeline instead of redefining
-  the entire pipeline using the **steps** key.
+ *  **prepend_steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    A list of build steps to prepend to the start of this component's build
+    pipeline. This can be used to modify the build pipeline instead of
+    redefining the entire pipeline using the **steps** key.
 
-* **steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
-  A way to override the complete build pipeline for this component. If not
-  present, the default pipeline for the entire repository is used. (See the
-  **steps** key under [Top level configuration](#top-level-configuration).)
+ *  **steps**: *array of [BuildStepConfig](#build-step-configuration)* (optional) --
+    A way to override the complete build pipeline for this component. If not
+    present, the default pipeline for the entire repository is used. (See the
+    **steps** key under [Top level configuration](#top-level-configuration).)
 
-* **version_constant**: *string* (optional) --
-  The fully-qualified name of the version constant. This is used to determine
-  the current version of the component. The default uses the module implied by
-  the component name. For example, if the component (gem) name is
-  `toys-release`, this defaults to `Toys::Release::VERSION`.
+ *  **version_constant**: *string* (optional) --
+    The fully-qualified name of the version constant. This is used to determine
+    the current version of the component. The default uses the module implied
+    by the component name. For example, if the component (gem) name is
+    `toys-release`, this defaults to `Toys::Release::VERSION`.
 
-* **version_rb_path**: *string* (optional) --
-  The path to a Ruby file that contains the current version of the component.
-  This file *must* include Ruby code that looks like this:
+ *  **version_rb_path**: *string* (optional) --
+    The path to a Ruby file that contains the current version of the component.
+    This file *must* include Ruby code that looks like this:
 
-      VERSION = "1.2.3"
+    ```ruby
+    VERSION = "1.2.3"
+    ```
   
-  where the string is the latest released version. (Prior to the initial
-  release, this version should be `0.0.0`.) Typically, `VERSION` is a constant
-  defined in the "base module" for the Ruby library.
+    where the string is the latest released version. (Prior to the initial
+    release, this version should be `0.0.0`.) Typically, `VERSION` is a
+    constant defined in the "base module" for the Ruby library.
 
-  The default is `version.rb` within the lib path associated with the Ruby
-  module implied by the component name. For example, if the component (gem)
-  name is `toys-release`, this defaults to `lib/toys/release/version.rb`.
+    The default is `version.rb` within the lib path associated with the Ruby
+    module implied by the component name. For example, if the component (gem)
+    name is `toys-release`, this defaults to `lib/toys/release/version.rb`.
 
 ### Build step configuration
 
@@ -1081,28 +1101,28 @@ define additional keys as documented under the section
 [build step types](#build-step-types). For more introductory information, see
 the section on [the release pipeline](#the-release-pipeline) above.
 
-* **name**: *string* (optional) --
-  The unique name of this build step in the build pipeline. If not explicitly
-  provided, a unique name will be generated.
+ *  **name**: *string* (optional) --
+    The unique name of this build step in the build pipeline. If not explicitly
+    provided, a unique name will be generated.
 
-* **type**: *string* (optional) --
-  The type of build step, defining what it does. Possible values are:
-  `build_gem`, `build_yard`, `bundle`, `command`, `noop`, `push_gh_pages`,
-  `release_gem`, `release_github`, and `tool`. For more information, see the
-  section [build step types](#build-step-types).
+ *  **type**: *string* (optional) --
+    The type of build step, defining what it does. Possible values are:
+    `build_gem`, `build_yard`, `bundle`, `command`, `noop`, `push_gh_pages`,
+    `release_gem`, `release_github`, and `tool`. For more information, see the
+    section [build step types](#build-step-types).
 
-* **run**: *boolean* (optional) --
-  Whether to force this step to run. Typically, build steps will run only if
-  the build type determines that it should run, or if the step is a dependency
-  of another step that will run. You can, however, force a step to run that
-  would otherwise not do so by setting this key to *true*.
+ *  **run**: *boolean* (optional) --
+    Whether to force this step to run. Typically, build steps will run only if
+    the build type determines that it should run, or if the step is a
+    dependency of another step that will run. You can, however, force a step to
+    run that would otherwise not do so by setting this key to *true*.
 
-* **inputs**: *array of [InputConfig](#step-input-configuration)* (optional) --
-  Inputs to this step, indicating dependencies on other steps and files to copy
-  from those steps' outputs.
+ *  **inputs**: *array of [InputConfig](#step-input-configuration)* (optional) --
+    Inputs to this step, indicating dependencies on other steps and files to
+    copy from those steps' outputs.
 
-* **outputs**: *array of [OutputConfig](#step-output-configuration)* (optional) --
-  Files to copy to this step's output so they become available to other steps.
+ *  **outputs**: *array of [OutputConfig](#step-output-configuration)* (optional) --
+    Files to copy to this step's output so they become available to other steps.
 
 #### Step input configuration
 
@@ -1111,41 +1131,41 @@ is run, that other (dependent) step will also be run. It also describes files
 that should be copied from the dependent step's output and made available to
 the depending step. This configuration is a dictionary with the following keys:
 
-* **collisions**: *string* (optional) --
-  A symbolic value indicating what to do if a collision occurs between incoming
-  and existing files. Possible values are:
+ *  **collisions**: *string* (optional) --
+    A symbolic value indicating what to do if a collision occurs between
+    incoming and existing files. Possible values are:
 
-    * `error`: (the default) Abort with an error
-    * `keep`: Keep the existing file
-    * `replace`: Replace the existing file with the incoming file
+     *  `error`: (the default) Abort with an error
+     *  `keep`: Keep the existing file
+     *  `replace`: Replace the existing file with the incoming file
 
-* **dest**: *string or false* (optional) --
-  A symbolic value indicating where to copy the dependent step's output to.
-  Possible values are:
+ *  **dest**: *string or false* (optional) --
+    A symbolic value indicating where to copy the dependent step's output to.
+    Possible values are:
 
-    * `component`: (the default) Copy files to the component directory
-    * `repo_root`: Copy files to the repository root
-    * `output`: Copy files to this step's output directory
-    * `temp`: Copy files to this step's temp directory
-    * `none`: Do not copy any files, but just declare a dependency
+     *  `component`: (the default) Copy files to the component directory
+     *  `repo_root`: Copy files to the repository root
+     *  `output`: Copy files to this step's output directory
+     *  `temp`: Copy files to this step's temp directory
+     *  `none`: Do not copy any files, but just declare a dependency
 
-* **dest_path**: *string* (optional) --
-  The path in the destination to copy to. If **source_path** is provided,
-  **dest_path** is the corresponding path in the destination. If **source_path**
-  is not provided, **dest_path** is a directory into which the source contents
-  are copied. If **dest_path** is not provided, it defaults to the effective
-  value of **source_path**, i.e. things are copied into the same locations
-  within the destination as they were in the source.
+ *  **dest_path**: *string* (optional) --
+    The path in the destination to copy to. If **source_path** is provided,
+    **dest_path** is the corresponding path in the destination. If
+    **source_path** is not provided, **dest_path** is a directory into which
+    the source contents are copied. If **dest_path** is not provided, it
+    defaults to the effective value of **source_path**, i.e. things are copied
+    into the same locations within the destination as they were in the source.
 
-* **name**: *string* (required) --
-  The name of the step to depend on. The dependent step must be located earlier
-  in the pipeline than the depending step.
+ *  **name**: *string* (required) --
+    The name of the step to depend on. The dependent step must be located
+    earlier in the pipeline than the depending step.
 
-* **source_path**: *string* (optional) --
-  The path of the file or directory to copy from the source output. Only this
-  item (recursively, if a directory) is copied. If this key is not provided,
-  *all* contents of the source output are copied (e.g. the default is
-  effectively "`.`")
+ *  **source_path**: *string* (optional) --
+    The path of the file or directory to copy from the source output. Only this
+    item (recursively, if a directory) is copied. If this key is not provided,
+    *all* contents of the source output are copied (e.g. the default is
+    effectively "`.`")
 
 #### Step output configuration
 
@@ -1153,157 +1173,157 @@ A step output represents files automatically copied to the step's output
 directory after the step runs. This configuration is a dictionary supporting
 the following keys:
 
-* **collisions**: *string* (optional) --
-  A symbolic value indicating what to do if a collision occurs between incoming
-  and existing files. Possible values are:
+ *  **collisions**: *string* (optional) --
+    A symbolic value indicating what to do if a collision occurs between incoming
+    and existing files. Possible values are:
 
-    * `error`: (the default) Abort with an error
-    * `keep`: Keep the existing file
-    * `replace`: Replace the existing file with the incoming file
+     *  `error`: (the default) Abort with an error
+     *  `keep`: Keep the existing file
+     *  `replace`: Replace the existing file with the incoming file
 
-* **dest_path**: *string* (optional) --
-  The path in the output directory to copy to. If **source_path** is provided,
-  **dest_path** is the corresponding path in the output. If **source_path** is
-  not provided, **dest_path** is a directory into which the source contents are
-  copied. If **dest_path** is not provided, it defaults to the effective value
-  of **source_path**, i.e. things are copied into the same locations within the
-  output as they were in the source.
+ *  **dest_path**: *string* (optional) --
+    The path in the output directory to copy to. If **source_path** is
+    provided, **dest_path** is the corresponding path in the output. If
+    **source_path** is not provided, **dest_path** is a directory into which
+    the source contents are copied. If **dest_path** is not provided, it
+    defaults to the effective value of **source_path**, i.e. things are copied
+    into the same locations within the output as they were in the source.
 
-* **source**: *string* (optional) --
-  A symbolic value indicating where to copy from. Possible values are:
+ *  **source**: *string* (optional) --
+    A symbolic value indicating where to copy from. Possible values are:
 
-    * `component`: (the default) Copy files from the component directory
-    * `repo_root`: Copy files from the repository root
-    * `temp`: Copy files from this step's temp directory
+     *  `component`: (the default) Copy files from the component directory
+     *  `repo_root`: Copy files from the repository root
+     *  `temp`: Copy files from this step's temp directory
 
-* **source_path**: *string* (optional) --
-  The path of the file or directory to copy from the source. Only this item
-  (recursively, if a directory) is copied. If this key is not provided, *all*
-  contents of the source are copied (e.g. the default is effectively "`.`")
+ *  **source_path**: *string* (optional) --
+    The path of the file or directory to copy from the source. Only this item
+    (recursively, if a directory) is copied. If this key is not provided, *all*
+    contents of the source are copied (e.g. the default is effectively "`.`")
 
 #### Build step types
 
 This is a list of the available build step types, including their behavior and
 any additional configuration keys supported by each.
 
-* **build_gem** -- A step that builds a gem package.
+ *  **build_gem** -- A step that builds a gem package.
 
-  This step builds the gem described by the properly named gemspec file for
-  this component. The built package file is copied to this step's output. Other
-  steps (such as **release_gem**) can declare it as an input to get access to
-  the built package. This step does not run unless it is declared as an input
-  dependency, or unless it is requested explicitly using the **run**
-  configuration.
+    This step builds the gem described by the properly named gemspec file for
+    this component. The built package file is copied to this step's output.
+    Other steps (such as **release_gem**) can declare it as an input to get
+    access to the built package. This step does not run unless it is declared
+    as an input dependency, or unless it is requested explicitly using the
+    **run** configuration.
 
-* **build_yard** -- A step that builds Yardocs.
+ *  **build_yard** -- A step that builds Yardocs.
 
-  This step builds documentation using [YARD](https://yardoc.org). The built
-  documentation is copied to this step's output in the directory `doc/`. Other
-  steps (such as **push_gh_pages**) can declare it as an input to get access to
-  the built documentation. This step does not run unless it is declared as an
-  input dependency, or unless it is requested explicitly using the **run**
-  configuration.
+    This step builds documentation using [YARD](https://yardoc.org). The built
+    documentation is copied to this step's output in the directory `doc/`.
+    Other steps (such as **push_gh_pages**) can declare it as an input to get
+    access to the built documentation. This step does not run unless it is
+    declared as an input dependency, or unless it is requested explicitly using
+    the **run** configuration.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **bundle_step**: *string* (optional) --
-      The name of the bundle step. Defaults to `bundle`. This is used if the
-      **uses_gems** key is *not* provided.
+     *  **bundle_step**: *string* (optional) --
+        The name of the bundle step. Defaults to `bundle`. This is used if the
+        **uses_gems** key is *not* provided.
 
-    * **uses_gems**: *array of (string or array of string)* (optional) --
-      An array of gem specifications, each of which can be a simple gem name or
-      an array including rubygems-style version requirements. These gems are
-      provided to Yard, and can include gems such as `redcarpet` that may be
-      needed for markup handling. If this key is included, the specified gems
-      are installed directly; if not, the bundle step is declared as a
-      dependency instead.
+     *  **uses_gems**: *array of (string or array of string)* (optional) --
+        An array of gem specifications, each of which can be a simple gem name
+        or an array including rubygems-style version requirements. These gems
+        are provided to Yard, and can include gems such as `redcarpet` that may
+        be needed for markup handling. If this key is included, the specified
+        gems are installed directly; if not, the bundle step is declared as a
+        dependency instead.
 
-* **bundle** -- A step that installs the bundle in the component directory.
+ *  **bundle** -- A step that installs the bundle in the component directory.
 
-  This step copies the resulting `Gemfile.lock` to its output. Other steps can
-  declare it as an input to get access to the `Gemfile.lock`. This step
-  does not run unless it is declared as an input dependency, or unless it is
-  requested explicitly using the **run** configuration.
+    This step copies the resulting `Gemfile.lock` to its output. Other steps
+    can declare it as an input to get access to the `Gemfile.lock`. This step
+    does not run unless it is declared as an input dependency, or unless it is
+    requested explicitly using the **run** configuration.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **chdir**: *string* (optional) --
-      Change to the specified directory (relative to the component directory)
-      when installing the bundle. By default, runs in the component directory.
+     *  **chdir**: *string* (optional) --
+        Change to the specified directory (relative to the component directory)
+        when installing the bundle. Defaults to component directory.
 
-* **command** -- A step that runs a command in the component directory.
+ *  **command** -- A step that runs a command in the component directory.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **chdir**: *string* (optional) --
-      Change to the specified directory (relative to the component directory)
-      when running the command. By default, runs in the component directory.
+     *  **chdir**: *string* (optional) --
+        Change to the specified directory (relative to the component directory)
+        when running the command. Defaults to component directory.
 
-    * **command**: *array of string* (required) --
-      The command to run
+     *  **command**: *array of string* (required) --
+        The command to run
 
-    * **continue_on_error**: *boolean* (optional) --
-      If *true*, continue to run the pipeline if the command exits abnormally.
-      If *false* (the default), the pipeline aborts.
+     *  **continue_on_error**: *boolean* (optional) --
+        If *true*, continue to run the pipeline if the command exits
+        abnormally. If *false* (the default), the pipeline aborts.
 
-  This step does not run unless it is requested explicitly using the **run**
-  configuration, or it is declared as a dependency.
+    This step does not run unless it is requested explicitly using the **run**
+    configuration, or it is declared as a dependency.
 
-* **noop** -- A no-op step that does nothing. This type is usually configured
-  with inputs and outputs and is used to collect or consolidate data from other
-  steps.
+ *  **noop** -- A no-op step that does nothing. This type is usually configured
+    with inputs and outputs and is used to collect or consolidate data from
+    other steps.
 
-  This step does not run unless it is requested explicitly using the **run**
-  configuration, or it is declared as a dependency.
+    This step does not run unless it is requested explicitly using the **run**
+    configuration, or it is declared as a dependency.
 
-* **push_gh_pages** -- A step that pushes documentation to the gh-pages branch.
+ *  **push_gh_pages** -- A step that pushes documentation to the gh-pages branch.
 
-  The documentation to publish should be under `doc/` in the output directory
-  of a "source" step, normally the **build_yard** step. This source step is
-  automatically declared as a dependency.
+    The documentation to publish should be under `doc/` in the output directory
+    of a "source" step, normally the **build_yard** step. This source step is
+    automatically declared as a dependency.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **source**: *string* (optional) --
-      The name of the source step. Defaults to `build_yard`.
+     *  **source**: *string* (optional) --
+        The name of the source step. Defaults to `build_yard`.
 
-  This step runs if gh-pages publishing is enabled in the component.
+    This step runs if gh-pages publishing is enabled for the component.
 
-* **release_gem** -- A step that pushes a gem package to rubygems.org.
+ *  **release_gem** -- A step that pushes a gem package to rubygems.org.
 
-  The package must be provided under `pkg/` in the output directory of a
-  "source" step, normally the **build_gem** step. This source step is
-  automatically declared as a dependency.
+    The package must be provided under `pkg/` in the output directory of a
+    "source" step, normally the **build_gem** step. This source step is
+    automatically declared as a dependency.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **source**: *string* (optional) --
-      The name of the source step. Defaults to `build_gem`.
+     *  **source**: *string* (optional) --
+        The name of the source step. Defaults to `build_gem`.
 
-  This step runs if a correctly-named gemspec file is present in the component
-  directory.
+    This step runs if a correctly-named gemspec file is present in the component
+    directory.
 
-* **release_github** -- A step that creates a git tag and GitHub release.
+ *  **release_github** -- A step that creates a git tag and GitHub release.
 
-  This step always runs if present in the pipeline.
+    This step always runs if present in the pipeline.
 
-* **tool** -- A step that runs a Toys tool in the component directory.
+ *  **tool** -- A step that runs a Toys tool in the component directory.
 
-  This step supports the following additional configuration keys:
+    This step supports the following additional configuration keys:
 
-    * **chdir**: *string* (optional) --
-      Change to the specified directory (relative to the component directory)
-      when running the tool. By default, runs in the component directory.
+     *  **chdir**: *string* (optional) --
+        Change to the specified directory (relative to the component directory)
+        when running the tool. Defaults to component directory.
 
-    * **continue_on_error**: *boolean* (optional) --
-      If *true*, continue to run the pipeline if the tool exits abnormally. If
-      *false* (the default), the pipeline aborts.
+     *  **continue_on_error**: *boolean* (optional) --
+        If *true*, continue to run the pipeline if the tool exits abnormally.
+        If *false* (the default), the pipeline aborts.
 
-    * **tool**: *array of string* (required) --
-      The tool to run
+     *  **tool**: *array of string* (required) --
+        The tool to run
 
-  This step does not run unless it is requested explicitly using the **run**
-  configuration, or it is declared as a dependency.
+    This step does not run unless it is requested explicitly using the **run**
+    configuration, or it is declared as a dependency.
 
 #### Build step modification
 
@@ -1314,11 +1334,11 @@ below.
 The **name** and **type** fields filter the steps to modify. If neither is
 provided, *all* steps are modified.
 
-* **name**: *string* (optional) --
-  Modify only the step with this unique name.
+ *  **name**: *string* (optional) --
+    Modify only the step with this unique name.
 
-* **type**: *string* (optional) --
-  Modify only steps matching this type.
+ *  **type**: *string* (optional) --
+    Modify only steps matching this type.
 
 All other keys represent changes to the configuration of matching steps. You
 can provide either the *null* value to delete the key, or a new full value for

@@ -64,6 +64,15 @@ the latest version of the standard C implementation of Ruby. (JRuby or
 TruffleRuby _may_ work, but are unsupported.) The Ruby provided by the standard
 `setup-ruby` GitHub Action is sufficient.
 
+### Learning more
+
+Detailed setup, usage, and reference documentation can be found in the
+[Toys-Release User Guide](https://dazuma.github.io/toys/gems/toys-release/latest/file.guide.html).
+
+For more information on the underlying Toys framework, see the
+[Toys README](https://dazuma.github.io/toys/gems/toys/latest) and the
+[Toys User Guide](https://dazuma.github.io/toys/gems/toys/latest/file.guide.html).
+
 ## License
 
 Copyright 2025 Daniel Azuma and the Toys contributors
