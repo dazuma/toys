@@ -11,7 +11,8 @@ gem "base64"
 # resulting in test failures due to the unexpected output.
 did_you_mean_versions = ::RUBY_VERSION < "3.1" ? ["~> 1.0", "< 1.6"] : [">= 1.6", "< 3"]
 gem "did_you_mean", *did_you_mean_versions
-gem "minitest", "~> 5.26"
+gem "irb" # Required by yard
+gem "minitest", ">= 5.26", "< 7"
 gem "minitest-focus", "~> 1.4"
 gem "minitest-rg", "~> 5.3"
 # Workaround for OpenSSL 3.6.0 issue (see https://github.com/ruby/openssl/issues/949)
@@ -19,4 +20,4 @@ gem "openssl"
 gem "rdoc", "~> 6.15"
 gem "redcarpet", "~> 3.6" unless ::RUBY_PLATFORM == "java"
 gem "rubocop", "~> 1.81"
-gem "yard", "~> 0.9.37"
+gem "yard", "~> 0.9.38"

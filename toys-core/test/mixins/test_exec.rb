@@ -99,32 +99,26 @@ describe Toys::StandardMixins::Exec do
       tool "foo" do
         include :exec
         def run
-          result = nil
-          Toys.stub(:executable_path, "toys-temp") do
-            my_spawn = proc do |*args|
-              cmd = args.find_all { |a| a.is_a?(::String) }
-              if cmd[1..] == ["toys-temp", "bar"]
-                nil
-              else
-                ::RuntimeError.new "Wrong args: #{args}"
-              end
-            end
-            Process.stub(:spawn, my_spawn) do
-              result = exec_separate_tool(["bar"])
-            end
-          end
-          if result.exception
-            puts result.exception
-            exit(1)
-          elsif result.status
-            exit(2)
-          else
+          dir = File.join(File.dirname(File.dirname(__dir__)), "test-data", "exec-fixtures")
+          result = exec_separate_tool(["bar"], chdir: dir, out: :capture)
+          if result.success? && result.captured_out == "running bar\n"
             exit(4)
+          else
+            exit(1)
           end
         end
       end
     end
-    assert_equal(4, cli.run("foo"))
+    reset_executable_path = false
+    if Toys.executable_path.nil?
+      reset_executable_path = true
+      Toys.executable_path = File.join(File.dirname(File.dirname(File.dirname(__dir__))), "toys", "bin", "toys")
+    end
+    begin
+      assert_equal(4, cli.run("foo"))
+    ensure
+      Toys.executable_path = nil if reset_executable_path
+    end
   end
 
   it "captures a unix command" do

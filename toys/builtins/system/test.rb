@@ -17,10 +17,12 @@ flag :recursive, "--[no-]recursive", default: true,
      desc: "Recursively test subtools (default is true)"
 flag :tool, "-t TOOL", "--tool TOOL", default: "",
      desc: "Run tests only for tools under the given path"
-flag :minitest_version, "--minitest-version=VERSION", default: "~> 5.0",
-     desc: "Set the minitest version requirement (default is ~>5.0)"
+flag :minitest_version, "--minitest-version=VERSION", default: ">=5.0,<7",
+     desc: "Set the minitest version requirement (default is >=5.0,<7)"
 flag :minitest_focus, "--minitest-focus[=VERSION]",
      desc: "Make minitest-focus available during the run"
+flag :minitest_mock, "--minitest-mock[=VERSION]",
+     desc: "Make minitest-mock available during the run"
 flag :minitest_rg, "--minitest-rg[=VERSION]",
      desc: "Make minitest-rg available during the run"
 flag :minitest_compat, "--[no-]minitest-compat",
@@ -42,17 +44,30 @@ def run
 end
 
 def load_minitest_gems
-  gem "minitest", minitest_version
-  require "minitest"
   if minitest_focus
-    set :minitest_focus, "~> 1.0" if minitest_focus == true
-    gem "minitest-focus", minitest_focus
+    set :minitest_focus, "~>1.4,>=1.4.1" if minitest_focus == true
+    gem "minitest-focus", *minitest_focus.split(",")
     require "minitest/focus"
   end
+  if minitest_mock
+    set :minitest_mock, "~>5.27" if minitest_mock == true
+    gem "minitest-mock", *minitest_mock.split(",")
+    require "minitest/mock"
+  end
   if minitest_rg
-    set :minitest_rg, "~> 5.0" if minitest_rg == true
-    gem "minitest-rg", minitest_rg
+    set :minitest_rg, "~>5.4" if minitest_rg == true
+    gem "minitest-rg", *minitest_rg.split(",")
     require "minitest/rg"
+  end
+  gem "minitest", *minitest_version.split(",")
+  require "minitest"
+
+  @minitest_version = @minitest_focus_version = @minitest_mock_version = @minitest_rg_version = nil
+  Gem.loaded_specs.each_value do |spec|
+    @minitest_version = spec.version.to_s if spec.name == "minitest"
+    @minitest_focus_version = spec.version.to_s if spec.name == "minitest-focus"
+    @minitest_mock_version = spec.version.to_s if spec.name == "minitest-mock"
+    @minitest_rg_version = spec.version.to_s if spec.name == "minitest-rg"
   end
 end
 
@@ -82,15 +97,18 @@ end
 
 def ruby_code
   code = []
-  code << "gem 'minitest', #{minitest_version.inspect}"
+  code << "gem 'minitest', '= #{@minitest_version}'"
   code << "require 'minitest/autorun'"
-  if minitest_focus
-    code << "gem 'minitest-focus', '= #{::Minitest::Test::Focus::VERSION}'"
+  if @minitest_focus_version
+    code << "gem 'minitest-focus', '= #{@minitest_focus_version}'"
     code << "require 'minitest/focus'"
   end
-  if minitest_rg
-    version = defined?(::Minitest::RG::VERSION) ? ::Minitest::RG::VERSION : ::MiniTest::RG::VERSION
-    code << "gem 'minitest-rg', '= #{version}'"
+  if @minitest_mock_version
+    code << "gem 'minitest-mock', '= #{@minitest_mock_version}'"
+    code << "require 'minitest/mock'"
+  end
+  if @minitest_rg_version
+    code << "gem 'minitest-rg', '= #{@minitest_rg_version}'"
     code << "require 'minitest/rg'"
   end
   code << "require 'toys'"
