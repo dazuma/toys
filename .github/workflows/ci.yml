@@ -34,7 +34,7 @@ jobs:
             ruby: "3.4"
             steps: "--test-all"
           - os: ubuntu-latest
-            ruby: "4.0.0-preview3"
+            ruby: "4.0"
             steps: "--test-all"
           - os: ubuntu-latest
             ruby: "jruby"
@@ -47,16 +47,16 @@ jobs:
             ruby: "2.7"
             steps: "--test-all --no-test-tools --no-test-release"
           - os: macos-latest
-            ruby: "3.4"
+            ruby: "4.0"
             steps: "--test-all --no-test-tools --no-test-release"
           - os: windows-latest
             ruby: "2.7"
             steps: "--test-all --no-test-tools --no-test-release"
           - os: windows-latest
-            ruby: "3.4"
+            ruby: "4.0"
             steps: "--test-all --no-test-tools --no-test-release"
           - os: ubuntu-latest
-            ruby: "3.4"
+            ruby: "4.0"
             steps: "--rubocop-all --yard-all --build-all"
       fail-fast: false
     runs-on: ${{ matrix.os }}
