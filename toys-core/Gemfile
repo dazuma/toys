@@ -12,7 +12,7 @@ did_you_mean_versions = ::RUBY_VERSION < "3.1" ? ["~> 1.0", "< 1.6"] : [">= 1.6"
 gem "did_you_mean", *did_you_mean_versions
 gem "highline", "~> 2.0"
 gem "irb" # Required by yard
-gem "minitest", "~> 5.26"
+gem "minitest", ">= 5.26", "< 7"
 gem "minitest-focus", "~> 1.4"
 gem "minitest-rg", "~> 5.3"
 # Workaround for OpenSSL 3.6.0 issue (see https://github.com/ruby/openssl/issues/949)

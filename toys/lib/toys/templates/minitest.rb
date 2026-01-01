@@ -12,7 +12,7 @@ module Toys
       # Default version requirements for the minitest gem.
       # @return [Array<String>]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 5.0"].freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = [">= 5.0", "< 7"].freeze
 
       ##
       # Default tool name
