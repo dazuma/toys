@@ -29,12 +29,12 @@ def run
     end
   end
 
-  expected_labels = create_expected_labels
+  expected_labels = define_expected_labels
   cur_labels = load_existing_labels
   update_labels cur_labels, expected_labels
 end
 
-def create_expected_labels
+def define_expected_labels
   [
     {
       "name" => @settings.release_pending_label,
@@ -76,16 +76,7 @@ def update_labels(cur_labels, expected_labels)
       create_label(expected)
     end
   end
-  release_related_labels = [
-    @settings.release_pending_label,
-    @settings.release_error_label,
-    @settings.release_aborted_label,
-    @settings.release_complete_label,
-  ]
-  cur_labels.each do |cur|
-    next unless release_related_labels.include?(cur["name"])
-    delete_label(cur) unless expected_labels.find { |label| label["name"] == cur["name"] }
-  end
+  puts "GitHub labels updated.", :green, :bold
 end
 
 def create_label(label)
@@ -95,6 +86,7 @@ def create_label(label)
   exec(["gh", "api", "repos/#{@settings.repo_path}/labels", "--input", "-",
         "-H", "Accept: application/vnd.github.v3+json"],
        in: [:string, body], out: :null, e: true)
+  puts "Created label #{label_name.inspect}", :green
 end
 
 def update_label(label)
@@ -104,12 +96,5 @@ def update_label(label)
   exec(["gh", "api", "-XPATCH", "repos/#{@settings.repo_path}/labels/#{label_name}",
         "--input", "-", "-H", "Accept: application/vnd.github.v3+json"],
        in: [:string, body], out: :null, e: true)
-end
-
-def delete_label(label)
-  label_name = label["name"]
-  return unless yes || confirm("Label \"#{label_name}\" unrecognized. Delete? ", default: true)
-  exec(["gh", "api", "-XDELETE", "repos/#{@settings.repo_path}/labels/#{label_name}",
-        "-H", "Accept: application/vnd.github.v3+json"],
-       out: :null, e: true)
+  puts "Updated fields of label #{label_name.inspect}", :green
 end

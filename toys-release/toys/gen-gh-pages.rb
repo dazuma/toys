@@ -115,7 +115,7 @@ def generate_file(template, destination, data, remove_dir: false)
   content = erb.result(ErbContext.get(data))
   content = yield(content, old_content) if block_given? && old_content
   ::File.write(destination, content)
-  puts "Wrote #{destination}."
+  puts "Wrote #{destination}.", :green
 end
 
 def file_generation_confirmations(destination, remove_dir)
