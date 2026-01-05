@@ -65,12 +65,13 @@ def generate_all_files
     "release-retry.yml",
   ]
   files.each { |name| generate_file(name) }
+  puts "Workflow files generated.", :green, :bold
 end
 
 def generate_file(name)
   destination = ::File.join(workflows_dir, name)
   if ::File.readable?(destination)
-    puts "Destination file #{destination} exists.", :yellow, :bold
+    puts "Destination file #{destination} exists.", :yellow
     return unless yes || confirm("Overwrite? ", default: true)
   else
     return unless yes || confirm("Create file #{destination}? ", default: true)
@@ -82,6 +83,6 @@ def generate_file(name)
 
   ::File.open(destination, "w") do |file|
     file.write(erb.result(ErbContext.get(@settings)))
-    puts "Wrote #{destination}.", :green, :bold
+    puts "Wrote #{destination}.", :green
   end
 end

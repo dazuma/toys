@@ -13,7 +13,7 @@ jobs:
   release-process-request:
     if: ${{ github.repository == '<%= @settings.repo_path %>' }}
     env:
-      ruby_version: "3.4"
+      ruby_version: "4.0"
     runs-on: ubuntu-latest
     steps:
       - name: Install Ruby ${{ env.ruby_version }}
