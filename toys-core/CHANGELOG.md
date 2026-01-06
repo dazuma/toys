@@ -2,7 +2,6 @@
 
 ### v0.19.1 / 2026-01-06
 
-* FIXED: Improved support for minitest 6
 * DOCS: Some formatting fixes in the user guide
 
 ### v0.19.0 / 2025-12-22
