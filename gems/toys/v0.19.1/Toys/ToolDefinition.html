@@ -1,0 +1,7047 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::ToolDefinition
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::ToolDefinition";
+  relpath = '../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../Toys.html" title="Toys (module)">Toys</a></span></span>
+     &raquo; 
+    <span class="title">ToolDefinition</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::ToolDefinition
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::ToolDefinition</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>core-docs/toys/tool_definition.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p><strong><em>Defined in the toys-core gem</em></strong></p>
+
+<p>A ToolDefinition describes a single command that can be invoked using Toys.
+It has a name, a series of one or more words that you use to identify
+the tool on the command line. It also has a set of formal flags and
+command line arguments supported, and a block that gets run when the
+tool is executed.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+
+</div><h2>Defined Under Namespace</h2>
+<p class="children">
+  
+    
+  
+    
+      <strong class="classes">Classes:</strong> <span class='object_link'><a href="ToolDefinition/DefaultCompletion.html" title="Toys::ToolDefinition::DefaultCompletion (class)">DefaultCompletion</a></span>, <span class='object_link'><a href="ToolDefinition/Settings.html" title="Toys::ToolDefinition::Settings (class)">Settings</a></span>
+    
+  
+</p>
+
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#built_middleware-instance_method" title="#built_middleware (instance method)">#<strong>built_middleware</strong>  &#x21d2; Array&lt;Toys::Middleware&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The stack of built middleware specs for this tool.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#completion-instance_method" title="#completion (instance method)">#<strong>completion</strong>  &#x21d2; Toys::Completion::Base, Proc </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The completion strategy for this tool.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#custom_context_directory-instance_method" title="#custom_context_directory (instance method)">#<strong>custom_context_directory</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The custom context directory set for this tool.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#default_data-instance_method" title="#default_data (instance method)">#<strong>default_data</strong>  &#x21d2; Hash </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The default context data set by arguments.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#delegate_target-instance_method" title="#delegate_target (instance method)">#<strong>delegate_target</strong>  &#x21d2; Array&lt;String&gt;<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The full name of the delegate target, if any.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#desc-instance_method" title="#desc (instance method)">#<strong>desc</strong>  &#x21d2; Toys::WrappableString </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The short description string.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flag_groups-instance_method" title="#flag_groups (instance method)">#<strong>flag_groups</strong>  &#x21d2; Array&lt;Toys::FlagGroup&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of all defined flag groups, in order.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flags-instance_method" title="#flags (instance method)">#<strong>flags</strong>  &#x21d2; Array&lt;Toys::Flag&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of all defined flags.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#full_name-instance_method" title="#full_name (instance method)">#<strong>full_name</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The name of the tool as an array of strings.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#long_desc-instance_method" title="#long_desc (instance method)">#<strong>long_desc</strong>  &#x21d2; Array&lt;Toys::WrappableString&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The long description strings.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#optional_args-instance_method" title="#optional_args (instance method)">#<strong>optional_args</strong>  &#x21d2; Array&lt;Toys::PositionalArg&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of all defined optional positional arguments.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#priority-instance_method" title="#priority (instance method)">#<strong>priority</strong>  &#x21d2; Integer </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The priority of this tool definition.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#remaining_arg-instance_method" title="#remaining_arg (instance method)">#<strong>remaining_arg</strong>  &#x21d2; Toys::PositionalArg<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The remaining arguments specification.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#required_args-instance_method" title="#required_args (instance method)">#<strong>required_args</strong>  &#x21d2; Array&lt;Toys::PositionalArg&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of all defined required positional arguments.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#run_handler-instance_method" title="#run_handler (instance method)">#<strong>run_handler</strong>  &#x21d2; Proc, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The run handler.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#settings-instance_method" title="#settings (instance method)">#<strong>settings</strong>  &#x21d2; Toys::ToolDefinition::Settings </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Settings for this tool.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#source_info-instance_method" title="#source_info (instance method)">#<strong>source_info</strong>  &#x21d2; Toys::SourceInfo<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Info on the source of this tool.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#source_root-instance_method" title="#source_root (instance method)">#<strong>source_root</strong>  &#x21d2; Toys::SourceInfo<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The root source info defining this tool, or nil if there is no source.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#subtool_middleware_stack-instance_method" title="#subtool_middleware_stack (instance method)">#<strong>subtool_middleware_stack</strong>  &#x21d2; Array&lt;Toys::Middleware::Spec&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The stack of middleware specs used for subtools.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tool_class-instance_method" title="#tool_class (instance method)">#<strong>tool_class</strong>  &#x21d2; Class </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The tool class.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#usage_error_handler-instance_method" title="#usage_error_handler (instance method)">#<strong>usage_error_handler</strong>  &#x21d2; Proc, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The usage error handler.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#used_flags-instance_method" title="#used_flags (instance method)">#<strong>used_flags</strong>  &#x21d2; Array&lt;String&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+      <span class="note title readonly">readonly</span>
+    
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A list of flags that have been used in the flag definitions.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_acceptor-instance_method" title="#add_acceptor (instance method)">#<strong>add_acceptor</strong>(name, acceptor = nil, type_desc: nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a named acceptor to the tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_completion-instance_method" title="#add_completion (instance method)">#<strong>add_completion</strong>(name, completion = nil, **options, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a named completion proc to this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_flag-instance_method" title="#add_flag (instance method)">#<strong>add_flag</strong>(key, flags = [], accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil, report_collisions: true, group: nil, desc: nil, long_desc: nil, display_name: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a flag to the current tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_flag_group-instance_method" title="#add_flag_group (instance method)">#<strong>add_flag_group</strong>(type: :optional, desc: nil, long_desc: nil, name: nil, report_collisions: true, prepend: false)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a flag group to the group list.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_initializer-instance_method" title="#add_initializer (instance method)">#<strong>add_initializer</strong>(proc, *args, **kwargs)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add an initializer.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_mixin-instance_method" title="#add_mixin (instance method)">#<strong>add_mixin</strong>(name, mixin_module = nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a named mixin module to this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_optional_arg-instance_method" title="#add_optional_arg (instance method)">#<strong>add_optional_arg</strong>(key, default: nil, accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add an optional positional argument to the current tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_required_arg-instance_method" title="#add_required_arg (instance method)">#<strong>add_required_arg</strong>(key, accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a required positional argument to the current tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#add_template-instance_method" title="#add_template (instance method)">#<strong>add_template</strong>(name, template_class = nil, &amp;block)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a named template class to this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#append_long_desc-instance_method" title="#append_long_desc (instance method)">#<strong>append_long_desc</strong>(long_desc)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Append long description strings.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#argument_parsing_disabled%3F-instance_method" title="#argument_parsing_disabled? (instance method)">#<strong>argument_parsing_disabled?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool has disabled argument parsing.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#context_directory-instance_method" title="#context_directory (instance method)">#<strong>context_directory</strong>  &#x21d2; String<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Return the effective context directory.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#definition_finished%3F-instance_method" title="#definition_finished? (instance method)">#<strong>definition_finished?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool&#39;s definition has been finished and is locked.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#delegate_to-instance_method" title="#delegate_to (instance method)">#<strong>delegate_to</strong>(target)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Causes this tool to delegate to another tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#disable_argument_parsing-instance_method" title="#disable_argument_parsing (instance method)">#<strong>disable_argument_parsing</strong>  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Disable argument parsing for this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#disable_flag-instance_method" title="#disable_flag (instance method)">#<strong>disable_flag</strong>(*flags)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Mark one or more flags as disabled, preventing their use by any subsequent flag definition.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#display_name-instance_method" title="#display_name (instance method)">#<strong>display_name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>A displayable name of this tool, generally the full name delimited by spaces.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#enforce_flags_before_args-instance_method" title="#enforce_flags_before_args (instance method)">#<strong>enforce_flags_before_args</strong>(state = true)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Enforce that flags must come before args for this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#exact_flag_match_required%3F-instance_method" title="#exact_flag_match_required? (instance method)">#<strong>exact_flag_match_required?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool requires exact flag matches.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#flags_before_args_enforced%3F-instance_method" title="#flags_before_args_enforced? (instance method)">#<strong>flags_before_args_enforced?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool enforces flags before args.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handles_interrupts%3F-instance_method" title="#handles_interrupts? (instance method)">#<strong>handles_interrupts?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool handles interrupts.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handles_signal%3F-instance_method" title="#handles_signal? (instance method)">#<strong>handles_signal?</strong>(signal)  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool handles the given signal.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#handles_usage_errors%3F-instance_method" title="#handles_usage_errors? (instance method)">#<strong>handles_usage_errors?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool handles usage errors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#include_mixin-instance_method" title="#include_mixin (instance method)">#<strong>include_mixin</strong>(mod, *args, **kwargs)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Include the given mixin in the tool class.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#includes_arguments%3F-instance_method" title="#includes_arguments? (instance method)">#<strong>includes_arguments?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if at least one flag or positional argument is defined for this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#includes_definition%3F-instance_method" title="#includes_definition? (instance method)">#<strong>includes_definition?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool has any definition information.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#includes_description%3F-instance_method" title="#includes_description? (instance method)">#<strong>includes_description?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if there is a specific description set for this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#includes_modules%3F-instance_method" title="#includes_modules? (instance method)">#<strong>includes_modules?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool has at least one included module.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#interrupt_handler-instance_method" title="#interrupt_handler (instance method)">#<strong>interrupt_handler</strong>  &#x21d2; Proc, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Return the interrupt handler.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#interrupt_handler=-instance_method" title="#interrupt_handler= (instance method)">#<strong>interrupt_handler=</strong>(handler)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the interrupt handler.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lock_source-instance_method" title="#lock_source (instance method)">#<strong>lock_source</strong>(source)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Sets the path to the file that defines this tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_acceptor-instance_method" title="#lookup_acceptor (instance method)">#<strong>lookup_acceptor</strong>(name)  &#x21d2; Toys::Acceptor::Base<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Get the named acceptor from this tool or its ancestors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_completion-instance_method" title="#lookup_completion (instance method)">#<strong>lookup_completion</strong>(name)  &#x21d2; Toys::Completion::Base, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Get the named completion from this tool or its ancestors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_mixin-instance_method" title="#lookup_mixin (instance method)">#<strong>lookup_mixin</strong>(name)  &#x21d2; Module<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Get the named mixin from this tool or its ancestors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#lookup_template-instance_method" title="#lookup_template (instance method)">#<strong>lookup_template</strong>(name)  &#x21d2; Class<sup>?</sup> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Get the named template from this tool or its ancestors.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#positional_args-instance_method" title="#positional_args (instance method)">#<strong>positional_args</strong>  &#x21d2; Array&lt;Toys::PositionalArg&gt; </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>All arg definitions in order: required, optional, remaining.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#require_exact_flag_match-instance_method" title="#require_exact_flag_match (instance method)">#<strong>require_exact_flag_match</strong>(state = true)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Require that flags must match exactly.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#resolve_flag-instance_method" title="#resolve_flag (instance method)">#<strong>resolve_flag</strong>(str)  &#x21d2; Toys::Flag::Resolution </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Resolve the given flag given the flag string.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#root%3F-instance_method" title="#root? (instance method)">#<strong>root?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool is a root tool.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#runnable%3F-instance_method" title="#runnable? (instance method)">#<strong>runnable?</strong>  &#x21d2; true, false </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Returns true if this tool is marked as runnable.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#set_remaining_args-instance_method" title="#set_remaining_args (instance method)">#<strong>set_remaining_args</strong>(key, default: [], accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; self </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Specify what should be done with unmatched positional arguments.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#set_signal_handler-instance_method" title="#set_signal_handler (instance method)">#<strong>set_signal_handler</strong>(signal, handler)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the handler for the given signal.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#signal_handler-instance_method" title="#signal_handler (instance method)">#<strong>signal_handler</strong>(signal)  &#x21d2; Proc, ... </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Return the signal handler for the given signal.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#simple_name-instance_method" title="#simple_name (instance method)">#<strong>simple_name</strong>  &#x21d2; String </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>The local name of this tool, i.e.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="built_middleware-instance_method">
+  
+    #<strong>built_middleware</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Toys::Middleware</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The stack of built middleware specs for this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Middleware.html" title="Toys::Middleware (module)">Toys::Middleware</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+267
+268
+269</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 267</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_built_middleware'>built_middleware</span>
+  <span class='ivar'>@built_middleware</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="completion=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="completion-instance_method">
+  
+    #<strong>completion</strong>  &#x21d2; <tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Proc</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The completion strategy for this tool.</p>
+
+<p>When reading, this may return an instance of one of the subclasses of
+<span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Completion::Base</a></span>, or a Proc that duck-types it. Generally, this
+defaults to a <span class='object_link'><a href="ToolDefinition/DefaultCompletion.html" title="Toys::ToolDefinition::DefaultCompletion (class)">DefaultCompletion</a></span>, providing a
+standard algorithm that finds appropriate completions from flags,
+positional arguments, and subtools.</p>
+
+<p>When setting, you may pass any of the following:</p>
+
+<ul>
+<li> <code>nil</code> or <code>:default</code> which sets the value to a default instance.</li>
+<li> A Hash of options to pass to the
+<span class='object_link'><a href="ToolDefinition/DefaultCompletion.html" title="Toys::ToolDefinition::DefaultCompletion (class)">DefaultCompletion</a></span> constructor.</li>
+<li> Any other form recognized by <span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Proc</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+302
+303
+304</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 302</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_completion'>completion</span>
+  <span class='ivar'>@completion</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="custom_context_directory=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="custom_context_directory-instance_method">
+  
+    #<strong>custom_context_directory</strong>  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The custom context directory set for this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The directory path</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no custom context directory is set.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+283
+284
+285</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 283</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_custom_context_directory'>custom_context_directory</span>
+  <span class='ivar'>@custom_context_directory</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="default_data-instance_method">
+  
+    #<strong>default_data</strong>  &#x21d2; <tt>Hash</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The default context data set by arguments.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+251
+252
+253</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 251</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_default_data'>default_data</span>
+  <span class='ivar'>@default_data</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="delegate_target-instance_method">
+  
+    #<strong>delegate_target</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The full name of the delegate target, if any.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if this tool delegates</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if this tool does not delegate</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+342
+343
+344</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 342</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_delegate_target'>delegate_target</span>
+  <span class='ivar'>@delegate_target</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="desc=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="desc-instance_method">
+  
+    #<strong>desc</strong>  &#x21d2; <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The short description string.</p>
+
+<p>When reading, this is always returned as a <span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>.</p>
+
+<p>When setting, the description may be provided as any of the following:</p>
+
+<ul>
+<li> A <span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>.</li>
+<li> A normal String, which will be transformed into a
+<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span> using spaces as word delimiters.</li>
+<li> An Array of String, which will be transformed into a
+<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span> where each array element represents an
+individual word for wrapping.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+182
+183
+184</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 182</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_desc'>desc</span>
+  <span class='ivar'>@desc</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="flag_groups-instance_method">
+  
+    #<strong>flag_groups</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="FlagGroup.html" title="Toys::FlagGroup (module)">Toys::FlagGroup</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of all defined flag groups, in order.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="FlagGroup.html" title="Toys::FlagGroup (module)">Toys::FlagGroup</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+208
+209
+210</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 208</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flag_groups'>flag_groups</span>
+  <span class='ivar'>@flag_groups</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="flags-instance_method">
+  
+    #<strong>flags</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="Flag.html" title="Toys::Flag (class)">Toys::Flag</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of all defined flags.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Flag.html" title="Toys::Flag (class)">Toys::Flag</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+215
+216
+217</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 215</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flags'>flags</span>
+  <span class='ivar'>@flags</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="full_name-instance_method">
+  
+    #<strong>full_name</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The name of the tool as an array of strings.
+This array may not be modified.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+144
+145
+146</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 144</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_full_name'>full_name</span>
+  <span class='ivar'>@full_name</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="long_desc=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="long_desc-instance_method">
+  
+    #<strong>long_desc</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The long description strings.</p>
+
+<p>When reading, this is returned as an Array of <span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span>
+representing the lines in the description.</p>
+
+<p>When setting, the description must be provided as an Array where <em>each
+element</em> may be any of the following:</p>
+
+<ul>
+<li> A <span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span> representing one line.</li>
+<li> A normal String representing a line. This will be transformed into a
+<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span> using spaces as word delimiters.</li>
+<li> An Array of String representing a line. This will be transformed into
+a <span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">WrappableString</a></span> where each array element represents an
+individual word for wrapping.</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+201
+202
+203</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 201</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_long_desc'>long_desc</span>
+  <span class='ivar'>@long_desc</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="optional_args-instance_method">
+  
+    #<strong>optional_args</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of all defined optional positional arguments.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+229
+230
+231</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 229</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_optional_args'>optional_args</span>
+  <span class='ivar'>@optional_args</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="priority-instance_method">
+  
+    #<strong>priority</strong>  &#x21d2; <tt>Integer</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The priority of this tool definition.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+151
+152
+153</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 151</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_priority'>priority</span>
+  <span class='ivar'>@priority</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="remaining_arg-instance_method">
+  
+    #<strong>remaining_arg</strong>  &#x21d2; <tt><span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span></tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The remaining arguments specification.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The argument definition</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if remaining arguments are not supported by this tool.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+237
+238
+239</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 237</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_remaining_arg'>remaining_arg</span>
+  <span class='ivar'>@remaining_arg</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="required_args-instance_method">
+  
+    #<strong>required_args</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of all defined required positional arguments.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+222
+223
+224</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 222</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_required_args'>required_args</span>
+  <span class='ivar'>@required_args</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="run_handler=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="run_handler-instance_method">
+  
+    #<strong>run_handler</strong>  &#x21d2; <tt>Proc</tt>, ... 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The run handler.</p>
+
+<p>This handler is called to run the tool. Normally it is a method name,
+represented by a symbol. (The default is <code>:run</code>.) It can be set to a
+different method name, or to a proc that will be called with <code>self</code> set
+to the tool context. Either way, it takes no arguments. The run handler
+can also be explicitly set to <code>nil</code> indicating a non-runnable tool;
+however, typically a tool is made non-runnable simply by leaving the run
+handler set to <code>:run</code> and not defining the method.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the run handler is defined as a Proc</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the run handler is defined as a method</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the tool is explicitly made non-runnable</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+319
+320
+321</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 319</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_run_handler'>run_handler</span>
+  <span class='ivar'>@run_handler</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="settings-instance_method">
+  
+    #<strong>settings</strong>  &#x21d2; <tt><span class='object_link'><a href="ToolDefinition/Settings.html" title="Toys::ToolDefinition::Settings (class)">Toys::ToolDefinition::Settings</a></span></tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Settings for this tool</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ToolDefinition/Settings.html" title="Toys::ToolDefinition::Settings (class)">Toys::ToolDefinition::Settings</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+136
+137
+138</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 136</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_settings'>settings</span>
+  <span class='ivar'>@settings</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="source_info-instance_method">
+  
+    #<strong>source_info</strong>  &#x21d2; <tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Info on the source of this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The source info</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the source is not defined.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+275
+276
+277</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 275</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_source_info'>source_info</span>
+  <span class='ivar'>@source_info</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="source_root-instance_method">
+  
+    #<strong>source_root</strong>  &#x21d2; <tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt><sup>?</sup>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The root source info defining this tool, or nil if there is no source.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt>, <tt>nil</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+158
+159
+160</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 158</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_source_root'>source_root</span>
+  <span class='ivar'>@source_root</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="subtool_middleware_stack-instance_method">
+  
+    #<strong>subtool_middleware_stack</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The stack of middleware specs used for subtools.</p>
+
+<p>This array may be modified in place.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="Middleware/Spec.html" title="Toys::Middleware::Spec (class)">Toys::Middleware::Spec</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+260
+261
+262</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 260</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_subtool_middleware_stack'>subtool_middleware_stack</span>
+  <span class='ivar'>@subtool_middleware_stack</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="tool_class-instance_method">
+  
+    #<strong>tool_class</strong>  &#x21d2; <tt>Class</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The tool class.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+165
+166
+167</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 165</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tool_class'>tool_class</span>
+  <span class='ivar'>@tool_class</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="usage_error_handler=-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="usage_error_handler-instance_method">
+  
+    #<strong>usage_error_handler</strong>  &#x21d2; <tt>Proc</tt>, ... 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The usage error handler.</p>
+
+<p>This handler is called when at least one usage error is detected during
+argument parsing, and is called instead of the <code>run</code> method. It can be
+specified as a Proc, or a Symbol indicating a method to call. It
+optionally takes an array of <span class='object_link'><a href="ArgParser/UsageError.html" title="Toys::ArgParser::UsageError (class)">ArgParser::UsageError</a></span> as the sole
+argument.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the usage error handler is defined as a Proc</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the user error handler is defined as a method</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no usage error handler</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+334
+335
+336</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 334</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_usage_error_handler'>usage_error_handler</span>
+  <span class='ivar'>@usage_error_handler</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id=""></span>
+      <div class="method_details ">
+  <h3 class="signature " id="used_flags-instance_method">
+  
+    #<strong>used_flags</strong>  &#x21d2; <tt>Array&lt;String&gt;</tt>  <span class="extras">(readonly)</span>
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A list of flags that have been used in the flag definitions.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+244
+245
+246</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 244</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_used_flags'>used_flags</span>
+  <span class='ivar'>@used_flags</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="add_acceptor-instance_method">
+  
+    #<strong>add_acceptor</strong>(name, acceptor = nil, type_desc: nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a named acceptor to the tool. This acceptor may be refereneced by
+name when adding a flag or an arg. See <span class='object_link'><a href="Acceptor.html#create-class_method" title="Toys::Acceptor.create (method)">Acceptor.create</a></span> for
+detailed information on how to specify an acceptor.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the acceptor.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>acceptor</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>, <tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The acceptor to add. You
+can provide either an acceptor object, or a spec understood by
+<span class='object_link'><a href="Acceptor.html#create-class_method" title="Toys::Acceptor.create (method)">Acceptor.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>type_desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Type description string, shown in help.
+Defaults to the acceptor name.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Optional block used to create an acceptor. See
+<span class='object_link'><a href="Acceptor.html#create-class_method" title="Toys::Acceptor.create (method)">Acceptor.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+641
+642
+643</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 641</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_acceptor'>add_acceptor</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_acceptor'>acceptor</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>type_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_completion-instance_method">
+  
+    #<strong>add_completion</strong>(name, completion = nil, **options, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a named completion proc to this tool. The completion may be
+referenced by name when adding a flag or an arg. See
+<span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span> for detailed information on how to specify a
+completion.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the completion.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>completion</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The completion to
+add. You can provide either a completion object, or a spec understood
+by <span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>options</span>
+      
+      
+        <span class='type'>(<tt>Hash</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Additional options to pass to the completion.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Optional block used to create a completion. See
+<span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+674
+675
+676</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 674</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_completion'>add_completion</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_completion'>completion</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_options'>options</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_flag-instance_method">
+  
+    #<strong>add_flag</strong>(key, flags = [], accept: nil, default: nil, handler: nil, complete_flags: nil, complete_values: nil, report_collisions: true, group: nil, desc: nil, long_desc: nil, display_name: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a flag to the current tool. Each flag must specify a key which
+the script may use to obtain the flag value from the context.
+You may then provide the flags themselves in <code>OptionParser</code> form.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The key to use to retrieve the value from
+the execution context.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flags</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The flags in OptionParser format. If empty,
+a flag will be inferred from the key.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>accept</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An acceptor that validates and/or converts the
+value. You may provide either the name of an acceptor you have
+defined, or one of the default acceptors provided by OptionParser.
+Optional. If not specified, accepts any value as a string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The default value. This is the value that will
+be set in the context if this flag is not provided on the command
+line. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>handler</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>nil</tt>, <tt>:set</tt>, <tt>:push</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An optional handler that customizes
+how a value is set or updated. A handler is a proc that takes up to
+three arguments: the given value, the previous value, and a hash
+containing all the data collected so far during argument parsing. It
+must return the new value that should be set. You may also specify a
+predefined named handler. The <code>:set</code> handler (the default) replaces
+the previous value (effectively <code>-&gt; (val) { val }</code>). The <code>:push</code>
+handler expects the previous value to be an array and pushes the
+given value onto it; it should be combined with setting <code>default: []</code>
+and is intended for &quot;multi-valued&quot; flags.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_flags</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion
+for flag names associated with this flag. By default, a
+<span class='object_link'><a href="Flag/DefaultCompletion.html" title="Toys::Flag::DefaultCompletion (class)">Flag::DefaultCompletion</a></span> is used, which provides the flag&#39;s
+names as completion candidates. To customize completion, set this to
+a hash of options to pass to the constructor for
+<span class='object_link'><a href="Flag/DefaultCompletion.html" title="Toys::Flag::DefaultCompletion (class)">Flag::DefaultCompletion</a></span>, or pass any other spec recognized
+by <span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete_values</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion
+for flag values associated with this flag. Pass any spec
+recognized by <span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>report_collisions</span>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Raise an exception if a flag is
+requested that is already in use or marked as disabled. Default is
+true.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>group</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="FlagGroup.html" title="Toys::FlagGroup (module)">Toys::FlagGroup</a></span></tt>, <tt>String</tt>, <tt>Symbol</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Group for
+this flag. You may provide a group name, a FlagGroup object, or
+<code>nil</code> which denotes the default group.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the flag. See <span class='object_link'><a href="#desc-instance_method" title="Toys::ToolDefinition#desc (method)">#desc</a></span> for a
+description of allowed formats. Defaults to the empty string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the flag. See <span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span>
+for a description of allowed formats. Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>display_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A display name for this flag, used in help
+text and error messages.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+807
+808
+809
+810
+811
+812</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 807</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_flag'>add_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='id identifier rubyid_flags'>flags</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span>
+             <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>handler:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete_flags:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+             <span class='label'>complete_values:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>group:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+             <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_flag_group-instance_method">
+  
+    #<strong>add_flag_group</strong>(type: :optional, desc: nil, long_desc: nil, name: nil, report_collisions: true, prepend: false)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a flag group to the group list.</p>
+
+<p>The type should be one of the following symbols:</p>
+
+<ul>
+<li> <code>:optional</code> All flags in the group are optional</li>
+<li> <code>:required</code> All flags in the group are required</li>
+<li> <code>:exactly_one</code> Exactly one flag in the group must be provided</li>
+<li> <code>:at_least_one</code> At least one flag in the group must be provided</li>
+<li> <code>:at_most_one</code> At most one flag in the group must be provided</li>
+</ul>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>type</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>:optional</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The type of group. Default is <code>:optional</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the group. See <span class='object_link'><a href="#desc-instance_method" title="Toys::ToolDefinition#desc (method)">#desc</a></span> for a
+description of allowed formats. Defaults to <code>&quot;Flags&quot;</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the flag group. See
+<span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span> for a description of allowed
+formats. Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the group, or nil for no
+name.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>report_collisions</span>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If <code>true</code>, raise an exception if a
+the given name is already taken. If <code>false</code>, ignore. Default is
+<code>true</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>prepend</span>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>false</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>If <code>true</code>, prepend rather than append the
+group to the list. Default is <code>false</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+750
+751
+752
+753</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 750</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_flag_group'>add_flag_group</span><span class='lparen'>(</span><span class='label'>type:</span> <span class='symbol'>:optional</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                   <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>report_collisions:</span> <span class='kw'>true</span><span class='comma'>,</span> <span class='label'>prepend:</span> <span class='kw'>false</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_initializer-instance_method">
+  
+    #<strong>add_initializer</strong>(proc, *args, **kwargs)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add an initializer.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>proc</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The initializer block</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>args</span>
+      
+      
+        <span class='type'>(<tt>Object...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Arguments to pass to the initializer</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>kwargs</span>
+      
+      
+        <span class='type'>(<tt>keywords</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Keyword arguments to pass to the initializer</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+982
+983
+984</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 982</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_initializer'>add_initializer</span><span class='lparen'>(</span><span class='id identifier rubyid_proc'>proc</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_kwargs'>kwargs</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_mixin-instance_method">
+  
+    #<strong>add_mixin</strong>(name, mixin_module = nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a named mixin module to this tool.
+You may provide a mixin module or a block that configures one.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the mixin.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>mixin_module</span>
+      
+      
+        <span class='type'>(<tt>Module</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The mixin module.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Define the mixin module here if a <code>mixin_module</code> is
+not provided directly.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+655
+656
+657</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 655</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_mixin'>add_mixin</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_mixin_module'>mixin_module</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_optional_arg-instance_method">
+  
+    #<strong>add_optional_arg</strong>(key, default: nil, accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add an optional positional argument to the current tool. You must specify
+a key which the script may use to obtain the argument value from the
+context. If an optional argument is not given on the command line, the
+value is set to the given default.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The key to use to retrieve the value from
+the execution context.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The default value. This is the value that will
+be set in the context if this argument is not provided on the command
+line. Defaults to <code>nil</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>accept</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An acceptor that validates and/or converts the
+value. You may provide either the name of an acceptor you have
+defined, or one of the default acceptors provided by OptionParser.
+Optional. If not specified, accepts any value as a string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion. See
+<span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span> for recognized formats.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>display_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A name to use for display (in help text and
+error reports). Defaults to the key in upper case.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the arg. See <span class='object_link'><a href="#desc-instance_method" title="Toys::ToolDefinition#desc (method)">#desc</a></span> for a
+description of allowed formats. Defaults to the empty string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the arg. See <span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span>
+for a description of allowed formats. Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+881
+882
+883
+884</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 881</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_optional_arg'>add_optional_arg</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                     <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_required_arg-instance_method">
+  
+    #<strong>add_required_arg</strong>(key, accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a required positional argument to the current tool. You must specify
+a key which the script may use to obtain the argument value from the
+context.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The key to use to retrieve the value from
+the execution context.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>accept</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An acceptor that validates and/or converts the
+value. You may provide either the name of an acceptor you have
+defined, or one of the default acceptors provided by OptionParser.
+Optional. If not specified, accepts any value as a string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion. See
+<span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span> for recognized formats.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>display_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A name to use for display (in help text and
+error reports). Defaults to the key in upper case.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the arg. See <span class='object_link'><a href="#desc-instance_method" title="Toys::ToolDefinition#desc (method)">#desc</a></span> for a
+description of allowed formats. Defaults to the empty string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the arg. See <span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span>
+for a description of allowed formats. Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+849
+850
+851
+852</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 849</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_required_arg'>add_required_arg</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                     <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="add_template-instance_method">
+  
+    #<strong>add_template</strong>(name, template_class = nil, &amp;block)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a named template class to this tool.
+You may provide a template class or a block that configures one.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The name of the template.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>template_class</span>
+      
+      
+        <span class='type'>(<tt>Class</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The template class.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Define the template class here if a <code>template_class</code>
+is not provided directly.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+688
+689
+690</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 688</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_add_template'>add_template</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_template_class'>template_class</span> <span class='op'>=</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="append_long_desc-instance_method">
+  
+    #<strong>append_long_desc</strong>(long_desc)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Append long description strings.</p>
+
+<p>You must pass an array of lines in the long description. See <span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span>
+for details on how each line may be represented.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>,String,Array&lt;String&gt;&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+622
+623
+624</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 622</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_append_long_desc'>append_long_desc</span><span class='lparen'>(</span><span class='id identifier rubyid_long_desc'>long_desc</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="argument_parsing_disabled?-instance_method">
+  
+    #<strong>argument_parsing_disabled?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool has disabled argument parsing.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+480
+481
+482</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 480</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_argument_parsing_disabled?'>argument_parsing_disabled?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="context_directory-instance_method">
+  
+    #<strong>context_directory</strong>  &#x21d2; <tt>String</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Return the effective context directory.
+If there is a custom context directory, uses that. Otherwise, looks for
+a custom context directory up the tool ancestor chain. If none is
+found, uses the default context directory from the source info. It is
+possible for there to be no context directory at all, in which case,
+returns nil.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The effective context directory path.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no effective context directory.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1019
+1020
+1021</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 1019</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_context_directory'>context_directory</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="definition_finished?-instance_method">
+  
+    #<strong>definition_finished?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool&#39;s definition has been finished and is locked.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+472
+473
+474</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 472</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_definition_finished?'>definition_finished?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="delegate_to-instance_method">
+  
+    #<strong>delegate_to</strong>(target)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Causes this tool to delegate to another tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>target</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The full path to the delegate tool.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+1029
+1030
+1031</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 1029</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_delegate_to'>delegate_to</span><span class='lparen'>(</span><span class='id identifier rubyid_target'>target</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="disable_argument_parsing-instance_method">
+  
+    #<strong>disable_argument_parsing</strong>  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Disable argument parsing for this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+697
+698
+699</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 697</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_disable_argument_parsing'>disable_argument_parsing</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="disable_flag-instance_method">
+  
+    #<strong>disable_flag</strong>(*flags)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Mark one or more flags as disabled, preventing their use by any
+subsequent flag definition. This may be used to prevent middleware from
+defining a particular flag.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>flags</span>
+      
+      
+        <span class='type'>(<tt>String...</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The flags to disable</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+822
+823
+824</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 822</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_disable_flag'>disable_flag</span><span class='lparen'>(</span><span class='op'>*</span><span class='id identifier rubyid_flags'>flags</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="display_name-instance_method">
+  
+    #<strong>display_name</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>A displayable name of this tool, generally the full name delimited by
+spaces.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+359
+360
+361</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 359</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_display_name'>display_name</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="enforce_flags_before_args-instance_method">
+  
+    #<strong>enforce_flags_before_args</strong>(state = true)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Enforce that flags must come before args for this tool.
+You may disable enforcement by passoing <code>false</code> for the state.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>state</span>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+708
+709
+710</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 708</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_enforce_flags_before_args'>enforce_flags_before_args</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="exact_flag_match_required?-instance_method">
+  
+    #<strong>exact_flag_match_required?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool requires exact flag matches.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+496
+497
+498</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 496</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_exact_flag_match_required?'>exact_flag_match_required?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="flags_before_args_enforced?-instance_method">
+  
+    #<strong>flags_before_args_enforced?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool enforces flags before args.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+488
+489
+490</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 488</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_flags_before_args_enforced?'>flags_before_args_enforced?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="handles_interrupts?-instance_method">
+  
+    #<strong>handles_interrupts?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool handles interrupts. This is equivalent to
+<code>handles_signal?(2)</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+413
+414
+415</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 413</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handles_interrupts?'>handles_interrupts?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="handles_signal?-instance_method">
+  
+    #<strong>handles_signal?</strong>(signal)  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool handles the given signal.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>signal</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>, <tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The signal number or name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+423
+424
+425</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 423</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handles_signal?'>handles_signal?</span><span class='lparen'>(</span><span class='id identifier rubyid_signal'>signal</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="handles_usage_errors?-instance_method">
+  
+    #<strong>handles_usage_errors?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool handles usage errors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+431
+432
+433</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 431</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_handles_usage_errors?'>handles_usage_errors?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="include_mixin-instance_method">
+  
+    #<strong>include_mixin</strong>(mod, *args, **kwargs)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Include the given mixin in the tool class.</p>
+
+<p>The mixin must be given as a module. You can use <span class='object_link'><a href="#lookup_mixin-instance_method" title="Toys::ToolDefinition#lookup_mixin (method)">#lookup_mixin</a></span> to
+resolve named mixins.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>mod</span>
+      
+      
+        <span class='type'>(<tt>Module</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The mixin module</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+575
+576
+577</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 575</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_include_mixin'>include_mixin</span><span class='lparen'>(</span><span class='id identifier rubyid_mod'>mod</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_args'>args</span><span class='comma'>,</span> <span class='op'>**</span><span class='id identifier rubyid_kwargs'>kwargs</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="includes_arguments?-instance_method">
+  
+    #<strong>includes_arguments?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if at least one flag or positional argument is defined
+for this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+456
+457
+458</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 456</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_includes_arguments?'>includes_arguments?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="includes_definition?-instance_method">
+  
+    #<strong>includes_definition?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool has any definition information.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+464
+465
+466</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 464</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_includes_definition?'>includes_definition?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="includes_description?-instance_method">
+  
+    #<strong>includes_description?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if there is a specific description set for this tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+447
+448
+449</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 447</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_includes_description?'>includes_description?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="includes_modules?-instance_method">
+  
+    #<strong>includes_modules?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool has at least one included module.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+439
+440
+441</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 439</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_includes_modules?'>includes_modules?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="interrupt_handler-instance_method">
+  
+    #<strong>interrupt_handler</strong>  &#x21d2; <tt>Proc</tt>, ... 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Return the interrupt handler. This is equivalent to <code>signal_handler(2)</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the interrupt signal handler is defined as a Proc</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the interrupt signal handler is defined as a method</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no handler for the interrupt signals</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+387
+388
+389</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 387</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_interrupt_handler'>interrupt_handler</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="interrupt_handler=-instance_method">
+  
+    #<strong>interrupt_handler=</strong>(handler)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the interrupt handler. This is equivalent to calling
+<span class='object_link'><a href="#set_signal_handler-instance_method" title="Toys::ToolDefinition#set_signal_handler (method)">#set_signal_handler</a></span> for the <code>SIGINT</code> signal.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>handler</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The interrupt signal handler</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+940
+941
+942</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 940</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_interrupt_handler='>interrupt_handler=</span><span class='lparen'>(</span><span class='id identifier rubyid_handler'>handler</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lock_source-instance_method">
+  
+    #<strong>lock_source</strong>(source)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Sets the path to the file that defines this tool.
+A tool may be defined from at most one path. If a different path is
+already set, it is left unchanged.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>source</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="SourceInfo.html" title="Toys::SourceInfo (class)">Toys::SourceInfo</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Source info</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+587
+588
+589</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 587</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lock_source'>lock_source</span><span class='lparen'>(</span><span class='id identifier rubyid_source'>source</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_acceptor-instance_method">
+  
+    #<strong>lookup_acceptor</strong>(name)  &#x21d2; <tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Get the named acceptor from this tool or its ancestors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The acceptor name.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Acceptor/Base.html" title="Toys::Acceptor::Base (class)">Toys::Acceptor::Base</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The acceptor.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no acceptor of the given name is found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+529
+530
+531</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 529</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_acceptor'>lookup_acceptor</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_completion-instance_method">
+  
+    #<strong>lookup_completion</strong>(name)  &#x21d2; <tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, ... 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Get the named completion from this tool or its ancestors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The completion name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Completion/Base.html" title="Toys::Completion::Base (class)">Toys::Completion::Base</a></span></tt>, <tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The completion proc.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no completion of the given name is found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+562
+563
+564</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 562</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_completion'>lookup_completion</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_mixin-instance_method">
+  
+    #<strong>lookup_mixin</strong>(name)  &#x21d2; <tt>Module</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Get the named mixin from this tool or its ancestors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The mixin name.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Module</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The mixin module.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no mixin of the given name is found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+551
+552
+553</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 551</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_mixin'>lookup_mixin</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="lookup_template-instance_method">
+  
+    #<strong>lookup_template</strong>(name)  &#x21d2; <tt>Class</tt><sup>?</sup> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Get the named template from this tool or its ancestors.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The template name.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Class</tt>, <tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The template class.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if no template of the given name is found.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+540
+541
+542</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 540</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_lookup_template'>lookup_template</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="positional_args-instance_method">
+  
+    #<strong>positional_args</strong>  &#x21d2; <tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>All arg definitions in order: required, optional, remaining.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Array&lt;<span class='object_link'><a href="PositionalArg.html" title="Toys::PositionalArg (class)">Toys::PositionalArg</a></span>&gt;</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+505
+506
+507</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 505</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_positional_args'>positional_args</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="require_exact_flag_match-instance_method">
+  
+    #<strong>require_exact_flag_match</strong>(state = true)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Require that flags must match exactly. (If false, flags can match an
+unambiguous substring.)</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>state</span>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>true</tt>)</em>
+      
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+719
+720
+721</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 719</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_require_exact_flag_match'>require_exact_flag_match</span><span class='lparen'>(</span><span class='id identifier rubyid_state'>state</span> <span class='op'>=</span> <span class='kw'>true</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="resolve_flag-instance_method">
+  
+    #<strong>resolve_flag</strong>(str)  &#x21d2; <tt><span class='object_link'><a href="Flag/Resolution.html" title="Toys::Flag::Resolution (class)">Toys::Flag::Resolution</a></span></tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Resolve the given flag given the flag string. Returns an object that
+describes the resolution result, including whether the resolution
+matched a unique flag, the specific flag syntax that was matched, and
+additional information.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>str</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>Flag string</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="Flag/Resolution.html" title="Toys::Flag::Resolution (class)">Toys::Flag::Resolution</a></span></tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+518
+519
+520</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 518</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_resolve_flag'>resolve_flag</span><span class='lparen'>(</span><span class='id identifier rubyid_str'>str</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="root?-instance_method">
+  
+    #<strong>root?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool is a root tool.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+395
+396
+397</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 395</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_root?'>root?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="runnable?-instance_method">
+  
+    #<strong>runnable?</strong>  &#x21d2; <tt>true</tt>, <tt>false</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Returns true if this tool is marked as runnable.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>true</tt>, <tt>false</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+403
+404
+405</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 403</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_runnable?'>runnable?</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="set_remaining_args-instance_method">
+  
+    #<strong>set_remaining_args</strong>(key, default: [], accept: nil, complete: nil, display_name: nil, desc: nil, long_desc: nil)  &#x21d2; <tt>self</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Specify what should be done with unmatched positional arguments. You must
+specify a key which the script may use to obtain the remaining args
+from the context.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>key</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The key to use to retrieve the value from
+the execution context.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>[]</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The default value. This is the value that will
+be set in the context if no unmatched arguments are provided on the
+command line. Defaults to the empty array <code>[]</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>accept</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An acceptor that validates and/or converts the
+value. You may provide either the name of an acceptor you have
+defined, or one of the default acceptors provided by OptionParser.
+Optional. If not specified, accepts any value as a string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>complete</span>
+      
+      
+        <span class='type'>(<tt>Object</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A specifier for shell tab completion. See
+<span class='object_link'><a href="Completion.html#create-class_method" title="Toys::Completion.create (method)">Completion.create</a></span> for recognized formats.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>display_name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A name to use for display (in help text and
+error reports). Defaults to the key in upper case.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>desc</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt><span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span></tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Short
+description for the arg. See <span class='object_link'><a href="#desc-instance_method" title="Toys::ToolDefinition#desc (method)">#desc</a></span> for a
+description of allowed formats. Defaults to the empty string.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>long_desc</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String,Array&lt;String&gt;,<span class='object_link'><a href="WrappableString.html" title="Toys::WrappableString (class)">Toys::WrappableString</a></span>&gt;</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Long description for the arg. See <span class='object_link'><a href="#long_desc-instance_method" title="Toys::ToolDefinition#long_desc (method)">#long_desc</a></span>
+for a description of allowed formats. Defaults to the empty array.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>self</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+912
+913
+914
+915</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 912</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_set_remaining_args'>set_remaining_args</span><span class='lparen'>(</span><span class='id identifier rubyid_key'>key</span><span class='comma'>,</span> <span class='label'>default:</span> <span class='lbracket'>[</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>accept:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>complete:</span> <span class='kw'>nil</span><span class='comma'>,</span>
+                       <span class='label'>display_name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>desc:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>long_desc:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="set_signal_handler-instance_method">
+  
+    #<strong>set_signal_handler</strong>(signal, handler)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the handler for the given signal.</p>
+
+<p>This handler is called when the given signal is received, immediately
+taking over the execution as if it were the new <code>run</code> method. The signal
+handler can be specified as a Proc, or a Symbol indicating a method to
+call. It optionally takes the <code>SignalException</code> as the sole argument.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>signal</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>, <tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The signal number or name</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>handler</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The signal handler</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+955
+956
+957</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 955</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_set_signal_handler'>set_signal_handler</span><span class='lparen'>(</span><span class='id identifier rubyid_signal'>signal</span><span class='comma'>,</span> <span class='id identifier rubyid_handler'>handler</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="signal_handler-instance_method">
+  
+    #<strong>signal_handler</strong>(signal)  &#x21d2; <tt>Proc</tt>, ... 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Return the signal handler for the given signal.</p>
+
+<p>This handler is called when the given signal is received, immediately
+taking over the execution as if it were the new run handler. The signal
+handler can be specified as a Proc, or a Symbol indicating a method to
+call. It optionally takes the <code>SignalException</code> as the sole argument.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>signal</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>, <tt>String</tt>, <tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The signal number or name</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the signal handler is defined as a Proc</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if the signal handler is defined as a method</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>nil</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>if there is no handler for the given signal</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+376
+377
+378</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 376</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_signal_handler'>signal_handler</span><span class='lparen'>(</span><span class='id identifier rubyid_signal'>signal</span><span class='rparen'>)</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="simple_name-instance_method">
+  
+    #<strong>simple_name</strong>  &#x21d2; <tt>String</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>The local name of this tool, i.e. the last element of the full name.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+349
+350
+351</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'core-docs/toys/tool_definition.rb', line 349</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_simple_name'>simple_name</span>
+  <span class='comment'># Source available in the toys-core gem
+</span><span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Tue Jan  6 18:40:37 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-4.0.0).
+</div>
+
+    </div>
+  </body>
+</html>
