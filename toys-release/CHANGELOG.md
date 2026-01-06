@@ -1,5 +1,12 @@
 # Release History
 
+### v0.4.0 / 2026-01-06
+
+* ADDED: Use Ruby 4.0 in actions
+* ADDED: Require toys 0.19 or later
+* FIXED: Improved support for minitest 6
+* FIXED: Output formatting in setup utilities is more consistent
+
 ### v0.3.2 / 2025-12-25
 
 * DOCS: Some formatting fixes in the user guide
