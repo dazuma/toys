@@ -2,7 +2,7 @@
 
 ### v0.19.1 / 2026-01-06
 
-* FIXED: Improved support for minitest 6
+* FIXED: The minitest template and the "system test" builtin now support minitest 6
 
 ### v0.19.0 / 2025-12-22
 
