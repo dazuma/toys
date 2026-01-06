@@ -1,5 +1,9 @@
 # Release History
 
+### v0.19.1 / 2026-01-06
+
+* DOCS: Some formatting fixes in the user guide
+
 ### v0.19.0 / 2025-12-22
 
 Compatibility update for Ruby 4.0, including:
