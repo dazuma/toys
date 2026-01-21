@@ -75,7 +75,7 @@ For more information on the underlying Toys framework, see the
 
 ## License
 
-Copyright 2025 Daniel Azuma and the Toys contributors
+Copyright 2025-2026 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

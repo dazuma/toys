@@ -53,45 +53,19 @@ module Toys
       ##
       # Attempt to verify that no other release pull request is already open
       # for this release.
-      # This is currently somewhat conservative. If any multi-release pull
-      # request is already open for the target branch, it will be noted as
-      # conflicting, even if it doesn't actually overlap. We don't currently
-      # have logic to dig into the existing pull requests and determine which
-      # components they actually want to release.
       #
       def verify_pull_request_status
         @utils.accumulate_errors("One or more existing release pull requests conflicts with this release") do
+          component_names = @request_spec.arguments.map { |arg| arg.sub(/[:=].*/, "") }
           existing_prs = @repository.find_release_prs(branch: @target_branch)
-          if @request_spec.single_component?
-            component_name = @request_spec.resolved_components.first.component_name
-            release_branch_name = @repository.release_branch_name(@target_branch, component_name)
-            existing_prs.each do |pr|
-              if pr.head_ref == release_branch_name
-                @utils.error("A release pull request (##{pr.number}) is already open for #{component_name}")
-              elsif pr.head_ref =~ %r{release/multi/\d{14}-\d{6}/#{@target_branch}}
-                @utils.error("A release pull request (##{pr.number}) is already open for multiple components")
-              end
-            end
-          else
-            existing_prs.each do |pr|
-              if pr.head_ref.end_with?("/#{@target_branch}")
-                @utils.error("A release pull request (##{pr.number}) is already open")
-              end
+          existing_prs.each do |pr|
+            pr_args = pr.request_arguments
+            if !pr_args || pr_args.map { |arg| arg.sub(/[:=].*/, "") }.intersect?(component_names)
+              @utils.error("An existing release pull request (##{pr.number}) overlaps with this one")
             end
           end
         end
         self
-      end
-
-      ##
-      # @return [String] A release branch name for this release
-      #
-      def determine_release_branch
-        if @request_spec.single_component?
-          @repository.release_branch_name(@target_branch, @request_spec.resolved_components[0].component_name)
-        else
-          @repository.multi_release_branch_name(@target_branch)
-        end
       end
 
       ##
@@ -166,7 +140,11 @@ module Toys
           script will trigger automatically on merge.
            *  To abort this release, close this pull request without merging.
 
-          #{build_pr_body_footer}
+          #{build_pr_body_changes}
+
+          ----
+
+          #{build_pr_body_metadata}
         STR
       end
 
@@ -176,7 +154,11 @@ module Toys
 
           You can run the `release perform` script once these changes are merged.
 
-          #{build_pr_body_footer}
+          #{build_pr_body_changes}
+
+          ----
+
+          #{build_pr_body_metadata}
         STR
       end
 
@@ -198,7 +180,7 @@ module Toys
         lines.join("\n")
       end
 
-      def build_pr_body_footer
+      def build_pr_body_changes
         lines = ["The generated changelog entries have been copied below:"]
         @request_spec.resolved_components.each do |resolved_component|
           lines << ""
@@ -211,6 +193,12 @@ module Toys
           end
         end
         lines.join("\n")
+      end
+
+      def build_pr_body_metadata
+        metadata = {"request_arguments" => @request_spec.arguments}
+        metadata_json = JSON.pretty_generate(metadata)
+        "```\n# release_metadata DO NOT REMOVE OR MODIFY\n#{metadata_json}\n```"
       end
     end
   end
