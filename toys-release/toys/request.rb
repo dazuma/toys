@@ -43,7 +43,7 @@ remaining_args :components do
       " If the version is omitted, a semver change type will be inferred" \
       " from the conventional commit message history, and the component will" \
       " be released only if at least one significant releasable commit tag" \
-      " (such as 'feat:', 'fix:', or 'docs:') is found.",
+      " (such as 'feat:' or 'fix:') is found.",
     "",
     "Note that any coordination groups are honored. If you release at least" \
       " one component within a group, all components in the group will be" \
@@ -82,7 +82,7 @@ def run
   @repo_settings = Toys::Release::RepoSettings.load_from_environment(@utils)
   @repository = prepare_repository
   @request_spec = build_request_spec
-  @request_logic = Toys::Release::RequestLogic.new(@repository, @request_spec)
+  @request_logic = Toys::Release::RequestLogic.new(@repository, @request_spec, target_branch: target_branch)
   @request_logic.verify_component_status
   @request_logic.verify_pull_request_status
   confirmation_ui
@@ -113,19 +113,22 @@ end
 def build_request_spec
   request_spec = Toys::Release::RequestSpec.new(@utils)
   set(:components, ["all"]) if components.empty?
-  components.each do |component_spec|
-    component_spec = component_spec.split(/[:=]/)
-    name = component_spec[0]
-    version = component_spec[1]
+  components.each do |str|
+    name, version = str.split(/[:=]/, 2)
     if name == "all"
       @repository.all_components.each do |component|
-        request_spec.add(component.name, version: version)
+        request_spec.add(component, version: version)
       end
     else
-      request_spec.add(name, version: version)
+      component = @repository.component_named(name)
+      if component.nil?
+        @utils.error("Unknown component name #{name.inspect}")
+      else
+        request_spec.add(component, version: version)
+      end
     end
   end
-  request_spec.resolve_versions(@repository, release_ref: target_branch)
+  request_spec.resolve_versions(@repository.current_sha(target_branch))
   request_spec
 end
 
@@ -140,7 +143,7 @@ def confirmation_ui
 end
 
 def create_pull_request
-  release_branch = @request_logic.determine_release_branch
+  release_branch = @repository.release_branch_name(target_branch)
   commit_title = @request_logic.build_commit_title
   commit_details = @request_logic.build_commit_details
   signoff = @repository.settings.signoff_commits?
