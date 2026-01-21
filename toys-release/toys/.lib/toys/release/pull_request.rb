@@ -107,30 +107,69 @@ module Toys
       end
 
       ##
+      # @return [String] The pull request description text
+      #
+      def description
+        resource["body"]
+      end
+
+      ##
+      # Attempt to parse metadata from the pull request description.
+      #
+      # @return [Hash,nil] The metadata hash, or nil if not found.
+      #
+      def release_metadata
+        match = /```\n# release_metadata(?:\s[^\n]*)?\n(\{\n(?:[^\n]*\n)+\}\n)```\n/.match(description)
+        ::JSON.parse(match[1]) rescue nil # rubocop:disable Style/RescueModifier
+      end
+
+      ##
+      # Attempt to parse request arguments from the release metadata.
+      #
+      # @return [Array<String>,nil] The arguments, or nil if not found.
+      #
+      def request_arguments
+        metadata = release_metadata
+        metadata ? metadata["request_arguments"] : nil
+      end
+
+      ##
       # Perform various updates to a pull request
       #
       # @param labels [String,Array<String>,nil] One or more release-related
       #     labels that should be applied. All existing release-related labels
-      #     are replaced with this list. Optional; no label updates are applied
-      #     if not present.
-      # @param state [String,nil] New pull request state. Optional; the state is
-      #     not modified if not present.
+      #     are replaced with this list. Optional; if not present, no label
+      #     updates are applied.
+      # @param state [String,nil] New pull request state. Optional; if not
+      #     present, the state is not modified.
+      # @param title [String,nil] New pull request title. Optional; if not
+      #     present, the title is not modified.
+      # @param body [String,nil] New pull request body. Optional; if not
+      #     present, the body is not modified.
       # @return [self]
       #
-      def update(labels: nil, state: nil)
-        body = {}
-        body[:state] = state if state && self.state != state
+      def update(labels: nil, state: nil, title: nil, body: nil)
+        content = {}
+        content[:state] = state if state && self.state != state
+        content[:body] = body if body
+        content[:title] = title if title
         if labels
           labels = Array(labels)
           release_labels, other_labels = self.labels.partition do |label|
             repository.release_related_label?(label)
           end
-          body[:labels] = other_labels + labels unless release_labels.sort == labels.sort
+          content[:labels] = other_labels + labels unless release_labels.sort == labels.sort
         end
-        unless body.empty?
-          cmd = ["gh", "api", "-XPATCH", "repos/#{repository.settings.repo_path}/issues/#{number}",
-                 "--input", "-", "-H", "Accept: application/vnd.github.v3+json"]
-          repository.utils.exec(cmd, in: [:string, ::JSON.dump(body)], out: :null, e: true)
+        unless content.empty?
+          cmd = [
+            "gh", "api",
+            "--method", "PATCH",
+            "repos/#{repository.settings.repo_path}/issues/#{number}",
+            "-H", "Accept: application/vnd.github+json",
+            "-H", "X-GitHub-Api-Version: 2022-11-28",
+            "--input", "-"
+          ]
+          repository.utils.exec(cmd, in: [:string, ::JSON.dump(content)], out: :null, e: true)
         end
         self
       end
@@ -142,9 +181,16 @@ module Toys
       # @return [self]
       #
       def add_comment(message)
-        cmd = ["gh", "api", "repos/#{repository.settings.repo_path}/issues/#{number}/comments",
-               "--input", "-", "-H", "Accept: application/vnd.github.v3+json"]
-        repository.utils.exec(cmd, in: [:string, ::JSON.dump(body: message)], out: :null, e: true)
+        content = {body: message}
+        cmd = [
+          "gh", "api",
+          "--method", "POST",
+          "repos/#{repository.settings.repo_path}/issues/#{number}/comments",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28",
+          "--input", "-"
+        ]
+        repository.utils.exec(cmd, in: [:string, ::JSON.dump(content)], out: :null, e: true)
         self
       end
     end
