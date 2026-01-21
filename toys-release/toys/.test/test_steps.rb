@@ -7,9 +7,9 @@ describe Toys::Release::Steps do
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
-  let(:toys_component) { Toys::Release::Component.new(repo_settings, "toys", environment_utils) }
-  let(:core_component) { Toys::Release::Component.new(repo_settings, "toys-core", environment_utils) }
-  let(:tools_component) { Toys::Release::Component.new(repo_settings, "common-tools", environment_utils) }
+  let(:toys_component) { Toys::Release::Component.new(repository, "toys", environment_utils) }
+  let(:core_component) { Toys::Release::Component.new(repository, "toys-core", environment_utils) }
+  let(:tools_component) { Toys::Release::Component.new(repository, "common-tools", environment_utils) }
   let(:artifact_dir) { Toys::Release::ArtifactDir.new }
   let(:sample_release_version) { Gem::Version.new("0.99.99") }
   let(:repo_root_dir) { File.dirname(File.dirname(File.dirname(__dir__))) }

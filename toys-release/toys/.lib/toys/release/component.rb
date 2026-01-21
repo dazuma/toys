@@ -13,13 +13,13 @@ module Toys
       ##
       # Constructor
       #
-      # @param repo_settings [Toys::Release::RepoSettings] the repo settings
+      # @param repository [Toys::Release::Repository] the repository
       # @param name [String] The component name
       # @param environment_utils [Toys::Release::EnvironmentUtils] env utils
       #
-      def initialize(repo_settings, name, environment_utils)
-        @repo_settings = repo_settings
-        @settings = repo_settings.component_settings(name)
+      def initialize(repository, name, environment_utils)
+        @repository = repository
+        @settings = repository.settings.component_settings(name)
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils, @settings.version_constant)
@@ -290,18 +290,10 @@ module Toys
         dir = settings.directory
         dir = "#{dir}/" unless dir.end_with?("/")
 
-        message = @utils.capture(["git", "log", sha, "--max-count=1", "--format=%B"], e: true)
+        message = @repository.current_commit_message(sha)
         return message if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(message)
 
-        result = @utils.exec(["git", "rev-parse", "#{sha}^"], out: :capture, err: :null)
-        parent_sha =
-          if result.success?
-            result.captured_out.strip
-          else
-            @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], in: :null).strip
-          end
-        files = @utils.capture(["git", "diff", "--name-only", "#{parent_sha}..#{sha}"], e: true)
-        files.split("\n").each do |file|
+        @repository.paths_modified_by_commit(sha).each do |file|
           return message if (file.start_with?(dir) ||
                             settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&
                             settings.exclude_globs.none? { |pattern| ::File.fnmatch?(pattern, file) }

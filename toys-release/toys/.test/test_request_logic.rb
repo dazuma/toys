@@ -10,21 +10,23 @@ describe Toys::Release::RequestLogic do
   let(:request_spec) { Toys::Release::RequestSpec.new(environment_utils) }
   let(:target_branch) { "main" }
 
-  it "handles Toys two commits before v0.15.6 tag" do
-    request_spec.resolve_versions(repository, release_ref: "4c620495f915fef39d1583170beb6489d0c7073d")
+  it "handles Toys one commit after v0.19.0 tag" do
+    request_spec.resolve_versions(repository, release_ref: "47cfeffc9ba275dab7604e30038fed107636304f")
     request_logic = Toys::Release::RequestLogic.new(repository, request_spec, target_branch: target_branch)
     assert_match(%r|^release/multi/\d{14}-\d{6}/#{target_branch}$|, request_logic.determine_release_branch)
-    assert_equal("release: Release 2 items", request_logic.build_commit_title)
+    assert_equal("release: Release 3 items", request_logic.build_commit_title)
     expected_details = <<~STRING.strip
-      * toys 0.15.6 (was 0.15.5)
-      * toys-core 0.15.6 (was 0.15.5)
+      * toys 0.19.1 (was 0.19.0)
+      * toys-core 0.19.1 (was 0.19.0)
+      * toys-release 0.3.2 (was 0.3.1)
     STRING
     assert_equal(expected_details, request_logic.build_commit_details)
     expected_body = <<~STRING
       This pull request prepares new releases for the following components:
 
-       *  **toys 0.15.6** (was 0.15.5)
-       *  **toys-core 0.15.6** (was 0.15.5)
+       *  **toys 0.19.1** (was 0.19.0)
+       *  **toys-core 0.19.1** (was 0.19.0)
+       *  **toys-release 0.3.2** (was 0.3.1)
 
       For each releasable component, this pull request modifies the version \
       and provides an initial changelog entry based on \
@@ -43,13 +45,28 @@ describe Toys::Release::RequestLogic do
 
       ## toys
 
-       *  FIXED: Fixed minitest version failures in the system test builtin tool
+       *  No significant updates.
 
       ----
 
       ## toys-core
 
-       *  No significant updates.
+       *  DOCS: Some formatting fixes in the user guide
+
+      ----
+
+      ## toys-release
+
+       *  DOCS: Some formatting fixes in the user guide
+
+      ----
+
+      ```
+      # release_metadata DO NOT REMOVE OR MODIFY
+      {
+        "request_input_string": ""
+      }
+      ```
     STRING
     assert_equal(expected_body, request_logic.build_pr_body)
     assert_equal(["release: pending"], request_logic.determine_pr_labels)

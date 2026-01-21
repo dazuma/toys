@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - "pr/request-update"
 
 permissions:
   contents: write # required for pushing changes

@@ -107,6 +107,32 @@ module Toys
       end
 
       ##
+      # Return the SHA of the parent of the given ref
+      #
+      # @param ref [String,nil] Optional ref. Defaults to HEAD.
+      # @return [String] the parent SHA
+      #
+      def parent_sha(ref = nil)
+        result = @utils.exec(["git", "rev-parse", "#{ref}^"], out: :capture, err: :null)
+        if result.success?
+          result.captured_out.strip
+        else
+          @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], in: :null).strip
+        end
+      end
+
+      ##
+      # Return the commit message of the given commit
+      #
+      # @param ref [String,nil] Optional ref. Defaults to HEAD.
+      # @return [String] Commit message.
+      #
+      def current_commit_message(ref = nil)
+        sha = current_sha(ref)
+        @utils.capture(["git", "log", sha, "--max-count=1", "--format=%B"], e: true).strip
+      end
+
+      ##
       # Return the current branch
       #
       # @return [String,nil] the branch name, or nil if no branch is checked out
@@ -124,6 +150,19 @@ module Toys
       #
       def git_remote_url(remote)
         @utils.capture(["git", "remote", "get-url", remote], e: true).strip
+      end
+
+      ##
+      # Return a list of paths modified by the given commit
+      #
+      # @param ref [String,nil] Optional ref. Defaults to HEAD.
+      # @return [Array<String>] File paths
+      #
+      def paths_modified_by_commit(ref = nil)
+        sha = current_sha(ref)
+        parent_sha = parent_sha(ref)
+        files = @utils.capture(["git", "diff", "--name-only", "#{parent_sha}..#{sha}"], e: true)
+        files.split("\n")
       end
 
       ##
@@ -327,7 +366,7 @@ module Toys
       #
       def simplify_branch_name(branch)
         return if branch.nil?
-        match = %r{^refs/heads/([^/\s]+)$}.match(branch)
+        match = %r{^refs/heads/([^\s]+)$}.match(branch)
         return match[1] if match
         branch
       end
@@ -512,7 +551,7 @@ module Toys
         @components = {}
         @utils.accumulate_errors("Errors while validating components") do
           settings.all_component_names.each do |name|
-            releasable = Component.new(settings, name, @utils)
+            releasable = Component.new(self, name, @utils)
             releasable.validate
             @components[releasable.name] = releasable
           end

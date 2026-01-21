@@ -63,6 +63,7 @@ describe Toys::Release::ChangeSet do
     assert_equal(Toys::Release::Semver::NONE, change_set.semver)
     groups = change_set.change_groups
     assert_equal(0, groups.size)
+    refute(change_set.significant_sha?("12345"))
   end
 
   it "reflects a simple feat message" do
@@ -72,6 +73,7 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     assert_equal(["ADDED: Feature 1"], groups[0].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects a simple patch message" do
@@ -81,6 +83,7 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     assert_equal(["FIXED: Fix 1"], groups[0].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects a patch message with breaking change" do
@@ -91,6 +94,7 @@ describe Toys::Release::ChangeSet do
     assert_equal(2, groups.size)
     assert_equal(["BREAKING CHANGE: Fix 1"], groups[0].prefixed_changes)
     assert_equal(["FIXED: Fix 1"], groups[1].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects a simple docs message" do
@@ -100,6 +104,7 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     assert_equal(["DOCS: Clarified"], groups[0].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects a compound message with fix and feat" do
@@ -110,6 +115,7 @@ describe Toys::Release::ChangeSet do
     assert_equal(2, groups.size)
     assert_equal(["ADDED: Feature 1"], groups[0].prefixed_changes)
     assert_equal(["FIXED: Fix 2"], groups[1].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects two messages, each with fix and feat" do
@@ -136,7 +142,7 @@ describe Toys::Release::ChangeSet do
     assert_equal(["FIXED: Fix 2", "FIXED: Breaking fix", "FIXED: Fix 4"], groups[2].prefixed_changes)
   end
 
-  it "reflects a semver-change" do
+  it "reflects a downgrading semver-change" do
     change_set.add_message("12345", "feat!: Breaking feature\nsemver-change: minor (#123)\nfeat!: Another break\n")
     change_set.finish
     assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
@@ -144,6 +150,17 @@ describe Toys::Release::ChangeSet do
     assert_equal(2, groups.size)
     assert_equal(["BREAKING CHANGE: Breaking feature", "BREAKING CHANGE: Another break"], groups[0].prefixed_changes)
     assert_equal(["ADDED: Breaking feature", "ADDED: Another break"], groups[1].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
+  end
+
+  it "reflects a semver-change that turns a non-significant change significant" do
+    change_set.add_message("12345", "chore: not much here\nsemver-change: minor (#123)\n")
+    change_set.finish
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_nil(groups[0].header)
+    assert(change_set.significant_sha?("12345"))
   end
 
   it "reflects a revert message reverting a feature but leaving a fix" do
@@ -155,6 +172,9 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     assert_equal(["FIXED: Fix 2"], groups[0].prefixed_changes)
+    refute(change_set.significant_sha?("12345"))
+    assert(change_set.significant_sha?("23456"))
+    assert(change_set.significant_sha?("67890"))
   end
 
   it "reflects a revert message reverting the last effective change" do
@@ -163,6 +183,20 @@ describe Toys::Release::ChangeSet do
     change_set.finish
     assert_equal(Toys::Release::Semver::NONE, change_set.semver)
     assert_empty(change_set.change_groups)
+  end
+
+  it "reflects a revert of a revert" do
+    change_set.add_message("12345", "feat: Feat 1")
+    change_set.add_message("23456", "chore: Revert feat 1\nrevert-commit: 12345")
+    change_set.add_message("34567", "chore: Revert the revert\nrevert-commit: 23456")
+    change_set.finish
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["ADDED: Feat 1"], groups[0].prefixed_changes)
+    assert(change_set.significant_sha?("12345"))
+    refute(change_set.significant_sha?("23456"))
+    assert(change_set.significant_sha?("34567"))
   end
 
   it "reflects a scope change to the header and semver" do
