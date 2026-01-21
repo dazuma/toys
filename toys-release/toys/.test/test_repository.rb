@@ -39,22 +39,19 @@ describe Toys::Release::Repository do
     assert_match(%r{dazuma/toys}, repository.git_remote_url("origin"))
   end
 
-  it "creates a single-component release branch name" do
-    assert_equal("release/component/toys-core/main", repository.release_branch_name("main", "toys-core"))
-  end
-
-  it "creates a multi-component release branch name" do
-    assert_match(%r|^release/multi/\d{14}-\d{6}/main$|, repository.multi_release_branch_name("main"))
+  it "creates a release branch name" do
+    assert_match(%r|^release/\d{14}-\d{6}/main$|, repository.release_branch_name("main"))
   end
 
   it "determines if a branch is release-related" do
-    assert(repository.release_related_branch?("release/component/toys/main"))
-    assert(repository.release_related_branch?("release/multi/20250903162351-123456/main"))
+    assert(repository.release_related_branch?("release/component/toys/main")) # Legacy format for single-component
+    assert(repository.release_related_branch?("release/multi/20250903162351-123456/main")) # Legacy multi-component
+    assert(repository.release_related_branch?("release/20250903162351-123456/main"))
     refute(repository.release_related_branch?("release/hello"))
   end
 
-  it "simplifies a branch name" do
-    assert_equal("main", repository.simplify_branch_name("refs/heads/main"))
+  it "simplifies a branch name with a slash" do
+    assert_equal("foo/bar", repository.simplify_branch_name("refs/heads/foo/bar"))
   end
 
   it "switches SHA" do
@@ -113,5 +110,28 @@ describe Toys::Release::Repository do
     assert_equal(2, data.size)
     assert_equal(::Gem::Version.new("0.15.5"), data["toys-core"])
     assert_equal(::Gem::Version.new("0.15.5"), data["toys"])
+  end
+
+  it "determines the parent of a SHA" do
+    assert_equal("29a389f95f1d007c7fff455a772286cde10efd53",
+                 repository.parent_sha("21fe91b8be71f1fc6def04f6fa62362cbb775b34"))
+  end
+
+  it "determines the parent of the initial commit" do
+    assert_equal("4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+                 repository.parent_sha("21dcf727b0f5b2f235a05a9d144a8b6a378a1aeb"))
+  end
+
+  it "determines a commit message" do
+    assert_equal("feat(release): Require toys 0.19 or later (#382)",
+                 repository.current_commit_message("21fe91b8be71f1fc6def04f6fa62362cbb775b34"))
+  end
+
+  it "determines paths modified by a commit" do
+    expected = [
+      "toys-release/CHANGELOG.md",
+      "toys-release/lib/toys/release/version.rb",
+    ]
+    assert_equal(expected, repository.paths_modified_by_commit("677d37cc9f6177c06a120e2940971efb73e82dae").sort)
   end
 end
