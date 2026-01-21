@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "set"
+
 require "toys/release/semver"
 
 module Toys
@@ -23,6 +25,7 @@ module Toys
         @semver = Semver::NONE
         @change_groups = nil
         @inputs = []
+        @significant_shas = ::Set.new
       end
 
       ##
@@ -52,12 +55,14 @@ module Toys
         @commit_tags.each do |tag_info|
           tag_info.all_headers.each { |header| change_groups[header] = Group.new(header) }
         end
+        apply_reverts
         @inputs.each do |input|
           @semver = input.semver if input.semver > @semver
           input.changes.each do |(header, change)|
             change_groups.fetch(header, nil)&.add([change])
           end
           change_groups[:breaking].add(input.breaks)
+          @significant_shas << input.sha if input.significant?
         end
         @change_groups = change_groups.values.find_all { |group| !group.empty? }
         if @change_groups.empty? && @semver != Semver::NONE
@@ -116,6 +121,13 @@ module Toys
         raise "ChangeSet not finished" unless finished?
         return nil unless semver.significant?
         semver.bump(last)
+      end
+
+      ##
+      # @return [boolean] Whether the given sha is sigificant in this changeset
+      #
+      def significant_sha?(sha)
+        @significant_shas.include?(sha)
       end
 
       ##
@@ -185,11 +197,20 @@ module Toys
         when /^semver-change$/i
           input.apply_semver_change(match[:content].split.first)
         when /^revert-commit$/i
-          @inputs.delete_if { |elem| elem.sha.start_with?(match[:content].split.first) }
+          input.add_revert(match[:content].split.first)
         else
           tag_info = @commit_tags.find { |tag| tag.tag == match[:tag] }
           input.apply_commit(tag_info, match[:scope], match[:bang], match[:content])
         end
+      end
+
+      def apply_reverts
+        reverts = []
+        @inputs.reverse_each do |input|
+          next if reverts.any? { |revert_sha| input.sha.start_with?(revert_sha) }
+          reverts += input.reverts
+        end
+        @inputs.delete_if { |input| reverts.any? { |revert_sha| input.sha.start_with?(revert_sha) } }
       end
 
       ##
@@ -204,6 +225,7 @@ module Toys
           @breaks = []
           @semver = Semver::NONE
           @semver_locked = false
+          @reverts = []
         end
 
         attr_reader :sha
@@ -211,6 +233,14 @@ module Toys
         attr_reader :breaks
         attr_reader :semver
         attr_reader :semver_locked
+        attr_reader :reverts
+
+        ##
+        # @return [boolean] Whether this is one commit affects the changeset
+        #
+        def significant?
+          !@reverts.empty? || !changes.empty? || @semver != Semver::NONE
+        end
 
         # @private
         def apply_breaking_change(value)
@@ -243,6 +273,11 @@ module Toys
             @breaks << description
           end
           self
+        end
+
+        # @private
+        def add_revert(sha)
+          @reverts << sha
         end
 
         private

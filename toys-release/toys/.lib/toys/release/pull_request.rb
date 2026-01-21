@@ -107,6 +107,34 @@ module Toys
       end
 
       ##
+      # @return [String] The pull request description text
+      #
+      def description
+        resource["body"]
+      end
+
+      ##
+      # Attempt to parse metadata from the pull request description.
+      #
+      # @return [Hash,nil] The metadata hash, or nil if not found.
+      #
+      def release_metadata
+        match = /```\n# release_metadata(?:\s[^\n]*)?\n(\{\n(?:[^\n]*\n)+\}\n)```\n/.match(description)
+        ::JSON.parse(match[1]) rescue nil # rubocop:disable Style/RescueModifier
+      end
+
+      ##
+      # Attempt to parse the original request input string from the release
+      # metadata.
+      #
+      # @return [String,nil] The input string, or nil if not found.
+      #
+      def request_input_string
+        metadata = release_metadata
+        metadata ? metadata["request_input_string"] : nil
+      end
+
+      ##
       # Perform various updates to a pull request
       #
       # @param labels [String,Array<String>,nil] One or more release-related

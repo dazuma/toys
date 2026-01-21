@@ -166,7 +166,11 @@ module Toys
           script will trigger automatically on merge.
            *  To abort this release, close this pull request without merging.
 
-          #{build_pr_body_footer}
+          #{build_pr_body_changes}
+
+          ----
+
+          #{build_pr_body_metadata}
         STR
       end
 
@@ -176,7 +180,11 @@ module Toys
 
           You can run the `release perform` script once these changes are merged.
 
-          #{build_pr_body_footer}
+          #{build_pr_body_changes}
+
+          ----
+
+          #{build_pr_body_metadata}
         STR
       end
 
@@ -198,7 +206,7 @@ module Toys
         lines.join("\n")
       end
 
-      def build_pr_body_footer
+      def build_pr_body_changes
         lines = ["The generated changelog entries have been copied below:"]
         @request_spec.resolved_components.each do |resolved_component|
           lines << ""
@@ -211,6 +219,12 @@ module Toys
           end
         end
         lines.join("\n")
+      end
+
+      def build_pr_body_metadata
+        metadata = {"request_input_string" => @request_spec.input_string}
+        metadata_json = JSON.pretty_generate(metadata)
+        "```\n# release_metadata DO NOT REMOVE OR MODIFY\n#{metadata_json}\n```"
       end
     end
   end

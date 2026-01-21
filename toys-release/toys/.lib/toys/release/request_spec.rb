@@ -23,7 +23,7 @@ module Toys
       # @!attribute [r] version
       #   @return [::Gem::Version]
       #
-      ResolvedComponent = ::Struct.new :component_name, :change_set, :last_version, :version
+      ResolvedComponent = ::Struct.new(:component_name, :change_set, :last_version, :version)
 
       ##
       # Create an empty request.
@@ -35,6 +35,7 @@ module Toys
         @resolved_components = nil
         @requested_components = {}
         @release_sha = nil
+        @inputs = []
       end
 
       ##
@@ -72,9 +73,17 @@ module Toys
       attr_reader :release_sha
 
       ##
+      # @return [boolean] Whether the given SHA is significant in any changeset.
+      #     Valid only after resolution.
+      #
+      def significant_sha?(sha)
+        resolved_components.any? { |rcomp| rcomp.change_set.significant_sha?(sha) }
+      end
+
+      ##
       # Add a component and version constraint.
       #
-      # @param component_name [String,:all] The name of the component to release
+      # @param component_name [String] The name of the component to release
       # @param version [::Gem::Version,Toys::Release::Semver,String,Symbol,nil]
       #     The version to release, or the kind of version bump to use. If `nil`
       #     (the default), infers a version bump from the changeset, and omits
@@ -82,6 +91,7 @@ module Toys
       #
       def add(component_name, version: nil)
         raise "Release request already resolved" if resolved?
+        @inputs << [component_name, version].compact.join("=")
         if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)
           name = version.to_s
           version = if name =~ /^\d/
@@ -101,6 +111,27 @@ module Toys
       end
 
       ##
+      # Parse an input string and add all components
+      #
+      # @param input_string [String]
+      # @param repository [Toys::Release::Repository]
+      #
+      def add_from_input_string(input_string, repository)
+        input_string.split.each do |component_spec|
+          component_spec = component_spec.split(/[:=]/)
+          name = component_spec[0]
+          version = component_spec[1]
+          if name == "all"
+            repository.all_components.each do |component|
+              add(component.name, version: version)
+            end
+          else
+            add(name, version: version)
+          end
+        end
+      end
+
+      ##
       # Resolve which components and versions to release.
       #
       # @param repository [Toys::Release::Repository]
@@ -109,6 +140,7 @@ module Toys
       #
       def resolve_versions(repository, release_ref: nil)
         raise "Release request already resolved" if resolved?
+        @utils.log("Resolving a request spec. Requested components = #{@requested_components.inspect}")
         @utils.accumulate_errors("Conflicts detected in the components and versions requested.") do
           @release_sha = repository.current_sha(release_ref)
           candidate_groups = determine_candidate_groups(repository)
@@ -125,6 +157,15 @@ module Toys
           end
         end
         self
+      end
+
+      ##
+      # Return the input string that originally configured this spec
+      #
+      # @return [String]
+      #
+      def input_string
+        @inputs.join(" ")
       end
 
       private
@@ -167,11 +208,13 @@ module Toys
       def resolve_one_group(group, version)
         suggested_next_version = nil
         resolved_group = group.map do |component|
+          @utils.log("Resolving component #{component.name}")
           last_version = component.latest_tag_version(ref: @release_sha)
           if last_version && version.is_a?(::Gem::Version) && last_version >= version
             @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
           end
           latest_tag = component.version_tag(last_version)
+          @utils.log("Creating changeset from #{latest_tag} to #{@release_sha}")
           changeset = component.make_change_set(from: latest_tag, to: @release_sha)
           unless version.is_a?(::Gem::Version)
             cur_suggested = version ? version.bump(last_version) : changeset.suggested_version(last_version)

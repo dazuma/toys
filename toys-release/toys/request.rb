@@ -43,7 +43,7 @@ remaining_args :components do
       " If the version is omitted, a semver change type will be inferred" \
       " from the conventional commit message history, and the component will" \
       " be released only if at least one significant releasable commit tag" \
-      " (such as 'feat:', 'fix:', or 'docs:') is found.",
+      " (such as 'feat:' or 'fix:') is found.",
     "",
     "Note that any coordination groups are honored. If you release at least" \
       " one component within a group, all components in the group will be" \
@@ -113,18 +113,7 @@ end
 def build_request_spec
   request_spec = Toys::Release::RequestSpec.new(@utils)
   set(:components, ["all"]) if components.empty?
-  components.each do |component_spec|
-    component_spec = component_spec.split(/[:=]/)
-    name = component_spec[0]
-    version = component_spec[1]
-    if name == "all"
-      @repository.all_components.each do |component|
-        request_spec.add(component.name, version: version)
-      end
-    else
-      request_spec.add(name, version: version)
-    end
-  end
+  request_spec.add_from_input_string(components.join(" "), @repository)
   request_spec.resolve_versions(@repository, release_ref: target_branch)
   request_spec
 end
