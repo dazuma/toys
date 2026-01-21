@@ -23,7 +23,7 @@ module Toys
       # @!attribute [r] version
       #   @return [::Gem::Version]
       #
-      ResolvedComponent = ::Struct.new :component_name, :change_set, :last_version, :version
+      ResolvedComponent = ::Struct.new(:component_name, :change_set, :last_version, :version)
 
       ##
       # Create an empty request.
@@ -35,6 +35,7 @@ module Toys
         @resolved_components = nil
         @requested_components = {}
         @release_sha = nil
+        @inputs = []
       end
 
       ##
@@ -72,9 +73,17 @@ module Toys
       attr_reader :release_sha
 
       ##
+      # @return [boolean] Whether the given SHA is significant in any changeset.
+      #     Valid only after resolution.
+      #
+      def significant_sha?(sha)
+        resolved_components.any? { |rcomp| rcomp.change_set.significant_sha?(sha) }
+      end
+
+      ##
       # Add a component and version constraint.
       #
-      # @param component_name [String,:all] The name of the component to release
+      # @param component_name [String] The name of the component to release
       # @param version [::Gem::Version,Toys::Release::Semver,String,Symbol,nil]
       #     The version to release, or the kind of version bump to use. If `nil`
       #     (the default), infers a version bump from the changeset, and omits
@@ -82,6 +91,7 @@ module Toys
       #
       def add(component_name, version: nil)
         raise "Release request already resolved" if resolved?
+        @inputs << [component_name, version].compact.join("=")
         if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)
           name = version.to_s
           version = if name =~ /^\d/
@@ -98,6 +108,27 @@ module Toys
           @requested_components[component_name] = version
         end
         self
+      end
+
+      ##
+      # Parse an input string and add all components
+      #
+      # @param input_string [String]
+      # @param repository [Toys::Release::Repository]
+      #
+      def add_from_input_string(input_string, repository)
+        input_string.split.each do |component_spec|
+          component_spec = component_spec.split(/[:=]/)
+          name = component_spec[0]
+          version = component_spec[1]
+          if name == "all"
+            repository.all_components.each do |component|
+              add(component.name, version: version)
+            end
+          else
+            add(name, version: version)
+          end
+        end
       end
 
       ##
@@ -125,6 +156,15 @@ module Toys
           end
         end
         self
+      end
+
+      ##
+      # Return the input string that originally configured this spec
+      #
+      # @return [String]
+      #
+      def input_string
+        @inputs.join(" ")
       end
 
       private
