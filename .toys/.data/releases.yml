@@ -2,6 +2,7 @@ repo: dazuma/toys
 git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
 required_checks_timeout: 1800
+update_existing_requests: false
 
 modify_steps:
   - name: build_yard
