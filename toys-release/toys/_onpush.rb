@@ -21,6 +21,8 @@ def setup
   require "toys/release/environment_utils"
   require "toys/release/repo_settings"
   require "toys/release/repository"
+  require "toys/release/request_logic"
+  require "toys/release/request_spec"
 
   @utils = Toys::Release::EnvironmentUtils.new(self)
   @settings = Toys::Release::RepoSettings.load_from_environment(@utils)
