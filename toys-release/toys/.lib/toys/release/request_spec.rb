@@ -207,7 +207,9 @@ module Toys
       def resolve_one_group(group, version)
         suggested_next_version = nil
         resolved_group = group.map do |component|
+          puts "####MEOW Resolving #{component.name}"
           last_version = component.latest_tag_version(ref: @release_sha)
+          puts "####MEOW last_version of #{component.name} is #{last_version.to_s}"
           if last_version && version.is_a?(::Gem::Version) && last_version >= version
             @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
           end
