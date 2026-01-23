@@ -1,5 +1,13 @@
 # Release History
 
+### v0.5.0 / 2026-01-23
+
+* ADDED: Support for updating release pull requests when new commits are added
+* FIXED: Use v6 of the checkout action
+* FIXED: Reverting a commit that itself does a revert does the right thing
+* FIXED: Fixed error when requesting a release from a branch with a slash in the name
+* FIXED: Test significant change
+
 ### v0.4.0 / 2026-01-06
 
 * ADDED: Actions workflows use Ruby 4.0 and Toys 0.19 or later
