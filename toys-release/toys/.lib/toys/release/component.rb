@@ -254,10 +254,8 @@ module Toys
       # @return [ChangeSet]
       #
       def make_change_set(from: :default, to: nil)
-        puts "####MEOW make_change_set from=#{from.inspect} to=#{to.inspect}"
         to ||= "HEAD"
         from = latest_tag(ref: to) if from == :default
-        puts "####MEOW make_change_set now from=#{from.inspect} to=#{to.inspect}"
         commits = from ? "#{from}..#{to}" : to
         changeset = ChangeSet.new(@settings)
         shas = @utils.capture(["git", "log", commits, "--format=%H"], e: true).split("\n")

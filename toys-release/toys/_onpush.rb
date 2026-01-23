@@ -30,7 +30,7 @@ def setup
   @push_branch = @repository.current_branch
   @push_sha = @repository.current_sha
   if @settings.update_existing_requests
-    @repository.git_unshallow("origin", branch: @push_branch)
+    @repository.git_prepare_branch("origin", branch: @push_branch)
   end
 end
 
