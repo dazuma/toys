@@ -140,6 +140,7 @@ module Toys
       #
       def resolve_versions(repository, release_ref: nil)
         raise "Release request already resolved" if resolved?
+        @utils.log("Resolving a request spec. Requested components = #{@requested_components.inspect}")
         @utils.accumulate_errors("Conflicts detected in the components and versions requested.") do
           @release_sha = repository.current_sha(release_ref)
           candidate_groups = determine_candidate_groups(repository)
@@ -207,11 +208,13 @@ module Toys
       def resolve_one_group(group, version)
         suggested_next_version = nil
         resolved_group = group.map do |component|
+          @utils.log("Resolving component #{component.name}")
           last_version = component.latest_tag_version(ref: @release_sha)
           if last_version && version.is_a?(::Gem::Version) && last_version >= version
             @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
           end
           latest_tag = component.version_tag(last_version)
+          @utils.log("Creating changeset from #{latest_tag} to #{@release_sha}")
           changeset = component.make_change_set(from: latest_tag, to: @release_sha)
           unless version.is_a?(::Gem::Version)
             cur_suggested = version ? version.bump(last_version) : changeset.suggested_version(last_version)
