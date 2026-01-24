@@ -96,7 +96,7 @@ def update_release_pr(pull, request_spec)
   request_logic.change_files
   @repository.git_commit(commit_title, commit_details: commit_details, signoff: signoff)
   @utils.exec(["git", "push", "-f", "origin", release_branch])
-  body = @request_logic.build_pr_body
+  body = request_logic.build_pr_body
   pull.update(body: body, title: commit_title)
   @utils.exec(["git", "switch", @push_branch])
 end
