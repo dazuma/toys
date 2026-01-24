@@ -113,7 +113,9 @@ def pr_warning_message
     Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
 
     Message:
+    ```
     #{last_commit_message}
+    ```
   STR
 end
 
@@ -125,7 +127,9 @@ def pr_updated_message
     Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
 
     Message:
+    ```
     #{last_commit_message}
+    ```
   STR
 end
 
@@ -138,7 +142,9 @@ def pr_error_message(errors)
     Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
 
     Message:
+    ```
     #{commit_message}
+    ```
 
     Errors:
     #{errors_str}
