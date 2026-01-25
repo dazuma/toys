@@ -105,6 +105,7 @@ module Toys
       # @return [String] the parent SHA
       #
       def parent_sha(ref = nil)
+        ref ||= "HEAD"
         result = @utils.exec(["git", "rev-parse", "#{ref}^"], out: :capture, err: :null)
         if result.success?
           result.captured_out.strip

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Toys
   module Release
     ##
@@ -196,7 +198,7 @@ module Toys
 
       def build_pr_body_metadata
         metadata = {"requested_components" => @request_spec.serializable_requested_components}
-        metadata_json = JSON.pretty_generate(metadata)
+        metadata_json = ::JSON.pretty_generate(metadata)
         "```\n# release_metadata DO NOT REMOVE OR MODIFY\n#{metadata_json}\n```"
       end
     end
