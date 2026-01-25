@@ -79,7 +79,7 @@ end
 
 def recreate_request_spec(pull)
   requested_components = pull.requested_components
-  @utils.error("Could not find metadata in PR #{pull.number}") unless arguments
+  @utils.error("Could not find metadata in PR #{pull.number}") unless requested_components
   request_spec = Toys::Release::RequestSpec.new(@utils)
   requested_components.each do |component_name, version|
     component = @repository.component_named(component_name)
