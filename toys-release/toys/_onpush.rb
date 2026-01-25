@@ -150,7 +150,7 @@ def pr_error_message(errors)
 
     Commit message:
     ```
-    #{commit_message}
+    #{last_commit_message}
     ```
 
     Errors:

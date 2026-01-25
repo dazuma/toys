@@ -120,7 +120,10 @@ module Toys
       #
       def release_metadata
         match = /```\n# release_metadata(?:\s[^\n]*)?\n(\{\n(?:[^\n]*\n)+\}\n)```\n/.match(description)
-        ::JSON.parse(match[1]) rescue nil # rubocop:disable Style/RescueModifier
+        return nil unless match
+        ::JSON.parse(match[1])
+      rescue ::JSON::ParserError
+        nil
       end
 
       ##

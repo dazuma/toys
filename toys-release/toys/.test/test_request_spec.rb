@@ -12,7 +12,7 @@ describe Toys::Release::RequestSpec do
   let(:toys_component) { repository.component_named("toys") }
 
   it "resolves default changes to Toys at HEAD" do
-    request_spec.resolve_versions(repository)
+    request_spec.resolve_versions(repository.current_sha)
     # Can't make any particular assertion here. Just make sure it didn't crash.
   end
 

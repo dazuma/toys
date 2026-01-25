@@ -16,7 +16,6 @@ describe "toys release gen-workflows" do
   end
 
   it "creates workflow files" do
-    skip
     capture_subprocess_io do
       code = toys_run_tool(["release", "gen-workflows", "-o", temp_dir, "-y"])
       assert_equal(0, code)

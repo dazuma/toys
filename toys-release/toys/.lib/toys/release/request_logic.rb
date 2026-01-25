@@ -59,7 +59,7 @@ module Toys
           cur_requested_components = @request_spec.serializable_requested_components
           existing_prs = @repository.find_release_prs(branch: @target_branch)
           existing_prs.each do |pr|
-            if pr.requested_components.keys.any? { |comp_name| cur_requested_components.include?(comp_name) }
+            if pr.requested_components&.keys&.any? { |comp_name| cur_requested_components.include?(comp_name) }
               @utils.error("An existing release pull request (##{pr.number}) overlaps with this one")
             end
           end

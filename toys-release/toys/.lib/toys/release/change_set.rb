@@ -124,7 +124,7 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether the given sha is sigificant in this changeset
+      # @return [boolean] Whether the given sha is significant in this changeset
       #
       def significant_sha?(sha)
         @significant_shas.include?(sha)
