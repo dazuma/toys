@@ -1,5 +1,9 @@
 # Release History
 
+### v0.18.1 / 2026-01-25
+
+* FIXED: Significant change to common-tools
+
 ### v0.18.0 / 2025-11-30
 
 * BREAKING CHANGE: Removed release tooling from common-tools; use the toys-release gem instead
