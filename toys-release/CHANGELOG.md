@@ -1,5 +1,9 @@
 # Release History
 
+### v0.4.1 / 2026-01-26
+
+* FIXED: Use v6 of the checkout action
+
 ### v0.4.0 / 2026-01-06
 
 * ADDED: Actions workflows use Ruby 4.0 and Toys 0.19 or later
