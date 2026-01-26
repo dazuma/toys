@@ -32,41 +32,61 @@ def setup
     logger.info("Ignoring push to release branch.")
     exit
   end
-  @push_sha = @repository.current_sha
-  if @settings.update_existing_requests
-    @repository.git_set_user_info
-    @repository.git_prepare_branch("origin", branch: @push_branch)
-  end
+  @repository.git_set_user_info
+  @repository.git_prepare_branch("origin", branch: @push_branch)
 end
 
 def update_open_release_prs
   logger.info("Searching for open release PRs targeting branch #{@push_branch} ...")
   release_prs = @repository.find_release_prs(branch: @push_branch)
+  count = 0
   release_prs.each do |pull|
-    if @settings.update_existing_requests
-      maybe_update_release_pr(pull)
+    relevant_commits = determine_relevant_commits(pull)
+    if relevant_commits.nil?
+      logger.info("No relevant commits for PR #{pull.number}")
     else
-      logger.info("Adding warning comment to PR #{pull.number} ...")
-      pull.add_comment(pr_warning_message)
+      if @settings.update_existing_requests
+        errors = update_release_pr(pull)
+        if errors.empty?
+          add_updated_comment(pull, relevant_commits)
+        else
+          add_error_comment(pull, relevant_commits, errors)
+        end
+      else
+        add_warning_comment(pull, relevant_commits)
+      end
+      count += 1
     end
   end
-  if release_prs.empty?
-    logger.info("No existing release PRs target branch #{@push_branch}.")
-  else
-    logger.info("Finished updating existing release PRs.")
-  end
+  logger.info("Updated #{count} release pull requests for target branch #{@push_branch}")
 end
 
-def maybe_update_release_pr(pull)
+def determine_relevant_commits(pull)
+  original_sha = pull.release_request_sha
+  return true if original_sha.nil?
+  requested_components = pull.requested_components
+  return true if requested_components.nil?
+  new_commits = @repository.commit_info_sequence(from: original_sha)
+  relevant_shas = {}
+  result = false
+  requested_components.each_key do |comp_name|
+    component = @repository.component_named(comp_name)
+    new_changes = component.make_change_set(commits: new_commits)
+    new_changes.significant_shas.each { |sha| relevant_shas[sha] = true }
+    result ||= !new_changes.empty?
+  end
+  return nil unless result
+  new_commits.find_all { |commit| relevant_shas[commit.sha] }
+end
+
+def update_release_pr(pull)
+  logger.info("Regenerating PR #{pull.number} ...")
   errors = []
   @utils.capture_errors(errors) do
     request_spec = recreate_request_spec(pull)
-    if request_spec.significant_sha?(request_spec.release_sha)
-      update_release_pr(pull, request_spec)
-    else
-      logger.info("Commit is not significant for PR #{pull.number}.")
-      return
-    end
+    request_logic = Toys::Release::RequestLogic.new(@repository, request_spec)
+    request_logic.update_existing_pr(pull)
+    @utils.exec(["git", "switch", @push_branch])
   end
   if errors.empty?
     logger.info("Recreated release PR #{pull.number}.")
@@ -93,67 +113,51 @@ def recreate_request_spec(pull)
   request_spec
 end
 
-def update_release_pr(pull, request_spec)
-  request_logic = Toys::Release::RequestLogic.new(@repository, request_spec)
-  release_branch = pull.head_ref
-  @repository.create_branch(release_branch)
-  commit_title = request_logic.build_commit_title
-  commit_details = request_logic.build_commit_details
-  signoff = @repository.settings.signoff_commits?
-  request_logic.change_files
-  @repository.git_commit(commit_title, commit_details: commit_details, signoff: signoff)
-  @utils.exec(["git", "push", "-f", "origin", release_branch])
-  body = request_logic.build_pr_body
-  pull.update(body: body, title: commit_title)
-  @utils.exec(["git", "switch", @push_branch])
-end
-
-def last_commit_message
-  @last_commit_message ||= capture(["git", "log", "-1", "--pretty=%B"], e: true).strip
-end
-
-def pr_warning_message
-  <<~STR
-    WARNING: An additional commit was added while this release PR was open.
+def add_warning_comment(pull, commits)
+  logger.info("Commented on release PR #{pull.number} to warn about new commits.")
+  comment = <<~STR
+    WARNING: Additional commits were added while this release PR was open.
     You may need to add to the changelog, or close this PR and prepare a new one.
 
-    Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
-
-    Commit message:
-    ```
-    #{last_commit_message}
-    ```
+    #{commit_descriptions(commits)}
   STR
+  pull.add_comment(comment)
 end
 
-def pr_updated_message
-  <<~STR
-    NOTE: An additional commit was added while this release PR was open.
+def add_updated_comment(pull, commits)
+  logger.info("Updated release PR #{pull.number} to reflect new commits.")
+  comment = <<~STR
+    NOTE: Additional commits were added while this release PR was open.
     This release PR has been updated to reflect the change.
 
-    Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
-
-    Commit message:
-    ```
-    #{last_commit_message}
-    ```
+    #{commit_descriptions(commits)}
   STR
+  pull.add_comment(comment)
 end
 
-def pr_error_message(errors)
+def add_error_comment(pull, commits, errors)
+  logger.info("Commented on release PR #{pull.number} to note errors when attempting to reflect new commits.")
   errors_str = errors.map { |str| "* #{str}" }.join("\n")
-  <<~STR
-    WARNING: An additional commit was added while this release PR was open.
-    Additionally, this release PR could not be updated due to errors.
+  comment = <<~STR
+    WARNING: Additional commits were added while this release PR was open.
+    However, this release PR could not be updated due to errors:
 
-    Commit link: https://github.com/#{@settings.repo_path}/commit/#{@push_sha}
-
-    Commit message:
-    ```
-    #{last_commit_message}
-    ```
-
-    Errors:
     #{errors_str}
+
+    #{commit_descriptions(commits)}
   STR
+  pull.add_comment(comment)
+end
+
+def commit_descriptions(commits)
+  commits.map do |commit|
+    <<~STR
+      ----
+
+      Commit: https://github.com/#{@settings.repo_path}/commit/#{commit.sha}
+      ```
+      #{commit.message.strip}
+      ```
+    STR
+  end.join("\n").strip
 end

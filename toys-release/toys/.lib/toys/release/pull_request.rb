@@ -119,21 +119,35 @@ module Toys
       # @return [Hash,nil] The metadata hash, or nil if not found.
       #
       def release_metadata
-        match = /```\n# release_metadata(?:\s[^\n]*)?\n(\{\n(?:[^\n]*\n)+\}\n)```\n/.match(description)
-        return nil unless match
-        ::JSON.parse(match[1])
-      rescue ::JSON::ParserError
-        nil
+        unless defined?(@release_metadata)
+          match = /```\n# release_metadata(?:\s[^\n]*)?\n(\{\n(?:[^\n]*\n)+\}\n)```\n/.match(description)
+          @release_metadata = begin
+            match ? ::JSON.parse(match[1]) : nil
+          rescue ::JSON::ParserError
+            nil
+          end
+        end
+        @release_metadata
       end
 
       ##
-      # Attempt to parse request arguments from the release metadata.
+      # The request components hash from the release metadata.
       #
       # @return [Hash{String=>(String,nil)},nil] The arguments, or nil if not found.
       #
       def requested_components
         metadata = release_metadata
         metadata ? metadata["requested_components"] : nil
+      end
+
+      ##
+      # The request sha from the release metadata.
+      #
+      # @return [String,nil] The SHA, or nil if not found
+      #
+      def release_request_sha
+        metadata = release_metadata
+        metadata ? metadata["request_sha"] : nil
       end
 
       ##

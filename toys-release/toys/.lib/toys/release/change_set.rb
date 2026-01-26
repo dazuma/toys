@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "set"
-
 require "toys/release/semver"
 
 module Toys
@@ -25,22 +23,24 @@ module Toys
         @semver = Semver::NONE
         @change_groups = nil
         @inputs = []
-        @significant_shas = ::Set.new
+        @significant_shas = []
       end
 
       ##
       # Add a commit.
       #
-      # @param sha [String] The SHA for the commit.
-      # @param message [String] The commit message.
+      # @param commit [Toys::Release::CommitInfo] The commit.
       #
-      def add_message(sha, message)
+      def add_commit(commit)
         raise "ChangeSet locked" if finished?
-        lines = message.split("\n")
+        lines = commit.message.split("\n")
         return if lines.empty?
-        input = Input.new(sha)
+        input = Input.new(commit.sha)
         lines.each { |line| analyze_line(line, input) }
-        @inputs << input
+        if input.significant?
+          @inputs << input
+          @significant_shas << commit.sha
+        end
         self
       end
 
@@ -62,10 +62,9 @@ module Toys
             change_groups.fetch(header, nil)&.add([change])
           end
           change_groups[:breaking].add(input.breaks)
-          @significant_shas << input.sha if input.significant?
         end
         @change_groups = change_groups.values.find_all { |group| !group.empty? }
-        if @change_groups.empty? && @semver != Semver::NONE
+        if @change_groups.empty? && @semver.significant?
           @change_groups << Group.new(nil).add(@no_significant_updates_notice)
         end
         @inputs = nil
@@ -100,6 +99,11 @@ module Toys
       end
 
       ##
+      # @return [Array<String>] All significant SHAs.
+      #
+      attr_reader :significant_shas
+
+      ##
       # @return [Integer] The semver change.
       #
       attr_reader :semver
@@ -121,13 +125,6 @@ module Toys
         raise "ChangeSet not finished" unless finished?
         return nil unless semver.significant?
         semver.bump(last)
-      end
-
-      ##
-      # @return [boolean] Whether the given sha is significant in this changeset
-      #
-      def significant_sha?(sha)
-        @significant_shas.include?(sha)
       end
 
       ##
@@ -235,11 +232,9 @@ module Toys
         attr_reader :semver_locked
         attr_reader :reverts
 
-        ##
-        # @return [boolean] Whether this is one commit affects the changeset
-        #
+        # @private
         def significant?
-          !@reverts.empty? || !changes.empty? || @semver != Semver::NONE
+          @semver.significant? || !reverts.empty? || !changes.empty? || !breaks.empty?
         end
 
         # @private

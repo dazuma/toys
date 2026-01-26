@@ -112,26 +112,20 @@ describe Toys::Release::Repository do
     assert_equal(::Gem::Version.new("0.15.5"), data["toys"])
   end
 
-  it "determines the parent of a SHA" do
-    assert_equal("29a389f95f1d007c7fff455a772286cde10efd53",
-                 repository.parent_sha("21fe91b8be71f1fc6def04f6fa62362cbb775b34"))
+  it "gets a commit info" do
+    commit = repository.commit_info("toys/v0.19.0")
+    assert_includes(commit.message, "release: Release 3 items (#375)")
   end
 
-  it "determines the parent of the initial commit" do
-    assert_equal("4b825dc642cb6eb9a060e54bf8d69288fbee4904",
-                 repository.parent_sha("21dcf727b0f5b2f235a05a9d144a8b6a378a1aeb"))
-  end
-
-  it "determines a commit message" do
-    assert_equal("feat(release): Require toys 0.19 or later (#382)",
-                 repository.current_commit_message("21fe91b8be71f1fc6def04f6fa62362cbb775b34"))
-  end
-
-  it "determines paths modified by a commit" do
-    expected = [
-      "toys-release/CHANGELOG.md",
-      "toys-release/lib/toys/release/version.rb",
+  it "gets a commit info sequence" do
+    sequence = repository.commit_info_sequence(from: "toys/v0.19.0", to: "toys/v0.19.1")
+    expected_shas = [
+      "47cfeffc9ba275dab7604e30038fed107636304f",
+      "6c213b368ac5b68866289f52ecf81cd4223e5a67",
+      "8d0e9a232cd6a71060a9c3c8859e7994383e6f3c",
+      "8c20e807a5782348b271331c6404ce5b17ed6137",
+      "29a389f95f1d007c7fff455a772286cde10efd53",
     ]
-    assert_equal(expected, repository.paths_modified_by_commit("677d37cc9f6177c06a120e2940971efb73e82dae").sort)
+    assert_equal(expected_shas, sequence.map(&:sha))
   end
 end

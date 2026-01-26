@@ -15,6 +15,10 @@ describe Toys::Release::ChangelogFile do
   let(:default_settings) { Toys::Release::RepoSettings.new({}) }
   let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
 
+  def commit_with(sha, message)
+    Toys::Release::CommitInfo.new(nil, sha, message: message)
+  end
+
   it "checks existence" do
     file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
     assert(file.exists?)
@@ -53,17 +57,23 @@ describe Toys::Release::ChangelogFile do
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog2_path, changelog_path)
       file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
-      change_set.add_message(
-        "abcde1",
-        "fix: fixed argument parsing to allow a flag values delimited by \"=\" to contain newlines"
+      change_set.add_commit(
+        commit_with(
+          "abcde1",
+          "fix: fixed argument parsing to allow a flag values delimited by \"=\" to contain newlines"
+        )
       )
-      change_set.add_message(
-        "abcde2",
-        "fix: fixed minitest version failures in the system test builtin tool"
+      change_set.add_commit(
+        commit_with(
+          "abcde2",
+          "fix: fixed minitest version failures in the system test builtin tool"
+        )
       )
-      change_set.add_message(
-        "abcde3",
-        "fix: fixed crash in the system test builtin tool's minitest-rg integration with minitest-rg 5.3"
+      change_set.add_commit(
+        commit_with(
+          "abcde3",
+          "fix: fixed crash in the system test builtin tool's minitest-rg integration with minitest-rg 5.3"
+        )
       )
       change_set.finish
       file.append(change_set, "0.15.6", date: "2024-05-15")
@@ -77,9 +87,11 @@ describe Toys::Release::ChangelogFile do
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
       file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
-      change_set.add_message(
-        "abcde1",
-        "fix: fix for uri version mismatch error in certain bundler integration cases"
+      change_set.add_commit(
+        commit_with(
+          "abcde1",
+          "fix: fix for uri version mismatch error in certain bundler integration cases"
+        )
       )
       change_set.finish
       file.append(change_set, "0.15.5", date: "2024-01-31")

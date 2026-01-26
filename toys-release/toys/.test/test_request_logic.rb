@@ -8,12 +8,11 @@ describe Toys::Release::RequestLogic do
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
   let(:request_spec) { Toys::Release::RequestSpec.new(environment_utils) }
-  let(:target_branch) { "main" }
 
   it "handles Toys one commit after v0.19.0 tag" do
     repository.all_components.each { |component| request_spec.add(component) }
     request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f")
-    request_logic = Toys::Release::RequestLogic.new(repository, request_spec, target_branch: target_branch)
+    request_logic = Toys::Release::RequestLogic.new(repository, request_spec)
     assert_equal("release: Release 3 items", request_logic.build_commit_title)
     expected_details = <<~STRING.strip
       * toys 0.19.1 (was 0.19.0)
@@ -21,6 +20,7 @@ describe Toys::Release::RequestLogic do
       * toys-release 0.3.2 (was 0.3.1)
     STRING
     assert_equal(expected_details, request_logic.build_commit_details)
+    expected_request_sha = repository.current_sha(repository.current_branch)
     expected_body = <<~STRING
       This pull request prepares new releases for the following components:
 
@@ -69,7 +69,8 @@ describe Toys::Release::RequestLogic do
           "toys-core": null,
           "toys-release": null,
           "common-tools": null
-        }
+        },
+        "request_sha": "#{expected_request_sha}"
       }
       ```
     STRING
