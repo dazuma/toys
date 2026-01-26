@@ -6,6 +6,7 @@ require "json"
 require "yaml"
 
 require "toys/release/artifact_dir"
+require "toys/release/commit_info"
 require "toys/release/component"
 require "toys/release/pull_request"
 
@@ -27,6 +28,7 @@ module Toys
         build_components
         ensure_gh_binary
         ensure_git_binary
+        @commit_cache = {}
       end
 
       ##
@@ -99,33 +101,6 @@ module Toys
       end
 
       ##
-      # Return the SHA of the parent of the given ref
-      #
-      # @param ref [String,nil] Optional ref. Defaults to HEAD.
-      # @return [String] the parent SHA
-      #
-      def parent_sha(ref = nil)
-        ref ||= "HEAD"
-        result = @utils.exec(["git", "rev-parse", "#{ref}^"], out: :capture, err: :null)
-        if result.success?
-          result.captured_out.strip
-        else
-          @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], in: :null).strip
-        end
-      end
-
-      ##
-      # Return the commit message of the given commit
-      #
-      # @param ref [String,nil] Optional ref. Defaults to HEAD.
-      # @return [String] Commit message.
-      #
-      def current_commit_message(ref = nil)
-        sha = current_sha(ref)
-        @utils.capture(["git", "log", sha, "--max-count=1", "--format=%B"], e: true).strip
-      end
-
-      ##
       # Return the current branch
       #
       # @return [String,nil] the branch name, or nil if no branch is checked out
@@ -146,16 +121,32 @@ module Toys
       end
 
       ##
-      # Return a list of paths modified by the given commit
+      # Return info on the given commit. Caches commits that were previously
+      # obtained.
       #
-      # @param ref [String,nil] Optional ref. Defaults to HEAD.
-      # @return [Array<String>] File paths
+      # @param ref [String] a git reference
+      # @return [Toys::Release::CommitInfo]
       #
-      def paths_modified_by_commit(ref = nil)
+      def commit_info(ref = nil)
         sha = current_sha(ref)
-        parent_sha = parent_sha(ref)
-        files = @utils.capture(["git", "diff", "--name-only", "#{parent_sha}..#{sha}"], e: true)
-        files.split("\n")
+        @commit_cache[sha] ||= CommitInfo.new(@utils, sha)
+      end
+
+      ##
+      # Return info on a sequence of commits. Caches commits that were
+      # previously obtained.
+      #
+      # @param from [String,nil] The starting point ref. If not provided,
+      #     gets only the "to" ref.
+      # @param to [String,nil] The endpoint ref. Defaults to HEAD.
+      # @return [Array<Toys::Release::CommitInfo]
+      #
+      def commit_info_sequence(from: nil, to: nil)
+        to ||= "HEAD"
+        range = from ? "#{from}..#{to}" : to
+        result = @utils.exec(["git", "log", range, "--format=%H"], out: :capture, err: :null)
+        shas = result.success? ? result.captured_out.split("\n") : []
+        shas.reverse.map { |sha| @commit_cache[sha] ||= CommitInfo.new(@utils, sha) }
       end
 
       ##

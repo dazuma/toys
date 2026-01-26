@@ -82,14 +82,6 @@ module Toys
       attr_reader :release_sha
 
       ##
-      # @return [boolean] Whether the given SHA is significant in any changeset.
-      #     Valid only after resolution.
-      #
-      def significant_sha?(sha)
-        resolved_components.any? { |rcomp| rcomp.change_set.significant_sha?(sha) }
-      end
-
-      ##
       # Add a component and version constraint.
       #
       # @param component [Toys::Release::Component] The component to release
@@ -100,7 +92,7 @@ module Toys
       #
       def add(component, version: nil)
         raise "Release request already resolved" if resolved?
-        version = resolve_version(version)
+        version = normalize_version(version)
         existing_version = @requested_components[component]
         if existing_version && existing_version != version
           @utils.error("Requested release of #{component.name} #{version} but #{existing_version} already requested")
@@ -143,7 +135,7 @@ module Toys
 
       private
 
-      def resolve_version(version)
+      def normalize_version(version)
         if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)
           version_str = version.to_s
           version = if version_str =~ /^\d/

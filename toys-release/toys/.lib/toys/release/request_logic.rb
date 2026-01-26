@@ -124,6 +124,21 @@ module Toys
         end
       end
 
+      ##
+      # Update an existing pull request to match the request spec
+      #
+      def update_existing_pr(pull)
+        release_branch = pull.head_ref
+        @repository.create_branch(release_branch)
+        change_files
+        commit_title = build_commit_title
+        @repository.git_commit(commit_title,
+                               commit_details: build_commit_details,
+                               signoff: @repository.settings.signoff_commits?)
+        @utils.exec(["git", "push", "-f", "origin", release_branch])
+        pull.update(body: build_pr_body, title: commit_title)
+      end
+
       private
 
       def format_component_info(resolved_component, bold: false)
@@ -197,7 +212,10 @@ module Toys
       end
 
       def build_pr_body_metadata
-        metadata = {"requested_components" => @request_spec.serializable_requested_components}
+        metadata = {
+          "requested_components" => @request_spec.serializable_requested_components,
+          "request_sha" => @repository.current_sha(@target_branch),
+        }
         metadata_json = ::JSON.pretty_generate(metadata)
         "```\n# release_metadata DO NOT REMOVE OR MODIFY\n#{metadata_json}\n```"
       end

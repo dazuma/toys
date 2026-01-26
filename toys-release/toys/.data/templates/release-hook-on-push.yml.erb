@@ -1,6 +1,9 @@
 name: "[release hook] Update open releases"
 
-on: push
+on:
+  push:
+    branches:
+      - "**"
 
 permissions:
   contents: write # required for pushing changes
