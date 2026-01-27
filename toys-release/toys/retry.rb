@@ -71,7 +71,9 @@ def run
   verify_release_pr
   setup_params
   release_sha = setup_git
-  perform_pending_releases(release_sha)
+  @repository.at_sha(release_sha) do
+    perform_pending_releases(release_sha)
+  end
 end
 
 def setup_objects
@@ -112,13 +114,11 @@ def setup_params
   end
   set(:dry_run, /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)) if dry_run.nil?
   ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
-  set(:release_ref, @pull_request.merge_commit_sha) unless release_ref
 end
 
 def setup_git
-  exec(["git", "fetch", "--depth=2", "origin", "+#{release_ref}:refs/heads/release/current"], e: true)
-  exec(["git", "switch", "release/current"], e: true)
-  @repository.current_sha
+  @repository.git_prepare_branch(git_remote, branch: @pull_request.base_ref)
+  @repository.current_sha(release_ref || @pull_request.merge_commit_sha)
 end
 
 def create_performer(release_sha)
