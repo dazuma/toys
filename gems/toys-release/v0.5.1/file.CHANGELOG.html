@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: CHANGELOG
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "CHANGELOG";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: CHANGELOG</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="release-history">Release History</h1>
+
+<h3 id="v0-5-1-2026-01-27">v0.5.1 / 2026-01-27</h3>
+
+<ul>
+<li>FIXED: Fixed additional cases of releases attempting to release components whose names are substrings of other components</li>
+<li>FIXED: Fixed several issues with the retry tool</li>
+<li>DOCS: Document the touch-component and no-touch-component tags</li>
+</ul>
+
+<h3 id="v0-5-0-2026-01-27">v0.5.0 / 2026-01-27</h3>
+
+<ul>
+<li>BREAKING CHANGE: Disabled GitHub check validation by default, because GitHub started adding hidden checks we can&#39;t account for</li>
+<li>ADDED: Support for updating release pull requests when new commits are added</li>
+<li>ADDED: Multiple release pull requests are now allowed as long as they don&#39;t release any of the same components</li>
+<li>FIXED: Use v6 of the checkout action</li>
+<li>FIXED: Disabled GitHub check validation by default, because GitHub started adding hidden checks we can&#39;t account for</li>
+<li>FIXED: Reverting a commit that itself does a revert does the right thing</li>
+<li>FIXED: Fixed error when requesting a release from a branch with a slash in the name</li>
+<li>FIXED: Updated some outdated GitHub API usage</li>
+</ul>
+
+<h3 id="v0-4-0-2026-01-06">v0.4.0 / 2026-01-06</h3>
+
+<ul>
+<li>ADDED: Actions workflows use Ruby 4.0 and Toys 0.19 or later</li>
+<li>FIXED: Output formatting in setup utilities is more consistent</li>
+</ul>
+
+<h3 id="v0-3-2-2025-12-25">v0.3.2 / 2025-12-25</h3>
+
+<ul>
+<li>DOCS: Some formatting fixes in the user guide</li>
+</ul>
+
+<h3 id="v0-3-1-2025-12-22">v0.3.1 / 2025-12-22</h3>
+
+<ul>
+<li>FIXED: Reset the local repository prior to each pipeline step</li>
+<li>DOCS: Updates to readmes and users guides</li>
+</ul>
+
+<h3 id="v0-3-0-2025-12-06">v0.3.0 / 2025-12-06</h3>
+
+<p>This release includes fairly substantial changes, a few of them breaking, to the configuration mechanism:</p>
+
+<ul>
+<li>Component types have been removed. You can customize the pipeline for specific components, but there are no longer any predefined &quot;categories&quot; of components.</li>
+<li>Commit tag handling can be overridden for specific components.</li>
+<li>Added a configuration to control how collisions during file copies (in inputs and outputs) are resolved.</li>
+<li>Unknown or misspelled keys in the configuration now trigger an error.</li>
+</ul>
+
+<p>Aditional changes:</p>
+
+<ul>
+<li>Renamed the gen-settings tool to gen-config and expanded its capabilities, including generating git_user_name and git_user_email.</li>
+<li>When the release automation starts, it posts a comment on the release pull request with a link to its logs.</li>
+<li>Initial work on the users guide.</li>
+</ul>
+
+<h3 id="v0-2-2-2025-11-30">v0.2.2 / 2025-11-30</h3>
+
+<ul>
+<li>FIXED: Fixed several crashes in the retry tool</li>
+<li>FIXED: Fixed step cleaner trying to clean the .git directory on non-monorepos</li>
+<li>FIXED: Repo prechecks can now actually stop releases from being performed</li>
+<li>FIXED: Retry tool uses --work-dir= instead of --gh-pages-dir=</li>
+<li>FIXED: Dry run mode no longer attempts to update pull requests or open issues</li>
+</ul>
+
+<h3 id="v0-2-1-2025-11-30">v0.2.1 / 2025-11-30</h3>
+
+<ul>
+<li>FIXED: Fixed some typos in the release pipeline logs</li>
+<li>DOCS: Fixed minor typos in readme files</li>
+</ul>
+
+<h3 id="v0-2-0-2025-11-30">v0.2.0 / 2025-11-30</h3>
+
+<ul>
+<li>BREAKING CHANGE: Reworked pipeline design and normalized how steps communicate</li>
+<li>BREAKING CHANGE: Removed defunct commit linter</li>
+</ul>
+
+<h3 id="v0-1-1-2025-11-09">v0.1.1 / 2025-11-09</h3>
+
+<ul>
+<li>FIXED: The gen-gh-pages script now generates the correct redirect paths on a non-monorepo with the default directory structure</li>
+<li>FIXED: The gen-gh-pages script no longer exits abnormally if no changes were made</li>
+</ul>
+
+<h3 id="v0-1-0-2025-11-09">v0.1.0 / 2025-11-09</h3>
+
+<p>Initial release of the toys-release gem</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Tue Jan 27 08:01:30 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-4.0.1).
+</div>
+
+    </div>
+  </body>
+</html>
