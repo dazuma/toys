@@ -1,5 +1,11 @@
 # Release History
 
+### v0.5.1 / 2026-01-27
+
+* FIXED: Fixed additional cases of releases attempting to release components whose names are substrings of other components
+* FIXED: Fixed several issues with the retry tool
+* DOCS: Document the touch-component and no-touch-component tags
+
 ### v0.5.0 / 2026-01-27
 
 * BREAKING CHANGE: Disabled GitHub check validation by default, because GitHub started adding hidden checks we can't account for
