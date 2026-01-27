@@ -70,9 +70,8 @@ def run
   setup_objects
   verify_release_pr
   setup_params
-  @repository.at_sha(release_ref) do
-    perform_pending_releases
-  end
+  release_sha = setup_git
+  perform_pending_releases(release_sha)
 end
 
 def setup_objects
@@ -113,12 +112,18 @@ def setup_params
   end
   set(:dry_run, /^t/i.match?(::ENV["TOYS_RELEASE_DRY_RUN"].to_s)) if dry_run.nil?
   ::ENV["GEM_HOST_API_KEY"] = rubygems_api_key if rubygems_api_key
-  set :release_ref, @repository.current_sha(release_ref || @pull_request.merge_commit_sha)
+  set(:release_ref, @pull_request.merge_commit_sha) unless release_ref
 end
 
-def create_performer
+def setup_git
+  exec(["git", "fetch", "--depth=2", "origin", "+#{release_ref}:refs/heads/release/current"], e: true)
+  exec(["git", "switch", "release/current"], e: true)
+  @repository.current_sha
+end
+
+def create_performer(release_sha)
   Toys::Release::Performer.new(@repository,
-                               release_ref: release_ref,
+                               release_ref: release_sha,
                                release_pr: release_pr,
                                enable_prechecks: enable_prechecks,
                                git_remote: git_remote,
@@ -126,9 +131,14 @@ def create_performer
                                dry_run: dry_run)
 end
 
-def perform_pending_releases
-  @repository.wait_github_checks(ref: release_ref) if enable_prechecks
-  performer = create_performer
+def perform_pending_releases(release_sha)
+  if enable_prechecks
+    github_check_errors = @repository.wait_github_checks(ref: release_sha)
+    unless github_check_errors.empty?
+      @utils.error("GitHub checks failed", *github_check_errors)
+    end
+  end
+  performer = create_performer(release_sha)
   performer.perform_pr_releases unless performer.error?
   performer.report_results
   if performer.error?
