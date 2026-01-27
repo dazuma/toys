@@ -112,6 +112,16 @@ describe Toys::Release::Repository do
     assert_equal(::Gem::Version.new("0.15.5"), data["toys"])
   end
 
+  it "determines multiple released component and version from pull request checking for substring bug" do
+    pull_request = Toys::Release::Tests::FakePullRequest.new(
+      merge_commit_sha: "9943eda4cf85a235940a68e38aae3149e6dd994b",
+      head_ref: "release/multi/20251030192335-123456/main"
+    )
+    data = repository.released_components_and_versions(pull_request)
+    assert_equal(1, data.size)
+    assert_equal(::Gem::Version.new("0.5.0"), data["toys-release"])
+  end
+
   it "gets a commit info" do
     commit = repository.commit_info("toys/v0.19.0")
     assert_includes(commit.message, "release: Release 3 items (#375)")

@@ -514,6 +514,24 @@ and affect the behavior of that and other commits.
     can even include multiple revert-commit tags if the commit reverts more than
     one previous commit.
 
+ *  **touch-component:** This tag indicates that the commit should be treated
+    as if it touches a specified component, even if it does not actually modify
+    that component's files. For example:
+
+    ```
+    fix: Fix the build
+    touch-component: my_gem
+    ```
+
+ *  **no-touch-component:** This tag indicates that the commit should be
+    treated as if it does *not* touch a specified component, even if it
+    modifies that component's files. For example:
+
+    ```
+    fix: Fix the build
+    no-touch-component: my_gem
+    ```
+
 ### Running on the command line
 
 The implementation of Toys-Release is done via Toys (i.e. command line) tools.
