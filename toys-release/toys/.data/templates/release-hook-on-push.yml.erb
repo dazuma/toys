@@ -2,8 +2,8 @@ name: "[release hook] Update open releases"
 
 on:
   push:
-    branches:
-      - <%= @settings.main_branch %>
+    branches-ignore:
+      - "<%= @settings.release_branch_prefix %>/**"
 
 permissions:
   contents: write # required for pushing changes

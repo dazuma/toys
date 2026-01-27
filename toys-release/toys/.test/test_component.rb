@@ -6,6 +6,7 @@ describe Toys::Release::Component do
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :raise) }
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
+  let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
 
   expected_components = [
     ["toys", "version.rb"],
@@ -16,7 +17,7 @@ describe Toys::Release::Component do
 
   expected_components.each do |(component_name, version_file_name)|
     describe "#{component_name} component" do
-      let(:component) { Toys::Release::Component.new(repo_settings, component_name, environment_utils) }
+      let(:component) { Toys::Release::Component.new(repository, component_name, environment_utils) }
       let(:changelog_file) { component.changelog_file }
       let(:version_rb_file) { component.version_rb_file }
 
@@ -77,44 +78,71 @@ describe Toys::Release::Component do
     end
   end
 
-  describe "#touched_message" do
+  describe "#make_change_set" do
+    let(:component) { Toys::Release::Component.new(repository, "toys-release", environment_utils) }
+
+    it "creates a changeset from commits" do
+      # These two commits are from 2026-Jan
+      commits = repository.commit_info_sequence(from: "21fe91b8be71f1fc6def04f6fa62362cbb775b34",
+                                                to: "d69c9d900287c5e8fca92303e566e220429296ed")
+      change_set = component.make_change_set(commits: commits)
+      assert_equal(["d69c9d900287c5e8fca92303e566e220429296ed"], change_set.significant_shas)
+      assert_equal(1, change_set.change_groups.size)
+      assert_equal(1, change_set.change_groups.first.changes.size)
+    end
+
+    it "creates a changeset from default tag" do
+      # The "to" commit is two commits past toys-release/v0.3.2.
+      change_set = component.make_change_set(to: "8c20e807a5782348b271331c6404ce5b17ed6137")
+      expected_significant_shas = [
+        "8d0e9a232cd6a71060a9c3c8859e7994383e6f3c",
+        "8c20e807a5782348b271331c6404ce5b17ed6137",
+      ]
+      assert_equal(expected_significant_shas, change_set.significant_shas)
+      assert_equal(2, change_set.change_groups.size)
+    end
+  end
+
+  describe "#touched?" do
     let(:sha) { "e774119e798f7efc30d9d0e469b7a88e7f54251c" }
+    let(:the_commit) { repository.commit_info(sha) }
     let(:initial_sha) { "21dcf727b0f5b2f235a05a9d144a8b6a378a1aeb" }
+    let(:initial_commit) { repository.commit_info(initial_sha) }
 
     it "finds a change to common-tools with the actual settings" do
-      tools_component = Toys::Release::Component.new(repo_settings, "common-tools", environment_utils)
-      refute_nil(tools_component.touched_message(sha))
-      core_component = Toys::Release::Component.new(repo_settings, "toys-core", environment_utils)
-      assert_nil(core_component.touched_message(sha))
-      toys_component = Toys::Release::Component.new(repo_settings, "toys", environment_utils)
-      assert_nil(toys_component.touched_message(sha))
+      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
+      assert(tools_component.touched?(the_commit))
+      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
+      refute(core_component.touched?(the_commit))
+      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
+      refute(toys_component.touched?(the_commit))
     end
 
     it "supports include_globs" do
       repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
-      tools_component = Toys::Release::Component.new(repo_settings, "common-tools", environment_utils)
-      refute_nil(tools_component.touched_message(sha))
-      core_component = Toys::Release::Component.new(repo_settings, "toys-core", environment_utils)
-      refute_nil(core_component.touched_message(sha))
-      toys_component = Toys::Release::Component.new(repo_settings, "toys", environment_utils)
-      assert_nil(toys_component.touched_message(sha))
+      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
+      assert(tools_component.touched?(the_commit))
+      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
+      assert(core_component.touched?(the_commit))
+      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
+      refute(toys_component.touched?(the_commit))
     end
 
     it "supports exclude_globs" do
       repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
       repo_settings.component_settings("toys-core").exclude_globs << "common-tools/release/_*.rb"
       repo_settings.component_settings("common-tools").exclude_globs << "common-tools/release/_*.rb"
-      tools_component = Toys::Release::Component.new(repo_settings, "common-tools", environment_utils)
-      assert_nil(tools_component.touched_message(sha))
-      core_component = Toys::Release::Component.new(repo_settings, "toys-core", environment_utils)
-      assert_nil(core_component.touched_message(sha))
-      toys_component = Toys::Release::Component.new(repo_settings, "toys", environment_utils)
-      assert_nil(toys_component.touched_message(sha))
+      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
+      refute(tools_component.touched?(the_commit))
+      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
+      refute(core_component.touched?(the_commit))
+      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
+      refute(toys_component.touched?(the_commit))
     end
 
     it "supports the initial commit" do
-      release_component = Toys::Release::Component.new(repo_settings, "toys-release", environment_utils)
-      assert_nil(release_component.touched_message(initial_sha))
+      release_component = Toys::Release::Component.new(repository, "toys-release", environment_utils)
+      refute(release_component.touched?(initial_commit))
     end
   end
 end

@@ -39,22 +39,19 @@ describe Toys::Release::Repository do
     assert_match(%r{dazuma/toys}, repository.git_remote_url("origin"))
   end
 
-  it "creates a single-component release branch name" do
-    assert_equal("release/component/toys-core/main", repository.release_branch_name("main", "toys-core"))
-  end
-
-  it "creates a multi-component release branch name" do
-    assert_match(%r|^release/multi/\d{14}-\d{6}/main$|, repository.multi_release_branch_name("main"))
+  it "creates a release branch name" do
+    assert_match(%r|^release/\d{14}-\d{6}/main$|, repository.release_branch_name("main"))
   end
 
   it "determines if a branch is release-related" do
-    assert(repository.release_related_branch?("release/component/toys/main"))
-    assert(repository.release_related_branch?("release/multi/20250903162351-123456/main"))
+    assert(repository.release_related_branch?("release/component/toys/main")) # Legacy format for single-component
+    assert(repository.release_related_branch?("release/multi/20250903162351-123456/main")) # Legacy multi-component
+    assert(repository.release_related_branch?("release/20250903162351-123456/main"))
     refute(repository.release_related_branch?("release/hello"))
   end
 
-  it "simplifies a branch name" do
-    assert_equal("main", repository.simplify_branch_name("refs/heads/main"))
+  it "simplifies a branch name with a slash" do
+    assert_equal("foo/bar", repository.simplify_branch_name("refs/heads/foo/bar"))
   end
 
   it "switches SHA" do
@@ -113,5 +110,22 @@ describe Toys::Release::Repository do
     assert_equal(2, data.size)
     assert_equal(::Gem::Version.new("0.15.5"), data["toys-core"])
     assert_equal(::Gem::Version.new("0.15.5"), data["toys"])
+  end
+
+  it "gets a commit info" do
+    commit = repository.commit_info("toys/v0.19.0")
+    assert_includes(commit.message, "release: Release 3 items (#375)")
+  end
+
+  it "gets a commit info sequence" do
+    sequence = repository.commit_info_sequence(from: "toys/v0.19.0", to: "toys/v0.19.1")
+    expected_shas = [
+      "47cfeffc9ba275dab7604e30038fed107636304f",
+      "6c213b368ac5b68866289f52ecf81cd4223e5a67",
+      "8d0e9a232cd6a71060a9c3c8859e7994383e6f3c",
+      "8c20e807a5782348b271331c6404ce5b17ed6137",
+      "29a389f95f1d007c7fff455a772286cde10efd53",
+    ]
+    assert_equal(expected_shas, sequence.map(&:sha))
   end
 end

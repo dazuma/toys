@@ -927,8 +927,8 @@ required. The rest are optional.
  *  **required_checks**: *regexp/boolean* (optional) --
     Identifies which GitHub checks must pass as a prerequisite for a release.
     If a string is provided, it is interpreted as a Ruby regexp (PCRE) and
-    identifies the check names. A boolean value of *true* (the default) means
-    all checks must pass. A boolean value of *false* disables checking.
+    identifies the check names. A boolean value of *true* means all checks must
+    pass. A boolean value of *false* (the default) disables checking.
 
  *  **required_checks_timeout**: *integer* (optional) --
     The time to wait, in seconds, for required checks to pass during release

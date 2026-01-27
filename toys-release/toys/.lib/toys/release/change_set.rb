@@ -23,21 +23,21 @@ module Toys
         @semver = Semver::NONE
         @change_groups = nil
         @inputs = []
+        @significant_shas = nil
       end
 
       ##
       # Add a commit.
       #
-      # @param sha [String] The SHA for the commit.
-      # @param message [String] The commit message.
+      # @param commit [Toys::Release::CommitInfo] The commit.
       #
-      def add_message(sha, message)
+      def add_commit(commit)
         raise "ChangeSet locked" if finished?
-        lines = message.split("\n")
+        lines = commit.message.split("\n")
         return if lines.empty?
-        input = Input.new(sha)
+        input = Input.new(commit.sha)
         lines.each { |line| analyze_line(line, input) }
-        @inputs << input
+        @inputs << input if input.significant?
         self
       end
 
@@ -52,6 +52,7 @@ module Toys
         @commit_tags.each do |tag_info|
           tag_info.all_headers.each { |header| change_groups[header] = Group.new(header) }
         end
+        apply_reverts
         @inputs.each do |input|
           @semver = input.semver if input.semver > @semver
           input.changes.each do |(header, change)|
@@ -60,9 +61,10 @@ module Toys
           change_groups[:breaking].add(input.breaks)
         end
         @change_groups = change_groups.values.find_all { |group| !group.empty? }
-        if @change_groups.empty? && @semver != Semver::NONE
+        if @change_groups.empty? && @semver.significant?
           @change_groups << Group.new(nil).add(@no_significant_updates_notice)
         end
+        @significant_shas = @inputs.map(&:sha)
         @inputs = nil
         self
       end
@@ -88,11 +90,18 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether this change set is empty.
+      # @return [boolean] Whether this change set is empty. Valid only after
+      #     the change set is finished.
       #
       def empty?
-        @change_groups.empty?
+        @change_groups&.empty?
       end
+
+      ##
+      # @return [Array<String>] All significant SHAs. Valid only after the
+      #     change set is finished.
+      #
+      attr_reader :significant_shas
 
       ##
       # @return [Integer] The semver change.
@@ -185,11 +194,20 @@ module Toys
         when /^semver-change$/i
           input.apply_semver_change(match[:content].split.first)
         when /^revert-commit$/i
-          @inputs.delete_if { |elem| elem.sha.start_with?(match[:content].split.first) }
+          input.add_revert(match[:content].split.first)
         else
           tag_info = @commit_tags.find { |tag| tag.tag == match[:tag] }
           input.apply_commit(tag_info, match[:scope], match[:bang], match[:content])
         end
+      end
+
+      def apply_reverts
+        reverts = []
+        @inputs.reverse_each do |input|
+          next if reverts.any? { |revert_sha| input.sha.start_with?(revert_sha) }
+          reverts += input.reverts
+        end
+        @inputs.delete_if { |input| reverts.any? { |revert_sha| input.sha.start_with?(revert_sha) } }
       end
 
       ##
@@ -204,6 +222,7 @@ module Toys
           @breaks = []
           @semver = Semver::NONE
           @semver_locked = false
+          @reverts = []
         end
 
         attr_reader :sha
@@ -211,6 +230,12 @@ module Toys
         attr_reader :breaks
         attr_reader :semver
         attr_reader :semver_locked
+        attr_reader :reverts
+
+        # @private
+        def significant?
+          @semver.significant? || !reverts.empty? || !changes.empty? || !breaks.empty?
+        end
 
         # @private
         def apply_breaking_change(value)
@@ -243,6 +268,11 @@ module Toys
             @breaks << description
           end
           self
+        end
+
+        # @private
+        def add_revert(sha)
+          @reverts << sha
         end
 
         private

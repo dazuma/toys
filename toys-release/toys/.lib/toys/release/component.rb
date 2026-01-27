@@ -13,13 +13,13 @@ module Toys
       ##
       # Constructor
       #
-      # @param repo_settings [Toys::Release::RepoSettings] the repo settings
+      # @param repository [Toys::Release::Repository] the repository
       # @param name [String] The component name
       # @param environment_utils [Toys::Release::EnvironmentUtils] env utils
       #
-      def initialize(repo_settings, name, environment_utils)
-        @repo_settings = repo_settings
-        @settings = repo_settings.component_settings(name)
+      def initialize(repository, name, environment_utils)
+        @repository = repository
+        @settings = repository.settings.component_settings(name)
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils, @settings.version_constant)
@@ -245,23 +245,27 @@ module Toys
       end
 
       ##
-      # Returns a list of commit messages, since the given committish, that are
-      # relevant to this component.
+      # Returns a changeset with the changes, from the given commit range, that
+      # are relevant to this component.
       #
+      # @param commits [Array<Toys::Release::CommitInfo>,nil] Commits to add.
+      #     If not provided, uses `from` and `to` to get commits.
       # @param from [String,nil] The starting point, defaults to the last
-      #     release tag. Set to nil explicitly to use the first commit.
+      #     release tag. Set to nil explicitly to search the full history of
+      #     the `to` commit.
       # @param to [String] The endpoint. Defaults to HEAD.
-      # @return [ChangeSet]
       #
-      def make_change_set(from: :default, to: nil)
-        to ||= "HEAD"
-        from = latest_tag(ref: to) if from == :default
-        commits = from ? "#{from}..#{to}" : to
+      # @return [Toys::Release::ChangeSet]
+      #
+      def make_change_set(commits: nil, from: :default, to: nil)
+        commits ||= begin
+          to ||= "HEAD"
+          from = latest_tag(ref: to) if from == :default
+          @repository.commit_info_sequence(from: from, to: to)
+        end
         changeset = ChangeSet.new(@settings)
-        shas = @utils.capture(["git", "log", commits, "--format=%H"], e: true).split("\n")
-        shas.reverse_each do |sha|
-          message = touched_message(sha)
-          changeset.add_message(sha, message) if message
+        commits.each do |commit|
+          changeset.add_commit(commit) if touched?(commit)
         end
         changeset.finish
       end
@@ -280,33 +284,20 @@ module Toys
       end
 
       ##
-      # Checks if the given sha touches this component. If so, returns the
-      # commit message, otherwise returns nil.
+      # Checks if the given commit touches this component.
       #
-      # @return [String] if the given commit touches this component
-      # @return [nil] if the given commit does not touch this component
+      # @param commit [Toys::Release::CommitInfo] A commit to check
+      # @return [boolean] Whether the given commit touches this component
       #
-      def touched_message(sha)
+      def touched?(commit)
         dir = settings.directory
         dir = "#{dir}/" unless dir.end_with?("/")
 
-        message = @utils.capture(["git", "log", sha, "--max-count=1", "--format=%B"], e: true)
-        return message if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(message)
-
-        result = @utils.exec(["git", "rev-parse", "#{sha}^"], out: :capture, err: :null)
-        parent_sha =
-          if result.success?
-            result.captured_out.strip
-          else
-            @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], in: :null).strip
-          end
-        files = @utils.capture(["git", "diff", "--name-only", "#{parent_sha}..#{sha}"], e: true)
-        files.split("\n").each do |file|
-          return message if (file.start_with?(dir) ||
-                            settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&
-                            settings.exclude_globs.none? { |pattern| ::File.fnmatch?(pattern, file) }
+        return true if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(commit.message)
+        commit.modified_paths.any? do |file|
+          (file.start_with?(dir) || settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&
+            settings.exclude_globs.none? { |pattern| ::File.fnmatch?(pattern, file) }
         end
-        nil
       end
 
       # @private

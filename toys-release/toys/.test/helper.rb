@@ -16,6 +16,7 @@ $LOAD_PATH.unshift(::File.join(::File.dirname(__dir__), ".lib"))
 require "toys/release/artifact_dir"
 require "toys/release/change_set"
 require "toys/release/changelog_file"
+require "toys/release/commit_info"
 require "toys/release/component"
 require "toys/release/environment_utils"
 require "toys/release/performer"

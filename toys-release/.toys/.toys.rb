@@ -12,9 +12,11 @@ expand :clean, paths: :gitignore
 tool "test" do
   flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
 
+  include :exec
+
   def run
     ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
-    exit(cli.run(["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"]))
+    exit(cli.run(["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"] + verbosity_flags))
   end
 end
 

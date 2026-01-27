@@ -60,8 +60,13 @@ def define_expected_labels
 end
 
 def load_existing_labels
-  output = capture(["gh", "api", "repos/#{@settings.repo_path}/labels",
-                    "-H", "Accept: application/vnd.github.v3+json"])
+  cmd = [
+    "gh", "api",
+    "repos/#{@settings.repo_path}/labels",
+    "-H", "Accept: application/vnd.github+json",
+    "-H", "X-GitHub-Api-Version: 2022-11-28"
+  ]
+  output = capture(cmd)
   ::JSON.parse(output)
 end
 
@@ -83,9 +88,14 @@ def create_label(label)
   label_name = label["name"]
   return unless yes || confirm("Label \"#{label_name}\" doesn't exist. Create? ", default: true)
   body = ::JSON.dump(label)
-  exec(["gh", "api", "repos/#{@settings.repo_path}/labels", "--input", "-",
-        "-H", "Accept: application/vnd.github.v3+json"],
-       in: [:string, body], out: :null, e: true)
+  cmd = [
+    "gh", "api", "--method", "POST",
+    "repos/#{@settings.repo_path}/labels",
+    "-H", "Accept: application/vnd.github+json",
+    "-H", "X-GitHub-Api-Version: 2022-11-28",
+    "--input", "-"
+  ]
+  exec(cmd, in: [:string, body], out: :null, e: true)
   puts "Created label #{label_name.inspect}", :green
 end
 
@@ -93,8 +103,13 @@ def update_label(label)
   label_name = label["name"]
   return unless yes || confirm("Update fields of \"#{label_name}\"? ", default: true)
   body = ::JSON.dump(color: label["color"], description: label["description"])
-  exec(["gh", "api", "-XPATCH", "repos/#{@settings.repo_path}/labels/#{label_name}",
-        "--input", "-", "-H", "Accept: application/vnd.github.v3+json"],
-       in: [:string, body], out: :null, e: true)
+  cmd = [
+    "gh", "api", "--method", "PATCH",
+    "repos/#{@settings.repo_path}/labels/#{label_name}",
+    "-H", "Accept: application/vnd.github+json",
+    "-H", "X-GitHub-Api-Version: 2022-11-28",
+    "--input", "-"
+  ]
+  exec(cmd, in: [:string, body], out: :null, e: true)
   puts "Updated fields of label #{label_name.inspect}", :green
 end

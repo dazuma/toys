@@ -7,9 +7,9 @@ describe Toys::Release::Steps do
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :nothing) }
   let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
-  let(:toys_component) { Toys::Release::Component.new(repo_settings, "toys", environment_utils) }
-  let(:core_component) { Toys::Release::Component.new(repo_settings, "toys-core", environment_utils) }
-  let(:tools_component) { Toys::Release::Component.new(repo_settings, "common-tools", environment_utils) }
+  let(:toys_component) { Toys::Release::Component.new(repository, "toys", environment_utils) }
+  let(:core_component) { Toys::Release::Component.new(repository, "toys-core", environment_utils) }
+  let(:tools_component) { Toys::Release::Component.new(repository, "common-tools", environment_utils) }
   let(:artifact_dir) { Toys::Release::ArtifactDir.new }
   let(:sample_release_version) { Gem::Version.new("0.99.99") }
   let(:repo_root_dir) { File.dirname(File.dirname(File.dirname(__dir__))) }
@@ -383,15 +383,24 @@ describe Toys::Release::Steps do
     end
 
     def stub_version_check(exists)
-      cmd = ["gh", "api", "repos/dazuma/toys/releases/tags/toys/v#{sample_release_version}",
-             "-H", "Accept: application/vnd.github.v3+json"]
+      cmd = [
+        "gh", "api",
+        "repos/dazuma/toys/releases/tags/toys/v#{sample_release_version}",
+        "-H", "Accept: application/vnd.github+json",
+        "-H", "X-GitHub-Api-Version: 2022-11-28"
+      ]
       result_code = exists ? 0 : 1
       fake_tool_context.stub_exec(cmd, result_code: result_code)
     end
 
     def stub_release_creation(result_code)
-      cmd = ["gh", "api", "repos/dazuma/toys/releases", "--input", "-",
-             "-H", "Accept: application/vnd.github.v3+json"]
+      cmd = [
+        "gh", "api", "--method", "POST",
+        "repos/dazuma/toys/releases",
+        "-H", "Accept: application/vnd.github+json",
+        "-H", "X-GitHub-Api-Version: 2022-11-28",
+        "--input", "-"
+      ]
       fake_tool_context.stub_exec(cmd, result_code: result_code)
     end
 

@@ -6,6 +6,7 @@ require "json"
 require "yaml"
 
 require "toys/release/artifact_dir"
+require "toys/release/commit_info"
 require "toys/release/component"
 require "toys/release/pull_request"
 
@@ -27,6 +28,7 @@ module Toys
         build_components
         ensure_gh_binary
         ensure_git_binary
+        @commit_cache = {}
       end
 
       ##
@@ -61,27 +63,19 @@ module Toys
       end
 
       ##
-      # @return [String] The name of the release branch for a given component
-      #     name
+      # @return [String] A unique branch name for a release
       #
-      def release_branch_name(from_branch, component_name)
-        "#{settings.release_branch_prefix}/component/#{component_name}/#{from_branch}"
-      end
-
-      ##
-      # @return [String] A unique branch name for a multi-release
-      #
-      def multi_release_branch_name(from_branch)
+      def release_branch_name(from_branch)
         timestamp = ::Time.now.strftime("%Y%m%d%H%M%S")
         salt = format("%06d", rand(1_000_000))
-        "#{settings.release_branch_prefix}/multi/#{timestamp}-#{salt}/#{from_branch}"
+        "#{settings.release_branch_prefix}/#{timestamp}-#{salt}/#{from_branch}"
       end
 
       ##
       # @return [boolean] Whether the given branch name is release-related
       #
       def release_related_branch?(ref)
-        %r{^#{settings.release_branch_prefix}/(multi/\d{14}-\d{6}|component/[\w-]+)/[\w/-]+$}.match?(ref)
+        %r{^#{settings.release_branch_prefix}/((multi/)?\d{14}-\d{6}|component/[\w-]+)/\S+$}.match?(ref)
       end
 
       ##
@@ -127,6 +121,35 @@ module Toys
       end
 
       ##
+      # Return info on the given commit. Caches commits that were previously
+      # obtained.
+      #
+      # @param ref [String] a git reference
+      # @return [Toys::Release::CommitInfo]
+      #
+      def commit_info(ref = nil)
+        sha = current_sha(ref)
+        @commit_cache[sha] ||= CommitInfo.new(@utils, sha)
+      end
+
+      ##
+      # Return info on a sequence of commits. Caches commits that were
+      # previously obtained.
+      #
+      # @param from [String,nil] The starting point ref. If not provided,
+      #     gets the full history of the "to" ref.
+      # @param to [String,nil] The endpoint ref. Defaults to HEAD.
+      # @return [Array<Toys::Release::CommitInfo>]
+      #
+      def commit_info_sequence(from: nil, to: nil)
+        to ||= "HEAD"
+        range = from ? "#{from}..#{to}" : to
+        result = @utils.exec(["git", "log", range, "--format=%H"], out: :capture, err: :null)
+        shas = result.success? ? result.captured_out.split("\n") : []
+        shas.reverse.map { |sha| @commit_cache[sha] ||= CommitInfo.new(@utils, sha) }
+      end
+
+      ##
       # Searches for existing open release pull requests
       #
       # @param branch [String,nil] Optional branch the releases would merge
@@ -142,8 +165,14 @@ module Toys
         }
         args[:base] = branch if branch
         query = args.map { |k, v| "#{k}=#{v}" }.join("&")
-        output = @utils.capture(["gh", "api", "repos/#{settings.repo_path}/pulls?#{query}", "--paginate", "--slurp",
-                                 "-H", "Accept: application/vnd.github.v3+json"], e: true)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/pulls?#{query}",
+          "--paginate", "--slurp",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        output = @utils.capture(cmd, e: true)
         prs = ::JSON.parse(output).flatten(1)
         release_label = settings.release_pending_label
         prs = prs.find_all { |pr| pr["labels"].any? { |label| label["name"] == release_label } }
@@ -157,9 +186,13 @@ module Toys
       # @return [PullRequest,nil] Pull request info, or nil if not found
       #
       def load_pr(pr_number)
-        result = @utils.exec(["gh", "api", "repos/#{settings.repo_path}/pulls/#{pr_number}",
-                              "-H", "Accept: application/vnd.github.v3+json"],
-                             out: :capture)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/pulls/#{pr_number}",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        result = @utils.exec(cmd, out: :capture)
         return nil unless result.success?
         PullRequest.new(self, ::JSON.parse(result.captured_out))
       end
@@ -174,9 +207,11 @@ module Toys
       def open_issue(title, body)
         input = ::JSON.dump(title: title, body: body)
         cmd = [
-          "gh", "api", "repos/#{settings.repo_path}/issues",
-          "--input", "-",
-          "-H", "Accept: application/vnd.github.v3+json"
+          "gh", "api", "--method", "POST",
+          "repos/#{settings.repo_path}/issues",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28",
+          "--input", "-"
         ]
         response = @utils.capture(cmd, in: [:string, input], e: true)
         ::JSON.parse(response)
@@ -236,7 +271,7 @@ module Toys
       # @param ref [String,nil] The ref to check. Optional, defaults to HEAD.
       #
       def verify_github_checks(ref: nil)
-        if @settings.required_checks_regexp.nil?
+        unless @settings.required_checks_regexp
           @utils.log("GitHub checks disabled")
           return self
         end
@@ -256,7 +291,7 @@ module Toys
       # @return [Array<String>] Errors
       #
       def wait_github_checks(ref: nil)
-        if @settings.required_checks_regexp.nil?
+        unless @settings.required_checks_regexp
           @utils.log("GitHub checks disabled")
           return self
         end
@@ -327,7 +362,7 @@ module Toys
       #
       def simplify_branch_name(branch)
         return if branch.nil?
-        match = %r{^refs/heads/([^/\s]+)$}.match(branch)
+        match = %r{^refs/heads/([^\s]+)$}.match(branch)
         return match[1] if match
         branch
       end
@@ -445,9 +480,14 @@ module Toys
                            base: base_branch,
                            body: body,
                            maintainer_can_modify: true)
-        response = @utils.capture(["gh", "api", "repos/#{settings.repo_path}/pulls", "--input", "-",
-                                   "-H", "Accept: application/vnd.github.v3+json"],
-                                  in: [:string, body], e: true)
+        gh_cmd = [
+          "gh", "api", "--method", "POST",
+          "repos/#{settings.repo_path}/pulls",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28",
+          "--input", "-"
+        ]
+        response = @utils.capture(gh_cmd, in: [:string, body], e: true)
         PullRequest.new(self, ::JSON.parse(response)).update(labels: labels)
       end
 
@@ -512,7 +552,7 @@ module Toys
         @components = {}
         @utils.accumulate_errors("Errors while validating components") do
           settings.all_component_names.each do |name|
-            releasable = Component.new(settings, name, @utils)
+            releasable = Component.new(self, name, @utils)
             releasable.validate
             @components[releasable.name] = releasable
           end
@@ -585,9 +625,13 @@ module Toys
       end
 
       def github_check_errors(ref)
-        result = @utils.exec(["gh", "api", "repos/#{settings.repo_path}/commits/#{ref}/check-runs",
-                              "-H", "Accept: application/vnd.github.antiope-preview+json"],
-                             out: :capture)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/commits/#{ref}/check-runs",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        result = @utils.exec(cmd, out: :capture)
         return ["Failed to obtain GitHub check results for #{ref}"] unless result.success?
         checks = ::JSON.parse(result.captured_out)["check_runs"]
         results = []

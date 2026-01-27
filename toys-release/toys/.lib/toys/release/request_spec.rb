@@ -23,15 +23,15 @@ module Toys
       # @!attribute [r] version
       #   @return [::Gem::Version]
       #
-      ResolvedComponent = ::Struct.new :component_name, :change_set, :last_version, :version
+      ResolvedComponent = ::Struct.new(:component_name, :change_set, :last_version, :version)
 
       ##
       # Create an empty request.
       #
-      # @param environment_utils [Toys::Release::EnvironmentUtils]
+      # @param utils [Toys::Release::EnvironmentUtils]
       #
-      def initialize(environment_utils)
-        @utils = environment_utils
+      def initialize(utils)
+        @utils = utils
         @resolved_components = nil
         @requested_components = {}
         @release_sha = nil
@@ -45,18 +45,31 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether the request is empty, i.e. has no changed
-      #     components
+      # @return [boolean,nil] Whether the request is empty, i.e. has no changed
+      #     components. Returns nil if the request spec is not yet resolved.
       #
       def empty?
+        return nil unless resolved?
         resolved_components.empty?
       end
 
       ##
-      # @return [boolean] Whether the request is for a single component
+      # @return [boolean,nil] Whether the request is for a single component.
+      #     Returns nil if the request spec is not yet resolved.
       #
       def single_component?
+        return nil unless resolved?
         resolved_components.size == 1
+      end
+
+      ##
+      # @return [Hash{String=>(String,nil)}]
+      #     The component releases requested (including indirectly via
+      #     coordination group). This hash will always be consistent according
+      #     to the coordination groups.
+      #
+      def serializable_requested_components
+        @requested_components.to_h { |component, version| [component.name, version&.to_s] }
       end
 
       ##
@@ -74,28 +87,22 @@ module Toys
       ##
       # Add a component and version constraint.
       #
-      # @param component_name [String,:all] The name of the component to release
+      # @param component [Toys::Release::Component] The component to release
       # @param version [::Gem::Version,Toys::Release::Semver,String,Symbol,nil]
       #     The version to release, or the kind of version bump to use. If `nil`
       #     (the default), infers a version bump from the changeset, and omits
       #     the component if no release is needed.
       #
-      def add(component_name, version: nil)
+      def add(component, version: nil)
         raise "Release request already resolved" if resolved?
-        if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)
-          name = version.to_s
-          version = if name =~ /^\d/
-                      ::Gem::Version.new(name)
-                    else
-                      Semver.for_name(name)
-                    end
-          @utils.error("Malformed version or semver name: #{name}") unless version
+        version = normalize_version(version)
+        existing_version = @requested_components[component]
+        if existing_version && existing_version != version
+          @utils.error("Requested release of #{component.name} #{version} but #{existing_version} already requested")
+          return
         end
-        @utils.error("Cannot release with no version change") if version == Semver::NONE
-        if @requested_components[component_name] && @requested_components[component_name] != version
-          @utils.error("Requested release of #{component_name.inspect} twice with different versions")
-        else
-          @requested_components[component_name] = version
+        component.coordination_group.each do |comp|
+          @requested_components[comp] ||= version
         end
         self
       end
@@ -103,17 +110,19 @@ module Toys
       ##
       # Resolve which components and versions to release.
       #
-      # @param repository [Toys::Release::Repository]
-      # @param release_ref [String,nil] Git ref at which the release should be
-      #     cut. If nil, uses the current HEAD.
+      # @param release_sha [String] Git ref at which the release should be cut
       #
-      def resolve_versions(repository, release_ref: nil)
+      def resolve_versions(release_sha)
         raise "Release request already resolved" if resolved?
+        @utils.log("Resolving a request spec.")
         @utils.accumulate_errors("Conflicts detected in the components and versions requested.") do
-          @release_sha = repository.current_sha(release_ref)
-          candidate_groups = determine_candidate_groups(repository)
+          @release_sha = release_sha
+          grouped_requests = {}
+          @requested_components.each do |component, version|
+            grouped_requests[component.coordination_group] ||= version
+          end
           @resolved_components = []
-          candidate_groups.each do |group, version|
+          grouped_requests.each do |group, version|
             resolved_group, version = resolve_one_group(group, version)
             if version
               resolved_group.each do |resolved_component|
@@ -129,35 +138,18 @@ module Toys
 
       private
 
-      ##
-      # Determines candidate groups, groups that could be released based on the
-      # release request alone (but we haven't yet checked commits.) Thus, the
-      # actual released groups will be a subset of this.
-      #
-      def determine_candidate_groups(repository)
-        candidate_groups = {}
-        if @requested_components.empty?
-          repository.coordination_groups.each { |group| candidate_groups[group] = nil }
-        else
-          @requested_components.each do |component_name, version|
-            component = repository.component_named(component_name)
-            unless component
-              @utils.error("Unknown component name #{component_name.inspect}")
-              next
-            end
-            group = component.coordination_group
-            group.each do |elem|
-              elem_name = elem.name
-              elem_version = @requested_components[elem_name]
-              if elem != component && version && elem_version && elem_version != version
-                @utils.error("#{component_name} #{version} implies #{elem_name} #{version} but " \
-                            "#{elem_name} #{elem_version} was already requested.")
-              end
-              candidate_groups[group] ||= version
-            end
-          end
+      def normalize_version(version)
+        if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)
+          version_str = version.to_s
+          version = if version_str =~ /^\d/
+                      ::Gem::Version.new(version_str)
+                    else
+                      Semver.for_name(version_str)
+                    end
+          @utils.error("Malformed version or semver name: #{version_str}") unless version
         end
-        candidate_groups
+        @utils.error("Cannot release with no version change") if version == Semver::NONE
+        version
       end
 
       ##
@@ -167,11 +159,13 @@ module Toys
       def resolve_one_group(group, version)
         suggested_next_version = nil
         resolved_group = group.map do |component|
+          @utils.log("Resolving component #{component.name}")
           last_version = component.latest_tag_version(ref: @release_sha)
           if last_version && version.is_a?(::Gem::Version) && last_version >= version
             @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
           end
           latest_tag = component.version_tag(last_version)
+          @utils.log("Creating changeset from #{latest_tag} to #{@release_sha}")
           changeset = component.make_change_set(from: latest_tag, to: @release_sha)
           unless version.is_a?(::Gem::Version)
             cur_suggested = version ? version.bump(last_version) : changeset.suggested_version(last_version)

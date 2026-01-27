@@ -645,6 +645,11 @@ module Toys
       attr_reader :gh_pages_enabled
 
       ##
+      # @return [boolean] Whether commits update existing release requests
+      #
+      attr_reader :update_existing_requests
+
+      ##
       # @return [Array<CommitTagSettings>] The conventional commit types
       #     recognized as release-triggering, along with information on the
       #     change they map to.
@@ -926,6 +931,7 @@ module Toys
         @signoff_commits = info.delete("signoff_commits") ? true : false
         @gh_pages_enabled = info.delete("gh_pages_enabled") ? true : false
         @enable_release_automation = info.delete("enable_release_automation") != false
+        @update_existing_requests = info.delete("update_existing_requests") ? true : false
         @release_branch_prefix = info.delete("release_branch_prefix") || "release"
         @git_user_name = info.delete("git_user_name")
         @git_user_email = info.delete("git_user_email")
@@ -935,7 +941,7 @@ module Toys
         required_checks = info.delete("required_checks")
         @required_checks_regexp =
           case required_checks
-          when false
+          when false, nil
             nil
           when true
             //
