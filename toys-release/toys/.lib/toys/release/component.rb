@@ -293,7 +293,9 @@ module Toys
         dir = settings.directory
         dir = "#{dir}/" unless dir.end_with?("/")
 
-        return true if dir == "./" || /(^|\n)touch-component: #{name}(\s|$)/i.match?(commit.message)
+        escaped_name = ::Regexp.escape(name)
+        return true if dir == "./" || /(^|\n)touch-component:\s+#{escaped_name}(\s|$)/i.match?(commit.message)
+        return false if /(^|\n)no-touch-component:\s+#{escaped_name}(\s|$)/i.match?(commit.message)
         commit.modified_paths.any? do |file|
           (file.start_with?(dir) || settings.include_globs.any? { |pattern| ::File.fnmatch?(pattern, file) }) &&
             settings.exclude_globs.none? { |pattern| ::File.fnmatch?(pattern, file) }

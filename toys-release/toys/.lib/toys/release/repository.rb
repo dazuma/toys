@@ -680,6 +680,7 @@ module Toys
         files = output.split("\n")
         components = all_components.find_all do |component|
           dir = component.directory
+          dir = "#{dir}/" unless dir.end_with?("/")
           files.any? { |file| file.start_with?(dir) }
         end
         components.each_with_object({}) do |component, result|
