@@ -6,6 +6,6 @@ module Toys
     # Current version of the Toys release system.
     # @return [String]
     #
-    VERSION = "0.5.0"
+    VERSION = "0.5.1"
   end
 end
