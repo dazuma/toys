@@ -137,7 +137,7 @@ module Toys
       # previously obtained.
       #
       # @param from [String,nil] The starting point ref. If not provided,
-      #     gets only the "to" ref.
+      #     gets the full history of the "to" ref.
       # @param to [String,nil] The endpoint ref. Defaults to HEAD.
       # @return [Array<Toys::Release::CommitInfo>]
       #
@@ -271,7 +271,7 @@ module Toys
       # @param ref [String,nil] The ref to check. Optional, defaults to HEAD.
       #
       def verify_github_checks(ref: nil)
-        if @settings.required_checks_regexp.nil?
+        unless @settings.required_checks_regexp
           @utils.log("GitHub checks disabled")
           return self
         end
@@ -291,7 +291,7 @@ module Toys
       # @return [Array<String>] Errors
       #
       def wait_github_checks(ref: nil)
-        if @settings.required_checks_regexp.nil?
+        unless @settings.required_checks_regexp
           @utils.log("GitHub checks disabled")
           return self
         end
