@@ -28,6 +28,7 @@ def setup
   @settings = Toys::Release::RepoSettings.load_from_environment(@utils)
   @repository = Toys::Release::Repository.new(@utils, @settings)
   @push_branch = @repository.current_branch
+  @utils.error("Cannot run the _onpush tool from detached HEAD") if @push_branch.nil?
   if @repository.release_related_branch?(@push_branch)
     logger.info("Ignoring push to release branch.")
     exit
@@ -71,6 +72,10 @@ def determine_relevant_commits(pull)
   result = false
   requested_components.each_key do |comp_name|
     component = @repository.component_named(comp_name)
+    if component.nil?
+      @utils.warning("Unknown component #{comp_name.inspect} found in metadata for PR #{pull.number}")
+      next
+    end
     new_changes = component.make_change_set(commits: new_commits)
     new_changes.significant_shas.each { |sha| relevant_shas[sha] = true }
     result ||= !new_changes.empty?

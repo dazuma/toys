@@ -45,18 +45,21 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether the request is empty, i.e. has no changed
-      #     components
+      # @return [boolean,nil] Whether the request is empty, i.e. has no changed
+      #     components. Returns nil if the request spec is not yet resolved.
       #
       def empty?
-        @resolved_components.empty?
+        return nil unless resolved?
+        resolved_components.empty?
       end
 
       ##
-      # @return [boolean] Whether the request is for a single component
+      # @return [boolean,nil] Whether the request is for a single component.
+      #     Returns nil if the request spec is not yet resolved.
       #
       def single_component?
-        @resolved_components.size == 1
+        return nil unless resolved?
+        resolved_components.size == 1
       end
 
       ##

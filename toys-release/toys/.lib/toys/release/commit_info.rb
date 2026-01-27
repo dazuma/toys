@@ -9,7 +9,7 @@ module Toys
       ##
       # Create a new CommitInfo
       #
-      # @param environment_utils [Toys::Release::EnvrionmentUtils]
+      # @param environment_utils [Toys::Release::EnvironmentUtils]
       # @param sha [String]
       #
       def initialize(environment_utils, sha, message: nil)

@@ -139,7 +139,7 @@ module Toys
       # @param from [String,nil] The starting point ref. If not provided,
       #     gets only the "to" ref.
       # @param to [String,nil] The endpoint ref. Defaults to HEAD.
-      # @return [Array<Toys::Release::CommitInfo]
+      # @return [Array<Toys::Release::CommitInfo>]
       #
       def commit_info_sequence(from: nil, to: nil)
         to ||= "HEAD"

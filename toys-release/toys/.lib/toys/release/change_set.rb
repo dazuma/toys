@@ -23,7 +23,7 @@ module Toys
         @semver = Semver::NONE
         @change_groups = nil
         @inputs = []
-        @significant_shas = []
+        @significant_shas = nil
       end
 
       ##
@@ -37,10 +37,7 @@ module Toys
         return if lines.empty?
         input = Input.new(commit.sha)
         lines.each { |line| analyze_line(line, input) }
-        if input.significant?
-          @inputs << input
-          @significant_shas << commit.sha
-        end
+        @inputs << input if input.significant?
         self
       end
 
@@ -67,6 +64,7 @@ module Toys
         if @change_groups.empty? && @semver.significant?
           @change_groups << Group.new(nil).add(@no_significant_updates_notice)
         end
+        @significant_shas = @inputs.map(&:sha)
         @inputs = nil
         self
       end
@@ -92,14 +90,16 @@ module Toys
       end
 
       ##
-      # @return [boolean] Whether this change set is empty.
+      # @return [boolean] Whether this change set is empty. Valid only after
+      #     the change set is finished.
       #
       def empty?
-        @change_groups.empty?
+        @change_groups&.empty?
       end
 
       ##
-      # @return [Array<String>] All significant SHAs.
+      # @return [Array<String>] All significant SHAs. Valid only after the
+      #     change set is finished.
       #
       attr_reader :significant_shas
 

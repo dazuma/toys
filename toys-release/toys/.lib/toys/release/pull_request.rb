@@ -110,7 +110,7 @@ module Toys
       # @return [String] The pull request description text
       #
       def description
-        resource["body"]
+        resource["body"].to_s
       end
 
       ##
