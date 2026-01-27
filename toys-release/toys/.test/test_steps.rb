@@ -383,15 +383,24 @@ describe Toys::Release::Steps do
     end
 
     def stub_version_check(exists)
-      cmd = ["gh", "api", "repos/dazuma/toys/releases/tags/toys/v#{sample_release_version}",
-             "-H", "Accept: application/vnd.github.v3+json"]
+      cmd = [
+        "gh", "api",
+        "repos/dazuma/toys/releases/tags/toys/v#{sample_release_version}",
+        "-H", "Accept: application/vnd.github+json",
+        "-H", "X-GitHub-Api-Version: 2022-11-28"
+      ]
       result_code = exists ? 0 : 1
       fake_tool_context.stub_exec(cmd, result_code: result_code)
     end
 
     def stub_release_creation(result_code)
-      cmd = ["gh", "api", "repos/dazuma/toys/releases", "--input", "-",
-             "-H", "Accept: application/vnd.github.v3+json"]
+      cmd = [
+        "gh", "api", "--method", "POST",
+        "repos/dazuma/toys/releases",
+        "-H", "Accept: application/vnd.github+json",
+        "-H", "X-GitHub-Api-Version: 2022-11-28",
+        "--input", "-"
+      ]
       fake_tool_context.stub_exec(cmd, result_code: result_code)
     end
 

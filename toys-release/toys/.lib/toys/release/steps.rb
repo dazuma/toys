@@ -390,10 +390,13 @@ module Toys
 
         def check_existence(step_context)
           tag_name = step_context.tag_name
-          repo_path = step_context.repository.settings.repo_path
           step_context.log("Checking whether #{tag_name} already exists...")
-          cmd = ["gh", "api", "repos/#{repo_path}/releases/tags/#{tag_name}",
-                 "-H", "Accept: application/vnd.github.v3+json"]
+          cmd = [
+            "gh", "api",
+            "repos/#{step_context.repository.settings.repo_path}/releases/tags/#{tag_name}",
+            "-H", "Accept: application/vnd.github+json",
+            "-H", "X-GitHub-Api-Version: 2022-11-28"
+          ]
           result = step_context.utils.exec(cmd, out: :null, err: :null)
           if result.success?
             step_context.warning("GitHub tag #{tag_name} already exists. Skipping.")
@@ -405,21 +408,20 @@ module Toys
 
         def push_tag(step_context)
           tag_name = step_context.tag_name
-          repo_path = step_context.repository.settings.repo_path
           step_context.log("Creating GitHub release #{tag_name}...")
-          changelog_file = step_context.component.changelog_file
-          changelog_content = changelog_file.read_and_verify_latest_entry(step_context.release_version)
-          release_sha = step_context.repository.current_sha
-          body = ::JSON.dump(tag_name: tag_name,
-                             target_commitish: release_sha,
-                             name: step_context.release_description,
-                             body: changelog_content)
+          body = build_tag_creation_body(step_context)
+
           if step_context.dry_run?
             step_context.add_success("DRY RUN GitHub tag #{tag_name}.")
             step_context.log("DRY RUN: GitHub tag #{tag_name} not actually created.")
           else
-            cmd = ["gh", "api", "repos/#{repo_path}/releases", "--input", "-",
-                   "-H", "Accept: application/vnd.github.v3+json"]
+            cmd = [
+              "gh", "api", "--method", "POST",
+              "repos/#{step_context.repository.settings.repo_path}/releases",
+              "-H", "Accept: application/vnd.github+json",
+              "-H", "X-GitHub-Api-Version: 2022-11-28",
+              "--input", "-"
+            ]
             result = step_context.utils.exec(cmd, in: [:string, body], out: :null)
             unless result.success?
               step_context.abort_pipeline("Unable to create release #{tag_name}. Check the logs for details.")
@@ -427,6 +429,16 @@ module Toys
             step_context.add_success("Created release with tag #{tag_name} on GitHub.")
             step_context.log("GitHub release successful.")
           end
+        end
+
+        def build_tag_creation_body(step_context)
+          changelog_file = step_context.component.changelog_file
+          changelog_content = changelog_file.read_and_verify_latest_entry(step_context.release_version)
+          release_sha = step_context.repository.current_sha
+          ::JSON.dump(tag_name: step_context.tag_name,
+                      target_commitish: release_sha,
+                      name: step_context.release_description,
+                      body: changelog_content)
         end
       end
     end

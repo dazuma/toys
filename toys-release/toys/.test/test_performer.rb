@@ -12,8 +12,12 @@ describe Toys::Release::Performer do
   def stub_existence_checks(name, version)
     cmd = ["gem", "search", name, "--exact", "--remote", "--version", version.to_s]
     fake_tool_context.stub_capture(cmd, output: "Not found")
-    cmd = ["gh", "api", "repos/dazuma/toys/releases/tags/#{name}/v#{version}",
-           "-H", "Accept: application/vnd.github.v3+json"]
+    cmd = [
+      "gh", "api",
+      "repos/dazuma/toys/releases/tags/#{name}/v#{version}",
+      "-H", "Accept: application/vnd.github+json",
+      "-H", "X-GitHub-Api-Version: 2022-11-28"
+    ]
     fake_tool_context.stub_exec(cmd, result_code: 1)
   end
 

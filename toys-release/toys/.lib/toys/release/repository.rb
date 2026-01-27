@@ -165,8 +165,14 @@ module Toys
         }
         args[:base] = branch if branch
         query = args.map { |k, v| "#{k}=#{v}" }.join("&")
-        output = @utils.capture(["gh", "api", "repos/#{settings.repo_path}/pulls?#{query}", "--paginate", "--slurp",
-                                 "-H", "Accept: application/vnd.github.v3+json"], e: true)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/pulls?#{query}",
+          "--paginate", "--slurp",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        output = @utils.capture(cmd, e: true)
         prs = ::JSON.parse(output).flatten(1)
         release_label = settings.release_pending_label
         prs = prs.find_all { |pr| pr["labels"].any? { |label| label["name"] == release_label } }
@@ -180,9 +186,13 @@ module Toys
       # @return [PullRequest,nil] Pull request info, or nil if not found
       #
       def load_pr(pr_number)
-        result = @utils.exec(["gh", "api", "repos/#{settings.repo_path}/pulls/#{pr_number}",
-                              "-H", "Accept: application/vnd.github.v3+json"],
-                             out: :capture)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/pulls/#{pr_number}",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        result = @utils.exec(cmd, out: :capture)
         return nil unless result.success?
         PullRequest.new(self, ::JSON.parse(result.captured_out))
       end
@@ -197,9 +207,11 @@ module Toys
       def open_issue(title, body)
         input = ::JSON.dump(title: title, body: body)
         cmd = [
-          "gh", "api", "repos/#{settings.repo_path}/issues",
-          "--input", "-",
-          "-H", "Accept: application/vnd.github.v3+json"
+          "gh", "api", "--method", "POST",
+          "repos/#{settings.repo_path}/issues",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28",
+          "--input", "-"
         ]
         response = @utils.capture(cmd, in: [:string, input], e: true)
         ::JSON.parse(response)
@@ -468,9 +480,14 @@ module Toys
                            base: base_branch,
                            body: body,
                            maintainer_can_modify: true)
-        response = @utils.capture(["gh", "api", "repos/#{settings.repo_path}/pulls", "--input", "-",
-                                   "-H", "Accept: application/vnd.github.v3+json"],
-                                  in: [:string, body], e: true)
+        gh_cmd = [
+          "gh", "api", "--method", "POST",
+          "repos/#{settings.repo_path}/pulls",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28",
+          "--input", "-"
+        ]
+        response = @utils.capture(gh_cmd, in: [:string, body], e: true)
         PullRequest.new(self, ::JSON.parse(response)).update(labels: labels)
       end
 
@@ -608,9 +625,13 @@ module Toys
       end
 
       def github_check_errors(ref)
-        result = @utils.exec(["gh", "api", "repos/#{settings.repo_path}/commits/#{ref}/check-runs",
-                              "-H", "Accept: application/vnd.github.antiope-preview+json"],
-                             out: :capture)
+        cmd = [
+          "gh", "api",
+          "repos/#{settings.repo_path}/commits/#{ref}/check-runs",
+          "-H", "Accept: application/vnd.github+json",
+          "-H", "X-GitHub-Api-Version: 2022-11-28"
+        ]
+        result = @utils.exec(cmd, out: :capture)
         return ["Failed to obtain GitHub check results for #{ref}"] unless result.success?
         checks = ::JSON.parse(result.captured_out)["check_runs"]
         results = []
