@@ -1,5 +1,9 @@
 # Release History
 
+### v0.19.2 / 2026-01-27
+
+* FIXED: Update toys-core 3
+
 ### v0.19.1 / 2026-01-06
 
 * DOCS: Some formatting fixes in the user guide
