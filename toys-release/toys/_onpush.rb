@@ -40,36 +40,44 @@ end
 def update_open_release_prs
   logger.info("Searching for open release PRs targeting branch #{@push_branch} ...")
   release_prs = @repository.find_release_prs(branch: @push_branch)
-  count = 0
   release_prs.each do |pull|
     relevant_commits = determine_relevant_commits(pull)
     if relevant_commits.nil?
-      logger.info("No relevant commits for PR #{pull.number}")
-    else
-      if @settings.update_existing_requests
-        errors = update_release_pr(pull)
-        if errors.empty?
-          add_updated_comment(pull, relevant_commits)
-        else
-          add_error_comment(pull, relevant_commits, errors)
-        end
+      add_legacy_comment(pull)
+    elsif relevant_commits.empty?
+      logger.info("No relevant commits for PR #{pull.number}. No comment posted.")
+    elsif @settings.update_existing_requests
+      errors = update_release_pr(pull)
+      if errors.empty?
+        add_updated_comment(pull, relevant_commits)
       else
-        add_warning_comment(pull, relevant_commits)
+        add_error_comment(pull, relevant_commits, errors)
       end
-      count += 1
+    else
+      add_warning_comment(pull, relevant_commits)
     end
   end
-  logger.info("Updated #{count} release pull requests for target branch #{@push_branch}")
+  logger.info("Analyzed #{release_prs.size} existing release pull requests for target branch #{@push_branch}")
 end
 
+##
+# Returns an array of commits that have been pushed and are relevant to at
+# least one component covered by the given release pull request. This could be
+# the empty array if no pushed commits are significant and relevant to any of
+# the pull request's components.
+#
+# Returns nil if the release pull request is malformed or legacy and relevancy
+# cannot be determined.
+#
+# @return [Array<Toys::Release::CommitInfo>,nil]
+#
 def determine_relevant_commits(pull)
   original_sha = pull.release_request_sha
-  return true if original_sha.nil?
+  return nil if original_sha.nil?
   requested_components = pull.requested_components
-  return true if requested_components.nil?
+  return nil if requested_components.nil?
   new_commits = @repository.commit_info_sequence(from: original_sha)
   relevant_shas = {}
-  result = false
   requested_components.each_key do |comp_name|
     component = @repository.component_named(comp_name)
     if component.nil?
@@ -78,12 +86,17 @@ def determine_relevant_commits(pull)
     end
     new_changes = component.make_change_set(commits: new_commits)
     new_changes.significant_shas.each { |sha| relevant_shas[sha] = true }
-    result ||= !new_changes.empty?
   end
-  return nil unless result
   new_commits.find_all { |commit| relevant_shas[commit.sha] }
 end
 
+##
+# Recreates a release pull request. Called when we know that subsequent
+# significant commits have been added. Returns an array of error messages.
+# an empty array indicates success.
+#
+# @return [Array<String>] Array of error messages.
+#
 def update_release_pr(pull)
   logger.info("Regenerating PR #{pull.number} ...")
   errors = []
@@ -91,11 +104,17 @@ def update_release_pr(pull)
     request_spec = recreate_request_spec(pull)
     request_logic = Toys::Release::RequestLogic.new(@repository, request_spec)
     request_logic.update_existing_pr(pull)
-    @utils.exec(["git", "switch", @push_branch])
+  ensure
+    @utils.exec(["git", "switch", @push_branch]) unless @repository.current_branch == @push_branch
   end
   errors
 end
 
+##
+# Recreate the request specification given the metadata in a pull request.
+#
+# @return [Toys::Release::RequestSpec]
+#
 def recreate_request_spec(pull)
   requested_components = pull.requested_components
   @utils.error("Could not find metadata in PR #{pull.number}") unless requested_components
@@ -110,6 +129,17 @@ def recreate_request_spec(pull)
   end
   request_spec.resolve_versions(@repository.current_sha(@push_branch))
   request_spec
+end
+
+def add_legacy_comment(pull)
+  logger.info("Commented generically on release PR #{pull.number} because components could not be determined.")
+  comment = <<~STR
+    WARNING: Additional commits were added while this release PR was open.
+    Additionally, the pull request metadata could not be read, so the pull \
+    request cannot be updated and no additional information is available.
+    You may need to add to the changelog, or close this PR and prepare a new one.
+  STR
+  pull.add_comment(comment)
 end
 
 def add_warning_comment(pull, commits)

@@ -75,7 +75,7 @@ module Toys
       # @return [boolean] Whether the given branch name is release-related
       #
       def release_related_branch?(ref)
-        %r{^#{settings.release_branch_prefix}/((multi/)?\d{14}-\d{6}|component/[\w-]+)/[\w/-]+$}.match?(ref)
+        %r{^#{settings.release_branch_prefix}/((multi/)?\d{14}-\d{6}|component/[\w-]+)/\S+$}.match?(ref)
       end
 
       ##
