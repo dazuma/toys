@@ -251,7 +251,8 @@ module Toys
       # @param commits [Array<Toys::Release::CommitInfo>,nil] Commits to add.
       #     If not provided, uses `from` and `to` to get commits.
       # @param from [String,nil] The starting point, defaults to the last
-      #     release tag. Set to nil explicitly to use only the endpoint commit.
+      #     release tag. Set to nil explicitly to search the full history of
+      #     the `to` commit.
       # @param to [String] The endpoint. Defaults to HEAD.
       #
       # @return [Toys::Release::ChangeSet]

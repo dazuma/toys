@@ -941,7 +941,7 @@ module Toys
         required_checks = info.delete("required_checks")
         @required_checks_regexp =
           case required_checks
-          when false
+          when false, nil
             nil
           when true
             //
