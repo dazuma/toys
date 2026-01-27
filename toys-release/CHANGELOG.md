@@ -1,5 +1,16 @@
 # Release History
 
+### v0.5.0 / 2026-01-27
+
+* BREAKING CHANGE: Disabled GitHub check validation by default, because GitHub started adding hidden checks we can't account for
+* ADDED: Support for updating release pull requests when new commits are added
+* ADDED: Multiple release pull requests are now allowed as long as they don't release any of the same components
+* FIXED: Use v6 of the checkout action
+* FIXED: Disabled GitHub check validation by default, because GitHub started adding hidden checks we can't account for
+* FIXED: Reverting a commit that itself does a revert does the right thing
+* FIXED: Fixed error when requesting a release from a branch with a slash in the name
+* FIXED: Updated some outdated GitHub API usage
+
 ### v0.4.0 / 2026-01-06
 
 * ADDED: Actions workflows use Ruby 4.0 and Toys 0.19 or later
