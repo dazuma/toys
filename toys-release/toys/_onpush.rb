@@ -88,13 +88,7 @@ def update_release_pr(pull)
     request_logic.update_existing_pr(pull)
     @utils.exec(["git", "switch", @push_branch])
   end
-  if errors.empty?
-    logger.info("Recreated release PR #{pull.number}.")
-    pull.add_comment(pr_updated_message)
-  else
-    logger.info("Encountered errors updating PR #{pull.number}. Adding warning comment instead ...")
-    pull.add_comment(pr_error_message(errors))
-  end
+  errors
 end
 
 def recreate_request_spec(pull)
