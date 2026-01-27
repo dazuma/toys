@@ -293,7 +293,7 @@ module Toys
       def wait_github_checks(ref: nil)
         unless @settings.required_checks_regexp
           @utils.log("GitHub checks disabled")
-          return self
+          return []
         end
         deadline = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC) + @settings.required_checks_timeout
         wait_github_checks_internal(current_sha(ref), deadline)
