@@ -1,5 +1,9 @@
 # Release History
 
+### v0.19.2 / 2026-01-27
+
+* No significant updates.
+
 ### v0.19.1 / 2026-01-06
 
 * FIXED: The minitest template and the "system test" builtin now support minitest 6

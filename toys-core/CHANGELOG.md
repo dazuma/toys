@@ -1,5 +1,11 @@
 # Release History
 
+### v0.19.2 / 2026-01-27
+
+* FIXED: Significant toys-core edit 5
+* FIXED: Significant toys-core edit 15
+* FIXED: Significant toys-core edit 25
+
 ### v0.19.1 / 2026-01-06
 
 * DOCS: Some formatting fixes in the user guide
