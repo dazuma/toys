@@ -263,7 +263,7 @@ module Toys
           from = latest_tag(ref: to) if from == :default
           @repository.commit_info_sequence(from: from, to: to)
         end
-        changeset = ChangeSet.new(@settings)
+        changeset = ChangeSet.new(@repository.settings, @settings)
         commits.each do |commit|
           changeset.add_commit(commit) if touched?(commit)
         end

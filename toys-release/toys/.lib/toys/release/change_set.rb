@@ -14,9 +14,10 @@ module Toys
       ##
       # Create a new ChangeSet
       #
+      # @param repo_settings [RepoSettings] the repo settings
       # @param component_settings [ComponentSettings] the component settings
       #
-      def initialize(component_settings)
+      def initialize(repo_settings, component_settings)
         @commit_tags = component_settings.commit_tags
         @breaking_change_header = component_settings.breaking_change_header
         @no_significant_updates_notice = component_settings.no_significant_updates_notice
@@ -24,6 +25,9 @@ module Toys
         @change_groups = nil
         @inputs = []
         @significant_shas = nil
+        @description_normalizer = create_description_normalizer(
+          component_settings.issue_number_suffix_handling, repo_settings.repo_path
+        )
       end
 
       ##
@@ -190,14 +194,16 @@ module Toys
         return unless match
         case match[:tag]
         when /^BREAKING[\s_-]CHANGE$/
-          input.apply_breaking_change(match[:content])
+          description = @description_normalizer.call(match[:content])
+          input.apply_breaking_change(description)
         when /^semver-change$/i
           input.apply_semver_change(match[:content].split.first)
         when /^revert-commit$/i
           input.add_revert(match[:content].split.first)
         else
           tag_info = @commit_tags.find { |tag| tag.tag == match[:tag] }
-          input.apply_commit(tag_info, match[:scope], match[:bang], match[:content])
+          description = @description_normalizer.call(match[:content])
+          input.apply_commit(tag_info, match[:scope], match[:bang], description)
         end
       end
 
@@ -208,6 +214,28 @@ module Toys
           reverts += input.reverts
         end
         @inputs.delete_if { |input| reverts.any? { |revert_sha| input.sha.start_with?(revert_sha) } }
+      end
+
+      def create_description_normalizer(issue_number_suffix_handling, repo_path)
+        proc do |description|
+          match = /^([a-z])(.*)$/.match(description)
+          description = match[1].upcase + match[2] if match
+          unless issue_number_suffix_handling == :plain
+            suffixes = []
+            while (match = /^(.*\S)(\s*\(#\d+\)\s*)$/.match(description))
+              suffixes << match[2]
+              description = match[1]
+            end
+            if issue_number_suffix_handling == :link
+              reconstruction = [description]
+              until suffixes.empty?
+                reconstruction << suffixes.pop.sub(/#(\d+)/, "[#\\1](https://github.com/#{repo_path}/pull/\\1)")
+              end
+              description = reconstruction.join
+            end
+          end
+          description
+        end
       end
 
       ##
@@ -238,9 +266,9 @@ module Toys
         end
 
         # @private
-        def apply_breaking_change(value)
+        def apply_breaking_change(description)
           @semver = Semver::MAJOR unless semver_locked
-          @breaks << normalize_description(value, delete_pr_number: true)
+          @breaks << description
           self
         end
 
@@ -256,7 +284,6 @@ module Toys
 
         # @private
         def apply_commit(tag_info, scope, bang, description)
-          description = normalize_description(description, delete_pr_number: true)
           if tag_info
             commit_header = tag_info.header(scope)
             commit_semver = tag_info.semver(scope)
@@ -273,15 +300,6 @@ module Toys
         # @private
         def add_revert(sha)
           @reverts << sha
-        end
-
-        private
-
-        def normalize_description(description, delete_pr_number: false)
-          match = /^([a-z])(.*)$/.match(description)
-          description = match[1].upcase + match[2] if match
-          description = description.gsub(/\s*\(#\d+\)$/, "") if delete_pr_number
-          description
         end
       end
     end

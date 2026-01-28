@@ -3,9 +3,12 @@
 require_relative "helper"
 
 describe Toys::Release::ChangeSet do
-  let(:settings_customization) { {} }
+  let(:component_name) { "my_component" }
+  let(:repo_path) { "example/repo" }
+  let(:settings_customization) { {"repo" => repo_path, "components" => [{"name" => component_name}]} }
   let(:repo_settings) { Toys::Release::RepoSettings.new(settings_customization) }
-  let(:change_set) { Toys::Release::ChangeSet.new(repo_settings) }
+  let(:component_settings) { repo_settings.component_settings(component_name) }
+  let(:change_set) { Toys::Release::ChangeSet.new(repo_settings, component_settings) }
 
   def commit_with(sha, message)
     Toys::Release::CommitInfo.new(nil, sha).populate_for_testing(message: message)
@@ -77,6 +80,40 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     assert_equal(["ADDED: Feature 1"], groups[0].prefixed_changes)
+    refute_empty(change_set)
+  end
+
+  it "reflects a simple message with issue numbers with plain handling" do
+    change_set.add_commit(commit_with("12345", "feat: Feature 1 (#123) (#456) "))
+    change_set.finish
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["ADDED: Feature 1 (#123) (#456) "], groups[0].prefixed_changes)
+    refute_empty(change_set)
+  end
+
+  it "reflects a simple message with issue numbers with delete handling" do
+    settings_customization["issue_number_suffix_handling"] = "delete"
+    change_set.add_commit(commit_with("12345", "feat: Feature 1 (#123) (#456) "))
+    change_set.finish
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["ADDED: Feature 1"], groups[0].prefixed_changes)
+    refute_empty(change_set)
+  end
+
+  it "reflects a simple message with issue numbers with link handling" do
+    settings_customization["issue_number_suffix_handling"] = "link"
+    change_set.add_commit(commit_with("12345", "feat: Feature 1 (#123) (#456) "))
+    change_set.finish
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    expected_entry = "ADDED: Feature 1 ([#123](https://github.com/example/repo/pull/123)) " \
+                     "([#456](https://github.com/example/repo/pull/456)) "
+    assert_equal([expected_entry], groups[0].prefixed_changes)
     refute_empty(change_set)
   end
 

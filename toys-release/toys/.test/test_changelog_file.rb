@@ -12,8 +12,12 @@ describe Toys::Release::ChangelogFile do
   let(:changelog2_path) { File.join(__dir__, ".data", "changelog2.md") }
   let(:changelog3_path) { File.join(__dir__, ".data", "changelog3.md") }
   let(:nonexistent_path) { File.join(__dir__, ".data", "nonexistent.md") }
-  let(:default_settings) { Toys::Release::RepoSettings.new({}) }
-  let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
+  let(:component_name) { "my_component" }
+  let(:repo_path) { "example/repo" }
+  let(:settings_customization) { {"repo" => repo_path, "components" => [{"name" => component_name}]} }
+  let(:repo_settings) { Toys::Release::RepoSettings.new(settings_customization) }
+  let(:component_settings) { repo_settings.component_settings(component_name) }
+  let(:change_set) { Toys::Release::ChangeSet.new(repo_settings, component_settings) }
 
   def commit_with(sha, message)
     Toys::Release::CommitInfo.new(nil, sha).populate_for_testing(message: message)
