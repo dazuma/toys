@@ -170,7 +170,7 @@ module Toys
       attr_reader :version_rb_path
 
       ##
-      # @return [Object] Deprecated and unused
+      # @return [String,Array<String>,nil] Deprecated and unused
       #
       attr_reader :version_constant
 
@@ -985,7 +985,7 @@ module Toys
           else
             @components[component.name] = component
             if component.version_constant
-              @warnings << "Found deprecated version_constant setting in component #{component.name}"
+              @warnings << "Found deprecated version_constant setting in component #{component.name.inspect}"
             end
           end
         end
