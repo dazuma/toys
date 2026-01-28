@@ -16,7 +16,7 @@ describe Toys::Release::ChangelogFile do
   let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
 
   def commit_with(sha, message)
-    Toys::Release::CommitInfo.new(nil, sha, message: message)
+    Toys::Release::CommitInfo.new(nil, sha).populate_for_testing(message: message)
   end
 
   it "checks existence" do

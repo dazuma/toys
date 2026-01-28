@@ -12,10 +12,10 @@ module Toys
       # @param environment_utils [Toys::Release::EnvironmentUtils]
       # @param sha [String]
       #
-      def initialize(environment_utils, sha, message: nil)
+      def initialize(environment_utils, sha)
         @utils = environment_utils
         @sha = sha
-        @message = message
+        @message = nil
         @parent_sha = nil
         @modified_paths = nil
       end
@@ -55,7 +55,7 @@ module Toys
             if result.success?
               result.captured_out.strip
             else
-              @utils.capture(["git", "hash-object", "-t", "tree", "--stdin"], e: true, in: :null).strip
+              @utils.empty_tree_sha
             end
           else
             ""
@@ -74,6 +74,14 @@ module Toys
           else
             []
           end
+      end
+
+      # @private
+      def populate_for_testing(message: nil, parent_sha: nil, modified_paths: nil)
+        @message = message
+        @parent_sha = parent_sha
+        @modified_paths = modified_paths
+        self
       end
     end
   end
