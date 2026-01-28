@@ -145,7 +145,11 @@ module Toys
           path = directory(from: :absolute)
           @utils.error("Missing directory #{path} for #{name}") unless ::File.directory?(path)
           @utils.error("Missing changelog #{changelog_file.path} for #{name}") unless changelog_file.exists?
-          @utils.error("Missing version #{version_rb_file.path} for #{name}") unless version_rb_file.exists?
+          if !version_rb_file.exists?
+            @utils.error("Missing version #{version_rb_file.path} for #{name}")
+          elsif version_rb_file.current_version.nil?
+            @utils.error("Unable to read version from #{version_rb_file.path} for #{name}")
+          end
           yield if block_given?
         end
       end

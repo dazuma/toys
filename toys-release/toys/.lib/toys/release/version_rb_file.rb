@@ -49,6 +49,7 @@ module Toys
       # @param version [String,::Gem::Version] The release version.
       #
       def update_version(version)
+        @utils.log("Updating #{path} to set VERSION=#{version}")
         new_content = content.sub(/VERSION\s*=\s*"(\d+(?:\.[a-zA-Z0-9]+)+)"/,
                                   "VERSION = \"#{version}\"")
         ::File.write(path, new_content)

@@ -11,8 +11,6 @@ describe Toys::Release::VersionRbFile do
   let(:version1_path) { File.join(__dir__, ".data", "version1.rb") }
   let(:version2_path) { File.join(__dir__, ".data", "version2.rb") }
   let(:nonexistent_path) { File.join(__dir__, ".data", "nonexistent.rb") }
-  let(:default_settings) { Toys::Release::RepoSettings.new({}) }
-  let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
 
   it "checks existence" do
     file = Toys::Release::VersionRbFile.new(version1_path, environment_utils)
