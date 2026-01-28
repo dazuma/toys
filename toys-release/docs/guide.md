@@ -1089,12 +1089,6 @@ documented here.
     present, the default pipeline for the entire repository is used. (See the
     **steps** key under [Top level configuration](#top-level-configuration).)
 
- *  **version_constant**: *string* (optional) --
-    The fully-qualified name of the version constant. This is used to determine
-    the current version of the component. The default uses the module implied
-    by the component name. For example, if the component (gem) name is
-    `toys-release`, this defaults to `Toys::Release::VERSION`.
-
  *  **version_rb_path**: *string* (optional) --
     The path to a Ruby file that contains the current version of the component.
     This file *must* include Ruby code that looks like this:

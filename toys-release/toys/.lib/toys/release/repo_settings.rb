@@ -169,12 +169,6 @@ module Toys
       attr_reader :version_rb_path
 
       ##
-      # @return [Array<String>] The constant used to define the version, as an
-      #     array representing the module path
-      #
-      attr_reader :version_constant
-
-      ##
       # @return [boolean] Whether gh-pages publication is enabled.
       #
       attr_reader :gh_pages_enabled
@@ -240,13 +234,10 @@ module Toys
       end
 
       def read_file_modification_info(info)
-        segments = @name.split("-")
-        name_path = segments.join("/")
+        name_path = @name.split("-").join("/")
         @version_rb_path = info.delete("version_rb_path") || "lib/#{name_path}/version.rb"
-        @version_constant = info.delete("version_constant") ||
-                            (segments.map { |seg| camelize(seg) } + ["VERSION"])
-        @version_constant = @version_constant.split("::") if @version_constant.is_a?(::String)
         @changelog_path = info.delete("changelog_path") || "CHANGELOG.md"
+        info.delete("version_constant") # Legacy setting, no longer used
       end
 
       def read_gh_pages_info(repo_settings, info, has_multiple_components)
