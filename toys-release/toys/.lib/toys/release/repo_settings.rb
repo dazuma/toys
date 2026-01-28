@@ -119,6 +119,7 @@ module Toys
       # @private
       # Create a ComponentSettings from input data structures
       #
+      # @param repo_settings [Toys::Release::RepoSettings]
       # @param info [Hash] Nested hash input
       # @param has_multiple_components [boolean] Whether there are other
       #     components
@@ -169,8 +170,7 @@ module Toys
       attr_reader :version_rb_path
 
       ##
-      # @return [Array<String>] The constant used to define the version, as an
-      #     array representing the module path
+      # @return [String,Array<String>,nil] Deprecated and unused
       #
       attr_reader :version_constant
 
@@ -240,13 +240,10 @@ module Toys
       end
 
       def read_file_modification_info(info)
-        segments = @name.split("-")
-        name_path = segments.join("/")
+        name_path = @name.split("-").join("/")
         @version_rb_path = info.delete("version_rb_path") || "lib/#{name_path}/version.rb"
-        @version_constant = info.delete("version_constant") ||
-                            (segments.map { |seg| camelize(seg) } + ["VERSION"])
-        @version_constant = @version_constant.split("::") if @version_constant.is_a?(::String)
         @changelog_path = info.delete("changelog_path") || "CHANGELOG.md"
+        @version_constant = info.delete("version_constant")
       end
 
       def read_gh_pages_info(repo_settings, info, has_multiple_components)
@@ -550,6 +547,8 @@ module Toys
         environment_utils.error("Unable to find releases.yml data file") unless file_path
         info = ::YAML.load_file(file_path)
         settings = RepoSettings.new(info)
+        warnings = settings.warnings
+        environment_utils.warning("Warnings while loading releases.yml", *warnings) unless warnings.empty?
         errors = settings.errors
         environment_utils.error("Errors while loading releases.yml", *errors) unless errors.empty?
         settings
@@ -985,6 +984,9 @@ module Toys
             @errors << "Duplicate component #{component.name.inspect}"
           else
             @components[component.name] = component
+            if component.version_constant
+              @warnings << "Found deprecated version_constant setting in component #{component.name.inspect}"
+            end
           end
         end
         @errors << "No components found" if @components.empty?

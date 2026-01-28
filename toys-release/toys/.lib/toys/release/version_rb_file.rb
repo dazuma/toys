@@ -11,24 +11,16 @@ module Toys
       #
       # @param path [String] File path
       # @param environment_utils [Toys::Release::EnvironmentUtils]
-      # @param constant_name [Array<String>] Fully qualified name of the version
-      #     constant
       #
-      def initialize(path, environment_utils, constant_name)
+      def initialize(path, environment_utils)
         @path = path
         @utils = environment_utils
-        @constant_name = constant_name
       end
 
       ##
       # @return [String] Path to the version file
       #
       attr_reader :path
-
-      ##
-      # @return [Array<String>] Fully qualified name of the version constant
-      #
-      attr_reader :constant_name
 
       ##
       # @return [boolean] Whether the file exists
@@ -52,23 +44,12 @@ module Toys
       end
 
       ##
-      # Attempt to evaluate the current version by evaluating Ruby.
-      #
-      # @return [::Gem::Version,nil] Current version, or nil if failed
-      #
-      def eval_version
-        joined_constant = constant_name.join("::")
-        script = "load #{path.inspect}; puts #{joined_constant}"
-        output = @utils.capture_ruby(script, err: :null).strip
-        output.empty? ? nil : ::Gem::Version.new(output)
-      end
-
-      ##
       # Update the file to reflect a new version.
       #
       # @param version [String,::Gem::Version] The release version.
       #
       def update_version(version)
+        @utils.log("Updating #{path} to set VERSION=#{version}")
         new_content = content.sub(/VERSION\s*=\s*"(\d+(?:\.[a-zA-Z0-9]+)+)"/,
                                   "VERSION = \"#{version}\"")
         ::File.write(path, new_content)

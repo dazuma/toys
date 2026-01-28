@@ -30,7 +30,6 @@ components:
     gh_pages_directory: gems/toys-release
   - name: common-tools
     version_rb_path: .lib/version.rb
-    version_constant: Toys::CommonTools::VERSION
     steps:
       - name: release_github
 

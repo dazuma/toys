@@ -11,43 +11,30 @@ describe Toys::Release::VersionRbFile do
   let(:version1_path) { File.join(__dir__, ".data", "version1.rb") }
   let(:version2_path) { File.join(__dir__, ".data", "version2.rb") }
   let(:nonexistent_path) { File.join(__dir__, ".data", "nonexistent.rb") }
-  let(:default_settings) { Toys::Release::RepoSettings.new({}) }
-  let(:change_set) { Toys::Release::ChangeSet.new(default_settings) }
-  let(:constant_name) { ["Toys", "Tests", "VERSION"] }
 
   it "checks existence" do
-    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils, constant_name)
+    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils)
     assert(file.exists?)
   end
 
   it "checks non-existence" do
-    file = Toys::Release::VersionRbFile.new(nonexistent_path, environment_utils, constant_name)
+    file = Toys::Release::VersionRbFile.new(nonexistent_path, environment_utils)
     refute(file.exists?)
   end
 
   it "determines current version from content" do
-    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils, constant_name)
+    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils)
     assert_equal("1.2.3.beta4", file.current_version.to_s)
-  end
-
-  it "determines current version from eval" do
-    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils, constant_name)
-    assert_equal("1.2.3.beta4", file.eval_version.to_s)
-  end
-
-  it "fails to eval when given the wrong constant" do
-    file = Toys::Release::VersionRbFile.new(version1_path, environment_utils, ["Bad"])
-    assert_nil(file.eval_version)
   end
 
   it "modifies a file" do
     Dir.mktmpdir do |dir|
       version_path = File.join(dir, "version.md")
       FileUtils.cp(version2_path, version_path)
-      file = Toys::Release::VersionRbFile.new(version_path, environment_utils, constant_name)
+      file = Toys::Release::VersionRbFile.new(version_path, environment_utils)
       assert_equal("1.2.3", file.current_version.to_s)
       file.update_version("1.2.3.beta4")
-      file1 = Toys::Release::VersionRbFile.new(version1_path, environment_utils, constant_name)
+      file1 = Toys::Release::VersionRbFile.new(version1_path, environment_utils)
       assert_equal(file1.content, file.content)
     end
   end

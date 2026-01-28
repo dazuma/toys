@@ -102,6 +102,7 @@ module Toys
       # @param date [String] The date. If not provided, uses the current UTC.
       #
       def append(changeset, version, date: nil)
+        @utils.log("Writing version #{version} to changelog #{path}")
         date ||= ::Time.now.utc
         date = date.strftime("%Y-%m-%d") if date.respond_to?(:strftime)
         new_entry = [

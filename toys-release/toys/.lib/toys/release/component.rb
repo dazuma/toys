@@ -22,7 +22,7 @@ module Toys
         @settings = repository.settings.component_settings(name)
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
-        @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils, @settings.version_constant)
+        @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils)
         @coordination_group = nil
       end
 
@@ -145,10 +145,10 @@ module Toys
           path = directory(from: :absolute)
           @utils.error("Missing directory #{path} for #{name}") unless ::File.directory?(path)
           @utils.error("Missing changelog #{changelog_file.path} for #{name}") unless changelog_file.exists?
-          @utils.error("Missing version #{version_rb_file.path} for #{name}") unless version_rb_file.exists?
-          version_constant = settings.version_constant.join("::")
-          unless version_rb_file.eval_version
-            @utils.error("#{version_rb_file.path} for #{name} didn't define #{version_constant}")
+          if !version_rb_file.exists?
+            @utils.error("Missing version #{version_rb_file.path} for #{name}")
+          elsif version_rb_file.current_version.nil?
+            @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
           end
           yield if block_given?
         end
