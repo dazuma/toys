@@ -254,6 +254,18 @@ module Toys
         "#{server_url}/#{repo}/actions/runs/#{run_id}"
       end
 
+      ##
+      # Returns the SHA corresponding to an empty tree. This can be used as the
+      # diff base for the initial commit. We compute this with an explicit git
+      # call (but cache it) instead of hard-coding it, so we remain compatible
+      # with both SHA-1 and SHA-256 repositories.
+      #
+      # @return [String] the SHA of the empty tree
+      #
+      def empty_tree_sha
+        @empty_tree_sha ||= capture(["git", "hash-object", "-t", "tree", "--stdin"], e: true, in: :null).strip
+      end
+
       private
 
       def modify_exec_opts(opts, cmd)

@@ -104,45 +104,60 @@ describe Toys::Release::Component do
   end
 
   describe "#touched?" do
+    # The SHA is from 2025-10-30, one commit past common-tools/v0.16.0.
     let(:sha) { "e774119e798f7efc30d9d0e469b7a88e7f54251c" }
     let(:the_commit) { repository.commit_info(sha) }
     let(:initial_sha) { "21dcf727b0f5b2f235a05a9d144a8b6a378a1aeb" }
     let(:initial_commit) { repository.commit_info(initial_sha) }
+    let(:toys_component) { Toys::Release::Component.new(repository, "toys", environment_utils) }
+    let(:core_component) { Toys::Release::Component.new(repository, "toys-core", environment_utils) }
+    let(:tools_component) { Toys::Release::Component.new(repository, "common-tools", environment_utils) }
+    let(:release_component) { Toys::Release::Component.new(repository, "toys-release", environment_utils) }
+
+    def append_commit_message(message_addition)
+      modified_message = "#{the_commit.message}\n#{message_addition}"
+      the_commit.populate_for_testing(message: modified_message,
+                                      parent_sha: the_commit.parent_sha,
+                                      modified_paths: the_commit.modified_paths)
+    end
 
     it "finds a change to common-tools with the actual settings" do
-      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
       assert(tools_component.touched?(the_commit))
-      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
       refute(core_component.touched?(the_commit))
-      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
       refute(toys_component.touched?(the_commit))
+      refute(release_component.touched?(the_commit))
     end
 
     it "supports include_globs" do
       repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
-      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
       assert(tools_component.touched?(the_commit))
-      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
       assert(core_component.touched?(the_commit))
-      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
       refute(toys_component.touched?(the_commit))
+      refute(release_component.touched?(the_commit))
     end
 
     it "supports exclude_globs" do
       repo_settings.component_settings("toys-core").include_globs << "common-tools/release/*.rb"
       repo_settings.component_settings("toys-core").exclude_globs << "common-tools/release/_*.rb"
       repo_settings.component_settings("common-tools").exclude_globs << "common-tools/release/_*.rb"
-      tools_component = Toys::Release::Component.new(repository, "common-tools", environment_utils)
       refute(tools_component.touched?(the_commit))
-      core_component = Toys::Release::Component.new(repository, "toys-core", environment_utils)
       refute(core_component.touched?(the_commit))
-      toys_component = Toys::Release::Component.new(repository, "toys", environment_utils)
       refute(toys_component.touched?(the_commit))
+      refute(release_component.touched?(the_commit))
     end
 
     it "supports the initial commit" do
-      release_component = Toys::Release::Component.new(repository, "toys-release", environment_utils)
       refute(release_component.touched?(initial_commit))
+    end
+
+    it "recognizes touch-component and no-touch-component" do
+      append_commit_message("touch-component: toys-core")
+      append_commit_message("touch-component: toys-release")
+      append_commit_message("no-touch-component: common-tools")
+      refute(tools_component.touched?(the_commit))
+      assert(core_component.touched?(the_commit))
+      refute(toys_component.touched?(the_commit))
+      assert(release_component.touched?(the_commit))
     end
   end
 end
