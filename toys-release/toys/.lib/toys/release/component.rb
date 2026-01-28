@@ -148,7 +148,7 @@ module Toys
           if !version_rb_file.exists?
             @utils.error("Missing version #{version_rb_file.path} for #{name}")
           elsif version_rb_file.current_version.nil?
-            @utils.error("Unable to read version from #{version_rb_file.path} for #{name}")
+            @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
           end
           yield if block_given?
         end
