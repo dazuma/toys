@@ -39,10 +39,9 @@ jobs:
           - os: ubuntu-latest
             ruby: "jruby"
             steps: "--test-all --no-test-tools --no-test-release"
-          # TEMPORARY: Disable truffleruby due to some issues with bundler
-          # - os: ubuntu-latest
-          #   ruby: "truffleruby"
-          #   steps: "--test-all --no-test-tools --no-test-release"
+          - os: ubuntu-latest
+            ruby: "truffleruby"
+            steps: "--test-all --no-test-tools --no-test-release"
           - os: macos-latest
             ruby: "2.7"
             steps: "--test-all --no-test-tools --no-test-release"
