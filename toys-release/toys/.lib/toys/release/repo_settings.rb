@@ -128,10 +128,10 @@ module Toys
         @name = info.delete("name").to_s
         read_path_info(info, has_multiple_components)
         read_file_modification_info(info)
-        read_gh_pages_info(repo_settings, info, has_multiple_components)
-        read_steps_info(repo_settings, info)
-        read_commit_tag_info(repo_settings, info)
-        check_problems(repo_settings, info)
+        read_gh_pages_info(info, repo_settings, has_multiple_components)
+        read_steps_info(info, repo_settings)
+        read_commit_tag_info(info, repo_settings)
+        check_problems(info, repo_settings)
       end
 
       ##
@@ -180,14 +180,15 @@ module Toys
       attr_reader :gh_pages_enabled
 
       ##
-      # @return [String] The directory within the gh_pages branch where the
-      #     reference documentation should be built
+      # @return [String,nil] The directory within the gh_pages branch where the
+      #     reference documentation should be built, or nil if gh_pages is not
+      #     enabled.
       #
       attr_reader :gh_pages_directory
 
       ##
-      # @return [String] The name of the Javascript variable representing this
-      #     gem's version in gh_pages
+      # @return [String,nil] The name of the Javascript variable representing
+      #     this gem's version in gh_pages, or nil if gh_pages is not enabled.
       #
       attr_reader :gh_pages_version_var
 
@@ -202,6 +203,12 @@ module Toys
       #     change they map to.
       #
       attr_reader :commit_tags
+
+      ##
+      # @return [:plain,:link,:delete] What to do with issue number suffixes in
+      #     commit messages.
+      #
+      attr_reader :issue_number_suffix_handling
 
       ##
       # @return [String] Header for breaking changes in a changelog
@@ -246,41 +253,47 @@ module Toys
         @version_constant = info.delete("version_constant")
       end
 
-      def read_gh_pages_info(repo_settings, info, has_multiple_components)
-        @gh_pages_enabled = info.fetch("gh_pages_enabled") do |_key|
-          repo_settings.gh_pages_enabled ||
-            info.key?("gh_pages_directory") ||
-            info.key?("gh_pages_version_var")
+      def read_gh_pages_info(info, repo_settings, has_multiple_components)
+        @gh_pages_enabled = info.delete("gh_pages_enabled")
+        @gh_pages_directory = info.delete("gh_pages_directory")
+        @gh_pages_version_var = info.delete("gh_pages_version_var")
+        if @gh_pages_enabled || @gh_pages_directory || @gh_pages_version_var ||
+           (@gh_pages_enabled.nil? && repo_settings.gh_pages_enabled)
+          @gh_pages_enabled = true
+          @gh_pages_directory ||= has_multiple_components ? name : "."
+          @gh_pages_version_var ||= has_multiple_components ? "version_#{name}".gsub(/\W/, "_") : "version"
+        else
+          @gh_pages_enabled = false
+          @gh_pages_directory = @gh_pages_version_var = nil
         end
-        info.delete("gh_pages_enabled")
-        @gh_pages_directory = info.delete("gh_pages_directory") || (has_multiple_components ? name : ".")
-        @gh_pages_version_var = info.delete("gh_pages_version_var") ||
-                                (has_multiple_components ? "version_#{name}".tr("-", "_") : "version")
       end
 
-      def read_steps_info(repo_settings, info)
-        @steps =
-          if info.key?("steps")
-            repo_settings.read_steps(info.delete("steps"))
-          else
-            repo_settings.steps.map(&:deep_copy)
-          end
-        @steps = repo_settings.modify_steps(@steps, info.delete("modify_steps") || [])
-        @steps = repo_settings.prepend_steps(@steps, info.delete("prepend_steps") || [])
-        @steps = repo_settings.append_steps(@steps, info.delete("append_steps") || [])
-        @steps = repo_settings.delete_steps(@steps, info.delete("delete_steps") || [])
+      def read_steps_info(info, repo_settings)
+        steps_info = info.delete("steps")
+        @steps = steps_info ? repo_settings.read_steps(steps_info) : repo_settings.steps.map(&:deep_copy)
+        modify_steps_info = info.delete("modify_steps")
+        @steps = repo_settings.modify_steps(@steps, modify_steps_info) if modify_steps_info
+        prepend_steps_info = info.delete("prepend_steps")
+        @steps = repo_settings.prepend_steps(@steps, prepend_steps_info) if prepend_steps_info
+        append_steps_info = info.delete("append_steps")
+        @steps = repo_settings.append_steps(@steps, append_steps_info) if append_steps_info
+        delete_steps_info = info.delete("delete_steps")
+        @steps = repo_settings.delete_steps(@steps, delete_steps_info) if delete_steps_info
       end
 
-      def read_commit_tag_info(repo_settings, info)
+      def read_commit_tag_info(info, repo_settings)
+        commit_tags_info = info.delete("commit_tags")
         @commit_tags =
-          if info.key?("commit_tags")
-            repo_settings.read_commit_tags(info.delete("commit_tags"))
+          if commit_tags_info
+            repo_settings.read_commit_tags(commit_tags_info)
           else
             repo_settings.commit_tags.dup
           end
         @breaking_change_header = info.delete("breaking_change_header") || repo_settings.breaking_change_header
         @no_significant_updates_notice =
           info.delete("no_significant_updates_notice") || repo_settings.no_significant_updates_notice
+        @issue_number_suffix_handling =
+          repo_settings.read_issue_number_suffix_handling(info, repo_settings.issue_number_suffix_handling)
       end
 
       def camelize(str)
@@ -291,7 +304,7 @@ module Toys
            .gsub(/(?:^|_)([a-zA-Z])/) { ::Regexp.last_match(1).upcase }
       end
 
-      def check_problems(repo_settings, info)
+      def check_problems(info, repo_settings)
         info.each_key do |key|
           repo_settings.errors << "Unknown key #{key.inspect} in component #{@name.inspect}"
         end
@@ -663,6 +676,13 @@ module Toys
       attr_reader :steps
 
       ##
+      # What to do with issue number suffixes in commit messages.
+      #
+      # @return [:plain,:link,:delete]
+      #
+      attr_reader :issue_number_suffix_handling
+
+      ##
       # @return [String] Header for breaking changes in a changelog
       #
       attr_reader :breaking_change_header
@@ -877,6 +897,21 @@ module Toys
         Array(info).map { |tag_info| CommitTagSettings.new(tag_info, @errors) }
       end
 
+      # @private
+      def read_issue_number_suffix_handling(info, default)
+        value = info.delete("issue_number_suffix_handling")
+        return default if value.nil?
+        processed_value = value.to_s.downcase
+        if ["plain", "link", "delete"].include?(processed_value)
+          processed_value.to_sym
+        else
+          message = "Unrecognized issue_number_suffix_handling setting: #{value.inspect}. " \
+            "Expected \"plain\", \"link\", or \"delete\"."
+          @errors << message
+          default
+        end
+      end
+
       private
 
       DEFAULT_MAIN_BRAMCH = "main"
@@ -905,6 +940,9 @@ module Toys
           source: build_yard
       STRING
       private_constant :DEFAULT_STEPS_YAML
+
+      DEFAULT_ISSUE_NUMBER_SUFFIX_HANDLING = :plain
+      private_constant :DEFAULT_ISSUE_NUMBER_SUFFIX_HANDLING
 
       DEFAULT_BREAKING_CHANGE_HEADER = "BREAKING CHANGE"
       private_constant :DEFAULT_BREAKING_CHANGE_HEADER
@@ -962,6 +1000,7 @@ module Toys
         @breaking_change_header = info.delete("breaking_change_header") || DEFAULT_BREAKING_CHANGE_HEADER
         @no_significant_updates_notice =
           info.delete("no_significant_updates_notice") || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
+        @issue_number_suffix_handling = read_issue_number_suffix_handling(info, DEFAULT_ISSUE_NUMBER_SUFFIX_HANDLING)
       end
 
       def read_default_step_info(info)

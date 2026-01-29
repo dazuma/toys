@@ -9,6 +9,9 @@ describe Toys::Release::RepoSettings do
 
   it "loads the toys repo settings" do
     settings = Toys::Release::RepoSettings.load_from_environment(environment_utils)
+    assert_empty(settings.errors)
+    assert_empty(settings.warnings)
+
     assert_equal("dazuma/toys", settings.repo_path)
     assert_equal("main", settings.main_branch)
     assert_equal("Daniel Azuma", settings.git_user_name)
@@ -18,6 +21,10 @@ describe Toys::Release::RepoSettings do
     assert_equal("dazuma", settings.repo_owner)
     assert_equal(false, settings.signoff_commits?)
     assert_equal(true, settings.enable_release_automation?)
+    assert_equal(:plain, settings.issue_number_suffix_handling)
+    assert_equal("BREAKING CHANGE", settings.breaking_change_header)
+    assert_equal("No significant updates.", settings.no_significant_updates_notice)
+
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
     assert_equal([["toys", "toys-core"]], settings.coordination_groups)
@@ -50,6 +57,9 @@ describe Toys::Release::RepoSettings do
     assert_nil(toys_core_settings.step_named("copy_core_docs"))
     assert_empty(toys_core_settings.step_named("build_yard").inputs)
     assert_equal("redcarpet", toys_core_settings.step_named("build_yard").options["uses_gems"])
+    assert_equal(:plain, toys_core_settings.issue_number_suffix_handling)
+    assert_equal("BREAKING CHANGE", toys_core_settings.breaking_change_header)
+    assert_equal("No significant updates.", toys_core_settings.no_significant_updates_notice)
 
     feat_tag_settings = toys_core_settings.commit_tag_named("feat")
     assert_equal("feat", feat_tag_settings.tag)
@@ -81,6 +91,9 @@ describe Toys::Release::RepoSettings do
     assert_equal("copy_core_docs", toys_settings.step_named("build_yard").inputs.first.step_name)
     assert_equal(1, toys_settings.step_named("copy_core_docs").outputs.size)
     assert_equal("core-docs", toys_settings.step_named("copy_core_docs").outputs.first.source_path)
+    assert_equal(:plain, toys_settings.issue_number_suffix_handling)
+    assert_equal("BREAKING CHANGE", toys_settings.breaking_change_header)
+    assert_equal("No significant updates.", toys_settings.no_significant_updates_notice)
 
     toys_release_settings = settings.component_settings("toys-release")
     assert_equal("toys-release", toys_release_settings.name)
@@ -92,6 +105,9 @@ describe Toys::Release::RepoSettings do
     assert_equal("lib/toys/release/version.rb", toys_release_settings.version_rb_path)
     assert_nil(toys_release_settings.step_named("copy_core_docs"))
     assert_empty(toys_release_settings.step_named("build_yard").inputs)
+    assert_equal(:plain, toys_release_settings.issue_number_suffix_handling)
+    assert_equal("BREAKING CHANGE", toys_release_settings.breaking_change_header)
+    assert_equal("No significant updates.", toys_release_settings.no_significant_updates_notice)
 
     common_tools_settings = settings.component_settings("common-tools")
     assert_equal("common-tools", common_tools_settings.name)
@@ -100,8 +116,6 @@ describe Toys::Release::RepoSettings do
     assert_equal(".lib/version.rb", common_tools_settings.version_rb_path)
     assert_nil(common_tools_settings.step_named("build_yard"))
     refute(common_tools_settings.gh_pages_enabled)
-
-    assert_empty(settings.errors)
   end
 
   it "detects unknown top level keys" do
