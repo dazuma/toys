@@ -21,7 +21,7 @@ describe Toys::Release::RepoSettings do
     assert_equal("dazuma", settings.repo_owner)
     assert_equal(false, settings.signoff_commits?)
     assert_equal(true, settings.enable_release_automation?)
-    assert_equal(:plain, settings.issue_number_suffix_handling)
+    assert_equal(:delete, settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", settings.breaking_change_header)
     assert_equal("No significant updates.", settings.no_significant_updates_notice)
 
@@ -57,7 +57,7 @@ describe Toys::Release::RepoSettings do
     assert_nil(toys_core_settings.step_named("copy_core_docs"))
     assert_empty(toys_core_settings.step_named("build_yard").inputs)
     assert_equal("redcarpet", toys_core_settings.step_named("build_yard").options["uses_gems"])
-    assert_equal(:plain, toys_core_settings.issue_number_suffix_handling)
+    assert_equal(:delete, toys_core_settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", toys_core_settings.breaking_change_header)
     assert_equal("No significant updates.", toys_core_settings.no_significant_updates_notice)
 
@@ -91,7 +91,7 @@ describe Toys::Release::RepoSettings do
     assert_equal("copy_core_docs", toys_settings.step_named("build_yard").inputs.first.step_name)
     assert_equal(1, toys_settings.step_named("copy_core_docs").outputs.size)
     assert_equal("core-docs", toys_settings.step_named("copy_core_docs").outputs.first.source_path)
-    assert_equal(:plain, toys_settings.issue_number_suffix_handling)
+    assert_equal(:delete, toys_settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", toys_settings.breaking_change_header)
     assert_equal("No significant updates.", toys_settings.no_significant_updates_notice)
 
@@ -105,7 +105,7 @@ describe Toys::Release::RepoSettings do
     assert_equal("lib/toys/release/version.rb", toys_release_settings.version_rb_path)
     assert_nil(toys_release_settings.step_named("copy_core_docs"))
     assert_empty(toys_release_settings.step_named("build_yard").inputs)
-    assert_equal(:plain, toys_release_settings.issue_number_suffix_handling)
+    assert_equal(:delete, toys_release_settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", toys_release_settings.breaking_change_header)
     assert_equal("No significant updates.", toys_release_settings.no_significant_updates_notice)
 

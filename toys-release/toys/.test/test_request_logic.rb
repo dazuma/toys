@@ -51,13 +51,13 @@ describe Toys::Release::RequestLogic do
 
       ## toys-core
 
-       *  DOCS: Some formatting fixes in the user guide (#376)
+       *  DOCS: Some formatting fixes in the user guide
 
       ----
 
       ## toys-release
 
-       *  DOCS: Some formatting fixes in the user guide (#376)
+       *  DOCS: Some formatting fixes in the user guide
 
       ----
 
