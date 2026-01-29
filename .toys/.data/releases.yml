@@ -3,6 +3,7 @@ git_user_name: Daniel Azuma
 git_user_email: dazuma@gmail.com
 required_checks: false
 update_existing_requests: true
+issue_number_suffix_handling: delete
 
 modify_steps:
   - name: build_yard
