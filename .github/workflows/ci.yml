@@ -74,4 +74,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           unset JAVA_TOOL_OPTIONS
+          gem install pathname:0.4.0 # For TruffleRuby
           ./toys-dev do ci init , ci --only ${{ matrix.steps }} < /dev/null
