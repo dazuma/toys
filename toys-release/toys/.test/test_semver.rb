@@ -69,4 +69,21 @@ describe Toys::Release::Semver do
     assert_equal(Toys::Release::Semver::PATCH2, Toys::Release::Semver.for_name(:patch2))
     assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_name(:none))
   end
+
+  it "analyzes the diff between versions" do
+    assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_diff("1.2.3", "1.2.3"))
+    assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_diff("1.2.0", "1.2"))
+    assert_equal(Toys::Release::Semver::MAJOR, Toys::Release::Semver.for_diff("0.2.0", "1.2.0"))
+    assert_equal(Toys::Release::Semver::MINOR, Toys::Release::Semver.for_diff("1.2.0", "1.3.0"))
+    assert_equal(Toys::Release::Semver::PATCH, Toys::Release::Semver.for_diff("1.2", "1.2.1"))
+    assert_equal(Toys::Release::Semver::PATCH2, Toys::Release::Semver.for_diff("1.2", "1.2.0.1"))
+    assert_equal(Toys::Release::Semver::PATCH2, Toys::Release::Semver.for_diff("1.2", "1.2.0.0.1"))
+  end
+
+  it "returns a max" do
+    assert_equal(Toys::Release::Semver::MAJOR, Toys::Release::Semver::MAJOR.max(Toys::Release::Semver::MINOR))
+    assert_equal(Toys::Release::Semver::MAJOR, Toys::Release::Semver::MINOR.max(Toys::Release::Semver::MAJOR))
+    assert_equal(Toys::Release::Semver::PATCH, Toys::Release::Semver::PATCH.max(Toys::Release::Semver::NONE))
+    assert_equal(Toys::Release::Semver::PATCH, Toys::Release::Semver::NONE.max(Toys::Release::Semver::PATCH))
+  end
 end

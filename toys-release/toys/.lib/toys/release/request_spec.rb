@@ -111,32 +111,88 @@ module Toys
       # Resolve which components and versions to release.
       #
       # @param release_sha [String] Git ref at which the release should be cut
+      # @param repository [Repository]
       #
-      def resolve_versions(release_sha)
+      def resolve_versions(release_sha, repository)
         raise "Release request already resolved" if resolved?
         @utils.log("Resolving a request spec.")
+        @release_sha = release_sha
         @utils.accumulate_errors("Conflicts detected in the components and versions requested.") do
-          @release_sha = release_sha
-          grouped_requests = {}
-          @requested_components.each do |component, version|
-            grouped_requests[component.coordination_group] ||= version
-          end
-          @resolved_components = []
-          grouped_requests.each do |group, version|
-            resolved_group, version = resolve_one_group(group, version)
-            if version
-              resolved_group.each do |resolved_component|
-                resolved_component.version = version
-                resolved_component.change_set.force_release!
-              end
-              @resolved_components.concat(resolved_group)
-            end
-          end
+          resolved_components = resolve_groups
+          resolve_dependency_updates(resolved_components, repository)
+          @resolved_components = finish_resolved_components(resolved_components.values)
         end
         self
       end
 
       private
+
+      ##
+      # For each explicitly requested component, expand the request to include
+      # its group. Then resolve the version to release for each group, making
+      # the changeset for each member component. Returns a hash mapping
+      # component name to ResolvedComponent.
+      #
+      def resolve_groups
+        grouped_requests = {}
+        resolved_components = {}
+        @requested_components.each do |component, version|
+          grouped_requests[component.coordination_group] ||= version
+        end
+        grouped_requests.each do |group, version|
+          resolved_group, version = resolve_one_group(group, version)
+          if version
+            resolved_group.each do |resolved_comp|
+              resolved_comp.version = version
+              resolved_components[resolved_comp.component_name] = resolved_comp
+            end
+          end
+        end
+        resolved_components
+      end
+
+      ##
+      # Handle the effect of update_dependencies by checking each component for
+      # any updated dependencies, and adding the component to the release if
+      # needed. Modifies the passed in resolved_components hash.
+      #
+      def resolve_dependency_updates(resolved_components, repository)
+        repository.all_components.each do |component|
+          updates, dependency_semver_threshold = find_updated_dependencies(component, resolved_components)
+          next if updates.empty?
+
+          current_resolved = resolved_components[component.name] || resolve_one_group([component], nil).first.first
+          change_set = current_resolved.change_set
+          change_set.add_dependency_updates(updates, dependency_semver_threshold)
+          next if change_set.updated_dependency_versions.empty?
+
+          current_resolved.version = change_set.suggested_version(current_resolved.last_version)
+          resolved_components[component.name] = current_resolved
+        end
+      end
+
+      ##
+      # For the given component, if it has any update_dependencies, look them
+      # up in the given resolved_components. Return a tuple consisting of the
+      # list of names of the updated dependencies, and the
+      # dependency_semver_threshold.
+      #
+      def find_updated_dependencies(component, resolved_components)
+        update_deps_config = component.settings.update_dependencies
+        return [[], Toys::Release::Semver::NONE] unless update_deps_config
+        updates = []
+        update_deps_config.dependencies.each do |name|
+          updates << resolved_components[name] if resolved_components.key?(name)
+        end
+        [updates, update_deps_config.dependency_semver_threshold]
+      end
+
+      def finish_resolved_components(resolved_components)
+        resolved_components.each do |resolved_comp|
+          resolved_comp.change_set.force_release!
+        end
+        resolved_components
+      end
 
       def normalize_version(version)
         if !version.nil? && !version.is_a?(::Gem::Version) && !version.is_a?(Semver)

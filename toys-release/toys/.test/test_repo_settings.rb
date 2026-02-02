@@ -328,7 +328,39 @@ describe Toys::Release::RepoSettings do
     end
   end
 
-  describe "with custom components" do
+  describe "component settings" do
+    it "inherits and overrides update_dependency_header" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: foo
+            update_dependency_header: DEPS
+          - name: bar
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+
+      foo_component = settings.component_settings("foo")
+      assert_equal("DEPS", foo_component.update_dependency_header)
+
+      bar_component = settings.component_settings("bar")
+      assert_equal("DEPENDENCY", bar_component.update_dependency_header)
+    end
+
+    it "inherits and overrides breaking_change_header" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: foo
+            breaking_change_header: BREAK
+          - name: bar
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+
+      foo_component = settings.component_settings("foo")
+      assert_equal("BREAK", foo_component.breaking_change_header)
+
+      bar_component = settings.component_settings("bar")
+      assert_equal("BREAKING CHANGE", bar_component.breaking_change_header)
+    end
+
     it "overrides commit tags" do
       input = YAML.load(<<~STRING)
         components:
@@ -377,21 +409,136 @@ describe Toys::Release::RepoSettings do
     end
   end
 
-  it "accepts a dash changelog_bullet" do
-    input = YAML.load(<<~STRING)
-      changelog_bullet: "-"
-    STRING
-    settings = Toys::Release::RepoSettings.new(input)
-    assert_equal("-", settings.changelog_bullet)
-    refute(settings.errors.any? { |err| err.include?("changelog_bullet") })
+  describe "with update_dependencies" do
+    it "defaults to no updates" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      assert_nil(component.update_dependencies)
+    end
+
+    it "uses the default levels" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_b]
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_all")
+      update_settings = component.update_dependencies
+      assert_equal(["comp_a", "comp_b"], update_settings.dependencies)
+      assert_equal(Toys::Release::Semver::MINOR, update_settings.dependency_semver_threshold)
+      assert_equal(Toys::Release::Semver::MINOR, update_settings.pessimistic_constraint_level)
+    end
+
+    it "sets custom levels" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_b]
+              dependency_semver_threshold: patch
+              pessimistic_constraint_level: patch
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_all")
+      update_settings = component.update_dependencies
+      assert_equal(Toys::Release::Semver::PATCH, update_settings.dependency_semver_threshold)
+      assert_equal(Toys::Release::Semver::PATCH, update_settings.pessimistic_constraint_level)
+    end
+
+    it "recognizes all and exact" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_b]
+              dependency_semver_threshold: all
+              pessimistic_constraint_level: exact
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_all")
+      update_settings = component.update_dependencies
+      assert_equal(Toys::Release::Semver::NONE, update_settings.dependency_semver_threshold)
+      assert_equal(Toys::Release::Semver::NONE, update_settings.pessimistic_constraint_level)
+    end
+
+    it "errors if the dependencies key is absent" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependency_semver_threshold: all
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "update_dependencies is missing required key \"dependencies\""
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
+
+    it "errors if a component with update_dependencies is in a coordination group" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_b]
+        coordination_groups:
+          - [comp_all, comp_a]
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "Component comp_all cannot be in a coordination group and have update_dependencies"
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
   end
 
-  it "rejects an invalid changelog_bullet" do
-    input = YAML.load(<<~STRING)
-      changelog_bullet: "+"
-    STRING
-    settings = Toys::Release::RepoSettings.new(input)
-    assert_equal("*", settings.changelog_bullet)
-    assert(settings.errors.any? { |err| err.include?("changelog_bullet") })
+  describe "top level settings" do
+    it "sets global update_dependency_header" do
+      input = YAML.load(<<~STRING)
+        update_dependency_header: DEPS
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+
+      assert_equal("DEPS", settings.update_dependency_header)
+    end
+
+    it "sets global breaking_change_header" do
+      input = YAML.load(<<~STRING)
+        breaking_change_header: BREAK
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+
+      assert_equal("BREAK", settings.breaking_change_header)
+    end
+
+    it "accepts a dash changelog_bullet" do
+      input = YAML.load(<<~STRING)
+        changelog_bullet: "-"
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal("-", settings.changelog_bullet)
+      refute(settings.errors.any? { |err| err.include?("changelog_bullet") })
+    end
+
+    it "rejects an invalid changelog_bullet" do
+      input = YAML.load(<<~STRING)
+        changelog_bullet: "+"
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal("*", settings.changelog_bullet)
+      assert(settings.errors.any? { |err| err.include?("changelog_bullet") })
+    end
   end
 end

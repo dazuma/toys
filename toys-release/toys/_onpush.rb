@@ -127,7 +127,7 @@ def recreate_request_spec(pull)
       request_spec.add(component, version: version)
     end
   end
-  request_spec.resolve_versions(@repository.current_sha(@push_branch))
+  request_spec.resolve_versions(@repository.current_sha(@push_branch), @repository.all_components)
   request_spec
 end
 

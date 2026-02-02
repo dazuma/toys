@@ -11,7 +11,7 @@ describe Toys::Release::RequestLogic do
 
   it "handles Toys one commit after v0.19.0 tag" do
     repository.all_components.each { |component| request_spec.add(component) }
-    request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f")
+    request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f", repository)
     request_logic = Toys::Release::RequestLogic.new(repository, request_spec)
     assert_equal("release: Release 3 items", request_logic.build_commit_title)
     expected_details = <<~STRING.strip

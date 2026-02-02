@@ -124,6 +124,8 @@ module Toys
           component.changelog_file.append(resolved_component.change_set, resolved_component.version,
                                           bullet: @settings.changelog_bullet)
           component.version_rb_file.update_version(resolved_component.version)
+          dependency_updates = resolved_component.change_set.updated_dependency_versions
+          component.gemspec_file.update_dependencies(dependency_updates) unless dependency_updates.empty?
         end
       end
 

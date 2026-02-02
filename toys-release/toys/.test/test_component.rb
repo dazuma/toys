@@ -20,6 +20,7 @@ describe Toys::Release::Component do
       let(:component) { Toys::Release::Component.new(repository, component_name, environment_utils) }
       let(:changelog_file) { component.changelog_file }
       let(:version_rb_file) { component.version_rb_file }
+      let(:gemspec_file) { component.gemspec_file }
 
       it "has the correct name" do
         assert_equal(component_name, component.name)
@@ -36,9 +37,16 @@ describe Toys::Release::Component do
         assert_equal("CHANGELOG.md", ::File.basename(changelog_file.path))
       end
 
-      it "accesses the version file file" do
+      it "accesses the version file" do
         assert(version_rb_file.exists?)
         assert_equal(version_file_name, ::File.basename(version_rb_file.path))
+      end
+
+      it "accesses the gemspec file" do
+        unless component_name == "common-tools"
+          assert(gemspec_file.exists?)
+          assert_equal("#{component_name}.gemspec", ::File.basename(gemspec_file.path))
+        end
       end
 
       it "has no errors" do

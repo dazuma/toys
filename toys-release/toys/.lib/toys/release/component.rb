@@ -2,6 +2,7 @@
 
 require "toys/release/change_set"
 require "toys/release/changelog_file"
+require "toys/release/gemspec_file"
 require "toys/release/version_rb_file"
 
 module Toys
@@ -23,6 +24,7 @@ module Toys
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils)
+        @gemspec_file = GemspecFile.new(gemspec_path(from: :absolute), @utils)
         @coordination_group = nil
       end
 
@@ -42,6 +44,12 @@ module Toys
       #     component
       #
       attr_reader :version_rb_file
+
+      ##
+      # @return [Toys::Release::GemspecFile] The .gemspec file in this
+      #     component
+      #
+      attr_reader :gemspec_file
 
       ##
       # @return [Array<Component>] The coordination group containing this
@@ -135,6 +143,19 @@ module Toys
       #
       def version_rb_path(from: :directory)
         file_path(settings.version_rb_path, from: from)
+      end
+
+      ##
+      # Returns the path to the gemspec. It can be returned as a relative
+      # path from the component directory, a relative path from the repo root
+      # directory, or an absolute path.
+      #
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
+      #     `:directory`)
+      # @return [String] The path to the gemspec
+      #
+      def gemspec_path(from: :directory)
+        file_path("#{name}.gemspec", from: from)
       end
 
       ##

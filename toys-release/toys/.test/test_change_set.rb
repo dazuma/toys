@@ -272,4 +272,32 @@ describe Toys::Release::ChangeSet do
     assert_equal(1, groups.size)
     assert_equal(["No significant updates."], groups[0].prefixed_changes)
   end
+
+  it "reflects a forced release" do
+    change_set.finish
+    change_set.force_release!
+    assert_equal(Toys::Release::Semver::PATCH, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["No significant updates."], groups[0].prefixed_changes)
+  end
+
+  it "reflects dependency updates" do
+    change_set.finish
+    updates = [
+      Toys::Release::RequestSpec::ResolvedComponent.new(
+        "comp_a", nil, ::Gem::Version.new("1.2.2"), ::Gem::Version.new("1.2.3")
+      ),
+      Toys::Release::RequestSpec::ResolvedComponent.new(
+        "comp_b", nil, ::Gem::Version.new("2.1.5"), ::Gem::Version.new("2.2.0")
+      ),
+    ]
+    change_set.add_dependency_updates(updates, Toys::Release::Semver::MINOR)
+    assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
+    groups = change_set.change_groups
+    assert_equal(1, groups.size)
+    assert_equal(["DEPENDENCY: Updated \"comp_b\" dependency to 2.2.0"], groups[0].prefixed_changes)
+    assert_equal(1, change_set.updated_dependency_versions.size)
+    assert_equal(::Gem::Version.new("2.2.0"), change_set.updated_dependency_versions["comp_b"])
+  end
 end

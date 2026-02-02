@@ -112,6 +112,65 @@ module Toys
     end
 
     ##
+    # Configuration of dependency updating
+    #
+    class UpdateDepSettings
+      # @private
+      def initialize(info, errors)
+        @dependencies = Array(info.delete("dependencies"))
+        load_semvers(info, errors)
+        check_problems(info, errors)
+      end
+
+      ##
+      # @return [Array<String>] List of component names included in dependency
+      #     updates.
+      #
+      attr_reader :dependencies
+
+      ##
+      # @return [Toys::Release::Semver] The minimum semver level of a
+      #     dependency update that should trigger an update of the kitchen sink
+      #     component. NONE indicates all dependency updates should trigger.
+      #
+      attr_reader :dependency_semver_threshold
+
+      ##
+      # @return [Toys::Release::Semver] The highest semver level allowed to
+      #     float in the pessimistic dependency version constraints used to
+      #     specify the dependencies. NONE indicates that dependencies should
+      #     require the exact release version.
+      #
+      attr_reader :pessimistic_constraint_level
+
+      private
+
+      def load_semvers(info, errors)
+        dependency_semver_threshold = info.delete("dependency_semver_threshold") || "minor"
+        dependency_semver_threshold = "none" if dependency_semver_threshold.to_s.downcase == "all"
+        @dependency_semver_threshold = Semver.for_name(dependency_semver_threshold)
+        unless @dependency_semver_threshold
+          errors << "Unrecognized value: #{dependency_semver_threshold} for dependency_semver_threshold"
+          @dependency_semver_threshold = Semver::NONE
+        end
+        pessimistic_constraint_level = info.delete("pessimistic_constraint_level") || "minor"
+        pessimistic_constraint_level = "none" if pessimistic_constraint_level.to_s.downcase == "exact"
+        @pessimistic_constraint_level = Toys::Release::Semver.for_name(pessimistic_constraint_level)
+        unless @pessimistic_constraint_level
+          errors << "Unrecognized value: #{pessimistic_constraint_level} for pessimistic_constraint_level"
+          @pessimistic_constraint_level = Semver::NONE
+        end
+      end
+
+      def check_problems(info, errors)
+        info.each_key do |key|
+          errors << "Unknown key #{key.inspect} for update_dependencies"
+        end
+        errors << 'update_dependencies is missing required key "dependencies"' if @dependencies.empty?
+      end
+    end
+
+    ##
     # Configuration of a single component
     #
     class ComponentSettings
@@ -131,6 +190,7 @@ module Toys
         read_gh_pages_info(info, repo_settings, has_multiple_components)
         read_steps_info(info, repo_settings)
         read_commit_tag_info(info, repo_settings)
+        read_update_deps(info, repo_settings)
         check_problems(info, repo_settings)
       end
 
@@ -216,10 +276,21 @@ module Toys
       attr_reader :breaking_change_header
 
       ##
+      # @return [String] Header for dependency updates in a changelog
+      #
+      attr_reader :update_dependency_header
+
+      ##
       # @return [String] Notice displayed in the changelog when there are
       #     otherwise no significant updates in the release
       #
       attr_reader :no_significant_updates_notice
+
+      ##
+      # @return [UpdateDepsSettings,nil] Configuration for treating this
+      #     component as a kitchen sink that updates when dependencies update.
+      #
+      attr_reader :update_dependencies
 
       ##
       # @return [StepSettings,nil] The unique step with the given name
@@ -290,10 +361,19 @@ module Toys
             repo_settings.commit_tags.dup
           end
         @breaking_change_header = info.delete("breaking_change_header") || repo_settings.breaking_change_header
+        @update_dependency_header = info.delete("update_dependency_header") || repo_settings.update_dependency_header
         @no_significant_updates_notice =
           info.delete("no_significant_updates_notice") || repo_settings.no_significant_updates_notice
         @issue_number_suffix_handling =
           repo_settings.read_issue_number_suffix_handling(info, repo_settings.issue_number_suffix_handling)
+      end
+
+      def read_update_deps(info, repo_settings)
+        update_deps_info = info.delete("update_dependencies")
+        @update_dependencies =
+          if update_deps_info
+            UpdateDepSettings.new(update_deps_info, repo_settings.errors)
+          end
       end
 
       def camelize(str)
@@ -688,6 +768,11 @@ module Toys
       attr_reader :breaking_change_header
 
       ##
+      # @return [String] Header for dependency updates in a changelog
+      #
+      attr_reader :update_dependency_header
+
+      ##
       # @return [String] Notice displayed in the changelog when there are
       #     otherwise no significant updates in the release
       #
@@ -952,6 +1037,9 @@ module Toys
       DEFAULT_BREAKING_CHANGE_HEADER = "BREAKING CHANGE"
       private_constant :DEFAULT_BREAKING_CHANGE_HEADER
 
+      DEFAULT_UPDATE_DEPENDENCY_HEADER = "DEPENDENCY"
+      private_constant :DEFAULT_UPDATE_DEPENDENCY_HEADER
+
       DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE = "No significant updates."
       private_constant :DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
 
@@ -1006,6 +1094,7 @@ module Toys
       def read_default_commit_tag_info(info)
         @commit_tags = read_commit_tags(info.delete("commit_tags") || ::YAML.load(DEFAULT_COMMIT_TAGS_YAML))
         @breaking_change_header = info.delete("breaking_change_header") || DEFAULT_BREAKING_CHANGE_HEADER
+        @update_dependency_header = info.delete("update_dependency_header") || DEFAULT_UPDATE_DEPENDENCY_HEADER
         @no_significant_updates_notice =
           info.delete("no_significant_updates_notice") || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
         @issue_number_suffix_handling = read_issue_number_suffix_handling(info, DEFAULT_ISSUE_NUMBER_SUFFIX_HANDLING)
@@ -1071,6 +1160,16 @@ module Toys
         @errors << 'Required key "repo" missing from releases.yml' unless @repo_path
         @errors << 'Required key "git_user_name" missing from releases.yml' unless @git_user_name
         @errors << 'Required key "git_user_email" missing from releases.yml' unless @git_user_email
+        @coordination_groups.each do |group|
+          next unless group.size > 1
+          group.each do |component_name|
+            component = @components[component_name]
+            if component.update_dependencies
+              @errors << "Component #{component_name} cannot be in a coordination group and have update_dependencies"
+            end
+          end
+        end
+        # TODO: Ensure there aren't transitive update_dependencies relationships
       end
     end
   end

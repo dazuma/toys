@@ -1144,6 +1144,13 @@ The **name** key is required. The others are optional.
     present, the default pipeline for the entire repository is used. (See the
     **steps** key under [Top level configuration](#top-level-configuration).)
 
+ *  **update_dependencies**: *[UpdateDepsConfig](#update-dependencies-configuration)* (optional) --
+    Set up automatic dependency updates, which causes this component to be
+    updated and released if any of a specified set of dependencies is also
+    present in the release. This supports automatically keeping "kitchen sink"
+    libraries up to date. If this setting is not present, automatic updating is
+    not performed for this component.
+
  *  **version_rb_path**: *string* (optional) --
     The path to a Ruby file that contains the current version of the component.
     This file *must* include Ruby code that looks like this:
@@ -1159,6 +1166,57 @@ The **name** key is required. The others are optional.
     The default is `version.rb` within the lib path associated with the Ruby
     module implied by the component name. For example, if the component (gem)
     name is `toys-release`, this defaults to `lib/toys/release/version.rb`.
+
+#### Update dependencies configuration
+
+An update-dependencies configuration describes when a component should also be
+released with updated dependency versions, due to one or more of those
+dependencies being released. It is typically used to keep "kitchen sink"
+libraries up to date.
+
+For example, consider two components "foo_a" and "foo_b", and a "kitchen sink"
+component "foo_all" that depends on both the others. Suppose whenever a patch
+or greater release of either "foo_a" or "foo_b" happens, we also want "foo_all"
+to be released with its corresponding dependency bumped to the same version. We
+might set up the configuration like so:
+
+```yaml
+components:
+  - name: foo_a
+  - name: foo_b
+  - name: foo_all
+    update_dependencies:
+      dependency_semver_threshold: patch
+      dependencies: [foo_a, foo_b]
+```
+
+The update-dependencies configuration for a kitchen sink component can include
+the following keys. The **dependencies** key is required. All others are
+optional.
+
+ *  **dependencies**: *array of string* (required) --
+    A list of names of the components this component depends on.
+
+ *  **dependency_semver_threshold**: *string* (optional) --
+    The minimum semver level of a dependency update that should trigger an
+    update of the kitchen sink component. For example, a threshold of `minor`
+    would trigger an update to the kitchen sink if a minor release of a
+    dependency occurred, but would not trigger an update to the kitchen sink if
+    a patch release occurred.
+
+    Allowed values are `major`, `minor`, `patch`, `patch2`, and `all`. The
+    `all` value indicates that every release of a dependency should trigger an
+    update to the kitchen sink. Defaults to `minor` if not specified.
+
+ *  **pessimistic_constraint_level**: *string* (optional) --
+    The highest semver level allowed to float in the pessimistic dependency
+    version constraints used to specify the dependencies. For example, a
+    version constraint of `~> 1.0` has level `minor` because the minor version
+    number is allowed to float, whereas the major version number is pinned.
+
+    Allowed values are `major`, `minor`, `patch`, `patch2`, and `exact`. The
+    `exact` value indicates that dependencies should require the exact release
+    version. Defaults to `minor` if not specified.
 
 ### Build step configuration
 

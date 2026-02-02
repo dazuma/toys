@@ -128,7 +128,7 @@ def build_request_spec
       end
     end
   end
-  request_spec.resolve_versions(@repository.current_sha(target_branch))
+  request_spec.resolve_versions(@repository.current_sha(target_branch), @repository.all_components)
   request_spec
 end
 
