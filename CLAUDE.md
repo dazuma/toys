@@ -19,10 +19,11 @@ Toys is **self-hosted** — it uses itself for all build, test, and CI tasks via
 
 ```bash
 ./toys-dev test                      # Run all tests
-./toys-dev test --only core          # Test toys-core only
-./toys-dev test --only toys          # Test toys gem only
-./toys-dev test --only builtins      # Test builtin commands only
-./toys-dev test --only tools         # Test common-tools only
+./toys-dev test --only --core        # Test toys-core only
+./toys-dev test --only --toys        # Test toys gem only
+./toys-dev test --only --release     # Test toys-release gem only
+./toys-dev test --only --builtins    # Test builtin commands only
+./toys-dev test --only --tools       # Test common-tools only
 ./toys-dev test --integration        # Include integration tests
 ```
 
@@ -36,18 +37,19 @@ ruby -Itoys/lib -Itoys-core/lib -Itoys/test toys/test/test_lookup.rb
 
 ```bash
 ./toys-dev rubocop                   # Run RuboCop for all gems
-./toys-dev rubocop --only core       # RuboCop for toys-core only
-./toys-dev rubocop --only toys       # RuboCop for toys only
-./toys-dev rubocop --only root       # RuboCop for repo tools/common-tools
+./toys-dev rubocop --only --core     # RuboCop for toys-core only
+./toys-dev rubocop --only --toys     # RuboCop for toys only
+./toys-dev rubocop --only --release  # RuboCop for toys-release only
+./toys-dev rubocop --only --root     # RuboCop for repo tools/common-tools
 ```
 
 ### Full CI
 
 ```bash
 ./toys-dev ci                        # Run all CI jobs (tests, rubocop, yardoc, build)
-./toys-dev ci --only test_core       # Run a specific CI job
-./toys-dev ci --only rubocop_all     # Run all rubocop jobs
-./toys-dev ci --only test_all        # Run all test jobs
+./toys-dev ci --only --test-core     # Run a specific CI job
+./toys-dev ci --only --rubocop-all   # Run all rubocop jobs
+./toys-dev ci --only --test-all      # Run all test jobs
 ```
 
 ### Other Commands

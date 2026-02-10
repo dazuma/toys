@@ -11,6 +11,8 @@ expand("toys-ci") do |toys_ci|
               tool: ["rubocop"], chdir: "toys-core")
   toys_ci.job("Rubocop for toys", flag: :toys,
               tool: ["rubocop"], chdir: "toys")
+  toys_ci.job("Rubocop for toys-release", flag: :release,
+              tool: ["rubocop"], chdir: "toys-release")
   toys_ci.job("Rubocop for the repo tools and common tools", flag: :root,
               tool: ["rubocop", "_root"])
 end

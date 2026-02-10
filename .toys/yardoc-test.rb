@@ -11,4 +11,6 @@ expand("toys-ci") do |toys_ci|
               tool: ["yardoc-test"], chdir: "toys-core")
   toys_ci.job("Yardoc generation for toys", flag: :toys,
               tool: ["yardoc-test"], chdir: "toys")
+  toys_ci.job("Yardoc generation for toys-release", flag: :release,
+              tool: ["yardoc-test"], chdir: "toys-release")
 end
