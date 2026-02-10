@@ -2,7 +2,7 @@
 
 load "#{__dir__}/../common-tools/ci"
 
-desc "Update bundles in both gems"
+desc "Update bundles in all gems"
 
 expand("toys-ci") do |toys_ci|
   toys_ci.only_flag = true
@@ -13,4 +13,6 @@ expand("toys-ci") do |toys_ci|
               exec: ["bundle", "update", "--all"], chdir: "toys-core")
   toys_ci.job("Bundle for toys", flag: :toys,
               exec: ["bundle", "update", "--all"], chdir: "toys")
+  toys_ci.job("Bundle for toys-release", flag: :toys,
+              exec: ["bundle", "update", "--all"], chdir: "toys-release")
 end

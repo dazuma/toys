@@ -18,6 +18,9 @@ expand("toys-ci") do |toys_ci|
               tool: ["test"], chdir: "toys")
   toys_ci.job("Tests for builtin commands", flag: :builtins,
               tool: ["test-builtins"], chdir: "toys")
+  toys_ci.job("Tests for toys-release", flag: :release,
+              tool: ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"],
+              chdir: "toys-release")
   toys_ci.job("Tests for common-tools", flag: :tools,
               tool: ["system", "test", "-d", ".", "--minitest-focus", "--minitest-rg"],
               chdir: "common-tools")

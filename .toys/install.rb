@@ -11,4 +11,6 @@ expand("toys-ci") do |toys_ci|
               tool: ["install", "-y"], chdir: "toys-core")
   toys_ci.job("Install toys from local build", flag: :toys,
               tool: ["install", "-y"], chdir: "toys")
+  toys_ci.job("Install toys-release from local build", flag: :core,
+              tool: ["install", "-y"], chdir: "toys-release")
 end
