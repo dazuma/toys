@@ -43,7 +43,9 @@ module Toys
                 " existing changelog already contains version #{changelog_version}.")
             end
             constant_version = component.version_rb_file.current_version
-            if constant_version >= component_spec.version
+            if constant_version.nil?
+              @utils.error("Cannot find a version constant for #{component.name} in #{component.version_rb_file.path}.")
+            elsif constant_version >= component_spec.version
               @utils.error("Cannot change #{component.name} version constant to #{component_spec.version} because the" \
                 " existing version constant is already at #{constant_version}.")
             end

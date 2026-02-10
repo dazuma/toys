@@ -13,6 +13,6 @@ expand("toys-ci") do |toys_ci|
               exec: ["bundle", "update", "--all"], chdir: "toys-core")
   toys_ci.job("Bundle for toys", flag: :toys,
               exec: ["bundle", "update", "--all"], chdir: "toys")
-  toys_ci.job("Bundle for toys-release", flag: :toys,
+  toys_ci.job("Bundle for toys-release", flag: :release,
               exec: ["bundle", "update", "--all"], chdir: "toys-release")
 end
