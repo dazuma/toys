@@ -50,8 +50,8 @@ module Toys
       #
       def update_version(version)
         @utils.log("Updating #{path} to set VERSION=#{version}")
-        new_content = content.sub(/VERSION\s*=\s*"(\d+(?:\.[a-zA-Z0-9]+)+)"/,
-                                  "VERSION = \"#{version}\"")
+        new_content = content.sub(/VERSION\s*=\s*(["'])(\d+(?:\.[a-zA-Z0-9]+)+)\1/,
+                                  "VERSION = \\1#{version}\\1")
         ::File.write(path, new_content)
         self
       end
@@ -64,8 +64,8 @@ module Toys
       # @return [nil] if no version was found
       #
       def self.current_version_from_content(content)
-        match = /VERSION\s*=\s*"(\d+(?:\.[a-zA-Z0-9]+)+)"/.match(content)
-        match ? ::Gem::Version.new(match[1]) : nil
+        match = /VERSION\s*=\s*(["'])(\d+(?:\.[a-zA-Z0-9]+)+)\1/.match(content)
+        match ? ::Gem::Version.new(match[2]) : nil
       end
     end
   end
