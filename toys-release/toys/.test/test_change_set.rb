@@ -89,7 +89,7 @@ describe Toys::Release::ChangeSet do
     assert_equal(Toys::Release::Semver::MINOR, change_set.semver)
     groups = change_set.change_groups
     assert_equal(1, groups.size)
-    assert_equal(["ADDED: Feature 1 (#123) (#456) "], groups[0].prefixed_changes)
+    assert_equal(["ADDED: Feature 1 (#123) (#456)"], groups[0].prefixed_changes)
     refute_empty(change_set)
   end
 
@@ -112,7 +112,7 @@ describe Toys::Release::ChangeSet do
     groups = change_set.change_groups
     assert_equal(1, groups.size)
     expected_entry = "ADDED: Feature 1 ([#123](https://github.com/example/repo/pull/123)) " \
-                     "([#456](https://github.com/example/repo/pull/456)) "
+                     "([#456](https://github.com/example/repo/pull/456))"
     assert_equal([expected_entry], groups[0].prefixed_changes)
     refute_empty(change_set)
   end
