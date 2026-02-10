@@ -42,7 +42,7 @@ expand("toys-ci") do |toys_ci|
               chdir: "common-tools")
   toys_ci.job("Yardoc generation for toys-core", flag: :yard_core,
               tool: ["yardoc-test"], chdir: "toys-core")
-  toys_ci.job("Yardoc generation for toys", flag: :yard_toys,
+  toys_ci.job("Yardoc generation and output test for toys", flag: :yard_toys,
               tool: ["yardoc-test"], chdir: "toys")
   toys_ci.job("Yardoc generation for toys-release", flag: :yard_release,
               tool: ["yardoc-test"], chdir: "toys-release")

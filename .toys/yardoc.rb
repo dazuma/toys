@@ -2,7 +2,7 @@
 
 load "#{__dir__}/../common-tools/ci"
 
-desc "Generates yardoc for both gems"
+desc "Generates yardoc for all gems"
 
 expand("toys-ci") do |toys_ci|
   toys_ci.only_flag = true
