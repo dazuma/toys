@@ -24,6 +24,7 @@ describe Toys::Release::RepoSettings do
     assert_equal(:delete, settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", settings.breaking_change_header)
     assert_equal("No significant updates.", settings.no_significant_updates_notice)
+    assert_equal("*", settings.changelog_bullet)
 
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
@@ -374,5 +375,23 @@ describe Toys::Release::RepoSettings do
       bar_component = settings.component_settings("bar")
       assert_includes(bar_component.steps.map(&:name), "build_gem")
     end
+  end
+
+  it "accepts a dash changelog_bullet" do
+    input = YAML.load(<<~STRING)
+      changelog_bullet: "-"
+    STRING
+    settings = Toys::Release::RepoSettings.new(input)
+    assert_equal("-", settings.changelog_bullet)
+    refute(settings.errors.any? { |err| err.include?("changelog_bullet") })
+  end
+
+  it "rejects an invalid changelog_bullet" do
+    input = YAML.load(<<~STRING)
+      changelog_bullet: "+"
+    STRING
+    settings = Toys::Release::RepoSettings.new(input)
+    assert_equal("*", settings.changelog_bullet)
+    assert(settings.errors.any? { |err| err.include?("changelog_bullet") })
   end
 end

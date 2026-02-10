@@ -100,8 +100,9 @@ module Toys
       # @param changeset [ChangeSet] The changeset.
       # @param version [String] The release version.
       # @param date [String] The date. If not provided, uses the current UTC.
+      # @param bullet [String] The bullet character for list items. Defaults to "*".
       #
-      def append(changeset, version, date: nil)
+      def append(changeset, version, date: nil, bullet: "*")
         @utils.log("Writing version #{version} to changelog #{path}")
         date ||= ::Time.now.utc
         date = date.strftime("%Y-%m-%d") if date.respond_to?(:strftime)
@@ -110,7 +111,7 @@ module Toys
           "",
         ]
         changeset.change_groups.each do |group|
-          new_entry.concat(group.prefixed_changes.map { |line| "* #{line}" })
+          new_entry.concat(group.prefixed_changes.map { |line| "#{bullet} #{line}" })
         end
         new_entry = new_entry.join("\n")
         old_content = content || DEFAULT_HEADER

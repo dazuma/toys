@@ -86,6 +86,22 @@ describe Toys::Release::ChangelogFile do
     end
   end
 
+  it "appends to a file with dash bullets" do
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      FileUtils.cp(changelog3_path, changelog_path)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      change_set.add_commit(
+        commit_with("abcde1", "fix: fix for uri version mismatch error")
+      )
+      change_set.finish
+      file.append(change_set, "0.15.5", date: "2024-01-31", bullet: "-")
+      result = file.content
+      assert_includes(result, "- FIXED:")
+      refute_includes(result, "* FIXED:")
+    end
+  end
+
   it "appends to an empty file" do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")

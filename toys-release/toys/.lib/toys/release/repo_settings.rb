@@ -694,6 +694,11 @@ module Toys
       attr_reader :no_significant_updates_notice
 
       ##
+      # @return [String] The bullet character used in changelog entries
+      #
+      attr_reader :changelog_bullet
+
+      ##
       # @return [String] GitHub label applied for pending release
       #
       attr_reader :release_pending_label
@@ -962,6 +967,9 @@ module Toys
       DEFAULT_RELEASE_COMPLETE_LABEL = "release: complete"
       private_constant :DEFAULT_RELEASE_COMPLETE_LABEL
 
+      DEFAULT_CHANGELOG_BULLET = "*"
+      private_constant :DEFAULT_CHANGELOG_BULLET
+
       def read_global_info(info)
         @main_branch = info.delete("main_branch") || DEFAULT_MAIN_BRAMCH
         @repo_path = info.delete("repo")
@@ -1001,6 +1009,11 @@ module Toys
         @no_significant_updates_notice =
           info.delete("no_significant_updates_notice") || DEFAULT_NO_SIGNIFICANT_UPDATES_NOTICE
         @issue_number_suffix_handling = read_issue_number_suffix_handling(info, DEFAULT_ISSUE_NUMBER_SUFFIX_HANDLING)
+        @changelog_bullet = info.delete("changelog_bullet") || DEFAULT_CHANGELOG_BULLET
+        unless ["*", "-"].include?(@changelog_bullet)
+          @errors << "Unrecognized changelog_bullet setting: #{@changelog_bullet.inspect}. Expected \"*\" or \"-\"."
+          @changelog_bullet = DEFAULT_CHANGELOG_BULLET
+        end
       end
 
       def read_default_step_info(info)
