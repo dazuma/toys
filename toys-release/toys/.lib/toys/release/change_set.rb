@@ -218,11 +218,12 @@ module Toys
 
       def create_description_normalizer(issue_number_suffix_handling, repo_path)
         proc do |description|
+          description = description.strip
           match = /^([a-z])(.*)$/.match(description)
           description = match[1].upcase + match[2] if match
           unless issue_number_suffix_handling == :plain
             suffixes = []
-            while (match = /^(.*\S)(\s*\(#\d+\)\s*)$/.match(description))
+            while (match = /^(.*\S)(\s*\(#\d+\))$/.match(description))
               suffixes << match[2]
               description = match[1]
             end
