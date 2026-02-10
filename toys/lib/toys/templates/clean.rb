@@ -19,16 +19,20 @@ module Toys
       #
       # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param paths [Array<String>] An array of glob patterns indicating what
-      #     to clean. You can also include the symbol `:gitignore` which will
-      #     clean all items covered by `.gitignore` files, if contained in a
-      #     git working tree.
+      # @param paths [Array<String,:gitignore>] An array of glob patterns
+      #     indicating what to clean. You can also include the symbol
+      #     `:gitignore` which will clean all items covered by `.gitignore`
+      #     files, if contained in a git working tree.
+      # @param preserve [Array<String>] An array of glob patterns indicating
+      #     what to preserve. Matching paths will be skipped even if they
+      #     match `paths`.
       # @param context_directory [String] A custom context directory to use
       #     when executing this tool.
       #
-      def initialize(name: nil, paths: [], context_directory: nil)
+      def initialize(name: nil, paths: [], preserve: [], context_directory: nil)
         @name = name
         @paths = paths
+        @preserve = preserve
         @context_directory = context_directory
       end
 
@@ -41,12 +45,22 @@ module Toys
       attr_writer :name
 
       ##
-      # An array of glob patterns indicating what to clean.
+      # An array of glob patterns indicating what to clean. May also include
+      # the symbol `:gitignore` which indicates all items covered by
+      # `.gitignore` files, if contained in a git working tree.
+      #
+      # @param value [Array<String,:gitignore>]
+      # @return [Array<String,:gitignore>]
+      #
+      attr_writer :paths
+
+      ##
+      # An array of glob patterns indicating what to preserve.
       #
       # @param value [Array<String>]
       # @return [Array<String>]
       #
-      attr_writer :paths
+      attr_writer :preserve
 
       ##
       # Custom context directory for this tool.
@@ -71,6 +85,13 @@ module Toys
       ##
       # @private
       #
+      def preserve
+        Array(@preserve)
+      end
+
+      ##
+      # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
@@ -79,9 +100,16 @@ module Toys
         tool(template.name) do
           desc "Clean built files and directories."
 
+          flag(:dry_run, "--dry-run", "-n") do
+            desc "Dry run that outputs files that would be cleaned but doesn't actually delete them"
+          end
+
           set_context_directory template.context_directory if template.context_directory
 
-          static :template_paths, template.paths
+          paths = template.paths
+          static :template_gitignore, paths.delete(:gitignore)
+          static :template_paths, paths
+          static :template_preserve, template.preserve
 
           include :fileutils
           include :exec
@@ -91,70 +119,98 @@ module Toys
           #
           def run
             cd(context_directory || ::Dir.getwd) do
-              template_paths.each do |elem|
-                case elem
-                when :gitignore
-                  clean_gitignore
-                when ::String
-                  clean_pattern(elem)
-                else
-                  raise "Unknown path in clean: #{elem.inspect}"
-                end
+              preserve_set = make_preserve_set(template_preserve)
+              clean_globs(template_paths, preserve_set)
+              clean_gitignore(preserve_set) if template_gitignore
+            end
+          end
+
+          ##
+          # @private
+          # Takes a possibly empty array of globs. For each, adds matching
+          # paths to the set of paths to preserve. Returns the set. All parent
+          # and ancestor directories are also included in the set. This
+          # prevents the cleaner from deleting those directories recursively
+          # since there are preserved contents.
+          #
+          def make_preserve_set(globs)
+            require "set"
+            preserve_set = ::Set.new << "."
+            process_globs(globs) do |path|
+              until preserve_set.include?(path)
+                preserve_set << path
+                path = File.dirname(path)
+              end
+            end
+            preserve_set
+          end
+
+          ##
+          # @private
+          # Takes a possibly empty array of globs. For each, attempts to clean
+          # matching paths that are not included in the given preserve set.
+          #
+          def clean_globs(globs, preserve_set)
+            process_globs(globs) do |path|
+              unless preserve_set.include?(path)
+                rm_rf(path) unless dry_run
+                puts "Cleaned: #{path}"
               end
             end
           end
 
           ##
           # @private
+          # Iterates through the entire directory structure recursively. Cleans
+          # anything that is not covered in the given preserve set AND is
+          # covered by gitignore.
           #
-          def clean_gitignore
+          def clean_gitignore(preserve_set)
             result = exec(["git", "rev-parse", "--is-inside-work-tree"], out: :null, err: :null)
             unless result.success?
               logger.error("Skipping :gitignore because we don't seem to be in a git directory")
               return
             end
-            clean_gitignore_dir(".")
-          end
-
-          ##
-          # @private
-          #
-          def clean_gitignore_dir(dir)
-            children = dir_children(dir)
             result = exec(["git", "check-ignore", "--stdin"],
                           in: :controller, out: :capture) do |controller|
-              children.each { |child| controller.in.puts(child) }
+              ::Dir.children(".").sort.each do |child|
+                process_path(child) do |path|
+                  controller.in.puts(path) unless preserve_set.include?(path)
+                end
+              end
             end
-            result.captured_out.split("\n").each { |path| clean_path(path) }
-            children = dir_children(dir) if result.success?
-            children.each { |child| clean_gitignore_dir(child) if ::File.directory?(child) }
-          end
-
-          ##
-          # @private
-          #
-          def dir_children(dir)
-            ::Dir.entries(dir)
-                 .grep_v(/^\.\.?$/)
-                 .sort
-                 .map { |entry| ::File.join(dir, entry) }
-          end
-
-          ##
-          # @private
-          #
-          def clean_pattern(pattern)
-            ::Dir.glob(pattern) { |path| clean_path(path) }
-          end
-
-          ##
-          # @private
-          #
-          def clean_path(path)
-            if ::File.exist?(path)
-              rm_rf(path)
+            result.captured_out.split("\n").each do |path|
+              rm_rf(path) unless dry_run
               puts "Cleaned: #{path}"
             end
+          end
+
+          ##
+          # @private
+          # Iterates through a list of globs. For each glob, iterates over all
+          # matching paths and calls the given block.
+          #
+          def process_globs(globs, &block)
+            globs.each do |glob|
+              ::Dir.glob(glob) do |path|
+                process_path(path.sub(%r{/$}, ""), &block)
+              end
+            end
+          end
+
+          ##
+          # @private
+          # For the given path and all its recursive descendents, calls the
+          # given block. Calls the block on children before parents.
+          #
+          def process_path(path, &block)
+            stat = ::File.lstat(path)
+            if stat.directory?
+              ::Dir.children(path).sort.each do |child|
+                process_path(::File.join(path, child), &block)
+              end
+            end
+            yield path
           end
         end
       end
