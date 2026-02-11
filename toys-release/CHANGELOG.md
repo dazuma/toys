@@ -1,5 +1,15 @@
 # Release History
 
+### v0.6.0 / 2026-02-11
+
+* ADDED: Support retaining and/or linkifying issue/PR numbers in commit messages
+* ADDED: Support for configuring the bullet used for changelog items
+* FIXED: Deprecated the version_constant configuration
+* FIXED: Strip changelog entries of trailing whitespace
+* FIXED: Fixed a crash in the requester when the version constant cannot be found
+* FIXED: Version constant can now be set using single quotes
+* FIXED: Added base64 gem to the dependencies and updated toys-core dependency
+
 ### v0.5.1 / 2026-01-27
 
 * FIXED: Fixed additional cases of releases attempting to release components whose names are substrings of other components
