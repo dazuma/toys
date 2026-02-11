@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  File: Toys-Release User Guide
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "guide";
+  relpath = '';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="file_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="_index.html">Index</a> &raquo; 
+    <span class="title">File: Toys-Release User Guide</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><div id='filecontents'><h1 id="toys-release-user-guide">Toys-Release User Guide</h1>
+
+<p>Toys-Release is a release pipeline system built on GitHub Actions and the Toys
+RubyGem. It interprets <a href="https://conventionalcommits.org/">conventional commit</a>
+message format to automate changelog generation and updates library versions
+based on semantic versioning. It supports fine tuning and approval of releases
+using GitHub pull requests.</p>
+
+<p>Out of the box, Toys-Release knows how to tag GitHub releases, build and push
+RubyGems packages, and build and publish documentation to gh-pages. You can
+customize the build pipeline and many aspects of its behavior.</p>
+
+<p>This user&#39;s guide covers all the features of Toys-Release in detail, including
+installation, normal operations, release pipeline customization, and a full
+configuration reference.</p>
+
+<h2 id="conceptual-overview">Conceptual overview</h2>
+
+<p>Toys-Release is a comprehensive release pipeline system. It includes a set of
+<strong>command line tools</strong> (built using the Toys framework) and a set of
+<strong>GitHub actions</strong> that can be integrated into a GitHub repository to provide a
+way to release new versions of packages present in that repository.</p>
+
+<p>Toys-Release depends on the repository utilizing the <strong>conventional commits</strong>
+standard (<a href="https://conventionalcommits.org">https://conventionalcommits.org</a>) to describe the changes made in each
+commit to the repository. Using this information, it automatically generates
+<strong>changelog</strong> entries and chooses a new package version to release, according
+to the <strong>semantic versioning</strong> standard (<a href="https://semver.org/">https://semver.org/</a>).</p>
+
+<p>Releases are requested explicitly by a repository maintainer by running a
+command line tool or triggering a GitHub action. Toys-Release will configure
+the release and open a <strong>release pull request</strong> describing the release. When
+this pull request is merged, Toys-Release will automatically perform the
+release. The pull request can also be modified to customize the release, or
+closed without merging to cancel the release.</p>
+
+<p>Toys-Release depends on a <strong>configuration file</strong> to describe which packages are
+present in a repository and how to release them. It supports repositories
+containing either a single package, or multiple packages (i.e. &quot;<strong>monorepos</strong>&quot;)
+and can analyze a repository to identify changes applying to each package.</p>
+
+<p>Toys-Release can build <strong>GitHub releases</strong>, publish <strong>RubyGems packages</strong>, and
+build and publish documentation to <strong>GitHub pages</strong>.</p>
+
+<p>Toys-Release uses the <a href="https://dazuma.github.io/toys/gems/toys/latest">Toys</a>
+RubyGem, but does not require familiarity with Toys.</p>
+
+<h2 id="installation">Installation</h2>
+
+<p>Toys-Release must be installed into a GitHub repository. This involves:</p>
+
+<ul>
+<li> Installing a Toys tool;</li>
+<li> Writing a configuration file;</li>
+<li> Defining a set of GitHub Actions workflows and a set of GitHub labels
+(a tool is provided to perform this step); and</li>
+<li> Providing necessary credentials.</li>
+</ul>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<p>Toys-Release is written in Ruby, using the Toys framework. The installation
+process requires these items to be installed locally, but normal operation
+happens in GitHub Actions and does not require any local installation.</p>
+
+<p>If you do not have Ruby or Toys installed locally, do so first. Install
+Ruby 3.0 or later, and then install the Toys RubyGem using:</p>
+
+<pre class="code sh"><code class="sh">gem install toys
+</code></pre>
+
+<p>Toys-Release requires Toys 0.18 or later. If you have an older version of Toys,
+update it using:</p>
+
+<pre class="code sh"><code class="sh">toys system update
+</code></pre>
+
+<p>Finally, you also need the GitHub command line tool, <code>gh</code>. Find installation
+instructions at <a href="https://cli.github.com/">https://cli.github.com/</a>. If you are running on MacOS, for
+example, the easiest way to install it is via homebrew:</p>
+
+<pre class="code sh"><code class="sh">brew install gh
+</code></pre>
+
+<h3 id="install-the-release-tool">Install the release tool</h3>
+
+<p>The Toys-Release tool needs to be installed in your repository, as a Toys tool
+loaded from the <a href="https://rubygems.org/gems/toys-release">toys-release</a> gem.</p>
+
+<p>Create <code>.toys/release.rb</code> (note the leading period in the directory name) in
+your git repository. Use the following content:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_load_gem'>load_gem</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-release</span><span class='tstring_end'>&quot;</span></span>
+</code></pre>
+
+<p>This will cause Toys-Release to use the latest version of Toys-Release. You can
+also pin to a specific version of Toys-Release by specifying version
+requirements similar to how those requirements are specified in RubyGems or
+Bundler:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_load_gem'>load_gem</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-release</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>~&gt; 0.3</span><span class='tstring_end'>&quot;</span></span>
+</code></pre>
+
+<p>Commit and push this change to your repository.</p>
+
+<h3 id="write-the-configuration-file">Write the configuration file</h3>
+
+<p>Next you will provide a configuration file for releases. This file is located
+in your repository at <code>.toys/.data/releases.yml</code> (note the leading periods) and
+lists all the releasable components (such as RubyGems packages) in your
+repository, along with any customizations to the build/release process and
+pipeline behavior.</p>
+
+<p>To get you started, Toys-Release provides a config generation tool. Once the
+release tool is installed as described above, you can run this from your local
+repository clone directory:</p>
+
+<pre class="code sh"><code class="sh">toys release gen-config
+</code></pre>
+
+<p>This will analyze your repository and generate an initial configuration file
+for you. It will make a guess as to what releasable components/RubyGems are
+present in your repository. At this stage, you do not need to get every
+configuration exactly correct, but feel free to begin editing it if you so
+choose. The remaining sections in this user&#39;s guide will cover the release
+capabilities that you may need to configure in this file, and the
+<a href="#configuration-reference">configuration reference</a> section below describes the
+file format in detail.</p>
+
+<h3 id="install-workflows-and-labels">Install workflows and labels</h3>
+
+<p>Once an initial configuration file is present, you can finish the rest of the
+installation by creating some needed labels in your GitHub repository and
+installing some needed GitHub Actions workflows. These are done on the command
+line using the release tool.</p>
+
+<p>To create the GitHub repo labels, run this from your local repo clone directory:</p>
+
+<pre class="code sh"><code class="sh">toys release create-labels
+</code></pre>
+
+<p>Then, to generate the GitHub Actions workflows, run:</p>
+
+<pre class="code sh"><code class="sh">toys release gen-workflows
+</code></pre>
+
+<p>This will generate files in a <code>.github/workflows</code> directory in your repository.
+Commit and push this change (along with the configuration file) to your
+repository.</p>
+
+<h3 id="provide-credentials">Provide credentials</h3>
+
+<p>If Toys-Release will publish RubyGems packages, it will require credentials.
+Provide those by creating a GitHub Actions Secret called <code>RUBYGEMS_API_KEY</code>.</p>
+
+<p>In your GitHub repository web UI, go to the Settings tab, and choose
+Secrets and Variables -&gt; Actions in the left nav. Create a repository secret
+called <code>RUBYGEMS_API_KEY</code> whose value is an API key from RubyGems with
+&quot;push rubygem&quot; scope. You can also provide this secret at the organization
+level.</p>
+
+<h2 id="release-operations">Release operations</h2>
+
+<p>This section describes how Toys-Release manages releases and how you control
+and interact with the process.</p>
+
+<p>Overall, the process looks like this:</p>
+
+<ol>
+<li><p>During development, commit messages for all commits should be formatted
+according to the <a href="https://conventionalcommits.org">Conventional Commits</a>
+standard. This allows Toys-Release (and other similar tools) to interpret
+the semantics of your changes and configure releases accordingly.</p></li>
+<li><p>A maintainer schedules a release by triggering the &quot;Open release request&quot;
+GitHub Action. This action analyzes the repository, looking for changes in
+each component, deciding which components have releasable updates,
+determining the semver version bump for each, and building a changelog. It
+then opens a pull request with the version and changelog updates.</p></li>
+<li><p>The maintainer can either merge the pull request (possibly with manual
+modifications to the changelogs and/or version numbers to release) or close
+it unmerged.</p></li>
+<li><p>If the pull request is merged, the release is automatically processed by
+additional GitHub Actions. The automation verifies that the GitHub checks
+pass, and runs the release pipeline.</p></li>
+<li><p>The results of the run are reported back to the release pull request. If
+the release failed, a GitHub issue is also automatically opened. A
+maintainer can retry a failed release by triggering the &quot;Retry release&quot;
+GitHub Action.</p></li>
+</ol>
+
+<h3 id="commit-message-formatting">Commit message formatting</h3>
+
+<p>When using Toys-Release, you should format all commit messages according to the
+<a href="https://conventionalcommits.org">Conventional Commits</a> standard. This allows
+Toys-Release (and other similar tools) to interpret the semantics of your
+changes and configure releases accordingly. (Even if you are not using such
+tools, Conventional Commits encapsulates good best practice for writing useful
+commit messages.) Properly formatted conventional commit messages will
+determine what kind of version bump Toys-Release uses when releasing those
+changes, and the commit messages themselves will be used in the changelog that
+Toys-Release generates.</p>
+
+<p>Specifically, a change that adds a new feature, corresponding to a minor update
+under <a href="https://semver.org">Semantic Versioning</a>, should have a commit message
+tagged with <code>feat:</code>. For example:</p>
+
+<pre class="code ruby"><code class="ruby">feat: You can now upload a cat photo
+</code></pre>
+
+<p>A change that fixes a bug, corresponding to a patch change under Semver, should
+have a commit message tagged with <code>fix:</code>. For example:</p>
+
+<pre class="code ruby"><code class="ruby">fix: The app no longer crashes when a photo includes a dog instead of a cat
+</code></pre>
+
+<p>A change that updates documentation should have a commit message tagged with
+<code>docs:</code>. For example:</p>
+
+<pre class="code ruby"><code class="ruby">docs: Emphasize that photos should include cats rather than dogs
+</code></pre>
+
+<p>A breaking change, which would trigger a major update under Semver, can be
+expressed using either the <code>BREAKING CHANGE:</code> tag, or an exclamation mark after
+any other type of tag. Here are a few examples:</p>
+
+<pre class="code ruby"><code class="ruby">BREAKING CHANGE: Rename the &quot;add-photo&quot; API to &quot;add-cat-photo&quot;
+feat!: Raise an exception if a photo contains a dog instead of a cat
+</code></pre>
+
+<p>A change that does not actually make any functional change, such as a git
+repository configuration change, a CI change, or other admin-level change,
+should be tagged with <code>chore:</code>. For example:</p>
+
+<pre class="code ruby"><code class="ruby">chore: Attach a photo of a cat to the repo
+</code></pre>
+
+<p>Other common tags might include <code>refactor:</code>, <code>style:</code>, <code>test:</code>, and others. See
+<a href="https://conventionalcommits.org">https://conventionalcommits.org</a> for more details and discussion.</p>
+
+<p>By default, Toys-Release specifically recognizes the <code>feat:</code>, <code>fix:</code>, and
+<code>docs:</code> tags, and uses them to configure releases and new versions. It also
+recognizes breaking changes. It considers other tags to be non-significant for
+release purposes. However, you can configure this behavior using the
+<strong>commit_tags</strong> configuration field. See the
+<a href="#configuration-reference">configuration reference</a> for more details.</p>
+
+<p>It is legal to have multiple conventional commit formatted messages in a single
+commit message. Toys-Release will parse each commit message and use all
+properly formatted conventional commit messages it finds. In most cases,
+however, it is good practice to keep commits small and describable via a single
+conventional commit message.</p>
+
+<h3 id="requesting-releases">Requesting releases</h3>
+
+<p>To request a release, navigate to the Actions tab in the GitHub UI, select the
+&quot;Open release request&quot; workflow, and click the &quot;Run workflow&quot; dropdown. This
+will open a confirmation drop-down. Click the &quot;Run workflow&quot; button to confirm
+and begin the automatic release analysis.</p>
+
+<p>The dropdown provides an optional &quot;Components to release&quot; field. Often you can
+leave this blank, and Toys-Release will analyze all components in the repository
+and select the ones that have releasable changes pending. Alternatively, you
+can choose which components to release by entering their names, space-delimited
+in the field.</p>
+
+<p>The field also supports setting the version number for each component, by
+appending the version to the component name, separated by a colon.</p>
+
+<p>For example, to request releases of the <code>toys</code> and <code>toys-release</code> components,
+you can enter the following text into &quot;Components to release&quot;:</p>
+
+<pre class="code sh"><code class="sh">toys toys-release
+</code></pre>
+
+<p>To make the above request but specifically request version 0.3.0 of the
+<code>toys-release</code> component:</p>
+
+<pre class="code sh"><code class="sh">toys toys-release:0.3.0
+</code></pre>
+
+<h3 id="managing-release-pull-requests">Managing release pull requests</h3>
+
+<p>You can also specify which components get released and at which versions, by
+modifying the release pull request. You can change the version in the pull
+request, or even revert the version/changelog change for some components and/or
+introduce version/changelog modifications for other components. The releases
+that ultimately take place are simply dictated by what changes get introduced
+by the commit introduced by merging the pull request.</p>
+
+<p><strong>Important:</strong> If you modify a release pull request, be sure to <em>squash</em> your
+changes when you merge it. It is important that the entire pull request is
+expressed in a single commit, because the automation will look only at the
+changes in the most recent commit after merge.</p>
+
+<p>You will also notice that the pull request opened by the &quot;Open release request&quot;
+workflow will have the <code>release: pending</code> label applied. This label signals the
+release automation that this is a release pull request. If you remove this
+label, the automation will not process the release.</p>
+
+<p>Finally, you can even create a release pull request manually, or using your own
+tools or processes. You must simply ensure that:</p>
+
+<ul>
+<li> The pull request has the <code>release: pending</code> label applied</li>
+<li> The pull request merges as a single commit (i.e. &quot;squashed&quot;)</li>
+<li> For each component you want to release, the version and changelog are
+updated appropriately.</li>
+</ul>
+
+<p>If you close a release pull request without merging, the release will be
+canceled. The automation will apply the <code>release: aborted</code> label to indicate
+this.</p>
+
+<h3 id="monitoring-progress-and-results">Monitoring progress and results</h3>
+
+<p>After a release pull request is merged, a GitHub Actions workflow will trigger
+and begin processing the release. You can follow the workflow logs if you want
+detailed information on the progress of the release. Additionally, updates will
+be posted to the pull request when the workflow begins and when it completes.
+These updates will include a link to the workflow logs for your convenience.</p>
+
+<p>After a workflow finishes, it will apply a label to the pull request indicating
+the final result. A successful release will have the <code>release: complete</code> label,
+while an unsuccessful release will have the <code>release: error</code> label. If an error
+occurred, the workflow will also open an issue in the repository reporting the
+failed release.</p>
+
+<p>Most of the useful workflow logs will appear in the &quot;Process release request&quot;
+job under the workflow. If you follow the logs, you will see the release goes
+through the following stages:</p>
+
+<ul>
+<li> First, it publishes a comment to the pull request indicating that the
+release is starting.</li>
+<li> Second, it polls the GitHub checks for the merge commit. Toys-Release will
+perform a release only if all required checks pass, so the release job will
+wait for them to complete. If any checks fail, the release will fail.</li>
+<li> Third, it runs a set of sanity checks, for example that it is looking at
+the correct repository and commit, that there are no locally modified
+files, and that the version numbers are set as expected.</li>
+<li> Next, it runs the release pipeline itself. It first does an analysis of
+which steps in the pipeline should run, then runs those steps in order.</li>
+<li> Finally, it publishes a comment to the pull request reporting the final
+result of the release.</li>
+</ul>
+
+<h3 id="troubleshooting-and-retrying-releases">Troubleshooting and retrying releases</h3>
+
+<p>If a release fails, generally an issue will be opened in the repository, and
+the pull request will have the <code>release: error</code> label applied. Releases can
+fail for a number of reasons, including:</p>
+
+<ul>
+<li> The GitHub checks for the commit representing the merge of the release pull
+request, have failed or did not complete in a timely manner.</li>
+<li> A failure during the release pipeline, such as an error during the build or
+publication of a release artifact.</li>
+<li> An intermittent failure of the release pipeline infrastructure, such as a
+failure to obtain a VM to execute a GitHub Actions workflow.</li>
+</ul>
+
+<p>If a failure occurs, the release workflow may have published some basic
+information on the cause, to the release pull request. You can also find more
+detailed information in the release logs, a link to which should also have been
+published in the pull request comments. You should use this information to
+troubleshoot the release.</p>
+
+<p>In many cases, you can retry the release, possibly after doing something to
+address the cause. For example, if the release failed because of a flaky test
+in the GitHub checks, you can rerun the check, and once it passes, retry the
+release. Or, if the release failed because of expired RubyGems credentials, you
+can rotate the credentials (see <a href="#provide-credentials">above</a>) and then retry
+the release.</p>
+
+<p>To retry a release, navigate to the Actions tab in the GitHub UI, select the
+&quot;Retry release&quot; workflow, and click the &quot;Run workflow&quot; dropdown. This will open
+a confirmation drop-down with a field for &quot;Release PR number&quot;. Enter the number
+of the <em>release pull request</em> here, and then click the &quot;Run workflow&quot; button to
+retry the release.</p>
+
+<p>When a failure takes place, it is possible that the release partially completed
+but did not fully complete. For example, a GitHub release and tag may already
+have been created, but the gem was not successfully pushed to RubyGems. When
+you retry a release, the release script will automatically detect which release
+steps were already completed, and will skip them.</p>
+
+<p>If you need to &quot;roll back&quot; a failed release so it can be retried from a
+different commit, currently you must manually roll back the version number and
+changelog modification (i.e. roll back the changes in the release pull
+request). You might also need to remove an existing GitHub tag and release if
+they were already created.</p>
+
+<h2 id="other-features">Other features</h2>
+
+<h3 id="documentation-publication">Documentation publication</h3>
+
+<p>One of the optional features of the release pipeline is publication of Yardoc
+reference documentation to GitHub Pages. This lets you host reference
+documentation for your Ruby gem on your GitHub Pages site, under github.io. As
+an example, of what this looks like you can see the reference documentation for
+the Toys gem at <a href="https://dazuma.github.io/toys/gems/toys">https://dazuma.github.io/toys/gems/toys</a>.</p>
+
+<p>The features of this system are:</p>
+
+<ul>
+<li> Host generated Yardoc (or rdoc) documentation for every version of the gem.</li>
+<li> Host documentation for multiple gems per repository.</li>
+<li> Permanent GitHub Pages (github.io) URL for each gem, which redirects to the
+documentation for the latest version.</li>
+<li> Automatically publish documentation with each release.</li>
+</ul>
+
+<h4 id="setting-up-documentation-publication">Setting up documentation publication</h4>
+
+<p>To set up documentation, do the following:</p>
+
+<ul>
+<li><p><a href="#install-the-release-tool">Install the release tool</a> as documented in the
+main setup procedure. This provides access to the Toys-Release command line.</p></li>
+<li><p>Make sure you have a release config file. See the section on
+<a href="#write-the-configuration-file">writing the configuration file</a> for how to
+get started here.</p></li>
+<li><p>For each gem that you want documented, include the configuration setting
+<code>gh_pages_enabled: true</code> in the component&#39;s configuration. Alternately, you
+can set <code>gh_pages_enabled: true</code> at the top level of the configuration file
+to enable documenting for all components.</p></li>
+<li><p>Create a starting gh-pages branch by running:</p>
+
+<pre class="code sh"><code class="sh">toys release gen-gh-pages
+</code></pre>
+
+<p>This will generate the gh-pages branch and push some key files to it,
+notably a <code>404.html</code> that does the redirecting to the latest documentation
+version. This may clobber any other gh-pages that you have present.</p></li>
+</ul>
+
+<p>From this point on, any releases you do should also publish documentation to
+your page. To find the page, use the URL
+<code>https://&lt;github-user&gt;.github.io/&lt;repo-name&gt;/&lt;component-name&gt;</code>.</p>
+
+<p>If you add or otherwise change your components, you can rerun the
+<code>toys release gen-gh-pages</code> script to regenerate the files and update the
+redirects. This will not affect any actual documentation you may have generated
+previously.</p>
+
+<h4 id="special-configuration">Special configuration</h4>
+
+<p>There are a few configuration fields that affect documentation publication.</p>
+
+<ul>
+<li><p><strong>gh_pages_directory</strong> is the directory name for this component in the
+documentation URL. This takes the place of the <code>&lt;component-name&gt;</code> in the
+URL. For example, if you set <code>gh_pages_directory: foo/bar</code> for your
+component, the documentation will be generated under the URL:
+<code>https://&lt;github-user&gt;.github.io/&lt;repo-name&gt;/foo/bar</code>.</p>
+
+<p>Note that if you modify this field after previously generating
+documentation for some releases, you will need to manually move the
+previous documentation into the new directory.</p></li>
+<li><p><strong>gh_pages_version_var</strong> is the name of the Javascript variable in the
+<code>404.html</code> file that stores the latest version of this component&#39;s release.
+You will generally not need to modify this unless the
+automatically-generated variable name isn&#39;t unique for some reason.</p></li>
+</ul>
+
+<p>See the <a href="#component-configuration">component configuration</a> section for more
+details.</p>
+
+<h3 id="special-commit-messages">Special commit messages</h3>
+
+<p>Several special cases can be handled via commit tags that are defined by
+Toys-Release. These conventional commit messages can appear in a commit message
+and affect the behavior of that and other commits.</p>
+
+<ul>
+<li><p><strong>semver-change:</strong> This tag forces a certain semver change to apply to this
+commit even if other commit tags say otherwise. For example, if a commit
+describes a new feature, but you want it released as a patch version bump
+rather than a minor version bump, you can include <code>semver-change: patch</code> in
+the commit message. The full commit message might read thus:</p>
+
+<pre class="code ruby"><code class="ruby">feat: Add a small button that doesn&#39;t do a lot
+semver-change: patch
+</code></pre>
+
+<p>Valid values for semver-change are <code>patch</code>, <code>minor</code>, <code>major</code>, and <code>none</code>.</p>
+
+<p>The semver-change tag affects only the commit it is part of. If multiple
+commits are included in a release, other commits in the release might still
+upgrade the version bump to minor or higher.</p></li>
+<li><p><strong>revert-commit:</strong> This tag indicates that the commit reverts, and thus
+nullifies the effect of, an earlier commit, thus removing any version bump
+and any changelog entries that would otherwise have been generated. Use the
+SHA of the earlier commit as the content of the tag. For example:</p>
+
+<pre class="code ruby"><code class="ruby">revert-commit: b10c6fb3363bd1335dcfbd671bdceae53cd55716
+</code></pre>
+
+<p>A commit can combine revert-commit with other conventional commit tags. It
+can even include multiple revert-commit tags if the commit reverts more than
+one previous commit.</p></li>
+<li><p><strong>touch-component:</strong> This tag indicates that the commit should be treated
+as if it touches a specified component, even if it does not actually modify
+that component&#39;s files. For example:</p>
+
+<pre class="code ruby"><code class="ruby">fix: Fix the build
+touch-component: my_gem
+</code></pre></li>
+<li><p><strong>no-touch-component:</strong> This tag indicates that the commit should be
+treated as if it does <em>not</em> touch a specified component, even if it
+modifies that component&#39;s files. For example:</p>
+
+<pre class="code ruby"><code class="ruby">fix: Fix the build
+no-touch-component: my_gem
+</code></pre></li>
+</ul>
+
+<h3 id="running-on-the-command-line">Running on the command line</h3>
+
+<p>The implementation of Toys-Release is done via Toys (i.e. command line) tools.
+In most cases, you will use the GitHub Actions integration to manage your
+releases, but you can also run the tools directly from the command line.</p>
+
+<p>To do so, first make sure you have
+<a href="#install-the-release-tool">installed the release tool</a> as documented in the
+main setup procedure. Then, the command line tools will be available as
+subtools underneath <code>toys release</code>. For example, you could request a release
+from the command line instead of a GitHub Action, by running the command
+<code>toys release request</code>, and providing it the needed arguments and credentials.</p>
+
+<p>As with all Toys-based tools, you can pass <code>--help</code> to any tool to get detailed
+usage information. For example: <code>toys release request --help</code>. You can also run
+<code>toys release --help</code> for a list of all the release-related tools.</p>
+
+<p>The following are the available command line tools. You may recognize some of
+these as tools you used during the <a href="#installation">installation</a> procedure.</p>
+
+<ul>
+<li><p><strong>create-labels</strong> Creates the GitHub labels used by the release system</p></li>
+<li><p><strong>gen-config</strong> Generates an initial release configuration file</p></li>
+<li><p><strong>gen-gh-pages</strong> Initializes the gh-pages branch for publishing
+documentation</p></li>
+<li><p><strong>gen-workflows</strong> Generates the GitHub Actions workflows used by
+Toys-Release</p></li>
+<li><p><strong>perform</strong> Runs the release pipeline from the command line. Assumes you
+have already updated the version number and the changelog.</p></li>
+<li><p><strong>request</strong> Analyzes the repository history and opens a release pull
+request including any pending releases. This is the command line tool used
+by the &quot;Open release request&quot; GitHub Action.</p></li>
+<li><p><strong>retry</strong> Retries a failed release. This is the command line tool used by
+the &quot;Retry release&quot; GitHub Action.</p></li>
+</ul>
+
+<p>There are also internal (hidden) subtools called &quot;_onclosed&quot; and &quot;_onpush&quot;.
+These are the tools called by GitHub Actions automation in response to pull
+request events, and you should generally not call them directly.</p>
+
+<h2 id="the-release-pipeline">The release pipeline</h2>
+
+<p>Toys-Release features a highly configurable build pipeline. By default it is
+configured to handle most RubyGems packages, and will:</p>
+
+<ul>
+<li> Tag and post a GitHub Release</li>
+<li> Build a RubyGems package and push it to rubygems.org</li>
+<li> Optionally build Yardoc documentation and push it to GitHub Pages</li>
+</ul>
+
+<p>The pipeline system, however, lets you customize any aspect of the process, and
+even replace it with an entirely different process altogether, possibly even
+handling a completely different type of releasable artifact. This section
+covers the build pipeline. See also the
+<a href="#build-step-configuration">build step configuration</a> section in the
+configuration reference documentation.</p>
+
+<h3 id="pipeline-steps">Pipeline steps</h3>
+
+<p>A release pipeline is defined as an ordered series of <strong>steps</strong>. Each of these
+steps may perform some task and/or exchange some data with other steps. For
+example, a step might install a bundle, another might build a gem package, and
+another might push a gem package built by a previous step to rubygems.org.</p>
+
+<p>The behavior of a step is determined by the <strong>type</strong> of the step, and by
+additional <strong>configuration attributes</strong> provided to the step. Each step also
+has a unique <strong>name</strong> that lets you identify it and connect it to other steps.</p>
+
+<p>When a pipeline is run, individual steps in the pipeline may or may not
+actually execute, depending on whether they are needed. For example, the step
+type that creates a GitHub release will always run if it is present in a
+pipeline, but the step type that installs the bundle will normally run only if
+another subsequent step <em>that will run</em> actually needs the bundle, and the step
+type that builds the gem package will normally run only if a subsequent step
+<em>that will run</em> actually uses the built package (e.g. to push it to RubyGems.)
+The decision of whether or not a step will run depends on the step&#39;s
+configuration, and the step dependencies configured into the pipeline.</p>
+
+<p>We will cover, as an example, the <a href="#the-standard-pipeline">standard pipeline</a>
+for RubyGems releases below. First, however, we need to discuss how steps
+depend on one another and pass data around.</p>
+
+<h3 id="inter-step-communication-and-dependencies">Inter-step communication and dependencies</h3>
+
+<p>When a step runs, the working directory is set to the <strong>component directory</strong>
+in a <em>clean</em> checkout of the release SHA in the repository. Any changes it
+makes to the repository working directory are <em>not</em> preserved for other steps;
+instead, it must explicitly &quot;output&quot; any files it needs to make available, and
+other steps must explicitly access those files as &quot;inputs&quot;. This is sometimes
+done by the step&#39;s code, but can also be specified in the step&#39;s configuration.</p>
+
+<p>For example, a step that builds a gem package should &quot;output&quot; the package so
+that it is available to other steps that want to publish it. This simply
+involves copying the relevant files to a special directory known as the output
+directory for that step (identified by step name). The standard <strong>build_gem</strong>
+step type does this in code. Alternatively, if you write a custom step that
+builds an artifact, you can specify, via the <strong>outputs</strong> configuration, the
+artifacts that you want made available. (See the
+<a href="#step-output-configuration">output config reference</a> for details.)</p>
+
+<p>Then, a step can use a built artifact previously output by another step by
+copying it from the previous step&#39;s output directory. Again, this can be done
+in code, as by the standard <strong>release_gem</strong> step type. You can also specify,
+via the <strong>inputs</strong> configuration, artifacts to copy from another step&#39;s output
+into your working directory. (For details, see the
+<a href="#step-input-configuration">input config reference</a>.)</p>
+
+<p>When a step specifies the <strong>inputs</strong> configuration, any steps so referenced are
+also automatically tagged as <em>dependencies</em> of the step. If the pipeline
+determines the step should be run, then its dependencies are also marked as to
+be run.</p>
+
+<h4 id="inter-step-communication-example">Inter-step communication example</h4>
+
+<p>Consider the following simple, if contrived, pipeline:</p>
+
+<pre class="code yaml"><code class="yaml">- name: create_file
+  type: command
+  command: [&quot;touch&quot;, &quot;my-file.txt&quot;]
+  outputs:
+    - source_path: my-file.txt
+- name: create_another_file
+  type: command
+  command: [&quot;touch&quot;, &quot;another-file.txt&quot;]
+  outputs:
+    - source_path: another-file.txt
+- name: show_file
+  type: command
+  command: [&quot;cat&quot;, &quot;my-file.txt&quot;]
+  inputs:
+    - name: create_file
+      source_path: my-file.txt
+  run: true
+</code></pre>
+
+<p>This pipeline includes three steps. After each step, the git repository gets
+reset, so any files created by the step are not initially available to
+subsequent steps unless the step explicitly accesses them via inputs. Also note
+that all three steps are of type &quot;command&quot;, which do not run by default unless
+something else causes them to run.</p>
+
+<p>Let&#39;s consider these steps starting with the last one.</p>
+
+<p>The third step, named <code>show_file</code>, looks for a file <code>my-file.txt</code> in the
+<em>first</em> step&#39;s outputs, copies it into its working directory, and prints its
+contents to the logs. It includes the <code>run: true</code> configuration which forces it
+to run.</p>
+
+<p>Because the third step, <code>show_file</code>, copies an input from the first step,
+<code>create_file</code>, the latter is a dependency of the former. And since the
+<code>show_file</code> is forced to run, then <code>create_file</code> will also run. This step will
+run first, because it is first in the list of steps, and it will create a file
+and copy it to its outputs so the <code>show_file</code> can access it.</p>
+
+<p>The second step, <code>create_another_file</code>, would create another file and copy it
+to its outputs. However, it neither is forced to run via <code>run: true</code> nor is
+listed as a dependency of any other step that will run. Therefore, the second
+step never runs at all.</p>
+
+<h3 id="the-standard-pipeline">The standard pipeline</h3>
+
+<p>The default release pipeline illustrates the above features of steps. It
+includes the following steps:</p>
+
+<ul>
+<li> <strong>bundle</strong>: Installs the bundle, and copies the <code>Gemfile.lock</code> to its
+output directory. This step runs because the later step <strong>build_yard</strong>
+declares it as a dependency and accesses the <code>Gemfile.lock</code>.</li>
+<li> <strong>build_gem</strong>: Builds the gem package, and copies the package file to its
+output directory. This step runs because the later step <strong>release_gem</strong>
+declares it as a dependency and accesses the built package.</li>
+<li> <strong>build_yard</strong>: Builds the Yardoc documentation. By default, this step uses
+the <code>yard</code> gem from the bundle, and thus depends on the earlier <strong>bundle</strong>
+step. It copies the <code>Gemfile.lock</code> output by the earlier step. After
+building the documentation into the <code>doc</code> directory, it copies that
+directory to its output directory. This step runs <em>if</em> the later step
+<strong>push_gh_pages</strong>, which lists it as a dependency, runs.</li>
+<li> <strong>release_github</strong>: Pushes a release tag to GitHub and creates a GitHub
+release. This step always runs and has no dependencies.</li>
+<li> <strong>release_gem</strong>: Pushes the built gem package to rubygems.org. This step
+lists the earlier <strong>build_gem</strong> step as a dependency, and copies the built
+gem package from that step&#39;s output.</li>
+<li> <strong>push_gh_pages</strong>: Pushes the built documentation to the <code>gh-pages</code> branch
+so it shows up on the repository&#39;s GitHub Pages site. This step runs only
+if the repository actually has a <code>gh-pages</code> branch and the release
+configuration specifies that it should be pushed to. If this step does run,
+it lists the earlier <strong>build_yard</strong> step as a dependency, and copies the
+built documentation from that step&#39;s output.</li>
+</ul>
+
+<p>Ultimately, this pipeline will create a GitHub release, push a RubyGems
+package, and optionally push documentation.</p>
+
+<h3 id="modifying-the-pipeline">Modifying the pipeline</h3>
+
+<p>If your releases have different requirements, you can modify the release
+pipeline, by inserting steps, by modifying existing steps, or by replacing the
+entire pipeline with a new pipeline. These modifications can be made globally
+for all releases in a repository, or specifically for individual releasable
+components, by adding configuration at the top level of the configuration (see
+the <a href="#top-level-configuration">top level configuration reference</a>) or
+underneath a particular component&#39;s configuration (see the
+<a href="#component-configuration">component configuration reference</a>).</p>
+
+<ul>
+<li> To insert new steps, at the beginning or end of the pipeline, or before or
+after specific named steps, use the <strong>append_steps</strong> and <strong>prepend_steps</strong>
+configurations.</li>
+<li> To modify existing steps, use the <strong>modify_steps</strong> configuration. See the
+reference on <a href="#build-step-modification">build step modification</a>.</li>
+<li> There is no specific way to delete an existing step. This is because a step
+might be referenced by other steps. To ensure a step does not run, you can
+modify it to change its type to <code>noop</code> (which has no behavior and does not
+run by default) and ensure that no step depends on it.</li>
+<li> If your changes are more complex than can reasonably be expressed by
+modifying the default pipeline, you can replace the pipeline completely
+using the <strong>steps</strong> configuration.</li>
+</ul>
+
+<h4 id="pipeline-modification-example">Pipeline modification example</h4>
+
+<p>The <code>toys</code> gem itself has a customized release pipeline. This pipeline includes
+a step that merges key classes from <code>toys-core</code>, such as DSL classes, into the
+documentation for the <code>toys</code> gem.</p>
+
+<p>The merging is actually performed by a toys tool called <code>copy-core-docs</code>
+defined in the directory for the <code>toys</code> gem. The implementation itself isn&#39;t
+important; what&#39;s important is that we want this merging to be part of the
+release process.</p>
+
+<p>The <code>releases.yml</code> for the toys repository includes this configuration for the
+<code>toys</code> gem:</p>
+
+<pre class="code yaml"><code class="yaml">components:
+  - name: toys
+    prepend_steps:
+      - name: copy_core_docs
+        type: tool
+        tool: [copy-core-docs]
+        outputs: [core-docs]
+    modify_steps:
+      - name: build_yard
+        inputs: [copy_core_docs]
+      - name: build_gem
+        inputs: [copy_core_docs]
+</code></pre>
+
+<p>Let&#39;s unpack what this is doing.</p>
+
+<p>First, we note that we are not replacing the default pipeline completely; we
+are only modifying it <em>for this one gem</em>. The other gems (<code>toys-core</code> and
+<code>toys-release</code>) continue to use the default pipeline unmodified.</p>
+
+<p>For the <code>toys</code> gem, then, we prepend one new step at the beginning of the
+pipeline. The step is named <code>copy_core_docs</code>, and it runs the toys tool that
+copies files (with some modifications to simplify them and make them suitable
+for just documentation) from <code>toys-core</code> into the <code>toys</code> directory under the
+<code>core-docs</code> subdirectory. This directory is not part of the include path, so
+these files are not in the require path and do not interfere with the
+functionality of the library. However, they are in the <code>.yardopts</code> file and are
+used when documentation is built. We then copy this new directory to the
+output for the <code>copy_core_docs</code> step, to preserve it for future steps.</p>
+
+<p>Next, we modify the <code>build_yard</code> step to load the <code>copy_core_docs</code> output. This
+brings those files back into our working directory when the Yardocs are built.
+It also adds the <code>copy_core_docs</code> step to the dependencies of <code>build_yard</code> to
+ensure it gets executed.</p>
+
+<p>We also modify the <code>build_gem</code> step to load the <code>copy_core_docs</code> output. This
+ensures that the files are also present when the gem is built, so that services
+like rubydoc.info will have them available when they build the documentation.
+Again, this also adds <code>copy_core_docs</code> to the dependencies of <code>build_gem</code>. As a
+dependency of both <code>build_gem</code> and <code>build_yard</code>, this ensures that our new step
+will indeed get executed. (It does not execute twice; Toys-Release ensures each
+step is executed at most once, even if it is listed multiple times as a
+dependency.)</p>
+
+<h4 id="useful-types-for-custom-steps">Useful types for custom steps</h4>
+
+<p>The <strong>command</strong> and <strong>tool</strong> step types are both very useful when creating
+custom steps. We&#39;ve seen in the <a href="#pipeline-modification-example">example above</a>
+how a step of type <strong>tool</strong> is used in the customized release process for the
+<code>toys</code> gem itself. The <strong>command</strong> type is similar; it executes a Unix command
+rather than a Toys tool. These two types are very useful for performing
+arbitrary behavior during a release.</p>
+
+<p>Another step type that is occasionally useful is <strong>noop</strong>. This type has no
+behavior; it doesn&#39;t <em>do</em> anything, but you can configure it with inputs and
+outputs. This can be useful for consolidating data output by other steps. You
+can, for example, configure a <strong>noop</strong> with multiple <strong>inputs</strong> from other
+steps, configuring each input to copy to the noop&#39;s <em>output</em>. Now, all the
+files from potentially multiple inputs are combined and can be referenced
+conveniently via a single step&#39;s output.</p>
+
+<p>See the reference below on <a href="#build-step-types">build step types</a> for detailed
+information on these and other step types and their configurations.</p>
+
+<h2 id="configuration-reference">Configuration reference</h2>
+
+<p>The Toys-Release configuration file is a <a href="https://yaml.org">YAML</a>-formatted
+file located in your repository at <code>.toys/.data/releases.yml</code>. It controls all
+aspects of the release process and behavior and is required.</p>
+
+<p>This section will cover all keys in configuration file.</p>
+
+<h3 id="top-level-configuration">Top level configuration</h3>
+
+<p>The top level of the yaml file is a dictionary that can include the following
+keys.</p>
+
+<p>The <strong>repo</strong>, <strong>git_user_name</strong>, and <strong>git_user_email</strong> keys are required. The
+rest are optional.</p>
+
+<ul>
+<li><p><strong>append_steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+A list of build steps to append to the end of the default build pipeline.
+This can be used to modify the default build pipeline instead of redefining
+the entire pipeline using the <strong>steps</strong> key.</p></li>
+<li><p><strong>breaking_change_header</strong>: <em>string</em> (optional) --
+A changelog entry prefix that appears when a change is marked as breaking.
+Default is <code>BREAKING CHANGE</code>.</p></li>
+<li><p><strong>commit_tags</strong>: <em>array of <a href="#commit-tag-configuration">CommitTagConfig</a></em> (optional) --
+A set of configurations defining how to interpret
+<a href="https://conventionalcommits.org">conventional commit</a> tags, including how
+they trigger releases, bump versions, and generate changelog entries. See
+<a href="#commit-tag-configuration">commit tag configuration</a> for details.
+If not included, Toys-Release will use a default configuration as follows:</p>
+
+<pre class="code yaml"><code class="yaml">- tag: feat
+  semver: minor
+  header: ADDED
+- tag: fix
+  semver: patch
+  header: FIXED
+- tag: docs
+  semver: patch
+</code></pre></li>
+<li><p><strong>components</strong>: <em>array of <a href="#component-configuration">ComponentConfig</a></em> (optional) --
+An array of releasable components, usually RubyGems packages. See
+<a href="#component-configuration">Component Configuration</a> for details on the
+format of each component. You can also use the name <strong>gems</strong> for this
+config key.</p></li>
+<li><p><strong>coordinate_versions</strong>: <em>boolean</em> (optional) --
+If set to true, this is a shorthand for setting up a coordination group
+containing all components in this repository. Defaults to <em>false</em>.</p></li>
+<li><p><strong>coordination_groups</strong>: <em>array of array of string</em> (optional) --
+A list of disjoint sets of component names. Each set defines a group of
+components that will always be released together with the same version
+number. That is, if one or more components in a set are released, the
+entire set is released, even components with no changes. This is useful for
+sets of gems, such as the Rails gems, that are always released together.</p></li>
+<li><p><strong>enable_release_automation</strong>: <em>boolean</em> (optional) --
+When enabled, the release pipeline runs automatically when a release pull
+request is merged. Defaults to <em>true</em>.</p></li>
+<li><p><strong>gh_pages_enabled</strong>: <em>boolean</em> (optional) --
+Whether to globally enable gh-pages publication for all releases. Defaults
+to <em>false</em>.</p></li>
+<li><p><strong>git_user_email</strong>: <em>string</em> (required) --
+The git <code>user.email</code> setting to use when making git commits.</p></li>
+<li><p><strong>git_user_name</strong>: <em>string</em> (required) --
+The git <code>user.name</code> setting to use when making git commits.</p></li>
+<li><p><strong>issue_number_suffix_handling</strong>: <em>string</em> (optional) --
+A code indicating what to do with issue number suffixes (e.g. <code>(#123)</code>)
+that GitHub inserts at the end of commit messages for pull request merges.
+Possible values are:</p>
+
+<ul>
+<li> <code>plain</code>: (the default) Retain the suffix as is</li>
+<li> <code>link</code>: Linkify the suffix</li>
+<li> <code>delete</code>: Delete the suffix</li>
+</ul></li>
+<li><p><strong>main_branch</strong>: <em>string</em> (optional) --
+The name of the main branch. Defaults to <code>main</code> if not provided.</p></li>
+<li><p><strong>modify_steps</strong>: <em>array of <a href="#build-step-modification">BuildStepModification</a></em> (optional) --
+A set of modifications to the default build steps. This can be used to
+modify the default build pipeline instead of redefining the entire pipeline
+using the <strong>steps</strong> key.</p></li>
+<li><p><strong>no_significant_updates_notice</strong>: <em>string</em> (optional) --
+A notice that appears in a changelog when a release is done but no other
+changelog entries are present. Default is <code>No significant updates.</code></p></li>
+<li><p><strong>prepend_steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+A list of build steps to prepend to the start of the default build
+pipeline. This can be used to modify the default build pipeline instead of
+redefining the entire pipeline using the <strong>steps</strong> key.</p></li>
+<li><p><strong>release_branch_prefix</strong>: <em>string</em> (optional) --
+The prefix for all release branch names. Defaults to <code>release</code>.</p></li>
+<li><p><strong>release_aborted_label</strong>: <em>string</em> (optional) --
+The name of the GitHub issue label that identifies aborted release pull
+requests. Defaults to <code>release: aborted</code>.</p></li>
+<li><p><strong>release_complete_label</strong>: <em>string</em> (optional) --
+The name of the GitHub issue label that identifies successfully completed
+release pull requests. Defaults to <code>release: complete</code>.</p></li>
+<li><p><strong>release_error_label</strong>: <em>string</em> (optional) --
+The name of the GitHub issue label that identifies release pull requests in
+an error state. Defaults to <code>release: error</code>.</p></li>
+<li><p><strong>release_pending_label</strong>: <em>string</em> (optional) --
+The name of the GitHub issue label that identifies pending release pull
+requests. Defaults to <code>release: pending</code>.</p></li>
+<li><p><strong>repo</strong>: <em>string</em> (required) --
+The GitHub repository name in the form <code>owner/repo</code>. For example, the Toys
+repo is <code>dazuma/toys</code>.</p></li>
+<li><p><strong>required_checks</strong>: <em>regexp/boolean</em> (optional) --
+Identifies which GitHub checks must pass as a prerequisite for a release.
+If a string is provided, it is interpreted as a Ruby regexp (PCRE) and
+identifies the check names. A boolean value of <em>true</em> means all checks must
+pass. A boolean value of <em>false</em> (the default) disables checking.</p></li>
+<li><p><strong>required_checks_timeout</strong>: <em>integer</em> (optional) --
+The time to wait, in seconds, for required checks to pass during release
+processing. Defaults to 900 (i.e. 15 minutes).</p></li>
+<li><p><strong>signoff_commits</strong>: <em>boolean</em> (optional) --
+Whether to make commits with <code>--signoff</code>. Set this to true if your
+repository has a policy that commits require signoff. Defaults to <em>false</em>.</p></li>
+<li><p><strong>steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+The build pipeline as a list of build steps. See
+<a href="#build-step-configuration">build step configuration</a> for details on how to
+define the pipeline. If this is not included, Toys-Release will use a
+default pipeline as follows:</p>
+
+<pre class="code yaml"><code class="yaml">- name: bundle
+- name: build_gem
+- name: build_yard
+- name: release_github
+- name: release_gem
+  source: build_gem
+- name: push_gh_pages
+  source: build_yard
+</code></pre>
+
+<p>See the earlier section on <a href="#the-standard-pipeline">the standard pipeline</a>
+for a detailed description of the behavior of this default pipeline.</p></li>
+</ul>
+
+<h3 id="commit-tag-configuration">Commit tag configuration</h3>
+
+<p>A commit tag configuration specifies how the release system should handle a
+particular <a href="https://conventionalcommits.org">conventional commits</a> tag,
+including what kind of <a href="https://semver.org">semver</a> version bump it implies,
+and how it should appear in the changelog. The format of the configuration is a
+dictionary with the keys documented here.</p>
+
+<p>The <strong>tag</strong> key is required. The others are optional.</p>
+
+<ul>
+<li><p><strong>header</strong>: <em>string,null</em> (optional) --
+A prefix that appears before each changelog entry generated by this tag.
+The special value <em>null</em> suppresses changelog entry generation for this
+scope. Defaults to the tag itself in all caps.</p></li>
+<li><p><strong>scopes</strong>: <em>array of <a href="#scope-configuration">ScopeConfig</a></em> (optional) --
+Overrides for conventional commit scopes.</p></li>
+<li><p><strong>semver</strong>: <em>string</em> (optional) --
+The semver version bump implied by changes of this type. Possible values
+are <code>patch</code>, <code>minor</code>, <code>major</code>, and <code>none</code>. Default is <code>none</code>.</p></li>
+<li><p><strong>tag</strong>: <em>string</em> (required) -- The conventional commit tag.</p></li>
+</ul>
+
+<h4 id="scope-configuration">Scope configuration</h4>
+
+<p>A scope configuration provides override behavior for a particular scope name
+in a commit tag configuration. This lets you provide special behavior for
+individual scopes. A common case might be <code>chore(deps):</code> which is used by some
+dependency-updating bots. Typically, <code>chore:</code> does not indicate a significant
+change that should trigger a release or appear in a changelog, but you might
+choose different behavior for dependency changes.</p>
+
+<p>The <strong>scope</strong> key is required. The others are optional.</p>
+
+<ul>
+<li><p><strong>header</strong>: <em>string,null</em> (optional) --
+A prefix that appears before each changelog entry generated by this tag.
+The special value <em>null</em> suppresses changelog entry generation for this
+scope. Defaults to the same setting used by the tag.</p></li>
+<li><p><strong>scope</strong>: <em>string</em> (required) -- The scope name.</p></li>
+<li><p><strong>semver</strong>: <em>string</em> (optional) -- 
+The semver version bump implied by changes of this type. Possible values
+are <code>patch</code>, <code>minor</code>, <code>major</code>, and <code>none</code>. Defaults to the same setting
+used by the tag.</p></li>
+</ul>
+
+<h3 id="component-configuration">Component configuration</h3>
+
+<p>A component configuration specifies how a particular component (often a
+RubyGems package) should be released. Its format is a dictionary with the keys
+documented here. Note that some keys can override global settings of the same
+name.</p>
+
+<p>The <strong>name</strong> key is required. The others are optional.</p>
+
+<ul>
+<li><p><strong>append_steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+A list of build steps to append to the end of this component&#39;s build
+pipeline. This can be used to use the default build pipeline as a starting
+point and define modifications specific to this component, instead of
+redefining the entire pipeline using the <strong>steps</strong> key.</p></li>
+<li><p><strong>breaking_change_header</strong>: <em>string</em> (optional) --
+A changelog entry prefix that appears when a change is marked as breaking.
+If not set, falls back to the <a href="#top-level-configuration">global setting</a> of
+the same name.</p></li>
+<li><p><strong>changelog_path</strong>: <em>string</em> (optional) --
+The path to the component&#39;s changelog file, relative to the component&#39;s
+directory. Default is <code>CHANGELOG.md</code>.</p></li>
+<li><p><strong>commit_tags</strong>: <em>array of <a href="#commit-tag-configuration">CommitTagConfig</a></em> (optional) --
+A set of configurations defining how to interpret
+<a href="https://conventionalcommits.org">conventional commit</a> tags, including how
+they trigger releases, bump versions, and generate changelog entries. See
+<a href="#commit-tag-configuration">commit tag configuration</a> for details.
+If not set, falls back to the <a href="#top-level-configuration">global setting</a> of
+the same name.</p></li>
+<li><p><strong>delete_steps</strong>: <em>array of String</em> (optional) --
+A list of build step names to delete for this component. This can be used
+to use the default build pipeline as a starting point and define
+modifications specific to this component, instead of redefining the entire
+pipeline using the <strong>steps</strong> key.</p></li>
+<li><p><strong>directory</strong>: <em>string</em> (optional) --
+The directory within the repository where this component is located.
+Defaults to the component name, unless there is exactly one component in
+this repository, in which case the default is the root of the repository,
+i.e. &quot;<code>.</code>&quot;. This directory is used to identify when files related to this
+component have been changed, and is also used as a base directory for other
+paths related to the component.</p></li>
+<li><p><strong>exclude_globs</strong>: <em>array of string</em> (optional) --
+An array of globs identifying files or directories that should be ignored
+when identifying changes to this component. These paths are relative to the
+repo root.</p></li>
+<li><p><strong>gh_pages_directory</strong>: <em>string</em> (optional) --
+The directory in the <code>gh-pages</code> branch under which this component&#39;s
+documentation is published. The default is the component name.</p></li>
+<li><p><strong>gh_pages_enabled</strong>: <em>boolean</em> (optional) --
+Whether gh-pages documentation publishing is enabled for this component.
+Default is <em>true</em> if either <strong>gh_pages_directory</strong> or
+<strong>gh_pages_version_var</strong> is set explicitly; otherwise falls back to the
+<a href="#top-level-configuration">global setting</a> of the same name.</p></li>
+<li><p><strong>gh_pages_version_var</strong>: <em>string</em> (optional) --
+The name of a Javascript variable within the <code>404.html</code> page under gh-pages
+that identifies the latest release of this component. Defaults to an
+auto-generated variable name corresponding to the component name.</p></li>
+<li><p><strong>include_globs</strong>: <em>array of string</em> (optional) --
+An array of globs identifying additional files or directories, not located
+in the component&#39;s directory itself, that should signal changes to this
+component. This can be used, for example, if the repo has global files
+shared by multiple components, where a change in such a file should trigger
+releases for all those components. These paths are relative to the repo
+root.</p></li>
+<li><p><strong>issue_number_suffix_handling</strong>: <em>string</em> (optional) --
+A code indicating what to do with issue number suffixes (e.g. <code>(#123)</code>)
+that GitHub inserts at the end of commit messages for pull request merges.
+If not set, falls back to the <a href="#top-level-configuration">global setting</a> of
+the same name. Possible values are:</p>
+
+<ul>
+<li> <code>plain</code>: Retain the suffix as is</li>
+<li> <code>link</code>: Linkify the suffix</li>
+<li> <code>delete</code>: Delete the suffix</li>
+</ul></li>
+<li><p><strong>modify_steps</strong>: <em>array of <a href="#build-step-modification">BuildStepModification</a></em> (optional) --
+A set of modifications to this component&#39;s build steps. This can be used to
+use the default build pipeline as a starting point and define modifications
+specific to this component, instead of redefining the entire pipeline using
+the <strong>steps</strong> key.</p></li>
+<li><p><strong>name</strong>: <em>string</em> (required) --
+The name of the component, e.g. the name of the RubyGems package if this
+component represents a gem.</p></li>
+<li><p><strong>no_significant_updates_notice</strong>: <em>string</em> (optional) --
+A notice that appears in a changelog when a release is done but no other
+changelog entries are present. If not set, falls back to the
+<a href="#top-level-configuration">global setting</a> of the same name.</p></li>
+<li><p><strong>prepend_steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+A list of build steps to prepend to the start of this component&#39;s build
+pipeline. This can be used to use the default build pipeline as a starting
+point and define modifications specific to this component, instead of
+redefining the entire pipeline using the <strong>steps</strong> key.</p></li>
+<li><p><strong>steps</strong>: <em>array of <a href="#build-step-configuration">BuildStepConfig</a></em> (optional) --
+A way to override the complete build pipeline for this component. If not
+present, the default pipeline for the entire repository is used. (See the
+<strong>steps</strong> key under <a href="#top-level-configuration">Top level configuration</a>.)</p></li>
+<li><p><strong>version_rb_path</strong>: <em>string</em> (optional) --
+The path to a Ruby file that contains the current version of the component.
+This file <em>must</em> include Ruby code that looks like this:</p>
+
+<pre class="code ruby"><code class="ruby"><span class='const'>VERSION</span> <span class='op'>=</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>1.2.3</span><span class='tstring_end'>&quot;</span></span>
+</code></pre>
+
+<p>where the string is the latest released version. (Prior to the initial
+release, this version should be <code>0.0.0</code>.) Typically, <code>VERSION</code> is a
+constant defined in the &quot;base module&quot; for the Ruby library.</p>
+
+<p>The default is <code>version.rb</code> within the lib path associated with the Ruby
+module implied by the component name. For example, if the component (gem)
+name is <code>toys-release</code>, this defaults to <code>lib/toys/release/version.rb</code>.</p></li>
+</ul>
+
+<h3 id="build-step-configuration">Build step configuration</h3>
+
+<p>A build step describes one step in the release process. Its format is a
+dictionary with the keys described below. Specific types of build steps may
+define additional keys as documented under the section
+<a href="#build-step-types">build step types</a>. For more introductory information, see
+the section on <a href="#the-release-pipeline">the release pipeline</a> above.</p>
+
+<p>All keys are optional.</p>
+
+<ul>
+<li><p><strong>name</strong>: <em>string</em> (optional) --
+The unique name of this build step in the build pipeline. If not explicitly
+provided, a unique name will be generated.</p>
+
+<p>In simple pipelines, there is often exactly one step of a given type (such
+as <code>release_github</code>). Because the type defaults to the name, it is common
+practice in such cases to simply set the name the desired type.</p></li>
+<li><p><strong>type</strong>: <em>string</em> (optional) --
+The type of build step, defining what it does. Possible values are:
+<code>build_gem</code>, <code>build_yard</code>, <code>bundle</code>, <code>command</code>, <code>noop</code>, <code>push_gh_pages</code>,
+<code>release_gem</code>, <code>release_github</code>, and <code>tool</code>. For more information, see the
+section <a href="#build-step-types">build step types</a>. If the type is not set
+explicitly, it is set to the name. If the name is also not set explicitly,
+the type defaults to <code>noop</code>.</p></li>
+<li><p><strong>run</strong>: <em>boolean</em> (optional) --
+Whether to force this step to run. Typically, build steps will run only if
+the build type determines that it should run, or if the step is a
+dependency of another step that will run. You can, however, force a step to
+run that would otherwise not do so by setting this key to <em>true</em>.</p></li>
+<li><p><strong>inputs</strong>: <em>array of <a href="#step-input-configuration">InputConfig</a></em> (optional) --
+Inputs to this step, indicating dependencies on other steps and files to
+copy from those steps&#39; outputs.</p></li>
+<li><p><strong>outputs</strong>: <em>array of <a href="#step-output-configuration">OutputConfig</a></em> (optional) --
+Files to copy to this step&#39;s output so they become available to other steps.</p></li>
+</ul>
+
+<h4 id="step-input-configuration">Step input configuration</h4>
+
+<p>A step input represents a dependency on another step: if this (depending) step
+is run, that other (dependent) step will also be run. It also describes files
+that should be copied from the dependent step&#39;s output and made available to
+the depending step. This configuration is a dictionary with the keys described
+below.</p>
+
+<p>The <strong>name</strong> key is required. The others are optional.</p>
+
+<ul>
+<li><p><strong>collisions</strong>: <em>string</em> (optional) --
+A symbolic value indicating what to do if a collision occurs between
+incoming and existing files. Possible values are:</p>
+
+<ul>
+<li> <code>error</code>: (the default) Abort with an error</li>
+<li> <code>keep</code>: Keep the existing file</li>
+<li> <code>replace</code>: Replace the existing file with the incoming file</li>
+</ul></li>
+<li><p><strong>dest</strong>: <em>string or false</em> (optional) --
+A symbolic value indicating where to copy the dependent step&#39;s output to.
+Possible values are:</p>
+
+<ul>
+<li> <code>component</code>: (the default) Copy files to the component directory</li>
+<li> <code>repo_root</code>: Copy files to the repository root</li>
+<li> <code>output</code>: Copy files to this step&#39;s output directory</li>
+<li> <code>temp</code>: Copy files to this step&#39;s temp directory</li>
+<li> <code>none</code>: Do not copy any files, but just declare a dependency</li>
+</ul></li>
+<li><p><strong>dest_path</strong>: <em>string</em> (optional) --
+The path in the destination to copy to. If <strong>source_path</strong> is provided,
+<strong>dest_path</strong> is the corresponding path in the destination. If
+<strong>source_path</strong> is not provided, <strong>dest_path</strong> is a directory into which
+the source contents are copied. If <strong>dest_path</strong> is not provided, it
+defaults to the effective value of <strong>source_path</strong>, i.e. things are copied
+into the same locations within the destination as they were in the source.</p></li>
+<li><p><strong>name</strong>: <em>string</em> (required) --
+The name of the step to depend on. The dependent step must be located
+earlier in the pipeline than the depending step.</p></li>
+<li><p><strong>source_path</strong>: <em>string</em> (optional) --
+The path of the file or directory to copy from the source output. Only this
+item (recursively, if a directory) is copied. If this key is not provided,
+<em>all</em> contents of the source output are copied (e.g. the default is
+effectively &quot;<code>.</code>&quot;)</p></li>
+</ul>
+
+<h4 id="step-output-configuration">Step output configuration</h4>
+
+<p>A step output represents files automatically copied to the step&#39;s output
+directory after the step runs. This configuration is a dictionary supporting
+the keys described below.</p>
+
+<p>All keys are optional.</p>
+
+<ul>
+<li><p><strong>collisions</strong>: <em>string</em> (optional) --
+A symbolic value indicating what to do if a collision occurs between incoming
+and existing files. Possible values are:</p>
+
+<ul>
+<li> <code>error</code>: (the default) Abort with an error</li>
+<li> <code>keep</code>: Keep the existing file</li>
+<li> <code>replace</code>: Replace the existing file with the incoming file</li>
+</ul></li>
+<li><p><strong>dest_path</strong>: <em>string</em> (optional) --
+The path in the output directory to copy to. If <strong>source_path</strong> is
+provided, <strong>dest_path</strong> is the corresponding path in the output. If
+<strong>source_path</strong> is not provided, <strong>dest_path</strong> is a directory into which
+the source contents are copied. If <strong>dest_path</strong> is not provided, it
+defaults to the effective value of <strong>source_path</strong>, i.e. things are copied
+into the same locations within the output as they were in the source.</p></li>
+<li><p><strong>source</strong>: <em>string</em> (optional) --
+A symbolic value indicating where to copy from. Possible values are:</p>
+
+<ul>
+<li> <code>component</code>: (the default) Copy files from the component directory</li>
+<li> <code>repo_root</code>: Copy files from the repository root</li>
+<li> <code>temp</code>: Copy files from this step&#39;s temp directory</li>
+</ul></li>
+<li><p><strong>source_path</strong>: <em>string</em> (optional) --
+The path of the file or directory to copy from the source. Only this item
+(recursively, if a directory) is copied. If this key is not provided, <em>all</em>
+contents of the source are copied (e.g. the default is effectively &quot;<code>.</code>&quot;)</p></li>
+</ul>
+
+<h4 id="build-step-types">Build step types</h4>
+
+<p>This is a list of the available build step types, including their behavior and
+any additional configuration keys supported by each.</p>
+
+<ul>
+<li><p><strong>build_gem</strong> -- A step that builds a gem package.</p>
+
+<p>This step builds the gem described by the properly named gemspec file for
+this component. The built package file is copied to this step&#39;s output.
+Other steps (such as <strong>release_gem</strong>) can declare it as an input to get
+access to the built package. This step does not run unless it is declared
+as an input dependency, or unless it is requested explicitly using the
+<strong>run</strong> configuration.</p></li>
+<li><p><strong>build_yard</strong> -- A step that builds Yardocs.</p>
+
+<p>This step builds documentation using <a href="https://yardoc.org">YARD</a>. The built
+documentation is copied to this step&#39;s output in the directory <code>doc/</code>.
+Other steps (such as <strong>push_gh_pages</strong>) can declare it as an input to get
+access to the built documentation. This step does not run unless it is
+declared as an input dependency, or unless it is requested explicitly using
+the <strong>run</strong> configuration.</p>
+
+<p>This step supports the following additional optional configuration keys.</p>
+
+<ul>
+<li> <strong>bundle_step</strong>: <em>string</em> (optional) --
+The name of the bundle step. Defaults to <code>bundle</code>. This is used if the
+<strong>uses_gems</strong> key is <em>not</em> provided.</li>
+<li> <strong>uses_gems</strong>: <em>array of (string or array of string)</em> (optional) --
+An array of gem specifications, each of which can be a simple gem name
+or an array including rubygems-style version requirements. These gems
+are provided to Yard, and can include gems such as <code>redcarpet</code> that may
+be needed for markup handling. If this key is included, the specified
+gems are installed directly; if not, the bundle step is declared as a
+dependency instead.</li>
+</ul></li>
+<li><p><strong>bundle</strong> -- A step that installs the bundle in the component directory.</p>
+
+<p>This step copies the resulting <code>Gemfile.lock</code> to its output. Other steps
+can declare it as an input to get access to the <code>Gemfile.lock</code>. This step
+does not run unless it is declared as an input dependency, or unless it is
+requested explicitly using the <strong>run</strong> configuration.</p>
+
+<p>This step supports the following additional optional configuration keys.</p>
+
+<ul>
+<li> <strong>chdir</strong>: <em>string</em> (optional) --
+Change to the specified directory (relative to the component directory)
+when installing the bundle. Defaults to component directory.</li>
+</ul></li>
+<li><p><strong>command</strong> -- A step that runs a command in the component directory.</p>
+
+<p>This step supports the following additional configuration keys. Note that
+the <strong>command</strong> key is required. The others are optional.</p>
+
+<ul>
+<li> <strong>chdir</strong>: <em>string</em> (optional) --
+Change to the specified directory (relative to the component directory)
+when running the command. Defaults to component directory.</li>
+<li> <strong>command</strong>: <em>array of string</em> (required) --
+The command to run</li>
+<li> <strong>continue_on_error</strong>: <em>boolean</em> (optional) --
+If <em>true</em>, continue to run the pipeline if the command exits
+abnormally. If <em>false</em> (the default), the pipeline aborts.</li>
+</ul>
+
+<p>This step does not run unless it is requested explicitly using the <strong>run</strong>
+configuration, or it is declared as a dependency.</p></li>
+<li><p><strong>noop</strong> -- A no-op step that does nothing. This type is usually configured
+with inputs and outputs and is used to collect or consolidate data from
+other steps.</p>
+
+<p>This step does not run unless it is requested explicitly using the <strong>run</strong>
+configuration, or it is declared as a dependency.</p></li>
+<li><p><strong>push_gh_pages</strong> -- A step that pushes documentation to the gh-pages branch.</p>
+
+<p>The documentation to publish should be under <code>doc/</code> in the output directory
+of a &quot;source&quot; step, normally the <strong>build_yard</strong> step. This source step is
+automatically declared as a dependency.</p>
+
+<p>This step supports the following additional optional configuration keys.</p>
+
+<ul>
+<li> <strong>source</strong>: <em>string</em> (optional) --
+The name of the source step. Defaults to <code>build_yard</code>.</li>
+</ul>
+
+<p>This step runs if gh-pages publishing is enabled for the component.</p></li>
+<li><p><strong>release_gem</strong> -- A step that pushes a gem package to rubygems.org.</p>
+
+<p>The package must be provided under <code>pkg/</code> in the output directory of a
+&quot;source&quot; step, normally the <strong>build_gem</strong> step. This source step is
+automatically declared as a dependency.</p>
+
+<p>This step supports the following additional optional configuration keys.</p>
+
+<ul>
+<li> <strong>source</strong>: <em>string</em> (optional) --
+The name of the source step. Defaults to <code>build_gem</code>.</li>
+</ul>
+
+<p>This step runs if a correctly-named gemspec file is present in the component
+directory.</p></li>
+<li><p><strong>release_github</strong> -- A step that creates a git tag and GitHub release.</p>
+
+<p>This step always runs if present in the pipeline.</p></li>
+<li><p><strong>tool</strong> -- A step that runs a Toys tool in the component directory.</p>
+
+<p>This step supports the following additional configuration keys. Note that
+the <strong>tool</strong> key is required. The others are optional.</p>
+
+<ul>
+<li> <strong>chdir</strong>: <em>string</em> (optional) --
+Change to the specified directory (relative to the component directory)
+when running the tool. Defaults to component directory.</li>
+<li> <strong>continue_on_error</strong>: <em>boolean</em> (optional) --
+If <em>true</em>, continue to run the pipeline if the tool exits abnormally.
+If <em>false</em> (the default), the pipeline aborts.</li>
+<li> <strong>tool</strong>: <em>array of string</em> (required) --
+The tool to run</li>
+</ul>
+
+<p>This step does not run unless it is requested explicitly using the <strong>run</strong>
+configuration, or it is declared as a dependency.</p></li>
+</ul>
+
+<h4 id="build-step-modification">Build step modification</h4>
+
+<p>A build step modification is a dictionary that modifies one or more existing
+steps in the build pipeline. Its format is a dictionary with the keys described
+below.</p>
+
+<p>The <strong>name</strong> and <strong>type</strong> fields filter the steps to modify. If neither is
+provided, <em>all</em> steps are modified.</p>
+
+<ul>
+<li><p><strong>name</strong>: <em>string</em> (optional) --
+Modify only the step with this unique name.</p></li>
+<li><p><strong>type</strong>: <em>string</em> (optional) --
+Modify only steps matching this type.</p></li>
+</ul>
+
+<p>All other keys represent changes to the configuration of matching steps. You
+can provide either the <em>null</em> value to delete the key, or a new full value for
+the key. See <a href="#build-step-configuration">build step configuration</a> and
+<a href="#build-step-types">build step types</a> for details on the available keys and
+their formats.</p>
+</div></div>
+
+      <div id="footer">
+  Generated on Wed Feb 11 00:45:40 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-4.0.1).
+</div>
+
+    </div>
+  </body>
+</html>
