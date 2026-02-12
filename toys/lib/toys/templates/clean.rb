@@ -195,7 +195,7 @@ module Toys
                 controller.in.close
               end
               controller.out.each_line do |path|
-                path = path.strip
+                path = path.chomp
                 rm_rf(path) unless dry_run
                 puts "Cleaned: #{path}"
               end
