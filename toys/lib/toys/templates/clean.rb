@@ -171,17 +171,21 @@ module Toys
               logger.error("Skipping :gitignore because we don't seem to be in a git directory")
               return
             end
-            result = exec(["git", "check-ignore", "--stdin"],
-                          in: :controller, out: :capture) do |controller|
-              ::Dir.children(".").sort.each do |child|
-                process_path(child) do |path|
-                  controller.in.puts(path) unless preserve_set.include?(path)
+            exec(["git", "check-ignore", "--stdin"], in: :controller, out: :controller) do |controller|
+              ::Thread.new do
+                ::Dir.children(".").sort.each do |child|
+                  process_path(child) do |path|
+                    controller.in.puts(path) unless preserve_set.include?(path)
+                  end
                 end
+              ensure
+                controller.in.close
               end
-            end
-            result.captured_out.split("\n").each do |path|
-              rm_rf(path) unless dry_run
-              puts "Cleaned: #{path}"
+              controller.out.each_line do |path|
+                path = path.strip
+                rm_rf(path) unless dry_run
+                puts "Cleaned: #{path}"
+              end
             end
           end
 
@@ -204,11 +208,14 @@ module Toys
           # given block. Calls the block on children before parents.
           #
           def process_path(path, &block)
-            stat = ::File.lstat(path)
-            if stat.directory?
-              ::Dir.children(path).sort.each do |child|
-                process_path(::File.join(path, child), &block)
-              end
+            begin
+              children = ::File.lstat(path).directory? ? ::Dir.children(path).sort : []
+            rescue ::Errno::ENOENT, ::Errno::ENOTDIR
+              # Something happened to the path. Just skip it.
+              return
+            end
+            children.each do |child|
+              process_path(::File.join(path, child), &block)
             end
             yield path
           end
