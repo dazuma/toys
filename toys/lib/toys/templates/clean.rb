@@ -106,9 +106,22 @@ module Toys
 
           set_context_directory template.context_directory if template.context_directory
 
-          paths = template.paths
+          paths = template.paths.dup
           static :template_gitignore, paths.delete(:gitignore)
+
+          paths.each do |elem|
+            unless elem.is_a?(::String)
+              raise Toys::ToolDefinitionError,
+                    "Unexpected element in paths: #{elem.inspect} (expected a glob or :gitignore)"
+            end
+          end
           static :template_paths, paths
+
+          template.preserve.each do |elem|
+            unless elem.is_a?(::String)
+              raise Toys::ToolDefinitionError, "Unexpected element in preserve: #{elem.inspect} (expected a glob)"
+            end
+          end
           static :template_preserve, template.preserve
 
           include :fileutils

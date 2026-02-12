@@ -168,6 +168,29 @@ describe "clean template" do
       refute(File.exist?(File.join(dir, "subdir", "baz.yml")))
     end
 
+    it "cleans gitignore but preserves some files" do
+      dir = workspace_dir
+      FileUtils.touch(File.join(dir, "foo.txt"))
+      FileUtils.touch(File.join(dir, "Gemfile.lock"))
+      FileUtils.mkdir(File.join(dir, "tmp"))
+      FileUtils.touch(File.join(dir, "tmp", "bar.txt"))
+      FileUtils.mkdir(File.join(dir, "hello"))
+      FileUtils.touch(File.join(dir, "hello", "baz.txt"))
+      FileUtils.touch(File.join(dir, "hello", "Gemfile.lock"))
+      loader.add_block do
+        set_context_directory dir
+        expand :clean, paths: :gitignore, preserve: ["**/bar.txt", "hello"]
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("clean"))
+      end
+      assert_equal("Cleaned: Gemfile.lock\n", out)
+      refute(File.exist?(File.join(dir, "Gemfile.lock")))
+      assert(File.exist?(File.join(dir, "tmp")))
+      assert(File.exist?(File.join(dir, "tmp", "bar.txt")))
+      assert(File.exist?(File.join(dir, "hello", "Gemfile.lock")))
+    end
+
     it "honors context_directory argument" do
       dir = workspace_dir
       FileUtils.touch(File.join(dir, "foo.txt"))
