@@ -5,4 +5,4 @@
 # include this.
 ::Kernel.exec(::File.join(context_directory, "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
-expand :clean, paths: :gitignore
+expand :clean, paths: :gitignore, preserve: ".claude/"

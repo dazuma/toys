@@ -10,3 +10,4 @@ Gemfile.lock
 gems.locked
 .gems.rb.lock
 .DS_Store
+.claude/
