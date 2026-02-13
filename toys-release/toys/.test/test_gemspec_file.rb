@@ -137,6 +137,19 @@ describe Toys::Release::GemspecFile do
       STR
       assert_equal(expected_constraints, empty_gemspec_file.current_dependencies)
     end
+
+    it "finds add_runtime_dependency" do
+      empty_gemspec_file.content = <<~STR
+        Gem::Specification.new do |spec|
+          spec.name = "my_gem"
+          spec.add_runtime_dependency "one-dependency", "~> 1.0"
+          spec.version = "0.1"
+          spec.add_runtime_dependency "another-dep", ">= 2.1", "< 4"
+          spec.add_dependency "no-versions"
+        end
+      STR
+      assert_equal(expected_constraints, empty_gemspec_file.current_dependencies)
+    end
   end
 
   describe "#update_dependencies" do
@@ -152,6 +165,7 @@ describe Toys::Release::GemspecFile do
       STR
     end
     let(:single_quoted_content) { double_quoted_content.tr('"', "'") }
+    let(:add_runtime_dependency_content) { double_quoted_content.gsub("add_dependency", "add_runtime_dependency") }
     let(:parenthesized_double_quoted_content) do
       <<~STR
         Gem::Specification.new do |spec|
@@ -262,6 +276,26 @@ describe Toys::Release::GemspecFile do
           spec.version = '0.1'
           spec.add_dependency('another-dep')
           spec.add_dependency('no-versions', '~> 2.2')
+        end
+      STR
+      assert_equal(expected_content, empty_gemspec_file.content)
+    end
+
+    it "handles add_runtime_dependency" do
+      empty_gemspec_file.content = add_runtime_dependency_content.dup
+      updates = {
+        "one-dependency" => [">= 1.1.3", "< 2"],
+        "another-dep" => [],
+        "no-versions" => ["~> 2.2"],
+      }
+      assert(empty_gemspec_file.update_dependencies(updates))
+      expected_content = <<~STR
+        Gem::Specification.new do |spec|
+          spec.name = "my_gem"
+          spec.add_runtime_dependency "one-dependency", ">= 1.1.3", "< 2"
+          spec.version = "0.1"
+          spec.add_runtime_dependency "another-dep"
+          spec.add_runtime_dependency "no-versions", "~> 2.2"
         end
       STR
       assert_equal(expected_content, empty_gemspec_file.content)

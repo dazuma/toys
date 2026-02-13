@@ -79,7 +79,8 @@ module Toys
       #
       def current_dependencies
         result = {}
-        content.scan(/\.add_dependency\(?\s*["']([^"']+)["']((?:,\s*["']([^"',]+)["'])*)\s*\)?/) do |comp_name, expr|
+        regex = /\.add(?:_runtime)?_dependency\(?\s*["']([^"']+)["']((?:,\s*["']([^"',]+)["'])*)\s*\)?/
+        content.scan(regex) do |comp_name, expr|
           result[comp_name] = expr.scan(/["']([^"',]+)["']/).map(&:first)
         end
         result
@@ -96,13 +97,16 @@ module Toys
       def update_dependencies(constraint_updates)
         constraint_updates.each do |name, exprs|
           escaped_name = Regexp.escape(name)
-          regex = /\.add_dependency(\(?\s*)(["'])#{escaped_name}["'](?:,\s*["'][^"',]+["'])*(\s*\)?)/
+          regex = /\.(add(?:_runtime)?_dependency)(\(?\s*)(["'])#{escaped_name}["'](?:,\s*["'][^"',]+["'])*(\s*\)?)/
           content.sub!(regex) do
             match = ::Regexp.last_match
-            quote = match[2]
+            method_name = match[1]
+            opening = match[2]
+            quote = match[3]
+            closing = match[4]
             exprs_str = exprs.map { |str| ", #{str.inspect}" }.join
             exprs_str.tr!('"', quote) unless quote == '"'
-            ".add_dependency#{match[1]}#{quote}#{name}#{quote}#{exprs_str}#{match[3]}"
+            ".#{method_name}#{opening}#{quote}#{name}#{quote}#{exprs_str}#{closing}"
           end
         end
         ::File.write(path, content) if path

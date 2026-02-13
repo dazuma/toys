@@ -52,6 +52,23 @@ describe Toys::Release::RequestSpec do
     assert_equal(5, changeset.change_groups[0].changes.size)
   end
 
+  it "resolves a specific requested version that overrides the changes" do
+    request_spec.add(release_component, version: "0.3.0")
+    request_spec.resolve_versions("450e87c777d642f2adf0add69cbcc0bca243c9d9", repository)
+    # This is one commit after toys-release/v0.2.1.
+    # At this point, only toys-release had updates.
+    resolved_components = request_spec.resolved_components
+    assert_equal(1, resolved_components.size)
+
+    component = resolved_components[0]
+    assert_equal("toys-release", component.component_name)
+    assert_equal(::Gem::Version.new("0.3.0"), component.version)
+    changeset = component.change_set
+    assert_equal(1, changeset.change_groups.size)
+    assert_equal("FIXED", changeset.change_groups[0].header)
+    assert_equal(5, changeset.change_groups[0].changes.size)
+  end
+
   it "resolves default changes to Toys with a coordination group" do
     repository.all_components.each { |component| request_spec.add(component) }
     request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f", repository)
@@ -86,7 +103,7 @@ describe Toys::Release::RequestSpec do
     assert_equal(1, changeset.change_groups[0].changes.size)
   end
 
-  it "resolves requested versioned changes to Toys" do
+  it "resolves requested version when no actual changes are present" do
     request_spec.add(common_tools_component, version: "0.15.5.2")
     request_spec.resolve_versions("4c620495f915fef39d1583170beb6489d0c7073d", repository)
     # This commit is two commits before toys/v0.15.6. No actual changes were

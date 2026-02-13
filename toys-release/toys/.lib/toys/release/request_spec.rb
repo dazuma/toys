@@ -140,12 +140,9 @@ module Toys
           grouped_requests[component.coordination_group] ||= version
         end
         grouped_requests.each do |group, version|
-          resolved_group, version = resolve_one_group(group, version)
-          if version
-            resolved_group.each do |resolved_comp|
-              resolved_comp.version = version
-              resolved_components[resolved_comp.component_name] = resolved_comp
-            end
+          resolved_group = resolve_one_group(group, version)
+          resolved_group.each do |resolved_comp|
+            resolved_components[resolved_comp.component_name] = resolved_comp if resolved_comp.version
           end
         end
         resolved_components
@@ -161,12 +158,12 @@ module Toys
           updates, dependency_semver_threshold = find_updated_dependencies(component, resolved_components)
           next if updates.empty?
 
-          current_resolved = resolved_components[component.name] || resolve_one_group([component], nil).first.first
+          current_resolved = resolved_components[component.name] || resolve_one_group([component], nil).first
           change_set = current_resolved.change_set
           change_set.add_dependency_updates(updates, dependency_semver_threshold)
           next if change_set.updated_dependency_versions.empty?
 
-          unless @requested_components[component.name]
+          unless @requested_components[component]
             current_resolved.version = change_set.suggested_version(current_resolved.last_version)
           end
           resolved_components[component.name] = current_resolved
@@ -211,29 +208,53 @@ module Toys
       end
 
       ##
-      # Resolves one candidate group. Returns an array of resolved components
-      # along with the version to release for the group.
+      # Resolves one candidate group, and the requested version or semver bump
+      # if any. Returns an array of resolved components, each with the final
+      # version set (which may be nil if no release seems needed).
       #
       def resolve_one_group(group, version)
-        suggested_next_version = nil
+        requested_bump = version if version.is_a?(Semver)
+        requested_version = version if version.is_a?(::Gem::Version)
+        best_suggested_version = nil
         resolved_group = group.map do |component|
-          @utils.log("Resolving component #{component.name}")
-          last_version = component.latest_tag_version(ref: @release_sha)
-          if last_version && version.is_a?(::Gem::Version) && last_version >= version
-            @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
-          end
-          latest_tag = component.version_tag(last_version)
-          @utils.log("Creating changeset from #{latest_tag || 'start'} to #{@release_sha}")
-          changeset = component.make_change_set(from: latest_tag, to: @release_sha)
-          unless version.is_a?(::Gem::Version)
-            cur_suggested = version ? version.bump(last_version) : changeset.suggested_version(last_version)
-            if suggested_next_version.nil? || (cur_suggested && cur_suggested > suggested_next_version)
-              suggested_next_version = cur_suggested
-            end
-          end
-          ResolvedComponent.new(component.name, changeset, last_version, nil)
+          resolved_component, best_suggested_version =
+            resolve_group_member(component, best_suggested_version, requested_bump, requested_version)
+          resolved_component
         end
-        [resolved_group, suggested_next_version || version]
+        final_version = requested_version || best_suggested_version
+        resolved_group.each { |resolved_comp| resolved_comp.version = final_version }
+        resolved_group
+      end
+
+      ##
+      # Resolve one component in a group. Returns a tuple consisting of the
+      # resolved component (with version still set to nil) and the current
+      # best suggested version for the group.
+      #
+      # @param component [Toys::Release::Component] the component to resolve
+      # @param best_suggested_version [Gem::Version,nil] the best version out
+      #     of those suggested in the group so far. Should start at nil.
+      # @param requested_bump [Toys::Release::Semver,nil] the requested version
+      #     bump, or nil if a bump was not requested
+      # @param requested_version [Gem::Version] the specific requested version,
+      #     or nil if a specific version was not requested
+      # @return [Array(ResolvedComponent,(Gem::Version|nil))]
+      #
+      def resolve_group_member(component, best_suggested_version, requested_bump, requested_version)
+        last_version = component.latest_tag_version(ref: @release_sha)
+        if requested_version && last_version && last_version >= requested_version
+          @utils.error("Requested #{component.name} #{requested_version} but #{last_version} is the latest.")
+        end
+        latest_tag = component.version_tag(last_version)
+        @utils.log("Creating #{component.name} changeset from #{latest_tag || 'start'} to #{@release_sha}")
+        changeset = component.make_change_set(from: latest_tag, to: @release_sha)
+        unless requested_version
+          cur_suggested_version = requested_bump&.bump(last_version) || changeset.suggested_version(last_version)
+          if !best_suggested_version || (cur_suggested_version && cur_suggested_version > best_suggested_version)
+            best_suggested_version = cur_suggested_version
+          end
+        end
+        [ResolvedComponent.new(component.name, changeset, last_version, nil), best_suggested_version]
       end
     end
   end
