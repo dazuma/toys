@@ -13,7 +13,9 @@ describe Toys::Release::RequestSpec do
       Toys::Release::RepoSettings.new(repo_settings_input)
     end
   end
-  let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
+  let(:repository) do
+    Toys::Release::Repository.new(environment_utils, repo_settings, skip_component_validation: true)
+  end
   let(:request_spec) { Toys::Release::RequestSpec.new(environment_utils) }
   let(:common_tools_component) { repository.component_named("common-tools") }
   let(:toys_component) { repository.component_named("toys") }

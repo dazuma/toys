@@ -3,9 +3,16 @@
 require_relative "helper"
 
 describe Toys::Release::Component do
+  let(:repo_settings_input) { {} }
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :raise) }
-  let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
+  let(:repo_settings) do
+    if repo_settings_input.empty?
+      Toys::Release::RepoSettings.load_from_environment(environment_utils)
+    else
+      Toys::Release::RepoSettings.new(repo_settings_input)
+    end
+  end
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
 
   expected_components = [
@@ -167,5 +174,37 @@ describe Toys::Release::Component do
       refute(toys_component.touched?(the_commit))
       assert(release_component.touched?(the_commit))
     end
+  end
+
+  it "validates a component with dependencies" do
+    settings_text = <<~STRING
+      components:
+        - name: toys-core
+          version_rb_path: lib/toys/core.rb
+        - name: toys-release
+        - name: toys
+          update_dependencies:
+            dependencies: [toys-core]
+    STRING
+    repo_settings_input.merge!(YAML.load(settings_text))
+    repository
+  end
+
+  it "flags an invalid component due to dependencies" do
+    settings_text = <<~STRING
+      components:
+        - name: toys-core
+          version_rb_path: lib/toys/core.rb
+        - name: toys-release
+        - name: toys
+          update_dependencies:
+            dependencies: [toys-release]
+    STRING
+    repo_settings_input.merge!(YAML.load(settings_text))
+    error = assert_raises(Toys::Release::ReleaseError) do
+      repository
+    end
+    assert_equal("Errors while validating components", error.message)
+    assert(error.more_messages.any? { |message| /Gemspec \S+ is missing toys-release/.match?(message) })
   end
 end

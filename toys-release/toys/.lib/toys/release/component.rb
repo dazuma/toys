@@ -166,12 +166,36 @@ module Toys
           path = directory(from: :absolute)
           @utils.error("Missing directory #{path} for #{name}") unless ::File.directory?(path)
           @utils.error("Missing changelog #{changelog_file.path} for #{name}") unless changelog_file.exists?
-          if !version_rb_file.exists?
-            @utils.error("Missing version #{version_rb_file.path} for #{name}")
-          elsif version_rb_file.current_version.nil?
-            @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
-          end
+          validate_version_rb_file
+          validate_gemspec_file
           yield if block_given?
+        end
+      end
+
+      ##
+      # Validates the version.rb file
+      #
+      def validate_version_rb_file
+        if !version_rb_file.exists?
+          @utils.error("Missing version #{version_rb_file.path} for #{name}")
+        elsif version_rb_file.current_version.nil?
+          @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
+        end
+      end
+
+      ##
+      # Validates the gemspec file if this component updates from dependencies
+      #
+      def validate_gemspec_file
+        update_deps_settings = settings.update_dependencies
+        return unless update_deps_settings
+        if gemspec_file.exists?
+          cur_deps = gemspec_file.current_dependencies
+          update_deps_settings.dependencies.each do |dep_name|
+            @utils.error("Gemspec #{gemspec_file.path} is missing #{dep_name}") unless cur_deps.key?(dep_name)
+          end
+        else
+          @utils.error("Missing gemspec #{gemspec_file.path} for #{name}")
         end
       end
 

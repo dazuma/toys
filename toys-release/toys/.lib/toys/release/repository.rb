@@ -22,10 +22,10 @@ module Toys
       # @param environment_utils [Toys::Release::EnvrionmentUtils]
       # @param settings [Toys::Release::RepoSettings]
       #
-      def initialize(environment_utils, settings)
+      def initialize(environment_utils, settings, skip_component_validation: false)
         @utils = environment_utils
         @settings = settings
-        build_components
+        build_components(skip_component_validation: skip_component_validation)
         ensure_gh_binary
         ensure_git_binary
         @commit_cache = {}
@@ -548,12 +548,12 @@ module Toys
         end
       end
 
-      def build_components
+      def build_components(skip_component_validation: false)
         @components = {}
         @utils.accumulate_errors("Errors while validating components") do
           settings.all_component_names.each do |name|
             releasable = Component.new(self, name, @utils)
-            releasable.validate
+            releasable.validate unless skip_component_validation
             @components[releasable.name] = releasable
           end
         end
