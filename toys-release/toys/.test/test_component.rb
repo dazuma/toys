@@ -3,9 +3,16 @@
 require_relative "helper"
 
 describe Toys::Release::Component do
+  let(:repo_settings_input) { {} }
   let(:fake_tool_context) { Toys::Release::Tests::FakeToolContext.new(allow_passthru_exec: true) }
   let(:environment_utils) { Toys::Release::EnvironmentUtils.new(fake_tool_context, on_error_option: :raise) }
-  let(:repo_settings) { Toys::Release::RepoSettings.load_from_environment(environment_utils) }
+  let(:repo_settings) do
+    if repo_settings_input.empty?
+      Toys::Release::RepoSettings.load_from_environment(environment_utils)
+    else
+      Toys::Release::RepoSettings.new(repo_settings_input)
+    end
+  end
   let(:repository) { Toys::Release::Repository.new(environment_utils, repo_settings) }
 
   expected_components = [
@@ -20,6 +27,7 @@ describe Toys::Release::Component do
       let(:component) { Toys::Release::Component.new(repository, component_name, environment_utils) }
       let(:changelog_file) { component.changelog_file }
       let(:version_rb_file) { component.version_rb_file }
+      let(:gemspec_file) { component.gemspec_file }
 
       it "has the correct name" do
         assert_equal(component_name, component.name)
@@ -36,9 +44,16 @@ describe Toys::Release::Component do
         assert_equal("CHANGELOG.md", ::File.basename(changelog_file.path))
       end
 
-      it "accesses the version file file" do
+      it "accesses the version file" do
         assert(version_rb_file.exists?)
         assert_equal(version_file_name, ::File.basename(version_rb_file.path))
+      end
+
+      it "accesses the gemspec file" do
+        unless component_name == "common-tools"
+          assert(gemspec_file.exists?)
+          assert_equal("#{component_name}.gemspec", ::File.basename(gemspec_file.path))
+        end
       end
 
       it "has no errors" do
@@ -159,5 +174,37 @@ describe Toys::Release::Component do
       refute(toys_component.touched?(the_commit))
       assert(release_component.touched?(the_commit))
     end
+  end
+
+  it "validates a component with dependencies" do
+    settings_text = <<~STRING
+      components:
+        - name: toys-core
+          version_rb_path: lib/toys/core.rb
+        - name: toys-release
+        - name: toys
+          update_dependencies:
+            dependencies: [toys-core]
+    STRING
+    repo_settings_input.merge!(YAML.load(settings_text))
+    repository
+  end
+
+  it "flags an invalid component due to dependencies" do
+    settings_text = <<~STRING
+      components:
+        - name: toys-core
+          version_rb_path: lib/toys/core.rb
+        - name: toys-release
+        - name: toys
+          update_dependencies:
+            dependencies: [toys-release]
+    STRING
+    repo_settings_input.merge!(YAML.load(settings_text))
+    error = assert_raises(Toys::Release::ReleaseError) do
+      repository
+    end
+    assert_equal("Errors while validating components", error.message)
+    assert(error.more_messages.any? { |message| /Gemspec \S+ is missing toys-release/.match?(message) })
   end
 end

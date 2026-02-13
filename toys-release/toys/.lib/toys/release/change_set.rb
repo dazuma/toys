@@ -21,8 +21,10 @@ module Toys
         @commit_tags = component_settings.commit_tags
         @breaking_change_header = component_settings.breaking_change_header
         @no_significant_updates_notice = component_settings.no_significant_updates_notice
+        @update_dependency_header = component_settings.update_dependency_header
         @semver = Semver::NONE
         @change_groups = nil
+        @updated_dependency_versions = nil
         @inputs = []
         @significant_shas = nil
         @description_normalizer = create_description_normalizer(
@@ -49,7 +51,7 @@ module Toys
       # Finish constructing a change set. After this method, new commit messages
       # cannot be added.
       #
-      def finish # rubocop:disable Metrics/AbcSize
+      def finish
         raise "ChangeSet locked" if finished?
         @semver = Semver::NONE
         change_groups = {breaking: Group.new(@breaking_change_header)}
@@ -65,11 +67,32 @@ module Toys
           change_groups[:breaking].add(input.breaks)
         end
         @change_groups = change_groups.values.find_all { |group| !group.empty? }
-        if @change_groups.empty? && @semver.significant?
-          @change_groups << Group.new(nil).add(@no_significant_updates_notice)
-        end
         @significant_shas = @inputs.map(&:sha)
+        @updated_dependency_versions = {}
         @inputs = nil
+        self
+      end
+
+      ##
+      # Add a set of dependency updates.
+      # May be called only on a finished changeset.
+      #
+      # @param updates [Array<Toys::Release::RequestSpec::ResolvedComponent>]
+      # @param dependency_semver_threshold [Toys::Release::Semver] The minimum
+      #     semver significance to trigger an update
+      #
+      def add_dependency_updates(updates, dependency_semver_threshold)
+        raise "ChangeSet not finished" unless finished?
+        existing_group = @change_groups.find { |group| group.header == @update_dependency_header }
+        group = existing_group || Group.new(@update_dependency_header)
+        updates.each do |resolved_update|
+          diff_semver = Toys::Release::Semver.for_diff(resolved_update.last_version, resolved_update.version)
+          next if diff_semver < dependency_semver_threshold
+          @updated_dependency_versions[resolved_update.component_name] = resolved_update.version
+          @semver = @semver.max(diff_semver)
+          group.add("Updated #{resolved_update.component_name.inspect} dependency to #{resolved_update.version}")
+        end
+        @change_groups << group unless existing_group || group.empty?
         self
       end
 
@@ -79,10 +102,7 @@ module Toys
       #
       def force_release!
         raise "ChangeSet not finished" unless finished?
-        if @change_groups.empty?
-          @semver = Semver::PATCH
-          @change_groups << Group.new(nil).add(@no_significant_updates_notice)
-        end
+        @semver = Semver::PATCH unless @semver.significant?
         self
       end
 
@@ -98,7 +118,7 @@ module Toys
       #     the change set is finished.
       #
       def empty?
-        @change_groups&.empty?
+        change_groups&.empty?
       end
 
       ##
@@ -116,7 +136,21 @@ module Toys
       # @return [Array<Group>] An array of change groups, in order. Returns nil
       #     if the change set is not finished.
       #
-      attr_reader :change_groups
+      def change_groups
+        if !finished?
+          nil
+        elsif @change_groups.empty? && @semver.significant?
+          @no_significant_updates_groups ||= [Group.new(nil).add(@no_significant_updates_notice)]
+        else
+          @change_groups
+        end
+      end
+
+      ##
+      # @return [Hash{String=>Gem::Version}] Dependency version updates.
+      #     Returns nil if the change set is not yet finished.
+      #
+      attr_reader :updated_dependency_versions
 
       ##
       # Suggest a next version based on the changeset's changes.

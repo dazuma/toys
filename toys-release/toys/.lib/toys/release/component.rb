@@ -2,6 +2,7 @@
 
 require "toys/release/change_set"
 require "toys/release/changelog_file"
+require "toys/release/gemspec_file"
 require "toys/release/version_rb_file"
 
 module Toys
@@ -23,6 +24,7 @@ module Toys
         @utils = environment_utils
         @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils)
+        @gemspec_file = GemspecFile.new(gemspec_path(from: :absolute), @utils)
         @coordination_group = nil
       end
 
@@ -42,6 +44,12 @@ module Toys
       #     component
       #
       attr_reader :version_rb_file
+
+      ##
+      # @return [Toys::Release::GemspecFile] The .gemspec file in this
+      #     component
+      #
+      attr_reader :gemspec_file
 
       ##
       # @return [Array<Component>] The coordination group containing this
@@ -138,6 +146,19 @@ module Toys
       end
 
       ##
+      # Returns the path to the gemspec. It can be returned as a relative
+      # path from the component directory, a relative path from the repo root
+      # directory, or an absolute path.
+      #
+      # @param from [:directory,:repo_root,:absolute] From where (defaults to
+      #     `:directory`)
+      # @return [String] The path to the gemspec
+      #
+      def gemspec_path(from: :directory)
+        file_path("#{name}.gemspec", from: from)
+      end
+
+      ##
       # Validates the component and reports any errors.
       #
       def validate
@@ -145,12 +166,36 @@ module Toys
           path = directory(from: :absolute)
           @utils.error("Missing directory #{path} for #{name}") unless ::File.directory?(path)
           @utils.error("Missing changelog #{changelog_file.path} for #{name}") unless changelog_file.exists?
-          if !version_rb_file.exists?
-            @utils.error("Missing version #{version_rb_file.path} for #{name}")
-          elsif version_rb_file.current_version.nil?
-            @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
-          end
+          validate_version_rb_file
+          validate_gemspec_file
           yield if block_given?
+        end
+      end
+
+      ##
+      # Validates the version.rb file
+      #
+      def validate_version_rb_file
+        if !version_rb_file.exists?
+          @utils.error("Missing version #{version_rb_file.path} for #{name}")
+        elsif version_rb_file.current_version.nil?
+          @utils.error("Unable to read VERSION constant from #{version_rb_file.path} for #{name}")
+        end
+      end
+
+      ##
+      # Validates the gemspec file if this component updates from dependencies
+      #
+      def validate_gemspec_file
+        update_deps_settings = settings.update_dependencies
+        return unless update_deps_settings
+        if gemspec_file.exists?
+          cur_deps = gemspec_file.current_dependencies
+          update_deps_settings.dependencies.each do |dep_name|
+            @utils.error("Gemspec #{gemspec_file.path} is missing #{dep_name}") unless cur_deps.key?(dep_name)
+          end
+        else
+          @utils.error("Missing gemspec #{gemspec_file.path} for #{name}")
         end
       end
 
