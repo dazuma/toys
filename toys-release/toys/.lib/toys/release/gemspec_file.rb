@@ -30,7 +30,7 @@ module Toys
             segments.slice!((dependency_semver_threshold.segment + 1)..) if dependency_semver_threshold.segment
             pessimistic_segments =
               if segments.size <= pessimistic_constraint_level.segment
-                segments.concat(::Array.new(pessimistic_constraint_level.segment - segments.size + 1, 0))
+                segments + ::Array.new(pessimistic_constraint_level.segment - segments.size + 1, 0)
               else
                 segments[..pessimistic_constraint_level.segment]
               end
