@@ -502,6 +502,50 @@ describe Toys::Release::RepoSettings do
       expected_error = "Component comp_all cannot be in a coordination group and have update_dependencies"
       assert(settings.errors.any? { |err| err.include?(expected_error) })
     end
+
+    it "errors if a dependency does not exist" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_c]
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "Component comp_all depends on nonexistent component comp_c"
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
+
+    it "errors if a component depends on itself" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+          - name: comp_all
+            update_dependencies:
+              dependencies: [comp_a, comp_all]
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "Component comp_all depends on itself"
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
+
+    it "errors if there are transitive dependencies" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+          - name: comp_b
+            update_dependencies:
+              dependencies: [comp_a]
+          - name: comp_c
+            update_dependencies:
+              dependencies: [comp_b]
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "Component comp_c depends on comp_b which also has dependencies"
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
   end
 
   describe "top level settings" do

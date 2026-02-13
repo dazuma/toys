@@ -176,7 +176,7 @@ module Toys
       ##
       # For the given component, if it has any update_dependencies, look them
       # up in the given resolved_components. Return a tuple consisting of the
-      # list of names of the updated dependencies, and the
+      # list of ResolvedComponent for the updated dependencies, and a
       # dependency_semver_threshold.
       #
       def find_updated_dependencies(component, resolved_components)

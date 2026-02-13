@@ -1160,6 +1160,11 @@ module Toys
         @errors << 'Required key "repo" missing from releases.yml' unless @repo_path
         @errors << 'Required key "git_user_name" missing from releases.yml' unless @git_user_name
         @errors << 'Required key "git_user_email" missing from releases.yml' unless @git_user_email
+        check_coordination_groups
+        check_update_dependencies
+      end
+
+      def check_coordination_groups
         @coordination_groups.each do |group|
           next unless group.size > 1
           group.each do |component_name|
@@ -1169,7 +1174,23 @@ module Toys
             end
           end
         end
-        # TODO: Ensure there aren't transitive update_dependencies relationships
+      end
+
+      def check_update_dependencies
+        @components.each do |name, component|
+          update_deps = component.update_dependencies
+          next unless update_deps
+          update_deps.dependencies.each do |dep_name|
+            dep_comp = @components[dep_name]
+            if dep_comp.nil?
+              @errors << "Component #{name} depends on nonexistent component #{dep_name}"
+            elsif dep_name == name
+              @errors << "Component #{name} depends on itself"
+            elsif dep_comp.update_dependencies
+              @errors << "Component #{name} depends on #{dep_name} which also has dependencies"
+            end
+          end
+        end
       end
     end
   end
