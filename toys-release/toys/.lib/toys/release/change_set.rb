@@ -21,7 +21,7 @@ module Toys
         @commit_tags = component_settings.commit_tags
         @breaking_change_header = component_settings.breaking_change_header
         @no_significant_updates_notice = component_settings.no_significant_updates_notice
-        @dependency_update_header = "DEPENDENCY"
+        @update_dependency_header = component_settings.update_dependency_header
         @semver = Semver::NONE
         @change_groups = nil
         @updated_dependency_versions = nil
@@ -83,8 +83,8 @@ module Toys
       #
       def add_dependency_updates(updates, dependency_semver_threshold)
         raise "ChangeSet not finished" unless finished?
-        group = @change_groups.find { |group| group.header == @dependency_update_header }
-        group ||= Group.new(@dependency_update_header)
+        group = @change_groups.find { |group| group.header == @update_dependency_header }
+        group ||= Group.new(@update_dependency_header)
         updates.each do |resolved_update|
           diff_semver = Toys::Release::Semver.for_diff(resolved_update.last_version, resolved_update.version)
           next if diff_semver < dependency_semver_threshold

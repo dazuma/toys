@@ -53,15 +53,15 @@ module Toys
       ##
       # Update the rubygems version constraints
       #
-      # @param updated_constraints [Hash{String=>Array<String>}] Map from
+      # @param constraint_updates [Hash{String=>Array<String>}] Map from
       #     component name to a possibly empty array of version constraint
       #     strings.
       # @return [boolean] true if all updates were successful, or false if at
       #     least one update could not be found
       #
-      def update_dependencies(updated_constraints)
+      def update_dependencies(constraint_updates)
         ok = true
-        updated_constraints.each do |name, exprs|
+        constraint_updates.each do |name, exprs|
           ok = false unless update_one_dependency(name, exprs)
         end
         ::File.write(path, @content) if path

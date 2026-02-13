@@ -32,7 +32,7 @@ describe Toys::Release::GemspecFile do
       assert_equal(expected_result, result)
     end
 
-    it "handles update significance threshold higher than pessmistic constraint" do
+    it "handles update significance threshold higher than pessimistic constraint" do
       expected_result = {
         "a" => ["~> 1.0"],
         "b" => ["~> 1.2"],
@@ -45,7 +45,7 @@ describe Toys::Release::GemspecFile do
       assert_equal(expected_result, result)
     end
 
-    it "handles update significance threshold lower than pessmistic constraint" do
+    it "handles update significance threshold lower than pessimistic constraint" do
       expected_result = {
         "a" => ["~> 1.0.0"],
         "b" => ["~> 1.2.0"],

@@ -125,7 +125,14 @@ module Toys
                                           bullet: @settings.changelog_bullet)
           component.version_rb_file.update_version(resolved_component.version)
           dependency_updates = resolved_component.change_set.updated_dependency_versions
-          component.gemspec_file.update_dependencies(dependency_updates) unless dependency_updates.empty?
+          next if dependency_updates.empty?
+          update_settings = component.settings.update_dependencies
+          constraint_updates = Toys::Release::GemspecFile.transform_version_constraints(
+            dependency_updates,
+            update_settings.dependency_semver_threshold,
+            update_settings.pessimistic_constraint_level
+          )
+          component.gemspec_file.update_dependencies(constraint_updates)
         end
       end
 
