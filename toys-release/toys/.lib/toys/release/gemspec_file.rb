@@ -26,7 +26,7 @@ module Toys
       # @return [boolean] Whether the file exists
       #
       def exists?
-        ::File.file?(path)
+        path && ::File.file?(path)
       end
 
       ##
@@ -108,6 +108,7 @@ module Toys
 
       private
 
+      # Returns a truthy String if a change was made, or nil if not.
       def update_one_dependency(name, exprs)
         escaped_name = Regexp.escape(name)
         regex = /\.add_dependency(\(?\s*)(["'])#{escaped_name}["'](?:,\s*["'][^"',]+["'])*(\s*\)?)/
