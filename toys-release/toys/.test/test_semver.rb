@@ -74,10 +74,13 @@ describe Toys::Release::Semver do
     assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_diff("1.2.3", "1.2.3"))
     assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_diff("1.2.0", "1.2"))
     assert_equal(Toys::Release::Semver::MAJOR, Toys::Release::Semver.for_diff("0.2.0", "1.2.0"))
+    assert_equal(Toys::Release::Semver::MAJOR, Toys::Release::Semver.for_diff("1.2.0", "0.2.0"))
     assert_equal(Toys::Release::Semver::MINOR, Toys::Release::Semver.for_diff("1.2.0", "1.3.0"))
     assert_equal(Toys::Release::Semver::PATCH, Toys::Release::Semver.for_diff("1.2", "1.2.1"))
     assert_equal(Toys::Release::Semver::PATCH2, Toys::Release::Semver.for_diff("1.2", "1.2.0.1"))
     assert_equal(Toys::Release::Semver::PATCH2, Toys::Release::Semver.for_diff("1.2", "1.2.0.0.1"))
+    assert_equal(Toys::Release::Semver::NONE, Toys::Release::Semver.for_diff(nil, nil))
+    assert_equal(Toys::Release::Semver::PATCH, Toys::Release::Semver.for_diff(nil, "0.0.1"))
   end
 
   it "returns a max" do

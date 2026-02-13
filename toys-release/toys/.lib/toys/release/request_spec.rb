@@ -166,7 +166,9 @@ module Toys
           change_set.add_dependency_updates(updates, dependency_semver_threshold)
           next if change_set.updated_dependency_versions.empty?
 
-          current_resolved.version = change_set.suggested_version(current_resolved.last_version)
+          unless @requested_components[component.name]
+            current_resolved.version = change_set.suggested_version(current_resolved.last_version)
+          end
           resolved_components[component.name] = current_resolved
         end
       end
@@ -221,7 +223,7 @@ module Toys
             @utils.error("Requested #{component.name} #{version} but #{last_version} is the latest.")
           end
           latest_tag = component.version_tag(last_version)
-          @utils.log("Creating changeset from #{latest_tag} to #{@release_sha}")
+          @utils.log("Creating changeset from #{latest_tag || 'start'} to #{@release_sha}")
           changeset = component.make_change_set(from: latest_tag, to: @release_sha)
           unless version.is_a?(::Gem::Version)
             cur_suggested = version ? version.bump(last_version) : changeset.suggested_version(last_version)

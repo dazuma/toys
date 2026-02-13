@@ -271,5 +271,18 @@ describe Toys::Release::RequestSpec do
     assert_equal({"toys-release" => Gem::Version.new("0.4.0")}, changeset.updated_dependency_versions)
   end
 
+  it "errors if two different versions are requested for the same component" do
+    request_spec.add(toys_component, version: "0.19.1")
+    assert_raises(Toys::Release::ReleaseError) do
+      request_spec.add(toys_component, version: "0.19.2")
+    end
+  end
+
+  it "errors if different versions are requested for components in the same group" do
+    request_spec.add(toys_component, version: "0.19.1")
+    assert_raises(Toys::Release::ReleaseError) do
+      request_spec.add(core_component, version: "0.19.2")
+    end
+  end
   # TODO: test error cases
 end

@@ -287,7 +287,7 @@ module Toys
       attr_reader :no_significant_updates_notice
 
       ##
-      # @return [UpdateDepsSettings,nil] Configuration for treating this
+      # @return [UpdateDepSettings,nil] Configuration for treating this
       #     component as a kitchen sink that updates when dependencies update.
       #
       attr_reader :update_dependencies
@@ -1164,7 +1164,7 @@ module Toys
           next unless group.size > 1
           group.each do |component_name|
             component = @components[component_name]
-            if component.update_dependencies
+            if component&.update_dependencies
               @errors << "Component #{component_name} cannot be in a coordination group and have update_dependencies"
             end
           end

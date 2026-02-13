@@ -21,15 +21,18 @@ module Toys
         ##
         # Return the semver level of the change between the given versions.
         # If the change is less significant than PATCH2, PATCH2 is returned.
-        # If the versions are identical, NONE is returned.
+        # If the versions are identical, NONE is returned. This is symmetric,
+        # so either version could be the earlier one.
         #
-        # @param version1 [Gem::Version,String] The before version
-        # @param version2 [Gem::Version,String] The after version
+        # @param version1 [Gem::Version,String,nil] One version. nil is
+        #     synonymous with `0.0.0`.
+        # @param version2 [Gem::Version,String,nil] Another version. nil is
+        #     synonymous with `0.0.0`.
         # @return [Semver] The semver level
         #
         def for_diff(version1, version2)
-          segments1 = Gem::Version.create(version1).segments
-          segments2 = Gem::Version.create(version2).segments
+          segments1 = Gem::Version.create(version1 || "0.0.0").segments
+          segments2 = Gem::Version.create(version2 || "0.0.0").segments
           size = segments1.size
           size = segments2.size if size < segments2.size
           (0...size).each do |index|
@@ -69,13 +72,15 @@ module Toys
       ##
       # Bump the given version.
       #
-      # @param version [::Gem::Version] The original version
+      # @param version [::Gem::Version] The original version. If nil is passed
+      #     in, it is treated as synonymous with `0.0.0`.
       # @return [::Gem::Version] The new version
       #
       def bump(version)
+        version ||= ::Gem::Version.new("0.0.0")
         return version if segment.nil?
         bump_seg = segment
-        version_segs = version&.segments || [0, 0, 0]
+        version_segs = version.segments
         max_seg = bump_seg
         max_seg = 2 if max_seg < 2
         version_segs = version_segs[0..max_seg]

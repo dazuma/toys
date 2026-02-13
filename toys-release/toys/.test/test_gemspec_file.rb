@@ -187,26 +187,6 @@ describe Toys::Release::GemspecFile do
       assert_equal(expected_content, empty_gemspec_file.content)
     end
 
-    it "notes inability to find an item" do
-      skip
-      empty_gemspec_file.content = double_quoted_content.dup
-      updates = {
-        "one-dependency" => [">= 1.1.3", "< 2"],
-        "not-found" => ["~> 2.2"],
-      }
-      refute(empty_gemspec_file.update_dependencies(updates))
-      expected_content = <<~STR
-        Gem::Specification.new do |spec|
-          spec.name = "my_gem"
-          spec.add_dependency "one-dependency", ">= 1.1.3", "< 2"
-          spec.version = "0.1"
-          spec.add_dependency "another-dep", ">= 2.1", "< 4"
-          spec.add_dependency "no-versions"
-        end
-      STR
-      assert_equal(expected_content, empty_gemspec_file.content)
-    end
-
     it "handles double quoted content" do
       empty_gemspec_file.content = double_quoted_content.dup
       updates = {

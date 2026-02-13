@@ -83,8 +83,8 @@ module Toys
       #
       def add_dependency_updates(updates, dependency_semver_threshold)
         raise "ChangeSet not finished" unless finished?
-        group = @change_groups.find { |group| group.header == @update_dependency_header }
-        group ||= Group.new(@update_dependency_header)
+        existing_group = @change_groups.find { |group| group.header == @update_dependency_header }
+        group = existing_group || Group.new(@update_dependency_header)
         updates.each do |resolved_update|
           diff_semver = Toys::Release::Semver.for_diff(resolved_update.last_version, resolved_update.version)
           next if diff_semver < dependency_semver_threshold
@@ -92,7 +92,7 @@ module Toys
           @semver = @semver.max(diff_semver)
           group.add("Updated #{resolved_update.component_name.inspect} dependency to #{resolved_update.version}")
         end
-        @change_groups << group unless group.empty?
+        @change_groups << group unless existing_group || group.empty?
         self
       end
 
