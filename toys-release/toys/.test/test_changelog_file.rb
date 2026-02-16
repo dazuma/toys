@@ -102,6 +102,29 @@ describe Toys::Release::ChangelogFile do
     end
   end
 
+  it "appends with a custom header format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}],
+    )
+    custom_component_settings = custom_settings.component_settings(component_name)
+    custom_change_set = Toys::Release::ChangeSet.new(custom_settings, custom_component_settings)
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Release History\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      custom_change_set.add_commit(
+        commit_with("abcde1", "fix: fixed something")
+      )
+      custom_change_set.finish
+      file.append(custom_change_set, "1.2.3", date: "2026-02-15")
+      result = file.content
+      assert_includes(result, "## 1.2.3 (2026-02-15)")
+      refute_includes(result, "### v")
+    end
+  end
+
   it "appends to an empty file" do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
