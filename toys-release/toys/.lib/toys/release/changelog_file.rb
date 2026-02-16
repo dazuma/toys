@@ -20,7 +20,7 @@ module Toys
       # @param environment_utils [Toys::Release::EnvironmentUtils]
       # @param settings [Toys::Release::RepoSettings] Repository settings
       #
-      def initialize(path, environment_utils, settings = nil)
+      def initialize(path, environment_utils, settings)
         @path = path
         @utils = environment_utils
         @settings = settings

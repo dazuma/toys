@@ -24,22 +24,22 @@ describe Toys::Release::ChangelogFile do
   end
 
   it "checks existence" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert(file.exists?)
   end
 
   it "checks non-existence" do
-    file = Toys::Release::ChangelogFile.new(nonexistent_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(nonexistent_path, environment_utils, repo_settings)
     refute(file.exists?)
   end
 
   it "determines current version from content" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert_equal("0.15.6", file.current_version.to_s)
   end
 
   it "reads latest entry" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     content = file.read_and_verify_latest_entry("0.15.6")
     assert_empty(fake_tool_context.console_output)
     lines = content.lines
@@ -50,7 +50,7 @@ describe Toys::Release::ChangelogFile do
   end
 
   it "fails latest entry verification on incorrect version" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert_raises(Toys::Release::Tests::FakeToolContext::FakeExit) do
       file.read_and_verify_latest_entry("0.15.61")
     end
@@ -60,7 +60,7 @@ describe Toys::Release::ChangelogFile do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog2_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
       change_set.add_commit(
         commit_with(
           "abcde1",
@@ -81,7 +81,7 @@ describe Toys::Release::ChangelogFile do
       )
       change_set.finish
       file.append(change_set, "0.15.6", date: "2024-05-15")
-      file1 = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+      file1 = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
       assert_equal(file1.content, file.content)
     end
   end
@@ -90,7 +90,7 @@ describe Toys::Release::ChangelogFile do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
       change_set.add_commit(
         commit_with("abcde1", "fix: fix for uri version mismatch error")
       )
@@ -167,7 +167,7 @@ describe Toys::Release::ChangelogFile do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
       change_set.add_commit(
         commit_with(
           "abcde1",
@@ -176,7 +176,7 @@ describe Toys::Release::ChangelogFile do
       )
       change_set.finish
       file.append(change_set, "0.15.5", date: "2024-01-31")
-      file2 = Toys::Release::ChangelogFile.new(changelog2_path, environment_utils)
+      file2 = Toys::Release::ChangelogFile.new(changelog2_path, environment_utils, repo_settings)
       assert_equal(file2.content, file.content)
     end
   end
