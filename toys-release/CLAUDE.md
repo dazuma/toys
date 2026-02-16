@@ -8,7 +8,7 @@ toys-release is a Ruby library release automation system using GitHub Actions an
 
 ## Development Commands
 
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script:
+From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
 
 ```bash
 ./toys-dev test --only --release         # Run toys-release tests (via root test tool)

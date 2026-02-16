@@ -23,7 +23,7 @@ Toys is **self-hosted** — it uses itself for all build, test, and CI tasks via
 ./toys-dev build                     # Build gems
 ```
 
-Use `--only` to target specific gems or CI jobs. See each subdirectory's CLAUDE.md for gem-specific commands.
+See each subdirectory's CLAUDE.md for examples of how to use the `--only` flag to target specific gems and CI jobs.
 
 Use `--help` for detailed usage information about any `toys-dev` development command. For example `./toys-dev test --help`.
 
@@ -45,6 +45,6 @@ Use `--help` for detailed usage information about any `toys-dev` development com
 
 ## General coding instructions
 
-- Use red-green test-driven development when making changes, unless instructed otherwise.
+- Use red-green test-driven development when making changes, and git commit after every green step, unless instructed otherwise.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
 - Avoid making changes to files under `toys-release/` in the same commit as changes to files under either `toys/` or `toys-core/`.

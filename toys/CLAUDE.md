@@ -8,7 +8,7 @@ This is the **toys** gem — the main CLI executable built on the toys-core fram
 
 ## Development Commands
 
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script:
+From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
 
 ```bash
 ./toys-dev test --only --toys            # Run toys gem tests

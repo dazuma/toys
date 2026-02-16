@@ -8,7 +8,7 @@ toys-core is the framework library underlying the Toys CLI. It provides the DSL,
 
 ## Development Commands
 
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script:
+From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
 
 ```bash
 ./toys-dev test --only --core         # Run toys-core tests
