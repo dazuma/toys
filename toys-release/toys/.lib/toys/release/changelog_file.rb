@@ -106,10 +106,10 @@ module Toys
       # @param changeset [ChangeSet] The changeset.
       # @param version [String] The release version.
       # @param date [String] The date. If not provided, uses the current UTC.
-      # @param bullet [String] The bullet character for list items. Defaults to "*".
       #
-      def append(changeset, version, date: nil, bullet: "*")
+      def append(changeset, version, date: nil)
         @utils.log("Writing version #{version} to changelog #{path}")
+        bullet = @settings.changelog_bullet
         header_line = format_header(version, date)
         new_entry = [
           header_line,

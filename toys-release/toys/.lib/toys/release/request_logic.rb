@@ -121,8 +121,7 @@ module Toys
       def change_files
         @request_spec.resolved_components.each do |resolved_component|
           component = @repository.component_named(resolved_component.component_name)
-          component.changelog_file.append(resolved_component.change_set, resolved_component.version,
-                                          bullet: @settings.changelog_bullet)
+          component.changelog_file.append(resolved_component.change_set, resolved_component.version)
           component.version_rb_file.update_version(resolved_component.version)
           dependency_updates = resolved_component.change_set.updated_dependency_versions
           next if dependency_updates.empty?

@@ -87,15 +87,22 @@ describe Toys::Release::ChangelogFile do
   end
 
   it "appends to a file with dash bullets" do
+    dash_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_bullet" => "-",
+      "components" => [{"name" => component_name}]
+    )
+    dash_component_settings = dash_settings.component_settings(component_name)
+    dash_change_set = Toys::Release::ChangeSet.new(dash_settings, dash_component_settings)
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
-      change_set.add_commit(
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, dash_settings)
+      dash_change_set.add_commit(
         commit_with("abcde1", "fix: fix for uri version mismatch error")
       )
-      change_set.finish
-      file.append(change_set, "0.15.5", date: "2024-01-31", bullet: "-")
+      dash_change_set.finish
+      file.append(dash_change_set, "0.15.5", date: "2024-01-31")
       result = file.content
       assert_includes(result, "- FIXED:")
       refute_includes(result, "* FIXED:")
