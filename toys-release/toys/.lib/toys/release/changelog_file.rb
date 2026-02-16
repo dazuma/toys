@@ -50,7 +50,7 @@ module Toys
       # @return [::Gem::Version,nil] Current latest version from the changelog
       #
       def current_version
-        ChangelogFile.current_version_from_content(content)
+        ChangelogFile.current_version_from_content(content, header_format)
       end
 
       ##
@@ -132,10 +132,18 @@ module Toys
       # Returns the current version from the given file content
       #
       # @param content [String] File contents
+      # @param header_format [String] The header format string containing
+      #     `%v` for version and strftime directives for date components.
       # @return [::Gem::Version] Latest version in the changelog
       #
-      def self.current_version_from_content(content)
-        match = %r{### v(\d+(?:\.[a-zA-Z0-9]+)+) / \d\d\d\d-\d\d-\d\d}.match(content)
+      def self.current_version_from_content(content, header_format)
+        version_capture = "(#{VERSION_PATTERN})"
+        result = ::Regexp.escape(header_format)
+        result = result.gsub("%v", version_capture)
+        result = result.gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
+          STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
+        end
+        match = ::Regexp.new(result).match(content.to_s)
         match ? ::Gem::Version.new(match[1]) : nil
       end
 

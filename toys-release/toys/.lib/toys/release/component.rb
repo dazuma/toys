@@ -250,7 +250,9 @@ module Toys
         if at
           path = changelog_path(from: :repo_root)
           content = @utils.capture(["git", "show", "#{at}:#{path}"], e: true)
-          return ChangelogFile.current_version_from_content(content)
+          return ChangelogFile.current_version_from_content(
+            content, @repository.settings.changelog_release_header_format
+          )
         end
         changelog_file.current_version
       end

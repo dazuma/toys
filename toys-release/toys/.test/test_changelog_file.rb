@@ -102,6 +102,26 @@ describe Toys::Release::ChangelogFile do
     end
   end
 
+  it "extracts current version from content with a custom header format" do
+    content = "# Changelog\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n"
+    version = Toys::Release::ChangelogFile.current_version_from_content(content, "## %v (%Y-%m-%d)")
+    assert_equal("1.2.3", version.to_s)
+  end
+
+  it "extracts current version using instance method with custom format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}],
+    )
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Changelog\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      assert_equal("1.2.3", file.current_version.to_s)
+    end
+  end
+
   it "reads latest entry with a custom header format" do
     custom_settings = Toys::Release::RepoSettings.new(
       "repo" => repo_path,
