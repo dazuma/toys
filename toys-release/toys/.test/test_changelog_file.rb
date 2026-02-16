@@ -112,7 +112,7 @@ describe Toys::Release::ChangelogFile do
     custom_settings = Toys::Release::RepoSettings.new(
       "repo" => repo_path,
       "changelog_release_header_format" => "## %v (%Y-%m-%d)",
-      "components" => [{"name" => component_name}],
+      "components" => [{"name" => component_name}]
     )
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
@@ -126,7 +126,7 @@ describe Toys::Release::ChangelogFile do
     custom_settings = Toys::Release::RepoSettings.new(
       "repo" => repo_path,
       "changelog_release_header_format" => "## %v (%Y-%m-%d)",
-      "components" => [{"name" => component_name}],
+      "components" => [{"name" => component_name}]
     )
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
@@ -144,7 +144,7 @@ describe Toys::Release::ChangelogFile do
     custom_settings = Toys::Release::RepoSettings.new(
       "repo" => repo_path,
       "changelog_release_header_format" => "## %v (%Y-%m-%d)",
-      "components" => [{"name" => component_name}],
+      "components" => [{"name" => component_name}]
     )
     custom_component_settings = custom_settings.component_settings(component_name)
     custom_change_set = Toys::Release::ChangeSet.new(custom_settings, custom_component_settings)

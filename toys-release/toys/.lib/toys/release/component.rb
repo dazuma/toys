@@ -22,7 +22,7 @@ module Toys
         @repository = repository
         @settings = repository.settings.component_settings(name)
         @utils = environment_utils
-        @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
+        @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils, repository.settings)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils)
         @gemspec_file = GemspecFile.new(gemspec_path(from: :absolute), @utils)
         @coordination_group = nil

@@ -147,10 +147,9 @@ module Toys
         match ? ::Gem::Version.new(match[1]) : nil
       end
 
-      private
-
       # @private
       VERSION_PATTERN = '\d+(?:\.[a-zA-Z0-9]+)+'
+      private_constant :VERSION_PATTERN
 
       # @private
       # Maps strftime conversion characters to regex patterns.
@@ -164,6 +163,9 @@ module Toys
         "b" => '\w+',
         "e" => '[\d ]\d',
       }.freeze
+      private_constant :STRFTIME_CONVERSIONS
+
+      private
 
       ##
       # Returns the configured header format string, falling back to the
@@ -173,7 +175,7 @@ module Toys
       #     strftime directives for date components.
       #
       def header_format
-        (@settings&.changelog_release_header_format) || "### v%v / %Y-%m-%d"
+        @settings&.changelog_release_header_format || "### v%v / %Y-%m-%d"
       end
 
       ##
@@ -186,7 +188,7 @@ module Toys
       # @return [String] The formatted header line.
       #
       def format_header(version, date)
-        date = ::Time.now.utc unless date
+        date ||= ::Time.now.utc
         date = ::Time.parse(date) if date.is_a?(::String)
         fmt = header_format.gsub("%v", "%%v")
         date.strftime(fmt).gsub("%v", version.to_s)
@@ -205,12 +207,11 @@ module Toys
       #
       def header_regex(version: nil)
         version_re = version ? ::Regexp.escape(version.to_s) : VERSION_PATTERN
-        result = ::Regexp.escape(header_format)
-        result = result.gsub("%v", version_re)
-        result = result.gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
-          STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
-        end
-        result
+        ::Regexp.escape(header_format)
+                .gsub("%v", version_re)
+                .gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
+                  STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
+                end
       end
     end
   end
