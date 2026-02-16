@@ -65,8 +65,8 @@ module Toys
         version = version.to_s
         @utils.log("Verifying #{path} changelog content...")
         expected_header = format_header(version, ::Time.now.utc)
-        version_re = ::Regexp.new("^#{header_regex(version: version)}\n$")
-        any_header_re = ::Regexp.new("^#{header_regex}")
+        version_re = ::Regexp.new("^#{ChangelogFile.header_regex(header_format, version: version)}\n$")
+        any_header_re = ::Regexp.new("^#{ChangelogFile.header_regex(header_format)}")
         entry = []
         state = :start
         ::File.readlines(@path).each do |line|
@@ -105,7 +105,7 @@ module Toys
       #
       # @param changeset [ChangeSet] The changeset.
       # @param version [String] The release version.
-      # @param date [String] The date. If not provided, uses the current UTC.
+      # @param date [Time,String,nil] The date. If not provided, uses the current UTC.
       #
       def append(changeset, version, date: nil)
         @utils.log("Writing version #{version} to changelog #{path}")
@@ -120,7 +120,7 @@ module Toys
         end
         new_entry = new_entry.join("\n")
         old_content = content || DEFAULT_HEADER
-        new_content = old_content.sub(/^(#{header_regex})$/, "#{new_entry}\n\n\\1")
+        new_content = old_content.sub(/^(#{ChangelogFile.header_regex(header_format)})$/, "#{new_entry}\n\n\\1")
         if new_content == old_content
           new_content = old_content.sub(/\n+\z/, "\n\n#{new_entry}\n")
         end
@@ -137,14 +137,38 @@ module Toys
       # @return [::Gem::Version] Latest version in the changelog
       #
       def self.current_version_from_content(content, header_format)
-        version_capture = "(#{VERSION_PATTERN})"
-        result = ::Regexp.escape(header_format)
-        result = result.gsub("%v", version_capture)
-        result = result.gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
-          STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
-        end
-        match = ::Regexp.new(result).match(content.to_s)
+        regex_str = header_regex(header_format)
+        match = ::Regexp.new(regex_str).match(content.to_s)
         match ? ::Gem::Version.new(match[1]) : nil
+      end
+
+      ##
+      # @private
+      #
+      # Converts a header format into a regular expression string for
+      # matching changelog headers. The `%v` placeholder is replaced with
+      # either a specific escaped version or a general version-capturing
+      # pattern. Strftime directives (including those with flags and width
+      # specifiers) are replaced with appropriate character class patterns.
+      #
+      # TODO: This does not correctly handle escaped percent signs (`%%`)
+      # in the format string. A `%%` sequence (which strftime interprets
+      # as a literal `%`) could have its second `%` misidentified as the
+      # start of a strftime directive. This is unlikely in practice but
+      # may warrant future investigation.
+      #
+      # @param header_format [String] The header format string.
+      # @param version [String,nil] If provided, the regex will match only
+      #     this specific version. If nil, the regex captures any version.
+      # @return [String] A regular expression string (not a Regexp object).
+      #
+      def self.header_regex(header_format, version: nil)
+        version_re = version ? ::Regexp.escape(version.to_s) : "(#{VERSION_PATTERN})"
+        ::Regexp.escape(header_format)
+                .gsub("%v", version_re)
+                .gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
+                  STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
+                end
       end
 
       # @private
@@ -168,14 +192,13 @@ module Toys
       private
 
       ##
-      # Returns the configured header format string, falling back to the
-      # default format if no settings are provided.
+      # Returns the configured header format string from settings.
       #
       # @return [String] A format string containing `%v` for version and
       #     strftime directives for date components.
       #
       def header_format
-        @settings&.changelog_release_header_format || "### v%v / %Y-%m-%d"
+        @settings.changelog_release_header_format
       end
 
       ##
@@ -192,26 +215,6 @@ module Toys
         date = ::Time.parse(date) if date.is_a?(::String)
         fmt = header_format.gsub("%v", "%%v")
         date.strftime(fmt).gsub("%v", version.to_s)
-      end
-
-      ##
-      # Converts the header format into a regular expression string for
-      # matching changelog headers. The `%v` placeholder is replaced with
-      # either a specific escaped version or a general version pattern.
-      # Strftime directives (including those with flags and width
-      # specifiers) are replaced with appropriate character class patterns.
-      #
-      # @param version [String,nil] If provided, the regex will match only
-      #     this specific version. If nil, the regex captures any version.
-      # @return [String] A regular expression string (not a Regexp object).
-      #
-      def header_regex(version: nil)
-        version_re = version ? ::Regexp.escape(version.to_s) : VERSION_PATTERN
-        ::Regexp.escape(header_format)
-                .gsub("%v", version_re)
-                .gsub(/%[-_0^#]?\d*([a-zA-Z])/) do
-                  STRFTIME_CONVERSIONS[::Regexp.last_match(1)] || '\S+'
-                end
       end
     end
   end
