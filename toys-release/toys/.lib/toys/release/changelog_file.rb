@@ -64,34 +64,36 @@ module Toys
       def read_and_verify_latest_entry(version) # rubocop:disable Metrics/MethodLength
         version = version.to_s
         @utils.log("Verifying #{path} changelog content...")
-        today = ::Time.now.strftime("%Y-%m-%d")
+        expected_header = format_header(version, ::Time.now)
+        version_re = ::Regexp.new("^#{header_regex(version: version)}\n$")
+        any_header_re = ::Regexp.new("^#{header_regex}")
         entry = []
         state = :start
         ::File.readlines(@path).each do |line|
           case state
           when :start
             case line
-            when %r{^### v#{::Regexp.escape(version)} / \d\d\d\d-\d\d-\d\d\n$}
+            when version_re
               entry << line
               state = :during
-            when /^### /
+            when any_header_re
               @utils.error("The first changelog entry in #{path} isn't for version #{version}.",
                            "It should start with:",
-                           "### v#{version} / #{today}",
+                           expected_header,
                            "But it actually starts with:",
                            line)
               entry << line
               state = :during
             end
           when :during
-            break if line =~ /^### /
+            break if any_header_re.match?(line)
             entry << line
           end
         end
         if entry.empty?
           @utils.error("The changelog #{path} doesn't have any entries.",
                        "The first changelog entry should start with:",
-                       "### v#{version} / #{today}")
+                       expected_header)
         else
           @utils.log("Changelog OK")
         end

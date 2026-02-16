@@ -102,6 +102,24 @@ describe Toys::Release::ChangelogFile do
     end
   end
 
+  it "reads latest entry with a custom header format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}],
+    )
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Release History\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      content = file.read_and_verify_latest_entry("1.2.3")
+      assert_empty(fake_tool_context.console_output)
+      lines = content.lines
+      assert_match(/^## 1\.2\.3 \(2026-02-15\)/, lines[0])
+      assert_match(/\* FIXED:/, lines[2])
+    end
+  end
+
   it "appends with a custom header format" do
     custom_settings = Toys::Release::RepoSettings.new(
       "repo" => repo_path,
