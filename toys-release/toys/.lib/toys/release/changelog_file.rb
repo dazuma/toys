@@ -64,7 +64,7 @@ module Toys
       def read_and_verify_latest_entry(version) # rubocop:disable Metrics/MethodLength
         version = version.to_s
         @utils.log("Verifying #{path} changelog content...")
-        expected_header = format_header(version, ::Time.now)
+        expected_header = format_header(version, ::Time.now.utc)
         version_re = ::Regexp.new("^#{header_regex(version: version)}\n$")
         any_header_re = ::Regexp.new("^#{header_regex}")
         entry = []
