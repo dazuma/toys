@@ -179,7 +179,7 @@ describe Toys::Utils::Exec do
       end
     end
 
-    it "recongizes strings as shell commands" do
+    it "recognizes strings as shell commands" do
       ::Timeout.timeout(simple_exec_timeout) do
         if Toys::Compat.windows?
           result = exec.exec("dir *.md", out: :capture)
@@ -193,7 +193,7 @@ describe Toys::Utils::Exec do
       end
     end
 
-    it "recongizes an array with array binary" do
+    it "recognizes an array with array binary" do
       skip if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
@@ -202,7 +202,7 @@ describe Toys::Utils::Exec do
       end
     end
 
-    it "recongizes argv0 as an option" do
+    it "recognizes argv0 as an option" do
       skip if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["sh", "-c", "echo $0"], out: :capture, argv0: "meow")
@@ -314,6 +314,8 @@ describe Toys::Utils::Exec do
         output = ::StringIO.new
         exec.ruby(["-e", 'puts(gets + "world\n")'], in: input, out: output)
         assert_match(/hello\r?\nworld\r?\n/, output.string)
+        refute(input.closed?)
+        refute(output.closed?)
       end
     end
 
@@ -799,6 +801,27 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(ruby_exec_timeout) do
         result = exec.ruby(["-e", 'puts ENV["FOOBAR"]'], out: :capture, env: {"FOOBAR" => "hello"})
         assert_equal("hello\n", result.captured_out)
+      end
+    end
+
+    it "honors unsetenv_others and nil values when forking" do
+      skip unless Toys::Compat.allow_fork?
+      ::Timeout.timeout(simple_exec_timeout) do
+        ::ENV["VAR2"] = "bar"
+        ::ENV["VAR3"] = "baz"
+        func = proc do
+          puts "VAR1: #{::ENV['VAR1'].inspect}"
+          puts "VAR2: #{::ENV['VAR2'].inspect}"
+          puts "VAR3: #{::ENV['VAR3'].inspect}"
+        end
+        env = {"VAR1" => "foo", "VAR2" => nil}
+        result = exec.exec_proc(func, out: :capture, env: env, unsetenv_others: true)
+        assert_match(/VAR1: "foo"/, result.captured_out)
+        assert_match(/VAR2: nil/, result.captured_out)
+        assert_match(/VAR3: nil/, result.captured_out)
+      ensure
+        ::ENV.delete("VAR2")
+        ::ENV.delete("VAR3")
       end
     end
   end

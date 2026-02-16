@@ -109,7 +109,8 @@ module Toys
     #     an existing File stream. Unlike `Process#spawn`, this works for IO
     #     objects that do not have a corresponding file descriptor (such as
     #     StringIO objects). In such a case, a thread will be spawned to pipe
-    #     the IO data through to the child process.
+    #     the IO data through to the child process. Note that the IO object
+    #     will _not_ be closed on completion.
     #
     #  *  **Redirect to a pipe:** You can redirect to a pipe created using
     #     `IO.pipe` (i.e. a two-element array of read and write IO objects) by
@@ -159,7 +160,7 @@ module Toys
     #
     # A subprocess result is represented by a {Toys::Utils::Exec::Result}
     # object, which includes the exit code, the content of any captured output
-    # streams, and any exeption raised when attempting to run the process.
+    # streams, and any exception raised when attempting to run the process.
     # When you run a process in the foreground, the method will return a result
     # object. When you run a process in the background, you can obtain the
     # result from the controller once the process completes.
@@ -192,7 +193,7 @@ module Toys
     # ### Configuration options
     #
     # A variety of options can be used to control subprocesses. These can be
-    # provided to any method that starts a subprocess. Youc an also set
+    # provided to any method that starts a subprocess. You can also set
     # defaults by calling {Toys::Utils::Exec#configure_defaults}.
     #
     # Options that affect the behavior of subprocesses:
@@ -444,7 +445,8 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Integer] The exit code
+      # @return [Integer] The exit code. Returns -1 if the shell failed to
+      #     start or was terminated by a signal.
       #
       def sh(cmd, **opts, &block)
         opts = opts.merge(background: false)
@@ -523,7 +525,7 @@ module Toys
           stream = stream_for(which)
           @join_threads << ::Thread.new do
             data = stream.read
-            @mutex.synchronize do
+            @captures_mutex.synchronize do
               @captures[which] = data
             end
           ensure
@@ -560,6 +562,10 @@ module Toys
         # provide the mode and permissions for the call to `File#open`. You can
         # also specify the value `:null` to indicate the null file.
         #
+        # If the stream is redirected to an IO-like object, it is _not_ closed
+        # when the process is completed. (If it is redirected to a file
+        # specified by path, the file is closed on completion.)
+        #
         # After calling this, do not interact directly with the stream.
         #
         # @param which [:in,:out,:err] Which stream to redirect
@@ -570,9 +576,11 @@ module Toys
         #
         def redirect(which, io, *io_args)
           io = ::File::NULL if io == :null
+          close_afterward = false
           if io.is_a?(::String)
             io_args = which == :in ? ["r"] : ["w"] if io_args.empty?
             io = ::File.open(io, *io_args)
+            close_afterward = true
           end
           stream = stream_for(which, allow_in: true)
           @join_threads << ::Thread.new do
@@ -583,7 +591,7 @@ module Toys
             end
           ensure
             stream.close
-            io.close
+            io.close if close_afterward
           end
           self
         end
@@ -681,35 +689,41 @@ module Toys
         def result(timeout: nil)
           close_streams(:in)
           return nil if @wait_thread && !@wait_thread.join(timeout)
-          @result ||= begin
-            close_streams(:out)
-            @join_threads.each(&:join)
-            Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
-                  .tap { |result| @result_callback&.call(result) }
+          should_run_callback = false
+          @result_mutex.synchronize do
+            @result ||= begin
+              should_run_callback = true
+              close_streams(:out)
+              @join_threads.each(&:join)
+              Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
+            end
           end
+          @result_callback&.call(@result) if should_run_callback
+          @result
         end
 
         ##
         # @private
         #
-        def initialize(name, controller_streams, captures, pid, join_threads,
-                       result_callback, mutex)
+        def initialize(name:, controller_streams:, captures:, pid_or_exception:,
+                       join_threads:, result_callback:, captures_mutex:)
           @name = name
           @in = controller_streams[:in]
           @out = controller_streams[:out]
           @err = controller_streams[:err]
           @captures = captures
           @pid = @exception = @wait_thread = nil
-          case pid
+          case pid_or_exception
           when ::Integer
-            @pid = pid
-            @wait_thread = ::Process.detach(pid)
+            @pid = pid_or_exception
+            @wait_thread = ::Process.detach(@pid)
           when ::Exception
-            @exception = pid
+            @exception = pid_or_exception
           end
           @join_threads = join_threads
           @result_callback = result_callback
-          @mutex = mutex
+          @captures_mutex = captures_mutex
+          @result_mutex = ::Mutex.new
           @result = nil
         end
 
@@ -797,7 +811,7 @@ module Toys
         # Exactly one of {#exception} and {#status} will be non-nil.
         #
         # @return [Process::Status] The status, if the process was successfully
-        #     spanwed and terminated.
+        #     spawned and terminated.
         # @return [nil] if the process could not be started.
         #
         attr_reader :status
@@ -916,7 +930,6 @@ module Toys
         CONFIG_KEYS = [
           :argv0,
           :background,
-          :cli,
           :env,
           :err,
           :in,
@@ -1012,6 +1025,10 @@ module Toys
         #
         def initialize(exec_opts, spawn_cmd, block)
           @fork_func = spawn_cmd.respond_to?(:call) ? spawn_cmd : nil
+          if @fork_func && !::Process.respond_to?(:fork)
+            raise ::NotImplementedError,
+                  "Executing a proc is not available because fork is not supported on the current Ruby platform"
+          end
           @spawn_cmd = spawn_cmd.respond_to?(:call) ? nil : spawn_cmd
           @config_opts = exec_opts.config_opts
           @spawn_opts = exec_opts.spawn_opts
@@ -1022,7 +1039,7 @@ module Toys
           @parent_streams = []
           @block = block
           @default_stream = @config_opts[:background] ? :null : :inherit
-          @mutex = ::Mutex.new
+          @captures_mutex = ::Mutex.new
         end
 
         ##
@@ -1068,15 +1085,20 @@ module Toys
         end
 
         def start_with_controller
-          pid =
+          pid_or_exception =
             begin
               @fork_func ? start_fork : start_process
             rescue ::StandardError => e
               e
             end
           @child_streams.each(&:close)
-          Controller.new(@config_opts[:name], @controller_streams, @captures, pid,
-                         @join_threads, @config_opts[:result_callback], @mutex)
+          Controller.new(name: @config_opts[:name],
+                         controller_streams: @controller_streams,
+                         captures: @captures,
+                         pid_or_exception: pid_or_exception,
+                         join_threads: @join_threads,
+                         result_callback: @config_opts[:result_callback],
+                         captures_mutex: @captures_mutex)
         end
 
         def start_process
@@ -1106,21 +1128,28 @@ module Toys
         def run_fork_func
           catch(:result) do
             if @spawn_opts[:chdir]
-              ::Dir.chdir(@spawn_opts[:chdir]) { @fork_func.call(@config_opts) }
+              ::Dir.chdir(@spawn_opts[:chdir]) { @fork_func.call }
             else
-              @fork_func.call(@config_opts)
+              @fork_func.call
             end
             0
           end
         end
 
         def setup_env_within_fork
-          if @config_opts[:unsetenv_others]
+          env = @config_opts[:env] || {}
+          if @spawn_opts[:unsetenv_others]
             ::ENV.each_key do |k|
-              ::ENV.delete(k) unless @config_opts.key?(k)
+              ::ENV.delete(k) unless env.key?(k)
             end
           end
-          (@config_opts[:env] || {}).each { |k, v| ::ENV[k.to_s] = v.to_s }
+          env.each do |k, v|
+            if v.nil?
+              ::ENV.delete(k.to_s)
+            else
+              ::ENV[k.to_s] = v.to_s
+            end
+          end
         end
 
         def setup_streams_within_fork
@@ -1436,7 +1465,7 @@ module Toys
               when :close
                 io.close rescue nil # rubocop:disable Style/RescueModifier
               when :capture
-                @mutex.synchronize do
+                @captures_mutex.synchronize do
                   @captures[key] = io.string
                 end
               end
@@ -1507,7 +1536,6 @@ module Toys
             ::IO.copy_stream(io, stream)
           ensure
             stream.close
-            io.close
           end
         end
 
@@ -1517,7 +1545,6 @@ module Toys
             ::IO.copy_stream(stream, io)
           ensure
             stream.close
-            io.close
           end
         end
 
@@ -1525,7 +1552,7 @@ module Toys
           stream = make_out_pipe(key)
           @join_threads << ::Thread.new do
             data = stream.read
-            @mutex.synchronize do
+            @captures_mutex.synchronize do
               @captures[key] = data
             end
           ensure
