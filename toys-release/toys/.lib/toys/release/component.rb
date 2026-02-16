@@ -22,7 +22,7 @@ module Toys
         @repository = repository
         @settings = repository.settings.component_settings(name)
         @utils = environment_utils
-        @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils)
+        @changelog_file = ChangelogFile.new(changelog_path(from: :absolute), @utils, repository.settings)
         @version_rb_file = VersionRbFile.new(version_rb_path(from: :absolute), @utils)
         @gemspec_file = GemspecFile.new(gemspec_path(from: :absolute), @utils)
         @coordination_group = nil
@@ -250,7 +250,9 @@ module Toys
         if at
           path = changelog_path(from: :repo_root)
           content = @utils.capture(["git", "show", "#{at}:#{path}"], e: true)
-          return ChangelogFile.current_version_from_content(content)
+          return ChangelogFile.current_version_from_content(
+            content, @repository.settings.changelog_release_header_format
+          )
         end
         changelog_file.current_version
       end

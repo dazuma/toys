@@ -784,6 +784,11 @@ module Toys
       attr_reader :changelog_bullet
 
       ##
+      # @return [String] The format string for changelog release headers
+      #
+      attr_reader :changelog_release_header_format
+
+      ##
       # @return [String] GitHub label applied for pending release
       #
       attr_reader :release_pending_label
@@ -1058,6 +1063,9 @@ module Toys
       DEFAULT_CHANGELOG_BULLET = "*"
       private_constant :DEFAULT_CHANGELOG_BULLET
 
+      DEFAULT_CHANGELOG_RELEASE_HEADER_FORMAT = "### v%v / %Y-%m-%d"
+      private_constant :DEFAULT_CHANGELOG_RELEASE_HEADER_FORMAT
+
       def read_global_info(info)
         @main_branch = info.delete("main_branch") || DEFAULT_MAIN_BRAMCH
         @repo_path = info.delete("repo")
@@ -1102,6 +1110,12 @@ module Toys
         unless ["*", "-"].include?(@changelog_bullet)
           @errors << "Unrecognized changelog_bullet setting: #{@changelog_bullet.inspect}. Expected \"*\" or \"-\"."
           @changelog_bullet = DEFAULT_CHANGELOG_BULLET
+        end
+        @changelog_release_header_format =
+          info.delete("changelog_release_header_format") || DEFAULT_CHANGELOG_RELEASE_HEADER_FORMAT
+        unless @changelog_release_header_format.include?("%v")
+          @errors << "changelog_release_header_format must include %v for version substitution."
+          @changelog_release_header_format = DEFAULT_CHANGELOG_RELEASE_HEADER_FORMAT
         end
       end
 

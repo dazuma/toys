@@ -24,22 +24,22 @@ describe Toys::Release::ChangelogFile do
   end
 
   it "checks existence" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert(file.exists?)
   end
 
   it "checks non-existence" do
-    file = Toys::Release::ChangelogFile.new(nonexistent_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(nonexistent_path, environment_utils, repo_settings)
     refute(file.exists?)
   end
 
   it "determines current version from content" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert_equal("0.15.6", file.current_version.to_s)
   end
 
   it "reads latest entry" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     content = file.read_and_verify_latest_entry("0.15.6")
     assert_empty(fake_tool_context.console_output)
     lines = content.lines
@@ -50,7 +50,7 @@ describe Toys::Release::ChangelogFile do
   end
 
   it "fails latest entry verification on incorrect version" do
-    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+    file = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
     assert_raises(Toys::Release::Tests::FakeToolContext::FakeExit) do
       file.read_and_verify_latest_entry("0.15.61")
     end
@@ -60,7 +60,7 @@ describe Toys::Release::ChangelogFile do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog2_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
       change_set.add_commit(
         commit_with(
           "abcde1",
@@ -81,24 +81,92 @@ describe Toys::Release::ChangelogFile do
       )
       change_set.finish
       file.append(change_set, "0.15.6", date: "2024-05-15")
-      file1 = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils)
+      file1 = Toys::Release::ChangelogFile.new(changelog1_path, environment_utils, repo_settings)
       assert_equal(file1.content, file.content)
     end
   end
 
   it "appends to a file with dash bullets" do
+    dash_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_bullet" => "-",
+      "components" => [{"name" => component_name}]
+    )
+    dash_component_settings = dash_settings.component_settings(component_name)
+    dash_change_set = Toys::Release::ChangeSet.new(dash_settings, dash_component_settings)
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
-      change_set.add_commit(
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, dash_settings)
+      dash_change_set.add_commit(
         commit_with("abcde1", "fix: fix for uri version mismatch error")
       )
-      change_set.finish
-      file.append(change_set, "0.15.5", date: "2024-01-31", bullet: "-")
+      dash_change_set.finish
+      file.append(dash_change_set, "0.15.5", date: "2024-01-31")
       result = file.content
       assert_includes(result, "- FIXED:")
       refute_includes(result, "* FIXED:")
+    end
+  end
+
+  it "extracts current version from content with a custom header format" do
+    content = "# Changelog\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n"
+    version = Toys::Release::ChangelogFile.current_version_from_content(content, "## %v (%Y-%m-%d)")
+    assert_equal("1.2.3", version.to_s)
+  end
+
+  it "extracts current version using instance method with custom format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}]
+    )
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Changelog\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      assert_equal("1.2.3", file.current_version.to_s)
+    end
+  end
+
+  it "reads latest entry with a custom header format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}]
+    )
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Release History\n\n## 1.2.3 (2026-02-15)\n\n* FIXED: Something\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      content = file.read_and_verify_latest_entry("1.2.3")
+      assert_empty(fake_tool_context.console_output)
+      lines = content.lines
+      assert_match(/^## 1\.2\.3 \(2026-02-15\)/, lines[0])
+      assert_match(/\* FIXED:/, lines[2])
+    end
+  end
+
+  it "appends with a custom header format" do
+    custom_settings = Toys::Release::RepoSettings.new(
+      "repo" => repo_path,
+      "changelog_release_header_format" => "## %v (%Y-%m-%d)",
+      "components" => [{"name" => component_name}]
+    )
+    custom_component_settings = custom_settings.component_settings(component_name)
+    custom_change_set = Toys::Release::ChangeSet.new(custom_settings, custom_component_settings)
+    Dir.mktmpdir do |dir|
+      changelog_path = File.join(dir, "changelog.md")
+      File.write(changelog_path, "# Release History\n")
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, custom_settings)
+      custom_change_set.add_commit(
+        commit_with("abcde1", "fix: fixed something")
+      )
+      custom_change_set.finish
+      file.append(custom_change_set, "1.2.3", date: "2026-02-15")
+      result = file.content
+      assert_includes(result, "## 1.2.3 (2026-02-15)")
+      refute_includes(result, "### v")
     end
   end
 
@@ -106,7 +174,7 @@ describe Toys::Release::ChangelogFile do
     Dir.mktmpdir do |dir|
       changelog_path = File.join(dir, "changelog.md")
       FileUtils.cp(changelog3_path, changelog_path)
-      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils)
+      file = Toys::Release::ChangelogFile.new(changelog_path, environment_utils, repo_settings)
       change_set.add_commit(
         commit_with(
           "abcde1",
@@ -115,7 +183,7 @@ describe Toys::Release::ChangelogFile do
       )
       change_set.finish
       file.append(change_set, "0.15.5", date: "2024-01-31")
-      file2 = Toys::Release::ChangelogFile.new(changelog2_path, environment_utils)
+      file2 = Toys::Release::ChangelogFile.new(changelog2_path, environment_utils, repo_settings)
       assert_equal(file2.content, file.content)
     end
   end

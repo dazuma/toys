@@ -855,6 +855,17 @@ rest are optional.
     A changelog entry prefix that appears when a change is marked as breaking.
     Default is `BREAKING CHANGE`.
 
+ *  **changelog_bullet**: *string* (optional) --
+    The bullet character used for changelog list items. Allowed values are
+    `*` and `-`. Default is `*`.
+
+ *  **changelog_release_header_format**: *string* (optional) --
+    A format string for changelog release headers. Use `%v` for the version
+    number and [strftime](https://docs.ruby-lang.org/en/4.0/language/strftime_formatting_rdoc.html)
+    directives (e.g. `%Y`, `%m`, `%d`) for date components. The format must
+    include `%v`. Default is `### v%v / %Y-%m-%d`, which produces headers
+    like `### v1.2.3 / 2026-02-16`.
+
  *  **commit_tags**: *array of [CommitTagConfig](#commit-tag-configuration)* (optional) --
     A set of configurations defining how to interpret
     [conventional commit](https://conventionalcommits.org) tags, including how

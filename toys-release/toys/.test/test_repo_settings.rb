@@ -584,5 +584,32 @@ describe Toys::Release::RepoSettings do
       assert_equal("*", settings.changelog_bullet)
       assert(settings.errors.any? { |err| err.include?("changelog_bullet") })
     end
+
+    it "defaults changelog_release_header_format" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: foo
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal("### v%v / %Y-%m-%d", settings.changelog_release_header_format)
+    end
+
+    it "accepts a custom changelog_release_header_format" do
+      input = YAML.load(<<~STRING)
+        changelog_release_header_format: "## %v (%Y-%m-%d)"
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal("## %v (%Y-%m-%d)", settings.changelog_release_header_format)
+      refute(settings.errors.any? { |err| err.include?("changelog_release_header_format") })
+    end
+
+    it "rejects changelog_release_header_format missing %v" do
+      input = YAML.load(<<~STRING)
+        changelog_release_header_format: "### %Y-%m-%d"
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal("### v%v / %Y-%m-%d", settings.changelog_release_header_format)
+      assert(settings.errors.any? { |err| err.include?("changelog_release_header_format") })
+    end
   end
 end
