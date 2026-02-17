@@ -851,6 +851,17 @@ rest are optional.
     This can be used to modify the default build pipeline instead of redefining
     the entire pipeline using the **steps** key.
 
+ *  **auto_create_request_branches**: *array of string* (optional) --
+    A list of branch names for which release pull requests are automatically
+    created when a push occurs and no existing release PRs are open for the
+    branch. When a push is made to one of these branches and there are no
+    open release PRs targeting it, the system will automatically run the
+    release request tool to create one, including all components with
+    releasable changes. If no components have releasable changes, the
+    auto-creation is silently skipped. This setting requires
+    **required_checks** to be disabled (set to *false*). Defaults to an
+    empty array (no auto-creation).
+
  *  **breaking_change_header**: *string* (optional) --
     A changelog entry prefix that appears when a change is marked as breaking.
     Default is `BREAKING CHANGE`.

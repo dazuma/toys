@@ -12,7 +12,13 @@ include :terminal, styled: true
 
 def run
   setup
-  update_open_release_prs
+  logger.info("Searching for open release PRs targeting branch #{@push_branch} ...")
+  release_prs = @repository.find_release_prs(branch: @push_branch)
+  if release_prs.empty?
+    auto_create_release_pr
+  else
+    update_open_release_prs(release_prs)
+  end
 end
 
 def setup
@@ -37,9 +43,7 @@ def setup
   @repository.git_prepare_branch("origin", branch: @push_branch)
 end
 
-def update_open_release_prs
-  logger.info("Searching for open release PRs targeting branch #{@push_branch} ...")
-  release_prs = @repository.find_release_prs(branch: @push_branch)
+def update_open_release_prs(release_prs)
   release_prs.each do |pull|
     relevant_commits = determine_relevant_commits(pull)
     if relevant_commits.nil?
@@ -58,6 +62,13 @@ def update_open_release_prs
     end
   end
   logger.info("Analyzed #{release_prs.size} existing release pull requests for target branch #{@push_branch}")
+end
+
+def auto_create_release_pr
+  return unless @settings.auto_create_request_branches.include?(@push_branch)
+  logger.info("No existing release PRs for #{@push_branch}. Auto-creating release request...")
+  cmd = ["release", "request", "--yes", "--skip-if-empty", "--target-branch=#{@push_branch}"] + verbosity_flags
+  exec_separate_tool(cmd, e: true)
 end
 
 ##
