@@ -25,6 +25,7 @@ describe Toys::Release::RepoSettings do
     assert_equal("BREAKING CHANGE", settings.breaking_change_header)
     assert_equal("No significant updates.", settings.no_significant_updates_notice)
     assert_equal("*", settings.changelog_bullet)
+    assert_empty(settings.auto_create_request_branches)
 
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
     assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
@@ -545,6 +546,54 @@ describe Toys::Release::RepoSettings do
       settings = Toys::Release::RepoSettings.new(input)
       expected_error = "Component comp_c depends on comp_b which also has dependencies"
       assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
+  end
+
+  describe "auto_create_request_branches" do
+    it "defaults to empty array" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: foo
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_empty(settings.auto_create_request_branches)
+    end
+
+    it "reads an array of branch names" do
+      input = YAML.load(<<~STRING)
+        auto_create_request_branches:
+          - main
+          - staging
+        components:
+          - name: foo
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      assert_equal(["main", "staging"], settings.auto_create_request_branches)
+    end
+
+    it "errors when required_checks is enabled" do
+      input = YAML.load(<<~STRING)
+        auto_create_request_branches:
+          - main
+        required_checks: true
+        components:
+          - name: foo
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      expected_error = "auto_create_request_branches requires required_checks to be disabled"
+      assert(settings.errors.any? { |err| err.include?(expected_error) })
+    end
+
+    it "allows when required_checks is disabled" do
+      input = YAML.load(<<~STRING)
+        auto_create_request_branches:
+          - main
+        required_checks: false
+        components:
+          - name: foo
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      refute(settings.errors.any? { |err| err.include?("auto_create_request_branches") })
     end
   end
 

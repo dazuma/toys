@@ -72,6 +72,9 @@ end
 flag :yes, "--yes", "-y" do
   desc "Automatically answer yes to all confirmations"
 end
+flag :skip_if_empty, "--skip-if-empty" do
+  desc "Skip silently if there are no components to release"
+end
 
 include :exec
 include :terminal, styled: true
@@ -82,6 +85,10 @@ def run
   @repo_settings = Toys::Release::RepoSettings.load_from_environment(@utils)
   @repository = prepare_repository
   @request_spec = build_request_spec
+  if skip_if_empty && @request_spec.empty?
+    logger.info("No components to release. Skipping.")
+    return
+  end
   @request_logic = Toys::Release::RequestLogic.new(@repository, @request_spec, target_branch: target_branch)
   @request_logic.verify_component_status
   @request_logic.verify_pull_request_status

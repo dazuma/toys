@@ -742,6 +742,12 @@ module Toys
       attr_reader :update_existing_requests
 
       ##
+      # @return [Array<String>] Branch names for which release PRs are
+      #     auto-created on push
+      #
+      attr_reader :auto_create_request_branches
+
+      ##
       # @return [Array<CommitTagSettings>] The conventional commit types
       #     recognized as release-triggering, along with information on the
       #     change they map to.
@@ -1073,6 +1079,7 @@ module Toys
         @gh_pages_enabled = info.delete("gh_pages_enabled") ? true : false
         @enable_release_automation = info.delete("enable_release_automation") != false
         @update_existing_requests = info.delete("update_existing_requests") ? true : false
+        @auto_create_request_branches = Array(info.delete("auto_create_request_branches"))
         @release_branch_prefix = info.delete("release_branch_prefix") || "release"
         @git_user_name = info.delete("git_user_name")
         @git_user_email = info.delete("git_user_email")
@@ -1176,6 +1183,7 @@ module Toys
         @errors << 'Required key "git_user_email" missing from releases.yml' unless @git_user_email
         check_coordination_groups
         check_update_dependencies
+        check_auto_create_request_branches
       end
 
       def check_coordination_groups
@@ -1188,6 +1196,12 @@ module Toys
             end
           end
         end
+      end
+
+      def check_auto_create_request_branches
+        return if @auto_create_request_branches.empty?
+        return if @required_checks_regexp.nil?
+        @errors << "auto_create_request_branches requires required_checks to be disabled (set required_checks: false)"
       end
 
       def check_update_dependencies
