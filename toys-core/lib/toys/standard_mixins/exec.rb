@@ -109,7 +109,8 @@ module Toys
     #     an existing File stream. Unlike `Process#spawn`, this works for IO
     #     objects that do not have a corresponding file descriptor (such as
     #     StringIO objects). In such a case, a thread will be spawned to pipe
-    #     the IO data through to the child process.
+    #     the IO data through to the child process. Note that the IO object
+    #     will _not_ be closed on completion.
     #
     #  *  **Redirect to a pipe:** You can redirect to a pipe created using
     #     `IO.pipe` (i.e. a two-element array of read and write IO objects) by
@@ -434,7 +435,7 @@ module Toys
       #     the foreground.
       #
       def exec_tool(cmd, **opts, &block)
-        func = Exec._make_tool_caller(cmd)
+        func = Exec._make_tool_caller(cmd, self[Context::Key::CLI])
         opts = Exec._setup_exec_opts(opts, self)
         opts = {log_cmd: "exec tool: #{cmd.inspect}"}.merge(opts)
         self[KEY].exec_proc(func, **opts, &block)
@@ -621,7 +622,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture_tool(cmd, **opts, &block)
-        func = Exec._make_tool_caller(cmd)
+        func = Exec._make_tool_caller(cmd, self[Context::Key::CLI])
         opts = Exec._setup_exec_opts(opts, self)
         self[KEY].capture_proc(func, **opts, &block)
       end
@@ -750,9 +751,9 @@ module Toys
       ##
       # @private
       #
-      def self._make_tool_caller(cmd)
+      def self._make_tool_caller(cmd, cli)
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-        proc { |config| ::Kernel.exit(config[:cli].run(*cmd)) }
+        proc { ::Kernel.exit(cli.run(*cmd)) }
       end
 
       ##
