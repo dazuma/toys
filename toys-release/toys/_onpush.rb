@@ -67,12 +67,8 @@ end
 def auto_create_release_pr
   return unless @settings.auto_create_request_branches.include?(@push_branch)
   logger.info("No existing release PRs for #{@push_branch}. Auto-creating release request...")
-  result = exec_separate_tool(
-    ["release", "request", "--yes", "--skip-if-empty", "--target-branch=#{@push_branch}"] + verbosity_flags
-  )
-  unless result.success?
-    logger.error("Auto-create release request failed with exit code #{result.exit_code}")
-  end
+  cmd = ["release", "request", "--yes", "--skip-if-empty", "--target-branch=#{@push_branch}"] + verbosity_flags
+  exec_separate_tool(cmd, e: true)
 end
 
 ##
