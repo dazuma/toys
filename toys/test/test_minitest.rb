@@ -38,14 +38,74 @@ describe "minitest template" do
       assert_equal(["test/**/test*.rb"], template.files)
     end
 
-    it "handles the gem_version field without bundler" do
-      assert_equal([">= 5.0", "< 7"], template.gem_version)
-      template.gem_version = "~> 6.0"
-      assert_equal(["~> 6.0"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
-      template.gem_version = nil
-      assert_equal([">= 5.0", "< 7"], template.gem_version)
+    it "sets the minitest gem version" do
+      assert_equal([">= 5.0", "< 7"], template.gem_dependencies["minitest"])
+      template.minitest = "~> 6.0"
+      assert_equal(["~> 6.0"], template.gem_dependencies["minitest"])
+      template.minitest = ["~> 5.14.0", "< 6.0"]
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["minitest"])
+      template.minitest = nil
+      assert_equal([">= 5.0", "< 7"], template.gem_dependencies["minitest"])
+    end
+
+    it "sets the minitest-mock gem version" do
+      refute_includes(template.gem_dependencies, "minitest-mock")
+      template.minitest_mock = "= 5.27.0"
+      assert_equal(["= 5.27.0"], template.gem_dependencies["minitest-mock"])
+      template.minitest_mock = [">= 5.27", "< 5.28"]
+      assert_equal([">= 5.27", "< 5.28"], template.gem_dependencies["minitest-mock"])
+      template.minitest_mock = true
+      assert_equal(["~> 5.27"], template.gem_dependencies["minitest-mock"])
+      template.minitest_mock = nil
+      refute_includes(template.gem_dependencies, "minitest-mock")
+    end
+
+    it "sets the minitest-focus gem version" do
+      refute_includes(template.gem_dependencies, "minitest-focus")
+      template.minitest_focus = "= 1.4.1"
+      assert_equal(["= 1.4.1"], template.gem_dependencies["minitest-focus"])
+      template.minitest_focus = [">= 1.4", "< 1.5"]
+      assert_equal([">= 1.4", "< 1.5"], template.gem_dependencies["minitest-focus"])
+      template.minitest_focus = true
+      assert_equal(["~> 1.4", ">= 1.4.1"], template.gem_dependencies["minitest-focus"])
+      template.minitest_focus = nil
+      refute_includes(template.gem_dependencies, "minitest-focus")
+    end
+
+    it "sets the minitest-rg gem version" do
+      refute_includes(template.gem_dependencies, "minitest-rg")
+      template.minitest_rg = "= 5.4.0"
+      assert_equal(["= 5.4.0"], template.gem_dependencies["minitest-rg"])
+      template.minitest_rg = [">= 5.4", "< 5.5"]
+      assert_equal([">= 5.4", "< 5.5"], template.gem_dependencies["minitest-rg"])
+      template.minitest_rg = true
+      assert_equal(["~> 5.4"], template.gem_dependencies["minitest-rg"])
+      template.minitest_rg = nil
+      refute_includes(template.gem_dependencies, "minitest-rg")
+    end
+
+    it "sets arbitrary gem versions" do
+      assert_equal([">= 5.0", "< 7"], template.gem_dependencies["minitest"])
+      refute_includes(template.gem_dependencies, "minitest-mock")
+      refute_includes(template.gem_dependencies, "toys")
+      template.update_gems({"minitest" => "~> 6.0", "minitest-mock" => "= 5.27.0", "toys" => "= 0.19.1"})
+      assert_equal(["~> 6.0"], template.gem_dependencies["minitest"])
+      assert_equal(["= 5.27.0"], template.gem_dependencies["minitest-mock"])
+      assert_equal(["= 0.19.1"], template.gem_dependencies["toys"])
+      template.update_gems({"minitest" => ["~> 5.14.0", "< 6.0"],
+                            "minitest-mock" => [">= 5.27", "< 5.28"],
+                            "toys" => [">= 0.19.1", "< 0.20"]})
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["minitest"])
+      assert_equal([">= 5.27", "< 5.28"], template.gem_dependencies["minitest-mock"])
+      assert_equal([">= 0.19.1", "< 0.20"], template.gem_dependencies["toys"])
+      template.update_gems({"minitest" => true, "minitest-mock" => true, "toys" => true})
+      assert_equal([">= 5.0", "< 7"], template.gem_dependencies["minitest"])
+      assert_equal(["~> 5.27"], template.gem_dependencies["minitest-mock"])
+      assert_equal([], template.gem_dependencies["toys"])
+      template.update_gems({"minitest" => nil, "minitest-mock" => nil, "toys" => nil})
+      assert_equal([">= 5.0", "< 7"], template.gem_dependencies["minitest"])
+      refute_includes(template.gem_dependencies, "minitest-mock")
+      refute_includes(template.gem_dependencies, "toys")
     end
 
     it "handles the seed field" do
@@ -76,15 +136,9 @@ describe "minitest template" do
       assert_equal(true, template.mt_compat)
     end
 
-    it "handles the gem_version field with bundler" do
+    it "unsets gem_dependencies when bundler is active" do
       template.use_bundler
-      assert_equal([], template.gem_version)
-      template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
-      template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
-      template.gem_version = nil
-      assert_equal([], template.gem_version)
+      assert_nil(template.gem_dependencies)
     end
 
     it "handles the bundler_settings field via the bundler writer" do
@@ -115,7 +169,11 @@ describe "minitest template" do
 
     it "honors constructor args" do
       template = template_class.new name: "hi",
-                                    gem_version: "~> 5.1",
+                                    minitest: "~> 6.0",
+                                    minitest_mock: [">= 5.27.0", "< 5.28"],
+                                    minitest_focus: "= 1.4.1",
+                                    minitest_rg: true,
+                                    gems: {"toys" => "= 1.9.1"},
                                     libs: "src",
                                     files: "test_files/**/*_test.rb",
                                     seed: 1234,
@@ -123,13 +181,20 @@ describe "minitest template" do
                                     warnings: false,
                                     context_directory: "/path/to/context"
       assert_equal("hi", template.name)
-      assert_equal(["~> 5.1"], template.gem_version)
       assert_equal(["src"], template.libs)
       assert_equal(["test_files/**/*_test.rb"], template.files)
       assert_equal(1234, template.seed)
       assert_equal(true, template.verbose)
       assert_equal(false, template.warnings)
       assert_equal("/path/to/context", template.context_directory)
+      expected_gems = {
+        "minitest" => ["~> 6.0"],
+        "minitest-focus" => ["= 1.4.1"],
+        "minitest-mock" => [">= 5.27.0", "< 5.28"],
+        "minitest-rg" => ["~> 5.4"],
+        "toys" => ["= 1.9.1"],
+      }
+      assert_equal(expected_gems, template.gem_dependencies)
     end
   end
 
@@ -149,6 +214,7 @@ describe "minitest template" do
         assert_equal(0, cli.run("test"))
       end
       assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
     end
 
     it "runs failing tests" do
@@ -161,6 +227,19 @@ describe "minitest template" do
         assert_equal(1, cli.run("test"))
       end
       assert_match(/1 failure/, out)
+    end
+
+    it "chooses files" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "multiple/bar.rb"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
     end
 
     it "honors context_directory argument" do
@@ -185,6 +264,7 @@ describe "minitest template" do
         assert_equal(expected_failures, cli.run("test"))
       end
       assert_match(/#{expected_failures} failure/, out)
+      assert_match(/0 errors/, out)
     end
 
     it "sets MT_COMPAT" do
@@ -203,6 +283,7 @@ describe "minitest template" do
         ENV["MT_COMPAT"] = old_mt_compat
       end
       assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
     end
 
     it "clears MT_COMPAT" do
@@ -221,6 +302,7 @@ describe "minitest template" do
         ENV["MT_COMPAT"] = old_mt_compat
       end
       assert_match(/1 failure/, out)
+      assert_match(/0 errors/, out)
     end
 
     it "supports input streams" do
@@ -231,6 +313,38 @@ describe "minitest template" do
         controller.in.puts "hello"
       end
       assert(result.success?)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "does not load minitest-focus by default" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-without"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/undefined/, result.captured_err)
+    end
+
+    it "loads minitest-focus directly" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-direct"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "loads minitest-focus from bundler" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-bundle"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
       assert_match(/0 failures/, result.captured_out)
       assert_match(/0 errors/, result.captured_out)
     end
