@@ -199,7 +199,8 @@ describe "minitest template" do
   end
 
   describe "integration functionality" do
-    let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
+    let(:middleware_stack) { [Toys::Middleware.spec(:add_verbosity_flags)] }
+    let(:cli) { Toys::CLI.new(middleware_stack: middleware_stack, template_lookup: template_lookup) }
     let(:loader) { cli.loader }
     let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "minitest-cases") }
     let(:exec_service) { Toys::Utils::Exec.new }
@@ -347,6 +348,46 @@ describe "minitest template" do
       assert_equal(0, result.exit_code)
       assert_match(/0 failures/, result.captured_out)
       assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "recognizes the --include flag" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--include", "/passes/"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+    end
+
+    it "recognizes the --exclude flag" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--exclude", "/fails/"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+    end
+
+    it "recognizes the --verbose flag" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "passing/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--verbose"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+      assert_includes(out, "foo#test_0001_passes =")
     end
   end
 end
