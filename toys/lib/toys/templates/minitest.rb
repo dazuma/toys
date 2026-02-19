@@ -367,9 +367,9 @@ module Toys
           flag :warnings, "-w", "--[no-]warnings",
                default: template.warnings,
                desc: "Turn on Ruby warnings (defaults to #{template.warnings})"
-          flag :name, "-n", "--name PATTERN",
+          flag :include_name, "-i", "-n", "--include PATTERN", "--name PATTERN",
                desc: "Filter run on /regexp/ or string."
-          flag :exclude, "-e", "--exclude PATTERN",
+          flag :exclude_name, "-e", "--exclude PATTERN",
                desc: "Exclude /regexp/ or string from run."
 
           remaining_args :tests,
@@ -384,12 +384,17 @@ module Toys
 
           # @private
           def run
+            require "tempfile"
             loaded_gem_versions = load_gems
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              result = exec_ruby(ruby_args(loaded_gem_versions), env: ruby_env)
-              if result.error?
-                logger.error("Minitest failed!")
-                exit(result.exit_code)
+              ::Tempfile.create(["toys_minitest_", ".rb"]) do |script_file|
+                script_file.write(ruby_script(loaded_gem_versions))
+                script_file.close
+                result = exec_ruby(ruby_args(script_file.path), env: ruby_env)
+                if result.error?
+                  logger.error("Minitest failed!")
+                  exit(result.exit_code)
+                end
               end
             end
           end
@@ -403,7 +408,7 @@ module Toys
             end
             gem "minitest", *gem_dependencies["minitest"]
             loaded_versions = {}
-            Gem.loaded_specs.each_value do |spec|
+            ::Gem.loaded_specs.each_value do |spec|
               loaded_versions[spec.name] = spec.version.to_s if gem_dependencies.key?(spec.name)
             end
             loaded_versions
@@ -422,18 +427,18 @@ module Toys
           end
 
           # @private
-          def ruby_code_lines(loaded_gem_versions)
-            code = []
+          def ruby_script(loaded_gem_versions)
+            lines = []
             if loaded_gem_versions
               loaded_gem_versions.each do |gem_name, gem_version|
-                code << "gem #{gem_name.inspect}, #{gem_version.inspect}"
+                lines << "gem #{gem_name.inspect}, '= #{gem_version}'"
               end
             else
-              code << "require 'bundler/setup'"
+              lines << "require 'bundler/setup'"
             end
-            loaded_gems = Gem.loaded_specs
+            loaded_gems = ::Gem.loaded_specs
             ["minitest", "minitest-mock", "minitest-focus", "minitest-rg"].each do |gem_name|
-              code << "require #{gem_name.tr('-', '/').inspect}" if loaded_gems.key?(gem_name)
+              lines << "require #{gem_name.tr('-', '/').inspect}" if loaded_gems.key?(gem_name)
             end
             if tests.empty?
               files.each do |pattern|
@@ -441,24 +446,24 @@ module Toys
               end
               tests.uniq!
             end
-            code << "require 'minitest/autorun'"
-            code.concat(tests.map { |path| "load #{path.inspect}" })
-            code
+            lines << "require 'minitest/autorun'"
+            lines.concat(tests.map { |path| "load #{path.inspect}" })
+            lines << ""
+            lines.join("\n")
           end
 
           # @private
-          def ruby_args(loaded_gem_versions)
+          def ruby_args(script_path)
             args = []
             args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
             args << "-w" if warnings
-            args << "-e" << ruby_code_lines(loaded_gem_versions).join("\n")
-            args << "--"
+            args << script_path
             args << "--seed" << seed if seed
             vv = verbosity
             vv += 1 if template_verbose
             args << "--verbose" if vv.positive?
-            args << "--name" << name if name
-            args << "--exclude" << exclude if exclude
+            args << "--name" << include_name if include_name
+            args << "--exclude" << exclude_name if exclude_name
             args
           end
         end
