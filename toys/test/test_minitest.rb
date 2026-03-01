@@ -136,27 +136,29 @@ describe "minitest template" do
       assert_equal(true, template.mt_compat)
     end
 
-    it "unsets gem_dependencies when bundler is active" do
-      template.use_bundler
-      assert_nil(template.gem_dependencies)
-    end
-
     it "handles the bundler_settings field via the bundler writer" do
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
       template.bundler = true
-      assert_equal({}, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.bundler = {groups: ["production"]}
-      assert_equal({groups: ["production"]}, template.bundler_settings)
+      assert_equal({groups: ["production"], setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.bundler = false
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
     end
 
     it "handles the bundler_settings field via use_bundler" do
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
       template.use_bundler
-      assert_equal({}, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.use_bundler(groups: ["production"])
-      assert_equal({groups: ["production"]}, template.bundler_settings)
+      assert_equal({groups: ["production"], setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
     end
 
     it "handles the context_directory field" do
@@ -241,6 +243,45 @@ describe "minitest template" do
       end
       assert_match(/0 failures/, out)
       assert_match(/0 errors/, out)
+    end
+
+    it "expands globs when choosing files with --globs" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--globs", "*/bar.rb"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+    end
+
+    it "warns if a glob doesn't match anything" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      out, err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--globs", "*/bar.rb", "foo/*.rb"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+      assert_includes(err, 'Glob "foo/*.rb" did not match anything')
+    end
+
+    it "does not expand globs by default when choosing files" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "multiple/*.rb"
+      end
+      _out, err = capture_subprocess_io do
+        assert_equal(1, cli.run("test", "*/bar.rb"))
+      end
+      assert_includes(err, "Unable to load test: */bar.rb")
     end
 
     it "honors context_directory argument" do
@@ -350,6 +391,91 @@ describe "minitest template" do
       assert_match(/0 errors/, result.captured_out)
     end
 
+    it "recognizes the --use-gem flag with no version" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-without", "--use-gem", "minitest-focus"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "recognizes the --use-gem flag with versions" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-without", "--use-gem", "minitest-focus , ~>1.4, >=1.4.1"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "recognizes the --omit-gem flag" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-direct", "--omit-gem", "minitest-focus"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/undefined/, result.captured_err)
+    end
+
+    it "recognizes the --use-gem flag overriding default bundler" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-bundle", "--use-gem", "minitest"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/undefined/, result.captured_err)
+    end
+
+    it "recognizes the --gemfile-path flag" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-without", "--gemfile-path", "Gemfile"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+    end
+
+    it "catches mutually exclusive gem arguments" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-bundle", "--gemfile-path", "Gemfile", "--use-gem", "minitest"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/mutually exclusive/, result.captured_err)
+    end
+
+    it "catches bad --use-gem syntax" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-bundle", "--use-gem", ","]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/Bad format for --use-gem/, result.captured_err)
+    end
+
+    it "ignores --omit-gem=minitest" do
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/focus"
+        args = [Toys.executable_path, "test-direct", "--omit-gem", "minitest"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/0 errors/, result.captured_out)
+      assert_match(/You cannot omit the minitest gem/, result.captured_err)
+    end
+
     it "recognizes the --include flag" do
       dir = cases_dir
       loader.add_block do
@@ -388,6 +514,18 @@ describe "minitest template" do
       assert_match(/0 failures/, out)
       assert_match(/0 errors/, out)
       assert_includes(out, "foo#test_0001_passes =")
+    end
+
+    it "runs preload code" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest, files: "passing/*.rb"
+      end
+      out, _err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "--preload-code", "puts 'PRELOAD RAN'"))
+      end
+      assert_match(/PRELOAD RAN/, out)
     end
   end
 end
