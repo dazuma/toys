@@ -22,9 +22,21 @@ module Toys
     #
     # The following parameters can be passed when including this mixin:
     #
-    #  *  `:static` (Boolean) If `true`, installs the bundle immediately, when
-    #     defining the tool. If `false` (the default), installs the bundle just
-    #     before the tool runs.
+    #  *  `:static` (Boolean) Has the same effect as passing `:static` to the
+    #     `:setup` parameter.
+    #
+    #  *  `:setup` (:auto,:manual,:static) A symbol indicating when the bundle
+    #     should be installed. Possible values are:
+    #
+    #      *  `:auto` - (Default) Installs the bundle just before the tool runs.
+    #      *  `:static` - Installs the bundle immediately when defining the
+    #         tool.
+    #      *  `:manual` - Does not install the bundle, but defines the methods
+    #         `bundler_setup` and `bundler_setup?` in the tool. The tool can
+    #         call `bundler_setup` to install the bundle, optionally passing
+    #         any of the remaining keyword arguments below to override the
+    #         corresponding mixin parameters. The `bundler_setup?` method can
+    #         be queried to determine whether the bundle has been set up yet.
     #
     #  *  `:groups` (Array\<String\>) The groups to include in setup.
     #
@@ -76,7 +88,9 @@ module Toys
     #     (optional)
     #
     #  *  `:terminal` (Toys::Utils::Terminal) Terminal to use (optional)
+    #
     #  *  `:input` (IO) Input IO (optional, defaults to STDIN)
+    #
     #  *  `:output` (IO) Output IO (optional, defaults to STDOUT)
     #
     module Bundler
@@ -93,6 +107,14 @@ module Toys
       # @return [Array<String>]
       #
       DEFAULT_TOYS_GEMFILE_NAMES = [".gems.rb", "Gemfile"].freeze
+
+      ##
+      # @private
+      # Context key for the mixin parameters when using manual setup. The value
+      # will be a hash of parameters if the bundle has not been set up yet, or
+      # nil if the bundle has already been set up.
+      #
+      SETUP_PARAMS_KEY = Object.new.freeze
 
       ##
       # @private
@@ -121,17 +143,43 @@ module Toys
         gems.bundle(groups: groups, gemfile_path: gemfile_path, retries: retries)
       end
 
-      on_initialize do |static: false, **kwargs|
-        unless static
+      on_initialize do |static: false, setup: nil, **kwargs|
+        setup ||= (static ? :static : :auto)
+        case setup
+        when :auto
           context_directory = self[::Toys::Context::Key::CONTEXT_DIRECTORY]
           source_info = self[::Toys::Context::Key::TOOL_SOURCE]
           ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
+        when :manual
+          self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY] = kwargs
         end
       end
 
-      on_include do |static: false, **kwargs|
-        if static
+      on_include do |static: false, setup: nil, **kwargs|
+        setup ||= (static ? :static : :auto)
+        case setup
+        when :static
           ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
+        when :manual
+          # @private
+          def bundler_setup(**kwargs)
+            original_kwargs = self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY]
+            raise ::Toys::Utils::Gems::AlreadyBundledError unless original_kwargs
+            context_directory = self[::Toys::Context::Key::CONTEXT_DIRECTORY]
+            source_info = self[::Toys::Context::Key::TOOL_SOURCE]
+            final_kwargs = original_kwargs.merge(kwargs)
+            ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **final_kwargs)
+            self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY] = nil
+          end
+
+          # @private
+          def bundler_setup?
+            self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY].nil?
+          end
+        when :auto
+          # Do nothing at this point
+        else
+          raise ::ArgumentError, "Unrecognized setup type: #{setup.inspect}"
         end
       end
 
@@ -165,7 +213,7 @@ module Toys
           when :toys
             search_toys
           else
-            raise ::ArgumentError, "Unrecognized search_dir: #{dir.inspect}"
+            raise ::ArgumentError, "Unrecognized search_dir: #{search_dir.inspect}"
           end
         end
 
