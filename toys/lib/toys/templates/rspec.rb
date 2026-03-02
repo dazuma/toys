@@ -9,10 +9,12 @@ module Toys
       include Template
 
       ##
-      # Default version requirements for the rspec gem.
-      # @return [Array<String>]
+      # Default version requirements for gem names.
+      # @return [Hash{String=>Array<String>}]
       #
-      DEFAULT_GEM_VERSION_REQUIREMENTS = ["~> 3.1"].freeze
+      DEFAULT_GEM_VERSION_REQUIREMENTS = {
+        "rspec" => ["~> 3.1"].freeze,
+      }.freeze
 
       ##
       # Default tool name
@@ -47,10 +49,23 @@ module Toys
       ##
       # Create the template settings for the RSpec template.
       #
+      # Note that arguments related to gem and bundler settings are defaults
+      # that can be overridden by command line arguments.
+      #
       # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
-      # @param gem_version [String,Array<String>] Version requirements for
-      #     the rspec gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
+      # @param rspec [String,Array<String>] Version requirements for
+      #     the "rspec" gem, used if bundler is not enabled.
+      #     Optional. If not provided, defaults to the value given in
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS}.
+      # @param gem_version [String,Array<String>] Deprecated alias for the
+      #     `rspec` argument.
+      # @param gems [Hash{String=>String|Array<String>|true}] Include the given
+      #     gems with the given version requirements. Used if bundler is not
+      #     enabled. If the version requirement is set to `true`, then the
+      #     default in {DEFAULT_GEM_VERSION_REQUIREMENTS} is used. If there
+      #     is no default available, then no particular version requirements
+      #     are imposed.
       # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
       # @param options [String] The path to a custom options file, if any.
@@ -64,15 +79,20 @@ module Toys
       # @param warnings [Boolean] If true, runs specs with Ruby warnings.
       #     Defaults to true.
       # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
-      #     enabled for this tool. If `true` or a Hash of options, bundler is
-      #     enabled. See the documentation for the
+      #     used unless enabled via command line argument. If `true` or a Hash
+      #     of options, bundler is enabled by default unless disabled via a
+      #     command line argument. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      #     for information on available options.
+      #     for information on available options. Note that any `:setup` option
+      #     is ignored; the bundle, if enabled, is always installed and set up
+      #     at the start of the tool execution.
       # @param context_directory [String] A custom context directory to use
       #     when executing this tool.
       #
       def initialize(name: nil,
+                     rspec: nil,
                      gem_version: nil,
+                     gems: nil,
                      libs: nil,
                      options: nil,
                      order: nil,
@@ -84,7 +104,6 @@ module Toys
                      bundler: false,
                      context_directory: nil)
         @name = name
-        @gem_version = gem_version
         @libs = libs
         @options = options
         @order = order
@@ -95,6 +114,9 @@ module Toys
         @warnings = warnings
         @bundler = bundler
         @context_directory = context_directory
+        @gem_dependencies = {}
+        update_version_spec("rspec", rspec || gem_version)
+        update_gems(gems) if gems
       end
 
       ##
@@ -106,15 +128,34 @@ module Toys
       attr_writer :name
 
       ##
-      # Version requirements for the rspec gem.
-      # If set to `nil`, uses the bundled version if bundler is enabled, or
-      # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
-      # enabled.
+      # Update the gems and version requirements that are used if bundler is
+      # not enabled.
       #
-      # @param value [String,Array<String>,nil]
-      # @return [String,Array<String>,nil]
+      # @param gems [Hash{String=>String|Array<String>|true|false|nil}]
+      #     A mapping from gem name to either the version requirements,
+      #     `true` to use a default, or `false` or `nil` to remove the gem from
+      #     the list. (Note that it is not possible to remove the `rspec`
+      #     gem, and setting it to `nil` will simply restore the default
+      #     version requirements.)
+      # @return [self]
       #
-      attr_writer :gem_version
+      def update_gems(gems)
+        gems.each do |gem_name, version_requirements|
+          update_version_spec(gem_name, version_requirements)
+        end
+        self
+      end
+
+      ##
+      # Version requirements for the rspec gem. Used if bundler is not used.
+      # If set to `true` or `nil`, a default version requirement is used.
+      #
+      # @param value [String,Array<String>,true,nil]
+      #
+      def rspec=(value)
+        update_version_spec("rspec", value)
+      end
+      alias gem_version= rspec=
 
       ##
       # An array of directories to add to the Ruby require path.
@@ -249,16 +290,21 @@ module Toys
       ##
       # @private
       #
+      attr_reader :gem_dependencies
+
+      ##
+      # @private
+      #
       def name
         @name || DEFAULT_TOOL_NAME
       end
 
       ##
+      # @deprecated Use {#gem_dependencies} instead.
       # @private
       #
       def gem_version
-        return Array(@gem_version) if @gem_version
-        @bundler ? [] : DEFAULT_GEM_VERSION_REQUIREMENTS
+        gem_dependencies["rspec"]
       end
 
       ##
@@ -293,24 +339,62 @@ module Toys
       # @private
       #
       def bundler_settings
-        if @bundler && !@bundler.is_a?(::Hash)
-          {}
+        if @bundler.is_a?(::Hash)
+          @bundler.merge({setup: :manual})
         else
-          @bundler
+          {setup: :manual}
         end
+      end
+
+      ##
+      # @private
+      #
+      def default_to_bundler?
+        @bundler ? true : false
       end
 
       on_expand do |template|
         tool(template.name) do
           desc "Run rspec on the current project."
 
+          long_desc(
+            "Run rspec specs for the current project.",
+            "",
+            "By default, executes specs matching the following pattern:"
+          )
+          long_desc(["  - `#{template.pattern}`"])
+          long_desc(
+            "To override this, pass the paths to the spec files to run as command line arguments." \
+            " You can also filter by example name using the --example argument.",
+            ""
+          )
+          if template.default_to_bundler?
+            long_desc(
+              "By default, uses the project bundle to load gems needed for testing, including the rspec gem.",
+              "You can specify a particular Gemfile using the --gemfile argument." \
+              " Alternatively, you can disable the bundle and manually specify the gem list using the --use-gem" \
+              " and --omit-gem arguments."
+            )
+          else
+            long_desc(
+              "By default, loads the following gems with version constraints:"
+            )
+            template.gem_dependencies.each do |name, versions|
+              spec = ([name] + versions).join(", ")
+              long_desc(["  - `#{spec}`"])
+            end
+            long_desc(
+              "To alter this list, use the --use-gem and --omit-gem arguments." \
+              " Alternatively, you can use a bundle instead by passing the --gemfile argument."
+            )
+          end
+
           set_context_directory template.context_directory if template.context_directory
 
           include :exec
           include :gems
 
-          bundler_settings = template.bundler_settings
-          include :bundler, **bundler_settings if bundler_settings
+          include :bundler, **template.bundler_settings
 
           flag :order, "--order TYPE",
                default: template.order,
@@ -338,30 +422,64 @@ module Toys
           flag :tag, "-t", "--tag TAG",
                desc: "Run examples with the specified tag, or exclude" \
                      " examples by adding ~ before the tag."
+          flag(:gemfile_path, "--gemfile PATH", "--gemfile-path PATH") do
+            desc("Bundle with the given gemfile, overriding any static setting.")
+            long_desc(
+              "Bundle with the given gemfile, overriding any static setting.",
+              "",
+              "You must provide the path to the Gemfile to use. This may override any default project Gemfile.",
+              "This flag is mutually exclusive with --use-gem and --omit-gem."
+            )
+          end
+          flag(:override_use_gems, "--use-gem SPEC") do
+            default([])
+            handler(:push)
+            desc("Install the given gem with version requirements, overriding any static setting.")
+            long_desc(
+              "Install the given gem with version requirements, overriding any static setting.",
+              "",
+              "The format is the gem name followed by zero or more version requirements, separated by commas.",
+              "For example:",
+              ["  --use-gem rspec,~>3.1"],
+              "",
+              "Each --use-gem flag specifies a single gem." \
+              " You can provide any number of --use-gem flags to specify any number of gems.",
+              "",
+              "This flag can be used in conjunction with --omit-gem, but is mutually exclusive with --gemfile."
+            )
+          end
+          flag(:override_omit_gems, "--omit-gem NAME") do
+            default([])
+            handler(:push)
+            desc("Do not install the given gem, overriding any static setting.")
+            long_desc(
+              "Do not install the given gem, overriding any static setting.",
+              "",
+              "Each --omit-gem flag omits a single gem." \
+              " You can provide any number of --omit-gem flags to specifically omit any number of gems.",
+              "",
+              "This flag can be used in conjunction with --use-gem, but is mutually exclusive with --gemfile."
+            )
+          end
 
           remaining_args :files,
                          complete: :file_system,
                          desc: "Paths to the specs to run (defaults to all specs)"
 
           static :libs, template.libs
-          static :gem_version, template.gem_version
+          static :gem_dependencies, template.gem_dependencies
+          static :default_to_bundler, template.default_to_bundler?
           static :rspec_options, template.options
 
           # @private
-          def run # rubocop:disable all
-            gem "rspec", *gem_version
-
+          def run
             ::Dir.chdir(context_directory || ::Dir.getwd) do
+              loaded_gem_versions = init_bundle_or_gems
+
               ruby_args = []
               ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
               ruby_args << "-w" if warnings
-
-              code = <<~CODE
-                gem 'rspec', *#{gem_version.inspect}
-                require 'rspec/core'
-                ::RSpec::Core::Runner.invoke
-              CODE
-              ruby_args << "-e" << code
+              ruby_args << "-e" << ruby_code(loaded_gem_versions)
 
               ruby_args << "--"
               ruby_args << "--options" << rspec_options if rspec_options
@@ -382,6 +500,86 @@ module Toys
               end
             end
           end
+
+          # @private
+          def init_bundle_or_gems
+            if gemfile_path && (!override_use_gems.empty? || !override_omit_gems.empty?)
+              logger.error("--gemfile is mutually exclusive with --use-gem and --omit-gem")
+              exit(1)
+            end
+            if gemfile_path ||
+               (default_to_bundler && override_use_gems.empty? && override_omit_gems.empty?)
+              bundler_setup(gemfile_path: gemfile_path)
+              nil
+            else
+              load_gems
+            end
+          end
+
+          # @private
+          def load_gems
+            updated_dependencies = updated_gem_dependencies
+            updated_dependencies.each do |gem_name, version_requirements|
+              next if gem_name == "rspec"
+              gem gem_name, *version_requirements
+            end
+            gem "rspec", *updated_dependencies["rspec"]
+            loaded_versions = {}
+            ::Gem.loaded_specs.each_value do |spec|
+              loaded_versions[spec.name] = spec.version.to_s if updated_dependencies.key?(spec.name)
+            end
+            loaded_versions
+          end
+
+          # @private
+          def updated_gem_dependencies
+            dependencies = gem_dependencies.dup
+            override_use_gems.each do |spec|
+              name, *versions = spec.strip.split(/\s*,\s*/)
+              if name.to_s.empty?
+                logger.error("Bad format for --use-gem: #{spec.inspect}")
+                exit(1)
+              end
+              versions.delete_if(&:empty?)
+              versions = ::Toys::Templates::Rspec::DEFAULT_GEM_VERSION_REQUIREMENTS[name] || [] if versions.empty?
+              dependencies[name] = versions
+            end
+            override_omit_gems.each do |name|
+              name = name.strip
+              if name == "rspec"
+                logger.warn("You cannot omit the rspec gem. Ignoring --omit-gem=rspec.")
+              else
+                dependencies.delete(name)
+              end
+            end
+            dependencies
+          end
+
+          # @private
+          def ruby_code(loaded_gem_versions)
+            if loaded_gem_versions
+              "gem 'rspec', '= #{loaded_gem_versions["rspec"]}'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
+            else
+              "require 'bundler/setup'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
+            end
+          end
+        end
+      end
+
+      private
+
+      def update_version_spec(gem_name, version_requirements)
+        version_requirements ||= true if gem_name == "rspec"
+        if version_requirements
+          @gem_dependencies[gem_name] =
+            if version_requirements == true
+              DEFAULT_GEM_VERSION_REQUIREMENTS[gem_name] || []
+            else
+              Array(version_requirements).map(&:to_s)
+            end
+        else
+          @gem_dependencies.delete(gem_name)
+          nil
         end
       end
     end

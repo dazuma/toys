@@ -28,25 +28,52 @@ describe "rspec template" do
       assert_equal(["lib"], template.libs)
     end
 
+    it "sets the rspec gem version" do
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
+      template.rspec = "~> 5.1"
+      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
+      template.rspec = ["~> 5.14.0", "< 6.0"]
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
+      template.rspec = nil
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
+    end
+
+    it "sets arbitrary gem versions" do
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
+      refute_includes(template.gem_dependencies, "toys")
+      template.update_gems({"rspec" => "~> 5.1", "toys" => "= 0.19.1"})
+      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
+      assert_equal(["= 0.19.1"], template.gem_dependencies["toys"])
+      template.update_gems({"rspec" => ["~> 5.14.0", "< 6.0"], "toys" => [">= 0.19.1", "< 0.20"]})
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
+      assert_equal([">= 0.19.1", "< 0.20"], template.gem_dependencies["toys"])
+      template.update_gems({"rspec" => true, "toys" => true})
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
+      assert_equal([], template.gem_dependencies["toys"])
+      template.update_gems({"rspec" => nil, "toys" => nil})
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
+      refute_includes(template.gem_dependencies, "toys")
+    end
+
     it "handles the gem_version field without bundler" do
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
       template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
+      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
       template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
       template.gem_version = nil
-      assert_equal(["~> 3.1"], template.gem_version)
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
     end
 
     it "handles the gem_version field with bundler" do
       template.use_bundler
-      assert_equal([], template.gem_version)
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
       template.gem_version = "~> 5.1"
-      assert_equal(["~> 5.1"], template.gem_version)
+      assert_equal(["~> 5.1"], template.gem_dependencies["rspec"])
       template.gem_version = ["~> 5.14.0", "< 6.0"]
-      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_version)
+      assert_equal(["~> 5.14.0", "< 6.0"], template.gem_dependencies["rspec"])
       template.gem_version = nil
-      assert_equal([], template.gem_version)
+      assert_equal(["~> 3.1"], template.gem_dependencies["rspec"])
     end
 
     it "handles the options field" do
@@ -102,21 +129,28 @@ describe "rspec template" do
     end
 
     it "handles the bundler_settings field via the bundler writer" do
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
       template.bundler = true
-      assert_equal({}, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.bundler = {groups: ["production"]}
-      assert_equal({groups: ["production"]}, template.bundler_settings)
+      assert_equal({groups: ["production"], setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.bundler = false
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
     end
 
     it "handles the bundler_settings field via use_bundler" do
-      assert_equal(false, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      refute(template.default_to_bundler?)
       template.use_bundler
-      assert_equal({}, template.bundler_settings)
+      assert_equal({setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
       template.use_bundler(groups: ["production"])
-      assert_equal({groups: ["production"]}, template.bundler_settings)
+      assert_equal({groups: ["production"], setup: :manual}, template.bundler_settings)
+      assert(template.default_to_bundler?)
     end
 
     it "handles the context_directory field" do
@@ -129,7 +163,8 @@ describe "rspec template" do
 
     it "honors constructor args" do
       template = template_class.new name: "hi",
-                                    gem_version: "~> 3.2",
+                                    rspec: "~> 3.2",
+                                    gems: {"toys" => "= 0.19.1"},
                                     libs: "src",
                                     options: "myoptions/.rspec",
                                     order: "rand",
@@ -140,7 +175,6 @@ describe "rspec template" do
                                     warnings: false,
                                     context_directory: "/path/to/context"
       assert_equal("hi", template.name)
-      assert_equal(["~> 3.2"], template.gem_version)
       assert_equal(["src"], template.libs)
       assert_equal("myoptions/.rspec", template.options)
       assert_equal("rand", template.order)
@@ -150,6 +184,11 @@ describe "rspec template" do
       assert_equal("myspecs/**/*_spec.rb", template.pattern)
       assert_equal(false, template.warnings)
       assert_equal("/path/to/context", template.context_directory)
+      expected_gems = {
+        "rspec" => ["~> 3.2"],
+        "toys" => ["= 0.19.1"],
+      }
+      assert_equal(expected_gems, template.gem_dependencies)
     end
   end
 
@@ -203,6 +242,84 @@ describe "rspec template" do
       end
       assert(result.success?)
       assert_match(/0 failures/, result.captured_out)
+    end
+
+    it "recognizes the --use-gem flag with no version" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-without", "--use-gem", "rspec"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+    end
+
+    it "recognizes the --use-gem flag with versions" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-without", "--use-gem", "rspec,~>3.1"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+    end
+
+    it "recognizes the --gemfile-path flag" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-without", "--gemfile-path", "Gemfile"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+    end
+
+    it "recognizes the --use-gem flag overriding default bundler" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-bundle", "--use-gem", "rspec"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+    end
+
+    it "catches mutually exclusive gem arguments" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-bundle", "--gemfile-path", "Gemfile", "--use-gem", "rspec"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/mutually exclusive/, result.captured_err)
+    end
+
+    it "catches bad --use-gem syntax" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-bundle", "--use-gem", ","]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(1, result.exit_code)
+      assert_match(/Bad format for --use-gem/, result.captured_err)
+    end
+
+    it "ignores --omit-gem rspec" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      result = ::Bundler.with_unbundled_env do
+        dir = "#{cases_dir}/gem-mgmt"
+        args = [Toys.executable_path, "spec-without", "--omit-gem", "rspec"]
+        exec_service.exec_ruby(args, chdir: dir, out: :capture, err: :capture)
+      end
+      assert_equal(0, result.exit_code)
+      assert_match(/0 failures/, result.captured_out)
+      assert_match(/You cannot omit the rspec gem/, result.captured_err)
     end
   end
 end
