@@ -300,14 +300,6 @@ module Toys
       end
 
       ##
-      # @deprecated Use {#gem_dependencies} instead.
-      # @private
-      #
-      def gem_version
-        gem_dependencies["rspec"]
-      end
-
-      ##
       # @private
       #
       def libs
@@ -396,32 +388,39 @@ module Toys
 
           include :bundler, **template.bundler_settings
 
-          flag :order, "--order TYPE",
-               default: template.order,
-               desc: "Run examples by the specified order type (default: #{template.order})"
-          flag :format, "-f", "--format FORMATTER",
-               default: template.format,
-               desc: "Choose a formatter (default: #{template.format})"
-          flag :out, "-o", "--out FILE",
-               default: template.out,
-               desc: "Write output to a file (default: #{template.out.inspect})"
-          flag :backtrace, "-b", "--[no-]backtrace",
-               default: template.backtrace,
-               desc: "Enable full backtrace (default: #{template.backtrace})"
-          flag :warnings, "-w", "--[no-]warnings",
-               default: template.warnings,
-               desc: "Turn on Ruby warnings (default: #{template.warnings})"
-          flag :pattern, "-P", "--pattern PATTERN",
-               default: template.pattern,
-               desc: "Load files matching pattern (default: #{template.pattern.inspect})"
-          flag :exclude_pattern, "--exclude-pattern PATTERN",
-               desc: "Load files except those matching pattern."
-          flag :example, "-e", "--example STRING",
-               desc: "Run examples whose full nested names include STRING" \
-                     " (may be used more than once)."
-          flag :tag, "-t", "--tag TAG",
-               desc: "Run examples with the specified tag, or exclude" \
-                     " examples by adding ~ before the tag."
+          flag(:order, "--order TYPE") do
+            default(template.order)
+            desc("Run examples by the specified order type (default: #{template.order})")
+          end
+          flag(:format, "-f", "--format FORMATTER") do
+            default(template.format)
+            desc("Choose a formatter (default: #{template.format})")
+          end
+          flag(:out, "-o", "--out FILE") do
+            default(template.out)
+            desc("Write output to a file (default: #{template.out.inspect})")
+          end
+          flag(:backtrace, "-b", "--[no-]backtrace") do
+            default(template.backtrace)
+            desc("Enable full backtrace (default: #{template.backtrace})")
+          end
+          flag(:warnings, "-w", "--[no-]warnings") do
+            default(template.warnings)
+            desc("Turn on Ruby warnings (default: #{template.warnings})")
+          end
+          flag(:pattern, "-P", "--pattern PATTERN") do
+            default(template.pattern)
+            desc("Load files matching pattern (default: #{template.pattern.inspect})")
+          end
+          flag(:exclude_pattern, "--exclude-pattern PATTERN") do
+            desc("Load files except those matching pattern.")
+          end
+          flag(:example, "-e", "--example STRING") do
+            desc("Run examples whose full nested names include STRING (may be used more than once).")
+          end
+          flag(:tag, "-t", "--tag TAG") do
+            desc("Run examples with the specified tag, or exclude examples by adding ~ before the tag.")
+          end
           flag(:gemfile_path, "--gemfile PATH", "--gemfile-path PATH") do
             desc("Bundle with the given gemfile, overriding any static setting.")
             long_desc(
