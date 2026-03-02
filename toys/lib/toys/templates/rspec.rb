@@ -559,7 +559,10 @@ module Toys
           # @private
           def ruby_code(loaded_gem_versions)
             if loaded_gem_versions
-              "gem 'rspec', '= #{loaded_gem_versions['rspec']}'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
+              parts = loaded_gem_versions.map { |gem_name, gem_version| "gem #{gem_name.inspect}, '= #{gem_version}'" }
+              parts << "require 'rspec/core'"
+              parts << "::RSpec::Core::Runner.invoke"
+              parts.join("; ")
             else
               "require 'bundler/setup'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
             end
