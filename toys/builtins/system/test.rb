@@ -43,17 +43,23 @@ include :terminal
 
 def run
   setup_mt_compat
-  result_code = 0
+  final_code = 0
   jobs = determine_jobs
   if jobs.empty?
     puts "WARNING: No test files found", :yellow, :bold
     exit
   end
   jobs.each do |job|
+    puts "Running #{job.name}", :bold
     result = run_job(job)
-    result_code = result.effective_code unless result.success?
+    if result.success?
+      puts "Succeeded: #{job.name}", :green, :bold
+    else
+      puts "Failed: #{job.name} (code=#{result.effective_code})", :red, :bold
+      final_code = 1
+    end
   end
-  exit(result_code)
+  exit(final_code)
 end
 
 def setup_mt_compat
@@ -65,10 +71,9 @@ def setup_mt_compat
   end
 end
 
-Job = ::Struct.new(:name, :glob, :tests, :gemfile)
+Job = ::Struct.new(:name, :globs, :tests, :gemfile)
 
 def run_job(job)
-  puts "Running #{job.name}", :bold
   args = ["system", "test", "_internal"]
   args.concat(verbosity_flags)
   args << "--seed" << seed if seed
@@ -80,9 +85,9 @@ def run_job(job)
   else
     add_gem_args(args)
   end
-  args << "--globs" if job.glob
+  args << "--globs" if job.globs
   args << "--preload-code" << preload_code
-  args.concat(Array(job.glob || job.tests))
+  args.concat(Array(job.globs || job.tests))
   exec_separate_tool(args)
 end
 
@@ -193,11 +198,12 @@ end
 
 def build_job_under(test_path)
   return nil unless ::File.directory?(test_path)
-  glob = "#{test_path}/**/test*.rb"
-  return nil if ::Dir.glob(glob).empty?
+  globs = ["#{test_path}/**/test_*.rb", "#{test_path}/**/*_test.rb"]
+  globs.delete_if { |glob| ::Dir.glob(glob).empty? }
+  return nil if globs.empty?
   gemfile_path = ::File.join(test_path, "Gemfile")
   gemfile_path = nil unless ::File.file?(gemfile_path)
-  Job.new("tests under #{test_path}", glob, nil, gemfile_path)
+  Job.new("tests under #{test_path}", globs, nil, gemfile_path)
 end
 
 def tool_dir
@@ -218,9 +224,13 @@ end
 def base_dir
   @base_dir ||=
     if directory
+      unless ::File.directory?(directory)
+        logger.error("Directory not found: #{directory}")
+        exit(1)
+      end
       ::File.realpath(directory)
     else
-      dir = parent = ::File.realpath(::Dir.getwd)
+      dir = ::File.realpath(::Dir.getwd)
       loop do
         candidate = ::File.join(dir, ::Toys::StandardCLI::CONFIG_DIR_NAME)
         break candidate if ::File.directory?(candidate)

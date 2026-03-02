@@ -119,12 +119,22 @@ describe "toys system test" do
 
   it "loads bundles" do
     tool = ["system", "test", "-d", tools_dir, "-t", "bundled", "-v"]
-    out, err = capture_subprocess_io do
+    _out, err = capture_subprocess_io do
       # Tests would fail if the bundle wasn't loaded
       assert_equal(0, toys_run_tool(tool))
     end
     assert_match(%r{Reading test: \S+tool-testing/bundled/.test/test_focus.rb}, err)
     assert_match(%r{Reading test: \S+tool-testing/bundled/foo/.test/test_rack.rb}, err)
     assert_match(%r{Reading test: \S+tool-testing/bundled/bar/.test/test_bar.rb}, err)
+  end
+
+  it "finds tests with both *_test.rb and test_*.rb patterns" do
+    tool = ["system", "test", "-d", tools_dir, "-t", "patterns", "-v"]
+    _out, err = capture_subprocess_io do
+      assert_equal(0, toys_run_tool(tool))
+    end
+    assert_match(%r{Reading test: \S+tool-testing/patterns/.test/test_foo.rb}, err)
+    assert_match(%r{Reading test: \S+tool-testing/patterns/.test/bar_test.rb}, err)
+    assert_equal(1, err.scan(%r{Reading test: \S+tool-testing/patterns/.test/test_hello_test.rb}).size)
   end
 end
