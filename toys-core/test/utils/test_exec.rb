@@ -28,6 +28,7 @@ describe Toys::Utils::Exec do
         assert_instance_of(::Process::Status, result.status)
         assert_equal(0, result.exit_code)
         assert_nil(result.signal_code)
+        assert_equal(0, result.effective_code)
         assert_equal(true, result.success?)
         assert_equal(false, result.error?)
         assert_equal(false, result.signaled?)
@@ -43,6 +44,7 @@ describe Toys::Utils::Exec do
         assert_instance_of(::Process::Status, result.status)
         assert_equal(3, result.exit_code)
         assert_nil(result.signal_code)
+        assert_equal(3, result.effective_code)
         assert_equal(false, result.success?)
         assert_equal(true, result.error?)
         assert_equal(false, result.signaled?)
@@ -54,9 +56,26 @@ describe Toys::Utils::Exec do
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["hohohohohohoho"])
         assert_instance_of(::Errno::ENOENT, result.exception)
-        assert_nil(result.exit_code)
+        assert_nil(result.status)
         assert_nil(result.exit_code)
         assert_nil(result.signal_code)
+        assert_equal(127, result.effective_code)
+        assert_equal(false, result.success?)
+        assert_equal(false, result.error?)
+        assert_equal(false, result.signaled?)
+        assert_equal(true, result.failed?)
+      end
+    end
+
+    it "detects EACCES/ENOEXEC" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        nonexecutable = File.join(File.dirname(File.dirname(__dir__)), "README.md")
+        result = exec.exec([nonexecutable])
+        assert(result.exception.is_a?(::Errno::ENOEXEC) || result.exception.is_a?(::Errno::EACCES))
+        assert_nil(result.status)
+        assert_nil(result.exit_code)
+        assert_nil(result.signal_code)
+        assert_equal(126, result.effective_code)
         assert_equal(false, result.success?)
         assert_equal(false, result.error?)
         assert_equal(false, result.signaled?)
@@ -75,6 +94,7 @@ describe Toys::Utils::Exec do
         assert_instance_of(::Process::Status, result.status)
         assert_nil(result.exit_code)
         assert_equal(15, result.signal_code)
+        assert_equal(143, result.effective_code)
         assert_equal(false, result.success?)
         assert_equal(false, result.error?)
         assert_equal(true, result.signaled?)
@@ -211,6 +231,14 @@ describe Toys::Utils::Exec do
       end
     end
 
+    it "captures normal commands" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        result = exec.capture(["echo", "hi"])
+        assert_equal("hi\n", result)
+        assert_match(/exec: \["echo", "hi"\]\n/, logger_stringio.string)
+      end
+    end
+
     it "forks procs" do
       skip unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
@@ -225,11 +253,62 @@ describe Toys::Utils::Exec do
       end
     end
 
+    it "captures forks" do
+      skip unless Toys::Compat.allow_fork?
+      ::Timeout.timeout(simple_exec_timeout) do
+        func = proc do
+          puts "pid: #{::Process.pid}"
+        end
+        result = exec.capture_proc(func)
+        match = /pid: (\d+)/.match(result)
+        refute_nil(match)
+        refute_equal(match[1].to_i, ::Process.pid)
+        assert_match(/exec proc:/, logger_stringio.string)
+      end
+    end
+
     it "runs a ruby subprocess" do
       ::Timeout.timeout(ruby_exec_timeout) do
         result = exec.exec_ruby(["-e", "puts 'hello, ' + 'world'"], out: :capture)
         assert_equal("hello, world\n", result.captured_out)
         assert_match(/exec ruby: \["-e", "puts 'hello, ' \+ 'world'"\]/, logger_stringio.string)
+      end
+    end
+
+    it "captures a ruby subprocess" do
+      ::Timeout.timeout(ruby_exec_timeout) do
+        result = exec.capture_ruby(["-e", "puts 'hello, ' + 'world'"])
+        assert_equal("hello, world\n", result)
+        assert_match(/exec ruby: \["-e", "puts 'hello, ' \+ 'world'"\]/, logger_stringio.string)
+      end
+    end
+
+    it "executes a successful shell explicitly" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        output = ""
+        if Toys::Compat.windows?
+          result = exec.sh("dir *.md", out: :controller) do |controller|
+            output = controller.out.read
+          end
+          assert_equal(0, result)
+          assert_match(/README\.md/, output)
+          assert_match(/exec sh: "dir \*\.md"\n/, logger_stringio.string)
+        else
+          result = exec.sh("BLAHXYZBLAH=hi env | grep BLAHXYZBLAH", out: :controller) do |controller|
+            output = controller.out.read
+          end
+          assert_equal(0, result)
+          assert_equal("BLAHXYZBLAH=hi\n", output)
+          assert_match(/exec sh: "BLAHXYZBLAH=hi env \| grep BLAHXYZBLAH"/, logger_stringio.string)
+        end
+      end
+    end
+
+    it "executes a shell explicitly that cannot find an executable" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        result = exec.sh("hohohohohohohoho")
+        assert_equal(127, result)
+        assert_match(/exec sh: "hohohohohohohoho"\n/, logger_stringio.string)
       end
     end
   end

@@ -433,8 +433,8 @@ module Toys
       end
 
       ##
-      # Execute the given string in a shell. Returns the exit code.
-      # Cannot be run in the background.
+      # Execute the given string in a shell. Returns an effective exit code
+      # that is always an integer. Cannot be run in the background.
       #
       # If a block is provided, a {Toys::Utils::Exec::Controller} will be
       # yielded to it.
@@ -445,12 +445,12 @@ module Toys
       # @yieldparam controller [Toys::Utils::Exec::Controller] A controller
       #     for the subprocess streams.
       #
-      # @return [Integer] The exit code. Returns -1 if the shell failed to
-      #     start or was terminated by a signal.
+      # @return [Integer] An effective exit code. See
+      #     {Toys::Utils::Exec::Result#effective_code}.
       #
       def sh(cmd, **opts, &block)
         opts = opts.merge(background: false)
-        exec(cmd, **opts, &block).exit_code || -1
+        exec(cmd, **opts, &block).effective_code
       end
 
       ##
@@ -900,6 +900,42 @@ module Toys
         def error?
           code = exit_code
           !code.nil? && !code.zero?
+        end
+
+        ##
+        # Returns an "effective" exit code, which is always an integer if the
+        # process has terminated for any reason. In general, this code will be:
+        #
+        # * The same as {#exit_code} if the process terminated normally with an
+        #   exit code,
+        # * The convention of `128+signalnum` if the process terminated due to
+        #   a signal,
+        # * The convention of 126 if the process could not start due to lack of
+        #   execution permissions,
+        # * The convention of 127 if the process could not start because the
+        #   command was not recognized or could not be found, or
+        # * An undefined value between 1 and 255 for other failures.
+        #
+        # Note that the normal exit code and signal number cases are stable,
+        # but any other cases are subject to change on future releases.
+        #
+        # @return [Integer]
+        #
+        def effective_code
+          code = exit_code
+          return code unless code.nil?
+          code = signal_code
+          return code + 128 unless code.nil?
+          case exception
+          when ::Errno::ENOENT
+            127
+          else
+            # This is the intended result for ENOEXEC/EACCES.
+            # For now, any other error (e.g. EBADARCH on MacOS) will also map
+            # to this result. We can change this in the future since the
+            # documentation explicitly allows it.
+            126
+          end
         end
 
         ##
