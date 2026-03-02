@@ -475,30 +475,32 @@ module Toys
           def run
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               loaded_gem_versions = init_bundle_or_gems
-
-              ruby_args = []
-              ruby_args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
-              ruby_args << "-w" if warnings
-              ruby_args << "-e" << ruby_code(loaded_gem_versions)
-
-              ruby_args << "--"
-              ruby_args << "--options" << rspec_options if rspec_options
-              ruby_args << "--order" << order if order
-              ruby_args << "--format" << format if format
-              ruby_args << "--out" << out if out
-              ruby_args << "--backtrace" if backtrace
-              ruby_args << "--pattern" << pattern
-              ruby_args << "--exclude-pattern" << exclude_pattern if exclude_pattern
-              ruby_args << "--example" << example if example
-              ruby_args << "--tag" << tag if tag
-              ruby_args.concat(files)
-
-              result = exec_ruby(ruby_args)
+              result = exec_ruby(ruby_args(loaded_gem_versions))
               if result.error?
                 logger.error("RSpec failed!")
                 exit(result.exit_code)
               end
             end
+          end
+
+          # @private
+          def ruby_args(loaded_gem_versions) # rubocop:disable Metrics/AbcSize
+            args = []
+            args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
+            args << "-w" if warnings
+            args << "-e" << ruby_code(loaded_gem_versions)
+            args << "--"
+            args << "--options" << rspec_options if rspec_options
+            args << "--order" << order if order
+            args << "--format" << format if format
+            args << "--out" << out if out
+            args << "--backtrace" if backtrace
+            args << "--pattern" << pattern
+            args << "--exclude-pattern" << exclude_pattern if exclude_pattern
+            args << "--example" << example if example
+            args << "--tag" << tag if tag
+            args.concat(files)
+            args
           end
 
           # @private
@@ -558,7 +560,7 @@ module Toys
           # @private
           def ruby_code(loaded_gem_versions)
             if loaded_gem_versions
-              "gem 'rspec', '= #{loaded_gem_versions["rspec"]}'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
+              "gem 'rspec', '= #{loaded_gem_versions['rspec']}'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
             else
               "require 'bundler/setup'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
             end
