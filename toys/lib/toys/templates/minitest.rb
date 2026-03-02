@@ -40,30 +40,35 @@ module Toys
       ##
       # Create the template settings for the Minitest template.
       #
+      # Note that arguments related to gem and bundler settings are defaults
+      # that can be overridden by command line arguments.
+      #
       # @param name [String] Name of the tool to create. Defaults to
       #     {DEFAULT_TOOL_NAME}.
       # @param minitest [String,Array<String>] Version requirements for
-      #     the "minitest" gem. Optional. If not provided, defaults to the
-      #     value given in {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      #     Ignored if bundler is enabled.
+      #     the "minitest" gem, used if bundler is not enabled.
+      #     Optional. If not provided, defaults to the value given in
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param gem_version [String,Array<String>] Deprecated alias for the
       #     `minitest` argument.
       # @param minitest_mock [String,Array<String>,true] Include the
-      #     "minitest-mock" gem with the given version requirements. If true
-      #     is passed, the value in {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
-      #     Ignored if bundler is enabled.
+      #     "minitest-mock" gem with the given version requirements. Used if
+      #     bundler is not enabled. If true is passed, the value in
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
       # @param minitest_focus [String,Array<String>,true] Include the
-      #     "minitest-focus" gem with the given version requirements. If true
-      #     is passed, the value in {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
-      #     Ignored if bundler is enabled.
+      #     "minitest-focus" gem with the given version requirements. Used if
+      #     bundler is not enabled. If true is passed, the value in
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
       # @param minitest_rg [String,Array<String>,true] Include the
-      #     "minitest-rg" gem with the given version requirements. If true
-      #     is passed, the value in {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
-      #     Ignored if bundler is enabled.
+      #     "minitest-rg" gem with the given version requirements. Used if
+      #     bundler is not enabled. If true is passed, the value in
+      #     {DEFAULT_GEM_VERSION_REQUIREMENTS} is used.
       # @param gems [Hash{String=>String|Array<String>|true}] Include the given
-      #     gems with the given version requirements. If true is provided for
-      #     a version, then no version requirements are imposed.
-      #     Ignored if bundler is enabled.
+      #     gems with the given version requirements. Used if bundler is not
+      #     enabled. If the version requirement is set to `true`, then a
+      #     the default in {DEFAULT_GEM_VERSION_REQUIREMENTS} is used. If there
+      #     is no default available, then no particular version requirements
+      #     are imposed.
       # @param libs [Array<String>] An array of library paths to add to the
       #     ruby require path. Defaults to {DEFAULT_LIBS}.
       # @param files [Array<String>] An array of globs indicating the test
@@ -74,10 +79,13 @@ module Toys
       # @param warnings [Boolean] If true, runs tests with Ruby warnings.
       #     Defaults to true.
       # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
-      #     enabled for this tool. If `true` or a Hash of options, bundler is
-      #     enabled. See the documentation for the
+      #     used unless enabled via command line argument. If `true` or a Hash
+      #     of options, bundler is enabled by default unless disabled via a
+      #     command line argument. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
-      #     for information on available options.
+      #     for information on available options. Note that any `:setup` option
+      #     is ignored; the bundle, if enabled, is always installed and set up
+      #     at the start of the tool execution.
       # @param mt_compat [boolean] If set to `true` or `false`, sets the
       #     `MT_COMPAT` environment variable accordingly. This may be required
       #     for certain older Minitest plugins. Optional. If not present, keeps
@@ -110,13 +118,11 @@ module Toys
         @mt_compat = mt_compat
         @context_directory = context_directory
         @gem_dependencies = {}
-        unless @bundler
-          update_version_spec("minitest", minitest || gem_version || true)
-          update_version_spec("minitest-mock", minitest_mock)
-          update_version_spec("minitest-focus", minitest_focus)
-          update_version_spec("minitest-rg", minitest_rg)
-          update_gems(gems) if gems
-        end
+        update_version_spec("minitest", minitest || gem_version)
+        update_version_spec("minitest-mock", minitest_mock)
+        update_version_spec("minitest-focus", minitest_focus)
+        update_version_spec("minitest-rg", minitest_rg)
+        update_gems(gems) if gems
       end
 
       ##
@@ -128,72 +134,69 @@ module Toys
       attr_writer :name
 
       ##
-      # Update gems and version requirements.
-      # Ignored if bundler is enabled.
+      # Update the gems and version requirements that are used if bundler is
+      # not enabled.
       #
       # @param gems [Hash{String=>String|Array<String>|true|false|nil}]
       #     A mapping from gem name to either the version requirements,
-      #     `true` to indicate no particular version restrictions, or `false`
-      #     or `nil` to remove the gem from the list. (Note that it is not
-      #     possible to remove the `minitest` gem, and setting it to `nil`
-      #     will simply restore the default version restrictions.)
+      #     `true` to use a default, or `false` or `nil` to remove the gem from
+      #     the list. (Note that it is not possible to remove the `minitest`
+      #     gem, and setting it to `nil` will simply restore the default
+      #     version requirements.)
       # @return [self]
       #
       def update_gems(gems)
-        unless @bundler
-          gems.each do |gem_name, version_requirements|
-            update_version_spec(gem_name, version_requirements)
-          end
+        gems.each do |gem_name, version_requirements|
+          update_version_spec(gem_name, version_requirements)
         end
         self
       end
 
       ##
-      # Version requirements for the minitest gem.
+      # Version requirements for the minitest gem. Used if bundler is not used.
       # If set to `true` or `nil`, a default version requirement is used.
-      # Ignored if bundler is enabled.
       #
       # @param value [String,Array<String>,true,nil]
       #
       def minitest=(value)
-        update_version_spec("minitest", value || true) unless @bundler
+        update_version_spec("minitest", value)
       end
       alias gem_version= minitest=
 
       ##
-      # Version requirements for the minitest-mock gem.
+      # Version requirements for the minitest-mock gem. Used if bundler is not
+      # used.
       # If set to `true`, a default version requirement is used.
       # If set to `nil`, minitest-mock is removed from the gem dependencies.
-      # Ignored if bundler is enabled.
       #
       # @param value [String,Array<String>,true,nil]
       #
       def minitest_mock=(value)
-        update_version_spec("minitest-mock", value) unless @bundler
+        update_version_spec("minitest-mock", value)
       end
 
       ##
-      # Version requirements for the minitest-focus gem.
+      # Version requirements for the minitest-focus gem. Used if bundler is not
+      # used.
       # If set to `true`, a default version requirement is used.
       # If set to `nil`, minitest-focus is removed from the gem dependencies.
-      # Ignored if bundler is enabled.
       #
       # @param value [String,Array<String>,true,nil]
       #
       def minitest_focus=(value)
-        update_version_spec("minitest-focus", value) unless @bundler
+        update_version_spec("minitest-focus", value)
       end
 
       ##
-      # Version requirements for the minitest-rg gem.
+      # Version requirements for the minitest-rg gem. Used if bundler is not
+      # used.
       # If set to `true`, a default version requirement is used.
       # If set to `nil`, minitest-rg is removed from the gem dependencies.
-      # Ignored if bundler is enabled.
       #
       # @param value [String,Array<String>,true,nil]
       #
       def minitest_rg=(value)
-        update_version_spec("minitest-rg", value) unless @bundler
+        update_version_spec("minitest-rg", value)
       end
 
       ##
@@ -314,9 +317,7 @@ module Toys
       ##
       # @private
       #
-      def gem_dependencies
-        @bundler ? nil : @gem_dependencies
-      end
+      attr_reader :gem_dependencies
 
       ##
       # @private
@@ -343,39 +344,169 @@ module Toys
       # @private
       #
       def bundler_settings
-        if @bundler && !@bundler.is_a?(::Hash)
-          {}
+        if @bundler.is_a?(::Hash)
+          @bundler.merge({setup: :manual})
         else
-          @bundler
+          {setup: :manual}
         end
+      end
+
+      ##
+      # @private
+      #
+      def default_to_bundler?
+        @bundler ? true : false
       end
 
       on_expand do |template|
         tool(template.name) do
-          desc "Run minitest on the current project."
+          desc("Run minitest-based tests for the current project.")
+
+          long_desc(
+            "Run minitest-based tests for the current project.",
+            "",
+            "By default, executes tests in the files that match the following patterns:"
+          )
+          template.files.each do |pattern|
+            long_desc(["  - `#{pattern}`"])
+          end
+          long_desc(
+            "To override this list, pass the paths to the test files to run as command line arguments." \
+            " You can also filter the test names to run using the --include and --exclude arguments.",
+            ""
+          )
+          if template.default_to_bundler?
+            long_desc(
+              "By default, uses the project bundle to load gems needed for testing, including the minitest gem.",
+              "You can specify a particular Gemfile using the --gemfile argument." \
+              " Alternatively, you can disable the bundle and manually specify the gem list using the --use-gem" \
+              " and --omit-gem arguments."
+            )
+          else
+            long_desc(
+              "By default, loads the following gems with version constraints:"
+            )
+            template.gem_dependencies.each do |name, versions|
+              spec = ([name] + versions).join(", ")
+              long_desc(["  - `#{spec}`"])
+            end
+            long_desc(
+              "To alter this list, use the --use-gem and --omit-gem arguments." \
+              " Alternatively, you can use a bundle instead by passing the --gemfile argument."
+            )
+          end
 
           set_context_directory template.context_directory if template.context_directory
 
           include :exec
           include :gems
 
-          bundler_settings = template.bundler_settings
-          include :bundler, **bundler_settings if bundler_settings
+          include :bundler, **template.bundler_settings
 
-          flag :seed, "-s", "--seed SEED",
-               default: template.seed, desc: "Sets random seed."
-          flag :warnings, "-w", "--[no-]warnings",
-               default: template.warnings,
-               desc: "Turn on Ruby warnings (defaults to #{template.warnings})"
-          flag :include_name, "-i", "-n", "--include PATTERN", "--name PATTERN",
-               desc: "Filter run on /regexp/ or string."
-          flag :exclude_name, "-e", "--exclude PATTERN",
-               desc: "Exclude /regexp/ or string from run."
+          flag(:seed, "-s", "--seed SEED") do
+            default(template.seed)
+            desc("Sets random seed.")
+          end
+          flag(:warnings, "-w", "--[no-]warnings") do
+            default(template.warnings)
+            desc("Turn on Ruby warnings (defaults to #{template.warnings})")
+          end
+          flag(:include_name, "-i", "-n", "--include PATTERN", "--name PATTERN") do
+            desc("Include /regexp/ or string for run.")
+            long_desc(
+              "Include /regexp/ or string for run.",
+              "",
+              "If the argument begins and ends with slashes, it is treated as a regular expression that must" \
+              " match test names in order to run them. Otherwise, the argument is treated as the name of the" \
+              " single test to run.",
+              "This can be combined with --exclude."
+            )
+          end
+          flag(:exclude_name, "-e", "-x", "--exclude PATTERN") do
+            desc("Exclude /regexp/ or string from run.")
+            long_desc(
+              "Exclude /regexp/ or string for run.",
+              "",
+              "If the argument begins and ends with slashes, it is treated as a regular expression that will" \
+              " filter out any matching test names. Otherwise, the argument is treated as the name of the" \
+              " single test to omit.",
+              "This can be combined with --include."
+            )
+          end
+          flag(:expand_globs, "--globs", "--expand-globs") do
+            desc("Expand any literal globs in the test file arguments.")
+          end
+          flag(:preload_code, "--preload-code CODE") do
+            desc("Ruby code to execute before loading tests.")
+          end
+          flag(:override_libs, "--libs PATH") do
+            # The logic below requires this to default to nil instead of the empty array.
+            handler(:push)
+            desc("Override the test library paths.")
+            long_desc(
+              "Specifies require paths to use when running tests." \
+              " Pass this flag multiple times to include multiple paths.",
+              "",
+              "If no --libs flags are present, defaults to the following list of paths:"
+            )
+            template.libs.each do |path|
+              long_desc(["  - #{path}"])
+            end
+          end
+          flag(:gemfile_path, "--gemfile PATH", "--gemfile-path PATH") do
+            desc("Bundle with the given gemfile, overriding any static setting.")
+            long_desc(
+              "Bundle with the given gemfile, overriding any static setting.",
+              "",
+              "You must provide the path to the Gemfile to use. This may override any default project Gemfile.",
+              "This flag is mutually exclusive with --use-gem and --omit-gem."
+            )
+          end
+          flag(:override_use_gems, "--use-gem SPEC") do
+            default([])
+            handler(:push)
+            desc("Install the given gem with version requirements, overriding any static setting.")
+            long_desc(
+              "Install the given gem with version requirements, overriding any static setting.",
+              "",
+              "The format is the gem name followed by zero or more version requirements, separated by commas.",
+              "For example:",
+              ["  --use-gem minitest-focus,~>1.4"],
+              "",
+              "Each --use-gem flag specifies a single gem." \
+              " You can provide any number of --use-gem flags to specify any number of gems.",
+              "",
+              "This flag can be used in conjunction with --omit-gem, but is mutually exclusive with --gemfile."
+            )
+          end
+          flag(:override_omit_gems, "--omit-gem NAME") do
+            default([])
+            handler(:push)
+            desc("Do not install the given gem, overriding any static setting.")
+            long_desc(
+              "Do not install the given gem, overriding any static setting.",
+              "",
+              "Each --omit-gem flag omits a single gem." \
+              " You can provide any number of --omit-gem flags to specifically omit any number of gems.",
+              "",
+              "This flag can be used in conjunction with --use-gem, but is mutually exclusive with --gemfile."
+            )
+          end
 
-          remaining_args :tests,
-                         complete: :file_system,
-                         desc: "Paths to the tests to run (defaults to all tests)"
+          remaining_args(:tests) do
+            complete(:file_system)
+            desc("Paths to the test files to load (defaults to all tests)")
+            long_desc(
+              "Paths to the test files to load.",
+              "",
+              "Defaults to all files matching the following patterns:"
+            )
+            template.files.each do |pattern|
+              long_desc(["  - `#{pattern}`"])
+            end
+          end
 
+          static :default_to_bundler, template.default_to_bundler?
           static :gem_dependencies, template.gem_dependencies
           static :libs, template.libs
           static :files, template.files
@@ -385,10 +516,12 @@ module Toys
           # @private
           def run
             require "tempfile"
-            loaded_gem_versions = load_gems
             ::Dir.chdir(context_directory || ::Dir.getwd) do
-              ::Tempfile.create(["toys_minitest_", ".rb"]) do |script_file|
-                script_file.write(ruby_script(loaded_gem_versions))
+              loaded_gem_versions = init_bundle_or_gems
+              found_tests = expand_tests
+              validate_tests(found_tests)
+              ::Tempfile.create(["toys-minitest-script-", ".rb"]) do |script_file|
+                script_file.write(ruby_script(loaded_gem_versions, found_tests))
                 script_file.close
                 result = exec_ruby(ruby_args(script_file.path), env: ruby_env)
                 if result.error?
@@ -400,18 +533,57 @@ module Toys
           end
 
           # @private
+          def init_bundle_or_gems
+            if gemfile_path && (!override_use_gems.empty? || !override_omit_gems.empty?)
+              logger.error("--gemfile is mutually exclusive with --use-gem and --omit-gem")
+              exit(1)
+            end
+            if gemfile_path ||
+               (default_to_bundler && override_use_gems.empty? && override_omit_gems.empty?)
+              bundler_setup(gemfile_path: gemfile_path)
+              nil
+            else
+              load_gems
+            end
+          end
+
+          # @private
           def load_gems
-            return nil unless gem_dependencies
-            gem_dependencies.each do |gem_name, version_requirements|
+            updated_dependencies = updated_gem_dependencies
+            updated_dependencies.each do |gem_name, version_requirements|
               next if gem_name == "minitest"
               gem gem_name, *version_requirements
             end
-            gem "minitest", *gem_dependencies["minitest"]
+            gem "minitest", *updated_dependencies["minitest"]
             loaded_versions = {}
             ::Gem.loaded_specs.each_value do |spec|
-              loaded_versions[spec.name] = spec.version.to_s if gem_dependencies.key?(spec.name)
+              loaded_versions[spec.name] = spec.version.to_s if updated_dependencies.key?(spec.name)
             end
             loaded_versions
+          end
+
+          # @private
+          def updated_gem_dependencies
+            dependencies = gem_dependencies.dup
+            override_use_gems.each do |spec|
+              name, *versions = spec.strip.split(/\s*,\s*/)
+              if name.to_s.empty?
+                logger.error("Bad format for --use-gem: #{spec.inspect}")
+                exit(1)
+              end
+              versions.delete_if(&:empty?)
+              versions = ::Toys::Templates::Minitest::DEFAULT_GEM_VERSION_REQUIREMENTS[name] || [] if versions.empty?
+              dependencies[name] = versions
+            end
+            override_omit_gems.each do |name|
+              name = name.strip
+              if name == "minitest"
+                logger.warn("You cannot omit the minitest gem. Ignoring --omit-gem=minitest.")
+              else
+                dependencies.delete(name)
+              end
+            end
+            dependencies
           end
 
           # @private
@@ -427,7 +599,7 @@ module Toys
           end
 
           # @private
-          def ruby_script(loaded_gem_versions)
+          def ruby_script(loaded_gem_versions, found_tests)
             lines = []
             if loaded_gem_versions
               loaded_gem_versions.each do |gem_name, gem_version|
@@ -440,22 +612,47 @@ module Toys
             ["minitest", "minitest-mock", "minitest-focus", "minitest-rg"].each do |gem_name|
               lines << "require #{gem_name.tr('-', '/').inspect}" if loaded_gems.key?(gem_name)
             end
-            if tests.empty?
-              files.each do |pattern|
-                tests.concat(::Dir.glob(pattern))
-              end
-              tests.uniq!
-            end
             lines << "require 'minitest/autorun'"
-            lines.concat(tests.map { |path| "load #{path.inspect}" })
+            lines.append(preload_code) if preload_code
+            lines.concat(found_tests.map { |path| "load #{path.inspect}" })
             lines << ""
             lines.join("\n")
           end
 
           # @private
+          def expand_tests
+            if !tests.empty? && !expand_globs
+              tests.dup
+            else
+              all_matches = []
+              (tests.empty? ? files : tests).each do |pattern|
+                matches = ::Dir.glob(pattern)
+                logger.warn("Glob #{pattern.inspect} did not match anything") if matches.empty?
+                all_matches.concat(matches)
+              end
+              all_matches.uniq
+            end
+          end
+
+          # @private
+          def validate_tests(found_tests)
+            ok = true
+            found_tests.each do |path|
+              if ::File.file?(path) && ::File.readable?(path)
+                logger.info("Reading test: #{path}")
+              else
+                logger.error("Unable to load test: #{path}")
+                ok = false
+              end
+            end
+            exit(1) unless ok
+          end
+
+          # @private
           def ruby_args(script_path)
             args = []
-            args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
+            effective_libs = override_libs || libs
+            args << "-I#{effective_libs.join(::File::PATH_SEPARATOR)}" unless effective_libs.empty?
             args << "-w" if warnings
             args << script_path
             args << "--seed" << seed if seed
