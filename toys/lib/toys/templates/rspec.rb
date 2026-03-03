@@ -472,23 +472,27 @@ module Toys
 
           # @private
           def run
+            require "tempfile"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
               loaded_gem_versions = init_bundle_or_gems
-              result = exec_ruby(ruby_args(loaded_gem_versions))
-              if result.error?
-                logger.error("RSpec failed!")
-                exit(result.exit_code)
+              ::Tempfile.create(["toys-rspec-script-", ".rb"]) do |script_file|
+                script_file.write(ruby_script(loaded_gem_versions))
+                script_file.close
+                result = exec_ruby(ruby_args(script_file.path))
+                if result.error?
+                  logger.error("RSpec failed!")
+                  exit(result.exit_code)
+                end
               end
             end
           end
 
           # @private
-          def ruby_args(loaded_gem_versions) # rubocop:disable Metrics/AbcSize
+          def ruby_args(script_path) # rubocop:disable Metrics/AbcSize
             args = []
             args << "-I#{libs.join(::File::PATH_SEPARATOR)}" unless libs.empty?
             args << "-w" if warnings
-            args << "-e" << ruby_code(loaded_gem_versions)
-            args << "--"
+            args << script_path
             args << "--options" << rspec_options if rspec_options
             args << "--order" << order if order
             args << "--format" << format if format
@@ -557,15 +561,19 @@ module Toys
           end
 
           # @private
-          def ruby_code(loaded_gem_versions)
+          def ruby_script(loaded_gem_versions)
+            lines = []
             if loaded_gem_versions
-              parts = loaded_gem_versions.map { |gem_name, gem_version| "gem #{gem_name.inspect}, '= #{gem_version}'" }
-              parts << "require 'rspec/core'"
-              parts << "::RSpec::Core::Runner.invoke"
-              parts.join("; ")
+              loaded_gem_versions.each do |gem_name, gem_version|
+                lines << "gem #{gem_name.inspect}, '= #{gem_version}'"
+              end
             else
-              "require 'bundler/setup'; require 'rspec/core'; ::RSpec::Core::Runner.invoke"
+              lines << "require 'bundler/setup'"
             end
+            lines << "require 'rspec/core'"
+            lines << "::RSpec::Core::Runner.invoke"
+            lines << ""
+            lines.join("\n")
           end
         end
       end
