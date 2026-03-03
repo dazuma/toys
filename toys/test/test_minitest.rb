@@ -29,13 +29,13 @@ describe "minitest template" do
     end
 
     it "handles the files field" do
-      assert_equal(["test/**/test*.rb"], template.files)
+      assert_equal(["test/**/test_*.rb", "test/**/*_test.rb"], template.files)
       template.files = "test/**/*_test.rb"
       assert_equal(["test/**/*_test.rb"], template.files)
       template.files = ["test/**/test*.rb", "spec/**/test*.rb"]
       assert_equal(["test/**/test*.rb", "spec/**/test*.rb"], template.files)
       template.files = nil
-      assert_equal(["test/**/test*.rb"], template.files)
+      assert_equal(["test/**/test_*.rb", "test/**/*_test.rb"], template.files)
     end
 
     it "sets the minitest gem version" do
@@ -230,6 +230,36 @@ describe "minitest template" do
         assert_equal(1, cli.run("test"))
       end
       assert_match(/1 failure/, out)
+    end
+
+    it "finds default files" do
+      dir = cases_dir
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest
+      end
+      out, err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "-v"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+      assert_includes(err, "Reading test: test/patterns/test_foo.rb")
+      assert_includes(err, "Reading test: test/patterns/bar_test.rb")
+      assert_equal(1, err.scan(%r{Reading test: test/patterns/test_hello_test\.rb}).size)
+    end
+
+    it "warns if default globs did not match anything" do
+      dir = File.join(cases_dir, "test")
+      loader.add_block do
+        set_context_directory dir
+        expand :minitest
+      end
+      out, err = capture_subprocess_io do
+        assert_equal(0, cli.run("test", "-v"))
+      end
+      assert_match(/0 failures/, out)
+      assert_match(/0 errors/, out)
+      assert_includes(err, "No test files matched any of the configured patterns")
     end
 
     it "chooses files" do
