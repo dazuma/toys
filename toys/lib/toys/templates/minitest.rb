@@ -35,7 +35,7 @@ module Toys
       # Default set of test file globs
       # @return [Array<String>]
       #
-      DEFAULT_FILES = ["test/**/test*.rb"].freeze
+      DEFAULT_FILES = ["test/**/test_*.rb", "test/**/*_test.rb"].freeze
 
       ##
       # Create the template settings for the Minitest template.
@@ -627,9 +627,14 @@ module Toys
               all_matches = []
               (tests.empty? ? files : tests).each do |pattern|
                 matches = ::Dir.glob(pattern)
-                logger.warn("Glob #{pattern.inspect} did not match anything") if matches.empty?
+                # Warn per-pattern only from globs supplied on the command line.
+                # It's generally not actionable if ndividual globs from the
+                # static configuration don't match. That said, in this case we
+                # warn if no files at all match, and thus no tests are run.
+                logger.warn("Glob #{pattern.inspect} did not match anything") if matches.empty? && !tests.empty?
                 all_matches.concat(matches)
               end
+              logger.warn("No test files matched any of the configured patterns") if all_matches.empty? && tests.empty?
               all_matches.uniq
             end
           end
