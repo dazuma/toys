@@ -416,9 +416,18 @@ module Toys
             desc("Load files except those matching pattern.")
           end
           flag(:example, "-e", "--example STRING") do
+            default([])
+            handler(:push)
             desc("Run examples whose full nested names include STRING (may be used more than once).")
           end
+          flag(:example_matches, "-E", "--example-matches REGEX") do
+            default([])
+            handler(:push)
+            desc("Run examples whose full nested names match REGEX (may be used more than once).")
+          end
           flag(:tag, "-t", "--tag TAG") do
+            default([])
+            handler(:push)
             desc("Run examples with the specified tag, or exclude examples by adding ~ before the tag.")
           end
           flag(:gemfile_path, "--gemfile PATH", "--gemfile-path PATH") do
@@ -500,8 +509,9 @@ module Toys
             args << "--backtrace" if backtrace
             args << "--pattern" << pattern
             args << "--exclude-pattern" << exclude_pattern if exclude_pattern
-            args << "--example" << example if example
-            args << "--tag" << tag if tag
+            example.each { |val| args << "--example" << val }
+            example_matches.each { |val| args << "--example-matches" << val }
+            tag.each { |val| args << "--tag" << val }
             args.concat(files)
             args
           end

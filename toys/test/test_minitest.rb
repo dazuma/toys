@@ -360,6 +360,7 @@ describe "minitest template" do
     end
 
     it "does not load minitest-focus by default" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-without"]
@@ -370,6 +371,7 @@ describe "minitest template" do
     end
 
     it "loads minitest-focus directly" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-direct"]
@@ -381,6 +383,7 @@ describe "minitest template" do
     end
 
     it "loads minitest-focus from bundler" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-bundle"]
@@ -392,6 +395,7 @@ describe "minitest template" do
     end
 
     it "recognizes the --use-gem flag with no version" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-without", "--use-gem", "minitest-focus"]
@@ -403,6 +407,7 @@ describe "minitest template" do
     end
 
     it "recognizes the --use-gem flag with versions" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-without", "--use-gem", "minitest-focus , ~>1.4, >=1.4.1"]
@@ -414,6 +419,7 @@ describe "minitest template" do
     end
 
     it "recognizes the --omit-gem flag" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-direct", "--omit-gem", "minitest-focus"]
@@ -424,6 +430,7 @@ describe "minitest template" do
     end
 
     it "recognizes the --use-gem flag overriding default bundler" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-bundle", "--use-gem", "minitest"]
@@ -434,6 +441,7 @@ describe "minitest template" do
     end
 
     it "recognizes the --gemfile-path flag" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-without", "--gemfile-path", "Gemfile"]
@@ -445,6 +453,7 @@ describe "minitest template" do
     end
 
     it "catches mutually exclusive gem arguments" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-bundle", "--gemfile-path", "Gemfile", "--use-gem", "minitest"]
@@ -455,6 +464,7 @@ describe "minitest template" do
     end
 
     it "catches bad --use-gem syntax" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-bundle", "--use-gem", ","]
@@ -465,6 +475,7 @@ describe "minitest template" do
     end
 
     it "ignores --omit-gem=minitest" do
+      skip unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/focus"
         args = [Toys.executable_path, "test-direct", "--omit-gem", "minitest"]
