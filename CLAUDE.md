@@ -6,26 +6,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Toys is a configurable command line tool framework for Ruby. It is a **monorepo** containing multiple gems:
 
-- **toys-core** (`toys-core/`) - The framework library providing the DSL, argument parsing, middleware, and tool loading infrastructure
-- **toys** (`toys/`) - The main CLI executable gem that depends on toys-core
-- **toys-release** (`toys-release/`) - Release automation system for GitHub Actions
-- **common-tools** (`common-tools/`) - Shared development tooling helpers (not a gem)
+- **toys-core** (`toys-core/`) - The framework library providing the DSL, argument parsing, middleware, and tool loading infrastructure. Used by the `toys` gem, but can also be used to write a standalone executable.
+- **toys** (`toys/`) - The main CLI executable gem that provides the `toys` executable, also providing a set of common tool templates and some built-in tools. Depends on toys-core.
+- **toys-release** (`toys-release/`) - Release automation system for GitHub Actions.
+- **common-tools** (`common-tools/`) - Shared development tooling helpers (not a gem).
 
 ## Development Commands
 
 Toys is **self-hosted** — it uses itself for all build, test, and CI tasks via the `./toys-dev` bootstrap script (which runs the local development copy).
 
+To run CI/test tasks across all gems, run `./toys-dev` from the repository root. For example:
+
 ```bash
-./toys-dev test                      # Run all tests across all gems
-./toys-dev rubocop                   # Run RuboCop for all gems
-./toys-dev ci                        # Run full CI (tests, rubocop, yardoc, build)
-./toys-dev yardoc                    # Generate YARD documentation
-./toys-dev build                     # Build gems
+./toys-dev ci                  # Run all CI tasks (test/rubocop/build/yardoc) for all gems
+./toys-dev test                # Run just tests for all gems, omitting integration tests
+./toys-dev test --integration  # Run just tests for all gems, including integration tests
+./toys-dev rubocop             # Run just RuboCop for all gems
 ```
 
-See each subdirectory's CLAUDE.md for examples of how to use the `--only` flag to target specific gems and CI jobs.
+To run only the CI/test tasks for a specific gem, run toys-dev from that gem's subdirectory. See the gem subdirectory's CLAUDE.md for gem-specific examples.
 
-Use `--help` for detailed usage information about any `toys-dev` development command. For example `./toys-dev test --help`.
+Each toys-dev command has a manpage describing all available options. For example:
+
+```bash
+./toys-dev ci --help  # Display a manpage showing all available options for toys-dev ci
+```
 
 ## Code Style
 
@@ -45,6 +50,7 @@ Use `--help` for detailed usage information about any `toys-dev` development com
 
 ## General coding instructions
 
-- Use red-green test-driven development when making changes, and git commit after every green step, unless instructed otherwise.
+- Unless instructed otherwise, always use red-green test-driven development when making code changes. For each step in a coding task, first write tests and confirm they fail. Then write code to make the tests pass.
+- Unless instructed otherwise, always git commit after a step is complete and the tests pass.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
-- Avoid making changes to files under `toys-release/` in the same commit as changes to files under either `toys/` or `toys-core/`.
+- Avoid making changes to multiple gems in the same commit.
