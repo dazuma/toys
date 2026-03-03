@@ -4,9 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-toys-release is a Ruby library release automation system using GitHub Actions and Toys. It interprets conventional commit messages to automate changelog generation and version bumping based on semantic versioning, and uses GitHub pull requests for release approval. It can tag GitHub releases, push gems to RubyGems, and publish documentation to gh-pages. It depends on `toys-core ~> 0.17`.
+toys-release is a Ruby library release automation system using GitHub Actions and Toys. It interprets conventional commit messages to automate changelog generation and version bumping based on semantic versioning, and uses GitHub pull requests for release approval. It can tag GitHub releases, push gems to RubyGems, and publish documentation to gh-pages. It depends on `toys-core ~> 0.19`.
 
 ## Development Commands
+
+From within the `toys-release` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
+
+```bash
+../toys-dev ci                  # Run all CI tasks for this gem
+../toys-dev test                # Run just the tests for this gem, omitting integration tests
+../toys-dev test --integration  # Run just the tests for this gem, including integration tests
+../toys-dev rubocop             # Run just RuboCop for this gem
+../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
+```
+
+To run individual test files directly, pass them as positional command line arguments:
+
+```bash
+../toys-dev test toys/.test/test_change_set.rb toys/.test/test_repository.rb   # Run only the tests in the given files
+```
+
 
 From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
 

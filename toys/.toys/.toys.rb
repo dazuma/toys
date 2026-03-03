@@ -23,11 +23,16 @@ tool "test" do
 end
 
 tool "test-builtins" do
+  flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
+  remaining_args :files
+
+  include :exec
+
   def run
     ::Dir.chdir(context_directory)
-    code = cli.run("system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg",
-                   verbosity: verbosity)
-    exit(code)
+    ::ENV["TOYS_TEST_INTEGRATION"] = "true" if integration_tests
+    cmd = ["system", "test", "-d", "builtins", "--minitest-focus", "--minitest-rg"] + verbosity_flags + files
+    exit(cli.run(cmd))
   end
 end
 

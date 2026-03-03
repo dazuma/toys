@@ -8,31 +8,21 @@ toys-core is the framework library underlying the Toys CLI. It provides the DSL,
 
 ## Development Commands
 
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
+From within the toys-core directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
 
 ```bash
-./toys-dev test --only --core         # Run toys-core tests
-./toys-dev rubocop --only --core      # Run RuboCop for toys-core
-./toys-dev ci --only --test-core      # Run toys-core tests via CI runner
-./toys-dev ci --only --rubocop-core   # Run toys-core RuboCop via CI runner
-./toys-dev ci --only --yard-core      # Run YARD doc generation check
+../toys-dev ci                  # Run all CI tasks for this gem
+../toys-dev test                # Run just tests for this gem, omitting integration tests
+../toys-dev test --integration  # Run just tests for this gem, including integration tests
+../toys-dev rubocop             # Run just RuboCop for this gem
+../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
 ```
 
-From **within the toys-core directory**, using the toys-dev script:
+To run individual test files directly, pass them as positional command line arguments:
 
 ```bash
-../toys-dev test                      # Run all toys-core tests
-../toys-dev test --integration        # Include integration tests
-../toys-dev rubocop                   # Run RuboCop
-../toys-dev yardoc                    # Generate YARD docs (fails on warnings/undocumented objects)
-../toys-dev build                     # Build the gem
-```
-
-Running individual test files directly:
-
-```bash
-ruby -Ilib -Itest test/test_cli.rb
-ruby -Ilib -Itest test/test_loader.rb
+../toys-dev test test/test_cli.rb test/test_loader.rb   # Run only the tests in the given files
+../toys-dev test --integration test/test_cli.rb test/test_loader.rb   # Include integration tests
 ```
 
 ## Source Architecture

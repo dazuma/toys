@@ -8,31 +8,22 @@ This is the **toys** gem — the main CLI executable built on the toys-core fram
 
 ## Development Commands
 
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
+From within the `toys` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
 
 ```bash
-./toys-dev test --only --toys            # Run toys gem tests
-./toys-dev test --only --builtins        # Run builtin command tests
-./toys-dev rubocop --only --toys         # Run RuboCop for toys
-./toys-dev ci --only --test-toys         # Run toys tests via CI runner
-./toys-dev ci --only --test-builtins     # Run builtin tests via CI runner
+../toys-dev ci                  # Run all CI tasks for this gem
+../toys-dev test                # Run just the library tests for this gem, omitting integration tests
+../toys-dev test --integration  # Run just the library tests for this gem, including integration tests
+../toys-dev test-builtins       # Run just tests of built-in tools in this gem
+../toys-dev rubocop             # Run just RuboCop for this gem
+../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
 ```
 
-From **within the toys directory**:
+To run individual test files directly, pass them as positional command line arguments:
 
 ```bash
-../toys-dev test                         # Run all toys tests
-../toys-dev test --integration           # Include integration tests
-../toys-dev test-builtins                # Run builtin command tests
-../toys-dev rubocop                      # Run RuboCop
-../toys-dev yardoc                       # Generate YARD docs (copies core-docs first)
-../toys-dev build                        # Build the gem
-```
-
-Running individual test files directly:
-
-```bash
-ruby -Ilib -I../toys-core/lib -Itest test/test_testing.rb
+../toys-dev test test/test_minitest.rb test/test_rspec.rb   # Run only the library tests in the given files
+../toys-dev test-builtins builtins/.test/test_general.rb   # Run only the built-in tool tests in the given file
 ```
 
 ## Source Structure
@@ -99,4 +90,5 @@ Each template has a corresponding test file in `test/test_<template>.rb`.
 - Tests in `test/` use Minitest spec style (`describe`/`it`) with assertions
 - Test fixtures in `test-data/` organized by template (minitest-cases, rake-dirs, rspec-cases, etc.)
 - Builtin tool tests live in `builtins/.test/` and `builtins/system/.test/`, run separately via `test-builtins`
+- Integration tests are gated behind `TOYS_TEST_INTEGRATION=true`
 - The YARD build copies toys-core source into `core-docs/` for cross-referencing; the `yardoc-test` tool verifies that optimized and unoptimized builds produce identical output
