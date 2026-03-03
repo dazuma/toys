@@ -33,6 +33,7 @@ describe Toys::Utils::CompletionEngine do
         def run; end
       end
       tool "two" do
+        optional_arg :path, complete: :file_system
         def run; end
       end
       tool "three" do
@@ -66,148 +67,152 @@ describe Toys::Utils::CompletionEngine do
     end
 
     it "completes empty input" do
-      result = completion.run_internal("toys ")
-      assert_equal(["five ", "one ", "three ", "two "], result)
+      _qt, candidates = completion.run_internal("toys ")
+      assert_equal(["five", "one", "three", "two"], candidates.map(&:string))
     end
 
     it "completes t" do
-      result = completion.run_internal("toys t")
-      assert_equal(["three ", "two "], result)
+      _qt, candidates = completion.run_internal("toys t")
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "completes tw" do
-      result = completion.run_internal("toys tw")
-      assert_equal(["two "], result)
+      _qt, candidates = completion.run_internal("toys tw")
+      assert_equal(["two"], candidates.map(&:string))
     end
 
     it "completes key=t" do
-      result = completion.run_internal("toys key=t")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys key=t")
+      assert_equal([], candidates)
     end
 
     it "completes subtool" do
-      result = completion.run_internal("toys three ")
-      assert_equal(["four "], result)
+      _qt, candidates = completion.run_internal("toys three ")
+      assert_equal(["four"], candidates.map(&:string))
     end
 
     it "completes subtool with colon" do
-      result = completion.run_internal("toys three:")
-      assert_equal(["four "], result)
+      _qt, candidates = completion.run_internal("toys three:")
+      assert_equal(["four"], candidates.map(&:string))
     end
 
     it "completes subtool with period" do
-      result = completion.run_internal("toys three.")
-      assert_equal(["three.four "], result)
+      _qt, candidates = completion.run_internal("toys three.")
+      assert_equal(["three.four"], candidates.map(&:string))
     end
 
     it "does not complete subtool with slash" do
-      result = completion.run_internal("toys three/")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys three/")
+      assert_equal([], candidates)
     end
 
     it "completes flag names and first arg" do
-      result = completion.run_internal("toys one ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
+      _qt, candidates = completion.run_internal("toys one ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes first arg with prefix" do
-      result = completion.run_internal("toys one key=")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one key=")
+      assert_equal([], candidates)
     end
 
     it "completes flag names only" do
-      result = completion.run_internal("toys one --")
-      assert_equal(["--hello ", "--ruby ", "--world "], result)
+      _qt, candidates = completion.run_internal("toys one --")
+      assert_equal(["--hello", "--ruby", "--world"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg" do
-      result = completion.run_internal("toys one x ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "k ", "n "], result)
+      _qt, candidates = completion.run_internal("toys one x ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg with a valid prefix" do
-      result = completion.run_internal("toys one x pre=")
-      assert_equal(["k ", "n "], result)
+      _qt, candidates = completion.run_internal("toys one x pre=")
+      assert_equal(["k", "n"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg with an invalid prefix" do
-      result = completion.run_internal("toys one x PRE=")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one x PRE=")
+      assert_equal([], candidates)
     end
 
     it "completes flag names and remaining arg" do
-      result = completion.run_internal("toys one x y z ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "aar ", "ooka "], result)
+      _qt, candidates = completion.run_internal("toys one x y z ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "aar", "ooka"], candidates.map(&:string))
     end
 
     it "completes after flag with no argument" do
-      result = completion.run_internal("toys one --hello ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
+      _qt, candidates = completion.run_internal("toys one --hello ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument" do
-      result = completion.run_internal("toys one --world ")
-      assert_equal(["building ", "news "], result)
+      _qt, candidates = completion.run_internal("toys one --world ")
+      assert_equal(["building", "news"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument and =" do
-      result = completion.run_internal("toys one --world=")
-      assert_equal(["building ", "news "], result)
+      _qt, candidates = completion.run_internal("toys one --world=")
+      assert_equal(["building", "news"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument and = with prefixed value" do
-      result = completion.run_internal("toys one --world=key=b")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one --world=key=b")
+      assert_equal([], candidates)
     end
 
     it "completes empty string after flag with optional argument" do
-      result = completion.run_internal("toys one --ruby ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "gems ", "tuesday "], result)
+      _qt, candidates = completion.run_internal("toys one --ruby ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "gems", "tuesday"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with optional argument and =" do
-      result = completion.run_internal("toys one --ruby=")
-      assert_equal(["gems ", "tuesday "], result)
+      _qt, candidates = completion.run_internal("toys one --ruby=")
+      assert_equal(["gems", "tuesday"], candidates.map(&:string))
     end
 
     it "completes apparent flag after flag with optional argument" do
-      result = completion.run_internal("toys one --ruby -")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w "], result)
+      _qt, candidates = completion.run_internal("toys one --ruby -")
+      assert_equal(["--hello", "--ruby", "--world", "-w"], candidates.map(&:string))
     end
 
     it "completes after flag with its argument" do
-      result = completion.run_internal("toys one --ruby together ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball "], result)
+      _qt, candidates = completion.run_internal("toys one --ruby together ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes after flag ender" do
-      result = completion.run_internal("toys one -- ")
-      assert_equal(["lish ", "sball "], result)
+      _qt, candidates = completion.run_internal("toys one -- ")
+      assert_equal(["lish", "sball"], candidates.map(&:string))
     end
 
     it "completes for delegating tools" do
-      result = completion.run_internal("toys five ")
-      assert_equal(["--hello ", "--ruby ", "--world ", "-w ", "lish ", "sball ", "six "], result)
+      _qt, candidates = completion.run_internal("toys five ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball", "six"], candidates.map(&:string))
     end
 
     it "recognizes closed single quotes" do
-      result = completion.run_internal("toys 't'")
-      assert_equal(["'three' ", "'two' "], result)
+      quote_type, candidates = completion.run_internal("toys 't'")
+      assert_equal(:single, quote_type)
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "recognizes open single quotes" do
-      result = completion.run_internal("toys 't")
-      assert_equal(["'three' ", "'two' "], result)
+      quote_type, candidates = completion.run_internal("toys 't")
+      assert_equal(:single, quote_type)
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "recognizes closed double quotes" do
-      result = completion.run_internal('toys "t"')
-      assert_equal(['"three" ', '"two" '], result)
+      quote_type, candidates = completion.run_internal('toys "t"')
+      assert_equal(:double, quote_type)
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "recognizes open double quotes" do
-      result = completion.run_internal('toys "t')
-      assert_equal(['"three" ', '"two" '], result)
+      quote_type, candidates = completion.run_internal('toys "t')
+      assert_equal(:double, quote_type)
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "constructs context for no active flag" do
@@ -246,6 +251,43 @@ describe Toys::Utils::CompletionEngine do
     end
   end
 
+  describe "format_candidate" do
+    it "formats a bare final candidate" do
+      candidate = Toys::Completion::Candidate.new("hello")
+      assert_equal("hello ", Toys::Utils::CompletionEngine.format_candidate(candidate, :bare))
+    end
+
+    it "formats a bare partial candidate without trailing space" do
+      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+      assert_equal("foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :bare))
+    end
+
+    it "formats a single-quoted final candidate" do
+      candidate = Toys::Completion::Candidate.new("hello")
+      assert_equal("'hello' ", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
+    end
+
+    it "formats a single-quoted partial candidate" do
+      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+      assert_equal("'foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
+    end
+
+    it "formats a double-quoted final candidate" do
+      candidate = Toys::Completion::Candidate.new("hello")
+      assert_equal('"hello" ', Toys::Utils::CompletionEngine.format_candidate(candidate, :double))
+    end
+
+    it "formats a double-quoted partial candidate" do
+      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+      assert_equal("\"foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :double))
+    end
+
+    it "falls back to bare if candidate contains a single quote in single-quoted context" do
+      candidate = Toys::Completion::Candidate.new("it's")
+      assert_equal("it\\'s ", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
+    end
+  end
+
   describe "for zsh" do
     let(:completion) {
       @context = nil
@@ -258,139 +300,139 @@ describe Toys::Utils::CompletionEngine do
     end
 
     it "completes empty input" do
-      result = completion.run_internal("toys ")
-      assert_equal(["five", "one", "three", "two"], result.map(&:string))
-      assert(result.none?(&:partial?))
+      _qt, candidates = completion.run_internal("toys ")
+      assert_equal(["five", "one", "three", "two"], candidates.map(&:string))
+      assert(candidates.none?(&:partial?))
     end
 
     it "completes t" do
-      result = completion.run_internal("toys t")
-      assert_equal(["three", "two"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys t")
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "completes tw" do
-      result = completion.run_internal("toys tw")
-      assert_equal(["two"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys tw")
+      assert_equal(["two"], candidates.map(&:string))
     end
 
     it "completes key=t" do
-      result = completion.run_internal("toys key=t")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys key=t")
+      assert_equal([], candidates)
     end
 
     it "completes subtool" do
-      result = completion.run_internal("toys three ")
-      assert_equal(["four"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys three ")
+      assert_equal(["four"], candidates.map(&:string))
     end
 
     it "completes subtool with colon" do
-      result = completion.run_internal("toys three:")
-      assert_equal(["four"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys three:")
+      assert_equal(["four"], candidates.map(&:string))
     end
 
     it "completes subtool with period" do
-      result = completion.run_internal("toys three.")
-      assert_equal(["three.four"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys three.")
+      assert_equal(["three.four"], candidates.map(&:string))
     end
 
     it "does not complete subtool with slash" do
-      result = completion.run_internal("toys three/")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys three/")
+      assert_equal([], candidates)
     end
 
     it "completes flag names and first arg" do
-      result = completion.run_internal("toys one ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes first arg with prefix" do
-      result = completion.run_internal("toys one key=")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one key=")
+      assert_equal([], candidates)
     end
 
     it "completes flag names only" do
-      result = completion.run_internal("toys one --")
-      assert_equal(["--hello", "--ruby", "--world"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --")
+      assert_equal(["--hello", "--ruby", "--world"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg" do
-      result = completion.run_internal("toys one x ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one x ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg with a valid prefix" do
-      result = completion.run_internal("toys one x pre=")
-      assert_equal(["k", "n"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one x pre=")
+      assert_equal(["k", "n"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg with an invalid prefix" do
-      result = completion.run_internal("toys one x PRE=")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one x PRE=")
+      assert_equal([], candidates)
     end
 
     it "completes flag names and remaining arg" do
-      result = completion.run_internal("toys one x y z ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "aar", "ooka"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one x y z ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "aar", "ooka"], candidates.map(&:string))
     end
 
     it "completes after flag with no argument" do
-      result = completion.run_internal("toys one --hello ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --hello ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument" do
-      result = completion.run_internal("toys one --world ")
-      assert_equal(["building", "news"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --world ")
+      assert_equal(["building", "news"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument and =" do
-      result = completion.run_internal("toys one --world=")
-      assert_equal(["building", "news"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --world=")
+      assert_equal(["building", "news"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument and = with prefixed value" do
-      result = completion.run_internal("toys one --world=key=b")
-      assert_equal([], result)
+      _qt, candidates = completion.run_internal("toys one --world=key=b")
+      assert_equal([], candidates)
     end
 
     it "completes empty string after flag with optional argument" do
-      result = completion.run_internal("toys one --ruby ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "gems", "tuesday"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --ruby ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "gems", "tuesday"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with optional argument and =" do
-      result = completion.run_internal("toys one --ruby=")
-      assert_equal(["gems", "tuesday"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --ruby=")
+      assert_equal(["gems", "tuesday"], candidates.map(&:string))
     end
 
     it "completes apparent flag after flag with optional argument" do
-      result = completion.run_internal("toys one --ruby -")
-      assert_equal(["--hello", "--ruby", "--world", "-w"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --ruby -")
+      assert_equal(["--hello", "--ruby", "--world", "-w"], candidates.map(&:string))
     end
 
     it "completes after flag with its argument" do
-      result = completion.run_internal("toys one --ruby together ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one --ruby together ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], candidates.map(&:string))
     end
 
     it "completes after flag ender" do
-      result = completion.run_internal("toys one -- ")
-      assert_equal(["lish", "sball"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys one -- ")
+      assert_equal(["lish", "sball"], candidates.map(&:string))
     end
 
     it "completes for delegating tools" do
-      result = completion.run_internal("toys five ")
-      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball", "six"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys five ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball", "six"], candidates.map(&:string))
     end
 
     it "returns raw unquoted strings for single-quoted input" do
-      result = completion.run_internal("toys 't")
-      assert_equal(["three", "two"], result.map(&:string))
+      _qt, candidates = completion.run_internal("toys 't")
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "returns raw unquoted strings for double-quoted input" do
-      result = completion.run_internal('toys "t')
-      assert_equal(["three", "two"], result.map(&:string))
+      _qt, candidates = completion.run_internal('toys "t')
+      assert_equal(["three", "two"], candidates.map(&:string))
     end
 
     it "sets shell param to :zsh" do
@@ -466,6 +508,13 @@ describe Toys::Utils::CompletionEngine do
         _status, lines = capture_run("toys t")
         sep = lines.index("--")
         assert_equal([], lines[(sep + 1)..])
+      end
+
+      it "emits partials" do
+        _status, lines = capture_run("toys two li")
+        sep = lines.index("--")
+        lib = lines.index("lib/")
+        assert(lib > sep)
       end
     end
   end

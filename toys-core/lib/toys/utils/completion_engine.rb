@@ -10,9 +10,88 @@ module Toys
     #
     module CompletionEngine
       ##
+      # Base class for shell completion engines that work similar to Bash.
+      #
+      # Subclasses must implement the private methods `#shell_name` and
+      # `#output_completions`.
+      #
+      class Base
+        ##
+        # Create a completion engine.
+        #
+        # @param cli [Toys::CLI] The CLI.
+        #
+        def initialize(cli)
+          @cli = cli
+        end
+
+        ##
+        # Perform completion in the current shell environment, which must
+        # include settings for the `COMP_LINE` and `COMP_POINT` environment
+        # variables. Prints out completion candidates and returns a status code
+        # indicating the result.
+        #
+        #  *  **0** for success.
+        #  *  **1** if completion failed.
+        #  *  **2** if the environment is incorrect (e.g. expected environment
+        #     variables not found)
+        #
+        # @return [Integer] status code
+        #
+        def run
+          return 2 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
+          line = ::ENV["COMP_LINE"].to_s
+          point = ::ENV["COMP_POINT"].to_i
+          point = line.length if point.negative?
+          line = line[0, point]
+          result = run_internal(line)
+          if result
+            output_completions(*result)
+            0
+          else
+            1
+          end
+        end
+
+        ##
+        # Internal completion method designed for testing.
+        # Returns `[quote_type, Array<Toys::Completion::Candidate>]`, or `nil`
+        # if the line cannot be parsed (e.g. the executable name is missing).
+        #
+        # @private
+        #
+        def run_internal(line)
+          words = CompletionEngine.split(line)
+          quote_type, last = words.pop
+          return nil unless words.shift
+          words.map! { |_type, word| word }
+          prefix = ""
+          if (match = /\A(.*[=:])(.*)\z/.match(last))
+            prefix = match[1]
+            last = match[2]
+          end
+          context = Completion::Context.new(
+            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
+            params: { shell: shell_name, quote_type: quote_type }
+          )
+          [quote_type, @cli.completion.call(context).uniq.sort]
+        end
+
+        private
+
+        def shell_name
+          raise ::NotImplementedError
+        end
+
+        def output_completions(_quote_type, _candidates)
+          raise ::NotImplementedError
+        end
+      end
+
+      ##
       # A completion engine for bash.
       #
-      class Bash
+      class Bash < Base
         ##
         # Create a bash completion engine.
         #
@@ -20,128 +99,35 @@ module Toys
         #
         def initialize(cli)
           require "shellwords"
-          @cli = cli
+          super
         end
 
-        ##
-        # Perform completion in the current shell environment, which must
-        # include settings for the `COMP_LINE` and `COMP_POINT` environment
-        # variables. Prints out completion candidates, one per line, and
-        # returns a status code indicating the result.
-        #
-        #  *  **0** for success.
-        #  *  **1** if completion failed.
-        #  *  **2** if the environment is incorrect (e.g. expected environment
-        #     variables not found)
-        #
-        # @return [Integer] status code
-        #
-        def run
-          return 2 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
-          line = ::ENV["COMP_LINE"].to_s
-          point = ::ENV["COMP_POINT"].to_i
-          point = line.length if point.negative?
-          line = line[0, point]
-          completions = run_internal(line)
-          if completions
-            completions.each { |completion| puts completion }
-            0
-          else
-            1
-          end
+        private
+
+        def shell_name
+          :bash
         end
 
-        ##
-        # Internal completion method designed for testing.
-        #
-        # @private
-        #
-        def run_internal(line)
-          words = CompletionEngine.split(line)
-          quote_type, last = words.pop
-          return nil unless words.shift
-          words.map! { |_type, word| word }
-          prefix = ""
-          if (match = /\A(.*[=:])(.*)\z/.match(last))
-            prefix = match[1]
-            last = match[2]
-          end
-          context = Completion::Context.new(
-            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
-            params: {shell: :bash, quote_type: quote_type}
-          )
-          candidates = @cli.completion.call(context)
-          candidates.uniq.sort.map do |candidate|
-            CompletionEngine.format_candidate(candidate, quote_type)
-          end
+        def output_completions(quote_type, candidates)
+          candidates.each { |c| puts CompletionEngine.format_candidate(c, quote_type) }
         end
       end
 
       ##
       # A completion engine for zsh.
       #
-      class Zsh
-        ##
-        # Create a zsh completion engine.
-        #
-        # @param cli [Toys::CLI] The CLI.
-        #
-        def initialize(cli)
-          @cli = cli
+      class Zsh < Base
+        private
+
+        def shell_name
+          :zsh
         end
 
-        ##
-        # Perform completion in the current shell environment, which must
-        # include settings for the `COMP_LINE` and `COMP_POINT` environment
-        # variables. Prints out completion candidates in two sections separated
-        # by a `--` line: final completions first, then partial completions.
-        # Returns a status code indicating the result.
-        #
-        #  *  **0** for success.
-        #  *  **1** if completion failed.
-        #  *  **2** if the environment is incorrect (e.g. expected environment
-        #     variables not found)
-        #
-        # @return [Integer] status code
-        #
-        def run
-          return 2 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
-          line = ::ENV["COMP_LINE"].to_s
-          point = ::ENV["COMP_POINT"].to_i
-          point = line.length if point.negative?
-          line = line[0, point]
-          completions = run_internal(line)
-          if completions
-            finals, partials = completions.partition(&:final?)
-            finals.each { |c| puts c.string }
-            puts "--"
-            partials.each { |c| puts c.string }
-            0
-          else
-            1
-          end
-        end
-
-        ##
-        # Internal completion method designed for testing.
-        #
-        # @private
-        #
-        def run_internal(line)
-          words = CompletionEngine.split(line)
-          quote_type, last = words.pop
-          return nil unless words.shift
-          words.map! { |_type, word| word }
-          prefix = ""
-          if (match = /\A(.*[=:])(.*)\z/.match(last))
-            prefix = match[1]
-            last = match[2]
-          end
-          context = Completion::Context.new(
-            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
-            params: { shell: :zsh, quote_type: quote_type }
-          )
-          @cli.completion.call(context).uniq.sort
+        def output_completions(_quote_type, candidates)
+          finals, partials = candidates.partition(&:final?)
+          finals.each { |c| puts c.string }
+          puts "--"
+          partials.each { |c| puts c.string }
         end
       end
 
@@ -171,6 +157,7 @@ module Toys
         # @private
         #
         def format_candidate(candidate, quote_type)
+          require "shellwords"
           str = candidate.to_s
           partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
           quote_type = nil if candidate.string.include?("'") && quote_type == :single
