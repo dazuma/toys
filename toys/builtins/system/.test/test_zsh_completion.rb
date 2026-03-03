@@ -17,6 +17,30 @@ describe "toys system zsh-completion" do
     assert_equal("    toys system zsh-completion - Zsh tab completion for Toys", output_lines[1])
   end
 
+  describe "install" do
+    it "sources the completion script file" do
+      result = toys_exec_tool(["system", "zsh-completion", "install"])
+      assert_match(%r{^source .*/share/zsh-completion\.sh toys$}, result.captured_out)
+    end
+
+    it "sources the completion script file with an alias name" do
+      result = toys_exec_tool(["system", "zsh-completion", "install", "myalias"])
+      assert_match(%r{^source .*/share/zsh-completion\.sh myalias$}, result.captured_out)
+    end
+  end
+
+  describe "remove" do
+    it "sources the completion script file" do
+      result = toys_exec_tool(["system", "zsh-completion", "remove"])
+      assert_match(%r{^source .*/share/zsh-completion-remove\.sh toys$}, result.captured_out)
+    end
+
+    it "sources the completion script file with an alias name" do
+      result = toys_exec_tool(["system", "zsh-completion", "remove", "myalias"])
+      assert_match(%r{^source .*/share/zsh-completion-remove\.sh myalias$}, result.captured_out)
+    end
+  end
+
   describe "eval" do
     def capture_completion(line)
       env = { "COMP_LINE" => line, "COMP_POINT" => "-1", "TOYS_DEV" => "true" }

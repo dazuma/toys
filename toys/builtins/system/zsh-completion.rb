@@ -18,6 +18,56 @@ long_desc \
   "The \"eval\" tool is the actual completion command invoked by zsh when it needs to" \
     " complete a toys command line. You shouldn't need to invoke it directly."
 
+tool "install" do
+  desc "Install zsh tab completion"
+
+  long_desc \
+    "Outputs a command to set up Toys tab completion in the current zsh shell.",
+    "",
+    "To use, execute the following line in a zsh shell, or include it in an init file" \
+      " such as your .zshrc (after the line that calls compinit):",
+    ["  $(toys system zsh-completion install)"],
+    "",
+    "This will associate the toys tab completion logic with the `toys` executable by default." \
+      " If you have aliases for the toys executable, pass them as arguments. e.g.",
+    ["  $(toys system zsh-completion install my-toys-alias another-alias)"]
+
+  remaining_args :executable_names,
+                 desc: "Names of executables for which to set up tab completion" \
+                       " (default: #{::Toys::StandardCLI::EXECUTABLE_NAME})"
+
+  def run
+    require "shellwords"
+    path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "zsh-completion.sh")
+    exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
+    puts Shellwords.join(["source", path] + exes)
+  end
+end
+
+tool "remove" do
+  desc "Remove zsh tab completion"
+
+  long_desc \
+    "Outputs a command to remove Toys tab completion from the current zsh shell.",
+    "",
+    "To use, execute the following line in a zsh shell:",
+    ["  $(toys system zsh-completion remove)"],
+    "",
+    "If you have other names or aliases for the toys executable, pass them as arguments. e.g.",
+    ["  $(toys system zsh-completion remove my-toys-alias another-alias)"]
+
+  remaining_args :executable_names,
+                 desc: "Names of executables for which to remove tab completion" \
+                       " (default: #{::Toys::StandardCLI::EXECUTABLE_NAME})"
+
+  def run
+    require "shellwords"
+    path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "zsh-completion-remove.sh")
+    exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
+    puts Shellwords.join(["source", path] + exes)
+  end
+end
+
 tool "eval" do
   desc "Tab completion command (executed by zsh)"
 
