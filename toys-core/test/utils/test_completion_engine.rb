@@ -245,4 +245,228 @@ describe Toys::Utils::CompletionEngine do
       assert_equal(["baz1", "baz2"], @context.arg_parser.data[:baz])
     end
   end
+
+  describe "for zsh" do
+    let(:completion) {
+      @context = nil
+      Toys::Utils::CompletionEngine::Zsh.new(cli)
+    }
+
+    it "detects failure to find executable name" do
+      result = completion.run_internal("toys")
+      assert_nil(result)
+    end
+
+    it "completes empty input" do
+      result = completion.run_internal("toys ")
+      assert_equal(["five", "one", "three", "two"], result.map(&:string))
+      assert(result.none?(&:partial?))
+    end
+
+    it "completes t" do
+      result = completion.run_internal("toys t")
+      assert_equal(["three", "two"], result.map(&:string))
+    end
+
+    it "completes tw" do
+      result = completion.run_internal("toys tw")
+      assert_equal(["two"], result.map(&:string))
+    end
+
+    it "completes key=t" do
+      result = completion.run_internal("toys key=t")
+      assert_equal([], result)
+    end
+
+    it "completes subtool" do
+      result = completion.run_internal("toys three ")
+      assert_equal(["four"], result.map(&:string))
+    end
+
+    it "completes subtool with colon" do
+      result = completion.run_internal("toys three:")
+      assert_equal(["four"], result.map(&:string))
+    end
+
+    it "completes subtool with period" do
+      result = completion.run_internal("toys three.")
+      assert_equal(["three.four"], result.map(&:string))
+    end
+
+    it "does not complete subtool with slash" do
+      result = completion.run_internal("toys three/")
+      assert_equal([], result)
+    end
+
+    it "completes flag names and first arg" do
+      result = completion.run_internal("toys one ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+    end
+
+    it "completes first arg with prefix" do
+      result = completion.run_internal("toys one key=")
+      assert_equal([], result)
+    end
+
+    it "completes flag names only" do
+      result = completion.run_internal("toys one --")
+      assert_equal(["--hello", "--ruby", "--world"], result.map(&:string))
+    end
+
+    it "completes flag names and second arg" do
+      result = completion.run_internal("toys one x ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], result.map(&:string))
+    end
+
+    it "completes flag names and second arg with a valid prefix" do
+      result = completion.run_internal("toys one x pre=")
+      assert_equal(["k", "n"], result.map(&:string))
+    end
+
+    it "completes flag names and second arg with an invalid prefix" do
+      result = completion.run_internal("toys one x PRE=")
+      assert_equal([], result)
+    end
+
+    it "completes flag names and remaining arg" do
+      result = completion.run_internal("toys one x y z ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "aar", "ooka"], result.map(&:string))
+    end
+
+    it "completes after flag with no argument" do
+      result = completion.run_internal("toys one --hello ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+    end
+
+    it "completes empty string after flag with required argument" do
+      result = completion.run_internal("toys one --world ")
+      assert_equal(["building", "news"], result.map(&:string))
+    end
+
+    it "completes empty string after flag with required argument and =" do
+      result = completion.run_internal("toys one --world=")
+      assert_equal(["building", "news"], result.map(&:string))
+    end
+
+    it "completes empty string after flag with required argument and = with prefixed value" do
+      result = completion.run_internal("toys one --world=key=b")
+      assert_equal([], result)
+    end
+
+    it "completes empty string after flag with optional argument" do
+      result = completion.run_internal("toys one --ruby ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "gems", "tuesday"], result.map(&:string))
+    end
+
+    it "completes empty string after flag with optional argument and =" do
+      result = completion.run_internal("toys one --ruby=")
+      assert_equal(["gems", "tuesday"], result.map(&:string))
+    end
+
+    it "completes apparent flag after flag with optional argument" do
+      result = completion.run_internal("toys one --ruby -")
+      assert_equal(["--hello", "--ruby", "--world", "-w"], result.map(&:string))
+    end
+
+    it "completes after flag with its argument" do
+      result = completion.run_internal("toys one --ruby together ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball"], result.map(&:string))
+    end
+
+    it "completes after flag ender" do
+      result = completion.run_internal("toys one -- ")
+      assert_equal(["lish", "sball"], result.map(&:string))
+    end
+
+    it "completes for delegating tools" do
+      result = completion.run_internal("toys five ")
+      assert_equal(["--hello", "--ruby", "--world", "-w", "lish", "sball", "six"], result.map(&:string))
+    end
+
+    it "returns raw unquoted strings for single-quoted input" do
+      result = completion.run_internal("toys 't")
+      assert_equal(["three", "two"], result.map(&:string))
+    end
+
+    it "returns raw unquoted strings for double-quoted input" do
+      result = completion.run_internal('toys "t')
+      assert_equal(["three", "two"], result.map(&:string))
+    end
+
+    it "sets shell param to :zsh" do
+      completion.run_internal("toys three four --hello 123")
+      assert_equal(:zsh, @context[:params][:shell])
+    end
+
+    it "constructs context for no active flag" do
+      completion.run_internal("toys three four --hello 123")
+      assert_equal("123", @context.fragment)
+      assert_nil(@context.arg_parser.active_flag_def)
+    end
+
+    it "constructs context for long flag with value" do
+      completion.run_internal("toys three four --world 123")
+      assert_equal("123", @context.fragment)
+      assert_equal(:world, @context.arg_parser.active_flag_def.key)
+    end
+
+    it "constructs context for several remaining args" do
+      completion.run_internal("toys three four foo bar baz1 baz2 ")
+      assert_equal("", @context.fragment)
+      assert_equal(["baz1", "baz2"], @context.arg_parser.data[:baz])
+    end
+
+    describe "#run" do
+      def capture_run(line)
+        old_stdout = $stdout
+        $stdout = StringIO.new
+        ::ENV["COMP_LINE"] = line
+        ::ENV["COMP_POINT"] = "-1"
+        status = completion.run
+        output = $stdout.string
+        [status, output.split("\n")]
+      ensure
+        $stdout = old_stdout
+        ::ENV.delete("COMP_LINE")
+        ::ENV.delete("COMP_POINT")
+      end
+
+      it "returns 2 if COMP_LINE is not set" do
+        ::ENV.delete("COMP_LINE")
+        ::ENV.delete("COMP_POINT")
+        assert_equal(2, completion.run)
+      end
+
+      it "returns 2 if COMP_POINT is not set" do
+        ::ENV["COMP_LINE"] = "toys "
+        ::ENV.delete("COMP_POINT")
+        assert_equal(2, completion.run)
+      ensure
+        ::ENV.delete("COMP_LINE")
+      end
+
+      it "returns 1 for an unparseable line" do
+        status, _lines = capture_run("toys")
+        assert_equal(1, status)
+      end
+
+      it "returns 0 for a valid completion" do
+        status, _lines = capture_run("toys ")
+        assert_equal(0, status)
+      end
+
+      it "emits final candidates before the separator" do
+        _status, lines = capture_run("toys t")
+        sep = lines.index("--")
+        refute_nil(sep)
+        assert_equal(["three", "two"], lines[0, sep])
+      end
+
+      it "emits an empty partials section for all-final candidates" do
+        _status, lines = capture_run("toys t")
+        sep = lines.index("--")
+        assert_equal([], lines[(sep + 1)..])
+      end
+    end
+  end
 end

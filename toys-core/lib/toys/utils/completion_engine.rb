@@ -77,6 +77,74 @@ module Toys
         end
       end
 
+      ##
+      # A completion engine for zsh.
+      #
+      class Zsh
+        ##
+        # Create a zsh completion engine.
+        #
+        # @param cli [Toys::CLI] The CLI.
+        #
+        def initialize(cli)
+          @cli = cli
+        end
+
+        ##
+        # Perform completion in the current shell environment, which must
+        # include settings for the `COMP_LINE` and `COMP_POINT` environment
+        # variables. Prints out completion candidates in two sections separated
+        # by a `--` line: final completions first, then partial completions.
+        # Returns a status code indicating the result.
+        #
+        #  *  **0** for success.
+        #  *  **1** if completion failed.
+        #  *  **2** if the environment is incorrect (e.g. expected environment
+        #     variables not found)
+        #
+        # @return [Integer] status code
+        #
+        def run
+          return 2 if !::ENV.key?("COMP_LINE") || !::ENV.key?("COMP_POINT")
+          line = ::ENV["COMP_LINE"].to_s
+          point = ::ENV["COMP_POINT"].to_i
+          point = line.length if point.negative?
+          line = line[0, point]
+          completions = run_internal(line)
+          if completions
+            finals, partials = completions.partition(&:final?)
+            finals.each { |c| puts c.string }
+            puts "--"
+            partials.each { |c| puts c.string }
+            0
+          else
+            1
+          end
+        end
+
+        ##
+        # Internal completion method designed for testing.
+        #
+        # @private
+        #
+        def run_internal(line)
+          words = CompletionEngine.split(line)
+          quote_type, last = words.pop
+          return nil unless words.shift
+          words.map! { |_type, word| word }
+          prefix = ""
+          if (match = /\A(.*[=:])(.*)\z/.match(last))
+            prefix = match[1]
+            last = match[2]
+          end
+          context = Completion::Context.new(
+            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
+            params: { shell: :zsh, quote_type: quote_type }
+          )
+          @cli.completion.call(context).uniq.sort
+        end
+      end
+
       class << self
         ##
         # @private
