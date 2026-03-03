@@ -75,7 +75,7 @@ tool "eval" do
     "Completion command invoked by zsh to complete a toys command line. Generally you do not" \
       " need to invoke this directly. It reads the command line context from the COMP_LINE" \
       " and COMP_POINT environment variables, and outputs completion candidates to stdout in" \
-      " two sections separated by a \"--\" line: final completions first, then partial" \
+      " two sections separated by a blank line: final completions first, then partial" \
       " completions (such as directory paths)."
 
   disable_argument_parsing

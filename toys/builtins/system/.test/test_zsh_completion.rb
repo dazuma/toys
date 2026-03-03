@@ -45,12 +45,12 @@ describe "toys system zsh-completion" do
     def capture_completion(line)
       env = { "COMP_LINE" => line, "COMP_POINT" => "-1", "TOYS_DEV" => "true" }
       result = toys_exec_tool(["system", "zsh-completion", "eval"], env: env)
-      result.captured_out.split("\n")
+      result.captured_out.chomp.split("\n", -1)
     end
 
     def finals(lines)
-      sep = lines.index("--")
-      refute_nil(sep, "Expected a '--' separator in output: #{lines.inspect}")
+      sep = lines.index("")
+      refute_nil(sep, "Expected a blank separator line in output: #{lines.inspect}")
       lines[0, sep]
     end
 

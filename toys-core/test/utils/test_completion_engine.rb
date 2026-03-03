@@ -16,6 +16,9 @@ describe Toys::Utils::CompletionEngine do
       []
     }
   }
+  let(:partials_fixture) {
+    proc { [Toys::Completion::Candidate.new("partial-hello", partial: true)] }
+  }
   let(:cli) {
     tester = self
     cli = Toys::CLI.new(executable_name: executable_name, logger: logger, middleware_stack: [],
@@ -33,7 +36,7 @@ describe Toys::Utils::CompletionEngine do
         def run; end
       end
       tool "two" do
-        optional_arg :path, complete: :file_system
+        optional_arg :path, complete: tester.partials_fixture
         def run; end
       end
       tool "three" do
@@ -249,42 +252,42 @@ describe Toys::Utils::CompletionEngine do
       assert_equal("", @context.fragment)
       assert_equal(["baz1", "baz2"], @context.arg_parser.data[:baz])
     end
-  end
 
-  describe "format_candidate" do
-    it "formats a bare final candidate" do
-      candidate = Toys::Completion::Candidate.new("hello")
-      assert_equal("hello ", Toys::Utils::CompletionEngine.format_candidate(candidate, :bare))
-    end
+    describe "format_candidate" do
+      it "formats a bare final candidate" do
+        candidate = Toys::Completion::Candidate.new("hello")
+        assert_equal("hello ", completion.format_candidate(candidate, :bare))
+      end
 
-    it "formats a bare partial candidate without trailing space" do
-      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
-      assert_equal("foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :bare))
-    end
+      it "formats a bare partial candidate without trailing space" do
+        candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+        assert_equal("foo/", completion.format_candidate(candidate, :bare))
+      end
 
-    it "formats a single-quoted final candidate" do
-      candidate = Toys::Completion::Candidate.new("hello")
-      assert_equal("'hello' ", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
-    end
+      it "formats a single-quoted final candidate" do
+        candidate = Toys::Completion::Candidate.new("hello")
+        assert_equal("'hello' ", completion.format_candidate(candidate, :single))
+      end
 
-    it "formats a single-quoted partial candidate" do
-      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
-      assert_equal("'foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
-    end
+      it "formats a single-quoted partial candidate" do
+        candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+        assert_equal("'foo/", completion.format_candidate(candidate, :single))
+      end
 
-    it "formats a double-quoted final candidate" do
-      candidate = Toys::Completion::Candidate.new("hello")
-      assert_equal('"hello" ', Toys::Utils::CompletionEngine.format_candidate(candidate, :double))
-    end
+      it "formats a double-quoted final candidate" do
+        candidate = Toys::Completion::Candidate.new("hello")
+        assert_equal('"hello" ', completion.format_candidate(candidate, :double))
+      end
 
-    it "formats a double-quoted partial candidate" do
-      candidate = Toys::Completion::Candidate.new("foo/", partial: true)
-      assert_equal("\"foo/", Toys::Utils::CompletionEngine.format_candidate(candidate, :double))
-    end
+      it "formats a double-quoted partial candidate" do
+        candidate = Toys::Completion::Candidate.new("foo/", partial: true)
+        assert_equal("\"foo/", completion.format_candidate(candidate, :double))
+      end
 
-    it "falls back to bare if candidate contains a single quote in single-quoted context" do
-      candidate = Toys::Completion::Candidate.new("it's")
-      assert_equal("it\\'s ", Toys::Utils::CompletionEngine.format_candidate(candidate, :single))
+      it "falls back to bare if candidate contains a single quote in single-quoted context" do
+        candidate = Toys::Completion::Candidate.new("it's")
+        assert_equal("it\\'s ", completion.format_candidate(candidate, :single))
+      end
     end
   end
 
@@ -465,8 +468,8 @@ describe Toys::Utils::CompletionEngine do
         ::ENV["COMP_LINE"] = line
         ::ENV["COMP_POINT"] = "-1"
         status = completion.run
-        output = $stdout.string
-        [status, output.split("\n")]
+        output = $stdout.string.chomp
+        [status, output.split("\n", -1)]
       ensure
         $stdout = old_stdout
         ::ENV.delete("COMP_LINE")
@@ -499,22 +502,24 @@ describe Toys::Utils::CompletionEngine do
 
       it "emits final candidates before the separator" do
         _status, lines = capture_run("toys t")
-        sep = lines.index("--")
+        sep = lines.index("")
         refute_nil(sep)
         assert_equal(["three", "two"], lines[0, sep])
       end
 
       it "emits an empty partials section for all-final candidates" do
         _status, lines = capture_run("toys t")
-        sep = lines.index("--")
+        sep = lines.index("")
         assert_equal([], lines[(sep + 1)..])
       end
 
       it "emits partials" do
-        _status, lines = capture_run("toys two li")
-        sep = lines.index("--")
-        lib = lines.index("lib/")
-        assert(lib > sep)
+        _status, lines = capture_run("toys two par")
+        sep = lines.index("")
+        refute_nil(sep)
+        part = lines.index("partial-hello")
+        refute_nil(part)
+        assert(part > sep)
       end
     end
   end

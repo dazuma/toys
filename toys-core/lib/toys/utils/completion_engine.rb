@@ -10,7 +10,8 @@ module Toys
     #
     module CompletionEngine
       ##
-      # Base class for shell completion engines that work similar to Bash.
+      # Base class for shell completion engines that use a
+      # `COMP_LINE` / `COMP_POINT` protocol.
       #
       # Subclasses must implement the private methods `#shell_name` and
       # `#output_completions`.
@@ -102,6 +103,26 @@ module Toys
           super
         end
 
+        ##
+        # @private
+        # Accessible only for testing
+        #
+        def format_candidate(candidate, quote_type)
+          str = candidate.to_s
+          partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
+          quote_type = nil if candidate.string.include?("'") && quote_type == :single
+          case quote_type
+          when :single
+            partial ? "'#{str}" : "'#{str}' "
+          when :double
+            str = str.gsub(/[$`"\\\n]/, '\\\\\\1')
+            partial ? "\"#{str}" : "\"#{str}\" "
+          else
+            str = ::Shellwords.escape(str)
+            partial ? str : "#{str} "
+          end
+        end
+
         private
 
         def shell_name
@@ -109,7 +130,7 @@ module Toys
         end
 
         def output_completions(quote_type, candidates)
-          candidates.each { |c| puts CompletionEngine.format_candidate(c, quote_type) }
+          candidates.each { |c| puts format_candidate(c, quote_type) }
         end
       end
 
@@ -125,9 +146,9 @@ module Toys
 
         def output_completions(_quote_type, candidates)
           finals, partials = candidates.partition(&:final?)
-          finals.each { |c| puts c.string }
-          puts "--"
-          partials.each { |c| puts c.string }
+          finals.each { |c| puts c.string unless c.string.empty? }
+          puts ""
+          partials.each { |c| puts c.string unless c.string.empty? }
         end
       end
 
@@ -151,26 +172,6 @@ module Toys
           end
           words << [quote_type, field] if field
           words
-        end
-
-        ##
-        # @private
-        #
-        def format_candidate(candidate, quote_type)
-          require "shellwords"
-          str = candidate.to_s
-          partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
-          quote_type = nil if candidate.string.include?("'") && quote_type == :single
-          case quote_type
-          when :single
-            partial ? "'#{str}" : "'#{str}' "
-          when :double
-            str = str.gsub(/[$`"\\\n]/, '\\\\\\1')
-            partial ? "\"#{str}" : "\"#{str}\" "
-          else
-            str = ::Shellwords.escape(str)
-            partial ? str : "#{str} "
-          end
         end
 
         private

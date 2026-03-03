@@ -3,12 +3,12 @@ _toys_completion() {
   local line in_partials=0
 
   while IFS= read -r line; do
-    if [[ "$line" == '--' ]]; then
+    if [[ -z "$line" ]]; then
       in_partials=1
     elif (( in_partials )); then
       [[ -n "$line" ]] && partials+=("$line")
     else
-      [[ -n "$line" ]] && finals+=("$line")
+      finals+=("$line")
     fi
   done < <(COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" \
            toys system zsh-completion eval 2>/dev/null)
