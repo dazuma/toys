@@ -24,9 +24,10 @@ require "toys/release/version"
   spec.homepage = "https://github.com/dazuma/toys"
 
   spec.files = ::Dir.glob("lib/**/*.rb") +
-               ::Dir.glob("toys/*.rb") + ["toys/.toys.rb"] +
-               ::Dir.glob("toys/.lib/**/*.rb") + ::Dir.glob("toys/.data/**/*.erb") +
-               ::Dir.glob("*.md") + ::Dir.glob("docs/*.md") + [".yardopts"]
+               ::Dir.glob("toys/**/*.rb") + ::Dir.glob("toys/**/.toys.rb") +
+               ::Dir.glob("toys/.lib/**/*.rb") + ::Dir.glob("toys/.data/**/*.*") +
+               (::Dir.glob("*.md") - ["CLAUDE.md", "AGENTS.md"]) +
+               ::Dir.glob("docs/*.md") + [".yardopts"]
   spec.required_ruby_version = ">= 2.7.0"
   spec.require_paths = ["lib"]
 
@@ -35,7 +36,7 @@ require "toys/release/version"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://dazuma.github.io/toys/gems/toys-release/v#{::Toys::Release::VERSION}/file.CHANGELOG.html"
-    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/main/toys-release"
+    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/toys-release/v#{::Toys::Release::VERSION}/toys-release"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
     spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys-release/v#{::Toys::Release::VERSION}"
   end
