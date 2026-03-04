@@ -17,7 +17,8 @@ require "toys/core"
   spec.license = "MIT"
   spec.homepage = "https://github.com/dazuma/toys"
 
-  spec.files = ::Dir.glob("lib/**/*.rb") + ::Dir.glob("*.md") +
+  spec.files = ::Dir.glob("lib/**/*.rb") +
+               (::Dir.glob("*.md") - ["CLAUDE.md", "AGENTS.md"]) +
                ::Dir.glob("docs/*.md") + [".yardopts"]
   spec.required_ruby_version = ">= 2.7.0"
   spec.require_paths = ["lib"]
@@ -26,7 +27,7 @@ require "toys/core"
 
   if spec.respond_to?(:metadata)
     spec.metadata["changelog_uri"] = "https://dazuma.github.io/toys/gems/toys-core/v#{::Toys::Core::VERSION}/file.CHANGELOG.html"
-    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/main/toys-core"
+    spec.metadata["source_code_uri"] = "https://github.com/dazuma/toys/tree/toys-core/v#{::Toys::Core::VERSION}/toys-core"
     spec.metadata["bug_tracker_uri"] = "https://github.com/dazuma/toys/issues"
     spec.metadata["documentation_uri"] = "https://dazuma.github.io/toys/gems/toys-core/v#{::Toys::Core::VERSION}"
   end
