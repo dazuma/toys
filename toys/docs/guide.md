@@ -275,9 +275,9 @@ You can also, of course, stop recognizing flags on the command line by passing
 
 ### Tab completion
 
-If you are using the Bash shell, Toys provides custom tab completion. See
-[this section](#installing-tab-completion-for-bash) for instructions on
-installing tab completion.
+If you are using the Bash or Zsh shell, Toys provides custom tab completion.
+See [this section](#installing-tab-completion) for instructions on installing
+tab completion.
 
 Toys will complete tool and subtool names, flags, values passed to flags, and
 positional argument values, and it will respect the current context. For
@@ -2655,11 +2655,11 @@ sets of tests independently.
 
 To run just the tests under `build/`:
 
-    toys system test build
+    toys system test --tool build
 
 To run just the tests under `deploy/`:
 
-    toys system test deploy
+    toys system test --tool deploy
 
 Now, if you do not provide a specific tool:
 
@@ -2852,6 +2852,29 @@ a different bundle. If you need to do this, use the
 to call the tool. This method spawns a separate process with a clean Bundler
 setup for running the tool.
 
+#### Manual bundle setup
+
+By default, the `:bundler` mixin sets up the bundle (i.e. ensures gems are
+installed, and activates the resolved versions) at the beginning of tool
+execution. If you need greater control over the timing, or need to decide at
+runtime whether to use a bundle, pass the `setup: :manual` option when
+including the `:bundler` mixin. This will prevent the mixin from automatically
+setting up the bundle, but will define a `bundler_setup` method in your tool
+that you can call to set it up explicitly. For example:
+
+    tool "my-tool" do
+      include :bundler, setup: :manual
+
+      flag :bundle, desc: "Use the bundle"
+
+      def run
+        # Set up the bundle only if the --bundle flag was invoked
+        bundler_setup if bundle
+        # Do other stuff...
+
+      end
+    end
+
 #### When a bundle is needed to define a tool
 
 Usually, the `:bundler` mixin sets up your bundle when the tool is *executed*.
@@ -2860,7 +2883,7 @@ might happen, for instance, if your bundle includes gems that define mixins or
 templates used by your tool.
 
 If you need the bundle set up immediately because its gems are needed by the
-tool definition, pass the `static: true` option when including the `:bundler`
+tool definition, pass the `setup: :static` option when including the `:bundler`
 mixin. For example, if you are using the
 [flame_server_toys](https://github.com/AlexWayfer/flame_server_toys) gem, which
 provides a template that generates tools for the
@@ -2869,17 +2892,17 @@ the `flame_server_toys` gem in your Gemfile, and make it available for defining
 tools:
 
     # Set up the bundle immediately.
-    include :bundler, static: true
+    include :bundler, setup: :static
 
     # Now you can use the gems in the bundle when defining tools.
     require "flame_server_toys"
     expand FlameServerToys::Template
 
-There is a big caveat to using `static: true`, which is that you are setting up
-a bundle immediately, and as a result any subsequent attempt to set up or use a
-different bundle will fail. (See the section on
+There is a big caveat to using `setup: :static`, which is that you are setting
+up a bundle immediately, and as a result any subsequent attempt to set up or
+use a different bundle will fail. (See the section on
 [bundle conflicts](#solving-bundle-conflicts) for a discussion of other reasons
-this can happen.) As a result, it's best not to use `static: true` unless you
+this can happen.) As a result, it's best not to use `setup: :static` unless you
 *really* need it to define tools. If you do run into this problem, here are two
 things you could try:
 
@@ -4078,16 +4101,19 @@ interactive confirmation, pass the `--yes` flag.
 
 A similar effect can of course be obtained by running `gem install toys`.
 
-### Installing tab completion for Bash
+### Installing tab completion
 
-Toys provides tab completion for the bash shell, and lets tools customize the
+Toys provides tab completion for Bash and Zsh, and lets tools customize the
 completions for their arguments. However, you need to install the Toys
-completion tool into your shell. The following command sets up tab completion
-the current shell:
+completion mechanism into your shell.
+
+#### Installing tab completion for Bash
+
+The following command sets up tab completion for the current Bash shell:
 
     $(toys system bash-completion install)
 
-Typically, you will want to include the above in your `.bashrc` or other bash
+Typically, you will want to include the above in your `.bashrc` or other Bash
 initialization file.
 
 By default, this associates the Toys tab completion logic with the `toys`
@@ -4102,10 +4128,28 @@ You can also remove the completion logic from the current shell:
     $(toys system bash-completion remove)
     $(toys system bash-completion remove t)
 
-At this time, bash is the only shell that is supported directly. If you are
-using zsh, however, you can use the `bashcompinit` function to load the toys
-bash completion (as well as other bash-based completions). This *mostly* works,
-with a few caveats. Native zsh completion is on the future roadmap.
+#### Installing tab completion for Zsh
+
+The following command sets up tab completion for the current Zsh shell:
+
+    $(toys system zsh-completion install)
+
+Typically, you will want to include the above in your `.zshrc` or other Zsh
+initialization file. You should ensure that `compinit` has been run before this
+line (for example, by calling `autoload -Uz compinit && compinit` earlier in
+your `.zshrc`). See `toys system zsh-completion --help` for more details.
+
+By default, this associates the Toys tab completion logic with the `toys`
+executable. If you have other names or aliases for the executable, pass them as
+arguments. For example, I use `t` as an alias for `toys`, and I therefore
+install Toys's completion logic for `t`:
+
+    $(toys system zsh-completion install t)
+
+You can also remove the completion logic from the current shell:
+
+    $(toys system zsh-completion remove)
+    $(toys system zsh-completion remove t)
 
 ### Getting information about tools
 
