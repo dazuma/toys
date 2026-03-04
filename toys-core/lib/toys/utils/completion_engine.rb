@@ -10,24 +10,27 @@ module Toys
     #
     module CompletionEngine
       ##
-      # A completion engine for bash.
+      # Base class for shell completion engines that use a
+      # `COMP_LINE` / `COMP_POINT` protocol.
       #
-      class Bash
+      # Subclasses must implement the private methods `#shell_name` and
+      # `#output_completions`.
+      #
+      class Base
         ##
-        # Create a bash completion engine.
+        # Create a completion engine.
         #
         # @param cli [Toys::CLI] The CLI.
         #
         def initialize(cli)
-          require "shellwords"
           @cli = cli
         end
 
         ##
         # Perform completion in the current shell environment, which must
         # include settings for the `COMP_LINE` and `COMP_POINT` environment
-        # variables. Prints out completion candidates, one per line, and
-        # returns a status code indicating the result.
+        # variables. Prints out completion candidates and returns a status code
+        # indicating the result.
         #
         #  *  **0** for success.
         #  *  **1** if completion failed.
@@ -42,9 +45,9 @@ module Toys
           point = ::ENV["COMP_POINT"].to_i
           point = line.length if point.negative?
           line = line[0, point]
-          completions = run_internal(line)
-          if completions
-            completions.each { |completion| puts completion }
+          result = run_internal(line)
+          if result
+            output_completions(*result)
             0
           else
             1
@@ -53,6 +56,8 @@ module Toys
 
         ##
         # Internal completion method designed for testing.
+        # Returns `[quote_type, Array<Toys::Completion::Candidate>]`, or `nil`
+        # if the line cannot be parsed (e.g. the executable name is missing).
         #
         # @private
         #
@@ -68,12 +73,82 @@ module Toys
           end
           context = Completion::Context.new(
             cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
-            params: {shell: :bash, quote_type: quote_type}
+            params: { shell: shell_name, quote_type: quote_type }
           )
-          candidates = @cli.completion.call(context)
-          candidates.uniq.sort.map do |candidate|
-            CompletionEngine.format_candidate(candidate, quote_type)
+          [quote_type, @cli.completion.call(context).uniq.sort]
+        end
+
+        private
+
+        def shell_name
+          raise ::NotImplementedError
+        end
+
+        def output_completions(_quote_type, _candidates)
+          raise ::NotImplementedError
+        end
+      end
+
+      ##
+      # A completion engine for bash.
+      #
+      class Bash < Base
+        ##
+        # Create a bash completion engine.
+        #
+        # @param cli [Toys::CLI] The CLI.
+        #
+        def initialize(cli)
+          require "shellwords"
+          super
+        end
+
+        ##
+        # @private
+        # Accessible only for testing
+        #
+        def format_candidate(candidate, quote_type)
+          str = candidate.to_s
+          partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
+          quote_type = nil if candidate.string.include?("'") && quote_type == :single
+          case quote_type
+          when :single
+            partial ? "'#{str}" : "'#{str}' "
+          when :double
+            str = str.gsub(/[$`"\\\n]/, '\\\\\\1')
+            partial ? "\"#{str}" : "\"#{str}\" "
+          else
+            str = ::Shellwords.escape(str)
+            partial ? str : "#{str} "
           end
+        end
+
+        private
+
+        def shell_name
+          :bash
+        end
+
+        def output_completions(quote_type, candidates)
+          candidates.each { |c| puts format_candidate(c, quote_type) }
+        end
+      end
+
+      ##
+      # A completion engine for zsh.
+      #
+      class Zsh < Base
+        private
+
+        def shell_name
+          :zsh
+        end
+
+        def output_completions(_quote_type, candidates)
+          finals, partials = candidates.partition(&:final?)
+          finals.each { |c| puts c.string unless c.string.empty? }
+          puts ""
+          partials.each { |c| puts c.string unless c.string.empty? }
         end
       end
 
@@ -97,25 +172,6 @@ module Toys
           end
           words << [quote_type, field] if field
           words
-        end
-
-        ##
-        # @private
-        #
-        def format_candidate(candidate, quote_type)
-          str = candidate.to_s
-          partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
-          quote_type = nil if candidate.string.include?("'") && quote_type == :single
-          case quote_type
-          when :single
-            partial ? "'#{str}" : "'#{str}' "
-          when :double
-            str = str.gsub(/[$`"\\\n]/, '\\\\\\1')
-            partial ? "\"#{str}" : "\"#{str}\" "
-          else
-            str = ::Shellwords.escape(str)
-            partial ? str : "#{str} "
-          end
         end
 
         private
