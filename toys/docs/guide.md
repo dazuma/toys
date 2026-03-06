@@ -22,48 +22,44 @@ command line executable using the related **toys-core** library.)
 If this is your first time using Toys, we recommend starting with the
 [README](https://dazuma.github.io/toys/gems/toys/latest), which includes a
 tutorial that introduces how to install Toys, write and execute tools, and even
-use Toys to replace Rake. The tutorial will likely give you enough information
-to start using Toys effectively.
-
-This user's guide is also structured like an extended tutorial, but it is much
-longer and covers all the features of Toys in much more depth. Read it when
-you're ready to unlock all the capabilities of Toys to create sophisticated
-command line tools.
+use Toys to replace Rake. The README tutorial will likely give you enough
+information to start using Toys effectively. This user's guide is much longer
+and covers all the features of Toys in much more depth. Read it when you're
+ready to unlock all the capabilities of Toys to create sophisticated command
+line tools.
 
 ## Conceptual overview
 
-Toys is a command line *framework*. It provides an executable called `toys`
-with basic functions such as argument parsing and online help. You provide the
+Toys is a command line framework. It provides an executable called `toys` with
+basic functions such as argument parsing and online help. You provide the
 actual behavior of the Toys executable by writing **Toys files**.
 
-Toys is a *multi-command* executable. You can define any number of commands,
+Toys is a multi-command executable. You can define any number of commands,
 called **tools**, which can be invoked by passing the tool name as an argument
 to the `toys` executable. Tools are arranged in a hierarchy; you can define
 **namespaces** that have **subtools**.
 
 Tools can recognize command line arguments in the form of **flags** and
-**positional arguments**. Flags can optionally take **values**, while
-positional arguments can be **required** or **optional**. Flags can be
-organized into **flag groups** that support marking flags or flag combinations
-as required.
+**positional arguments**. Flags can optionally take values, while positional
+arguments can be required or optional. Flags can be organized into
+**flag groups** that support marking flags or flag combinations as required.
 
-The configuration of a tool can include **descriptions**, for the tool itself,
-and for each command line argument. These descriptions are displayed in the
-tool's **online help** screen. Descriptions come in **long** and **short**
-forms, which appear in different styles of help.
+The configuration of a tool can include descriptions, for the tool itself, and
+for each command line argument. These descriptions are displayed in the tool's
+online help screen. Descriptions come in long and short forms, which appear in
+different styles of help.
 
-Toys searches for tools in specifically-named **Toys files** and **Toys
-directories**. It searches for these in the current directory, in parent
-directories, and in the Toys **search path**. You can also distribute tools in
-gems or via git.
+Toys searches for tools in specifically-named Toys files and directories. It
+searches for these in the current directory, in parent directories, and in the
+Toys **search path**. You can also distribute tools in gems or via git.
 
 Toys provides various features to help you write tools. This includes providing
-a **logger** for each tool, **mixins** that provide common functions a tool can
+a logger for each tool, **mixins** that provide common functions a tool can
 call (such as to control subprocesses and style output), and **templates**
 which are prefabricated tools that you can configure for your needs. It also
-integrates with testing frameworks, making it easy to write and run **tests**.
+integrates with testing frameworks, making it easy to write and run tests.
 
-Finally, Toys provides useful **built-in behavior**, including automatically
+Finally, Toys provides useful built-in behavior, including automatically
 providing flags to display help screens and set verbosity. It also includes a
 built-in set of **system tools** that let you inspect and configure the Toys
 system itself.
@@ -373,42 +369,212 @@ If you need to control the wrapping behavior, pass an array of strings for that
 line. Each array element will be considered a unit for wrapping purposes, and
 will not be split. The example command in the long description above
 illustrates how to prevent a line from being word-wrapped. This is also a
-useful technique for preserving spaces and indentation.
+useful technique for preserving spaces and indentation. You can see an example
+of this technique in the long description for the `greet` tool above, where the
+last line consists of a one-element array, preserving the indent and preventing
+the example command line from being word-wrapped.
 
 For more details, see the reference documentation for {Toys::DSL::Tool#desc}
 and {Toys::DSL::Tool#long_desc}.
 
-### Positional arguments
+### Tool arguments
 
-Tools can recognize any number of **positional arguments**. Each argument must
-have a name, which is a key that the tool can use to obtain the argument's
-value at execution time. Arguments can also have various properties controlling
-how values are validated and expressed.
+When you define a tool, you declare the arguments that it can take on the
+command line. Toys will parse the arguments and make the results available to
+your tool.
+
+Toys distinguishes two types of arguments: **positional arguments** and
+**flags**. Flags are generally arguments beginning with a single or double
+hyphen, as are common in Unix/POSIX commands. They are typically (but not
+always) optional, and can be referenced by name. Positional arguments generally
+do not begin with hyphens and are identified by their order on the command
+line. Positional arguments can be required or optional.
+
+Each argument, whether positional or flag, must have a name, which is a key
+that the tool can use to obtain the argument's value at execution time.
 
 The above example uses the directive {Toys::DSL::Tool#optional_arg} to declare
-an **optional argument** named `:whom`. If the argument is provided on the
-command line e.g.
+an optional positional argument named `:whom`. If the argument is provided on
+the command line, the option `:whom` is set to the argument value, e.g.:
 
     $ toys greet ruby
     Hello, ruby!
 
-Then the option `:whom` is set to the string `"ruby"`. Otherwise, if the
-argument is omitted, e.g.
+The above example also uses the directive {Toys::DSL::Tool#flag} to declare a
+flag named `:shout`. If this flag is included on the command line, the option
+`:shout` is set to `true`, with this result:
 
-    $ toys greet
-    Hello, world!
+    $ toys greet --shout
+    HELLO, WORLD!
 
-Then the option `:whom` is set to the default value `"world"`.
+Arguments also have various properties controlling how values are validated and
+expressed. For all the details on configuring arguments, see the section on
+[defining command line arguments](#defining-command-line-arguments).
 
-If the option name is symbol representing a valid method name (that doesn't
-collide with a method already present), Toys will provide a method that you can
-use to retrieve the value. In the above example, we retrieve the value for the
-option `:whom` by calling the method `whom`. If the option name cannot be made
-into a method, you can retrieve the value by calling {Toys::Context#get}.
+### Tool execution basics
 
-An argument can also be **required**, which means it must be provided on the
-command line; otherwise the tool will report a usage error. You can declare a
-required argument using the directive {Toys::DSL::Tool#required_arg}.
+When you run a tool from the command line, Toys will build the tool based on
+its definition in a Toys file, and then it will attempt to execute it by
+calling the `run` method. Normally, you should define this method in each of
+your tools.
+
+Note: If you do not define the `run` method for a tool, Toys provides a default
+implementation that displays the tool's help screen. This is typically used for
+namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
+however, should define `run`.
+
+In our greeting example, note how the `run` method can access values that were
+assigned by flags or positional arguments by just calling a method with that
+flag or argument name. When you declare a flag or argument, if the option name
+is a symbol that is a valid Ruby method name, Toys will provide a method that
+you can call to get the value. In the example, `whom` and `shout` are such
+methods.
+
+Most tools produce output or interact with the console using the normal Ruby
+`$stdout`, `$stderr`, and `$stdin` streams.
+
+If a tool's `run` method finishes normally, Toys will exit with a result code
+of 0, indicating success. You can exit immediately and/or provide a nonzero
+result by calling {Toys::Context#exit}:
+
+    def run
+      puts "Exiting with an error..."
+      exit(1)
+      puts "Will never get here."
+    end
+
+If your `run` method raises an exception, Toys will display the exception and
+exit with a nonzero code.
+
+Finally, you can also define additional methods within the tool. These are
+available to be called by your `run` method, and can be used to decompose your
+tool implementation. Indeed, a tool is actually a class under the hood, and
+you can define methods as with any other class. Here's a contrived example:
+
+    tool "greet-many" do
+      # Support any number of arguments on the command line
+      remaining_args :whom, default: ["world"]
+      flag :shout, "-s", "--shout"
+
+      # You can define helper methods like this.
+      def greet(name)
+        greeting = "Hello, #{name}!"
+        greeting = greeting.upcase if shout
+        puts greeting
+      end
+
+      def run
+        whom.each do |name|
+          greet(name)
+        end
+      end
+    end
+
+This should be enough to get you started implementing tools. A variety of
+additional features are available for your tool implementation and will be
+discussed further below. But first we will cover one final important topic.
+
+### Namespaces and subtools
+
+Like many command line frameworks, Toys supports **subtools**. You can, for
+example create a tool called "test" that runs your tests for a particular
+project, but you might also want "test unit" and "test integration" tools to
+run specific subsets of the test suite. One way to do this, of course, is for
+the "test" tool to parse "unit" or "integration" as arguments. However, it's
+often easier to define them as separate tools, subtools of "test".
+
+To define a subtool, create nested `tool` directives. Here's a simple example:
+
+    tool "test" do
+      tool "unit" do
+        def run
+          puts "run unit tests here..."
+        end
+      end
+
+      tool "integration" do
+        def run
+          puts "run integration tests here..."
+        end
+      end
+    end
+
+You can now invoke them like this:
+
+    $ toys test unit
+    run unit tests here...
+    $ toys test integration
+    run integration tests here...
+
+Notice in this case, the parent "test" tool itself has no `run` method. This is
+a common pattern: "test" is just a "container" for tools, a way of organizing
+your tools. In Toys terminology, it is called a **namespace**. But it is still
+a tool, and it can still be run:
+
+    $ toys test
+
+As discussed earlier, Toys provides a default implementation that displays the
+help screen, which includes a list of the subtools and their descriptions.
+
+As another example, the "root" tool is also normally a namespace. If you just
+run Toys with no arguments:
+
+    $ toys
+
+The root tool will display the overall help screen for Toys.
+
+Although it is a less common pattern, it is possible for a tool to have its own
+`run` method even if it has subtools:
+
+    tool "test" do
+      def run
+        puts "run all tests here..."
+      end
+
+      tool "unit" do
+        def run
+          puts "run only unit tests here..."
+        end
+      end
+
+      tool "integration" do
+        def run
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
+Now running `toys test` will run its own implementation.
+
+(Yes, it is even possible to write a `run` method for the root tool. I don't
+recommend doing so, because you would lose the root tool's useful default
+implementation that lists all your tools.)
+
+Toys allows subtools to be nested arbitrarily deep. In practice, however, more
+than two or three levels of hierarchy can be confusing to use.
+
+## Defining command line arguments
+
+In this section, we will take a closer look at command line arguments,
+including all the different ways to control and validate them. We'll first look
+at [positional arguments](#defining-positional-arguments) and
+[flags](#defining-flags) and the features that make them distinct. Afterward,
+we'll look at features that are common across both types of arguments,
+including [descriptions](#argument-descriptions),
+[acceptors](#argument-acceptors), and [completions](#argument-completions).
+
+### Defining positional arguments
+
+Tools can recognize any number of positional arguments. Each argument must have
+a name, a key into the tool's context that can be used to obtain the argument's
+value at execution time. Arguments can also have various properties controlling
+how values are validated and expressed.
+
+Positional arguments can be **required**, declared using the directive
+{Toys::DSL::Tool#required_arg}, or **optional**, declared using the directive
+{Toys::DSL::Tool#optional_arg}. Required arguments *must* be provided on the
+command line, otherwise the tool will report a usage error. Optional arguments
+can be omitted; if they are, the value will be set to a default.
 
 #### Parsing required and optional arguments
 
@@ -499,109 +665,19 @@ Tools can include any number of `required_arg` and `optional_arg` directives,
 declaring any number of required and optional arguments. But tools can have at
 most only one `remaining_args` directive.
 
-#### Descriptions and the args DSL
+### Defining flags
 
-Positional arguments can also have short and long descriptions, which are
-displayed in online help. Set descriptions via the `desc:` and `long_desc:`
-arguments to the argument directive. The `desc:` argument takes a single string
-description, while the `long_desc:` argument takes an array of strings. Here is
-an example:
+Tools can also recognize any number of flags. Each flag must have a name that
+can be used to obtain the flag's state at execution time. Flags also support a
+variety of properties controlling how the flag is parsed and handled. They are
+declared using the directive {Toys::DSL::Tool#flag}.
 
-    required_arg :arg,
-                 desc: "This is a short description for the arg",
-                 long_desc: ["Long descriptions can have multiple lines.",
-                             "This is the second line."]
+Flags can support a number of "spellings" that are effectively synonyms for the
+same flag. These can include both short form (e.g. `-s`) and long form (e.g.
+`--shout`). Flags can optionally take values (e.g. `--output=file.txt`), or
+they can simply be present or absent.
 
-See the [above section on Descriptions](#tool-descriptions) for more
-information on how descriptions are rendered and word wrapped.
-
-Because long descriptions may be unwieldly to write as a hash argument in this
-way, Toys provides an alternate syntax for defining arguments using a block.
-
-    required_arg :arg do
-      desc "This is a short description for the arg"
-      long_desc "Long desc can be set as multiple lines together,",
-                "like this second line."
-      long_desc "Or you can call long_desc again to add more lines."
-    end
-
-For detailed info on configuring an argument using a block, see the
-{Toys::DSL::PositionalArg} class.
-
-#### Argument acceptors
-
-Finally, positional arguments can use **acceptors** to define how to validate
-arguments and convert them to Ruby objects for your tool to consume. By
-default, Toys will accept any argument string, and expose it to your tool as a
-raw string. However, you can provide an acceptor to change this behavior.
-
-Acceptors are part of the OptionParser interface, and are described under the
-[type coercion](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#class-OptionParser-label-Type+Coercion)
-section. For example, you can provide the `Integer` class as an acceptor, which
-will validate that the argument is a well-formed integer, and convert it to an
-integer during parsing:
-
-    tool "acceptor-demo" do
-      required_arg :age, accept: Integer
-      def run
-        puts "Next year I will be #{age + 1}"  # Age is an integer
-      end
-    end
-
-If you pass a non-integer for this argument, Toys will report a usage error.
-
-You can use any of the ready-to-use coercion types provided by OptionParser,
-including the special types such as
-[OptionParser::DecimalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#DecimalInteger)
-and
-[OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
-
-You can also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
-
-#### Argument completions
-
-Shell tab completion supports positional arguments, and arguments can be
-configured to present a set of completion candidates for themselves.
-
-By default, an argument does not provide any completions for itself. To change
-that, set the `completion` option. Currently there are three ways to set the
-completion:
-
-*   Provide a static set of possible values, as an array of strings.
-*   Specify that values should be paths in the file system by setting the
-    symbol `:file_system`.
-*   Provide a `Proc` that returns possible values.
-
-The following are two example arguments, one that supports a static set of
-completions and the other that supports file paths.
-
-    required_arg :language, complete: ["ruby", "elixir", "rust"]
-    required_arg :path, complete: :file_system
-
-Completions are somewhat related to acceptors, and it is a common pattern to
-set both in concert. But they perform distinct functions. Acceptors affect
-argument parsing, whereas completions affect tab completion in the shell.
-
-### Flags
-
-Tools can also recognize **flags** on the command line. In our "greet" example,
-we declared a flag named `:shout`:
-
-    flag :shout, "-s", "--shout", desc: "Greet loudly."
-
-Like a positional argument, a flag sets an option based on the command line
-arguments passed to the tool. In the case above, the `:shout` option is set to
-`true` if either `-s` or `--shout` is provided on the command line; otherwise
-it remains falsy. The two flags `-s` and `--shout` are effectively synonyms and
-have the same effect. A flag declaration can include any number of synonyms.
-
-As with arguments, Toys can provide a method that you can call to retrieve the
-option value set by a flag. This method is provided if the flag name is a
-symbol representing a valid method name that does not collide with a method
-already present. In our example, Toys provides a method called `shout` that
-returns either true or false. If the option name cannot be made into a method,
-you can retrieve the value by calling {Toys::Context#get}.
+Let's take a closer look at the different types of flags.
 
 #### Flag types
 
@@ -664,7 +740,7 @@ definitions are also equivalent:
 #### Handling optional values
 
 There are some subtleties in how the Ruby OptionParser library treats flags
-with optional values. Although Toys does not use OptionParser interally, it
+with optional values. Although Toys does not use OptionParser internally, it
 does, for the most part, replicate OptionParser's behavior. It is thus
 important to understand that behavior if you use optional values.
 
@@ -716,16 +792,18 @@ other using equals.
 
     tool "flags-demo-space" do
       flag :output, "--output [DIRECTORY]", default: "."
-      set_remaining_args :remaining
+      remaining_args :remaining
       def run
         puts "output is #{output.inspect}"
+        puts "remaining is #{remaining.inspect}"
       end
     end
     tool "flags-demo-equals" do
       flag :output, "--output=[DIRECTORY]", default: "."
-      set_remaining_args :remaining
+      remaining_args :remaining
       def run
         puts "output is #{output.inspect}"
+        puts "remaining is #{remaining.inspect}"
       end
     end
 
@@ -733,43 +811,16 @@ Here is the behavior:
 
     $ toys flags-demo-space --output=/etc
     output is "/etc"
+    remaining is []
     $ toys flags-demo-space --output /etc
     output is "/etc"
+    remaining is []
     $ toys flags-demo-equals --output=/etc
     output is "/etc"
+    remaining is []
     $ toys flags-demo-equals --output /etc
     output is true
-
-#### Flag acceptors
-
-Flags can use **acceptors** to define how to validate values and convert them
-to Ruby objects for your tool to consume. By default, Toys will accept a flag
-value string in any form, and expose it to your tool as a raw string. However,
-you can provide an acceptor to change this behavior.
-
-Acceptors are part of the OptionParser interface, and are described under the
-[type coercion](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#class-OptionParser-label-Type+Coercion)
-section. For example, you can provide the `Integer` class as an acceptor, which
-will validate that the argument is a well-formed integer, and convert it to an
-integer during parsing:
-
-    tool "flags-demo" do
-      flag :age, accept: Integer
-      def run
-        puts "Next year I will be #{age + 1}"  # Age is an integer
-      end
-    end
-
-If you pass a non-integer for this flag value, Toys will report a usage error.
-
-You can use any of the ready-to-use coercion types provided by OptionParser,
-including the special types such as
-[OptionParser::DecimalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#DecimalInteger)
-and
-[OptionParser::OctalInteger](http://ruby-doc.org/stdlib/libdoc/optparse/rdoc/OptionParser.html#OctalInteger).
-
-You can also create **custom acceptors**. See the
-[section below on Custom Acceptors](#custom-acceptors) for more information.
+    remaining is ["/etc"]
 
 #### Defaults and handlers
 
@@ -810,7 +861,7 @@ Effectively, the default behavior (setting the value and ignoring the previous
 value) is equivalent to the following handler that takes only the first
 argument:
 
-    flag :shout, "--[no-]shout", handler: proc { | val| val }
+    flag :shout, "--[no-]shout", handler: proc { |val| val }
 
 Toys gives the default handler the special name `:set`. So the above is also
 equivalent to:
@@ -853,59 +904,6 @@ flags, and the `:include` option will be set to an array of the given paths.
 
 The `:push` handler is equivalent to
 `proc { |val, array| array.nil? ? [val] : array << val }`.
-
-#### Descriptions and the flags DSL
-
-Flags can also have short and long descriptions, which are displayed in online
-help. Set descriptions via the `desc:` and `long_desc:` arguments to the flag
-directive. The `desc:` argument takes a single string description, while the
-`long_desc:` argument takes an array of strings. Here is an example:
-
-    flag :my_flag, "--my-flag",
-         desc: "This is a short description for the arg",
-         long_desc: ["Long descriptions can have multiple lines.",
-                     "This is the second line."]
-
-See the [above section on Descriptions](#tool-descriptions) for more information on
-how descriptions are rendered and word wrapped.
-
-Because long descriptions may be unwieldly to write as a hash argument in this
-way, Toys provides an alternate syntax for defining flags using a block.
-
-    flag :my_flag do
-      flags "--my-flag"
-      desc "This is a short description for the flag"
-      long_desc "Long desc can be set as multiple lines together,",
-                "like this second line."
-      long_desc "Or you can call long_desc again to add more lines."
-    end
-
-For detailed info on configuring an flag using a block, see the
-{Toys::DSL::Flag} class.
-
-#### Flag completions
-
-Shell tab completion supports flag values, and flags can be configured to
-present a set of completion candidates for themselves.
-
-By default, a flag does not provide any completions for itself. To change that,
-set the `completion` option. Currently there are three ways to set the
-completion:
-
-*   Provide a static set of possible values, as an array of strings.
-*   Specify that values should be paths in the file system by setting the
-    symbol `:file_system`.
-*   Provide a `Proc` that returns possible values.
-
-The following are two example flags, one that supports a static set of
-completions and the other that supports file paths.
-
-    flag :language, "--lang=VAL", complete_values: ["ruby", "elixir", "rust"]
-    flag :path, "--path=VAL", complete_values: :file_system
-
-Completions are somewhat related to acceptors, and it is a common pattern to
-set both in concert. But they perform distinct functions. Acceptors affect
-option parsing, whereas completions affect tab completion in the shell.
 
 #### Flag groups
 
@@ -980,43 +978,138 @@ configuration for your tool with a flag group:
       end
     end
 
-### Tool execution basics
+### Argument descriptions
 
-When you run a tool from the command line, Toys will build the tool based on
-its definition in a Toys file, and then it will attempt to execute it by
-calling the `run` method. Normally, you should define this method in each of
-your tools.
+Both positional arguments and flags can have short and long descriptions, which
+are displayed in online help. Set descriptions via the `desc:` and `long_desc:`
+arguments to the argument directive. The `desc:` argument takes a single string
+description, while the `long_desc:` argument takes an array of strings.
 
-Note: If you do not define the `run` method for a tool, Toys provides a default
-implementation that displays the tool's help screen. This is typically used for
-namespaces, as we shall see [below](#namespaces-and-subtools). Most tools,
-however, should define `run`.
+Here is an example of a positional argument with a description:
 
-Let's revisit the "greet" example we covered earlier.
+    required_arg :arg,
+                 desc: "This is a short description for the arg",
+                 long_desc: ["Long descriptions can have multiple lines.",
+                             "This is the second line."]
 
-    tool "greet" do
-      optional_arg :whom, default: "world"
-      flag :shout, "-s", "--shout"
+Here is an example of a flag with a description:
 
+    flag :my_flag, "--my-flag",
+         desc: "This is a short description for the arg",
+         long_desc: ["Long descriptions can have multiple lines.",
+                     "This is the second line."]
+
+See the [above section on Descriptions](#tool-descriptions) for more
+information on how descriptions are rendered and word wrapped.
+
+#### Argument acceptors
+
+Positional arguments and flags can use **acceptors** to define how to validate
+values and convert them to Ruby objects for your tool to consume. By default
+Toys will accept any argument string, and expose it to your tool as a raw
+string. However, you can provide an acceptor to change this behavior.
+
+Acceptors are part of the OptionParser interface, and are described under the
+[argument converters](https://docs.ruby-lang.org/en/4.0/optparse/argument_converters_rdoc.html)
+section. For example, you can provide the `Integer` class as an acceptor, which
+will validate that the argument is a well-formed integer, and convert it to an
+integer during parsing:
+
+    tool "acceptor-demo" do
+      required_arg :sibling, accept: ["Pollux", "Castor"]
+      flag :age, accept: Integer
       def run
-        greeting = "Hello, #{whom}!"
-        greeting = greeting.upcase if shout
-        puts greeting
+        puts "Next year #{sibling} will be #{age + 1}"  # Age is an integer
       end
     end
 
-Note that you can produce output or interact with the console using the normal
-Ruby `$stdout`, `$stderr`, and `$stdin` streams.
+If you pass a non-integer for the `:age` argument, or a name other than the two
+allowed `:sibling` names, Toys will report a usage error.
 
-Note also how the `run` method can access values that were assigned by flags or
-positional arguments by just calling a method with that flag or argument name.
-When you declare a flag or argument, if the option name is a symbol that is a
-valid Ruby method name, Toys will provide a method that you can call to get the
-value. In the above example, `whom` and `shout` are such methods.
+You can use any of the ready-to-use coercion types provided by OptionParser,
+including the special types such as
+[OptionParser::DecimalInteger](https://docs.ruby-lang.org/en/4.0/optparse/argument_converters_rdoc.html#label-DecimalInteger)
+and
+[OptionParser::OctalInteger](https://docs.ruby-lang.org/en/4.0/optparse/argument_converters_rdoc.html#label-OctalInteger).
 
-If you create a flag or argument whose option name is not a symbol *or* is not
-a valid method name, you can still get the value by calling
-{Toys::Context#get}. For example:
+You can also create **custom acceptors**. See the
+[section below on Custom Acceptors](#custom-acceptors) for more information.
+
+#### Argument completions
+
+Shell tab completion supports positional arguments and flags, and both can
+be configured to present a set of completion candidates for themselves.
+
+By default, an argument does not provide any completions for itself. To change
+that, set the `completion` option. Currently there are three ways to set the
+completion:
+
+*   Provide a static set of possible values, as an array of strings.
+*   Specify that values should be paths in the file system by setting the
+    symbol `:file_system`.
+*   Provide a `Proc` that returns possible values.
+
+The following are two example arguments, one that supports a static set of
+completions and the other that supports file paths.
+
+    flag :language, "--lang=VALUE", complete_values: ["ruby", "elixir", "rust"]
+    required_arg :path, complete: :file_system
+
+Completions are somewhat related to acceptors, and it is a common pattern to
+set both in concert. But they perform distinct functions. Acceptors affect
+argument parsing, whereas completions affect tab completion in the shell.
+
+### Argument block syntax
+
+Complex flags and positional arguments can sometimes be unwieldy to configure
+using keyword arguments, especially if they contain long descriptions. Thus,
+Toys provides an alternate syntax for defining arguments using a block.
+
+Here is an example of using a block to define a positional argument. Within the
+block, directives such as `long_desc` are defined as methods of the
+{Toys::DSL::PositionalArg} class.
+
+    required_arg :arg do
+      desc "This is a short description for the arg"
+      long_desc "Long desc can be set as multiple lines together,",
+                "like this second line."
+      long_desc "Or you can call long_desc again to add more lines."
+    end
+
+Here is an example using a block to define a flag. Within the block, directives
+such as `default` are defined as methods of the {Toys::DSL::Flag} class.
+
+    flag :my_flag do
+      flags "--my-flag VALUE"
+      default "hello"
+      desc "This is a short description for the flag"
+      long_desc "Long desc can be set as multiple lines together,",
+                "like this second line."
+      long_desc "Or you can call long_desc again to add more lines."
+    end
+
+## The execution environment
+
+This section describes the context and resources available to your tool when it
+is running; that is, what you can call from your tool's `run` method.
+
+Each tool is defined as a class that subclasses {Toys::Context}. The base class
+defines various helper methods, and provides access to a variety of data,
+resources, and capabilities relevant to your tool. We have already seen earlier
+how to use the {Toys::Context#exit} method to exit immediately and return an
+exit code. Now we will cover other resources available to your tool.
+
+### The options hash
+
+The core of the execution context is the options hash. This is a hash that
+contains, among other things, the values provided by a tool's command line
+arguments and flags.
+
+You've seen already that you can access the state of these arguments by calling
+methods defined by the argument name. You can also access these values by
+calling {Toys::Context#get} (or its alias {Toys::Context#[]}) and passing the
+argument name. This also lets you access arguments if the name is not a valid
+method name. For example:
 
     tool "greet" do
       # The name "whom-to-greet" is not a valid method name.
@@ -1031,213 +1124,289 @@ a valid method name, you can still get the value by calling
       end
     end
 
-If a tool's `run` method finishes normally, Toys will exit with a result code
-of 0, indicating success. You can exit immediately and/or provide a nonzero
-result by calling {Toys::Context#exit}:
+In addition to reading values, you can also write to the options hash, by
+calling {Toys::Context#set}. This can be used to postprocess inputs. For
+example, suppose you are writing a command line tool that needs to work with
+absolute file paths. You can still allow a user to pass relative paths on the
+command line, and postprocess them at execution time:
+
+    tool "mytool" do
+      remaining_args :paths
+
+      def run
+        set(:paths, paths.map { |path| File.absolute_path(path) })
+        # Now you know the `paths` are all absolute...
+      end
+    end
+
+You can also define new entries in the options hash, along with corresponding
+helper methods, using the {Toys::DSL::Tool#static} directive. This directive
+sets a value in the options hash, and also defines a helper method for
+accessing it if the key is a symbol that is a legal method name. This is often
+a good alternative to constants, which can be [problematic](#using-constants)
+in a tool definition.
+
+    tool "greet" do
+      static :greeting, "Hello"
+
+      optional_arg :whom, default: "world"
+
+      def run
+        puts "#{greeting}, #{whom}!"
+      end
+    end
+
+Finally, you can access the options as a hash, and read and modify it
+accordingly, by calling {Toys::Context#options}.
+
+### Built-in context
+
+In addition to the options set by your tool's flags and command line arguments,
+a variety of other data and objects are also accessible in the options hash via
+{Toys::Context#get}. For example, you can get the full name of the tool being
+executed like this:
 
     def run
-      puts "Exiting with an error..."
-      exit(1)
-      puts "Will never get here."
+      puts "Current tool is #{get(TOOL_NAME)}"
     end
 
-If your `run` method raises an exception, Toys will display the exception and
-exit with a nonzero code.
+The `TOOL_NAME` constant above is a well-known key that corresponds to the full
+name (as an array of strings) of the running tool. A variety of well-known keys
+are defined in the {Toys::Context::Key} module. They include information about
+the current execution, such as the tool name and the original command line
+arguments passed to it (before they were parsed). They also include some
+internal Toys objects, which can be used to do things like write to the logger
+or look up and call other tools.
 
-Finally, you can also define additional methods within the tool. These are
-available to be called by your `run` method, and can be used to decompose your
-tool implementation. Indeed, a tool is actually a class under the hood, and
-you can define methods as with any other class. Here's a contrived example:
+Most of the important context also can be accessed from convenience methods.
+For example, the `TOOL_NAME` is also available from {Toys::Context#tool_name}:
 
-    tool "greet-many" do
-      # Support any number of arguments on the command line
-      remaining_args :whom, default: ["world"]
-      flag :shout, "-s", "--shout"
+    def run
+      puts "Current tool is #{tool_name}"
+    end
 
-      # You can define helper methods like this.
-      def greet(name)
-        greeting = "Hello, #{name}!"
-        greeting = greeting.upcase if shout
-        puts greeting
+Let's take a look at a few things your tool can do with the objects you can
+access from built-in context.
+
+### Working directory and context directory
+
+When a tool runs, the working directory is initially set to what was the
+current working directory when toys was invoked. In many cases, this is what
+you'll want. However, for some tools, it might make more sense for the working
+directory to be set to the so-called **context directory**. This is the
+directory *containing* the top level `.toys.rb` file or `.toys` directory where
+the tool is defined.
+
+For example, suppose you have a Ruby project directory:
+
+    my-project/
+    |
+    +- .toys.rb  <-- project tools defined here
+    |
+    +- lib/
+    |
+    +- test/
+    |
+    etc...
+
+Now suppose you defined a tool that lists the tests:
+
+    tool "list-tests" do
+      def run
+        puts Dir.glob("test/**/*.rb").join("\n")
       end
+    end
+
+This tool assumes it will be run from the main project directory (`my-project`
+in the above case). However, Toys lets you invoke tools even if you are in a
+subdirectory:
+
+    $ cd lib
+    $ toys list-tests  # Does not work
+
+Rake handles this by always automatically changing the current working
+directory to the directory containing the active Rakefile. Toys, however, does
+not change the working directory unless you tell it to. You can make the
+`list-tests` tool work correctly by changing the directory to the context
+directory, which in this example is the `my-project` directory. The context
+directory is part of the built-in context, and is available via the
+`CONTEXT_DIRECTORY` context key or the {Toys::Context#context_directory} method.
+
+    tool "list-tests" do
+      def run
+        Dir.chdir(context_directory) do
+          puts Dir.glob("test/**/*.rb").join("\n")
+        end
+      end
+    end
+
+Note that the context directory is different from `__dir__`. It is not
+necessarily the directory containing the tool file being executed, but the
+directory containing the entire toys directory structure. So if your tool
+definition is inside a `.toys` directory, it will still work:
+
+    my-project/   <-- context_directory still points here
+    |
+    +- .toys/
+    |  |
+    |  +- list-tests.rb   <-- tool defined here
+    |
+    +- lib/
+    |
+    +- test/
+    |
+    etc...
+
+This technique is particularly useful for build tools. Indeed, all the build
+tools described in the section on
+[Toys as a Rake Replacement](#toys-as-a-rake-replacement) automatically move
+into the context directory when they execute.
+
+### Logging and verbosity
+
+Toys provides a Logger (a simple instance of the Ruby standard library logger
+that writes to standard error) for your tool to use to report status
+information. You can access this logger via the `LOGGER` context key, or
+{Toys::Context#logger}. For example:
+
+    def run
+      logger.warn "Danger Will Robinson!"
+    end
+
+The current logger level is controlled by the verbosity. Verbosity is an
+integer context value that you can retrieve using the `VERBOSITY` context key
+or {Toys::Context#verbosity}. The verbosity is set to 0 by default. This
+corresponds to a logger level of `WARN`. That is, warnings, errors, and fatals
+are displayed, while infos and debugs are not. However,
+[as we saw earlier](#standard-flags), most tools automatically respond to the
+`--verbose` and `--quiet` flags, (or `-v` and `-q`), which increment and
+decrement the verbosity value, respectively. If you pass `-v` to a tool, the
+verbosity is incremented to 1, and the logger level is set to `INFO`. If you
+pass `-q`, the verbosity is decremented to -1, and the logger level is set to
+`ERROR`. So by using the provided logger, a tool can easily provide command
+line based control of the output verbosity.
+
+### Running tools from tools
+
+A common operation a tool might want to do is "call" another tool. This can be
+done via the CLI object, which you can retrieve using the `CLI` key or
+{Toys::Context#cli}. These return the current instance of {Toys::CLI}, which is
+the "main" interface to Toys. In particular, it provides the {Toys::CLI#run}
+method, which can be used to call another tool:
+
+    def run
+      status = cli.run("greet", "rubyists", "-v")
+      exit(status) unless status.zero?
+    end
+
+Pass the tool name and arguments as arguments to the run method. It will
+execute, and return a process status code (i.e. 0 for success, and nonzero for
+error). Make sure you handle the exit status. For example, in most cases, you
+should probably exit if the tool you are calling returns a nonzero code.
+
+You can also use the `exec` mixin [described below](#executing-subprocesses) to
+run a tool in a separate process. This is particularly useful if you need to
+capture or manipulate that tool's input or output stream.
+
+### Helper methods and mixins
+
+The methods of {Toys::Context} are not the only methods available for your tool
+to call. We [saw earlier](#tool-execution-basics) that a tool can define
+additional methods that you can use as helpers.
+
+You can also include **mixins**, which are modules that bring in a whole set of
+helper methods. Include a mixin using the `include` directive:
+
+    tool "greet" do
+      include :terminal
+      def run
+        puts "This is a bold line.", :bold
+      end
+    end
+
+A mixin can be specified by providing a module itself, or by providing a
+**mixin name**. In the above example, we used `:terminal`, which is the name
+of a built-in mixin that Toys provides. Among other things, it defines a
+special `puts` method that lets you include style information such as `:bold`,
+which affects the display on ANSI-capable terminals.
+
+For details on the built-in mixins provided by Toys, see the modules under
+{Toys::StandardMixins}. We will look at a few examples of the use of these
+mixins below. Built-in mixins have names that are symbols.
+
+You can also define your own mixins, as we will see in the
+[section on defining mixins](#defining-mixins).
+
+### Executing subprocesses
+
+Another common operation you might do in a tool is to execute other binaries.
+For example, you might write a tool that shells out to `scp` to copy files to
+a remote server.
+
+Ruby itself provides a few convenient methods for simple execution, such as the
+[Kernel#system](https://docs.ruby-lang.org/en/4.0/Kernel.html#method-i-system) method.
+However, these typically provide limited ability to control or interact with
+subprocess streams, and you also need to remember to handle the exit status
+yourself. If you do want to exert more control over subprocesses, you can use
+[Process.spawn](https://docs.ruby-lang.org/en/4.0/Process.html#method-c-spawn), or a
+higher-level wrapper such as the
+[open3 library](https://docs.ruby-lang.org/en/4.0/Open3.html).
+
+Another alternative is to use the `:exec` built-in mixin. This mixin provides
+convenient methods for the common cases of executing subprocesses and capturing
+their output, and a powerful block-based interface for controlling streams. The
+exec mixin also lets you set a useful default option that causes the tool to
+exit automatically if one of its subprocesses exits abnormally.
+
+The exec mixin provides methods for running several different kinds of
+subprocesses:
+
+*   Normal processes started by the operating system.
+*   Another Ruby process.
+*   A shell script.
+*   Another tool run in a separate (forked) process.
+*   A block run in a separate (forked) process.
+
+Following is a simple example that installs the bundle and starts a rails app:
+
+    tool "start-rails" do
+      include :exec, exit_on_nonzero_status: true
 
       def run
-        whom.each do |name|
-          greet(name)
-        end
+        exec(["bundle", "install"])
+        exec(["bin/rails", "serve"], env: {"RAILS_ENV" => "production"})
       end
     end
 
-This should be enough to get you started implementing tools. A variety of
-additional features are available for your tool implementation and will be
-discussed further below. But first we will cover a few important topics.
+For more information, see the {Toys::StandardMixins::Exec} mixin module and the
+underlying library {Toys::Utils::Exec}.
 
-### Namespaces and subtools
+### Formatting output
 
-Like many command line frameworks, Toys supports **subtools**. You can, for
-example create a tool called "test" that runs your tests for a particular
-project, but you might also want "test unit" and "test integration" tools to
-run specific subsets of the test suite. One way to do this, of course, is for
-the "test" tool to parse "unit" or "integration" as arguments. However, it's
-often easier to define them as separate tools, subtools of "test".
+Interacting with the user is a very common function of a command line tool, and
+many modern tools include intricately designed and styled output, and terminal
+effects such as progress bars and spinners. Toys provides several mixins that
+can help create nicer interfaces.
 
-To define a subtool, create nested `tool` directives. Here's a simple example:
+First, there is `:terminal`, which provides some basic terminal features such
+as styled output and simple spinners. For information, see the
+{Toys::StandardMixins::Terminal} mixin module and the underlying library
+{Toys::Utils::Terminal}.
 
-    tool "test" do
-      tool "unit" do
-        def run
-          puts "run unit tests here..."
-        end
-      end
+If you prefer the venerable Highline library interface, Toys provides a mixin
+called `:highline` that automatically installs the highline gem (version 2.x)
+if it is not already available, and makes a highline object available to the
+tool. For more information, see the {Toys::StandardMixins::Highline} mixin
+module.
 
-      tool "integration" do
-        def run
-          puts "run integration tests here..."
-        end
-      end
-    end
+The `:pager` mixin provides a convenient interface to pager utilities such as
+`less`, which let your users interactively page through long output. For more
+information, see the {Toys::StandardMixins::Pager} mixin module and the
+underlying library {Toys::Utils::Pager}.
 
-You can now invoke them like this:
-
-    $ toys test unit
-    run unit tests here...
-    $ toys test integration
-    run integration tests here...
-
-Notice in this case, the parent "test" tool itself has no `run` method. This is
-a common pattern: "test" is just a "container" for tools, a way of organizing
-your tools. In Toys terminology, it is called a **namespace**. But it is still
-a tool, and it can still be run:
-
-    $ toys test
-
-As discussed earlier, Toys provides a default implementation that displays the
-help screen, which includes a list of the subtools and their descriptions.
-
-As another example, the "root" tool is also normally a namespace. If you just
-run Toys with no arguments:
-
-    $ toys
-
-The root tool will display the overall help screen for Toys.
-
-Although it is a less common pattern, it is possible for a tool to have its own
-`run` method even if it has subtools:
-
-    tool "test" do
-      def run
-        puts "run all tests here..."
-      end
-
-      tool "unit" do
-        def run
-          puts "run only unit tests here..."
-        end
-      end
-
-      tool "integration" do
-        def run
-          puts "run only integration tests here..."
-        end
-      end
-    end
-
-Now running `toys test` will run its own implementation.
-
-(Yes, it is even possible to write a `run` method for the root tool. I don't
-recommend doing so, because you would lose the root tool's useful default
-implementation that lists all your tools.)
-
-Toys allows subtools to be nested arbitrarily deep. In practice, however, more
-than two or three levels of hierarchy can be confusing to use.
-
-### Defining subtools using classes
-
-It is also possible to define subtools by subclassing `Toys::Tool`. The class
-will support the same DSL as a `tool` block would. For example, this is what
-our greet tool would look like as a class:
-
-    class Greet < Toys::Tool
-      optional_arg :whom, default: "world"
-      flag :shout, "-s", "--shout"
-
-      def run
-        greeting = "Hello, #{whom}!"
-        greeting = greeting.upcase if shout
-        puts greeting
-      end
-    end
-
-Defining tools as clases is useful if you want your Toys files to look a bit
-more like normal Ruby or you want to avoid long blocks. Additionally, they can
-be useful to scope constants, which otherwise would be visible throughout the
-entire file, as noted in the [section on using constants](#using-constants).
-
-When you define a tool as a class, Toys infers the tool name by converting the
-class name to "kebab-case". For example, the `Greet` class above would define a
-tool called `greet`. If the class were called `GreetMany`, the tool would be
-called `greet-many`. If you need to override this behavior or set a tool name
-that is not possible from legal class names, pass the desired tool name to the
-`Toys.Tool` method like this:
-
-    class Greet < Toys.Tool("_my_greet")
-      optional_arg :whom, default: "world"
-      flag :shout, "-s", "--shout"
-
-      def run
-        greeting = "Hello, #{whom}!"
-        greeting = greeting.upcase if shout
-        puts greeting
-      end
-    end
-
-You can create subtools by nesting classes:
-
-    class Test < Toys::Tool
-      class Unit < Toys::Tool
-        def run
-          puts "run only unit tests here..."
-        end
-      end
-
-      class Integration < Toys::Tool
-        def run
-          puts "run only integration tests here..."
-        end
-      end
-    end
-
-The above defines `test unit` and `test integration` tools as expected.
-
-Finally, you may not nest a class-based tool inside a block-based tool. (This
-is because Ruby's constant definition rules would put such a class in an
-unexpected namespace, leading to potential clashes that would be difficult to
-diagnose.) It is, however, permissible to nest a block-based tool inside a
-class-based tool.
-
-Hence, this is not allowed, and will result in an exception:
-
-    tool "test" do
-      # This will raise Toys::ToolDefinitionError...
-      class Unit < Toys::Tool
-        def run
-          puts "run unit tests..."
-        end
-      end
-    end
-
-But this is legal:
-
-    class Test < Toys::Tool
-      tool "unit" do
-        def run
-          puts "run unit tests..."
-        end
-      end
-    end
-
-In general, though, as a best practice, I recommend against mixing the two
-styles. Define tools either as classes or as blocks, not both.
+You can also use other third-party gems such as
+[tty](https://github.com/piotrmurach/tty). The section below on
+[useful gems](#useful-gems) provides some examples.
 
 ## Understanding Toys files
 
@@ -1483,7 +1652,7 @@ Equivalently, you can say:
     load "/var/share/single-tool.rb", as: "my-single-tool"
 
 You can also use the `load` directive to load an entire directory. Again, this
-will be have as though the directory's contents are inserted at the load point.
+will behave as though the directory's contents are inserted at the load point.
 The contents of any `.toys.rb` index file will be defined at the load point
 itself, and other files within the directory and subdirectories will be
 namespaced accordingly.
@@ -1630,208 +1799,6 @@ need to change this default, you can set the gem's `"toys_dir"` metadata to a
 different directory name. If this metadata is set, `load_gem` will use it as
 the toys top level directory for that gem. In either case, the caller of the
 `load_gem` directive can still override it by passing the `:toys_dir` argument.
-
-## The execution environment
-
-This section describes the context and resources available to your tool when it
-is running; that is, what you can call from your tool's `run` method.
-
-Each tool is defined as a class that subclasses {Toys::Context}. The base class
-defines helper methods, and provides access to a variety of data and objects
-relevant to your tool. We have already seen earlier how to use the
-{Toys::Context#get} method to retrieve option values, and how to use the
-{Toys::Context#exit} method to exit immediately and return an exit code. Now we
-will cover other resources available to your tool.
-
-### Built-in context
-
-In addition to the options set by your tool's flags and command line arguments,
-a variety of other data and objects are also accessible using
-{Toys::Context#get}. For example, you can get the full name of the tool being
-executed like this:
-
-    def run
-      puts "Current tool is #{get(TOOL_NAME)}"
-    end
-
-The `TOOL_NAME` constant above is a well-known key that corresponds to the full
-name (as an array of strings) of the running tool. A variety of well-known keys
-are defined in the {Toys::Context::Key} module. They include information about
-the current execution, such as the tool name and the original command line
-arguments passed to it (before they were parsed). They also include some
-internal Toys objects, which can be used to do things like write to the logger
-or look up and call other tools.
-
-Most of the important context also can be accessed from convenience methods.
-For example, the `TOOL_NAME` is also available from {Toys::Context#tool_name}:
-
-    def run
-      puts "Current tool is #{tool_name}"
-    end
-
-Let's take a look at a few things your tool can do with the objects you can
-access from built-in context.
-
-### Logging and verbosity
-
-Toys provides a Logger (a simple instance of the Ruby standard library logger
-that writes to standard error) for your tool to use to report status
-information. You can access this logger via the `LOGGER` context key, or
-{Toys::Context#logger}. For example:
-
-    def run
-      logger.warn "Danger Will Robinson!"
-    end
-
-The current logger level is controlled by the verbosity. Verbosity is an
-integer context value that you can retrieve using the `VERBOSITY` context key
-or {Toys::Context#verbosity}. The verbosity is set to 0 by default. This
-corresponds to a logger level of `WARN`. That is, warnings, errors, and fatals
-are displayed, while infos and debugs are not. However,
-[as we saw earlier](#standard-flags), most tools automatically respond to the
-`--verbose` and `--quiet` flags, (or `-v` and `-q`), which increment and
-decrement the verbosity value, respectively. If you pass `-v` to a tool, the
-verbosity is incremented to 1, and the logger level is set to `INFO`. If you
-pass `-q`, the verbosity is decremented to -1, and the logger level is set to
-`ERROR`. So by using the provided logger, a tool can easily provide command
-line based control of the output verbosity.
-
-### Running tools from tools
-
-A common operation a tool might want to do is "call" another tool. This can be
-done via the CLI object, which you can retrieve using the `CLI` key or
-{Toys::Context#cli}. These return the current instance of {Toys::CLI}, which is
-the "main" interface to Toys. In particular, it provides the {Toys::CLI#run}
-method, which can be used to call another tool:
-
-    def run
-      status = cli.run("greet", "rubyists", "-v")
-      exit(status) unless status.zero?
-    end
-
-Pass the tool name and arguments as arguments to the run method. It will
-execute, and return a process status code (i.e. 0 for success, and nonzero for
-error). Make sure you handle the exit status. For example, in most cases, you
-should probably exit if the tool you are calling returns a nonzero code.
-
-You can also use the `exec` mixin [described below](#executing-subprocesses) to
-run a tool in a separate process. This is particularly useful if you need to
-capture or manipulate that tool's input or output stream.
-
-### Helper methods and mixins
-
-The methods of {Toys::Context} are not the only methods available for your tool
-to call. We [saw earlier](#tool-execution-basics) that a tool can define
-additional methods that you can use as helpers.
-
-You can also include **mixins**, which are modules that bring in a whole set of
-helper methods. Include a mixin using the `include` directive:
-
-    tool "greet" do
-      include :terminal
-      def run
-        puts "This is a bold line.", :bold
-      end
-    end
-
-A mixin can be specified by providing a module itself, or by providing a
-**mixin name**. In the above example, we used `:terminal`, which is the name
-of a built-in mixin that Toys provides. Among other things, it defines a
-special `puts` method that lets you include style information such as `:bold`,
-which affects the display on ANSI-capable terminals.
-
-For details on the built-in mixins provided by Toys, see the modules under
-{Toys::StandardMixins}. We will look at a few examples of the use of these
-mixins below. Built-in mixins have names that are symbols.
-
-You can also define your own mixins, as we will see in the
-[upcoming section on defining mixins](#defining-mixins).
-
-### Executing subprocesses
-
-Another common operation you might do in a tool is to execute other binaries.
-For example, you might write a tool that shells out to `scp` to copy files to
-a remote server.
-
-Ruby itself provides a few convenient methods for simple execution, such as the
-[Kernel#system](http://ruby-doc.org/core/Kernel.html#method-i-system) method.
-However, these typically provide limited ability to control or interact with
-subprocess streams, and you also need to remember to handle the exit status
-yourself. If you do want to exert more control over subprocesses, you can use
-[Process.spawn](http://ruby-doc.org/core/Process.html#method-c-spawn), or a
-higher-level wrapper such as the
-[open3 library](http://ruby-doc.org/stdlib/libdoc/open3/rdoc/index.html).
-
-Another alternative is to use the `:exec` built-in mixin. This mixin provides
-convenient methods for the common cases of executing subprocesses and capturing
-their output, and a powerful block-based interface for controlling streams. The
-exec mixin also lets you set a useful default option that causes the tool to
-exit automatically if one of its subprocesses exits abnormally.
-
-The exec mixin provides methods for running several different kinds of
-subprocesses:
-
-*   Normal processes started by the operating system.
-*   Another Ruby process.
-*   A shell script.
-*   Another tool run in a separate (forked) process.
-*   A block run in a separate (forked) process.
-
-For more information, see the {Toys::StandardMixins::Exec} mixin module and the
-underyling library {Toys::Utils::Exec}.
-
-### Formatting output
-
-Interacting with the user is a very common function of a command line tool, and
-many modern tools include intricately designed and styled output, and terminal
-effects such as progress bars and spinners. Toys provides several mixins that
-can help create nicer interfaces.
-
-First, there is `:terminal`, which provides some basic terminal features such
-as styled output and simple spinners. For information, see the
-{Toys::StandardMixins::Terminal} mixin module and the underyling library
-{Toys::Utils::Terminal}.
-
-If you prefer the venerable Highline library interface, Toys provides a mixin
-called `:highline` that automatically installs the highline gem (version 2.x)
-if it is not already available, and makes a highline object available to the
-tool. For more information, see the {Toys::StandardMixins::Highline} mixin
-module.
-
-The `:pager` mixin provides a convenient interface to pager utilities such as
-`less`, which let your users interactively page through long output. For more
-information, see the {Toys::StandardMixins::Pager} mixin module and the
-underlying library {Toys::Utils::Pager}.
-
-You can also use other third-party gems such as
-[tty](https://github.com/piotrmurach/tty). The section below on
-[useful gems](#useful-gems) provides some examples.
-
-### Standard base directories
-
-Command line tools often need access to common user-specific files such as
-caches and state data. The
-[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
-specifies standard locations for these files and standard environment variables
-that can be used to override them. Toys provides easy access to these paths via
-the `:xdg` mixin.
-
-Here's a simple example:
-
-    tool "my-tool" do
-      include :xdg
-
-      def run
-        # Get config file paths, in order from most to least inportant
-        config_files = xdg.lookup_config("my-tool/my-config.toml")
-        config_files.each do |absolute_path|
-          # Read the file...
-        end
-      end
-    end
-
-The `lookup_config` method and many others are documented under the
-{Toys::Utils::XDG} class.
 
 ## Sharing code
 
@@ -2001,6 +1968,11 @@ top level of a Toys file, so it doesn't "look" like it is scoped to something
 smaller. In particular, do not attempt to define constants in a mixin, unless
 you scope them with `self::`.
 
+Often a better alternative to a constant is to use the {Toys::DSL::Tool#static}
+directive to set a static value and create a method that returns it, similar to
+the `let` construct used in some test frameworks. See the section on
+[the options hash](#the-options-hash) for details on this technique.
+
 Modules and classes defined using the `module` or `class` keyword, are also
 constants, and thus follow the same rules. So you could, for example, define a
 "mixin" module like this:
@@ -2037,7 +2009,7 @@ any constant, it is visible only in the same file it is defined in. The `mixin`
 directive creates mixins that are visible from *all* files at the same point in
 the search path.
 
-Not also, when you define a mixin in this way, you should include `Toys::Mixin`
+Note also, when you define a mixin in this way, you should include `Toys::Mixin`
 in the module, as illustrated above. This makes `on_initialize` available in
 the module.
 
@@ -2263,7 +2235,7 @@ by how close they are to the tool being executed. For example:
        +- .lib/   <-- available when any tool defined in this directory
        |  |           is executed
        |  |
-       |  +- helper.rb   <-- visible to "greet" but not "test unit"
+       |  +- helper.rb   <-- visible to "greet" but overridden for "test unit"
        |  |
        |  +- helper2.rb   <-- visible to both "greet" and "test unit"
        |
@@ -2332,6 +2304,51 @@ Either a single `.preload.rb` file or a `.preload` directory, or both, can be
 used. If both are present in the same directory, the `.preload.rb` file is
 loaded first before the `.preload` directory contents.
 
+### Applying directives to multiple tools
+
+Sometimes a group of tools are set up similarly or share a set of flags,
+mixins, or other directives. You can apply a set of directives to all subtools
+(recursively) of the current tool, using the {Toys::DSL::Tool#subtool_apply}
+directive.
+
+For example, it is common for tools to use the `:exec` built-in mixin to invoke
+external programs. You can use `subtool_apply` to ensure that the mixin is
+included in all subtools, so that you do not need to repeat the `include`
+directive in every tool.
+
+    subtool_apply do
+      # Include the mixin only if the tool hasn't already done so
+      unless include?(:exec)
+        include :exec, exit_on_nonzero_status: true
+      end
+    end
+
+    tool "my-tool" do
+      def run
+        # This tool has access to methods defined by the :exec mixin
+        # because the above block is applied to the tool
+        sh "echo hello"
+      end
+    end
+
+Importantly, `subtool_apply` blocks are "applied" at the *end* of a tool's
+definition. Therefore, when using `subtool_apply`, you have the ability to look
+at the current definition of the tool to decide whether to apply further
+changes. The `subtool_apply` block in the above example uses this technique; it
+checks whether the `:exec` mixin has already been included before attempting to
+include it. Thus, it is possible for a tool to "override" the inclusion, say,
+to use a different configuration:
+
+    tool "another-tool" do
+      # Use a different configuration for the :exec mixin.
+      # This "overrides" the subtool_apply block above.
+      include :exec, exit_on_nonzero_status: false
+      def run
+        # This is run with exit_on_nonzero_status: false
+        sh "echo hello"
+      end
+    end
+
 ## Testing your tools
 
 Tests play a critical part in the maintainability of any Ruby app. However, it
@@ -2388,7 +2405,7 @@ And the `helper.rb` file:
 
 You can run tests using:
 
-    toys system test
+    $ toys system test
 
 The built-in `system test` tool searches for the closest `.toys` directory, and
 runs any tests it finds. In the example above, `toys system test` will find the
@@ -2441,7 +2458,7 @@ as the command:
     class GreetTest < Minitest::Test
       include Toys::Testing
 
-      def test_greet_with_no_arguents
+      def test_greet_with_no_arguments
         exit_code = toys_run_tool(["greet"])
         assert_equal(0, exit_code)
       end
@@ -2460,7 +2477,7 @@ block, to capture the output. So here's a complete test for our `greet` tool:
     class GreetTest < Minitest::Test
       include Toys::Testing
 
-      def test_greet_with_no_arguents
+      def test_greet_with_no_arguments
         out, err = capture_subprocess_io do
           exit_code = toys_run_tool(["greet"])
           assert_equal(0, exit_code)
@@ -2479,7 +2496,7 @@ of passing different arguments and flags. For example, here's a test of the
 
       def test_greet_with_shout_flag
         out, err = capture_subprocess_io do
-          exit_code = toys_run_tool(["greet", "--shout])
+          exit_code = toys_run_tool(["greet", "--shout"])
           assert_equal(0, exit_code)
         end
         assert_equal("HELLO, WORLD!\n", out)
@@ -2490,8 +2507,8 @@ of passing different arguments and flags. For example, here's a test of the
 It is important to note that `toys_run_tool` executes the tool *in-process* in
 your tests. This may be appropriate for simple tools, but may not work for
 other cases such as tools that replace the current process using
-[Kernel#exec](http://ruby-doc.org/core/Kernel.html#method-i-exec), or tools
-that require user interaction. For these cases, you can run a tool in a
+[Kernel#exec](https://docs.ruby-lang.org/en/4.0/Kernel.html#method-i-exec), or
+tools that require user interaction. For these cases, you can run a tool in a
 separate forked process using the {Toys::Testing#toys_exec_tool} method, which
 we shall look at next.
 
@@ -2517,7 +2534,7 @@ to rewrite our greeting test as follows:
     class GreetTest < Minitest::Test
       include Toys::Testing
 
-      def test_greet_with_no_arguents
+      def test_greet_with_no_arguments
         result = toys_exec_tool(["greet"])
         assert_equal(0, result.exit_code)
         assert_equal("Hello, world!\n", result.captured_out)
@@ -2655,15 +2672,15 @@ sets of tests independently.
 
 To run just the tests under `build/`:
 
-    toys system test --tool build
+    $ toys system test --tool build
 
 To run just the tests under `deploy/`:
 
-    toys system test --tool deploy
+    $ toys system test --tool deploy
 
 Now, if you do not provide a specific tool:
 
-    toys system test
+    $ toys system test
 
 ...Toys will recursively search for `.test` directories, and run *all* the
 tests, including both the build and deploy tests. To disable this recursive
@@ -2675,6 +2692,53 @@ It is also possible to focus on specific tests using the
 `--minitest-focus` argument to `toys system test` to tell it to load the gem,
 and you will be able to use the `focus` keyword in your tests to temporarily
 focus on a few tests.
+
+Finally, you can limit your test run to specific test files by passing their
+paths as command line arguments to `toys system test`. For example, to run only
+the staging deployment tests:
+
+    $ toys system test .toys/deploy/.test/test_staging.rb
+
+### Gem dependencies in tests
+
+Running tests always requires using gems, at the very least the
+[minitest](https://rubygems.org/gems/minitest) gem. But they might also require
+auxiliary test framework gems such as
+[minitest-mock](https://rubygems.org/gems/minitest-mock), or gems used by the
+tools themselves. So you'll need a way to tell `toys system test` which gems it
+needs to load when running tests.
+
+The easiest way is to provide a Gemfile *for the tests*. This is a Gemfile
+located in the `.test` directory; if the file exists, `toys system test` will
+install and use it when running the tests. This Gemfile *must* include
+`minitest` itself, any other test framework gems needed by the tests, and any
+gems used by the tool itself.
+
+You can also pass arguments to `toys system test` to specify which gems to load
+*for tests that do not have a Gemfile*. Specifically, pass
+`--use-gem=<gem_name>[,<version...>]` for each gem needed beyond `minitest`
+itself. The versions are optional and can be any number of comma-delimited
+requirements using the Rubygems syntax. For example, you can use the
+`minitest-focus` and `minitest-mock` gems as follows:
+
+    $ toys system test --use-gem=minitest-mock --use-gem=minitest-focus,~>1.4
+
+The `minitest-mock`, `minitest-focus`, and `minitest-rg` gems are common enough
+that `toys system test` provides convenience flags for them:
+
+    $ toys system test --minitest-mock --minitest-focus=~>1.4
+
+Note that specifying gems via flag takes effect only for tests for which there
+is no Gemfile. If there is a Gemfile in the `.test` directory, it always
+overrides any flag-specified gems.
+
+Also note that such a Gemfile is distinct from a Gemfile that might be used by
+the tool itself, as described on the section on
+[using bundler](#using-bundler-with-a-tool). A testing gemfile must be located
+in the `.test` directory, whereas a tool Gemfile should be located at the top
+of the project directory or the `.toys` directory. If those Gemfiles are
+closely related, you could have one load the other or even symlink them
+together.
 
 ## Using third-party gems
 
@@ -2782,7 +2846,7 @@ for more information on `subtool_apply`.
 
 By default, the `:bundler` mixin will look for a `Gemfile` within the `.toys`
 directory (if your tool is defined in one), and if one is not found there,
-within the [context directory](#the-context-directory) (the directory
+within the [context directory](#working-directory-and-context-directory) (the directory
 containing your `.toys` directory or `.toys.rb` file), and if one still is not
 found, in the current working directory. You can change this behavior by
 passing an option to the `:bundler` mixin. For example, you can search only the
@@ -2971,7 +3035,7 @@ to ensure highline is installed while the tool is being defined.
     end
 
 Note these methods are a bit different from the
-[gem method](http://ruby-doc.org/stdlib/libdoc/rubygems/rdoc/Kernel.html)
+[gem method](https://docs.ruby-lang.org/en/4.0/Kernel.html#method-i-gem)
 provided by Rubygems. The Toys version attempts to install a missing gem for
 you, whereas Rubygems will just throw an exception.
 
@@ -3064,8 +3128,10 @@ non-deterministic.
       end
     end
 
-A variety of other useful gems can also be found in
-[this article](https://lab.hookops.com/ruby-cli-gems.html).
+Another interesting terminal UI system that just appeared recently (as of this
+writing in 2026) is [RatatuiRuby](https://www.ratatui-ruby.dev/), a Ruby
+wrapper around the Rust library Ratatui. RatatuiRuby pairs very well with Toys
+to build highly sophisticated terminal-based UIs.
 
 ## Toys as a Rake replacement
 
@@ -3208,27 +3274,42 @@ The following sections will describe some of the built-in templates provided by
 Toys to generate common build tools.
 
 Note that Rakefiles and Toys files can coexist in the same directory, so you
-can use either or both tools, depending on your needs.
+can use either or both tools, depending on your needs. It's also quite easy to
+invoke Rake from Toys and vice versa.
 
 ### Running tests
 
 Toys provides a built-in template called `:minitest` for running unit tests
 with [minitest](https://github.com/seattlerb/minitest). The following example
-directive uses the minitest template to create a tool called `test`:
+directive uses the Minitest template to create a tool called `test` that runs
+Minitest-based tests using the current Gemfile:
 
-    expand :minitest, files: ["test/test*.rb"], libs: ["lib", "ext"]
+    expand :minitest, bundler: true
 
-See the {Toys::Templates::Minitest} documentation for details on the available
-options.
+Now to run the tests, you can simply:
+
+    $ toys test
+
+The `test` tool created by the `:minitest` template supports a variety of
+command line arguments that you can use to control which tests are run and how
+results are output. For example, the following command runs only the tests in a
+particular test file whose description does not contain "integration", and
+shows verbose results:
+
+    $ toys test --verbose --exclude=integration test/test_foo.rb
+
+See the {Toys::Templates::Minitest} documentation for details on options you
+can pass to customize the `:minitest` template, and run `toys test --help` on
+the resulting tool for a detailed description of the command line arguments.
 
 Toys also provides a built-in template called `:rspec` for running BDD examples
 using [RSpec](http://rspec.info). The following example directive uses this
 template to create a tool called `spec`:
 
-    expand :rspec, pattern: "spec/**/*_spec.rb", libs: ["lib, "ext"]
+    expand :rspec, bundler: true
 
 See the {Toys::Templates::Rspec} documentation for details on the available
-options.
+options, and try `toys spec --help` for command line arguments.
 
 If you want to enforce code style using the
 [rubocop gem](https://rubygems.org/gems/rubocop), you can use the built-in
@@ -3309,10 +3390,10 @@ themselves.
     expand :clean, paths: :gitignore
 
     # This is the "test" tool.
-    expand :minitest, libs: ["lib", "test"]
+    expand :minitest, bundler: true, libs: ["lib", "test"]
 
     # This is the "rubocop" tool.
-    expand :rubocop
+    expand :rubocop, bundler: true
 
     # This is the "yardoc" tool. We cause it to fail on warnings and if there
     # are any undocumented objects, which is useful for CI. We also configure
@@ -3320,6 +3401,7 @@ themselves.
     # this flag to invoke yardoc but suppress output, because it just wants to
     # check for warnings.
     expand :yardoc do |t|
+      t.bundler = true
       t.generate_output_flag = true
       t.fail_on_warning = true
       t.fail_on_undocumented_objects = true
@@ -3367,14 +3449,38 @@ themselves.
       end
     end
 
-## Advanced tool definition techniques
+## Additional tool definition features
 
 This section covers some additional features that are often useful for writing
-tools. I've labeled them "advanced", but all that really means is that this
-user's guide didn't happen to have covered them until this section. Each of
-these features is very useful for certain types of tools, and it is good at
-least to know that you *can* do these things, even if you don't use them
-regularly.
+tools. Each of these features is very useful for certain types of tools, and it
+is good at least to know that you *can* do these things, even if you don't use
+them regularly.
+
+### Standard base directories
+
+Command line tools often need access to common user-specific files such as
+caches and state data. The
+[XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+specifies standard locations for these files and standard environment variables
+that can be used to override them. Toys provides easy access to these paths via
+the `:xdg` mixin.
+
+Here's a simple example:
+
+    tool "my-tool" do
+      include :xdg
+
+      def run
+        # Get config file paths, in order from most to least important
+        config_files = xdg.lookup_config("my-tool/my-config.toml")
+        config_files.each do |absolute_path|
+          # Read the file...
+        end
+      end
+    end
+
+The `lookup_config` method and many others are documented under the
+{Toys::Utils::XDG} class.
 
 ### Delegating tools
 
@@ -3433,51 +3539,6 @@ Now `toys test` delegates to, and thus has the same effect as `toys test unit`.
 It is also possible to specify the delegate via _relative_ name, using the
 `:delegate_relative` keyword argument. This can be helpful if you have a set of
 tools and delegates that are meant to be reused under different namespaces.
-
-### Applying directives to multiple tools
-
-Sometimes a group of tools are set up similarly or share a set of flags,
-mixins, or other directives. You can apply a set of directives to all subtools
-(recursively) of the current tool, using the {Toys::DSL::Tool#subtool_apply}
-directive.
-
-For example, it is common for tools to use the `:exec` built-in mixin to invoke
-external programs. You can use `subtool_apply` to ensure that the mixin is
-included in all subtools, so that you do not need to repeat the `include`
-directive in every tool.
-
-    subtool_apply do
-      # Include the mixin only if the tool hasn't already done so
-      unless include?(:exec)
-        include :exec, exit_on_nonzero_status: true
-      end
-    end
-
-    tool "my-tool" do
-      def run
-        # This tool has access to methods defined by the :exec mixin
-        # because the above block is applied to the tool
-        sh "echo hello"
-      end
-    end
-
-Importantly, `subtool_apply` blocks are "applied" at the *end* of a tool's
-definition. Therefore, when using `subtool_apply`, you have the ability to look
-at the current definition of the tool to decide whether to apply further
-changes. The `subtool_apply` block in the above example uses this technique; it
-checks whether the `:exec` mixin has already been included before attempting to
-include it. Thus, it is possible for a tool to "override" the inclusion, say,
-to use a different configuration:
-
-    tool "another-tool" do
-      # Use a different configuration for the :exec mixin.
-      # This "overrides" the subtool_apply block above.
-      include :exec, exit_on_nonzero_status: false
-      def run
-        # This is run with exit_on_nonzero_status: false
-        sh "echo hello"
-      end
-    end
 
 ### Custom acceptors
 
@@ -3590,7 +3651,7 @@ simplified excerpt from the implementation that tool:
 ### Requiring exact flag matches
 
 By default, tools will recognize "shortened" forms of long flags. For example,
-most suppose you are defining a tool with long flags:
+suppose you are defining a tool with long flags:
 
     tool "my-tool" do
       flag :long_flag_name, "--long-flag-name"
@@ -3662,7 +3723,7 @@ If you interrupt a running tool by hitting `CTRL`-`C` or sending it a signal,
 Toys will normally terminate execution and display the message `INTERRUPTED` on
 the standard error stream.
 
-If your tool needs to handle signals or inerrupts itself, you have several
+If your tool needs to handle signals or interrupts itself, you have several
 options. You can rescue the `SignalException` or call `Signal.trap`. Or you can
 provide a *signal handler* in your tool using the `on_signal` or `on_interrupt`
 directive. These directives either provide a block or designate a named method
@@ -3786,7 +3847,7 @@ gets set, causing the integration tests to run. Here's what that looks like:
       # Add a flag to the tool
       flag :integration
 
-      # Create a new run method that "wraps" the existing one
+      # Create a new run method that "wraps" the existing method
       def run_with_integration
         # First set the environment variable to activate integration tests
         # if requested
@@ -3846,7 +3907,7 @@ To use data files, you must define your tools inside a
 [Toys directory](#toys-directories). Within the Toys directory, create a
 directory named `.data` and copy your data files there.
 
-You mcanay then "find" a data file by providing the relative path to the file from
+You may then "find" a data file by providing the relative path to the file from
 the `.data` directory. When defining a tool, use the
 {Toys::DSL::Tool#find_data} directive in a Toys file. Or, at tool execution
 time, call {Toys::Context#find_data} (which is a convenience method for getting
@@ -3931,81 +3992,12 @@ If, however, you find `greeting.txt` from a tool under `test`, it will still
 find the more general `.toys/.data/greeting.txt` file because there is no
 overriding file under `.toys/test/.data`.
 
-### The context directory
+### Changing the context directory
 
-The **context directory** for a tool is the directory containing the top level
-`.toys.rb` file or the `.toys` directory within which the tool is defined. It
-is sometimes useful for tools that expect to be run from a specific working
-directory.
-
-For example, suppose you have a Ruby project directory:
-
-    my-project/
-    |
-    +- .toys.rb  <-- project tools defined here
-    |
-    +- lib/
-    |
-    +- test/
-    |
-    etc...
-
-Now suppose you defined a tool that lists the tests:
-
-    tool "list-tests" do
-      def run
-        puts Dir.glob("test/**/*.rb").join("\n")
-      end
-    end
-
-This tool assumes it will be run from the main project directory (`my-project`
-in the above case). However, Toys lets you invoke tools even if you are in a
-subdirectory:
-
-    $ cd lib
-    $ toys list-tests  # Does not work
-
-Rake handles this by actually changing the current working directory to the
-directory containing the active Rakefile. Toys, however, does not change the
-working directory unless you tell it to. You can make the `list-tests` tool
-work correctly by changing the directory to the context directory (which is the
-directory containing the `.toys.rb` file, i.e. the `my-project` directory.)
-
-    tool "list-tests" do
-      def run
-        Dir.chdir(context_directory) do
-          puts Dir.glob("test/**/*.rb").join("\n")
-        end
-      end
-    end
-
-Note the context directory is different from `__dir__`. It is not necessarily
-the directory containing the file being executed, but the directory containing
-the entire toys directory structure. So if your tool definition is inside a
-`.toys` directory, it will still work:
-
-    my-project/   <-- context_directory still points here
-    |
-    +- .toys/
-    |  |
-    |  +- list-tests.rb   <-- tool defined here
-    |
-    +- lib/
-    |
-    +- test/
-    |
-    etc...
-
-This technique is particularly useful for build tools. Indeed, all the build
-tools described in the section on
-[Toys as a Rake Replacement](#toys-as-a-rake-replacement) automatically move
-into the context directory when they execute.
-
-#### Changing the context directory
-
-It is even possible to modify the context directory, causing tools that use the
-context directory (such as the standard build tools) to run in a different
-directory. Here is an example:
+It is possible to modify the
+[context directory](#working-directory-and-context-directory), causing tools
+that use the context directory (such as the standard build tools) to run in a
+different directory. Here is an example:
 
 Suppose you have a repository with multiple gems, each in its own directory:
 
@@ -4071,6 +4063,94 @@ the implementation of other tools.
 If you pass the `--all` flag when displaying help, the help screen will include
 hidden tools in the subtools list.
 
+### Defining subtools using classes
+
+It is also possible to define subtools by subclassing `Toys::Tool`. The class
+will support the same DSL as a `tool` block would. For example, this is what
+our greet tool would look like as a class:
+
+    class Greet < Toys::Tool
+      optional_arg :whom, default: "world"
+      flag :shout, "-s", "--shout"
+
+      def run
+        greeting = "Hello, #{whom}!"
+        greeting = greeting.upcase if shout
+        puts greeting
+      end
+    end
+
+Defining tools as classes is useful if you want your Toys files to look a bit
+more like normal Ruby or you want to avoid long blocks. Additionally, they can
+be useful to scope constants, which otherwise would be visible throughout the
+entire file, as noted in the [section on using constants](#using-constants).
+
+When you define a tool as a class, Toys infers the tool name by converting the
+class name to "kebab-case". For example, the `Greet` class above would define a
+tool called `greet`. If the class were called `GreetMany`, the tool would be
+called `greet-many`. If you need to override this behavior or set a tool name
+that is not possible from legal class names, pass the desired tool name to the
+`Toys.Tool` method like this:
+
+    class Greet < Toys.Tool("_my_greet")
+      optional_arg :whom, default: "world"
+      flag :shout, "-s", "--shout"
+
+      def run
+        greeting = "Hello, #{whom}!"
+        greeting = greeting.upcase if shout
+        puts greeting
+      end
+    end
+
+You can create subtools by nesting classes:
+
+    class Test < Toys::Tool
+      class Unit < Toys::Tool
+        def run
+          puts "run only unit tests here..."
+        end
+      end
+
+      class Integration < Toys::Tool
+        def run
+          puts "run only integration tests here..."
+        end
+      end
+    end
+
+The above defines `test unit` and `test integration` tools as expected.
+
+Finally, you may not nest a class-based tool inside a block-based tool. (This
+is because Ruby's constant definition rules would put such a class in an
+unexpected namespace, leading to potential clashes that would be difficult to
+diagnose.) It is, however, permissible to nest a block-based tool inside a
+class-based tool.
+
+Hence, this is not allowed, and will result in an exception:
+
+    tool "test" do
+      # This will raise Toys::ToolDefinitionError...
+      class Unit < Toys::Tool
+        def run
+          puts "run unit tests..."
+        end
+      end
+    end
+
+But this is legal:
+
+    class Test < Toys::Tool
+      tool "unit" do
+        def run
+          puts "run unit tests..."
+        end
+      end
+    end
+
+In general, though, as a best practice, I recommend against mixing the two
+styles. Define tools either as classes or as blocks, not both.
+
 ## Toys administration using the system tools
 
 Toys comes with a few built-in tools, including some that let you administer
@@ -4080,18 +4160,18 @@ Toys itself. These tools live in the `system` namespace.
 
 You can get the current version of Toys by running:
 
-    toys system version
+    $ toys system version
 
 Note that the same output can be obtained by passing the `--version` flag to
 the root tool:
 
-    toys --version
+    $ toys --version
 
 ### Upgrading Toys
 
 To update Toys to the latest released version, run:
 
-    toys system update
+    $ toys system update
 
 This will determine the latest version from Rubygems, and update your Toys
 installation if it is not already current.
@@ -4118,8 +4198,8 @@ initialization file.
 
 By default, this associates the Toys tab completion logic with the `toys`
 executable. If you have other names or aliases for the executable, pass them as
-arguments. For example, I use `t` as an alias for `toys`, and I therefore
-install Toys's completion logic for `t`:
+arguments. For example, if you use `t` as an alias for `toys`, you can install
+Toys's completion logic for `t`:
 
     $(toys system bash-completion install t)
 
@@ -4141,8 +4221,8 @@ your `.zshrc`). See `toys system zsh-completion --help` for more details.
 
 By default, this associates the Toys tab completion logic with the `toys`
 executable. If you have other names or aliases for the executable, pass them as
-arguments. For example, I use `t` as an alias for `toys`, and I therefore
-install Toys's completion logic for `t`:
+arguments. For example, if you use `t` as an alias for `toys`, you can install
+Toys's completion logic for `t`:
 
     $(toys system zsh-completion install t)
 
@@ -4163,8 +4243,8 @@ and list tools, and another to get information about a specific tool. In both
 cases, you can view results as either YAML or JSON. For more information, see
 the help screens:
 
-    toys system tools list --help
-    toys system tools show --help
+    $ toys system tools list --help
+    $ toys system tools show --help
 
 ### Managing the Git cache
 
@@ -4176,7 +4256,7 @@ information about cache status, and deleting old data.
 
 To display general information and a list of tools, run:
 
-    toys system git-cache --help
+    $ toys system git-cache --help
 
 By default, files in the Git Cache are read-only. This is to prevent code that
 uses the cache from modifying those files in place and thus causing problems
