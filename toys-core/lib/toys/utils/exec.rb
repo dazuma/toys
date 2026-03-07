@@ -677,10 +677,6 @@ module Toys
         ##
         # Wait for the subcommand to complete, and return a result object.
         #
-        # Closes the control streams if present. The stdin stream is always
-        # closed, even if the call times out. The stdout and stderr streams are
-        # closed only after the command terminates.
-        #
         # @param timeout [Numeric,nil] The timeout in seconds, or `nil` to
         #     wait indefinitely.
         # @return [Toys::Utils::Exec::Result] The result object
