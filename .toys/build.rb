@@ -1,16 +1,36 @@
 # frozen_string_literal: true
 
-load "#{__dir__}/../common-tools/ci"
+# Normally you would do the following to load the CI framework:
+#     load_gem "toys-ci"
+# In this repo we want to use the current HEAD instead, so we manually add
+# the lib directory to the load path and load the tool directory directly.
+toys_ci_path = ::File.join(::File.dirname(__dir__), "toys-ci")
+lib_path = ::File.join(toys_ci_path, "lib")
+$LOAD_PATH.unshift(lib_path) unless $LOAD_PATH.include?(lib_path)
+load(::File.join(toys_ci_path, "toys"))
 
 desc "Checks build for all gems"
 
-expand("toys-ci") do |toys_ci|
-  toys_ci.only_flag = true
-  toys_ci.fail_fast_flag = true
-  toys_ci.job("Build toys-core gem", flag: :core,
-              tool: ["build"], chdir: "toys-core")
-  toys_ci.job("Build toys gem", flag: :toys,
-              tool: ["build"], chdir: "toys")
-  toys_ci.job("Build toys-release gem", flag: :release,
-              tool: ["build"], chdir: "toys-release")
+expand(Toys::CI::Template) do |ci|
+  ci.only_flag = true
+  ci.fail_fast_flag = true
+  ci.base_ref_flag = true
+  ci.include_github_event_flags
+
+  ci.tool_job("Build toys-core gem",
+              ["build"], chdir: "toys-core",
+              flag: :toys_core,
+              trigger_paths: ["toys-core/"])
+  ci.tool_job("Build toys gem",
+              ["build"], chdir: "toys",
+              flag: :toys,
+              trigger_paths: ["toys-core/", "toys/"])
+  ci.tool_job("Build toys-ci gem",
+              ["build"], chdir: "toys-ci",
+              flag: :toys_ci,
+              trigger_paths: ["toys-ci/"])
+  ci.tool_job("Build toys-release gem",
+              ["build"], chdir: "toys-release",
+              flag: :toys_release,
+              trigger_paths: ["toys-release/"])
 end

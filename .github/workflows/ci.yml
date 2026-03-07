@@ -38,22 +38,22 @@ jobs:
             steps: "--test-all"
           - os: ubuntu-latest
             ruby: "jruby"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: ubuntu-latest
             ruby: "truffleruby"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: macos-latest
             ruby: "2.7"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: macos-latest
             ruby: "4.0"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: windows-latest
             ruby: "2.7"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: windows-latest
             ruby: "4.0"
-            steps: "--test-all --no-test-tools --no-test-release"
+            steps: "--test-all --no-test-toys-release"
           - os: ubuntu-latest
             ruby: "4.0"
             steps: "--rubocop-all --yard-all --build-all"
@@ -70,8 +70,9 @@ jobs:
       - name: Run ${{ matrix.steps || '--test-all' }}
         shell: bash
         env:
-          TOYS_TEST_INTEGRATION: "1"
+          TOYS_TEST_INTEGRATION: "true"
           GH_TOKEN: ${{ github.token }}
         run: |
           unset JAVA_TOOL_OPTIONS
-          ./toys-dev do ci init , ci --only ${{ matrix.steps }} < /dev/null
+          ./toys-dev ci-init
+          ./toys-dev ci --github-event-name=${{ github.event_name }} --github-event-path=${{ github.event_path }} --only ${{ matrix.steps }} < /dev/null

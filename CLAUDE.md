@@ -9,6 +9,7 @@ Toys is a configurable command line tool framework for Ruby. It is a **monorepo*
 - **toys-core** (`toys-core/`) - The framework library providing the DSL, argument parsing, middleware, and tool loading infrastructure. Used by the `toys` gem, but can also be used to write a standalone executable.
 - **toys** (`toys/`) - The main CLI executable gem that provides the `toys` executable, also providing a set of common tool templates and some built-in tools. Depends on toys-core.
 - **toys-release** (`toys-release/`) - Release automation system for GitHub Actions.
+- **toys-ci** (`toys-ci/`) - CI tool library providing a mixin and template for implementing CI jobs in Toys. Depends on toys-core.
 - **common-tools** (`common-tools/`) - Shared development tooling helpers (not a gem).
 
 ## Development Commands
@@ -26,7 +27,7 @@ To run CI/test tasks across all gems, run `./toys-dev` from the repository root.
 
 To run only the CI/test tasks for a specific gem, run toys-dev from that gem's subdirectory. See the gem subdirectory's CLAUDE.md for gem-specific examples.
 
-Each toys-dev command has a manpage describing all available options. For example:
+Pass the `--help` flag to any toys-dev command to display a manpage describing all available options. For example:
 
 ```bash
 ./toys-dev ci --help  # Display a manpage showing all available options for toys-dev ci
@@ -54,3 +55,4 @@ Each toys-dev command has a manpage describing all available options. For exampl
 - Unless instructed otherwise, always git commit after a step is complete and the tests pass.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
 - Avoid making changes to multiple gems in the same commit.
+- Prefer Ruby for any one-off scripts you need to write as part of your work.

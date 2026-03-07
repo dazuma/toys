@@ -313,6 +313,7 @@ module Toys
         # the modified gemfile is created) but the gemfile lock itself calls
         # for a different version.
         require "uri"
+        require "stringio"
         # Lock the bundler version, preventing bundler's SelfManager from
         # installing a different bundler and taking over the process.
         ::ENV["BUNDLER_VERSION"] = ::Bundler::VERSION
@@ -422,7 +423,6 @@ module Toys
           path_suffix = path ? ", path: '#{path}'" : ""
           content << "gem '#{spec.name}', '= #{spec.version}'#{path_suffix}"
         end
-
         content
       end
 
