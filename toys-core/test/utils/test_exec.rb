@@ -37,7 +37,7 @@ describe Toys::Utils::Exec do
     end
 
     it "detects nonzero exit codes" do
-      skip("https://github.com/oracle/truffleruby/issues/2568") if Toys::Compat.truffleruby?
+      skip "https://github.com/oracle/truffleruby/issues/2568" if Toys::Compat.truffleruby?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("exit 3")
         assert_nil(result.exception)
@@ -84,7 +84,7 @@ describe Toys::Utils::Exec do
     end
 
     it "detects termination due to signal" do
-      skip if Toys::Compat.windows?
+      skip "Skipped test on Windows" if Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec("sleep 5") do |controller|
           sleep(0.5)
@@ -148,7 +148,7 @@ describe Toys::Utils::Exec do
     end
 
     it "is called on signals" do
-      skip if Toys::Compat.windows?
+      skip "Skipped test on Windows" if Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         was_called = false
         callback = proc do |result|
@@ -214,7 +214,7 @@ describe Toys::Utils::Exec do
     end
 
     it "recognizes an array with array binary" do
-      skip if Toys::Compat.jruby? || Toys::Compat.windows?
+      skip "Skipped test on Windows and/or JRuby" if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec([["sh", "meow"], "-c", "echo $0"], out: :capture)
         assert_equal("meow\n", result.captured_out)
@@ -223,7 +223,7 @@ describe Toys::Utils::Exec do
     end
 
     it "recognizes argv0 as an option" do
-      skip if Toys::Compat.jruby? || Toys::Compat.windows?
+      skip "Skipped test on Windows and/or JRuby" if Toys::Compat.jruby? || Toys::Compat.windows?
       ::Timeout.timeout(simple_exec_timeout) do
         result = exec.exec(["sh", "-c", "echo $0"], out: :capture, argv0: "meow")
         assert_equal("meow\n", result.captured_out)
@@ -240,7 +240,7 @@ describe Toys::Utils::Exec do
     end
 
     it "forks procs" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           puts "pid: #{::Process.pid}"
@@ -254,7 +254,7 @@ describe Toys::Utils::Exec do
     end
 
     it "captures forks" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         func = proc do
           puts "pid: #{::Process.pid}"
@@ -340,7 +340,7 @@ describe Toys::Utils::Exec do
 
   describe "stream handling for spawn" do
     it "inherits parent streams" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(ruby_exec_timeout) do
         func = proc do
           script = <<-SCRIPT
@@ -478,7 +478,7 @@ describe Toys::Utils::Exec do
     end
 
     it "inherits parent streams by default when running in the foreground" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(ruby_exec_timeout) do
         func = proc do
           script = <<-SCRIPT
@@ -501,7 +501,7 @@ describe Toys::Utils::Exec do
     end
 
     it "redirects to null by default when running in the background" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(ruby_exec_timeout) do
         func = proc do
           script = <<-SCRIPT
@@ -519,7 +519,7 @@ describe Toys::Utils::Exec do
 
   describe "stream handling for fork" do
     before do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     end
 
     it "inherits parent streams" do
@@ -884,7 +884,7 @@ describe Toys::Utils::Exec do
     end
 
     it "honors unsetenv_others and nil values when forking" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       ::Timeout.timeout(simple_exec_timeout) do
         ::ENV["VAR2"] = "bar"
         ::ENV["VAR3"] = "baz"

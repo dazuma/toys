@@ -1989,7 +1989,7 @@ describe Toys::DSL::Tool do
 
   describe "load_git directive" do
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
     end
 
     let(:git_remote) { "https://github.com/dazuma/toys.git" }

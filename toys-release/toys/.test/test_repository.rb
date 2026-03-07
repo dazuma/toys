@@ -55,8 +55,8 @@ describe Toys::Release::Repository do
   end
 
   it "switches SHA" do
-    skip unless ENV["TOYS_TEST_INTEGRATION"]
-    skip unless repository.git_clean?
+    skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+    skip "Skipped test to avoid colliding with local edits" unless repository.git_clean?
     original_sha = repository.current_sha
     refute_equal("a922cf30093c539f3d46733e040567a3d8d9d847", original_sha)
     repository.git_prepare_branch("origin")
@@ -72,7 +72,7 @@ describe Toys::Release::Repository do
   end
 
   it "creates a branch" do
-    skip unless repository.git_clean?
+    skip "Skipped test to avoid colliding with local edits" unless repository.git_clean?
     cur_branch = repository.current_branch
     cur_sha = repository.current_sha
     new_branch_name = "test/test-branch-12345"

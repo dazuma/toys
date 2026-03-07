@@ -61,7 +61,7 @@ describe Toys::Testing do
 
   describe "#toys_exec_tool" do
     before do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     end
 
     it "captures a tool's output" do

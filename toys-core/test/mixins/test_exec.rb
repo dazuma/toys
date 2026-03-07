@@ -22,7 +22,7 @@ describe Toys::StandardMixins::Exec do
   }
 
   it "executes a shell command" do
-    skip if Toys::Compat.windows?
+    skip "Skipped test on Windows" if Toys::Compat.windows?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -62,7 +62,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a proc" do
-    skip unless Toys::Compat.allow_fork?
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -76,7 +76,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "executes a toys tool in a fork" do
-    skip unless Toys::Compat.allow_fork?
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "bar" do
         def run
@@ -148,7 +148,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a proc" do
-    skip unless Toys::Compat.allow_fork?
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "foo" do
         include :exec
@@ -162,7 +162,7 @@ describe Toys::StandardMixins::Exec do
   end
 
   it "captures a toys tool" do
-    skip unless Toys::Compat.allow_fork?
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
     cli.add_config_block do
       tool "bar" do
         def run
@@ -337,7 +337,7 @@ describe Toys::StandardMixins::Exec do
     end
 
     it "exits on signal" do
-      skip if Toys::Compat.windows?
+      skip "Skipped test on Windows" if Toys::Compat.windows?
       completed = false
       cli.add_config_block do
         tool "foo" do

@@ -141,8 +141,8 @@ describe Toys::Release::Steps do
     end
 
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
-      skip if ::Toys::Compat.jruby?
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped test on JRuby" if ::Toys::Compat.jruby?
     end
 
     it "sets dependencies in bundle mode" do
@@ -306,7 +306,7 @@ describe Toys::Release::Steps do
     end
 
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       fake_tool_context.prevent_real_exec_prefix(["git", "push"])
     end
 

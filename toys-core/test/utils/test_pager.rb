@@ -27,7 +27,7 @@ describe Toys::Utils::Pager do
   end
 
   it "calls the default command" do
-    skip if Toys::Compat.windows?
+    skip "Skipped test on Windows" if Toys::Compat.windows?
     out, _err = capture_subprocess_io do
       Toys::Utils::Pager.start(fallback_io: fallback_io) do |io|
         io.puts "ruby rulz"
@@ -38,7 +38,7 @@ describe Toys::Utils::Pager do
   end
 
   it "calls a custom command" do
-    skip if Toys::Compat.windows?
+    skip "Skipped test on Windows" if Toys::Compat.windows?
     cat_path = `which cat`.strip
     out, _err = capture_subprocess_io do
       Toys::Utils::Pager.start(command: cat_path, fallback_io: fallback_io) do |io|
@@ -50,7 +50,7 @@ describe Toys::Utils::Pager do
   end
 
   it "returns the pager result code" do
-    skip if Toys::Compat.windows?
+    skip "Skipped test on Windows" if Toys::Compat.windows?
     command = [::RbConfig.ruby, "-e", "exit(12)"]
     code = Toys::Utils::Pager.start(command: command, fallback_io: fallback_io) do |io|
       io.puts "ruby rox"
@@ -59,7 +59,7 @@ describe Toys::Utils::Pager do
   end
 
   it "catches broken pipes" do
-    skip if Toys::Compat.windows?
+    skip "Skipped test on Windows" if Toys::Compat.windows?
     command = [::RbConfig.ruby, "-e", "$stdin.read(10); $stdin.close"]
     Toys::Utils::Pager.start(command: command, fallback_io: fallback_io) do |io|
       100_000.times { io.puts "hello ruby hello ruby" }

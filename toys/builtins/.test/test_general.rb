@@ -30,7 +30,7 @@ describe "toys" do
   end
 
   it "displays alternative suggestions for misspelled tool" do
-    skip unless Toys::Compat.supports_suggestions?
+    skip "Skipped test because did_you_mean is not available" unless Toys::Compat.supports_suggestions?
     _out, err = capture_subprocess_io do
       toys_run_tool(["system", "versiom"])
     end
@@ -40,7 +40,7 @@ describe "toys" do
   end
 
   it "displays alternative suggestions for misspelled flag" do
-    skip unless Toys::Compat.supports_suggestions?
+    skip "Skipped test because did_you_mean is not available" unless Toys::Compat.supports_suggestions?
     _out, err = capture_subprocess_io do
       toys_run_tool(["--helf"])
     end

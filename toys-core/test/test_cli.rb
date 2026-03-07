@@ -162,7 +162,7 @@ describe Toys::CLI do
     end
 
     it "accesses lib directory" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       cli.loader.add_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("foo")
@@ -172,7 +172,7 @@ describe Toys::CLI do
     end
 
     it "accesses lib directory with overrides" do
-      skip unless Toys::Compat.allow_fork?
+      skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
       cli.loader.add_path(File.join(lookup_cases_dir, "lib-dirs"))
       func = proc do
         puts cli.run("ns", "bar")

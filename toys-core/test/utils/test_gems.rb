@@ -12,7 +12,7 @@ describe Toys::Utils::Gems do
   let(:exec_service) { Toys::Utils::Exec.new }
 
   def setup_case(name, tmp_vendor: true, timeout: 60, &block)
-    skip unless ::ENV["TOYS_TEST_INTEGRATION"]
+    skip "Skipped integration test" unless ::ENV["TOYS_TEST_INTEGRATION"]
     Bundler.with_unbundled_env do
       Dir.chdir(File.join(gems_cases_dir, name)) do
         old_path = ENV["BUNDLE_PATH"]
@@ -135,8 +135,10 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle requiring installation of a direct dependency" do
-      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
-      skip if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
+        skip "Skipped test becuase highline 2.0.2 is already installed"
+      end
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
@@ -155,8 +157,10 @@ describe Toys::Utils::Gems do
     end
 
     it "sets up a bundle requiring installation of a transitive dependency via a gemspec" do
-      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
-      skip if exec_service.capture(["gem", "list", "highline"]).include?("2.0.1")
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      if exec_service.capture(["gem", "list", "highline"]).include?("2.0.1")
+        skip "Skipped test becuase highline 2.0.1 is already installed"
+      end
       setup_case("bundle-using-gemspec") do
         result = run_script
         assert(result.success?)
@@ -174,10 +178,14 @@ describe Toys::Utils::Gems do
     end
 
     it "updates the bundle if install fails due to conflicts" do
-      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       # Problem installing jaro_winkler on Mac Ruby 3.4
-      skip if Toys::Compat.macos? && Toys::Compat::RUBY_VERSION_CODE >= 30_400
-      skip if exec_service.capture(["gem", "list", "rubocop"]).include?("0.81.0")
+      if Toys::Compat.macos? && Toys::Compat::RUBY_VERSION_CODE >= 30_400
+        skip "Skipped due to a problem with jaro_winkler on Ruby 3.4 on Mac OS"
+      end
+      if exec_service.capture(["gem", "list", "rubocop"]).include?("0.81.0")
+        skip "Skipped test becuase rubocop 0.81.0 is already installed"
+      end
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")
         FileUtils.cp("Gemfile.lock.orig", "Gemfile.lock")
@@ -191,7 +199,7 @@ describe Toys::Utils::Gems do
     end
 
     it "preserves the versions of default gems" do
-      skip if Toys::Compat.jruby? || Toys::Compat.truffleruby?
+      skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       setup_case("bundle-with-default-gems") do
         result = run_script
         assert(result.success?)
