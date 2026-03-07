@@ -5,13 +5,10 @@ on:
     branches:
       - main
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
   tests:
-    if: ${{ github.repository == 'dazuma/toys' }}
     strategy:
       matrix:
         include:
