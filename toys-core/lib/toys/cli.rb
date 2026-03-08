@@ -552,7 +552,7 @@ module Toys
       #
       def default_error_handler
         proc do |error|
-          cause = error.cause
+          cause = error.respond_to?(:underlying_error) ? error.underlying_error : error.cause
           raise cause.is_a?(::SignalException) ? cause : error
         end
       end

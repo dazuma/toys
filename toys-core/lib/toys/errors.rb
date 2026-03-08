@@ -51,24 +51,25 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def initialize(cause, banner,
+    def initialize(underlying_error, banner,
                    config_path: nil, config_line: nil,
                    tool_name: nil, tool_args: nil)
-      super("#{banner} : #{cause.message} (#{cause.class})")
-      @cause = cause
+      super("#{banner} : #{underlying_error.message} (#{underlying_error.class})")
+      @underlying_error = underlying_error
       @banner = banner
       @config_path = config_path
       @config_line = config_line
       @tool_name = tool_name
       @tool_args = tool_args
-      set_backtrace(cause.backtrace)
+      set_backtrace(underlying_error.backtrace)
     end
 
     ##
-    # The underlying exception
+    # The underlying exception.
+    # Generally the same as `Exception#cause`.
     # @return [::StandardError]
     #
-    attr_reader :cause
+    attr_reader :underlying_error
 
     ##
     # An overall banner message
@@ -141,10 +142,10 @@ module Toys
         end
         raise e
       rescue ::ScriptError, ::StandardError, ::SignalException => e
-        e = ContextualError.new(e, banner)
-        add_fields_if_missing(e, opts)
-        add_config_path_if_missing(e, path)
-        raise e
+        ce = ContextualError.new(e, banner)
+        add_fields_if_missing(ce, opts)
+        add_config_path_if_missing(ce, path)
+        raise ce
       end
 
       ##
@@ -172,7 +173,7 @@ module Toys
 
       def add_config_path_if_missing(error, path)
         if error.config_path.nil? && error.config_line.nil?
-          l = (error.cause.backtrace_locations || []).find do |b|
+          l = (error.underlying_error.backtrace_locations || []).find do |b|
             b.absolute_path == path || b.path == path
           end
           if l

@@ -413,6 +413,8 @@ module Toys
         end
 
         loaded_gems = ::Gem.loaded_specs.values.sort_by(&:name)
+        omit_list = ::Toys::Compat.gems_to_omit_from_bundles
+        loaded_gems.delete_if { |spec| omit_list.include?(spec.name) } unless omit_list.empty?
         content << "toys_loaded_gems = #{loaded_gems.map(&:name).inspect}"
         content << "dependencies.delete_if { |dep| toys_loaded_gems.include?(dep.name) }"
         loaded_gems.each do |spec|
