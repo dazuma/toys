@@ -68,10 +68,12 @@ describe Toys::Utils::Exec do
     end
 
     it "detects EACCES/ENOEXEC" do
+      skip "https://github.com/truffleruby/truffleruby/issues/4176" if Toys::Compat.truffleruby?
       ::Timeout.timeout(simple_exec_timeout) do
         nonexecutable = File.join(File.dirname(File.dirname(__dir__)), "README.md")
         result = exec.exec([nonexecutable])
-        assert(result.exception.is_a?(::Errno::ENOEXEC) || result.exception.is_a?(::Errno::EACCES))
+        assert(result.exception.is_a?(::Errno::ENOEXEC) || result.exception.is_a?(::Errno::EACCES),
+               "Unexpected exception type #{result.exception.class} when attempting to execute nonexecutable file")
         assert_nil(result.status)
         assert_nil(result.exit_code)
         assert_nil(result.signal_code)
