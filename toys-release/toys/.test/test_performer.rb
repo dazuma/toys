@@ -22,8 +22,9 @@ describe Toys::Release::Performer do
   end
 
   before do
-    skip unless ENV["TOYS_TEST_INTEGRATION"]
-    skip if ::Toys::Compat.jruby?
+    skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+    skip "Skipped test on JRuby" if ::Toys::Compat.jruby?
+    skip "Skipped test to avoid dropping local edits" unless repository.git_clean?
   end
 
   it "does a dry run adhoc release of toys" do

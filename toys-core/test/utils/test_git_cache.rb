@@ -377,7 +377,7 @@ describe Toys::Utils::GitCache do
     let(:toys_core_examples_path) { "toys-core/examples" }
 
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
     end
 
     it "gets toys-core examples from a branch" do

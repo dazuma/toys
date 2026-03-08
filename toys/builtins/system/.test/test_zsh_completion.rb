@@ -7,7 +7,7 @@ describe "toys system zsh-completion" do
   toys_include_builtins(false)
 
   before do
-    skip unless Toys::Compat.allow_fork?
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
   end
 
   it "prints the description" do

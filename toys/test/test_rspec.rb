@@ -245,7 +245,7 @@ describe "rspec template" do
     end
 
     it "recognizes the --use-gem flag with no version" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-without", "--use-gem", "rspec"]
@@ -256,7 +256,7 @@ describe "rspec template" do
     end
 
     it "recognizes the --use-gem flag with versions" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-without", "--use-gem", "rspec,~>3.1"]
@@ -267,7 +267,7 @@ describe "rspec template" do
     end
 
     it "recognizes the --gemfile-path flag" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-without", "--gemfile-path", "Gemfile"]
@@ -278,7 +278,7 @@ describe "rspec template" do
     end
 
     it "recognizes the --use-gem flag overriding default bundler" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-bundle", "--use-gem", "rspec"]
@@ -289,7 +289,7 @@ describe "rspec template" do
     end
 
     it "catches mutually exclusive gem arguments" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-bundle", "--gemfile-path", "Gemfile", "--use-gem", "rspec"]
@@ -300,7 +300,7 @@ describe "rspec template" do
     end
 
     it "catches bad --use-gem syntax" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-bundle", "--use-gem", ","]
@@ -311,7 +311,7 @@ describe "rspec template" do
     end
 
     it "ignores --omit-gem rspec" do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       result = ::Bundler.with_unbundled_env do
         dir = "#{cases_dir}/gem-mgmt"
         args = [Toys.executable_path, "spec-without", "--omit-gem", "rspec"]

@@ -149,7 +149,7 @@ describe Toys::Loader do
 
   describe "config from git sources" do
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys", git_commit)
       loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
     end
@@ -396,7 +396,7 @@ describe Toys::Loader do
     let(:includes_cases_dir) { File.join(cases_dir, "items-with-includes") }
 
     before do
-      skip unless ENV["TOYS_TEST_INTEGRATION"]
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       loader.add_path(File.join(includes_cases_dir, "github.rb"))
     end
 
