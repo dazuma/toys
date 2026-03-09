@@ -4,12 +4,6 @@
 
 Toys 0.20 is a major release with several new features and a number of fixes, including a few minor breaking changes.
 
-Significant changes include:
-
-* Native tab autocompletion for zsh
-* Support for bundler and consistent gem installation tools across the `:minitest` and `:rspec` templates and the `system test` builtin.
-* Ability to preserve specified files in the `:clean` template
-
 Changes in the `:minitest` template:
 
 * BREAKING CHANGE: Tools produced by the `:minitest` template default to looking for test files of the forms `*_test.rb` and `test_*.rb` instead of `test*.rb`.
