@@ -66,7 +66,11 @@ module Toys
           result = @exec_service.exec(@command, in: :controller) do |controller|
             yield controller.in if controller.pid
           rescue ::Errno::EPIPE => e
-            raise e unless @rescue_broken_pipes
+            if @rescue_broken_pipes
+              return 1
+            else
+              raise e
+            end
           end
           return result.exit_code unless result.failed?
         end
