@@ -10,7 +10,7 @@ module Toys
     # utility methods that locate base directories and search paths for
     # application state, configuration, caches, and other data, according to
     # the [XDG Base Directory Spec version
-    # 0.8](https://specifications.freedesktop.org/basedir-spec/0.8/).
+    # 0.8](https://specifications.freedesktop.org/basedir/0.8/).
     #
     # @example
     #
