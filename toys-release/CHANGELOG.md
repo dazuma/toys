@@ -1,5 +1,11 @@
 # Release History
 
+### v0.7.0 / 2026-03-09
+
+* ADDED: Support updating dependencies among released components
+* ADDED: Configurable changelog release header format
+* ADDED: Support optionally auto-creating release PRs on push
+
 ### v0.6.0 / 2026-02-11
 
 * ADDED: Support retaining and/or linkifying issue/PR numbers in commit messages
