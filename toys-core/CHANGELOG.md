@@ -1,5 +1,25 @@
 # Release History
 
+### v0.20.0 / 2026-03-09
+
+* BREAKING CHANGE: In the exec utility, an options hash is no longer passed when executing a proc using a fork
+* BREAKING CHANGE: In the exec utility, passing an IO object as an input or output string no longer closes it afterward
+* BREAKING CHANGE: In the exec utility, :cli is no longer a legal config option
+* BREAKING CHANGE: The exec utility no longer prematurely closes the controller input stream when waiting for a process result
+* ADDED: Support for manual bundle setup using the bundler mixin
+* ADDED: Toys::Utils::Exec::Result provides an effective result code
+* ADDED: Native tab completion for zsh
+* FIXED: In the exec utility, fixed the :unsetenv_others option when executing a proc using a fork
+* FIXED: In the exec utility, environment variable values specified as nil are now correctly unset when executing a proc using a fork
+* FIXED: In the exec utility, fixed a rare concurrency issue if multiple threads concurrently get the result from a controller
+* FIXED: In the exec utility, an options hash is no longer passed when executing a proc using a fork
+* FIXED: In the exec utility, passing an IO object as an input or output string no longer closes it afterward
+* FIXED: In the exec utility, :cli is no longer a legal config option
+* FIXED: Bundler integration temporary Gemfiles will not add the pathname gem on TruffleRuby
+* FIXED: ContextualError no longer overrides Exception#cause, which would cause problems on TruffleRuby
+* FIXED: The exec utility no longer prematurely closes the controller input stream when waiting for a process result
+* DOCS: Various minor documentation updates
+
 ### v0.19.1 / 2026-01-06
 
 * DOCS: Some formatting fixes in the user guide

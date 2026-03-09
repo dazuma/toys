@@ -1,5 +1,29 @@
 # Release History
 
+### v0.20.0 / 2026-03-09
+
+* BREAKING CHANGE: Toys::Templates::Minitest::DEFAULT_GEM_VERSION_REQUIREMENTS is now a hash that covers multiple gems rather than just the minitest gem
+* BREAKING CHANGE: The system test builtin looks for test files of the form *_test.rb in addition to test_*.rb
+* BREAKING CHANGE: Toys::Templates::Rspec::DEFAULT_GEM_VERSION_REQUIREMENTS is now a hash that covers potentially multiple gems
+* BREAKING CHANGE: The minitest template defaults to looking for `*_test.rb` and `test_*.rb`
+* ADDED: Add preserve argument to the Clean tool template
+* ADDED: The clean tool is more robust against concurrent modification and large git repos
+* ADDED: Support for gem management without bundler in the minitest tool template
+* ADDED: The minitest template now recognizes "--include" as an alias for "--name", matching recent releases of minitest
+* ADDED: The minitest template provides command line arguments for using specific gems or a specific bundle
+* ADDED: The minitest template provides more comprehensive tool documentation
+* ADDED: The system test builtin supports using bundler and loading arbitrary gems via command line arguments
+* ADDED: The system test builtin looks for test files of the form *_test.rb in addition to test_*.rb
+* ADDED: The rspec template provides command line arguments for using specific gems or a specific bundle
+* ADDED: The rspec template provides more comprehensive tool documentation
+* ADDED: The rspec template supports --example-matches, and can take multiple --example and --tag flags
+* ADDED: The minitest template defaults to looking for `*_test.rb` and `test_*.rb`
+* ADDED: Native tab completion for zsh
+* FIXED: The minitest tool template now requires "minitest/autorun" before loading tests, so tests don't have to do so themselves.
+* FIXED: Fix the minitest template exceeding command line length limits if the list of test files is extremely long
+* DOCS: Updated user guide to cover zsh completion and manual bundler setup
+* DOCS: Cleanup and updates to the user guide
+
 ### v0.19.1 / 2026-01-06
 
 * FIXED: The minitest template and the "system test" builtin now support minitest 6
