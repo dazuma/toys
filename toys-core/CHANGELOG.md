@@ -2,23 +2,28 @@
 
 ### v0.20.0 / 2026-03-09
 
-* BREAKING CHANGE: In the exec utility, an options hash is no longer passed when executing a proc using a fork
-* BREAKING CHANGE: In the exec utility, passing an IO object as an input or output string no longer closes it afterward
-* BREAKING CHANGE: In the exec utility, :cli is no longer a legal config option
-* BREAKING CHANGE: The exec utility no longer prematurely closes the controller input stream when waiting for a process result
-* ADDED: Support for manual bundle setup using the bundler mixin
-* ADDED: Toys::Utils::Exec::Result provides an effective result code
-* ADDED: Native tab completion for zsh
-* FIXED: In the exec utility, fixed the :unsetenv_others option when executing a proc using a fork
-* FIXED: In the exec utility, environment variable values specified as nil are now correctly unset when executing a proc using a fork
-* FIXED: In the exec utility, fixed a rare concurrency issue if multiple threads concurrently get the result from a controller
-* FIXED: In the exec utility, an options hash is no longer passed when executing a proc using a fork
-* FIXED: In the exec utility, passing an IO object as an input or output string no longer closes it afterward
-* FIXED: In the exec utility, :cli is no longer a legal config option
-* FIXED: Bundler integration temporary Gemfiles will not add the pathname gem on TruffleRuby
-* FIXED: ContextualError no longer overrides Exception#cause, which would cause problems on TruffleRuby
-* FIXED: The exec utility no longer prematurely closes the controller input stream when waiting for a process result
-* DOCS: Various minor documentation updates
+Toys-core 0.20 is a major release with a several new features and a number of fixes, including a few minor breaking changes.
+
+Major changes:
+
+* NEW: Native tab completion for zsh.
+* NEW: The `:bundler` mixin supports "manual" bundle setup, allowing bundler decisions to be deferred to execution time
+
+Updates to the Exec mixin and library:
+
+* NEW: The new `Toys::Utils::Exec::Result#effective_result` method provides a reasonable integer result code even when a process terminates via signal or fails to start at all.
+* BREAKING API CHANGE: `:cli` is no longer a legal config option.
+* BREAKING API CHANGE: An options hash is no longer passed to the proc when executing a proc using a fork.
+* BREAKING API CHANGE: Passing an IO object as an input or output stream no longer closes it afterward.
+* BREAKING API CHANGE: `Toys::Utils::Exec::Controller#result` no longer preemptively (and prematurely) closes the controller input stream
+* FIXED: The `:unsetenv_others` option now works properly when executing a proc using a fork.
+* FIXED: Environment variable values specified as nil are now correctly unset when executing a proc using a fork.
+* FIXED: Fixed a rare concurrency issue if multiple threads concurrently get the result from a controller.
+
+Minor fixes for TruffleRuby compatibility:
+
+* FIXED: The `:bundler` mixin will not attempt to add the `pathname` gem to generated Gemfiles when running on TruffleRuby. This caused issues because TruffleRuby includes a special version of the gem and cannot install the one from Rubygems.
+* FIXED: `ContextualError` no longer overrides `Exception#cause`, which could confuse TruffleRuby.
 
 ### v0.19.1 / 2026-01-06
 
