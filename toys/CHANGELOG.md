@@ -1,5 +1,59 @@
 # Release History
 
+### v0.20.0 / 2026-03-09
+
+Toys 0.20 is a major release with several new features and a number of fixes, including a few minor breaking changes.
+
+Changes in the `:minitest` template:
+
+* BREAKING CHANGE: Tools produced by the `:minitest` template default to looking for test files of the forms `*_test.rb` and `test_*.rb` instead of `test*.rb`.
+* NEW: The `:minitest` template supports installing specified gems without using bundler.
+* NEW: Tools produced by the `:minitest` template provide command line arguments for overriding the gem installation or bundler settings.
+* NEW: Tools produced by the `:minitest` template recognize `--include` as an alias for `--name`. This matches recent versions of minitest.
+* NEW: The `:minitest` template generates more comprehensive documentation.
+* NEW: The minitest tool template now requires "minitest/autorun" before loading tests, so tests don't have to do so themselves.
+* BREAKING API CHANGE: Toys::Templates::Minitest::DEFAULT_GEM_VERSION_REQUIREMENTS is now a hash that covers multiple gems rather than just the minitest gem
+* FIXED: The minitest template no longer exceeds command line length limits if the list of test files is extremely long.
+
+New functionality in the `:rspec` template:
+
+* NEW: The `:rspec` template supports installing specified gems without using bundler.
+* NEW: Tools produced by the `:rspec` template provide command line arguments for overriding the gem installation or bundler settings.
+* NEW: Tools produced by the `:rspec` template recognize the `--example-matches` flag, and can handle multiple `--example` and `--tag` flags.
+* NEW: The `:rspec` template generates more comprehensive documentation.
+* BREAKING API CHANGE: Toys::Templates::Rspec::DEFAULT_GEM_VERSION_REQUIREMENTS is now a hash that covers potentially multiple gems
+
+New functionality in the `:clean` template:
+
+* The `:clean` template supports specifying certain gitignored files to preserve.
+* The `:clean` template is more robust against concurrent modification and works better with large git repos.
+
+New functionality in the `system test` builtin tool:
+
+* BREAKING CHANGE: The `system test` builtin looks for test files of the form `*_test.rb` in addition to `test_*.rb`.
+* The `system test` builtin uses bundler to install gems if a Gemfile is present in the `.test` directory.
+* The `system test` builtin supports flags that can specify arbitrary gems to load.
+
+Updates to the Exec mixin and library:
+
+* NEW: The new `Toys::Utils::Exec::Result#effective_result` method provides a reasonable integer result code even when a process terminates via signal or fails to start at all.
+* BREAKING API CHANGE: `:cli` is no longer a legal config option.
+* BREAKING API CHANGE: An options hash is no longer passed to the proc when executing a proc using a fork.
+* BREAKING API CHANGE: Passing an IO object as an input or output stream no longer closes it afterward.
+* BREAKING API CHANGE: `Toys::Utils::Exec::Controller#result` no longer preemptively (and prematurely) closes the controller input stream
+* FIXED: The `:unsetenv_others` option now works properly when executing a proc using a fork.
+* FIXED: Environment variable values specified as nil are now correctly unset when executing a proc using a fork.
+* FIXED: Fixed a rare concurrency issue if multiple threads concurrently get the result from a controller.
+
+Other changes:
+
+* NEW: Native tab completion for zsh.
+* NEW: The `:bundler` mixin supports "manual" bundle setup, allowing bundler decisions to be deferred to execution time
+* FIXED: The `:bundler` mixin will not attempt to add the `pathname` gem to generated Gemfiles when running on TruffleRuby. This caused issues because TruffleRuby includes a special version of the gem and cannot install the one from Rubygems.
+* FIXED: `ContextualError` no longer overrides `Exception#cause`, which could confuse TruffleRuby.
+* DOCUMENTATION: Updated user guide to cover zsh completion and manual bundler setup
+* DOCUMENTATION: Some reorganization and cleanup in the user guide
+
 ### v0.19.1 / 2026-01-06
 
 * FIXED: The minitest template and the "system test" builtin now support minitest 6
