@@ -265,8 +265,8 @@ Navigate to the simple-gem example:
 
     $ cd toys-core/examples/simple-gem
 
-This example wraps the simple "greet" executable that we
-[covered earlier](#Add_some_functionality) in a gem. You can see the
+This example wraps the simple "greet" executable that we covered earlier, in a
+gem. You can see the
 [executable file](https://github.com/dazuma/toys/tree/main/toys-core/examples/simple-gem/bin/toys-core-simple-example)
 in the bin directory.
 
@@ -348,7 +348,7 @@ recommended because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2025 Daniel Azuma and the Toys contributors
+Copyright 2019-2026 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
