@@ -687,13 +687,12 @@ module Toys
         # @return [nil] if a timeout occurred.
         #
         def result(timeout: nil)
-          close_streams(:in)
           return nil if @wait_thread && !@wait_thread.join(timeout)
           should_run_callback = false
           @result_mutex.synchronize do
             @result ||= begin
               should_run_callback = true
-              close_streams(:out)
+              close_streams(:both)
               @join_threads.each(&:join)
               Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
             end
@@ -1090,6 +1089,7 @@ module Toys
           return controller if @config_opts[:background]
           begin
             @block&.call(controller)
+            controller.close_streams(:in)
             controller.result
           ensure
             controller.close_streams(:both)
