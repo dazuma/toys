@@ -25,7 +25,7 @@ New functionality in the `:rspec` template:
 
 * NEW: The `:rspec` template supports installing specified gems without using bundler.
 * NEW: Tools produced by the `:rspec` template provide command line arguments for overriding the gem installation or bundler settings.
-* NEW: Tools produced by the `:rspec` template recognize the `--example-matches` flag, and can handle mutliple `--example` and `--tag` flags.
+* NEW: Tools produced by the `:rspec` template recognize the `--example-matches` flag, and can handle multiple `--example` and `--tag` flags.
 * NEW: The `:rspec` template generates more comprehensive documentation.
 * BREAKING API CHANGE: Toys::Templates::Rspec::DEFAULT_GEM_VERSION_REQUIREMENTS is now a hash that covers potentially multiple gems
 
