@@ -2,7 +2,7 @@
 
 ### v0.20.0 / 2026-03-09
 
-Toys 0.20 is a major release with a several new features and a number of fixes, including a few minor breaking changes.
+Toys 0.20 is a major release with several new features and a number of fixes, including a few minor breaking changes.
 
 Significant changes include:
 
