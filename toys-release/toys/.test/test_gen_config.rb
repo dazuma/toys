@@ -5,6 +5,8 @@ require_relative "helper"
 describe "toys release gen-config" do
   include Toys::Testing
 
+  let(:repo_gem_list) { ["toys", "toys-ci", "toys-core", "toys-release"] }
+
   describe "internal methods" do
     let(:repo_root) { ::File.dirname(::File.dirname(::File.dirname(__dir__))) }
 
@@ -38,9 +40,10 @@ describe "toys release gen-config" do
         Dir.chdir(repo_root) do
           out, _err = capture_subprocess_io do
             found = tool.find_gems
-            assert_equal(3, found.size)
+            assert_equal(4, found.size)
             found.sort_by!(&:first)
-            assert_equal([["toys", "toys"], ["toys-core", "toys-core"], ["toys-release", "toys-release"]], found)
+            expected_found = repo_gem_list.map { |name| [name, name] }
+            assert_equal(expected_found, found)
           end
           assert_includes(out, "Found toys/toys.gemspec in the repo.")
           assert_includes(out, "Found toys-core/toys-core.gemspec in the repo.")
@@ -94,20 +97,7 @@ describe "toys release gen-config" do
       end
       expected_yaml = {
         "repo" => "dazuma/toys",
-        "gems" => [
-          {
-            "name" => "toys",
-            "directory" => "toys",
-          },
-          {
-            "name" => "toys-core",
-            "directory" => "toys-core",
-          },
-          {
-            "name" => "toys-release",
-            "directory" => "toys-release",
-          },
-        ],
+        "gems" => repo_gem_list.map { |name| {"name" => name, "directory" => name} },
       }
       created_yaml = ::YAML.load_file(file_path)
       refute(created_yaml.delete("git_user_name").empty?)

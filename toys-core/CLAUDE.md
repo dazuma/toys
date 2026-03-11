@@ -11,11 +11,10 @@ toys-core is the framework library underlying the Toys CLI. It provides the DSL,
 From within the toys-core directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci                  # Run all CI tasks for this gem
-../toys-dev test                # Run just tests for this gem, omitting integration tests
-../toys-dev test --integration  # Run just tests for this gem, including integration tests
-../toys-dev rubocop             # Run just RuboCop for this gem
-../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
+../toys-dev ci --only --current  # Run all CI tasks for this gem
+../toys-dev test                 # Run just tests for this gem, omitting integration tests
+../toys-dev test --integration   # Run just tests for this gem, including integration tests
+../toys-dev rubocop              # Run just RuboCop for this gem
 ```
 
 To run individual test files directly, pass them as positional command line arguments:

@@ -1,0 +1,10 @@
+--no-private
+--title=Toys CI System
+--markup=markdown
+--markup-provider redcarpet
+--main=README.md
+./lib/**/*.rb
+-
+README.md
+LICENSE.md
+CHANGELOG.md

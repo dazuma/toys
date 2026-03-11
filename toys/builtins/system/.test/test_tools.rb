@@ -108,17 +108,17 @@ describe "toys system tools" do
       assert_equal("", result["namespace"])
       system_tool = result["tools"].find { |t| t["name"] == "system" }
       assert_nil(system_tool)
-      ci_tool = result["tools"].find { |t| t["name"] == "ci" }
-      assert_equal("Run all CI checks for the toys gem", ci_tool["desc"])
-      assert(ci_tool["runnable"])
+      ccd_tool = result["tools"].find { |t| t["name"] == "copy-core-docs" }
+      assert_equal("Prepare toys-core Ruby files for documenting", ccd_tool["desc"])
+      assert(ccd_tool["runnable"])
     end
 
     it "handles --dir pointing at a .toys dir" do
       dir = "#{toys_gem_dir}/.toys"
       result = capture_system_tools_output(["list", "--recursive", "--local", "--dir", dir])
-      ci_tool = result["tools"].find { |t| t["name"] == "ci" }
-      assert_equal("Run all CI checks for the toys gem", ci_tool["desc"])
-      assert(ci_tool["runnable"])
+      ccd_tool = result["tools"].find { |t| t["name"] == "copy-core-docs" }
+      assert_equal("Prepare toys-core Ruby files for documenting", ccd_tool["desc"])
+      assert(ccd_tool["runnable"])
     end
 
     it "lists tools non-recursively, outputting as json" do
@@ -203,9 +203,9 @@ describe "toys system tools" do
     end
 
     it "shows a local tool from a directory" do
-      result = capture_system_tools_output(["show", "--local", "--dir", toys_gem_dir, "ci"])
-      assert_equal("ci", result["name"])
-      assert_equal("Run all CI checks for the toys gem", result["desc"])
+      result = capture_system_tools_output(["show", "--local", "--dir", toys_gem_dir, "copy-core-docs"])
+      assert_equal("copy-core-docs", result["name"])
+      assert_equal("Prepare toys-core Ruby files for documenting", result["desc"])
       assert(result["runnable"])
       assert(result["exists"])
     end

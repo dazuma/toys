@@ -1,0 +1,40 @@
+inherit_from: "../.rubocop-common.yml"
+
+AllCops:
+  Include:
+    - "Gemfile"
+    - "**/*.rb"
+    - "**/.lib/**/*.rb"
+    - "**/.test/**/*.rb"
+    - "**/.toys/*.rb"
+    - "**/.toys/.toys.rb"
+  Exclude:
+    - "test-data/**/*"
+    - "tmp/**/*"
+
+Layout/LineLength:
+  Exclude:
+    - "*.gemspec"
+
+Metrics/BlockLength:
+  Exclude:
+    - "*.gemspec"
+    - "lib/toys/ci/template.rb"
+    - "test/**/*"
+
+Naming/FileName:
+  Exclude:
+    - "lib/toys-ci.rb"
+    - "toys/.toys.rb"
+
+Style/BlockDelimiters:
+  Exclude:
+    - "test/**/*"
+Style/DocumentationMethod:
+  Exclude:
+    - ".toys/.toys.rb"
+    - "lib/toys/ci/template.rb"
+    - "test/**/*"
+Style/TrivialAccessors:
+  Exclude:
+    - "lib/toys/ci/template.rb"

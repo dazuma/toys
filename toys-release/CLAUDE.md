@@ -11,36 +11,16 @@ toys-release is a Ruby library release automation system using GitHub Actions an
 From within the `toys-release` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci                  # Run all CI tasks for this gem
-../toys-dev test                # Run just the tests for this gem, omitting integration tests
-../toys-dev test --integration  # Run just the tests for this gem, including integration tests
-../toys-dev rubocop             # Run just RuboCop for this gem
-../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
+../toys-dev ci --only --current  # Run all CI tasks for this gem
+../toys-dev test                 # Run just the tests for this gem, omitting integration tests
+../toys-dev test --integration   # Run just the tests for this gem, including integration tests
+../toys-dev rubocop              # Run just RuboCop for this gem
 ```
 
 To run individual test files directly, pass them as positional command line arguments:
 
 ```bash
 ../toys-dev test toys/.test/test_change_set.rb toys/.test/test_repository.rb   # Run only the tests in the given files
-```
-
-
-From the **repository root**, use the self-hosted `./toys-dev` bootstrap script from the repo root:
-
-```bash
-./toys-dev test --only --release         # Run toys-release tests (via root test tool)
-./toys-dev rubocop --only --release      # Run RuboCop (via root rubocop tool -- note flag is :release not :toys_release)
-./toys-dev ci --only --test-release      # Run tests via CI runner
-./toys-dev ci --only --rubocop-release   # Run RuboCop via CI runner
-```
-
-From **within the toys-release directory**:
-
-```bash
-../toys-dev test                         # Run tests
-../toys-dev rubocop                      # Run RuboCop
-../toys-dev yardoc                       # Generate YARD docs
-../toys-dev build                        # Build the gem
 ```
 
 Tests run via the built-in `system test` tool pointing at the `toys/` directory, which discovers tests in `toys/.test/`.

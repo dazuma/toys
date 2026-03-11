@@ -11,12 +11,11 @@ This is the **toys** gem — the main CLI executable built on the toys-core fram
 From within the `toys` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci                  # Run all CI tasks for this gem
-../toys-dev test                # Run just the library tests for this gem, omitting integration tests
-../toys-dev test --integration  # Run just the library tests for this gem, including integration tests
-../toys-dev test-builtins       # Run just tests of built-in tools in this gem
-../toys-dev rubocop             # Run just RuboCop for this gem
-../toys-dev ci --help           # Display the gem-specific manpage for toys-dev ci
+../toys-dev ci --only --current  # Run all CI tasks for this gem
+../toys-dev test                 # Run just the library tests for this gem, omitting integration tests
+../toys-dev test --integration   # Run just the library tests for this gem, including integration tests
+../toys-dev test-builtins        # Run just tests of built-in tools in this gem
+../toys-dev rubocop              # Run just RuboCop for this gem
 ```
 
 To run individual test files directly, pass them as positional command line arguments:
