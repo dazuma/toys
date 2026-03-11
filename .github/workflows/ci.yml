@@ -75,4 +75,4 @@ jobs:
         run: |
           unset JAVA_TOOL_OPTIONS
           ./toys-dev ci-init
-          ./toys-dev ci --github-event-name=${{ github.event_name }} --github-event-path=${{ github.event_path }} --only ${{ matrix.steps }} < /dev/null
+          ./toys-dev ci --use-github-base-ref --only ${{ matrix.steps }} < /dev/null

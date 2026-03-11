@@ -14,8 +14,6 @@ describe Toys::CI::Mixin do
   }
   let(:data_dir) { File.join(File.dirname(__dir__), "test-data") }
   let(:basic_tools_dir) { File.join(data_dir, "basic-tools") }
-  let(:push_event_path) { File.join(data_dir, "push-event.json") }
-  let(:pr_event_path) { File.join(data_dir, "pr-event.json") }
 
   describe "job types" do
     it "runs a succeeding tool job" do
@@ -446,6 +444,24 @@ describe Toys::CI::Mixin do
   end
 
   describe "toys_ci_github_event_base_sha" do
+    let(:save_envs) { ["GITHUB_EVENT_NAME", "GITHUB_EVENT_PATH"] }
+    let(:push_event_path) { File.join(data_dir, "push-event.json") }
+    let(:pr_event_path) { File.join(data_dir, "pr-event.json") }
+
+    before do
+      @save_env_vars = save_envs.to_h { |name| [name, ::ENV[name]] }
+    end
+
+    after do
+      @save_env_vars.each do |name, val|
+        if val
+          ::ENV[name] = val
+        else
+          ::ENV.delete(name)
+        end
+      end
+    end
+
     it "loads a push event" do
       test_case = self
 
@@ -456,7 +472,9 @@ describe Toys::CI::Mixin do
           static :event_path, test_case.push_event_path
 
           def run
-            puts toys_ci_github_event_base_sha("push", event_path).inspect
+            ENV["GITHUB_EVENT_NAME"] = "push"
+            ENV["GITHUB_EVENT_PATH"] = event_path
+            puts toys_ci_github_event_base_sha.inspect
           end
         end
       end
@@ -477,7 +495,9 @@ describe Toys::CI::Mixin do
           static :event_path, test_case.pr_event_path
 
           def run
-            puts toys_ci_github_event_base_sha("pull_request", event_path).inspect
+            ENV["GITHUB_EVENT_NAME"] = "pull_request"
+            ENV["GITHUB_EVENT_PATH"] = event_path
+            puts toys_ci_github_event_base_sha.inspect
           end
         end
       end
@@ -498,7 +518,9 @@ describe Toys::CI::Mixin do
           static :event_path, test_case.pr_event_path
 
           def run
-            puts toys_ci_github_event_base_sha("pull_request_target", event_path).inspect
+            ENV["GITHUB_EVENT_NAME"] = "pull_request_target"
+            ENV["GITHUB_EVENT_PATH"] = event_path
+            puts toys_ci_github_event_base_sha.inspect
           end
         end
       end
@@ -519,7 +541,9 @@ describe Toys::CI::Mixin do
           static :event_path, test_case.basic_tools_dir
 
           def run
-            puts toys_ci_github_event_base_sha("pull_request_target", event_path).inspect
+            ENV["GITHUB_EVENT_NAME"] = "push"
+            ENV["GITHUB_EVENT_PATH"] = event_path
+            puts toys_ci_github_event_base_sha.inspect
           end
         end
       end

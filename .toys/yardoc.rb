@@ -15,7 +15,7 @@ expand(Toys::CI::Template) do |ci|
   ci.only_flag = true
   ci.fail_fast_flag = true
   ci.base_ref_flag = true
-  ci.include_github_event_flags
+  ci.use_github_base_ref_flag = true
 
   ci.tool_job("Yardoc generation for toys-core",
               ["yardoc"], chdir: "toys-core",

@@ -14,8 +14,6 @@ describe Toys::CI::Template do
   }
   let(:data_dir) { File.join(File.dirname(__dir__), "test-data") }
   let(:basic_tools_dir) { File.join(data_dir, "basic-tools") }
-  let(:push_event_path) { File.join(data_dir, "push-event.json") }
-  let(:pr_event_path) { File.join(data_dir, "pr-event.json") }
 
   describe "job types" do
     it "runs a succeeding tool job" do
@@ -541,6 +539,24 @@ describe Toys::CI::Template do
   end
 
   describe "with base_ref" do
+    let(:save_envs) { ["GITHUB_EVENT_NAME", "GITHUB_EVENT_PATH"] }
+    let(:push_event_path) { File.join(data_dir, "push-event.json") }
+    let(:pr_event_path) { File.join(data_dir, "pr-event.json") }
+
+    before do
+      @save_env_vars = save_envs.to_h { |name| [name, ::ENV[name]] }
+    end
+
+    after do
+      @save_env_vars.each do |name, val|
+        if val
+          ::ENV[name] = val
+        else
+          ::ENV.delete(name)
+        end
+      end
+    end
+
     it "runs all jobs if no base ref given" do
       cli.add_config_block(context_directory: basic_tools_dir) do
         tool "ci" do
@@ -586,7 +602,7 @@ describe Toys::CI::Template do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
             ci.tool_job("Bar", ["bar"], trigger_paths: "bar")
-            ci.include_github_event_flags
+            ci.use_github_base_ref_flag = true
             ci.before_run do
               ::Toys::TestHelper.stub_changed_files(self, "shapush1234567890", ["foo/hello.rb", "what.rb"])
             end
@@ -594,8 +610,10 @@ describe Toys::CI::Template do
         end
       end
 
+      ENV["GITHUB_EVENT_NAME"] = "push"
+      ENV["GITHUB_EVENT_PATH"] = push_event_path
       out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("ci", "--github-event-name", "push", "--github-event-path", push_event_path))
+        assert_equal(0, cli.run("ci", "--use-github-base-ref"))
       end
       assert_includes(out, "FOO SUCCEEDED")
       assert_includes(out, "SKIPPING BECAUSE NO CHANGES FOUND: Bar")
@@ -607,7 +625,7 @@ describe Toys::CI::Template do
           expand Toys::CI::Template do |ci|
             ci.tool_job("Foo", ["foo"], trigger_paths: "foo")
             ci.tool_job("Bar", ["bar"], trigger_paths: "bar")
-            ci.include_github_event_flags
+            ci.use_github_base_ref_flag = true
             ci.before_run do
               ::Toys::TestHelper.stub_changed_files(self, "shapr1234567890", ["foo/hello.rb", "what.rb"])
             end
@@ -615,8 +633,10 @@ describe Toys::CI::Template do
         end
       end
 
+      ENV["GITHUB_EVENT_NAME"] = "pull_request"
+      ENV["GITHUB_EVENT_PATH"] = pr_event_path
       out, _err = capture_subprocess_io do
-        assert_equal(0, cli.run("ci", "--github-event-name", "pull_request", "--github-event-path", pr_event_path))
+        assert_equal(0, cli.run("ci", "--use-github-base-ref"))
       end
       assert_includes(out, "FOO SUCCEEDED")
       assert_includes(out, "SKIPPING BECAUSE NO CHANGES FOUND: Bar")

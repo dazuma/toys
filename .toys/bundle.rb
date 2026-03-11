@@ -20,8 +20,6 @@ end
 expand(Toys::CI::Template) do |ci|
   ci.only_flag = true
   ci.fail_fast_flag = true
-  ci.base_ref_flag = true
-  ci.include_github_event_flags
 
   ci.job("Bundle for the root directory", flag: :root) do
     exec(bundle_cmd_array, name: "Bundle for the root directory").success?
