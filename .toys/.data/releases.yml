@@ -27,6 +27,8 @@ components:
     version_rb_path: lib/toys/core.rb
     gh_pages_directory: gems/toys-core
     gh_pages_version_var: version
+  - name: toys-ci
+    gh_pages_directory: gems/toys-ci
   - name: toys-release
     gh_pages_directory: gems/toys-release
   - name: common-tools

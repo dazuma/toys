@@ -27,8 +27,9 @@ describe Toys::Release::RepoSettings do
     assert_equal("*", settings.changelog_bullet)
     assert_empty(settings.auto_create_request_branches)
 
-    assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_names)
-    assert_equal(["toys", "toys-core", "toys-release", "common-tools"], settings.all_component_settings.map(&:name))
+    assert_equal(["toys", "toys-core", "toys-ci", "toys-release", "common-tools"], settings.all_component_names)
+    assert_equal(["toys", "toys-core", "toys-ci", "toys-release", "common-tools"],
+                 settings.all_component_settings.map(&:name))
     assert_equal([["toys", "toys-core"]], settings.coordination_groups)
 
     feat_tag_settings = settings.commit_tag_named("feat")
@@ -110,6 +111,20 @@ describe Toys::Release::RepoSettings do
     assert_equal(:delete, toys_release_settings.issue_number_suffix_handling)
     assert_equal("BREAKING CHANGE", toys_release_settings.breaking_change_header)
     assert_equal("No significant updates.", toys_release_settings.no_significant_updates_notice)
+
+    toys_ci_settings = settings.component_settings("toys-ci")
+    assert_equal("toys-ci", toys_ci_settings.name)
+    assert_equal("toys-ci", toys_ci_settings.directory)
+    assert_equal("CHANGELOG.md", toys_ci_settings.changelog_path)
+    assert_equal("gems/toys-ci", toys_ci_settings.gh_pages_directory)
+    assert_equal("version_toys_ci", toys_ci_settings.gh_pages_version_var)
+    assert(toys_ci_settings.gh_pages_enabled)
+    assert_equal("lib/toys/ci/version.rb", toys_ci_settings.version_rb_path)
+    assert_nil(toys_ci_settings.step_named("copy_core_docs"))
+    assert_empty(toys_ci_settings.step_named("build_yard").inputs)
+    assert_equal(:delete, toys_ci_settings.issue_number_suffix_handling)
+    assert_equal("BREAKING CHANGE", toys_ci_settings.breaking_change_header)
+    assert_equal("No significant updates.", toys_ci_settings.no_significant_updates_notice)
 
     common_tools_settings = settings.component_settings("common-tools")
     assert_equal("common-tools", common_tools_settings.name)

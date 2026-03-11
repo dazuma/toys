@@ -67,6 +67,7 @@ describe Toys::Release::RequestLogic do
         "requested_components": {
           "toys": null,
           "toys-core": null,
+          "toys-ci": null,
           "toys-release": null,
           "common-tools": null
         },
