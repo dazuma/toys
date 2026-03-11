@@ -16,19 +16,22 @@ describe Toys::Release::Repository do
   end
 
   it "defines the Toys coordination groups" do
-    assert_equal(3, repository.coordination_groups.size)
+    assert_equal(4, repository.coordination_groups.size)
     assert_equal(["toys", "toys-core"], repository.coordination_groups[0].map(&:name))
-    assert_equal(["toys-release"], repository.coordination_groups[1].map(&:name))
-    assert_equal(["common-tools"], repository.coordination_groups[2].map(&:name))
+    assert_equal(["toys-ci"], repository.coordination_groups[1].map(&:name))
+    assert_equal(["toys-release"], repository.coordination_groups[2].map(&:name))
+    assert_equal(["common-tools"], repository.coordination_groups[3].map(&:name))
   end
 
   it "sets the Toys coordination groups on their components" do
     toys_component = repository.component_named("toys")
     core_component = repository.component_named("toys-core")
-    tools_component = repository.component_named("common-tools")
+    ci_component = repository.component_named("toys-ci")
+    release_component = repository.component_named("toys-release")
     assert_equal(core_component.coordination_group, toys_component.coordination_group)
     assert_equal([toys_component, core_component], core_component.coordination_group)
-    assert_equal([tools_component], tools_component.coordination_group)
+    assert_equal([ci_component], ci_component.coordination_group)
+    assert_equal([release_component], release_component.coordination_group)
   end
 
   it "returns the current SHA" do
