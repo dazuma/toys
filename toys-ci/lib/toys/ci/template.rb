@@ -246,6 +246,10 @@ module Toys
       # Create a flag that can be used to specify the base ref for the change
       # directly. This can be used to filter CI jobs based on what has changed.
       #
+      # A change base ref provided in this way will override any obtained from
+      # other means, such as from the GitHub environment using
+      # {#use_github_base_ref_flag=}.
+      #
       # @param value [Symbol,boolean] If a symbol, it is used as the flag
       #     key for a flag that specifies the base ref. You can also pass
       #     `true` to use the default, `:base_ref`.
@@ -255,23 +259,18 @@ module Toys
       end
 
       ##
-      # Create flags that receive information about the GitHub event.
-      # If both these flags are provided when the CI tool is invoked, they are
-      # used to determine the base ref for the change, based on the event.
-      # This can be used to filter CI jobs based on what has changed in a
-      # pushed commit or pull request.
+      # Create a flag that enables obtaining the change base ref from the
+      # GitHub workflow environment. This can be used to filter CI jobs based
+      # on what has changed in a GitHub Actions workflow. The flag should be
+      # specified by symbol, and the actual flag will be set accordingly. You
+      # can also use the value `true` which will set the default
+      # `:use_github_base_ref`. For example, passing `true` will define the
+      # flags `--use-github-base-ref` and `--no-use-github-base-ref`.
       #
-      # @param name_flag [Symbol,boolean] If a symbol, it is used as the flag
-      #     key for a flag that specifies the event name. The default is
-      #     `:github_event_name`.
-      # @param path_flag [Symbol,boolean] If a symbol, it is used as the flag
-      #     key for a flag that specifies the event payload path. The default
-      #     is `:github_event_path`.
+      # @param value [Symbol,boolean]
       #
-      def include_github_event_flags(name_flag: true, path_flag: true)
-        @github_event_name_flag = name_flag
-        @github_event_path_flag = path_flag
-        self
+      def use_github_base_ref_flag=(value)
+        @use_github_base_ref_flag = value
       end
 
       # @private
@@ -284,8 +283,7 @@ module Toys
         @fail_fast_flag = nil
         @fail_fast_default = false
         @base_ref_flag = nil
-        @github_event_name_flag = nil
-        @github_event_path_flag = nil
+        @use_github_base_ref_flag = nil
         @prerun = nil
       end
 
@@ -337,9 +335,8 @@ module Toys
       end
 
       # @private
-      def github_event_flags?
-        !@github_event_name_flag.nil? && @github_event_name_flag != false &&
-          !@github_event_path_flag.nil? && @github_event_path_flag != false
+      def use_github_base_ref_flag?
+        !@use_github_base_ref_flag.nil? && @use_github_base_ref_flag != false
       end
 
       # @private
@@ -363,13 +360,8 @@ module Toys
       end
 
       # @private
-      def github_event_name_flag(desired_format = :symbol)
-        format_flag(@github_event_name_flag, :github_event_name, desired_format)
-      end
-
-      # @private
-      def github_event_path_flag(desired_format = :symbol)
-        format_flag(@github_event_path_flag, :github_event_path, desired_format)
+      def use_github_base_ref_flag(desired_format = :symbol)
+        format_flag(@use_github_base_ref_flag, :use_github_base_ref, desired_format)
       end
 
       # @private
@@ -414,14 +406,10 @@ module Toys
           end
         end
 
-        if template.github_event_flags?
-          flag(template.github_event_name_flag) do
-            flags("--#{template.github_event_name_flag(:hyphenated)} NAME")
-            desc("The GitHub event name triggering the CI run")
-          end
-          flag(template.github_event_path_flag) do
-            flags("--#{template.github_event_path_flag(:hyphenated)} PATH")
-            desc("Path to the GitHub event payload triggering the CI run")
+        if template.use_github_base_ref_flag?
+          flag(template.use_github_base_ref_flag) do
+            flags("--[no-]#{template.use_github_base_ref_flag(:hyphenated)}")
+            desc("Look up the change base from GitHub to determine which jobs to filter")
           end
         end
 
@@ -488,13 +476,9 @@ module Toys
         end
 
         def toys_ci_resolve_base_ref
-          base_ref = nil
-          if toys_ci_template.base_ref_flag?
-            base_ref = self[toys_ci_template.base_ref_flag]
-          end
-          if toys_ci_template.github_event_flags?
-            base_ref ||= toys_ci_github_event_base_sha(self[toys_ci_template.github_event_name_flag],
-                                                       self[toys_ci_template.github_event_path_flag])
+          base_ref = toys_ci_template.base_ref_flag? ? self[toys_ci_template.base_ref_flag] : nil
+          if toys_ci_template.use_github_base_ref_flag? && self[toys_ci_template.use_github_base_ref_flag]
+            base_ref ||= toys_ci_github_event_base_sha
           end
           base_ref
         end

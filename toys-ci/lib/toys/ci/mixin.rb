@@ -81,38 +81,40 @@ module Toys
       end
 
       ##
-      # Read a GitHub webhook event from the given file path and extract a
-      # suitable change base. Returns the SHA, or nil if no GitHub event is
-      # found or the event has no suitable base SHA.
+      # Look for environment variables set by a GitHub workflow, and attempt to
+      # extract a suitable change base. Returns a git SHA, or nil if one could
+      # not be obtained from the current environment.
+      #
+      # This may read the `GITHUB_EVENT_NAME` and `GITHUB_EVENT_PATH`
+      # environment variables, and may also read the event payload file if
+      # found. However, the exact logic is not specified.
       #
       # The result can be passed to the `:limit_by_changes_since` argument of
       # {#toys_ci_init}.
       #
-      # @param event_name [String] The name of the GitHub event
-      # @param event_path [String] Path to a JSON file
-      #
-      # @return [String] The SHA for the change base
+      # @return [String] The git SHA for the change base
       # @return [nil] if no change base can be determined
       #
-      def toys_ci_github_event_base_sha(event_name, event_path)
-        event_name = event_name.to_s
-        event_path = event_path.to_s
-        return nil if event_name.empty? || event_path.empty?
-        event =
-          begin
-            require "json"
-            ::JSON.parse(::File.read(event_path))
-          rescue ::SystemCallError, ::JSON::ParserError
-            nil
-          end
-        return nil unless event
+      def toys_ci_github_event_base_sha
+        event_path = ::ENV["GITHUB_EVENT_PATH"].to_s
+        if event_path.empty?
+          logger.info("GITHUB_EVENT_PATH is empty or unset; cannot determine event payload file")
+          return nil
+        end
+        event_payload = toys_ci_read_event_payload_file(event_path)
+        return nil unless event_payload
+
+        event_name = ::ENV["GITHUB_EVENT_NAME"]
         case event_name
         when "push"
           logger.info("Getting change base from push event")
-          event["before"]
+          event_payload["before"]
         when "pull_request"
           logger.info("Getting change base from pull_request event")
-          event.dig("pull_request", "base", "sha")
+          event_payload.dig("pull_request", "base", "sha")
+        else
+          logger.info("Did not find a change base from event #{event_name.inspect}")
+          nil
         end
       end
 
@@ -262,6 +264,19 @@ module Toys
 
       ##
       # @private
+      # Read a GitHub event payload file
+      #
+      def toys_ci_read_event_payload_file(path)
+        require "json"
+        ::JSON.parse(::File.read(path))
+      rescue ::SystemCallError, ::JSON::ParserError => e
+        logger.error("Failed to read GitHub event payload from #{path.inspect}:")
+        logger.error(e.inspect)
+        nil
+      end
+
+      ##
+      # @private
       # Find all the changed files since the given ref.
       #
       def toys_ci_find_changes_since(ref)
@@ -283,6 +298,9 @@ module Toys
 
       ##
       # @private
+      # Go through the given trigger paths and see if any match the changes
+      #
+      # @return [boolean] True to run the job, or false to skip
       #
       def toys_ci_check_trigger_paths(trigger_paths, name)
         return true if !@toys_ci_changed_paths || !trigger_paths
