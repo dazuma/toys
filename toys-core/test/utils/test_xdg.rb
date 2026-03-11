@@ -57,6 +57,11 @@ describe Toys::Utils::XDG do
     it "returns the default" do
       assert_equal(default_config_home, xdg.config_home)
     end
+
+    it "ignores non-absolute paths in XDG_CONFIG_HOME" do
+      env["XDG_CONFIG_HOME"] = "my/config"
+      assert_equal(default_config_home, xdg.config_home)
+    end
   end
 
   describe "#state_home" do
@@ -69,6 +74,11 @@ describe Toys::Utils::XDG do
     it "returns the default" do
       assert_equal(default_state_home, xdg.state_home)
     end
+
+    it "ignores non-absolute paths in XDG_STATE_HOME" do
+      env["XDG_STATE_HOME"] = "my/state"
+      assert_equal(default_state_home, xdg.state_home)
+    end
   end
 
   describe "#cache_home" do
@@ -79,6 +89,11 @@ describe Toys::Utils::XDG do
     end
 
     it "returns the default" do
+      assert_equal(default_cache_home, xdg.cache_home)
+    end
+
+    it "ignores non-absolute paths in XDG_CACHE_HOME" do
+      env["XDG_CACHE_HOME"] = "my/cache"
       assert_equal(default_cache_home, xdg.cache_home)
     end
   end
@@ -97,8 +112,14 @@ describe Toys::Utils::XDG do
       assert_equal([dir1, dir2], xdg.data_dirs)
     end
 
-    it "returns the default" do
+    it "returns the default if XDG_DATA_DIRS is unset" do
       expected = root_dir == "/" ? ["/usr/local/share", "/usr/share"] : []
+      assert_equal(expected, xdg.data_dirs)
+    end
+
+    it "returns the default if XDG_DATA_DIRS is empty" do
+      expected = root_dir == "/" ? ["/usr/local/share", "/usr/share"] : []
+      env["XDG_DATA_DIRS"] = ""
       assert_equal(expected, xdg.data_dirs)
     end
 
@@ -106,6 +127,11 @@ describe Toys::Utils::XDG do
       dir2 = File.join(root_dir, "var2", "data")
       env["XDG_DATA_DIRS"] = "my/data#{File::PATH_SEPARATOR}#{dir2}"
       assert_equal([dir2], xdg.data_dirs)
+    end
+
+    it "still uses XDG_DATA_DIRS if nonempty but all paths illegal" do
+      env["XDG_DATA_DIRS"] = "my/data#{File::PATH_SEPARATOR}my/data2"
+      assert_equal([], xdg.data_dirs)
     end
   end
 
@@ -117,9 +143,26 @@ describe Toys::Utils::XDG do
       assert_equal([dir1, dir2], xdg.config_dirs)
     end
 
-    it "returns the default" do
+    it "returns the default if XDG_CONFIG_DIRS is unset" do
       expected = root_dir == "/" ? ["/etc/xdg"] : []
       assert_equal(expected, xdg.config_dirs)
+    end
+
+    it "returns the default if XDG_CONFIG_DIRS is empty" do
+      expected = root_dir == "/" ? ["/etc/xdg"] : []
+      env["XDG_CONFIG_DIRS"] = ""
+      assert_equal(expected, xdg.config_dirs)
+    end
+
+    it "ignores non-absolute paths in XDG_CONFIG_DIRS" do
+      dir2 = File.join(root_dir, "var2", "config")
+      env["XDG_CONFIG_DIRS"] = "my/config#{File::PATH_SEPARATOR}#{dir2}"
+      assert_equal([dir2], xdg.config_dirs)
+    end
+
+    it "still uses XDG_CONFIG_DIRS if nonempty but all paths illegal" do
+      env["XDG_CONFIG_DIRS"] = "my/config#{File::PATH_SEPARATOR}my/config2"
+      assert_equal([], xdg.config_dirs)
     end
   end
 
@@ -132,6 +175,12 @@ describe Toys::Utils::XDG do
 
     it "returns nil if not set" do
       assert_nil(xdg.runtime_dir)
+    end
+
+    it "raises if not set in the bang version" do
+      assert_raises(Toys::Utils::XDG::Error) do
+        xdg.runtime_dir!
+      end
     end
   end
 
@@ -158,7 +207,7 @@ describe Toys::Utils::XDG do
       assert_equal([file_path], xdg.lookup_data("indirectory", type: :file))
     end
 
-    it "honors mulitple types" do
+    it "honors multiple types" do
       env["XDG_DATA_HOME"] = data2_dir
       env["XDG_DATA_DIRS"] = data1_dir
       file_path = File.join(data2_dir, "indirectory")
@@ -195,6 +244,133 @@ describe Toys::Utils::XDG do
       input1_path = File.join(data1_dir, "input.txt")
       input2_path = File.join(data2_dir, "input.txt")
       assert_equal([input1_path, input2_path], xdg.lookup_config("input.txt"))
+    end
+
+    it "finds directories" do
+      env["XDG_CONFIG_HOME"] = data2_dir
+      env["XDG_CONFIG_DIRS"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_config("indirectory", type: :directory))
+    end
+
+    it "does not find directories when asked for files" do
+      env["XDG_CONFIG_HOME"] = data2_dir
+      env["XDG_CONFIG_DIRS"] = data1_dir
+      file_path = File.join(data2_dir, "indirectory")
+      assert_equal([file_path], xdg.lookup_config("indirectory", type: :file))
+    end
+
+    it "honors multiple types" do
+      env["XDG_CONFIG_HOME"] = data2_dir
+      env["XDG_CONFIG_DIRS"] = data1_dir
+      file_path = File.join(data2_dir, "indirectory")
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([file_path, dir_path], xdg.lookup_config("indirectory", type: [:file, :directory]))
+    end
+
+    it "honors the any type" do
+      env["XDG_CONFIG_HOME"] = data2_dir
+      env["XDG_CONFIG_DIRS"] = data1_dir
+      file_path = File.join(data2_dir, "indirectory")
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([file_path, dir_path], xdg.lookup_config("indirectory", type: :any))
+    end
+
+    it "finds nested files" do
+      env["XDG_CONFIG_HOME"] = data1_dir
+      env["XDG_CONFIG_DIRS"] = data2_dir
+      input1_path = File.join(data1_dir, "indirectory", "content.txt")
+      assert_equal([input1_path], xdg.lookup_config("indirectory/content.txt"))
+    end
+
+    it "finds nothing" do
+      env["XDG_CONFIG_HOME"] = data1_dir
+      env["XDG_CONFIG_DIRS"] = data2_dir
+      assert_empty(xdg.lookup_config("blah"))
+    end
+  end
+
+  describe "#lookup_state" do
+    it "finds a file" do
+      env["XDG_STATE_HOME"] = data1_dir
+      input1_path = File.join(data1_dir, "input.txt")
+      assert_equal([input1_path], xdg.lookup_state("input.txt"))
+    end
+
+    it "finds a directory" do
+      env["XDG_STATE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_state("indirectory", type: :directory))
+    end
+
+    it "does not find directories when asked for files" do
+      env["XDG_STATE_HOME"] = data1_dir
+      assert_empty(xdg.lookup_state("indirectory", type: :file))
+    end
+
+    it "honors multiple types" do
+      env["XDG_STATE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_state("indirectory", type: [:file, :directory]))
+    end
+
+    it "honors the any type" do
+      env["XDG_STATE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_state("indirectory", type: :any))
+    end
+
+    it "finds nested files" do
+      env["XDG_STATE_HOME"] = data1_dir
+      input1_path = File.join(data1_dir, "indirectory", "content.txt")
+      assert_equal([input1_path], xdg.lookup_state("indirectory/content.txt"))
+    end
+
+    it "finds nothing" do
+      env["XDG_STATE_HOME"] = data1_dir
+      assert_empty(xdg.lookup_state("blah"))
+    end
+  end
+
+  describe "#lookup_cache" do
+    it "finds a file" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      input1_path = File.join(data1_dir, "input.txt")
+      assert_equal([input1_path], xdg.lookup_cache("input.txt"))
+    end
+
+    it "finds a directory" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_cache("indirectory", type: :directory))
+    end
+
+    it "does not find directories when asked for files" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      assert_empty(xdg.lookup_cache("indirectory", type: :file))
+    end
+
+    it "honors multiple types" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_cache("indirectory", type: [:file, :directory]))
+    end
+
+    it "honors the any type" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      dir_path = File.join(data1_dir, "indirectory")
+      assert_equal([dir_path], xdg.lookup_cache("indirectory", type: :any))
+    end
+
+    it "finds nested files" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      input1_path = File.join(data1_dir, "indirectory", "content.txt")
+      assert_equal([input1_path], xdg.lookup_cache("indirectory/content.txt"))
+    end
+
+    it "finds nothing" do
+      env["XDG_CACHE_HOME"] = data1_dir
+      assert_empty(xdg.lookup_cache("blah"))
     end
   end
 
