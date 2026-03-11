@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>
+  Class: Toys::CI::Template
+  
+    &mdash; Toys
+  
+</title>
+
+  <link rel="stylesheet" href="../../css/style.css" type="text/css" />
+
+  <link rel="stylesheet" href="../../css/common.css" type="text/css" />
+
+<script type="text/javascript">
+  pathId = "Toys::CI::Template";
+  relpath = '../../';
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="../../js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="../../js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div class="nav_wrap">
+      <iframe id="nav" src="../../class_list.html?1"></iframe>
+      <div id="resizer"></div>
+    </div>
+
+    <div id="main" tabindex="-1">
+      <div id="header">
+        <div id="menu">
+  
+    <a href="../../_index.html">Index (T)</a> &raquo;
+    <span class='title'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span> &raquo; <span class='title'><span class='object_link'><a href="../CI.html" title="Toys::CI (module)">CI</a></span></span>
+     &raquo; 
+    <span class="title">Template</span>
+  
+</div>
+
+        <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="../../class_list.html">
+
+        <svg width="24" height="24">
+          <rect x="0" y="4" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="12" width="24" height="4" rx="1" ry="1"></rect>
+          <rect x="0" y="20" width="24" height="4" rx="1" ry="1"></rect>
+        </svg>
+    </a>
+  
+</div>
+        <div class="clear"></div>
+      </div>
+
+      <div id="content"><h1>Class: Toys::CI::Template
+  
+  
+  
+</h1>
+<div class="box_info">
+  
+  <dl>
+    <dt>Inherits:</dt>
+    <dd>
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Toys::CI::Template</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+    </dd>
+  </dl>
+  
+
+  
+  
+  
+  
+  <dl>
+      <dt>Includes:</dt>
+      <dd>Template</dd>
+  </dl>
+  
+  
+
+  
+
+  
+  <dl>
+    <dt>Defined in:</dt>
+    <dd>lib/toys/ci/template.rb</dd>
+  </dl>
+  
+</div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>A template that can be used to implement a CI tool.</p>
+
+<p>This template generates flags and implementation methods in the current
+tool to implement CI. In particular, it generates the <code>run</code> method
+itself. If you need more control over the CI tool&#39;s implementation,
+consider using <span class='object_link'><a href="Mixin.html" title="Toys::CI::Mixin (module)">Mixin</a></span> which provides a lower-level interface.</p>
+
+<p>To implement a CI tool using this template, simply expand the template
+and provide the necessary configuration, including specifying at least
+one CI task to run. The generated tool will use <span class='object_link'><a href="Mixin.html" title="Toys::CI::Mixin (module)">Mixin</a></span> under
+the hood.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <div class="examples">
+    <h4 class="tag_title">Examples:</h4>
+    
+      
+      <pre class="example code"><code>
+<span class='comment'># Define the &quot;test&quot; tool
+</span><span class='id identifier rubyid_expand'>expand</span> <span class='symbol'>:minitest</span><span class='comma'>,</span> <span class='label'>bundler:</span> <span class='kw'>true</span>
+
+<span class='comment'># Define the &quot;rubocop&quot; tool
+</span><span class='id identifier rubyid_expand'>expand</span> <span class='symbol'>:rubocop</span><span class='comma'>,</span> <span class='label'>bundler:</span> <span class='kw'>true</span>
+
+<span class='comment'># Define a &quot;ci&quot; tool that runs both the above, controlled by
+</span><span class='comment'># flags &quot;--tests&quot;, &quot;--rubocop&quot;, and/or &quot;--all&quot;.
+</span><span class='id identifier rubyid_tool'>tool</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>ci</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>do</span>
+  <span class='comment'># Activate the toys-ci gem and expand the template
+</span>  <span class='id identifier rubyid_load_gem'>load_gem</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>toys-ci</span><span class='tstring_end'>&quot;</span></span>
+  <span class='id identifier rubyid_expand'>expand</span> <span class='const'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'><span class='object_link'><a href="../CI.html" title="Toys::CI (module)">CI</a></span></span><span class='op'>::</span><span class='const'>Template</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_ci'>ci</span><span class='op'>|</span>
+    <span class='id identifier rubyid_ci'>ci</span><span class='period'>.</span><span class='id identifier rubyid_all_flag'>all_flag</span> <span class='op'>=</span> <span class='kw'>true</span>
+    <span class='id identifier rubyid_ci'>ci</span><span class='period'>.</span><span class='id identifier rubyid_tool_job'>tool_job</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Tests</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>test</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>flag:</span> <span class='symbol'>:tests</span><span class='rparen'>)</span>
+    <span class='id identifier rubyid_ci'>ci</span><span class='period'>.</span><span class='id identifier rubyid_tool_job'>tool_job</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Rubocop</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>rubocop</span><span class='tstring_end'>&quot;</span></span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='label'>flag:</span> <span class='symbol'>:rubocop</span><span class='rparen'>)</span>
+  <span class='kw'>end</span>
+<span class='kw'>end</span></code></pre>
+    
+  </div>
+
+
+</div>
+
+
+
+  <h2>Instance Attribute Summary <small><a href="#" class="summary_toggle">collapse</a></small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fail_fast_default=-instance_method" title="#fail_fast_default= (instance method)">#<strong>fail_fast_default</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+      <span class="note title writeonly">writeonly</span>
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Set the default value of fail-fast.</p>
+</div></span>
+  
+</li>
+
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#jobs_disabled_by_default=-instance_method" title="#jobs_disabled_by_default= (instance method)">#<strong>jobs_disabled_by_default</strong>  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+    
+    
+      <span class="note title writeonly">writeonly</span>
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>If set to true, all jobs are disabled by default unless explicitly enabled by their individual flags.</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small><a href="#" class="summary_toggle">collapse</a></small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#all_flag=-instance_method" title="#all_flag= (instance method)">#<strong>all_flag=</strong>(value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a flag that will enable all jobs.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#base_ref_flag=-instance_method" title="#base_ref_flag= (instance method)">#<strong>base_ref_flag=</strong>(value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a flag that can be used to specify the base ref for the change directly.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#before_run-instance_method" title="#before_run (instance method)">#<strong>before_run</strong>(&amp;block)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Provide a block that will be run at the beginning of the CI job.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#cmd_job-instance_method" title="#cmd_job (instance method)">#<strong>cmd_job</strong>(name, cmd, flag: nil, override_flags: nil, trigger_paths: nil, env: nil, chdir: nil)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a job implemented by an external process.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#collection-instance_method" title="#collection (instance method)">#<strong>collection</strong>(name, flag, job_flags, override_flags: nil)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Define a collection of jobs that can be enabled/disabled as a group.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#fail_fast_flag=-instance_method" title="#fail_fast_flag= (instance method)">#<strong>fail_fast_flag=</strong>(value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create flags that will enable and disable fail-fast.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#job-instance_method" title="#job (instance method)">#<strong>job</strong>(name, flag: nil, override_flags: nil, trigger_paths: nil, &amp;block)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a job implemented by a block.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#only_flag=-instance_method" title="#only_flag= (instance method)">#<strong>only_flag=</strong>(value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a flag that will disable all jobs.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#tool_job-instance_method" title="#tool_job (instance method)">#<strong>tool_job</strong>(name, tool, flag: nil, override_flags: nil, trigger_paths: nil, env: nil, chdir: nil)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Add a job implemented by a tool call.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#use_github_base_ref_flag=-instance_method" title="#use_github_base_ref_flag= (instance method)">#<strong>use_github_base_ref_flag=</strong>(value)  &#x21d2; Object </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>Create a flag that enables obtaining the change base ref from the GitHub workflow environment.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id="fail_fast_default-instance_method"></span>
+      <div class="method_details first">
+  <h3 class="signature first" id="fail_fast_default=-instance_method">
+  
+    #<strong>fail_fast_default=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Set the default value of fail-fast. You can also create flags that can
+override this value using <span class='object_link'><a href="#fail_fast_flag=-instance_method" title="Toys::CI::Template#fail_fast_flag= (method)">#fail_fast_flag=</a></span>. Default is false.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+241
+242
+243</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 241</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fail_fast_default='>fail_fast_default=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@fail_fast_default</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      
+      <span id="jobs_disabled_by_default-instance_method"></span>
+      <div class="method_details ">
+  <h3 class="signature " id="jobs_disabled_by_default=-instance_method">
+  
+    #<strong>jobs_disabled_by_default=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>If set to true, all jobs are disabled by default unless explicitly
+enabled by their individual flags.</p>
+
+<p>This setting is mutually exclusive with <span class='object_link'><a href="#all_flag=-instance_method" title="Toys::CI::Template#all_flag= (method)">#all_flag=</a></span> and <span class='object_link'><a href="#only_flag=-instance_method" title="Toys::CI::Template#only_flag= (method)">#only_flag=</a></span>.
+If you set up one of those flags, the default enabling behavior is also
+set implicitly.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+218
+219
+220</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 218</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_jobs_disabled_by_default='>jobs_disabled_by_default=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@jobs_disabled_by_default</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="all_flag=-instance_method">
+  
+    #<strong>all_flag=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a flag that will enable all jobs. All jobs will otherwise be
+disabled by default. This setting is mutually exclusive with
+<span class='object_link'><a href="#only_flag=-instance_method" title="Toys::CI::Template#only_flag= (method)">#only_flag=</a></span> and <span class='object_link'><a href="#jobs_disabled_by_default=-instance_method" title="Toys::CI::Template#jobs_disabled_by_default= (method)">#jobs_disabled_by_default=</a></span>.</p>
+
+<p>The value can either be the flag key as a symbol, <code>true</code> to use the
+default (which is <code>:all</code>), or <code>false</code> to disable such a flag.
+For example, passing <code>true</code> will define the flag <code>--all</code> which will set
+the context key <code>:all</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+188
+189
+190</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 188</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_all_flag='>all_flag=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@all_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="base_ref_flag=-instance_method">
+  
+    #<strong>base_ref_flag=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a flag that can be used to specify the base ref for the change
+directly. This can be used to filter CI jobs based on what has changed.</p>
+
+<p>A change base ref provided in this way will override any obtained from
+other means, such as from the GitHub environment using
+<span class='object_link'><a href="#use_github_base_ref_flag=-instance_method" title="Toys::CI::Template#use_github_base_ref_flag= (method)">#use_github_base_ref_flag=</a></span>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>If a symbol, it is used as the flag
+key for a flag that specifies the base ref. You can also pass
+<code>true</code> to use the default, <code>:base_ref</code>.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+257
+258
+259</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 257</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_base_ref_flag='>base_ref_flag=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@base_ref_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="before_run-instance_method">
+  
+    #<strong>before_run</strong>(&amp;block)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Provide a block that will be run at the beginning of the CI job.
+The block will run in the tool execution context, with <code>self</code> set to
+the <code>Toys::Context</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The block to execute.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+172
+173
+174</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 172</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_before_run'>before_run</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='ivar'>@prerun</span> <span class='op'>=</span> <span class='id identifier rubyid_block'>block</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="cmd_job-instance_method">
+  
+    #<strong>cmd_job</strong>(name, cmd, flag: nil, override_flags: nil, trigger_paths: nil, env: nil, chdir: nil)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a job implemented by an external process.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A user-visible name for the job. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>cmd</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The command to run. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flag</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A flag key to control whether the job will run.
+If provided, it will be used to generate two flags that can be
+passed to the CI job. For example, passing <code>:unit_tests</code> will
+generate the flags <code>--unit-tests</code> and <code>--no-unit-tests</code> and set the
+context value <code>:unit_tests</code>. If not provided, no flag is generated
+and runnability will be determined by the &quot;all&quot; or &quot;only&quot; flag.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>override_flags</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Generated flags to use
+instead of the ones implied by the <code>:flag</code> argument. These must be
+specified without the leading <code>--</code>, and will automatically have
+<code>--[no-]</code> prepended. Optional. If not specified or nil, the flags
+fall back to those implied by the <code>:flag</code> argument.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>trigger_paths</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>, <tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of file or
+directory paths, relative to the repo root, that must have changes
+in order to trigger the job. If not specified, the job is always
+triggered.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>env</span>
+      
+      
+        <span class='type'>(<tt>Hash{String=&gt;String}</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Environment variables to set during
+the run. Optional.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>chdir</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The working directory for the run. Optional.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+99
+100
+101
+102
+103
+104
+105</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 99</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_cmd_job'>cmd_job</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='label'>flag:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>override_flags:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>trigger_paths:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>env:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>chdir:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_override_flags'>override_flags</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_flag'>flag</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'>ToolDefinitionError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>override_flags is meaningless without a flag</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@jobs</span> <span class='op'>&lt;&lt;</span> <span class='const'>CmdJob</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_override_flags'>override_flags</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_trigger_paths'>trigger_paths</span><span class='comma'>,</span> <span class='id identifier rubyid_cmd'>cmd</span><span class='comma'>,</span> <span class='id identifier rubyid_env'>env</span><span class='comma'>,</span> <span class='id identifier rubyid_chdir'>chdir</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="collection-instance_method">
+  
+    #<strong>collection</strong>(name, flag, job_flags, override_flags: nil)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Define a collection of jobs that can be enabled/disabled as a group.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A user-visible name for the collection. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flag</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A flag key to control the collection. Required.
+Used to define two flags that can be passed to the CI job. For
+example, passing <code>:unit_tests</code> will generate the flags
+<code>--unit-tests</code> and <code>--no-unit-tests</code> and set the context value
+<code>:unit_tests</code>.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>override_flags</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Generated flags to use
+instead of the ones implied by the <code>:flag</code> argument. These must be
+specified without the leading <code>--</code>, and will automatically have
+<code>--[no-]</code> prepended. Optional. If not specified or nil, the flags
+fall back to those implied by the <code>:flag</code> argument.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>job_flags</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Symbol&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The individual job flags that will be
+controlled as a group by this collection. Must be nonempty.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+157
+158
+159
+160
+161
+162
+163</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 157</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_collection'>collection</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='id identifier rubyid_job_flags'>job_flags</span><span class='comma'>,</span> <span class='label'>override_flags:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_job_flags'>job_flags</span><span class='period'>.</span><span class='id identifier rubyid_empty?'>empty?</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'>ToolDefinitionError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>You must provide at least one entry in job_flags</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@collections</span> <span class='op'>&lt;&lt;</span> <span class='const'>Collection</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_override_flags'>override_flags</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_job_flags'>job_flags</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="fail_fast_flag=-instance_method">
+  
+    #<strong>fail_fast_flag=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create flags that will enable and disable fail-fast. The flag should be
+specified by symbol, and the actual flag will be set accordingly. You
+can also use the value <code>true</code> which will set the default <code>:fail_fast</code>.
+For example, passing <code>true</code> will define the flags <code>--fail-fast</code> and
+<code>--no-fail-fast</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+231
+232
+233</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 231</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_fail_fast_flag='>fail_fast_flag=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@fail_fast_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="job-instance_method">
+  
+    #<strong>job</strong>(name, flag: nil, override_flags: nil, trigger_paths: nil, &amp;block)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a job implemented by a block.</p>
+
+<p>The block should perform a CI job and return a boolean indicating
+whether or not the job succeeded. It will execute in the tool execution
+context, with <code>self</code> set to the <code>Toys::Context</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A user-visible name for the job. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>block</span>
+      
+      
+        <span class='type'>(<tt>Proc</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A block that runs this job. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flag</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A flag key to control whether the job will run.
+If provided, it will be used to generate two flags that can be
+passed to the CI job. For example, passing <code>:unit_tests</code> will
+generate the flags <code>--unit-tests</code> and <code>--no-unit-tests</code> and set the
+context value <code>:unit_tests</code>. If not provided, no flag is generated
+and runnability will be determined by the &quot;all&quot; or &quot;only&quot; flag.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>override_flags</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Generated flags to use
+instead of the ones implied by the <code>:flag</code> argument. These must be
+specified without the leading <code>--</code>, and will automatically have
+<code>--[no-]</code> prepended. Optional. If not specified or nil, the flags
+fall back to those implied by the <code>:flag</code> argument.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>trigger_paths</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>, <tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of file or
+directory paths, relative to the repo root, that must have changes
+in order to trigger the job. If not specified, the job is always
+triggered.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+132
+133
+134
+135
+136
+137
+138</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 132</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_job'>job</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='label'>flag:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>override_flags:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>trigger_paths:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_override_flags'>override_flags</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_flag'>flag</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'>ToolDefinitionError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>override_flags is meaningless without a flag</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@jobs</span> <span class='op'>&lt;&lt;</span> <span class='const'>BlockJob</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_override_flags'>override_flags</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_trigger_paths'>trigger_paths</span><span class='comma'>,</span> <span class='id identifier rubyid_block'>block</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="only_flag=-instance_method">
+  
+    #<strong>only_flag=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a flag that will disable all jobs. All jobs will otherwise be
+enabled by default. This setting is mutually exclusive with
+<span class='object_link'><a href="#all_flag=-instance_method" title="Toys::CI::Template#all_flag= (method)">#all_flag=</a></span> and <span class='object_link'><a href="#jobs_disabled_by_default=-instance_method" title="Toys::CI::Template#jobs_disabled_by_default= (method)">#jobs_disabled_by_default=</a></span>.</p>
+
+<p>The value can either be the flag key as a symbol, <code>true</code> to use the
+default (which is <code>:only</code>), or <code>false</code> to disable such a flag.
+For example, passing <code>true</code> will define the flag <code>--only</code> which will
+set the context key <code>:only</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+204
+205
+206</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 204</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_only_flag='>only_flag=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@only_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="tool_job-instance_method">
+  
+    #<strong>tool_job</strong>(name, tool, flag: nil, override_flags: nil, trigger_paths: nil, env: nil, chdir: nil)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Add a job implemented by a tool call.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>name</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>A user-visible name for the job. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>tool</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'><p>The Toys tool to run. Required.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>flag</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>A flag key to control whether the job will run.
+If provided, it will be used to generate two flags that can be
+passed to the CI job. For example, passing <code>:unit_tests</code> will
+generate the flags <code>--unit-tests</code> and <code>--no-unit-tests</code> and set the
+context value <code>:unit_tests</code>. If not provided, no flag is generated
+and runnability will be determined by the &quot;all&quot; or &quot;only&quot; flag.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>override_flags</span>
+      
+      
+        <span class='type'>(<tt>String</tt>, <tt>Array&lt;String&gt;</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Generated flags to use
+instead of the ones implied by the <code>:flag</code> argument. These must be
+specified without the leading <code>--</code>, and will automatically have
+<code>--[no-]</code> prepended. Optional. If not specified or nil, the flags
+fall back to those implied by the <code>:flag</code> argument.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>trigger_paths</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;String&gt;</tt>, <tt>String</tt>, <tt>nil</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>An array of file or
+directory paths, relative to the repo root, that must have changes
+in order to trigger the job. If not specified, the job is always
+triggered.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>env</span>
+      
+      
+        <span class='type'>(<tt>Hash{String=&gt;String}</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>Environment variables to set during
+the run. Optional.</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>chdir</span>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+        <em class="default">(defaults to: <tt>nil</tt>)</em>
+      
+      
+        &mdash;
+        <div class='inline'><p>The working directory for the run. Optional.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+67
+68
+69
+70
+71
+72
+73</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 67</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_tool_job'>tool_job</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='label'>flag:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>override_flags:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>trigger_paths:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>env:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>chdir:</span> <span class='kw'>nil</span><span class='rparen'>)</span>
+  <span class='kw'>if</span> <span class='id identifier rubyid_override_flags'>override_flags</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='id identifier rubyid_flag'>flag</span>
+    <span class='id identifier rubyid_raise'>raise</span> <span class='op'>::</span><span class='const'><span class='object_link'><a href="../../Toys.html" title="Toys (module)">Toys</a></span></span><span class='op'>::</span><span class='const'>ToolDefinitionError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>override_flags is meaningless without a flag</span><span class='tstring_end'>&quot;</span></span>
+  <span class='kw'>end</span>
+  <span class='ivar'>@jobs</span> <span class='op'>&lt;&lt;</span> <span class='const'>ToolJob</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='id identifier rubyid_name'>name</span><span class='comma'>,</span> <span class='id identifier rubyid_flag'>flag</span><span class='comma'>,</span> <span class='const'>Array</span><span class='lparen'>(</span><span class='id identifier rubyid_override_flags'>override_flags</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='id identifier rubyid_trigger_paths'>trigger_paths</span><span class='comma'>,</span> <span class='id identifier rubyid_tool'>tool</span><span class='comma'>,</span> <span class='id identifier rubyid_env'>env</span><span class='comma'>,</span> <span class='id identifier rubyid_chdir'>chdir</span><span class='rparen'>)</span>
+  <span class='kw'>self</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="use_github_base_ref_flag=-instance_method">
+  
+    #<strong>use_github_base_ref_flag=</strong>(value)  &#x21d2; <tt>Object</tt> 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    <p>Create a flag that enables obtaining the change base ref from the
+GitHub workflow environment. This can be used to filter CI jobs based
+on what has changed in a GitHub Actions workflow. The flag should be
+specified by symbol, and the actual flag will be set accordingly. You
+can also use the value <code>true</code> which will set the default
+<code>:use_github_base_ref</code>. For example, passing <code>true</code> will define the
+flags <code>--use-github-base-ref</code> and <code>--no-use-github-base-ref</code>.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>value</span>
+      
+      
+        <span class='type'>(<tt>Symbol</tt>, <tt>boolean</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+272
+273
+274</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/toys/ci/template.rb', line 272</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_use_github_base_ref_flag='>use_github_base_ref_flag=</span><span class='lparen'>(</span><span class='id identifier rubyid_value'>value</span><span class='rparen'>)</span>
+  <span class='ivar'>@use_github_base_ref_flag</span> <span class='op'>=</span> <span class='id identifier rubyid_value'>value</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+      <div id="footer">
+  Generated on Wed Mar 11 22:36:31 2026 by
+  <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.9.38 (ruby-4.0.1).
+</div>
+
+    </div>
+  </body>
+</html>
