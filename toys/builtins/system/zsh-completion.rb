@@ -40,7 +40,7 @@ tool "install" do
     require "shellwords"
     path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "zsh-completion.sh")
     exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
-    puts Shellwords.join(["source", path] + exes)
+    puts ::Shellwords.join(["source", path] + exes)
   end
 end
 
@@ -64,7 +64,7 @@ tool "remove" do
     require "shellwords"
     path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "zsh-completion-remove.sh")
     exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
-    puts Shellwords.join(["source", path] + exes)
+    puts ::Shellwords.join(["source", path] + exes)
   end
 end
 

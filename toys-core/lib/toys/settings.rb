@@ -641,7 +641,7 @@ module Toys
     # @return [Array<FieldError>] An array of errors.
     #
     def load_yaml_file!(filename, raise_on_failure: false)
-      load_yaml!(File.read(filename), raise_on_failure: raise_on_failure)
+      load_yaml!(::File.read(filename), raise_on_failure: raise_on_failure)
     end
 
     ##
@@ -668,7 +668,7 @@ module Toys
     # @return [Array<FieldError>] An array of errors.
     #
     def load_json_file!(filename, raise_on_failure: false, **json_opts)
-      load_json!(File.read(filename), raise_on_failure: raise_on_failure, **json_opts)
+      load_json!(::File.read(filename), raise_on_failure: raise_on_failure, **json_opts)
     end
 
     ##
