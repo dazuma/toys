@@ -44,7 +44,8 @@ containing either a single package, or multiple packages (i.e. "**monorepos**")
 and can analyze a repository to identify changes applying to each package.
 
 Toys-Release can build **GitHub releases**, publish **RubyGems packages**, and
-build and publish documentation to **GitHub pages**.
+build and publish documentation to **GitHub Pages**. (GitHub Pages integration
+is currently experimental.)
 
 Toys-Release uses the [Toys](https://dazuma.github.io/toys/gems/toys/latest)
 RubyGem, but does not require familiarity with Toys.
@@ -412,6 +413,9 @@ reference documentation to GitHub Pages. This lets you host reference
 documentation for your Ruby gem on your GitHub Pages site, under github.io. As
 an example, of what this looks like you can see the reference documentation for
 the Toys gem at https://dazuma.github.io/toys/gems/toys.
+
+**IMPORTANT: GitHub Pages publication is currently experimental. The feature
+set is in flux, and breaking changes will be common.**
 
 The features of this system are:
 

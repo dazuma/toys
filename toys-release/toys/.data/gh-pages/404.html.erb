@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <p>
+      <a href="<%= @default_redirect_url %>">Main documentation page</a>
+    </p>
+  </body>
+  <script>
+<% @version_vars.each do |(name, value)| %>    var <%= name %> = "<%= value %>";
+<% end %>    var location_updated = false;
+<% @replacement_info.each do |comp_info| %>    if (!location_updated) {
+      var loc = window.location.href.replace(
+        new RegExp(<%= comp_info.regexp_source.inspect %>),
+        "//<%= comp_info.base_path %>/v" + <%= comp_info.version_var %> + "/");
+      if (window.location.href != loc) {
+        window.location.replace(loc);
+        location_updated = true;
+      }
+    }
+<% end %>    if (!location_updated) {
+      window.location.replace("<%= @default_redirect_url %>");
+    }
+  </script>
+</html>
