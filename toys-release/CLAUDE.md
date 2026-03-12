@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-toys-release is a Ruby library release automation system using GitHub Actions and Toys. It interprets conventional commit messages to automate changelog generation and version bumping based on semantic versioning, and uses GitHub pull requests for release approval. It can tag GitHub releases, push gems to RubyGems, and publish documentation to gh-pages. It depends on `toys-core ~> 0.19`.
+toys-release is a Ruby library release automation system using GitHub Actions and Toys. It interprets conventional commit messages to automate changelog generation and version bumping based on semantic versioning, and uses GitHub pull requests for release approval. It can tag GitHub releases, push gems to RubyGems, and publish documentation to gh-pages. It depends on `toys-core ~> 0.20`.
 
 ## Development Commands
 

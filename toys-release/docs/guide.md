@@ -67,13 +67,13 @@ process requires these items to be installed locally, but normal operation
 happens in GitHub Actions and does not require any local installation.
 
 If you do not have Ruby or Toys installed locally, do so first. Install
-Ruby 3.0 or later, and then install the Toys RubyGem using:
+Ruby 2.7 or later, and then install the Toys RubyGem using:
 
 ```sh
 gem install toys
 ```
 
-Toys-Release requires Toys 0.18 or later. If you have an older version of Toys,
+Toys-Release requires Toys 0.20 or later. If you have an older version of Toys,
 update it using:
 
 ```sh

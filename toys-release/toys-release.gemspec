@@ -31,7 +31,7 @@ require "toys/release/version"
   spec.required_ruby_version = ">= 2.7.0"
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "toys-core", "~> 0.19"
+  spec.add_dependency "toys-core", "~> 0.20"
   spec.add_dependency "base64", "~> 0.3"
 
   if spec.respond_to?(:metadata)

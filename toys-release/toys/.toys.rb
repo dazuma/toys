@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-toys_version!(">= 0.19", "< 2")
+toys_version!(">= 0.20", "< 2")
 
 desc "Namespace for toys-release tools"
