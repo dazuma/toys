@@ -1,5 +1,9 @@
 # Release History
 
+### v0.8.1 / 2026-03-12
+
+* FIXED: Prevent global index from clobbering local index when creating gh-pages for a non-monorepo
+
 ### v0.8.0 / 2026-03-12
 
 * ADDED: Add a command to reserve a gem
