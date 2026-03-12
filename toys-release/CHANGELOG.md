@@ -1,5 +1,10 @@
 # Release History
 
+### v0.8.0 / 2026-03-12
+
+* ADDED: Add a command to reserve a gem
+* ADDED: Create index redirects in the gh-pages deployment
+
 ### v0.7.0 / 2026-03-09
 
 * ADDED: Support updating dependencies among released components
