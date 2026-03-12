@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+::Gem::Specification.new do |spec|
+  spec.name = <%= @gem_name.inspect %>
+  spec.version = <%= @gem_version.inspect %>
+  spec.authors = [<%= @contact.inspect %>]
+
+  spec.summary = "Placeholder gem"
+  spec.description =
+    "This is a placeholder gem, which was generated on <%= @date %> to reserve the gem " +
+    <%= @gem_name.inspect %> + ". The actual gem is planned for release in the near future. " +
+    "If this is a problem, or if the actual gem has not been released in a timely manner, " +
+    "you can contact the owner at " + <%= @contact.inspect %> + "."
+
+  spec.files = ["README.md", "lib/<%= @gem_name %>.rb"]
+  spec.require_paths = ["lib"]
+end
