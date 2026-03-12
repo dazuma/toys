@@ -96,7 +96,7 @@ module Toys
       #
       def update_dependencies(constraint_updates)
         constraint_updates.each do |name, exprs|
-          escaped_name = Regexp.escape(name)
+          escaped_name = ::Regexp.escape(name)
           regex = /\.(add(?:_runtime)?_dependency)(\(?\s*)(["'])#{escaped_name}["'](?:,\s*["'][^"',]+["'])*(\s*\)?)/
           content.sub!(regex) do
             match = ::Regexp.last_match

@@ -152,7 +152,7 @@ module Toys
             process_globs(globs) do |path|
               until preserve_set.include?(path)
                 preserve_set << path
-                path = File.dirname(path)
+                path = ::File.dirname(path)
               end
             end
             preserve_set

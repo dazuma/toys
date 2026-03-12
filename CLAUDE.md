@@ -42,6 +42,7 @@ Pass the `--help` flag to any toys-dev command to display a manpage describing a
 - Max line length: 120
 - `Style/DocumentationMethod: Enabled` — public methods require YARD docs
 - Tests use Minitest spec style with assertions (not expectations)
+- Top-level constants must be prefixed with `::` (e.g. `::File`, `::Regexp`, `::Gem::Version`) to avoid ambiguous resolution within nested namespaces. Relative constants defined within the current namespace should not be prefixed. Note that Kernel method calls such as `Array(x)`, `Integer(x)`, `Float(x)` look like constants but are not and do not get the prefix.
 
 ## Testing
 

@@ -31,8 +31,8 @@ module Toys
         # @return [Semver] The semver level
         #
         def for_diff(version1, version2)
-          segments1 = Gem::Version.create(version1 || "0.0.0").segments
-          segments2 = Gem::Version.create(version2 || "0.0.0").segments
+          segments1 = ::Gem::Version.create(version1 || "0.0.0").segments
+          segments2 = ::Gem::Version.create(version2 || "0.0.0").segments
           size = segments1.size
           size = segments2.size if size < segments2.size
           (0...size).each do |index|

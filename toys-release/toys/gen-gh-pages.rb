@@ -127,7 +127,7 @@ def generate_html404
   replacement_info = @relevant_component_settings.map do |comp_settings|
     version_vars[comp_settings.gh_pages_version_var] = current_component_version(comp_settings)
     base_path = component_base_path(comp_settings)
-    regexp_source = "//#{Regexp.escape(base_path)}/latest(/|$)"
+    regexp_source = "//#{::Regexp.escape(base_path)}/latest(/|$)"
     CompInfo.new(base_path, regexp_source, comp_settings.gh_pages_version_var)
   end
   template_params = {
