@@ -12,7 +12,6 @@ modify_steps:
 components:
   - name: toys
     gh_pages_directory: gems/toys
-    gh_pages_version_var: version
     prepend_steps:
       - name: copy_core_docs
         type: tool
@@ -26,7 +25,6 @@ components:
   - name: toys-core
     version_rb_path: lib/toys/core.rb
     gh_pages_directory: gems/toys-core
-    gh_pages_version_var: version
   - name: toys-ci
     gh_pages_directory: gems/toys-ci
   - name: toys-release

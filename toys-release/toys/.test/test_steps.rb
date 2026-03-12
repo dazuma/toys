@@ -346,7 +346,14 @@ describe Toys::Release::Steps do
       path = ::File.join(step_context.temp_dir, "gems", "toys", "v#{unreleased_version}", "index.html")
       assert(::File.file?(path), "Expected docs to be copied into gh-pages")
       content = ::File.read(::File.join(step_context.temp_dir, "404.html"))
-      assert_includes(content, "version = #{unreleased_version.inspect};")
+      assert_includes(content, "version_toys = #{unreleased_version.inspect};")
+      ["index.html", "latest/index.html"].each do |filename|
+        content = ::File.read(::File.join(step_context.temp_dir, "gems", "toys", filename))
+        assert_includes(content, "<a href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+        assert_includes(content, "<link rel=\"canonical\" href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+        assert_includes(content, "<meta http-equiv=\"refresh\" content=\"0; url=https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+        assert_includes(content, "window.location.replace(\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\");")
+      end
     end
 
     it "does a real publish" do
