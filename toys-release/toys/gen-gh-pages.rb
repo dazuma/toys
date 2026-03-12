@@ -119,7 +119,9 @@ end
 def generate_toplevel_files
   ::File.write(".nojekyll", "")
   generate_file(".gitignore", "gitignore.erb", {})
-  generate_file("index.html", "redirect.html.erb", {redirect_url: default_redirect_url})
+  unless @relevant_component_settings.any? { |settings| settings.gh_pages_directory == "." }
+    generate_file("index.html", "redirect.html.erb", {redirect_url: default_redirect_url})
+  end
 end
 
 def generate_html404
@@ -151,7 +153,7 @@ def component_base_path(component_settings)
 end
 
 def default_redirect_url
-  @default_redirect_url ||= "https://#{component_base_path(@relevant_component_settings.first)}"
+  @default_redirect_url ||= "https://#{component_base_path(@relevant_component_settings.first)}/latest"
 end
 
 def generate_file(destination, template, data)
