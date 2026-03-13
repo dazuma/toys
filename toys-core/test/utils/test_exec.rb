@@ -164,6 +164,33 @@ describe Toys::Utils::Exec do
         assert_equal(true, was_called)
       end
     end
+
+    it "is called on the calling thread when running in the foreground" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        calling_thread = ::Thread.current
+        callback_thread = nil
+        callback = proc do |_result|
+          callback_thread = ::Thread.current
+        end
+        exec.exec(["echo", "hi"], out: :capture, result_callback: callback)
+        assert_equal(calling_thread, callback_thread)
+      end
+    end
+
+    it "is called on a different thread when running in the background" do
+      ::Timeout.timeout(simple_exec_timeout) do
+        calling_thread = ::Thread.current
+        callback_queue = ::Queue.new
+        callback = proc do |_result|
+          callback_queue << ::Thread.current
+        end
+        controller = exec.exec(["echo", "hi"], background: true, result_callback: callback)
+        controller.result
+        callback_thread = callback_queue.pop
+        refute_nil(callback_thread)
+        refute_equal(calling_thread, callback_thread)
+      end
+    end
   end
 
   describe "command form" do
@@ -903,6 +930,14 @@ describe Toys::Utils::Exec do
       ensure
         ::ENV.delete("VAR2")
         ::ENV.delete("VAR3")
+      end
+    end
+
+    it "unbundles" do
+      ::Timeout.timeout(ruby_exec_timeout) do
+        skip "Skipped because the test is not run with bundler" unless ::ENV["BUNDLE_GEMFILE"]
+        result = exec.ruby(["-e", 'puts ENV["BUNDLE_GEMFILE"].inspect'], out: :capture, unbundle: true)
+        refute_includes(result.captured_out, '"')
       end
     end
   end

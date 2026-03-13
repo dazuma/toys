@@ -35,36 +35,6 @@ module Toys
     # but you can also retrieve the service object itself by calling
     # {Toys::Context#get} with the key {Toys::StandardMixins::Exec::KEY}.
     #
-    # ### Controlling processes
-    #
-    # A process can be started in the *foreground* or the *background*. If you
-    # start a foreground process, it will "take over" your standard input and
-    # output streams by default, and it will keep control until it completes.
-    # If you start a background process, its streams will be redirected to null
-    # by default, and control will be returned to you immediately.
-    #
-    # While a process is running, you can control it using a
-    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
-    # the process's input and output streams, send it signals, or wait for it
-    # to complete.
-    #
-    # When running a process in the foreground, the controller will be yielded
-    # to an optional block. For example, the following code starts a process in
-    # the foreground and passes its output stream to a controller.
-    #
-    #     exec(["git", "init"], out: :controller) do |controller|
-    #       loop do
-    #         line = controller.out.gets
-    #         break if line.nil?
-    #         puts "Got line: #{line}"
-    #       end
-    #     end
-    #
-    # When running a process in the background, the controller is returned from
-    # the method that starts the process:
-    #
-    #     controller = exec(["git", "init"], background: true)
-    #
     # ### Stream handling
     #
     # By default, subprocess streams are connected to the corresponding streams
@@ -84,7 +54,7 @@ module Toys
     #
     #  *  **Inherit parent stream:** You can inherit the corresponding stream
     #     in the parent process by passing `:inherit` as the option value. This
-    #     is the default if the subprocess is *not* run in the background.
+    #     is the default if the subprocess is run in the foreground.
     #
     #  *  **Redirect to null:** You can redirect to a null stream by passing
     #     `:null` as the option value. This connects to a stream that is not
@@ -136,7 +106,7 @@ module Toys
     #     the setting `:controller`. You can then manipulate the stream via the
     #     controller. If you pass a block to {Toys::StandardMixins::Exec#exec},
     #     it yields the {Toys::Utils::Exec::Controller}, giving you access to
-    #     streams.
+    #     streams. See the section below on controlling processes.
     #
     #  *  **Make copies of an output stream:** You can "tee," or duplicate the
     #     `:out` or `:err` stream and redirect those copies to various
@@ -155,6 +125,68 @@ module Toys
     #      *  `:buffer_size` The size of the memory buffer for each element of
     #         the tee. Larger buffers may allow higher throughput. The default
     #         is 65536.
+    #
+    # ### Controlling processes
+    #
+    # A process can be started in the *foreground* or the *background*. If you
+    # start a foreground process, it will inherit your standard input and
+    # output streams by default, and it will keep control until it completes.
+    # If you start a background process, its streams will be redirected to null
+    # by default, and control will be returned to you immediately.
+    #
+    # While a process is running, you can control it using a
+    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
+    # the process's input and output streams, send it signals, or wait for it
+    # to complete.
+    #
+    # When running a process in the foreground, the controller will be yielded
+    # to an optional block. For example, the following code starts a process in
+    # the foreground and passes its output stream to a controller.
+    #
+    #     exec(["git", "init"], out: :controller) do |controller|
+    #       loop do
+    #         line = controller.out.gets
+    #         break if line.nil?
+    #         puts "Got line: #{line}"
+    #       end
+    #     end
+    #
+    # At the end of the block, if the controller is handling the process's
+    # input stream, that stream will automatically be closed. The following
+    # example programmatically sends data to the `wc` unix program, and
+    # captures its output. Because the controller is handling the input stream,
+    # it automatically closes the stream at the end of the block, which causes
+    # `wc` to end.
+    #
+    #     result = exec(["wc"], in: :controller, out: :capture) do |controller|
+    #       controller.in.puts "Hello, world!"
+    #     end
+    #     puts "Results: #{result.captured_out}"
+    #
+    # Otherwise, depending on the process's behavior, it may continue to run
+    # after the end of the block. Control will not be returned to the caller
+    # until the process actually terminates. Conversely, it is also possible
+    # the process could terminate by itself while the block is still executing.
+    # You can call controller methods to obtain the process's actual current
+    # state.
+    #
+    # When running a process in the background, the controller is returned
+    # immediately from the method that starts the process. In the following
+    # example, git init is kicked off in the background and the output is
+    # thrown away to /dev/null.
+    #
+    #     controller = exec(["git", "init"], background: true)
+    #
+    # In this mode, use the returned controller to query the process's state
+    # and interact with it. Streams directed to the controller are not
+    # automatically closed, so you will need to do so yourself. Following is an
+    # example of running `wc` in the background:
+    #
+    #     controller = exec(["wc"], background: true,
+    #                               in: :controller, out: :controller)
+    #     controller.in.puts "Hello, world!"
+    #     controller.in.close # Do this explicitly to cause wc to finish
+    #     puts "Results: #{controller.out.read}" # Read the entire stream
     #
     # ### Result handling
     #
@@ -193,6 +225,12 @@ module Toys
     #       puts "exit code: #{result.exit_code}"
     #     end
     #
+    # In foreground mode, the callback is executed in the calling thread, after
+    # the process terminates (and after any controller block has completed) but
+    # before control is returned to the caller. In background mode, the
+    # callback is executed asynchronously in a separate thread after the
+    # process terminates.
+    #
     # Finally, you can force your tool to exit if a subprocess fails, similar
     # to setting the `set -e` option in bash, by setting the
     # `:exit_on_nonzero_status` option. This is often set as a default
@@ -215,6 +253,10 @@ module Toys
     #     either strings or `nil`, which unsets the variable.
     #
     #  *  `:background` (Boolean) Runs the process in the background if `true`.
+    #
+    #  *  `:unbundle` (Boolean) Disables any existing bundle when running the
+    #     subprocess. Has no effect if Bundler isn't active at the call point.
+    #     Cannot be used when executing in a fork, e.g. via {#exec_proc}.
     #
     # Options related to handling results
     #
@@ -837,12 +879,7 @@ module Toys
         context = self
         opts = Exec._setup_exec_opts(opts, context)
         context[KEY] = Utils::Exec.new(**opts) do |k|
-          case k
-          when :logger
-            context[Context::Key::LOGGER]
-          when :cli
-            context[Context::Key::CLI]
-          end
+          k == :logger ? context[Context::Key::LOGGER] : nil
         end
       end
     end
