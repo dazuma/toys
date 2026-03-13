@@ -35,36 +35,6 @@ module Toys
     # to processes it spawns. You can set these defaults when constructing the
     # service class, or at any time by calling {#configure_defaults}.
     #
-    # ### Controlling processes
-    #
-    # A process can be started in the *foreground* or the *background*. If you
-    # start a foreground process, it will "take over" your standard input and
-    # output streams by default, and it will keep control until it completes.
-    # If you start a background process, its streams will be redirected to null
-    # by default, and control will be returned to you immediately.
-    #
-    # While a process is running, you can control it using a
-    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
-    # the process's input and output streams, send it signals, or wait for it
-    # to complete.
-    #
-    # When running a process in the foreground, the controller will be yielded
-    # to an optional block. For example, the following code starts a process in
-    # the foreground and passes its output stream to a controller.
-    #
-    #     exec_service.exec(["git", "init"], out: :controller) do |controller|
-    #       loop do
-    #         line = controller.out.gets
-    #         break if line.nil?
-    #         puts "Got line: #{line}"
-    #       end
-    #     end
-    #
-    # When running a process in the background, the controller is returned from
-    # the method that starts the process:
-    #
-    #     controller = exec_service.exec(["git", "init"], background: true)
-    #
     # ### Stream handling
     #
     # By default, subprocess streams are connected to the corresponding streams
@@ -84,7 +54,7 @@ module Toys
     #
     #  *  **Inherit parent stream:** You can inherit the corresponding stream
     #     in the parent process by passing `:inherit` as the option value. This
-    #     is the default if the subprocess is *not* run in the background.
+    #     is the default if the subprocess is run in the foreground.
     #
     #  *  **Redirect to null:** You can redirect to a null stream by passing
     #     `:null` as the option value. This connects to a stream that is not
@@ -136,7 +106,7 @@ module Toys
     #     the setting `:controller`. You can then manipulate the stream via the
     #     controller. If you pass a block to {Toys::Utils::Exec#exec}, it
     #     yields the {Toys::Utils::Exec::Controller}, giving you access to
-    #     streams.
+    #     streams. See the section below on controlling processes.
     #
     #  *  **Make copies of an output stream:** You can "tee," or duplicate the
     #     `:out` or `:err` stream and redirect those copies to various
@@ -155,6 +125,70 @@ module Toys
     #      *  `:buffer_size` The size of the memory buffer for each element of
     #         the tee. Larger buffers may allow higher throughput. The default
     #         is 65536.
+    #
+    # ### Controlling processes
+    #
+    # A process can be started in the *foreground* or the *background*. If you
+    # start a foreground process, it will inherit your standard input and
+    # output streams by default, and it will keep control until it completes.
+    # If you start a background process, its streams will be redirected to null
+    # by default, and control will be returned to you immediately.
+    #
+    # While a process is running, you can control it using a
+    # {Toys::Utils::Exec::Controller} object. Use a controller to interact with
+    # the process's input and output streams, send it signals, or wait for it
+    # to complete.
+    #
+    # When running a process in the foreground, the controller will be yielded
+    # to an optional block. For example, the following code starts a process in
+    # the foreground and passes its output stream to a controller.
+    #
+    #     exec_service.exec(["git", "init"], out: :controller) do |controller|
+    #       loop do
+    #         line = controller.out.gets
+    #         break if line.nil?
+    #         puts "Got line: #{line}"
+    #       end
+    #     end
+    #
+    # At the end of the block, if the controller is handling the process's
+    # input stream, that stream will automatically be closed. The following
+    # example programmatically sends data to the `wc` unix program, and
+    # captures its output. Because the controller is handling the input stream,
+    # it automatically closes the stream at the end of the block, which causes
+    # `wc` to end.
+    #
+    #     result = exec_service.exec(["wc"],
+    #                                in: :controller,
+    #                                out: :capture) do |controller|
+    #       controller.in.puts "Hello, world!"
+    #     end
+    #     puts "Results: #{result.captured_out}"
+    #
+    # Otherwise, depending on the process's behavior, it may continue to run
+    # after the end of the block. Control will not be returned to the caller
+    # until the process actually terminates. Conversely, it is also possible
+    # the process could terminate by itself while the block is still executing.
+    # You can call controller methods to obtain the process's actual current
+    # state.
+    #
+    # When running a process in the background, the controller is returned
+    # immediately from the method that starts the process. In the following
+    # example, git init is kicked off in the background and the output is
+    # thrown away to /dev/null.
+    #
+    #     controller = exec_service.exec(["git", "init"], background: true)
+    #
+    # In this mode, use the returned controller to query the process's state
+    # and interact with it. Streams directed to the controller are not
+    # automatically closed, so you will need to do so yourself. Following is an
+    # example of running `wc` in the background:
+    #
+    #     controller = exec_service.exec(["wc"], background: true,
+    #                                    in: :controller, out: :controller)
+    #     controller.in.puts "Hello, world!"
+    #     controller.in.close # Do this explicitly to cause wc to finish
+    #     puts "Results: #{controller.out.read}" # Read the entire stream
     #
     # ### Result handling
     #
@@ -190,6 +224,12 @@ module Toys
     #     end
     #     exec_service.exec(["git", "init"], result_callback: my_callback)
     #
+    # In foreground mode, the callback is executed in the calling thread, after
+    # the process terminates (and after any controller block has completed) but
+    # before control is returned to the caller. In background mode, the
+    # callback is executed asynchronously in a separate thread after the
+    # process terminates.
+    #
     # ### Configuration options
     #
     # A variety of options can be used to control subprocesses. These can be
@@ -202,10 +242,16 @@ module Toys
     #     Keys represent variable names and should be strings. Values should be
     #     either strings or `nil`, which unsets the variable.
     #
-    #  *  `:background` (Boolean) Runs the process in the background if `true`.
+    #  *  `:background` (boolean) Runs the process in the background if `true`.
     #
     #  *  `:result_callback` (Proc) Called and passed the result object when
-    #     the subprocess exits.
+    #     the subprocess exits. If the process was run in the background, this
+    #     callback is executed in a separate thread. If the process was run in
+    #     the foreground, this callback is executed in the calling thread.
+    #
+    #  *  `:unbundle` (boolean) Disables any existing bundle when running the
+    #     subprocess. Has no effect if Bundler isn't active at the call point.
+    #     Cannot be used when executing in a fork, e.g. via {#exec_proc}.
     #
     # Options for connecting input and output streams. See the section above on
     # stream handling for info on the values that can be passed.
@@ -240,16 +286,16 @@ module Toys
     #
     #  *  `:chdir` (String) Set the working directory for the command.
     #
-    #  *  `:close_others` (Boolean) Whether to close non-redirected
+    #  *  `:close_others` (boolean) Whether to close non-redirected
     #     non-standard file descriptors.
     #
-    #  *  `:new_pgroup` (Boolean) Create new process group (Windows only).
+    #  *  `:new_pgroup` (boolean) Create new process group (Windows only).
     #
     #  *  `:pgroup` (Integer,true,nil) The process group setting.
     #
     #  *  `:umask` (Integer) Umask setting for the new process.
     #
-    #  *  `:unsetenv_others` (Boolean) Clear environment variables except those
+    #  *  `:unsetenv_others` (boolean) Clear environment variables except those
     #     explicitly set.
     #
     # Any other option key will result in an `ArgumentError`.
@@ -360,7 +406,9 @@ module Toys
       #     the foreground.
       #
       def exec_proc(func, **opts, &block)
+        raise ::ArgumentError, "Given proc is not callable" unless func.respond_to?(:call)
         exec_opts = Opts.new(@default_opts).add(opts)
+        raise ::ArgumentError, "Cannot use :unbundle option with exec_proc" if exec_opts.config_opts[:unbundle]
         executor = Executor.new(exec_opts, func, block)
         executor.execute
       end
@@ -519,17 +567,23 @@ module Toys
         # After calling this, do not read directly from the stream.
         #
         # @param which [:out,:err] Which stream to capture
-        # @return [self]
+        #
+        # @return [self] if the stream was captured
+        # @return [nil] if the stream was not captured because the process has
+        #     completed or did not start successfully
         #
         def capture(which)
-          stream = stream_for(which)
-          @join_threads << ::Thread.new do
-            data = stream.read
-            @captures_mutex.synchronize do
-              @captures[which] = data
+          @streams_mutex.synchronize do
+            return nil unless @streams_open
+            stream = stream_for(which, allow_in: false)
+            @join_threads << ::Thread.new do
+              data = stream.read
+              @captures_mutex.synchronize do
+                @captures[which] = data
+              end
+            ensure
+              stream.close
             end
-          ensure
-            stream.close
           end
           self
         end
@@ -572,26 +626,32 @@ module Toys
         # @param io [IO,StringIO,String,:null] Where to redirect the stream
         # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to/from a file.
-        # @return [self]
+        #
+        # @return [self] if the stream was redirected
+        # @return [nil] if the stream was not redirected because the process
+        #     has completed or did not start successfully
         #
         def redirect(which, io, *io_args)
-          io = ::File::NULL if io == :null
-          close_afterward = false
-          if io.is_a?(::String)
-            io_args = which == :in ? ["r"] : ["w"] if io_args.empty?
-            io = ::File.open(io, *io_args)
-            close_afterward = true
-          end
-          stream = stream_for(which, allow_in: true)
-          @join_threads << ::Thread.new do
-            if which == :in
-              ::IO.copy_stream(io, stream)
-            else
-              ::IO.copy_stream(stream, io)
+          @streams_mutex.synchronize do
+            return nil unless @streams_open
+            io = ::File::NULL if io == :null
+            close_afterward = false
+            if io.is_a?(::String)
+              io_args = which == :in ? ["r"] : ["w"] if io_args.empty?
+              io = ::File.open(io, *io_args)
+              close_afterward = true
             end
-          ensure
-            stream.close
-            io.close if close_afterward
+            stream = stream_for(which, allow_in: true)
+            @join_threads << ::Thread.new do
+              if which == :in
+                ::IO.copy_stream(io, stream)
+              else
+                ::IO.copy_stream(stream, io)
+              end
+            ensure
+              stream.close
+              io.close if close_afterward
+            end
           end
           self
         end
@@ -609,7 +669,10 @@ module Toys
         # @param io [IO,StringIO,String,:null] Where to redirect the stream
         # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting from a file.
-        # @return [self]
+        #
+        # @return [self] if the stream was redirected
+        # @return [nil] if the stream was not redirected because the process
+        #     has completed or did not start successfully
         #
         def redirect_in(io, *io_args)
           redirect(:in, io, *io_args)
@@ -628,7 +691,10 @@ module Toys
         # @param io [IO,StringIO,String,:null] Where to redirect the stream
         # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to a file.
-        # @return [self]
+        #
+        # @return [self] if the stream was redirected
+        # @return [nil] if the stream was not redirected because the process
+        #     has completed or did not start successfully
         #
         def redirect_out(io, *io_args)
           redirect(:out, io, *io_args)
@@ -639,14 +705,18 @@ module Toys
         #
         # You can specify the stream as an IO or IO-like object, or as a file
         # specified by its path. If specifying a file, you can optionally
-        # provide the mode and permissions for the call to `File#open`.
+        # provide the mode and permissions for the call to `File#open`. You can
+        # also specify the value `:null` to indicate the null file.
         #
         # After calling this, do not interact directly with the stream.
         #
-        # @param io [IO,StringIO,String] Where to redirect the stream
+        # @param io [IO,StringIO,String,:null] Where to redirect the stream
         # @param io_args [Object...] The mode and permissions for opening the
         #     file, if redirecting to a file.
-        # @return [self]
+        #
+        # @return [self] if the stream was redirected
+        # @return [nil] if the stream was not redirected because the process
+        #     has completed or did not start successfully
         #
         def redirect_err(io, *io_args)
           redirect(:err, io, *io_args)
@@ -668,10 +738,10 @@ module Toys
         ##
         # Determine whether the subcommand is still executing
         #
-        # @return [Boolean]
+        # @return [boolean]
         #
         def executing?
-          @wait_thread&.status ? true : false
+          @completion_thread&.status ? true : false
         end
 
         ##
@@ -683,17 +753,9 @@ module Toys
         # @return [nil] if a timeout occurred.
         #
         def result(timeout: nil)
-          return nil if @wait_thread && !@wait_thread.join(timeout)
-          should_run_callback = false
-          @result_mutex.synchronize do
-            @result ||= begin
-              should_run_callback = true
-              close_streams(:both)
-              @join_threads.each(&:join)
-              Result.new(name, @captures[:out], @captures[:err], @wait_thread&.value, @exception)
-            end
-          end
-          @result_callback&.call(@result) if should_run_callback
+          return nil if @completion_thread && !@completion_thread.join(timeout)
+          # @completion_thread sets @result, so the final value is guaranteed
+          # to be stable once the thread has joined above.
           @result
         end
 
@@ -701,40 +763,77 @@ module Toys
         # @private
         #
         def initialize(name:, controller_streams:, captures:, pid_or_exception:,
-                       join_threads:, result_callback:, captures_mutex:)
+                       join_threads:, background_callback:, captures_mutex:)
           @name = name
           @in = controller_streams[:in]
           @out = controller_streams[:out]
           @err = controller_streams[:err]
           @captures = captures
-          @pid = @exception = @wait_thread = nil
+          @join_threads = join_threads
+          @background_callback = background_callback
+          @captures_mutex = captures_mutex
+          @streams_open = false
+          @streams_mutex = ::Mutex.new
+          @pid = @exception = @completion_thread = @result = nil
           case pid_or_exception
           when ::Integer
             @pid = pid_or_exception
-            @wait_thread = ::Process.detach(@pid)
+            @streams_open = true
+            @completion_thread = ::Thread.new do
+              _pid, status = ::Process.wait2(@pid)
+              cleanup(status)
+            end
           when ::Exception
             @exception = pid_or_exception
+            cleanup(nil)
           end
-          @join_threads = join_threads
-          @result_callback = result_callback
-          @captures_mutex = captures_mutex
-          @result_mutex = ::Mutex.new
-          @result = nil
         end
 
         ##
-        # Close the controller's streams.
+        # Close the controller's input stream, if any.
         #
         # @private
         #
-        def close_streams(which)
-          @in.close if which != :out && @in && !@in.closed?
-          @out.close if which != :in && @out && !@out.closed?
-          @err.close if which != :in && @err && !@err.closed?
+        def close_in_stream
+          @streams_mutex.synchronize do
+            @in&.close
+          end
+          self
+        end
+
+        ##
+        # Close the controller's output streams, if any.
+        #
+        # @private
+        #
+        def close_out_streams
+          @streams_mutex.synchronize do
+            @out&.close
+            @err&.close
+          end
           self
         end
 
         private
+
+        ##
+        # Cleanup after the child process ends.
+        # Blocks any further captures/redirects, joins all stream processing
+        # threads, and sets the result. Also kicks off the callback if run in
+        # the background.
+        #
+        def cleanup(status)
+          @streams_mutex.synchronize do
+            @streams_open = false
+          end
+          @join_threads.each(&:join)
+          @result = Result.new(@name, @captures[:out], @captures[:err], status, @exception)
+          if @background_callback
+            ::Thread.new do
+              @background_callback.call(@result)
+            end
+          end
+        end
 
         def stream_for(which, allow_in: false)
           stream = nil
@@ -857,7 +956,7 @@ module Toys
         # Returns true if the subprocess failed to start, or false if the
         # process was able to execute.
         #
-        # @return [Boolean]
+        # @return [boolean]
         #
         def failed?
           status.nil?
@@ -867,7 +966,7 @@ module Toys
         # Returns true if the subprocess terminated due to an unhandled signal,
         # or false if the process failed to start or exited normally.
         #
-        # @return [Boolean]
+        # @return [boolean]
         #
         def signaled?
           !signal_code.nil?
@@ -878,7 +977,7 @@ module Toys
         # false if the process failed to start, terminated due to a signal, or
         # returned a nonzero status.
         #
-        # @return [Boolean]
+        # @return [boolean]
         #
         def success?
           code = exit_code
@@ -890,7 +989,7 @@ module Toys
         # false if the process failed to start, terminated due to a signal, or
         # returned a zero status.
         #
-        # @return [Boolean]
+        # @return [boolean]
         #
         def error?
           code = exit_code
@@ -942,6 +1041,7 @@ module Toys
           @captured_err = err
           @status = status
           @exception = exception
+          freeze
         end
       end
 
@@ -970,6 +1070,7 @@ module Toys
           :name,
           :out,
           :result_callback,
+          :unbundle,
         ].freeze
 
         ##
@@ -1084,12 +1185,17 @@ module Toys
           controller = start_with_controller
           return controller if @config_opts[:background]
           begin
-            @block&.call(controller)
-            controller.close_streams(:in)
-            controller.result
+            begin
+              @block&.call(controller)
+            ensure
+              controller.close_in_stream
+            end
+            result = controller.result
+            @config_opts[:result_callback]&.call(result)
           ensure
-            controller.close_streams(:both)
+            controller.close_out_streams
           end
+          result
         end
 
         private
@@ -1124,12 +1230,13 @@ module Toys
               e
             end
           @child_streams.each(&:close)
+          background_callback = @config_opts[:result_callback] if @config_opts[:background]
           Controller.new(name: @config_opts[:name],
                          controller_streams: @controller_streams,
                          captures: @captures,
                          pid_or_exception: pid_or_exception,
                          join_threads: @join_threads,
-                         result_callback: @config_opts[:result_callback],
+                         background_callback: background_callback,
                          captures_mutex: @captures_mutex)
         end
 
@@ -1137,7 +1244,13 @@ module Toys
           args = []
           args << @config_opts[:env] if @config_opts[:env]
           args.concat(@spawn_cmd)
-          ::Process.spawn(*args, @spawn_opts)
+          if @config_opts[:unbundle] && defined?(::Bundler) && ::Bundler.respond_to?(:with_unbundled_env)
+            ::Bundler.with_unbundled_env do
+              ::Process.spawn(*args, @spawn_opts)
+            end
+          else
+            ::Process.spawn(*args, @spawn_opts)
+          end
         end
 
         def start_fork

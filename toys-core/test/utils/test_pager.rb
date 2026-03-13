@@ -62,7 +62,11 @@ describe Toys::Utils::Pager do
     skip "Skipped test on Windows" if Toys::Compat.windows?
     command = [::RbConfig.ruby, "-e", "$stdin.read(10); $stdin.close"]
     Toys::Utils::Pager.start(command: command, fallback_io: fallback_io) do |io|
-      100_000.times { io.puts "hello ruby hello ruby" }
+      100.times do
+        io.puts "hello ruby hello ruby"
+        sleep(0.1)
+      end
+      flunk("Never got a broken pipe")
     end
   end
 end
