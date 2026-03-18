@@ -1,5 +1,9 @@
 # Release History
 
+### v0.8.2 / 2026-03-18
+
+* FIXED: Tighten version constant regex
+
 ### v0.8.1 / 2026-03-12
 
 * FIXED: Prevent global index from clobbering local index when creating gh-pages for a non-monorepo
