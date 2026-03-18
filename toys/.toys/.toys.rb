@@ -61,17 +61,17 @@ tool "yardoc-test" do
   include :terminal
 
   def run
+    ::Dir.chdir(context_directory)
+    puts "Ensuring the bundle is installed..." # So it doesn't interfere with yardoc output
+    unless exec(["bundle", "check"], e: false).success?
+      exec(["bundle", "install"])
+    end
     puts "Running yardoc on unoptimized input..."
     unoptimized_result = exec_separate_tool(["yardoc", "--no-optimize"], out: [:tee, :inherit, :capture])
     puts "Running yardoc on optimized input..."
     optimized_result = exec_separate_tool(["yardoc", "--optimize"], out: [:tee, :inherit, :capture])
     unless unoptimized_result.captured_out == optimized_result.captured_out
       puts "Output changed!", :red
-      puts "**** UNOPTIMIZED:", :red
-      puts unoptimized_result.captured_out
-      puts "**** OPTIMIZED:", :red
-      puts optimized_result.captured_out
-      puts "****", :red
       exit 1
     end
     if unoptimized_result.captured_out.empty? || optimized_result.captured_out.empty?
