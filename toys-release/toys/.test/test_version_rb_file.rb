@@ -12,6 +12,8 @@ describe Toys::Release::VersionRbFile do
   let(:version2_path) { File.join(__dir__, ".data", "version2.rb") }
   let(:version3_path) { File.join(__dir__, ".data", "version3.rb") }
   let(:version4_path) { File.join(__dir__, ".data", "version4.rb") }
+  let(:version5_path) { File.join(__dir__, ".data", "version5.rb") }
+  let(:version6_path) { File.join(__dir__, ".data", "version6.rb") }
   let(:nonexistent_path) { File.join(__dir__, ".data", "nonexistent.rb") }
 
   it "checks existence" do
@@ -49,6 +51,18 @@ describe Toys::Release::VersionRbFile do
       assert_equal("1.2.3", file.current_version.to_s)
       file.update_version("1.2.3.beta4")
       file1 = Toys::Release::VersionRbFile.new(version3_path, environment_utils)
+      assert_equal(file1.content, file.content)
+    end
+  end
+
+  it "modifies the correct constant if SPEC_VERSION is present" do
+    Dir.mktmpdir do |dir|
+      version_path = File.join(dir, "version.rb")
+      FileUtils.cp(version6_path, version_path)
+      file = Toys::Release::VersionRbFile.new(version_path, environment_utils)
+      assert_equal("1.2.3", file.current_version.to_s)
+      file.update_version("1.2.3.beta4")
+      file1 = Toys::Release::VersionRbFile.new(version5_path, environment_utils)
       assert_equal(file1.content, file.content)
     end
   end
