@@ -249,12 +249,37 @@ module Toys
         @utils.log("Creating #{component.name} changeset from #{latest_tag || 'start'} to #{@release_sha}")
         changeset = component.make_change_set(from: latest_tag, to: @release_sha)
         unless requested_version
-          cur_suggested_version = requested_bump&.bump(last_version) || changeset.suggested_version(last_version)
+          cur_suggested_version = determine_suggested_version(component, changeset, requested_bump, last_version)
           if !best_suggested_version || (cur_suggested_version && cur_suggested_version > best_suggested_version)
             best_suggested_version = cur_suggested_version
           end
         end
         [ResolvedComponent.new(component.name, changeset, last_version, nil), best_suggested_version]
+      end
+
+      def determine_suggested_version(component, changeset, requested_bump, last_version)
+        vfc_settings = component.settings.version_from_code
+        if vfc_settings
+          requested_version = component.current_constant_version(at: @release_sha)
+          if requested_version.nil?
+            @utils.error("Unable to read code-specified version for #{component.name}")
+          elsif last_version.nil? || requested_version > last_version
+            @utils.log("Using code-specified version for #{component.name}")
+            requested_version
+          elsif vfc_settings.bump == Semver::NONE
+            @utils.error("Requested #{component.name} #{requested_version} but #{last_version} is the latest.")
+          else
+            @utils.log("Requested #{component.name} #{requested_version} but #{last_version} is the latest. " \
+                       "Bumping to get a releasable version.")
+            vfc_settings.bump.bump(last_version, minimum_fill: Semver::PATCH, prevent_bump_to_v1: true)
+          end
+        elsif requested_bump
+          @utils.log("Using requested semver bump of #{requested_bump} for #{component.name}")
+          requested_bump.bump(last_version, minimum_fill: Semver::PATCH, prevent_bump_to_v1: true)
+        else
+          @utils.log("Using changeset-suggested version for #{component.name}")
+          changeset.suggested_version(last_version)
+        end
       end
     end
   end

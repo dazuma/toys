@@ -11,7 +11,7 @@ expand :clean, paths: :gitignore
 
 tool "test" do
   flag :integration_tests, "--integration-tests", "--integration", desc: "Enable integration tests"
-  remaining_args :files
+  remaining_args :files, complete: :file_system
 
   include :exec
 
