@@ -70,14 +70,14 @@ If you do not have Ruby or Toys installed locally, do so first. Install
 Ruby 2.7 or later, and then install the Toys RubyGem using:
 
 ```sh
-gem install toys
+$ gem install toys
 ```
 
 Toys-Release requires Toys 0.20 or later. If you have an older version of Toys,
 update it using:
 
 ```sh
-toys system update
+$ toys system update
 ```
 
 Finally, you also need the GitHub command line tool, `gh`. Find installation
@@ -85,28 +85,37 @@ instructions at https://cli.github.com/. If you are running on MacOS, for
 example, the easiest way to install it is via homebrew:
 
 ```sh
-brew install gh
+$ brew install gh
 ```
 
 ### Install the release tool
 
-The Toys-Release tool needs to be installed in your repository, as a Toys tool
-loaded from the [toys-release](https://rubygems.org/gems/toys-release) gem.
+The Toys-Release tool needs to be installed in your repository. This means
+creating a Toys tool whose implementation is provided by the
+[toys-release](https://rubygems.org/gems/toys-release) gem.
 
 Create `.toys/release.rb` (note the leading period in the directory name) in
 your git repository. Use the following content:
 
 ```ruby
+# frozen_string_literal: true
 load_gem "toys-release"
 ```
 
-This will cause Toys-Release to use the latest version of Toys-Release. You can
-also pin to a specific version of Toys-Release by specifying version
-requirements similar to how those requirements are specified in RubyGems or
-Bundler:
+Test the install by displaying the online help for toys-release:
+
+```sh
+$ toys release --help
+```
+
+If you do not already have the toys-release gem installed, this will install it
+for you (after asking for permission.) By default, it will install the latest
+version, but you can pin to a specific version of the gem by specifying version
+requirements similar to how you would in RubyGems or Bundler:
 
 ```ruby
-load_gem "toys-release", "~> 0.3"
+# frozen_string_literal: true
+load_gem "toys-release", "~> 0.8"
 ```
 
 Commit and push this change to your repository.
@@ -124,7 +133,7 @@ release tool is installed as described above, you can run this from your local
 repository clone directory:
 
 ```sh
-toys release gen-config
+$ toys release gen-config
 ```
 
 This will analyze your repository and generate an initial configuration file
@@ -146,13 +155,13 @@ line using the release tool.
 To create the GitHub repo labels, run this from your local repo clone directory:
 
 ```sh
-toys release create-labels
+$ toys release create-labels
 ```
 
 Then, to generate the GitHub Actions workflows, run:
 
 ```sh
-toys release gen-workflows
+$ toys release gen-workflows
 ```
 
 This will generate files in a `.github/workflows` directory in your repository.
@@ -287,15 +296,15 @@ appending the version to the component name, separated by a colon.
 For example, to request releases of the `toys` and `toys-release` components,
 you can enter the following text into "Components to release":
 
-```sh
+```
 toys toys-release
 ```
 
-To make the above request but specifically request version 0.3.0 of the
+To make the above request but specifically request version 1.0.0 of the
 `toys-release` component:
 
-```sh
-toys toys-release:0.3.0
+```
+toys toys-release:1.0.0
 ```
 
 ### Managing release pull requests
@@ -444,7 +453,7 @@ To set up documentation, do the following:
  *  Create a starting gh-pages branch by running:
 
     ```sh
-    toys release gen-gh-pages
+    $ toys release gen-gh-pages
     ```
 
     This will generate the gh-pages branch and push some key files to it,
