@@ -174,4 +174,106 @@ describe Toys::StandardMiddleware::ShowHelp do
     cli.run("--no-recursive")
     refute_match(/bar - was met/, string_io.string)
   end
+
+  describe "when a runnable tool has subtools" do
+    let(:cli) {
+      make_cli(
+        help_flags: true, usage_flags: true, list_flags: true,
+        search_flags: true, recursive_flags: true, show_all_subtools_flags: true
+      )
+    }
+
+    it "omits subtool filter flags" do
+      cli.add_config_block do
+        tool "foo" do
+          desc "beyond all recognition"
+          def run; end
+          tool "bar" do
+            desc "was met"
+            def run; end
+          end
+        end
+      end
+      cli.run("foo", "--help")
+      output = string_io.string
+      assert_includes(output, "--help")
+      assert_includes(output, "--tools")
+      assert_includes(output, "--usage")
+      refute_includes(output, "--all")
+      refute_includes(output, "--[no-]recursive")
+      refute_includes(output, "--search")
+    end
+
+    it "still supports usage" do
+      cli.add_config_block do
+        tool "foo" do
+          desc "beyond all recognition"
+          def run; end
+          tool "bar" do
+            desc "was met"
+            def run; end
+          end
+        end
+      end
+      cli.run("foo", "--usage")
+      assert_match(/Usage:\s+toys foo TOOL/, string_io.string)
+    end
+
+    it "still supports list tools" do
+      cli.add_config_block do
+        tool "foo" do
+          desc "beyond all recognition"
+          def run; end
+          tool "bar" do
+            desc "was met"
+            def run; end
+          end
+        end
+      end
+      cli.run("foo", "--tools")
+      assert_includes(string_io.string, "List of tools under foo:")
+    end
+
+    it "allows the tool to override usage flag" do
+      cli.add_config_block do
+        tool "foo" do
+          desc "beyond all recognition"
+          flag :usage
+          def run
+            puts "NORMAL RUN #{usage}"
+          end
+          tool "bar" do
+            desc "was met"
+            def run; end
+          end
+        end
+      end
+      out, _err = capture_subprocess_io do
+        cli.run("foo", "--usage")
+      end
+      assert_includes(out, "NORMAL RUN true")
+      assert_empty(string_io.string)
+    end
+
+    it "allows the tool to override list tools flag" do
+      cli.add_config_block do
+        tool "foo" do
+          desc "beyond all recognition"
+          flag :tools
+          def run
+            puts "NORMAL RUN #{tools}"
+          end
+          tool "bar" do
+            desc "was met"
+            def run; end
+          end
+        end
+      end
+      out, _err = capture_subprocess_io do
+        cli.run("foo", "--tools")
+      end
+      assert_includes(out, "NORMAL RUN true")
+      assert_empty(string_io.string)
+    end
+  end
 end
