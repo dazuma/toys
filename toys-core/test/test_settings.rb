@@ -15,6 +15,14 @@ module Toys
         settings_attr(:ho)
       end
     end
+
+    class Settings2 < Toys::Settings
+      settings_attr(:haha)
+    end
+
+    class Settings3 < Settings2
+      settings_attr(:hehe)
+    end
   end
 end
 
@@ -66,6 +74,18 @@ describe Toys::Settings do
         settings_class.settings_attr(:method_missing)
       end
       assert_equal("Illegal settings field name: method_missing", err.message)
+    end
+
+    it "catches reserved attribute names" do
+      [
+        :initialize, :raise, :require,
+        :class, :clone, :dup, :freeze, :hash, :object_id, :public_send, :send
+      ].each do |name|
+        err = assert_raises(::ArgumentError) do
+          settings_class.settings_attr(name)
+        end
+        assert_equal("Illegal settings field name: #{name}", err.message)
+      end
     end
 
     it "catches duplicate attribute names" do
@@ -196,6 +216,13 @@ describe Toys::Settings do
           "unable to set #{settings_class_name}#foo: value 3.14 does not match type Integer",
           err.message
         )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = "abc"
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value \"abc\" does not match type Integer",
+          err.message
+        )
         settings.foo_unset!
         assert_equal(0, settings.foo)
       end
@@ -219,6 +246,13 @@ describe Toys::Settings do
           "unable to set #{settings_class_name}#foo: value :hi does not match type Float",
           err.message
         )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = "abc"
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value \"abc\" does not match type Float",
+          err.message
+        )
         settings.foo_unset!
         assert_equal(0.0, settings.foo)
         assert_kind_of(Float, settings.foo)
@@ -240,6 +274,92 @@ describe Toys::Settings do
         )
         settings.foo_unset!
         assert_equal(//, settings.foo)
+      end
+
+      it "matches and converts to Date type spec" do
+        require "date"
+        settings_class.settings_attr(:foo, type: Date, default: ::Date.new(2000, 1, 1))
+        assert_equal(::Date.new(2000, 1, 1), settings.foo)
+        settings.foo = ::Date.new(2024, 3, 15)
+        assert_equal(::Date.new(2024, 3, 15), settings.foo)
+        settings.foo = "2024-06-01"
+        assert_equal(::Date.new(2024, 6, 1), settings.foo)
+        settings.foo = 0
+        assert_equal(::Date.new(1970, 1, 1), settings.foo)
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = "not-a-date"
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value \"not-a-date\" does not match type Date",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = :yesterday
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value :yesterday does not match type Date",
+          err.message
+        )
+        settings.foo_unset!
+        assert_equal(::Date.new(2000, 1, 1), settings.foo)
+      end
+
+      it "matches and converts to DateTime type spec" do
+        require "date"
+        settings_class.settings_attr(:foo, type: DateTime, default: ::DateTime.new(2000, 1, 1))
+        assert_equal(::DateTime.new(2000, 1, 1), settings.foo)
+        settings.foo = ::DateTime.new(2024, 3, 15, 12, 30, 0)
+        assert_equal(::DateTime.new(2024, 3, 15, 12, 30, 0), settings.foo)
+        settings.foo = "2024-06-01T08:00:00+00:00"
+        assert_equal(::DateTime.new(2024, 6, 1, 8, 0, 0, "+00:00"), settings.foo)
+        settings.foo = 0
+        assert_equal(::DateTime.new(1970, 1, 1, 0, 0, 0, "+00:00"), settings.foo)
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = "not-a-date"
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo:" \
+            " value \"not-a-date\" does not match type DateTime",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = :yesterday
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value :yesterday does not match type DateTime",
+          err.message
+        )
+        settings.foo_unset!
+        assert_equal(::DateTime.new(2000, 1, 1), settings.foo)
+      end
+
+      it "matches and converts to Time type spec" do
+        require "date"
+        settings_class.settings_attr(:foo, type: Time, default: ::Time.at(0, in: "UTC"))
+        assert_equal(::Time.at(0, in: "UTC"), settings.foo)
+        settings.foo = ::Time.new(2024, 3, 15, 12, 30, 0, "+00:00")
+        assert_equal(::Time.new(2024, 3, 15, 12, 30, 0, "+00:00"), settings.foo)
+        settings.foo = "2024-06-01T08:00:00+00:00"
+        assert_equal(::Time.new(2024, 6, 1, 8, 0, 0, "+00:00"), settings.foo)
+        settings.foo = 0
+        assert_equal(::Time.at(0, in: "UTC"), settings.foo)
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = "not-a-time"
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo:" \
+            " value \"not-a-time\" does not match type Time",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = :now
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value :now does not match type Time",
+          err.message
+        )
+        settings.foo_unset!
+        assert_equal(::Time.at(0, in: "UTC"), settings.foo)
       end
 
       it "matches integer range type spec" do
@@ -267,6 +387,56 @@ describe Toys::Settings do
         assert_equal(3, settings.foo)
       end
 
+      it "matches endless range type spec" do
+        settings_class.settings_attr(:foo, type: 1.., default: 3)
+        assert_equal(3, settings.foo)
+        settings.foo = 1
+        assert_equal(1, settings.foo)
+        settings.foo = "2"
+        assert_equal(2, settings.foo)
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = nil
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value nil does not match type (1..)",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = 0
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value 0 does not match type (1..)",
+          err.message
+        )
+        settings.foo_unset!
+        assert_equal(3, settings.foo)
+      end
+
+      it "matches beginless range type spec" do
+        settings_class.settings_attr(:foo, type: ..5, default: 3)
+        assert_equal(3, settings.foo)
+        settings.foo = 5
+        assert_equal(5, settings.foo)
+        settings.foo = "4"
+        assert_equal(4, settings.foo)
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = nil
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value nil does not match type (..5)",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = 6
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value 6 does not match type (..5)",
+          err.message
+        )
+        settings.foo_unset!
+        assert_equal(3, settings.foo)
+      end
+
       it "matches regex type spec" do
         settings_class.settings_attr(:foo, type: /^\w+$/, default: "a")
         assert_equal("a", settings.foo)
@@ -286,8 +456,33 @@ describe Toys::Settings do
           "unable to set #{settings_class_name}#foo: value \":\" does not match type /^\\w+$/",
           err.message
         )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = 123
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value 123 does not match type /^\\w+$/",
+          err.message
+        )
         settings.foo_unset!
         assert_equal("a", settings.foo)
+      end
+
+      it "rejects non-String values for a regexp type that would match their to_s" do
+        settings_class.settings_attr(:foo, type: /^\d*$/, default: "")
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = nil
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value nil does not match type /^\\d*$/",
+          err.message
+        )
+        err = assert_raises(Toys::Settings::FieldError) do
+          settings.foo = 42
+        end
+        assert_equal(
+          "unable to set #{settings_class_name}#foo: value 42 does not match type /^\\d*$/",
+          err.message
+        )
       end
 
       it "matches scalar type spec" do
@@ -329,6 +524,19 @@ describe Toys::Settings do
         )
         settings.foo_unset!
         assert_nil(settings.foo)
+      end
+
+      it "prioritizes exact-matches over conversions in a union" do
+        settings_class.settings_attr(:foo, type: [Float, Integer], default: 0.0)
+        settings.foo = 3
+        assert_kind_of(Integer, settings.foo)
+        assert_equal(3, settings.foo)
+        settings.foo = 3.0
+        assert_kind_of(Float, settings.foo)
+        assert_equal(3.0, settings.foo)
+        settings.foo = "2"
+        assert_kind_of(Float, settings.foo)
+        assert_equal(2.0, settings.foo)
       end
 
       it "recognizes a block type spec" do
@@ -540,6 +748,16 @@ describe Toys::Settings do
     end
   end
 
+  describe "subclass of a settings class" do
+    it "inherits the fields" do
+      settings = Toys::TestFixtures::Settings3.new
+      settings.haha = "hello"
+      settings.hehe = "bye"
+      assert_equal("hello", settings.haha)
+      assert_equal("bye", settings.hehe)
+    end
+  end
+
   describe "data loading" do
     it "loads a simple hash" do
       settings_class.settings_attr(:foo)
@@ -610,6 +828,38 @@ describe Toys::Settings do
       )
     end
 
+    it "collects errors from nested groups" do
+      settings_class.class_eval do
+        settings_group(:foo) do
+          settings_attr(:bar, type: /[a-z]+/, default: "a")
+        end
+      end
+      errors = settings.load_data!({ "foo" => { "bar" => "123" } })
+      assert_equal(1, errors.size)
+      assert_equal(
+        "unable to set #{settings_class_name}::Foo#bar:" \
+          " value \"123\" does not match type /[a-z]+/",
+        errors.first.message
+      )
+      assert_equal("a", settings.foo.bar)
+    end
+
+    it "raises errors from nested groups when raise_on_failure is true" do
+      settings_class.class_eval do
+        settings_group(:foo) do
+          settings_attr(:bar, type: /[a-z]+/, default: "a")
+        end
+      end
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_data!({ "foo" => { "bar" => "123" } }, raise_on_failure: true)
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}::Foo#bar:" \
+          " value \"123\" does not match type /[a-z]+/",
+        err.message
+      )
+    end
+
     it "loads a YAML string" do
       settings_class.settings_attr(:foo)
       settings_class.settings_attr(:bar)
@@ -617,6 +867,21 @@ describe Toys::Settings do
       assert_empty(errors)
       assert_equal("hello", settings.foo)
       assert_nil(settings.bar)
+    end
+
+    it "loads symbols from YAML" do
+      settings_class.settings_attr(:foo, type: Symbol, default: :x)
+      errors = settings.load_yaml!("foo: hello")
+      assert_empty(errors)
+      assert_equal(:hello, settings.foo)
+    end
+
+    it "rejects arbitrary Ruby objects in YAML" do
+      require "psych"
+      settings_class.settings_attr(:foo)
+      assert_raises(::Psych::DisallowedClass) do
+        settings.load_yaml!("foo: !ruby/object {}")
+      end
     end
 
     it "loads a JSON string" do
@@ -644,6 +909,74 @@ describe Toys::Settings do
       assert_empty(errors)
       assert_equal("hello", settings.foo)
       assert_nil(settings.bar)
+    end
+
+    it "raises a top-level error from load_data! when raise_on_failure is true" do
+      settings_class.settings_attr(:foo, type: /[a-z]+/, default: "a")
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_data!({ "foo" => "123" }, raise_on_failure: true)
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}#foo: value \"123\" does not match type /[a-z]+/",
+        err.message
+      )
+    end
+
+    it "raises when load_yaml! encounters a type error and raise_on_failure is true" do
+      settings_class.settings_attr(:foo, default: 0)
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_yaml!("foo: hello", raise_on_failure: true)
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}#foo: value \"hello\" does not match type Integer",
+        err.message
+      )
+    end
+
+    it "raises when load_yaml_file! encounters a type error and raise_on_failure is true" do
+      settings_class.settings_attr(:foo, default: 0)
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_yaml_file!(
+          File.join(__dir__, "settings", "input.yaml"),
+          raise_on_failure: true
+        )
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}#foo: value \"hello\" does not match type Integer",
+        err.message
+      )
+    end
+
+    it "raises when load_json! encounters a type error and raise_on_failure is true" do
+      settings_class.settings_attr(:foo, default: 0)
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_json!('{"foo": "hello"}', raise_on_failure: true)
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}#foo: value \"hello\" does not match type Integer",
+        err.message
+      )
+    end
+
+    it "raises when load_json_file! encounters a type error and raise_on_failure is true" do
+      settings_class.settings_attr(:foo, default: 0)
+      err = assert_raises(Toys::Settings::FieldError) do
+        settings.load_json_file!(
+          File.join(__dir__, "settings", "input.json"),
+          raise_on_failure: true
+        )
+      end
+      assert_equal(
+        "unable to set #{settings_class_name}#foo: value \"hello\" does not match type Integer",
+        err.message
+      )
+    end
+
+    it "loads fields defined in superclasses" do
+      settings = Toys::TestFixtures::Settings3.new
+      settings.load_data!({ "haha" => "hello", "hehe" => "bye" })
+      assert_equal("hello", settings.haha)
+      assert_equal("bye", settings.hehe)
     end
   end
 end

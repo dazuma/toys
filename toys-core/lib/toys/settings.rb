@@ -35,8 +35,12 @@ module Toys
   # Attribute names must start with an ascii letter, and may contain only ascii
   # letters, digits, and underscores. Unlike method names, they may not include
   # non-ascii unicode characters, nor may they end with `!` or `?`.
-  # Additionally, the name `method_missing` is not allowed because of its
-  # special behavior in Ruby.
+  # Additionally, some names are reserved because they would shadow critical
+  # Ruby methods or interfere with Settings' internal behavior (see
+  # {Toys::Settings::RESERVED_FIELD_NAMES} for the complete list, which
+  # currently includes names such as `class`, `clone`, `dup`, `freeze`, `hash`,
+  # `initialize`, `method_missing`, `object_id`, `public_send`, `raise`,
+  # `require`, and `send`).
   #
   # Each attribute defines four methods: a getter, a setter, an unsetter, and a
   # set detector. In the above example, the attribute named `:endpoint` creates
@@ -297,11 +301,26 @@ module Toys
   #     grandchild_settings.str        # => "value_from_root"
   #
   class Settings
+    ##
     # A special value indicating a type check failure.
+    #
     ILLEGAL_VALUE = ::Object.new.freeze
 
+    ##
     # A special type specification indicating infer from the default value.
+    #
     DEFAULT_TYPE = ::Object.new.freeze
+
+    ##
+    # Field names that are not allowed because they would shadow critical Ruby
+    # methods or break Settings' own internal method calls.
+    #
+    # @return [Array<String>]
+    #
+    RESERVED_FIELD_NAMES = [
+      "class", "clone", "dup", "freeze", "hash", "initialize",
+      "method_missing", "object_id", "public_send", "raise", "require", "send"
+    ].freeze
 
     ##
     # Error raised when a value does not match the type constraint.
@@ -447,15 +466,14 @@ module Toys
           range_class = (range.begin || range.end).class
           new("(#{range})") do |val|
             converted = convert(val, range_class)
-            range.member?(converted) ? converted : ILLEGAL_VALUE
+            converted != ILLEGAL_VALUE && range.member?(converted) ? converted : ILLEGAL_VALUE
           end
         end
 
         def for_regexp(regexp)
           regexp_str = regexp.source.gsub("/", "\\/")
           new("/#{regexp_str}/") do |val|
-            str = val.to_s
-            regexp.match(str) ? str : ILLEGAL_VALUE
+            val.is_a?(::String) && regexp.match(val) ? val : ILLEGAL_VALUE
           end
         end
 
@@ -466,7 +484,7 @@ module Toys
             result = ILLEGAL_VALUE
             types.each do |type|
               converted = type.call(val)
-              if converted == val
+              if converted.eql?(val)
                 result = val
                 break
               elsif result == ILLEGAL_VALUE
@@ -518,7 +536,7 @@ module Toys
       float_converter = proc do |val|
         case val
         when ::String
-          val.to_f
+          Float(val)
         when ::Numeric
           converted = val.to_f
           converted == val ? converted : ILLEGAL_VALUE
@@ -530,7 +548,7 @@ module Toys
       integer_converter = proc do |val|
         case val
         when ::String
-          val.to_i
+          Integer(val)
         when ::Numeric
           converted = val.to_i
           converted == val ? converted : ILLEGAL_VALUE
@@ -605,7 +623,7 @@ module Toys
           raise FieldError.new(value, self.class, name, nil) unless field
           if field.group?
             raise FieldError.new(value, self.class, name, "Hash") unless value.is_a?(::Hash)
-            get!(field).load_data!(value)
+            errors.concat(get!(field).load_data!(value, raise_on_failure: raise_on_failure))
           else
             set!(field, value)
           end
@@ -628,7 +646,7 @@ module Toys
     #
     def load_yaml!(str, raise_on_failure: false)
       require "psych"
-      load_data!(::Psych.load(str), raise_on_failure: raise_on_failure)
+      load_data!(::Psych.safe_load(str, permitted_classes: [::Symbol]), raise_on_failure: raise_on_failure)
     end
 
     ##
@@ -848,7 +866,12 @@ module Toys
       # all its instances.
       #
       def fields
-        @fields ||= {}
+        @fields ||=
+          if superclass.respond_to?(:fields)
+            superclass.fields.dup
+          else
+            {}
+          end
       end
 
       ##
@@ -882,7 +905,7 @@ module Toys
 
       def interpret_name(name)
         name = name.to_s
-        if name !~ /^[a-zA-Z]\w*$/ || name == "method_missing"
+        if name !~ /^[a-zA-Z]\w*$/ || RESERVED_FIELD_NAMES.include?(name)
           raise ::ArgumentError, "Illegal settings field name: #{name}"
         end
         existing = public_instance_methods(false)
