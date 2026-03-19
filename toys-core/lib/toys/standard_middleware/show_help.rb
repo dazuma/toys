@@ -214,7 +214,7 @@ module Toys
           list_flags = has_subtools ? add_list_flags(tool) : []
           can_display_help = !help_flags.empty? || !list_flags.empty? ||
                              !usage_flags.empty? || @fallback_execution
-          if can_display_help && has_subtools
+          if can_display_help && has_subtools && !tool.runnable?
             add_recursive_flags(tool)
             add_search_flags(tool)
             add_show_all_subtools_flags(tool)
