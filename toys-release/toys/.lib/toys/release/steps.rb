@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
+require "toys/release/gh_pages_logic"
 require "toys/utils/gems"
 
 module Toys
@@ -300,8 +301,12 @@ module Toys
           dest_dir = ::File.join(component_dir, "v#{step_context.release_version}")
           check_existence(step_context, dest_dir)
           copy_docs_dir(step_context, dest_dir)
-          update_404_page(step_context, gh_pages_dir)
-          update_index_pages(step_context, gh_pages_dir)
+          logic = ::Toys::Release::GhPagesLogic.new(step_context.repository.settings)
+          logic.update_version_pages(
+            gh_pages_dir,
+            step_context.component.settings,
+            step_context.release_version
+          ) { |msg| step_context.warning(msg) }
           push_docs_to_git(step_context, gh_pages_dir)
         end
 
@@ -339,39 +344,6 @@ module Toys
           end
           ::FileUtils.mkdir_p(::File.dirname(dest_dir))
           ::FileUtils.cp_r(source_dir, dest_dir)
-        end
-
-        def update_404_page(step_context, gh_pages_dir)
-          path = ::File.join(gh_pages_dir, "404.html")
-          unless ::File.file?(path)
-            step_context.warning("404.html not found. Skipping.")
-            return
-          end
-          content = ::File.read(path)
-          version_var = step_context.component.settings.gh_pages_version_var
-          content.sub!(/#{Regexp.escape(version_var)} = "[\w.]+";/,
-                       "#{version_var} = \"#{step_context.release_version}\";")
-          ::File.write(path, content)
-        end
-
-        def update_index_pages(step_context, gh_pages_dir)
-          subdir = step_context.component.settings.gh_pages_directory
-          dir_suffix = subdir == "." ? "" : "/#{subdir}"
-          settings = step_context.repository.settings
-          version = step_context.release_version
-          redirect_url = "https://#{settings.repo_owner}.github.io/#{settings.repo_name}#{dir_suffix}/v#{version}"
-          ["index.html", "latest/index.html"].each do |filename|
-            path = "#{gh_pages_dir}#{dir_suffix}/#{filename}"
-            unless ::File.file?(path)
-              step_context.warning("#{path} not found. Skipping.")
-              next
-            end
-            content = ::File.read(path)
-            content.gsub!(/ href="[^"]+"/, " href=\"#{redirect_url}\"")
-            content.gsub!(/ content="0; url=[^"]+"/, " content=\"0; url=#{redirect_url}\"")
-            content.gsub!(/window\.location\.replace\("[^"]+"\)/, "window.location.replace(\"#{redirect_url}\")")
-            ::File.write(path, content)
-          end
         end
 
         def push_docs_to_git(step_context, gh_pages_dir)

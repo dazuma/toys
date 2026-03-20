@@ -21,18 +21,6 @@ flag :dry_run
 include :exec
 include :terminal, styled: true
 
-# Context for ERB templates
-class ErbContext
-  def initialize(data)
-    data.each { |name, value| instance_variable_set("@#{name}", value) }
-    freeze
-  end
-
-  def self.get(data)
-    new(data).instance_eval { binding }
-  end
-end
-
 def run
   setup
   generate_gh_pages
@@ -41,10 +29,9 @@ def run
 end
 
 def setup
-  require "erb"
-  require "fileutils"
   require "toys/release/artifact_dir"
   require "toys/release/environment_utils"
+  require "toys/release/gh_pages_logic"
   require "toys/release/repo_settings"
   require "toys/release/repository"
 
@@ -57,139 +44,47 @@ def setup
     branch: "gh-pages", remote: git_remote, dir: @artifact_dir.get("gh-pages"),
     gh_token: ::ENV["GITHUB_TOKEN"], create: true
   )
-  @relevant_component_settings = @settings.all_component_settings.find_all(&:gh_pages_enabled)
-  if @relevant_component_settings.empty?
+  if @settings.all_component_settings.none?(&:gh_pages_enabled)
     puts "No components have gh-pages enabled", :red, :bold
     exit(1)
   end
+  @template_dir = find_data("gh-pages", type: :directory)
+  raise "Fatal: Unable to find gh-pages template data directory" unless @template_dir
+  @logic = Toys::Release::GhPagesLogic.new(@settings)
 end
 
 def cleanup
   @artifact_dir.cleanup
 end
 
-CompInfo = ::Struct.new(:base_path, :regexp_source, :version_var)
-
 def generate_gh_pages
-  ::Dir.chdir(@gh_pages_dir) do
-    @relevant_component_settings.each do |component_settings|
-      generate_component_files(component_settings)
+  @logic.cleanup_v0_directories(@gh_pages_dir) do |directory, _children|
+    puts "Non-index files exist in #{directory}.", :yellow, :bold
+    yes || confirm("Remove? ", default: true)
+  end
+  results = @logic.generate_files(@gh_pages_dir, @template_dir) do |destination, status, existing_ftype|
+    if status == :overwrite
+      puts "Destination #{destination} exists (type: #{existing_ftype})", :yellow, :bold
+      yes || confirm("Overwrite? ", default: true)
+    else
+      yes || confirm("Create file #{destination}? ", default: true)
     end
-    generate_toplevel_files
-    generate_html404
+  end
+  output_results(results)
+end
+
+def output_results(results)
+  results.each do |r|
+    case r[:outcome]
+    when :wrote
+      puts "Wrote #{r[:destination]}.", :green
+    when :unchanged
+      puts "Unchanged: #{r[:destination]}.", :green
+    when :skipped
+      puts "Skipped: #{r[:destination]}.", :yellow
+    end
   end
   puts "Files generated into #{@gh_pages_dir}", :bold
-end
-
-def generate_component_files(comp_settings)
-  prepare_v0_directory("#{comp_settings.gh_pages_directory}/v0")
-  generate_file("#{comp_settings.gh_pages_directory}/v0/index.html",
-                "empty.html.erb", {name: comp_settings.name})
-  component_redirect_url = "https://#{component_base_path(comp_settings)}/v#{current_component_version(comp_settings)}"
-  generate_file("#{comp_settings.gh_pages_directory}/index.html",
-                "redirect.html.erb", {redirect_url: component_redirect_url})
-  generate_file("#{comp_settings.gh_pages_directory}/latest/index.html",
-                "redirect.html.erb", {redirect_url: component_redirect_url})
-end
-
-def prepare_v0_directory(directory)
-  ::FileUtils.mkdir_p(directory)
-  children = ::Dir.children(directory) - ["index.html"]
-  return if children.empty?
-  puts "Non-index files exist in #{directory}.", :yellow, :bold
-  return unless yes || confirm("Remove? ", default: true)
-  children.each do |child|
-    ::FileUtils.remove_entry(::File.join(directory, child), true)
-  end
-end
-
-def current_component_version(comp_settings)
-  base_dir = comp_settings.gh_pages_directory
-  latest = ::Gem::Version.new("0")
-  return latest unless ::File.directory?(base_dir)
-  ::Dir.children(base_dir).each do |child|
-    next unless /^v\d+(\.\d+)*$/.match?(child)
-    next unless ::File.directory?(::File.join(base_dir, child))
-    version = ::Gem::Version.new(child[1..])
-    latest = version if version > latest
-  end
-  latest
-end
-
-def generate_toplevel_files
-  ::File.write(".nojekyll", "")
-  generate_file(".gitignore", "gitignore.erb", {})
-  unless @relevant_component_settings.any? { |settings| settings.gh_pages_directory == "." }
-    generate_file("index.html", "redirect.html.erb", {redirect_url: default_redirect_url})
-  end
-end
-
-def generate_html404
-  version_vars = {}
-  replacement_info = @relevant_component_settings.map do |comp_settings|
-    version_vars[comp_settings.gh_pages_version_var] = current_component_version(comp_settings)
-    base_path = component_base_path(comp_settings)
-    regexp_source = "//#{::Regexp.escape(base_path)}/latest(/|$)"
-    CompInfo.new(base_path, regexp_source, comp_settings.gh_pages_version_var)
-  end
-  template_params = {
-    default_redirect_url: default_redirect_url,
-    version_vars: version_vars,
-    replacement_info: replacement_info,
-  }
-  generate_file("404.html", "404.html.erb", template_params)
-end
-
-def url_base_path
-  @url_base_path ||= "#{@settings.repo_owner}.github.io/#{@settings.repo_name}"
-end
-
-def component_base_path(component_settings)
-  if component_settings.gh_pages_directory == "."
-    url_base_path
-  else
-    "#{url_base_path}/#{component_settings.gh_pages_directory}"
-  end
-end
-
-def default_redirect_url
-  @default_redirect_url ||= "https://#{component_base_path(@relevant_component_settings.first)}/latest"
-end
-
-def generate_file(destination, template, data)
-  template_path = find_data("gh-pages/#{template}")
-  raise "Unable to find template #{template}" unless template_path
-  erb = ::ERB.new(::File.read(template_path))
-  content = erb.result(ErbContext.get(data))
-
-  stat = safe_lstat(destination)
-  if stat
-    if stat.file? && safe_read(destination) == content
-      puts "Unchanged: #{destination}.", :green
-      return
-    end
-    puts "Destination #{destination} exists (type: #{stat.ftype})", :yellow, :bold
-    return unless yes || confirm("Overwrite? ", default: true)
-  else
-    return unless yes || confirm("Create file #{destination}? ", default: true)
-  end
-
-  ::FileUtils.mkdir_p(::File.dirname(destination))
-  ::FileUtils.remove_entry(destination, true)
-  ::File.write(destination, content)
-  puts "Wrote #{destination}.", :green
-end
-
-def safe_lstat(path)
-  ::File.lstat(path)
-rescue ::SystemCallError
-  nil
-end
-
-def safe_read(path)
-  ::File.read(path)
-rescue ::SystemCallError
-  nil
 end
 
 def push_gh_pages
