@@ -69,20 +69,37 @@ def generate_all_files
 end
 
 def generate_file(name)
+  template_path = find_data("templates/#{name}.erb")
+  raise "Unable to find template #{name}.erb" unless template_path
+  erb = ::ERB.new(::File.read(template_path))
+  content = erb.result(ErbContext.get(@settings))
+
   destination = ::File.join(workflows_dir, name)
-  if ::File.readable?(destination)
-    puts "Destination file #{destination} exists.", :yellow
+  stat = safe_lstat(destination)
+  if stat
+    if stat.file? && safe_read(destination) == content
+      puts "Unchanged: #{destination}.", :green
+      return
+    end
+    puts "Destination #{destination} exists (type: #{stat.ftype})", :yellow, :bold
     return unless yes || confirm("Overwrite? ", default: true)
   else
     return unless yes || confirm("Create file #{destination}? ", default: true)
   end
 
-  template_path = find_data("templates/#{name}.erb")
-  raise "Unable to find template #{name}.erb" unless template_path
-  erb = ::ERB.new(::File.read(template_path))
+  ::FileUtils.remove_entry(destination, true)
+  ::File.write(destination, content)
+  puts "Wrote #{destination}.", :green
+end
 
-  ::File.open(destination, "w") do |file|
-    file.write(erb.result(ErbContext.get(@settings)))
-    puts "Wrote #{destination}.", :green
-  end
+def safe_lstat(path)
+  ::File.lstat(path)
+rescue ::SystemCallError
+  nil
+end
+
+def safe_read(path)
+  ::File.read(path)
+rescue ::SystemCallError
+  nil
 end

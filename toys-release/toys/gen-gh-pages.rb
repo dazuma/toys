@@ -157,29 +157,39 @@ def default_redirect_url
 end
 
 def generate_file(destination, template, data)
-  return unless file_generation_confirmations(destination)
   template_path = find_data("gh-pages/#{template}")
   raise "Unable to find template #{template}" unless template_path
   erb = ::ERB.new(::File.read(template_path))
   content = erb.result(ErbContext.get(data))
+
+  stat = safe_lstat(destination)
+  if stat
+    if stat.file? && safe_read(destination) == content
+      puts "Unchanged: #{destination}.", :green
+      return
+    end
+    puts "Destination #{destination} exists (type: #{stat.ftype})", :yellow, :bold
+    return unless yes || confirm("Overwrite? ", default: true)
+  else
+    return unless yes || confirm("Create file #{destination}? ", default: true)
+  end
+
   ::FileUtils.mkdir_p(::File.dirname(destination))
+  ::FileUtils.remove_entry(destination, true)
   ::File.write(destination, content)
   puts "Wrote #{destination}.", :green
 end
 
-def file_generation_confirmations(destination)
-  if ::File.exist?(destination)
-    if ::File.directory?(destination)
-      puts "Destination #{destination} exists and is a DIRECTORY.", :yellow, :bold
-    else
-      puts "Destination file #{destination} exists.", :yellow, :bold
-    end
-    return false unless yes || confirm("Overwrite? ", default: true)
-    ::FileUtils.remove_entry(destination)
-  else
-    return false unless yes || confirm("Create file #{destination}? ", default: true)
-  end
-  true
+def safe_lstat(path)
+  ::File.lstat(path)
+rescue ::SystemCallError
+  nil
+end
+
+def safe_read(path)
+  ::File.read(path)
+rescue ::SystemCallError
+  nil
 end
 
 def push_gh_pages
