@@ -74,19 +74,30 @@ module Toys
       #
       # @param version [::Gem::Version] The original version. If nil is passed
       #     in, it is treated as synonymous with `0.0.0`.
+      # @param minimum_fill [Semver] Remove zeros down to this length. Default
+      #     is NONE, indicating to leave the length the same as the input.
+      # @param prevent_bump_to_v1 [boolean] If set to true, major version bumps
+      #     prior to 1.0 will actually bump the minor version, preventing a
+      #     normal bump to version 1.0.
       # @return [::Gem::Version] The new version
       #
-      def bump(version)
+      def bump(version, minimum_fill: Semver::NONE, prevent_bump_to_v1: false)
         version ||= ::Gem::Version.new("0.0.0")
         return version if segment.nil?
         bump_seg = segment
-        version_segs = version.segments
-        max_seg = bump_seg
-        max_seg = 2 if max_seg < 2
-        version_segs = version_segs[0..max_seg]
-        bump_seg = 1 if bump_seg.zero? && version_segs[0].zero?
-        version_segs[bump_seg] += 1
-        ::Gem::Version.new(version_segs.fill(0, bump_seg + 1).join("."))
+        version_segs = version.segments.dup
+        bump_seg = 1 if prevent_bump_to_v1 && bump_seg.zero? && version_segs[0].zero?
+        if version_segs.size > bump_seg
+          fill_seg = minimum_fill.segment || (version_segs.size - 1)
+          fill_seg = bump_seg if fill_seg < bump_seg
+          version_segs.slice!((fill_seg + 1)..)
+          version_segs[bump_seg] += 1
+          version_segs.fill(0, bump_seg + 1)
+        else
+          version_segs.concat(::Array.new(bump_seg - version_segs.size, 0))
+          version_segs << 1
+        end
+        ::Gem::Version.new(version_segs.join("."))
       end
 
       ##

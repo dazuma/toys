@@ -70,14 +70,14 @@ If you do not have Ruby or Toys installed locally, do so first. Install
 Ruby 2.7 or later, and then install the Toys RubyGem using:
 
 ```sh
-gem install toys
+$ gem install toys
 ```
 
 Toys-Release requires Toys 0.20 or later. If you have an older version of Toys,
 update it using:
 
 ```sh
-toys system update
+$ toys system update
 ```
 
 Finally, you also need the GitHub command line tool, `gh`. Find installation
@@ -85,28 +85,37 @@ instructions at https://cli.github.com/. If you are running on MacOS, for
 example, the easiest way to install it is via homebrew:
 
 ```sh
-brew install gh
+$ brew install gh
 ```
 
 ### Install the release tool
 
-The Toys-Release tool needs to be installed in your repository, as a Toys tool
-loaded from the [toys-release](https://rubygems.org/gems/toys-release) gem.
+The Toys-Release tool needs to be installed in your repository. This means
+creating a Toys tool whose implementation is provided by the
+[toys-release](https://rubygems.org/gems/toys-release) gem.
 
 Create `.toys/release.rb` (note the leading period in the directory name) in
 your git repository. Use the following content:
 
 ```ruby
+# frozen_string_literal: true
 load_gem "toys-release"
 ```
 
-This will cause Toys-Release to use the latest version of Toys-Release. You can
-also pin to a specific version of Toys-Release by specifying version
-requirements similar to how those requirements are specified in RubyGems or
-Bundler:
+Test the install by displaying the online help for toys-release:
+
+```sh
+$ toys release --help
+```
+
+If you do not already have the toys-release gem installed, this will install it
+for you (after asking for permission.) By default, it will install the latest
+version, but you can pin to a specific version of the gem by specifying version
+requirements similar to how you would in RubyGems or Bundler:
 
 ```ruby
-load_gem "toys-release", "~> 0.3"
+# frozen_string_literal: true
+load_gem "toys-release", "~> 0.8"
 ```
 
 Commit and push this change to your repository.
@@ -124,7 +133,7 @@ release tool is installed as described above, you can run this from your local
 repository clone directory:
 
 ```sh
-toys release gen-config
+$ toys release gen-config
 ```
 
 This will analyze your repository and generate an initial configuration file
@@ -146,13 +155,13 @@ line using the release tool.
 To create the GitHub repo labels, run this from your local repo clone directory:
 
 ```sh
-toys release create-labels
+$ toys release create-labels
 ```
 
 Then, to generate the GitHub Actions workflows, run:
 
 ```sh
-toys release gen-workflows
+$ toys release gen-workflows
 ```
 
 This will generate files in a `.github/workflows` directory in your repository.
@@ -287,15 +296,15 @@ appending the version to the component name, separated by a colon.
 For example, to request releases of the `toys` and `toys-release` components,
 you can enter the following text into "Components to release":
 
-```sh
+```
 toys toys-release
 ```
 
-To make the above request but specifically request version 0.3.0 of the
+To make the above request but specifically request version 1.0.0 of the
 `toys-release` component:
 
-```sh
-toys toys-release:0.3.0
+```
+toys toys-release:1.0.0
 ```
 
 ### Managing release pull requests
@@ -444,7 +453,7 @@ To set up documentation, do the following:
  *  Create a starting gh-pages branch by running:
 
     ```sh
-    toys release gen-gh-pages
+    $ toys release gen-gh-pages
     ```
 
     This will generate the gh-pages branch and push some key files to it,
@@ -535,6 +544,49 @@ and affect the behavior of that and other commits.
     fix: Fix the build
     no-touch-component: my_gem
     ```
+
+### Using code-specified versions
+
+By default, Toys-Release determines the version to release by analyzing the
+conventional commit history since the last release. For each component, it
+selects the semver bump implied by the commits and applies it to the last
+released version.
+
+As an alternative, you can configure a component to use the version specified
+directly in the code — specifically, the `VERSION` constant in the `version.rb`
+file (as identified by the **version_rb_path** setting) — as the target release
+version. This is useful when you prefer to control the version number manually
+or when your workflow requires the version to be set in the code before a
+release is requested.
+
+To enable this, set `version_from_code: true` in the component's configuration:
+
+```yaml
+components:
+  - name: my_gem
+    version_from_code: true
+```
+
+With this setting, when a release is requested, Toys-Release reads the version
+constant from the code at the tip of the release branch. If this version is
+newer than the last released version, it is used as the release version.
+
+If the code version is not newer than the last released version (for example,
+if you forgot to update it before requesting the release), the release request
+will fail with an error by default. You can configure the optional `bump`
+sub-setting to specify a fallback semver bump level to apply to the last
+released version instead:
+
+```yaml
+components:
+  - name: my_gem
+    version_from_code:
+      bump: patch2
+```
+
+With `bump: patch2` (or `patch`, `minor`, or `major`), if the code version is
+not newer than the last release, the last released version is bumped by the
+given level to produce a releasable version.
 
 ### Running on the command line
 
@@ -1177,6 +1229,41 @@ The **name** key is required. The others are optional.
     libraries up to date. If this setting is not present, automatic updating is
     not performed for this component.
 
+ *  **version_from_code**: *boolean or dictionary* (optional) --
+    When set, uses the version constant in the component's code (as identified
+    by the **version_rb_path** setting) as the version to release, rather than
+    computing it automatically from the conventional commit history.
+
+    Set this to `true` to enable the feature with default settings:
+
+    ```yaml
+    components:
+      - name: my_gem
+        version_from_code: true
+    ```
+
+    Or set it to a dictionary to provide additional configuration:
+
+    ```yaml
+    components:
+      - name: my_gem
+        version_from_code:
+          bump: patch
+    ```
+
+    The dictionary supports the following optional key:
+
+     *  **bump**: *string* (optional) --
+        What to do if the version specified in the code has already been
+        released (i.e. the code version is not newer than the most recently
+        released version). Possible values are `patch2`, `patch`, `minor`,
+        `major`, and `none`. If `none` (the default), the release request will
+        fail with an error. If a semver bump level is given, the last released
+        version is bumped by that level to produce a releasable version.
+
+    See also [Using code-specified versions](#using-code-specified-versions)
+    for a conceptual overview.
+
  *  **version_rb_path**: *string* (optional) --
     The path to a Ruby file that contains the current version of the component.
     This file *must* include Ruby code that looks like this:
@@ -1200,20 +1287,20 @@ released with updated dependency versions, due to one or more of those
 dependencies being released. It is typically used to keep "kitchen sink"
 libraries up to date.
 
-For example, consider two components "foo_a" and "foo_b", and a "kitchen sink"
-component "foo_all" that depends on both the others. Suppose whenever a patch
-or greater release of either "foo_a" or "foo_b" happens, we also want "foo_all"
+For example, consider two components "gem_a" and "gem_b", and a "kitchen sink"
+component "gem_all" that depends on both the others. Suppose whenever a patch
+or greater release of either "gem_a" or "gem_b" happens, we also want "gem_all"
 to be released with its corresponding dependency bumped to the same version. We
 might set up the configuration like so:
 
 ```yaml
 components:
-  - name: foo_a
-  - name: foo_b
-  - name: foo_all
+  - name: gem_a
+  - name: gem_b
+  - name: gem_all
     update_dependencies:
       dependency_semver_threshold: patch
-      dependencies: [foo_a, foo_b]
+      dependencies: [gem_a, gem_b]
 ```
 
 The update-dependencies configuration for a kitchen sink component can include

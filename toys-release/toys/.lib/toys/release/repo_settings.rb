@@ -171,6 +171,36 @@ module Toys
     end
 
     ##
+    # This configuration is present for a component if version_from_code is
+    # requested, i.e. the version to release is the version in the code.
+    #
+    class VersionFromCodeSettings
+      # @private
+      def initialize(info, errors)
+        unless info.is_a?(::Hash)
+          errors << "version_from_code expected to be true or a dictionary" unless info == true
+          info = {}
+        end
+        bump_name = info.delete("bump") || "none"
+        @bump = Semver.for_name(bump_name)
+        unless @bump
+          errors << "Unrecognized semver bump value: #{bump_name.inspect}"
+          @bump = Semver::NONE
+        end
+        info.each_key do |key|
+          errors << "Unknown key #{key.inspect} for version_from_code"
+        end
+      end
+
+      ##
+      # @return [Semver] What semver field to bump if the requested version has
+      #     already been released. If this is {Semver::NONE} and the requested
+      #     version is already released, the release request will error out.
+      #
+      attr_reader :bump
+    end
+
+    ##
     # Configuration of a single component
     #
     class ComponentSettings
@@ -191,6 +221,7 @@ module Toys
         read_steps_info(info, repo_settings)
         read_commit_tag_info(info, repo_settings)
         read_update_deps(info, repo_settings)
+        read_version_from_code(info, repo_settings)
         check_problems(info, repo_settings)
       end
 
@@ -293,6 +324,13 @@ module Toys
       attr_reader :update_dependencies
 
       ##
+      # @return [VersionFromCodeSettings,nil] Configuration for using
+      #     the version in code as the version to release instead of
+      #     interpreting conventional commit tags.
+      #
+      attr_reader :version_from_code
+
+      ##
       # @return [StepSettings,nil] The unique step with the given name
       #
       def step_named(name)
@@ -373,6 +411,14 @@ module Toys
         @update_dependencies =
           if update_deps_info
             UpdateDepSettings.new(update_deps_info, repo_settings.errors)
+          end
+      end
+
+      def read_version_from_code(info, repo_settings)
+        vfc_info = info.delete("version_from_code")
+        @version_from_code =
+          if vfc_info
+            VersionFromCodeSettings.new(vfc_info, repo_settings.errors)
           end
       end
 

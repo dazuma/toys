@@ -564,6 +564,84 @@ describe Toys::Release::RepoSettings do
     end
   end
 
+  describe "with version_from_code" do
+    it "defaults to no vfc" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      assert_nil(component.version_from_code)
+    end
+
+    it "recognizes true" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+            version_from_code: true
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      vfc_settings = component.version_from_code
+      assert_equal(Toys::Release::Semver::NONE, vfc_settings.bump)
+    end
+
+    it "recognizes custom bump" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+            version_from_code:
+              bump: patch2
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      vfc_settings = component.version_from_code
+      assert_equal(Toys::Release::Semver::PATCH2, vfc_settings.bump)
+    end
+
+    it "raises an error on an unrecognized version_from_code value" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+            version_from_code: yeah
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      vfc_settings = component.version_from_code
+      assert_equal(Toys::Release::Semver::NONE, vfc_settings.bump)
+      assert_includes(settings.errors, "version_from_code expected to be true or a dictionary")
+    end
+
+    it "raises an error on an unrecognized bump value" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+            version_from_code:
+              bump: teeny
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      vfc_settings = component.version_from_code
+      assert_equal(Toys::Release::Semver::NONE, vfc_settings.bump)
+      assert_includes(settings.errors, 'Unrecognized semver bump value: "teeny"')
+    end
+
+    it "raises an error on an unrecognized version_from_code key" do
+      input = YAML.load(<<~STRING)
+        components:
+          - name: comp_a
+            version_from_code:
+              bump2: patch
+      STRING
+      settings = Toys::Release::RepoSettings.new(input)
+      component = settings.component_settings("comp_a")
+      vfc_settings = component.version_from_code
+      assert_equal(Toys::Release::Semver::NONE, vfc_settings.bump)
+      assert_includes(settings.errors, 'Unknown key "bump2" for version_from_code')
+    end
+  end
+
   describe "auto_create_request_branches" do
     it "defaults to empty array" do
       input = YAML.load(<<~STRING)

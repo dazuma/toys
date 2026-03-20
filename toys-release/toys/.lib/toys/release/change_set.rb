@@ -162,7 +162,7 @@ module Toys
       def suggested_version(last)
         raise "ChangeSet not finished" unless finished?
         return nil unless semver.significant?
-        semver.bump(last)
+        semver.bump(last, minimum_fill: Semver::PATCH, prevent_bump_to_v1: true)
       end
 
       ##
