@@ -306,7 +306,6 @@ describe Toys::Release::Steps do
     end
 
     before do
-      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
       fake_tool_context.prevent_real_exec_prefix(["git", "push"])
     end
 
@@ -323,60 +322,64 @@ describe Toys::Release::Steps do
       assert_equal(["custom_build"], ::Toys::Release::Steps::PUSH_GH_PAGES.dependencies(step_context))
     end
 
-    it "aborts if docs exist" do
-      make_dummy_docs
-      step_context = make_context(version: released_version)
-      assert_raises(Toys::Release::Pipeline::StepExit) do
+    describe "#run" do
+      before do
+        skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+        make_dummy_docs
+      end
+
+      it "aborts if docs exist" do
+        step_context = make_context(version: released_version)
+        assert_raises(Toys::Release::Pipeline::StepExit) do
+          capture_subprocess_io do
+            ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
+          end
+        end
+        assert_equal(1, @performer_result.successes.size)
+        assert_equal("Docs already published for toys #{released_version}", @performer_result.successes.first)
+      end
+
+      it "does a dry run publish" do
+        step_context = make_context(dry_run: true)
         capture_subprocess_io do
           ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
         end
+        assert_equal(1, @performer_result.successes.size)
+        assert_equal("DRY RUN documentation published for toys #{unreleased_version}.",
+                     @performer_result.successes.first)
+        path = ::File.join(step_context.temp_dir, "gems", "toys", "v#{unreleased_version}", "index.html")
+        assert(::File.file?(path), "Expected docs to be copied into gh-pages")
+        content = ::File.read(::File.join(step_context.temp_dir, "404.html"))
+        assert_includes(content, "version_toys = #{unreleased_version.inspect};")
+        ["index.html", "latest/index.html"].each do |filename|
+          content = ::File.read(::File.join(step_context.temp_dir, "gems", "toys", filename))
+          assert_includes(content, "<a href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+          assert_includes(content, "<link rel=\"canonical\" href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+          assert_includes(content, "<meta http-equiv=\"refresh\" content=\"0; url=https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
+          assert_includes(content, "window.location.replace(\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\");")
+        end
       end
-      assert_equal(1, @performer_result.successes.size)
-      assert_equal("Docs already published for toys #{released_version}", @performer_result.successes.first)
-    end
 
-    it "does a dry run publish" do
-      make_dummy_docs
-      step_context = make_context(dry_run: true)
-      capture_subprocess_io do
-        ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
-      end
-      assert_equal(1, @performer_result.successes.size)
-      assert_equal("DRY RUN documentation published for toys #{unreleased_version}.", @performer_result.successes.first)
-      path = ::File.join(step_context.temp_dir, "gems", "toys", "v#{unreleased_version}", "index.html")
-      assert(::File.file?(path), "Expected docs to be copied into gh-pages")
-      content = ::File.read(::File.join(step_context.temp_dir, "404.html"))
-      assert_includes(content, "version_toys = #{unreleased_version.inspect};")
-      ["index.html", "latest/index.html"].each do |filename|
-        content = ::File.read(::File.join(step_context.temp_dir, "gems", "toys", filename))
-        assert_includes(content, "<a href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
-        assert_includes(content, "<link rel=\"canonical\" href=\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
-        assert_includes(content, "<meta http-equiv=\"refresh\" content=\"0; url=https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\">")
-        assert_includes(content, "window.location.replace(\"https://dazuma.github.io/toys/gems/toys/v#{unreleased_version}\");")
-      end
-    end
-
-    it "does a real publish" do
-      make_dummy_docs
-      step_context = make_context(dry_run: false)
-      fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"])
-      capture_subprocess_io do
-        ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
-      end
-      assert_equal(1, @performer_result.successes.size)
-      assert_equal("Published documentation for toys #{unreleased_version}.", @performer_result.successes.first)
-    end
-
-    it "fails to publish" do
-      make_dummy_docs
-      step_context = make_context(dry_run: false)
-      fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"], result_code: 1)
-      assert_raises(Toys::Release::Pipeline::PipelineExit) do
+      it "does a real publish" do
+        step_context = make_context(dry_run: false)
+        fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"])
         capture_subprocess_io do
           ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
         end
+        assert_equal(1, @performer_result.successes.size)
+        assert_equal("Published documentation for toys #{unreleased_version}.", @performer_result.successes.first)
       end
-      assert_empty(@performer_result.successes)
+
+      it "fails to publish" do
+        step_context = make_context(dry_run: false)
+        fake_tool_context.stub_exec(["git", "push", "origin", "gh-pages"], result_code: 1)
+        assert_raises(Toys::Release::Pipeline::PipelineExit) do
+          capture_subprocess_io do
+            ::Toys::Release::Steps::PUSH_GH_PAGES.run(step_context)
+          end
+        end
+        assert_empty(@performer_result.successes)
+      end
     end
   end
 
