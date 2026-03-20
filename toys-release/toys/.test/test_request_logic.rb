@@ -10,7 +10,9 @@ describe Toys::Release::RequestLogic do
   let(:request_spec) { Toys::Release::RequestSpec.new(environment_utils) }
 
   it "handles Toys one commit after v0.19.0 tag" do
-    repository.all_components.each { |component| request_spec.add(component) }
+    ["toys", "toys-core", "toys-release", "common-tools"].each do |comp_name|
+      request_spec.add(repository.component_named(comp_name))
+    end
     request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f", repository)
     request_logic = Toys::Release::RequestLogic.new(repository, request_spec)
     assert_equal("release: Release 3 items", request_logic.build_commit_title)
@@ -67,7 +69,6 @@ describe Toys::Release::RequestLogic do
         "requested_components": {
           "toys": null,
           "toys-core": null,
-          "toys-ci": null,
           "toys-release": null,
           "common-tools": null
         },

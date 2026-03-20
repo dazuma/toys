@@ -32,16 +32,20 @@ describe Toys::Release::RequestSpec do
       # Can't make any particular assertion here. Just make sure it didn't crash.
     end
 
-    it "resolves default changes to Toys at v0.19.0 tag" do
-      repository.all_components.each { |component| request_spec.add(component) }
+    it "resolves changes when no changes are expected" do
+      ["toys", "toys-core", "toys-release", "common-tools"].each do |comp_name|
+        request_spec.add(repository.component_named(comp_name))
+      end
       request_spec.resolve_versions(repository.current_sha("toys/v0.19.0"), repository)
-      # At this point, toys, toys-core, and toys-release were just released and
+      # At this tag, toys, toys-core, and toys-release were just released and
       # should show no changes, and common-tools had no updates since 0.18.0.
       assert_empty(request_spec.resolved_components)
     end
 
-    it "resolves default changes to Toys expecting only toys-release changes" do
-      repository.all_components.each { |component| request_spec.add(component) }
+    it "resolves changes when one component has changed but no others have" do
+      ["toys", "toys-core", "toys-release", "common-tools"].each do |comp_name|
+        request_spec.add(repository.component_named(comp_name))
+      end
       request_spec.resolve_versions("450e87c777d642f2adf0add69cbcc0bca243c9d9", repository)
       # This is one commit after toys-release/v0.2.1.
       # At this point, only toys-release had updates.
@@ -75,7 +79,9 @@ describe Toys::Release::RequestSpec do
     end
 
     it "resolves default changes to Toys with a coordination group" do
-      repository.all_components.each { |component| request_spec.add(component) }
+      ["toys", "toys-core", "toys-release", "common-tools"].each do |comp_name|
+        request_spec.add(repository.component_named(comp_name))
+      end
       request_spec.resolve_versions("47cfeffc9ba275dab7604e30038fed107636304f", repository)
       # This is one commit after toys/v0.19.0.
       # This commit modifies toys-core and toys-release, and should bring toys in
