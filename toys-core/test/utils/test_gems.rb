@@ -68,6 +68,7 @@ describe Toys::Utils::Gems do
         result = run_script
         refute(result.success?)
         assert_match(/Toys::Utils::Gems::IncompatibleToysError/, result.captured_err)
+        refute_match(/Unexpected BUNDLE_GEMFILE/, result.captured_out)
         refute_match(/should-not-get-here/, result.captured_out)
       end
     end
@@ -137,7 +138,7 @@ describe Toys::Utils::Gems do
     it "sets up a bundle requiring installation of a direct dependency" do
       skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       if exec_service.capture(["gem", "list", "highline"]).include?("2.0.2")
-        skip "Skipped test becuase highline 2.0.2 is already installed"
+        skip "Skipped test because highline 2.0.2 is already installed"
       end
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
@@ -159,7 +160,7 @@ describe Toys::Utils::Gems do
     it "sets up a bundle requiring installation of a transitive dependency via a gemspec" do
       skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
       if exec_service.capture(["gem", "list", "highline"]).include?("2.0.1")
-        skip "Skipped test becuase highline 2.0.1 is already installed"
+        skip "Skipped test because highline 2.0.1 is already installed"
       end
       setup_case("bundle-using-gemspec") do
         result = run_script
@@ -179,12 +180,8 @@ describe Toys::Utils::Gems do
 
     it "updates the bundle if install fails due to conflicts" do
       skip "Skipped test on JRuby or TruffleRuby" if Toys::Compat.jruby? || Toys::Compat.truffleruby?
-      # Problem installing jaro_winkler on Mac Ruby 3.4
-      if Toys::Compat.macos? && Toys::Compat::RUBY_VERSION_CODE >= 30_400
-        skip "Skipped due to a problem with jaro_winkler on Ruby 3.4 on Mac OS"
-      end
       if exec_service.capture(["gem", "list", "rubocop"]).include?("0.81.0")
-        skip "Skipped test becuase rubocop 0.81.0 is already installed"
+        skip "Skipped test because rubocop 0.81.0 is already installed"
       end
       setup_case("bundle-update-required") do
         FileUtils.rm_f("Gemfile.lock")

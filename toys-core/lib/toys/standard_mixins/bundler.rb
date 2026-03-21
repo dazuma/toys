@@ -23,7 +23,8 @@ module Toys
     # The following parameters can be passed when including this mixin:
     #
     #  *  `:static` (Boolean) Has the same effect as passing `:static` to the
-    #     `:setup` parameter.
+    #     `:setup` parameter. This is present largely for historical
+    #     compatibility, but it is supported and _not_ deprecated.
     #
     #  *  `:setup` (:auto,:manual,:static) A symbol indicating when the bundle
     #     should be installed. Possible values are:
@@ -152,6 +153,8 @@ module Toys
           ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
         when :manual
           self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY] = kwargs
+        when :static
+          # Already set up at include time
         end
       end
 
@@ -161,7 +164,7 @@ module Toys
         when :static
           ::Toys::StandardMixins::Bundler.setup_bundle(context_directory, source_info, **kwargs)
         when :manual
-          # @private
+          # @private Defined dynamically for the tool but not visible to YARD
           def bundler_setup(**kwargs)
             original_kwargs = self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY]
             raise ::Toys::Utils::Gems::AlreadyBundledError unless original_kwargs
@@ -172,7 +175,7 @@ module Toys
             self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY] = nil
           end
 
-          # @private
+          # @private Defined dynamically for the tool but not visible to YARD
           def bundler_setup?
             self[::Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY].nil?
           end
@@ -193,7 +196,7 @@ module Toys
         def initialize(context_directory, source_info, gemfile_names, toys_gemfile_names)
           @context_directory = context_directory
           @source_info = source_info
-          @gemfile_names = gemfile_names
+          @gemfile_names = gemfile_names || ::Toys::Utils::Gems::DEFAULT_GEMFILE_NAMES
           @toys_gemfile_names = toys_gemfile_names || DEFAULT_TOYS_GEMFILE_NAMES
         end
 

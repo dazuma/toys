@@ -110,11 +110,12 @@ module Toys
       #
       #     The default is `:error`.
       #
+      # @param default_confirm [Boolean] The default confirmation result, if
+      #     `on_missing` is set to `:confirm`. Defaults to true.
       # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
       # @param input [IO] Input IO (optional, defaults to STDIN)
       # @param output [IO] Output IO (optional, defaults to STDOUT)
       # @param suppress_confirm [Boolean] Deprecated. Use `on_missing` instead.
-      # @param default_confirm [Boolean] Deprecated. Use `on_missing` instead.
       #
       def initialize(on_missing: nil,
                      on_conflict: nil,
@@ -124,7 +125,12 @@ module Toys
                      suppress_confirm: nil,
                      default_confirm: nil)
         require "rubygems"
-        @default_confirm = default_confirm || default_confirm.nil? ? true : false
+        unless suppress_confirm.nil?
+          warn("The :suppress_confirm argument to Toys::Utils::Gems is deprecated. " \
+               "Use :on_missing instead.")
+        end
+        default_confirm = true if default_confirm.nil?
+        @default_confirm = default_confirm ? true : false
         @on_missing = on_missing ||
                       if suppress_confirm
                         @default_confirm ? :install : :error
@@ -186,11 +192,7 @@ module Toys
         raise GemfileNotFoundError, "Gemfile not found" unless gemfile_path
         gemfile_path = ::File.absolute_path(gemfile_path)
         Gems.synchronize do
-          if configure_gemfile(gemfile_path)
-            activate("bundler", *bundler_version_requirements)
-            require "bundler"
-            setup_bundle(gemfile_path, groups: groups, retries: retries)
-          end
+          setup_bundle(gemfile_path, groups: Array(groups), retries: retries)
         end
       end
 
@@ -211,14 +213,27 @@ module Toys
         @global_mutex.synchronize(&block)
       end
 
+      @delete_at_exit_mutex = ::Mutex.new
+      @delete_at_exit_list = nil
+
       # @private
+      # This is a class method so the at_exit block doesn't hold onto an
+      # instance for the duration of the Ruby process
       def self.delete_at_exit(path)
-        # Call this from a class method so it doesn't hold onto the instance
-        # for the duration of the Ruby process
-        at_exit { ::FileUtils.rm_f(path) }
+        @delete_at_exit_mutex.synchronize do
+          if @delete_at_exit_list.nil?
+            @delete_at_exit_list = []
+            at_exit do
+              @delete_at_exit_list.each { |del_path| ::FileUtils.rm_f(del_path) }
+            end
+          end
+          @delete_at_exit_list << path
+        end
       end
 
       private
+
+      # ---- General private utilities ----
 
       def terminal
         @terminal ||= begin
@@ -233,6 +248,8 @@ module Toys
           Utils::Exec.new
         end
       end
+
+      # ---- Private methods as part of gem activation ----
 
       def handle_activation_error(error, name, requirements)
         is_missing_spec =
@@ -280,6 +297,32 @@ module Toys
         raise ActivationFailedError, err.message
       end
 
+      # ---- Private methods as part of bundle install and setup ----
+
+      def setup_bundle(gemfile_path, groups: nil, retries: nil)
+        configure_gemfile(gemfile_path) do
+          activate_bundler
+          check_gemfile_compatibility(gemfile_path)
+          modified_gemfile_path = create_modified_gemfile(gemfile_path)
+          success = false
+          begin
+            attempt_setup_bundle(modified_gemfile_path, groups)
+            success = true
+          rescue *bundler_exceptions
+            ::Bundler.reset!
+            restore_toys_libs
+            install_bundle(modified_gemfile_path, retries: retries)
+            attempt_setup_bundle(modified_gemfile_path, groups)
+            success = true
+          ensure
+            delete_modified_gemfile(modified_gemfile_path)
+            ::Bundler.reset! unless success
+            restore_toys_libs
+          end
+          true
+        end
+      end
+
       def configure_gemfile(gemfile_path)
         old_path = ::ENV["BUNDLE_GEMFILE"]
         if old_path
@@ -294,73 +337,38 @@ module Toys
           return false
         end
         ::ENV["BUNDLE_GEMFILE"] = gemfile_path
+        success = false
+        begin
+          yield
+          success = true
+        ensure
+          ::ENV["BUNDLE_GEMFILE"] = success ? gemfile_path : old_path
+        end
         true
       end
 
-      def find_lockfile_path(gemfile_path)
-        if ::File.basename(gemfile_path) == "gems.rb"
-          ::File.join(::File.dirname(gemfile_path), "gems.locked")
-        else
-          "#{gemfile_path}.lock"
-        end
-      end
+      def activate_bundler
+        bundler_version_requirements =
+          if ::RUBY_VERSION < "3"
+            [">= 2.2", "< 2.5"]
+          else
+            [">= 2.2", "< 5"]
+          end
+        activate("bundler", *bundler_version_requirements)
+        require "bundler"
 
-      def setup_bundle(gemfile_path, groups: nil, retries: nil)
         # Ensure certain built-in gems that may be used by bundler/rubygems
-        # themselves are preloaded so they can be included in the modified
+        # themselves are pre-activated so they can be included in the modified
         # gemfile. This prevents a gem version mismatch if bundler/rubygems
         # loads a version of the gem during the bundler setup code (i.e. after
         # the modified gemfile is created) but the gemfile lock itself calls
         # for a different version.
         require "uri"
         require "stringio"
+
         # Lock the bundler version, preventing bundler's SelfManager from
         # installing a different bundler and taking over the process.
         ::ENV["BUNDLER_VERSION"] = ::Bundler::VERSION
-        check_gemfile_compatibility(gemfile_path)
-        groups = Array(groups)
-        modified_gemfile_path = create_modified_gemfile(gemfile_path)
-        begin
-          attempt_setup_bundle(modified_gemfile_path, groups)
-        rescue *bundler_exceptions
-          ::Bundler.reset!
-          restore_toys_libs
-          install_bundle(modified_gemfile_path, retries: retries)
-          attempt_setup_bundle(modified_gemfile_path, groups)
-        ensure
-          delete_modified_gemfile(modified_gemfile_path)
-          ::ENV["BUNDLE_GEMFILE"] = gemfile_path
-        end
-        restore_toys_libs
-      end
-
-      def bundler_exceptions
-        @bundler_exceptions ||= begin
-          exceptions = [::Bundler::GemNotFound]
-          exceptions << ::Bundler::VersionConflict if ::Bundler.const_defined?(:VersionConflict)
-          exceptions << ::Bundler::SolveFailure if ::Bundler.const_defined?(:SolveFailure)
-          exceptions
-        end
-      end
-
-      def bundler_version_requirements
-        if ::RUBY_VERSION < "2.6"
-          [">= 2.2", "< 2.4"]
-        elsif ::RUBY_VERSION < "3"
-          [">= 2.2", "< 2.5"]
-        else
-          [">= 2.2", "< 5"]
-        end
-      end
-
-      def attempt_setup_bundle(modified_gemfile_path, groups)
-        ::ENV["BUNDLE_GEMFILE"] = modified_gemfile_path
-        ::Bundler.configure
-        ::Bundler.settings.temporary({gemfile: modified_gemfile_path}) do
-          ::Bundler.ui.silence do
-            ::Bundler.setup(*groups)
-          end
-        end
       end
 
       def check_gemfile_compatibility(gemfile_path)
@@ -369,6 +377,7 @@ module Toys
         builder.eval_gemfile(gemfile_path)
         check_gemfile_gem_compatibility(builder, "toys-core")
         check_gemfile_gem_compatibility(builder, "toys")
+      ensure
         ::Bundler.reset!
       end
 
@@ -405,51 +414,63 @@ module Toys
 
       def modified_gemfile_content(gemfile_path)
         content = [::File.read(gemfile_path)]
-
-        custom_paths = {}
-        if ::ENV["TOYS_DEV"]
-          repo_root = ::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH))
-          custom_paths["toys-core"] = ::File.join(repo_root, "toys-core")
-          custom_paths["toys"] = ::File.join(repo_root, "toys")
-        end
-
         loaded_gems = ::Gem.loaded_specs.values.sort_by(&:name)
         omit_list = ::Toys::Compat.gems_to_omit_from_bundles
         loaded_gems.delete_if { |spec| omit_list.include?(spec.name) } unless omit_list.empty?
         content << "toys_loaded_gems = #{loaded_gems.map(&:name).inspect}"
         content << "dependencies.delete_if { |dep| toys_loaded_gems.include?(dep.name) }"
         loaded_gems.each do |spec|
-          path = custom_paths[spec.name]
-          path_suffix = path ? ", path: '#{path}'" : ""
-          content << "gem '#{spec.name}', '= #{spec.version}'#{path_suffix}"
+          path = custom_lib_paths[spec.name]
+          path_suffix = path ? ", path: #{path.inspect}" : ""
+          content << "gem #{spec.name.inspect}, '= #{spec.version}'#{path_suffix}"
         end
         content
+      end
+
+      def custom_lib_paths
+        unless defined?(@custom_lib_paths)
+          @custom_lib_paths = {}
+          if ::ENV["TOYS_DEV"]
+            repo_root = ::File.dirname(::File.dirname(::Toys::CORE_LIB_PATH))
+            @custom_lib_paths["toys-core"] = ::File.join(repo_root, "toys-core")
+            @custom_lib_paths["toys"] = ::File.join(repo_root, "toys")
+          end
+        end
+        @custom_lib_paths
       end
 
       def delete_modified_gemfile(modified_gemfile_path)
         ::FileUtils.rm_f(modified_gemfile_path)
         modified_lockfile_path = find_lockfile_path(modified_gemfile_path)
         ::FileUtils.rm_f(modified_lockfile_path)
+        # Also delete at exit in case bundler recreates the lockfile later
         Gems.delete_at_exit(modified_lockfile_path)
       end
 
-      def restore_toys_libs
-        $LOAD_PATH.delete(::Toys::CORE_LIB_PATH)
-        $LOAD_PATH.unshift(::Toys::CORE_LIB_PATH)
-        if ::Toys.const_defined?(:LIB_PATH)
-          $LOAD_PATH.delete(::Toys::LIB_PATH)
-          $LOAD_PATH.unshift(::Toys::LIB_PATH)
+      def find_lockfile_path(gemfile_path)
+        if ::File.basename(gemfile_path) == "gems.rb"
+          ::File.join(::File.dirname(gemfile_path), "gems.locked")
+        else
+          "#{gemfile_path}.lock"
         end
       end
 
-      def permission_to_bundle?
-        case @on_missing
-        when :install
-          true
-        when :error
-          false
-        else
-          terminal.confirm("Your bundle requires additional gems. Install? ", default: @default_confirm)
+      def attempt_setup_bundle(modified_gemfile_path, groups)
+        ::ENV["BUNDLE_GEMFILE"] = modified_gemfile_path
+        ::Bundler.configure
+        ::Bundler.settings.temporary({gemfile: modified_gemfile_path}) do
+          ::Bundler.ui.silence do
+            ::Bundler.setup(*groups)
+          end
+        end
+      end
+
+      def bundler_exceptions
+        @bundler_exceptions ||= begin
+          exceptions = [::Bundler::GemNotFound]
+          exceptions << ::Bundler::VersionConflict if ::Bundler.const_defined?(:VersionConflict)
+          exceptions << ::Bundler::SolveFailure if ::Bundler.const_defined?(:SolveFailure)
+          exceptions
         end
       end
 
@@ -474,6 +495,26 @@ module Toys
         result = exec_util.exec_ruby([bundler_bin, "update"] + args)
         return if result.success?
         raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"
+      end
+
+      def permission_to_bundle?
+        case @on_missing
+        when :install
+          true
+        when :error
+          false
+        else
+          terminal.confirm("Your bundle requires additional gems. Install? ", default: @default_confirm)
+        end
+      end
+
+      def restore_toys_libs
+        $LOAD_PATH.delete(::Toys::CORE_LIB_PATH)
+        $LOAD_PATH.unshift(::Toys::CORE_LIB_PATH)
+        if ::Toys.const_defined?(:LIB_PATH)
+          $LOAD_PATH.delete(::Toys::LIB_PATH)
+          $LOAD_PATH.unshift(::Toys::LIB_PATH)
+        end
       end
     end
   end
