@@ -1,5 +1,30 @@
 # Release History
 
+### v0.21.0 / 2026-03-23
+
+* BREAKING CHANGE: The XDG utility returns an empty array (instead of the system defaults) from the corresponding methods if `XDG_DATA_DIRS` or `XDG_CONFIG_DIRS` is nonempty but contains only relative paths
+* BREAKING CHANGE: The help middleware omits the subtool filter flags on runnable tools that have subtools
+* ADDED: Provided lookup_state and lookup_cache methods on the XDG utility
+* ADDED: The exec utility can now remove any existing bundle for a subprocess
+* ADDED: GitCache supports filtering lookups of ref and source info
+* ADDED: GitCache supports SHA-256 repos
+* FIXED: The XDG utility returns an empty array (instead of the system defaults) from the corresponding methods if `XDG_DATA_DIRS` or `XDG_CONFIG_DIRS` is nonempty but contains only relative paths
+* FIXED: Made the controller thread-safe
+* FIXED: The result callback is now called in background mode if the result is never explicitly obtained from the controller
+* FIXED: Fixed GitCache failure to get a parent directory after previously getting a descendant object
+* FIXED: GitCache no longer unnecessarily sets the write bit on files copied into a specified directory
+* FIXED: GitCache no longer cleans out existing files when writing to a shared source, which should reduce issues with concurrent clients
+* FIXED: Block certain reserved names from being used as Settings field names
+* FIXED: Fixed Settings#load_data! when subclassing another settings class
+* FIXED: Reject non-String values in Settings regexp type spec
+* FIXED: Settings guards against unknown classes when loading YAML on older Ruby versions
+* FIXED: Settings guards against ILLEGAL_VALUE being passed to range.member?
+* FIXED: Settings does a better job choosing exact-match values when using a union type
+* FIXED: Settings reject non-numeric strings in Integer and Float converters
+* FIXED: Settings propagates nested group errors in Settings#load_data!
+* FIXED: The help middleware omits the subtool filter flags on runnable tools that have subtools
+* FIXED: Fixed some cleanup issues when bundler setup fails
+
 ### v0.20.0 / 2026-03-09
 
 Toys-core 0.20 is a major release with several new features and a number of fixes, including a few minor breaking changes.

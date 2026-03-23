@@ -1,5 +1,11 @@
 # Release History
 
+### v0.21.0 / 2026-03-23
+
+* ADDED: The exec utility can now remove any existing bundle for a subprocess
+* FIXED: Made the controller thread-safe
+* FIXED: The result callback is now called in background mode if the result is never explicitly obtained from the controller
+
 ### v0.20.0 / 2026-03-09
 
 Toys 0.20 is a major release with several new features and a number of fixes, including a few minor breaking changes.
