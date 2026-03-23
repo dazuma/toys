@@ -46,10 +46,6 @@ module Toys
 
     ##
     # The base class of a FlagGroup, implementing everything except validation.
-    # The base class effectively behaves as an Optional group. And the default
-    # group that contains flags not otherwise assigned to a group, is of this
-    # type. However, you should use {Toys::FlagGroup::Optional} when creating
-    # an explicit optional group.
     #
     class Base
       ##
@@ -178,9 +174,16 @@ module Toys
 
       ##
       # @private
+      # This provides the behavioral distinctions between subclasses, returning
+      # errors for any validations not satisfied by the current flags.
+      #
+      # @param _seen [Array<Object>] A list of the keys of the flags actually
+      #     passed to the invocation
+      # @return [Array<ArgParser::FlagGroupConstraintError>] A list of errors
+      #     to raise, or the empty array if no errors were found
       #
       def validation_errors(_seen)
-        []
+        raise ::NotImplementedError
       end
     end
 
@@ -207,6 +210,12 @@ module Toys
     # A FlagGroup containing all optional flags
     #
     class Optional < Base
+      ##
+      # @private
+      #
+      def validation_errors(_seen)
+        []
+      end
     end
 
     ##
@@ -264,9 +273,7 @@ module Toys
       # @private
       #
       def validation_errors(seen)
-        flags.each do |flag|
-          return [] if seen.include?(flag.key)
-        end
+        return [] if flags.any? { |flag| seen.include?(flag.key) }
         str = "At least one flag out of group #{summary} is required, but none were provided."
         [ArgParser::FlagGroupConstraintError.new(str)]
       end

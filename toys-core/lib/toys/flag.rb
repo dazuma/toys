@@ -401,8 +401,8 @@ module Toys
     # @param default [Object] The default value. This is the value that will
     #     be set in the context if this flag is not provided on the command
     #     line. Defaults to `nil`.
-    # @param handler [Proc,nil,:set,:push] An optional handler that customizes
-    #     how a value is set or updated when the flag is parsed.
+    # @param handler [Proc,nil,:set,:push,:append] An optional handler that
+    #     customizes how a value is set or updated when the flag is parsed.
     #     A handler is a proc that takes up to three arguments: the given
     #     value, the previous value, and a hash containing all the data
     #     collected so far during argument parsing. The proc must return the
@@ -412,7 +412,7 @@ module Toys
     #     `-> (val) { val }`). The `:push` handler expects the previous value
     #     to be an array and pushes the given value onto it; it should be
     #     combined with setting `default: []` and is intended for
-    #     "multi-valued" flags.
+    #     "multi-valued" flags. `:append` is an alias for `:push`.
     # @param complete_flags [Object] A specifier for shell tab completion for
     #     flag names associated with this flag. By default, a
     #     {Toys::Flag::DefaultCompletion} is used, which provides the flag's
@@ -696,7 +696,7 @@ module Toys
       @long_desc = WrappableString.make_array(long_desc)
       @default = default
       @flag_completion = create_flag_completion(flag_completion)
-      @value_completion = Completion.create(value_completion, **{})
+      @value_completion = Completion.create(value_completion)
       create_default_flag if @flag_syntax.empty?
       remove_used_flags(used_flags, report_collisions)
       canonicalize
@@ -721,16 +721,21 @@ module Toys
     end
 
     def create_flag_completion(spec)
-      spec =
-        case spec
-        when nil, :default
-          {"": DefaultCompletion, flag: self}
-        when ::Hash
-          spec[:""].nil? ? spec.merge({"": DefaultCompletion, flag: self}) : spec
-        else
-          spec
-        end
-      Completion.create(spec, **{})
+      options = {}
+      block = nil
+      if defined?(::Toys::ToolDefinition) && spec.is_a?(ToolDefinition::ScalarSpec)
+        spec, options, block = spec.expand
+      end
+      case spec
+      when :default
+        DefaultCompletion.new(flag: self, **options)
+      when nil
+        block || DefaultCompletion.new(flag: self, **options)
+      when ::Hash
+        DefaultCompletion.new(flag: self, **spec)
+      else
+        Completion.create(spec, **options, &block)
+      end
     end
 
     def create_default_flag

@@ -1060,6 +1060,12 @@ module Toys
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
       #
+      # It is legal to declare a required argument after an optional argument,
+      # but at parse time, all required arguments are parsed first, followed by
+      # optional arguments. Thus, it is generally recommended to declare them
+      # in that order to avoid confusion. Within each type, arguments are
+      # parsed in the order they are declared.
+      #
       # ### Example
       #
       # This tool "moves" something from a source to destination, and takes two
@@ -1134,6 +1140,12 @@ module Toys
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
+      #
+      # It is legal to declare a required argument after an optional argument,
+      # but at parse time, all required arguments are parsed first, followed by
+      # optional arguments. Thus, it is generally recommended to declare them
+      # in that order to avoid confusion. Within each type, arguments are
+      # parsed in the order they are declared.
       #
       # ### Example
       #
@@ -1212,6 +1224,12 @@ module Toys
       # Attributes of the arg may be passed in as arguments to this method, or
       # set in a block passed to this method. If you provide a block, you can
       # use directives in {Toys::DSL::PositionalArg} within the block.
+      #
+      # Remaining arguments are parsed only after explicit required and
+      # optional arguments have been parsed and matched. While it is legal for
+      # the `remaining_args` directive to appear before `required_arg` or
+      # `optional_arg` directives, it is generally recommended that it appear
+      # last in order to avoid confusion.
       #
       # ### Example
       #
@@ -1479,7 +1497,7 @@ module Toys
       def complete_tool_args(spec = nil, **options, &block)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        cur_tool.completion = Completion.scalarize_spec(spec, options, block)
+        cur_tool.completion = ToolDefinition::ScalarSpec.from(spec, options, block)
         self
       end
 
