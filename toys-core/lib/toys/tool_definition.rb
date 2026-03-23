@@ -79,10 +79,9 @@ module Toys
 
       ##
       # Delegation target, or nil for none.
-      # @return [Array<String>] if there is a delegation target
-      # @return [nil] if there is no delegation target
+      # @return [Array<String>,nil]
       #
-      attr_accessor :delegation_target
+      attr_reader :delegation_target
 
       ##
       # Returns candidates for the current completion.
@@ -211,6 +210,35 @@ module Toys
     end
 
     ##
+    # @private
+    # A spec for a completion or acceptor, as a single object
+    #
+    class ScalarSpec
+      # @private
+      def self.from(spec, options, block)
+        if options.empty? && block.nil?
+          spec
+        elsif spec.nil? && options.empty?
+          block
+        else
+          new(spec, options, block)
+        end
+      end
+
+      # @private
+      def initialize(spec, options, block)
+        @spec = spec
+        @options = options
+        @block = block
+      end
+
+      # @private
+      def expand
+        [@spec, @options, @block]
+      end
+    end
+
+    ##
     # Create a new tool.
     # Should be created only from the DSL via the Loader.
     #
@@ -256,7 +284,7 @@ module Toys
       @used_flags = []
       @initializers = []
 
-      default_flag_group = FlagGroup::Base.new(nil, nil, nil)
+      default_flag_group = FlagGroup::Optional.new(nil, nil, nil)
       @flag_groups = [default_flag_group]
       @flag_group_names = {nil => default_flag_group}
 
@@ -1095,6 +1123,10 @@ module Toys
     # a key which the script may use to obtain the argument value from the
     # context.
     #
+    # In general, arguments are parsed in the order they are added to the tool
+    # definition. However, all required arguments are always parsed before
+    # all optional arguments, even if they are added afterward.
+    #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
     # @param accept [Object] An acceptor that validates and/or converts the
@@ -1129,6 +1161,10 @@ module Toys
     # a key which the script may use to obtain the argument value from the
     # context. If an optional argument is not given on the command line, the
     # value is set to the given default.
+    #
+    # In general, arguments are parsed in the order they are added to the tool
+    # definition. However, all required arguments are always parsed before
+    # all optional arguments, even if they are added afterward.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
@@ -1305,17 +1341,21 @@ module Toys
     # @param spec [Object]
     #
     def completion=(spec)
+      options = {}
+      block = nil
+      spec, options, block = spec.expand if spec.is_a?(ScalarSpec)
       spec = resolve_completion_name(spec)
-      spec =
+      @completion =
         case spec
-        when nil, :default
-          DefaultCompletion
+        when :default
+          DefaultCompletion.new(**options)
+        when nil
+          block || DefaultCompletion.new(**options)
         when ::Hash
-          spec[:""].nil? ? spec.merge({"": DefaultCompletion}) : spec
+          DefaultCompletion.new(**spec)
         else
-          spec
+          Completion.create(spec, **options, &block)
         end
-      @completion = Completion.create(spec, **{})
     end
 
     ##
@@ -1346,7 +1386,7 @@ module Toys
               "Cannot delegate tool #{display_name.inspect} to #{target.join(' ')} because it" \
               " already delegates to \"#{@delegate_target.join(' ')}\"."
       end
-      if includes_arguments? || runnable? || includes_modules? || !default_data.empty?
+      if includes_arguments? || runnable? || run_handler != :run || includes_modules? || !default_data.empty?
         raise ToolDefinitionError,
               "Cannot delegate tool #{display_name.inspect} because" \
               " some implementation has already been created for it."
@@ -1421,7 +1461,7 @@ module Toys
     def check_definition_state(is_arg: false, is_method: false)
       if @definition_finished
         raise ToolDefinitionError,
-              "Defintion of tool #{display_name.inspect} is already finished"
+              "Definition of tool #{display_name.inspect} is already finished"
       end
       if is_arg && argument_parsing_disabled?
         raise ToolDefinitionError,

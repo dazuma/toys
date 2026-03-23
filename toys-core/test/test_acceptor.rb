@@ -102,6 +102,10 @@ describe Toys::Acceptor::Enum do
     Toys::Acceptor::Enum.new([:Robb, :Sansa, :Arya, :Bran, :Rickon])
   }
 
+  it "returns the enum values" do
+    assert_equal([:Robb, :Sansa, :Arya, :Bran, :Rickon], acceptor.values)
+  end
+
   it "accepts matching strings" do
     assert_equal(["Arya", :Arya], acceptor.match("Arya"))
   end
@@ -132,6 +136,50 @@ describe Toys::Acceptor::Range do
 
     it "rejects integers outside the range" do
       assert_nil(acceptor.match("0"))
+    end
+
+    it "rejects floats" do
+      assert_nil(acceptor.match("2.0"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+  end
+
+  describe "of endless integer" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(1..)
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["100", 100], acceptor.match("100"))
+    end
+
+    it "rejects integers outside the range" do
+      assert_nil(acceptor.match("0"))
+    end
+
+    it "rejects floats" do
+      assert_nil(acceptor.match("2.0"))
+    end
+
+    it "rejects non-numerics" do
+      assert_nil(acceptor.match("hi!"))
+    end
+  end
+
+  describe "of beginless integer" do
+    let(:acceptor) {
+      Toys::Acceptor::Range.new(..10)
+    }
+
+    it "accepts integers in the range" do
+      assert_equal(["-10", -10], acceptor.match("-10"))
+    end
+
+    it "rejects integers outside the range" do
+      assert_nil(acceptor.match("20"))
     end
 
     it "rejects floats" do

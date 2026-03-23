@@ -34,7 +34,7 @@ module Toys
       # @return [self]
       #
       def accept(spec = nil, **options, &block)
-        @acceptor = Acceptor.scalarize_spec(spec, options, block)
+        @acceptor = ToolDefinition::ScalarSpec.from(spec, options, block)
         self
       end
 
@@ -61,7 +61,7 @@ module Toys
       # @return [self]
       #
       def complete(spec = nil, **options, &block)
-        @completion = Completion.scalarize_spec(spec, options, block)
+        @completion = ToolDefinition::ScalarSpec.from(spec, options, block)
         self
       end
 

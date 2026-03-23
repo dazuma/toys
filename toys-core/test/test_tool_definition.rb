@@ -521,14 +521,14 @@ describe Toys::ToolDefinition do
 
     it "appends a flag group" do
       tool.add_flag_group(type: :required)
-      assert_equal(Toys::FlagGroup::Base, tool.flag_groups[0].class)
+      assert_equal(Toys::FlagGroup::Optional, tool.flag_groups[0].class)
       assert_equal(Toys::FlagGroup::Required, tool.flag_groups[1].class)
     end
 
     it "prepends a flag group" do
       tool.add_flag_group(type: :required, prepend: true)
       assert_equal(Toys::FlagGroup::Required, tool.flag_groups[0].class)
-      assert_equal(Toys::FlagGroup::Base, tool.flag_groups[1].class)
+      assert_equal(Toys::FlagGroup::Optional, tool.flag_groups[1].class)
     end
 
     it "adds to a flag group by name" do
@@ -565,6 +565,233 @@ describe Toys::ToolDefinition do
       tool.add_flag(:a, ["--[no-]aa"])
       tool.add_flag(:b, ["-bVALUE", "--bb=VALUE"])
       assert_equal(["--aa", "--no-aa", "-b", "--bb"], tool.used_flags)
+    end
+  end
+
+  describe "positional arg definition" do
+    it "starts empty" do
+      assert_empty(tool.required_args)
+      assert_empty(tool.optional_args)
+      assert_nil(tool.remaining_arg)
+      assert_empty(tool.positional_args)
+    end
+
+    describe "add_required_arg" do
+      it "adds a required arg" do
+        tool.add_required_arg(:foo)
+        assert_equal(1, tool.required_args.size)
+        arg = tool.required_args.first
+        assert_equal(:foo, arg.key)
+        assert_equal(:required, arg.type)
+      end
+
+      it "returns self" do
+        assert_same(tool, tool.add_required_arg(:foo))
+      end
+
+      it "adds multiple required args in order" do
+        tool.add_required_arg(:foo)
+        tool.add_required_arg(:bar)
+        tool.add_required_arg(:baz)
+        assert_equal([:foo, :bar, :baz], tool.required_args.map(&:key))
+      end
+
+      it "does not populate default_data" do
+        tool.add_required_arg(:foo)
+        refute(tool.default_data.key?(:foo))
+      end
+
+      it "recognizes desc and long_desc" do
+        tool.add_required_arg(:foo, desc: "short desc", long_desc: ["line one", "line two"])
+        arg = tool.required_args.first
+        assert_equal(wrappable("short desc"), arg.desc)
+        assert_equal([wrappable("line one"), wrappable("line two")], arg.long_desc)
+      end
+
+      it "recognizes accept" do
+        tool.add_required_arg(:foo, accept: Integer)
+        assert_equal(Integer, tool.required_args.first.acceptor.well_known_spec)
+      end
+
+      it "recognizes complete" do
+        tool.add_required_arg(:foo, complete: ["a", "b"])
+        assert_instance_of(Toys::Completion::Enum, tool.required_args.first.completion)
+      end
+
+      it "recognizes display_name" do
+        tool.add_required_arg(:foo, display_name: "MYFOO")
+        assert_equal("MYFOO", tool.required_args.first.display_name)
+      end
+    end
+
+    describe "add_optional_arg" do
+      it "adds an optional arg" do
+        tool.add_optional_arg(:foo)
+        assert_equal(1, tool.optional_args.size)
+        arg = tool.optional_args.first
+        assert_equal(:foo, arg.key)
+        assert_equal(:optional, arg.type)
+      end
+
+      it "returns self" do
+        assert_same(tool, tool.add_optional_arg(:foo))
+      end
+
+      it "sets includes_arguments?" do
+        tool.add_optional_arg(:foo)
+        assert(tool.includes_arguments?)
+      end
+
+      it "adds multiple optional args in order" do
+        tool.add_optional_arg(:foo)
+        tool.add_optional_arg(:bar)
+        tool.add_optional_arg(:baz)
+        assert_equal([:foo, :bar, :baz], tool.optional_args.map(&:key))
+      end
+
+      it "populates default_data with nil by default" do
+        tool.add_optional_arg(:foo)
+        assert(tool.default_data.key?(:foo))
+        assert_nil(tool.default_data[:foo])
+      end
+
+      it "populates default_data with a custom value" do
+        tool.add_optional_arg(:foo, default: "hello")
+        assert_equal("hello", tool.default_data[:foo])
+      end
+
+      it "recognizes desc and long_desc" do
+        tool.add_optional_arg(:foo, desc: "short desc", long_desc: ["line one"])
+        arg = tool.optional_args.first
+        assert_equal(wrappable("short desc"), arg.desc)
+        assert_equal([wrappable("line one")], arg.long_desc)
+      end
+
+      it "recognizes accept" do
+        tool.add_optional_arg(:foo, accept: Integer)
+        assert_equal(Integer, tool.optional_args.first.acceptor.well_known_spec)
+      end
+
+      it "recognizes complete" do
+        tool.add_optional_arg(:foo, complete: ["a", "b"])
+        assert_instance_of(Toys::Completion::Enum, tool.optional_args.first.completion)
+      end
+
+      it "recognizes display_name" do
+        tool.add_optional_arg(:foo, display_name: "MYFOO")
+        assert_equal("MYFOO", tool.optional_args.first.display_name)
+      end
+
+      it "errors if argument parsing is disabled" do
+        tool.disable_argument_parsing
+        assert_raises(Toys::ToolDefinitionError) { tool.add_optional_arg(:foo) }
+      end
+
+      it "errors if definition is finished" do
+        tool.finish_definition(loader)
+        assert_raises(Toys::ToolDefinitionError) { tool.add_optional_arg(:foo) }
+      end
+    end
+
+    describe "set_remaining_args" do
+      it "sets the remaining arg" do
+        tool.set_remaining_args(:rest)
+        refute_nil(tool.remaining_arg)
+        arg = tool.remaining_arg
+        assert_equal(:rest, arg.key)
+        assert_equal(:remaining, arg.type)
+      end
+
+      it "returns self" do
+        assert_same(tool, tool.set_remaining_args(:rest))
+      end
+
+      it "sets includes_arguments?" do
+        tool.set_remaining_args(:rest)
+        assert(tool.includes_arguments?)
+      end
+
+      it "populates default_data with an empty array by default" do
+        tool.set_remaining_args(:rest)
+        assert(tool.default_data.key?(:rest))
+        assert_equal([], tool.default_data[:rest])
+      end
+
+      it "populates default_data with a custom value" do
+        tool.set_remaining_args(:rest, default: ["a", "b"])
+        assert_equal(["a", "b"], tool.default_data[:rest])
+      end
+
+      it "replaces a previously set remaining arg" do
+        tool.set_remaining_args(:rest1)
+        tool.set_remaining_args(:rest2)
+        assert_equal(:rest2, tool.remaining_arg.key)
+      end
+
+      it "recognizes desc and long_desc" do
+        tool.set_remaining_args(:rest, desc: "short desc", long_desc: ["line one"])
+        arg = tool.remaining_arg
+        assert_equal(wrappable("short desc"), arg.desc)
+        assert_equal([wrappable("line one")], arg.long_desc)
+      end
+
+      it "recognizes accept" do
+        tool.set_remaining_args(:rest, accept: Integer)
+        assert_equal(Integer, tool.remaining_arg.acceptor.well_known_spec)
+      end
+
+      it "recognizes complete" do
+        tool.set_remaining_args(:rest, complete: ["a", "b"])
+        assert_instance_of(Toys::Completion::Enum, tool.remaining_arg.completion)
+      end
+
+      it "recognizes display_name" do
+        tool.set_remaining_args(:rest, display_name: "MYREST")
+        assert_equal("MYREST", tool.remaining_arg.display_name)
+      end
+
+      it "errors if argument parsing is disabled" do
+        tool.disable_argument_parsing
+        assert_raises(Toys::ToolDefinitionError) { tool.set_remaining_args(:rest) }
+      end
+
+      it "errors if definition is finished" do
+        tool.finish_definition(loader)
+        assert_raises(Toys::ToolDefinitionError) { tool.set_remaining_args(:rest) }
+      end
+    end
+
+    describe "positional_args aggregate" do
+      it "returns required args only" do
+        tool.add_required_arg(:foo)
+        tool.add_required_arg(:bar)
+        assert_equal([:foo, :bar], tool.positional_args.map(&:key))
+      end
+
+      it "returns optional args only" do
+        tool.add_optional_arg(:foo)
+        tool.add_optional_arg(:bar)
+        assert_equal([:foo, :bar], tool.positional_args.map(&:key))
+      end
+
+      it "returns remaining arg only" do
+        tool.set_remaining_args(:rest)
+        assert_equal([:rest], tool.positional_args.map(&:key))
+      end
+
+      it "returns required, then optional, then remaining" do
+        tool.add_required_arg(:req1)
+        tool.add_required_arg(:req2)
+        tool.add_optional_arg(:opt1)
+        tool.set_remaining_args(:rest)
+        assert_equal([:req1, :req2, :opt1, :rest], tool.positional_args.map(&:key))
+      end
+
+      it "omits remaining when not set" do
+        tool.add_required_arg(:req1)
+        tool.add_optional_arg(:opt1)
+        assert_equal([:req1, :opt1], tool.positional_args.map(&:key))
+      end
     end
   end
 
@@ -770,6 +997,22 @@ describe Toys::ToolDefinition do
         end
       end
     end
+
+    describe "tool-level setting" do
+      it "can be set based on options" do
+        tool.completion = {complete_subtools: false}
+        refute(tool.completion.complete_subtools?)
+        assert(tool.completion.complete_args?)
+      end
+
+      it "can be set by name" do
+        completion = Toys::ToolDefinition::DefaultCompletion.new(complete_subtools: false)
+        tool.add_completion(completion_name, completion)
+        tool.completion = completion_name
+        refute(tool.completion.complete_subtools?)
+        assert(tool.completion.complete_args?)
+      end
+    end
   end
 
   describe "source info" do
@@ -970,6 +1213,13 @@ describe Toys::ToolDefinition do
 
     it "errors if the tool is already runnable" do
       tool.run_handler = proc {}
+      assert_raises(Toys::ToolDefinitionError) do
+        tool.delegate_to(["bar"])
+      end
+    end
+
+    it "errors if the run handler has been set to a different method name" do
+      tool.run_handler = :run_other
       assert_raises(Toys::ToolDefinitionError) do
         tool.delegate_to(["bar"])
       end

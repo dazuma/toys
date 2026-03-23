@@ -283,7 +283,9 @@ module Toys
       # The array of enum values.
       # @return [Array<Object>]
       #
-      attr_reader :values
+      def values
+        @values.map(&:last)
+      end
 
       ##
       # Overrides {Toys::Acceptor::Base#match} to find the value.
@@ -362,7 +364,7 @@ module Toys
         converter ||= block || make_converter(range.begin, range.end)
         super(type_desc: type_desc, well_known_spec: well_known_spec) do |val|
           val = converter.call(val) if converter
-          val.nil? || range.include?(val) ? val : REJECT
+          range.include?(val) ? val : REJECT
         end
         @range = range
       end
@@ -376,13 +378,30 @@ module Toys
       private
 
       def make_converter(val1, val2)
-        if val1.is_a?(::Integer) && val2.is_a?(::Integer)
+        if val1.nil?
+          make_converter1(val2)
+        elsif val2.nil?
+          make_converter1(val1)
+        elsif val1.is_a?(::Integer) && val2.is_a?(::Integer)
           INTEGER_CONVERTER
         elsif val1.is_a?(::Float) && val2.is_a?(::Float)
           FLOAT_CONVERTER
         elsif val1.is_a?(::Rational) && val2.is_a?(::Rational)
           RATIONAL_CONVERTER
         elsif val1.is_a?(::Numeric) && val2.is_a?(::Numeric)
+          NUMERIC_CONVERTER
+        end
+      end
+
+      def make_converter1(val)
+        case val
+        when ::Integer
+          INTEGER_CONVERTER
+        when ::Float
+          FLOAT_CONVERTER
+        when ::Rational
+          RATIONAL_CONVERTER
+        when ::Numeric
           NUMERIC_CONVERTER
         end
       end
@@ -393,21 +412,21 @@ module Toys
     # acceptors.
     # @return [Proc]
     #
-    INTEGER_CONVERTER = proc { |s| s.nil? ? nil : Integer(s) }
+    INTEGER_CONVERTER = proc { |s| Integer(s) }
 
     ##
     # A converter proc that handles floats. Useful in Simple and Range
     # acceptors.
     # @return [Proc]
     #
-    FLOAT_CONVERTER = proc { |s| s.nil? ? nil : Float(s) }
+    FLOAT_CONVERTER = proc { |s| Float(s) }
 
     ##
     # A converter proc that handles rationals. Useful in Simple and Range
     # acceptors.
     # @return [Proc]
     #
-    RATIONAL_CONVERTER = proc { |s| s.nil? ? nil : Rational(s) }
+    RATIONAL_CONVERTER = proc { |s| Rational(s) }
 
     ##
     # A converter proc that handles any numeric value. Useful in Simple and
@@ -490,7 +509,7 @@ module Toys
       #     and type description you provide are ignored.
       #
       #  *  Any **regular expression**. The returned acceptor validates only if
-      #     the regex matches the *entire string parameter*.
+      #     the regex matches the string parameter.
       #
       #     You can also provide an optional conversion function as a block. If
       #     provided, the block must take a variable number of arguments, the
@@ -541,37 +560,11 @@ module Toys
       # @return [Toys::Acceptor::Base,Proc]
       #
       def create(spec = nil, **options, &block)
+        if defined?(::Toys::ToolDefinition) && spec.is_a?(ToolDefinition::ScalarSpec)
+          spec, options, block = spec.expand
+        end
         well_known = lookup_well_known(spec)
         return well_known if well_known
-        if spec.is_a?(::Hash)
-          options = options.merge(spec)
-          spec = nil
-        end
-        spec ||= options.delete(:"")
-        internal_create(spec, options, block)
-      end
-
-      ##
-      # Take the various ways to express an acceptor spec, and convert them to
-      # a canonical form expressed as a single object. This is called from the
-      # DSL to generate a spec object that can be stored.
-      #
-      # @private This interface is internal and subject to change without warning.
-      #
-      def scalarize_spec(spec, options, block)
-        spec ||= block
-        if options.empty?
-          spec
-        elsif spec
-          options.merge({"": spec})
-        else
-          options
-        end
-      end
-
-      private
-
-      def internal_create(spec, options, block)
         case spec
         when Base
           spec
@@ -583,12 +576,16 @@ module Toys
           Simple.new(spec, **options)
         when ::Range
           Range.new(spec, **options, &block)
-        when nil, :default
+        when :default
+          DEFAULT
+        when nil
           block ? Simple.new(**options, &block) : DEFAULT
         else
           raise ToolDefinitionError, "Illegal acceptor spec: #{spec.inspect}"
         end
       end
+
+      private
 
       def standard_well_knowns
         @standard_well_knowns ||= {

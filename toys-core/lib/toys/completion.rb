@@ -398,6 +398,9 @@ module Toys
     #     completion object, taking {Toys::Completion::Context} as the sole
     #     argument, and returning an array of {Toys::Completion::Candidate}.
     #
+    #  *  A **class**. Returns an instantiation of the class. Any options are
+    #     passed through as keyword arguments.
+    #
     #  *  `:default` and `nil` indicate the **default completion**. For this
     #     method, the default is the empty completion (i.e. these are synonyms
     #     for `:empty`). However, other completion resolution methods might
@@ -409,20 +412,18 @@ module Toys
     # @return [Toys::Completion::Base,Proc]
     #
     def self.create(spec = nil, **options, &block)
-      if spec.is_a?(::Hash)
-        options = options.merge(spec)
-        spec = nil
+      if defined?(::Toys::ToolDefinition) && spec.is_a?(ToolDefinition::ScalarSpec)
+        spec, options, block = spec.expand
       end
-      spec ||= options.delete(:"") || block
       case spec
-      when nil, :empty, :default
+      when :empty, :default
         EMPTY
-      when ::Proc, Base
-        spec
-      when ::Array
-        Enum.new(spec, **options)
+      when nil
+        block || EMPTY
       when :file_system
         FileSystem.new(**options)
+      when ::Array
+        Enum.new(spec, **options)
       when ::Class
         spec.new(**options)
       else
@@ -431,24 +432,6 @@ module Toys
         else
           raise ToolDefinitionError, "Illegal completion spec: #{spec.inspect}"
         end
-      end
-    end
-
-    ##
-    # Take the various ways to express a completion spec, and convert them to a
-    # canonical form expressed as a single object. This is called from the DSL
-    # DSL to generate a spec object that can be stored.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.scalarize_spec(spec, options, block)
-      spec ||= block
-      if options.empty?
-        spec
-      elsif spec
-        options.merge({"": spec})
-      else
-        options
       end
     end
   end
