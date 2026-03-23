@@ -2,10 +2,10 @@
 
 ### v0.9.0 / 2026-03-23
 
-* ADDED: Provided a setting that allows the current VERSION constant to determine the release version
-* FIXED: Gen-gh-pages and gen-workflows no longer ask for confirmation if a file to generate is unchanged
+* ADDED: Provided a `version_from_code` setting that allows the current VERSION constant to determine the release version
+* FIXED: The gen-gh-pages and gen-workflows tools no longer ask for confirmation if a file to generate is unchanged
 * FIXED: Release versions can now omit version fields beyond major, e.g. version "1" is now legal
-* FIXED: Minor UI improvements for gen-gh-pages
+* FIXED: Minor UI improvements for the gen-gh-pages tool
 * DOCS: Minor fixes to the toys-release guide
 
 ### v0.8.2 / 2026-03-18
