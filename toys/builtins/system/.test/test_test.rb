@@ -120,6 +120,9 @@ describe "toys system test" do
   it "loads bundles" do
     tool = ["system", "test", "-d", tools_dir, "-t", "bundled", "-v"]
     _out, err = capture_subprocess_io do
+      # Make sure rack is installed first, so that the test doesn't hang while
+      # prompting and waiting for a response
+      system("gem install rack") if `gem list -i rack`.strip == "false"
       # Tests would fail if the bundle wasn't loaded
       assert_equal(0, toys_run_tool(tool))
     end
