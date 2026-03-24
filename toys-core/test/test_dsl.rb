@@ -263,6 +263,248 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "on_interrupt directive" do
+    it "defaults to no interrupt handler" do
+      loader.add_block do
+        tool "foo" do
+          # no on_interrupt
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.interrupt_handler)
+      assert_equal(false, tool.handles_signal?("INT"))
+    end
+
+    it "registers a block as the interrupt handler" do
+      loader.add_block do
+        tool "foo" do
+          on_interrupt { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.interrupt_handler)
+      assert(tool.handles_signal?(2))
+    end
+
+    it "registers a method symbol as the interrupt handler" do
+      loader.add_block do
+        tool "foo" do
+          on_interrupt :my_handler
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:my_handler, tool.interrupt_handler)
+      assert(tool.handles_signal?("INT"))
+    end
+
+    it "registers a Proc object as the interrupt handler" do
+      my_proc = proc { :noop }
+      loader.add_block do
+        tool "foo" do
+          on_interrupt my_proc
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_same(my_proc, tool.interrupt_handler)
+    end
+
+    it "clears the handler when nil is given" do
+      loader.add_block do
+        tool "foo" do
+          on_interrupt { :noop }
+          on_interrupt nil
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.interrupt_handler)
+      assert_equal(false, tool.handles_signal?("INT"))
+    end
+
+    it "is stored as signal_handler(2)" do
+      loader.add_block do
+        tool "foo" do
+          on_interrupt :my_handler
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:my_handler, tool.signal_handler(2))
+      assert_equal(:my_handler, tool.signal_handler("INT"))
+      assert_equal(:my_handler, tool.signal_handler("SIGINT"))
+      assert_equal(:my_handler, tool.signal_handler(:INT))
+    end
+  end
+
+  describe "on_signal directive" do
+    it "defaults to no signal handlers" do
+      loader.add_block do
+        tool "foo" do
+          # no on_signal
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.signal_handler(15))
+      assert_equal(false, tool.handles_signal?(15))
+    end
+
+    it "registers a block handler for an integer signal number" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(15) { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.signal_handler(15))
+      assert(tool.handles_signal?(15))
+    end
+
+    it "registers a method symbol handler for a signal" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(15, :my_handler)
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:my_handler, tool.signal_handler(15))
+    end
+
+    it "accepts a string signal name without SIG prefix" do
+      loader.add_block do
+        tool "foo" do
+          on_signal("TERM") { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.signal_handler(15))
+      assert_instance_of(Proc, tool.signal_handler("TERM"))
+      assert_instance_of(Proc, tool.signal_handler("SIGTERM"))
+    end
+
+    it "accepts a string signal name with SIG prefix" do
+      loader.add_block do
+        tool "foo" do
+          on_signal("SIGTERM") { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.signal_handler(15))
+    end
+
+    it "accepts a symbol signal name" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(:TERM) { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.signal_handler(15))
+    end
+
+    it "stores separate handlers for different signals" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(15, :term_handler)
+          on_signal(4, :other_handler)
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:term_handler, tool.signal_handler(15))
+      assert_equal(:other_handler, tool.signal_handler(4))
+      assert_nil(tool.signal_handler(2))
+    end
+
+    it "clears a handler when nil is given" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(15) { :noop }
+          on_signal(15, nil)
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.signal_handler(15))
+      assert_equal(false, tool.handles_signal?(15))
+    end
+
+    it "sets the interrupt handler when signal number is 2" do
+      loader.add_block do
+        tool "foo" do
+          on_signal(2, :my_handler)
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:my_handler, tool.interrupt_handler)
+    end
+
+    it "raises ArgumentError for an unknown signal number" do
+      t = self
+      loader.add_block do
+        tool "foo" do
+          t.assert_raises(ArgumentError) do
+            on_signal(999) { :noop }
+          end
+        end
+      end
+      loader.lookup(["foo"])
+    end
+  end
+
+  describe "on_usage_error directive" do
+    it "defaults to no usage error handler" do
+      loader.add_block do
+        tool "foo" do
+          # no on_usage_error
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.usage_error_handler)
+      assert_equal(false, tool.handles_usage_errors?)
+    end
+
+    it "registers a block as the usage error handler" do
+      loader.add_block do
+        tool "foo" do
+          on_usage_error { :noop }
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_instance_of(Proc, tool.usage_error_handler)
+      assert(tool.handles_usage_errors?)
+    end
+
+    it "registers a method symbol as the usage error handler" do
+      loader.add_block do
+        tool "foo" do
+          on_usage_error :my_handler
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal(:my_handler, tool.usage_error_handler)
+      assert(tool.handles_usage_errors?)
+    end
+
+    it "registers a Proc object as the usage error handler" do
+      my_proc = proc { :noop }
+      loader.add_block do
+        tool "foo" do
+          on_usage_error my_proc
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_same(my_proc, tool.usage_error_handler)
+    end
+
+    it "clears the handler when nil is given" do
+      loader.add_block do
+        tool "foo" do
+          on_usage_error { :noop }
+          on_usage_error nil
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.usage_error_handler)
+      assert_equal(false, tool.handles_usage_errors?)
+    end
+  end
+
   describe "completion directive" do
     it "creates an enum completion" do
       loader.add_block do
@@ -1858,14 +2100,16 @@ describe Toys::DSL::Tool do
   end
 
   describe "subtool_apply directive" do
-    it "applies to subtools" do
+    it "applies recursively to subtools" do
       loader.add_block do
         tool "foo" do
           subtool_apply do
             desc "hello"
           end
           tool "bar" do
-            # Empty tool
+            tool "qux" do
+              # Empty tool
+            end
           end
           tool "baz" do
             desc "ahoy"
@@ -1876,6 +2120,29 @@ describe Toys::DSL::Tool do
       assert_equal("hello", tool.desc.to_s)
       tool, _remaining = loader.lookup(["foo", "baz"])
       assert_equal("hello", tool.desc.to_s)
+      tool, _remaining = loader.lookup(["foo", "bar", "qux"])
+      assert_equal("hello", tool.desc.to_s)
+    end
+
+    it "applies multiple blocks" do
+      loader.add_block do
+        tool "foo" do
+          subtool_apply do
+            desc "hello"
+            long_desc "hello", "Ruby"
+          end
+          subtool_apply do
+            desc "greetings"
+            long_desc "greetings", "Ruby"
+          end
+          tool "bar" do
+            # Empty tool
+          end
+        end
+      end
+      tool, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal("greetings", tool.desc.to_s)
+      assert_equal(["hello", "Ruby", "greetings", "Ruby"], tool.long_desc.map(&:to_s))
     end
 
     it "does not affect the current tool" do
@@ -2126,6 +2393,187 @@ describe Toys::DSL::Tool do
         end
       end
       loader.lookup(["blah"])
+    end
+  end
+
+  describe "context_directory directive" do
+    it "returns nil when no context directory exists" do
+      captured = nil
+      loader.add_block do
+        tool "foo" do
+          captured = context_directory
+        end
+      end
+      loader.lookup(["foo"])
+      assert_nil(captured)
+    end
+
+    it "returns the source context directory when no custom one is set" do
+      captured = nil
+      loader.add_block(context_directory: "/source/dir") do
+        tool "foo" do
+          captured = context_directory
+        end
+      end
+      loader.lookup(["foo"])
+      assert_equal("/source/dir", captured)
+    end
+
+    it "returns the custom directory after set_context_directory" do
+      captured = nil
+      loader.add_block do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+          captured = context_directory
+        end
+      end
+      loader.lookup(["foo"])
+      assert_equal("/custom/dir", captured)
+    end
+
+    it "returns the custom directory over the source context directory" do
+      captured = nil
+      loader.add_block(context_directory: "/source/dir") do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+          captured = context_directory
+        end
+      end
+      loader.lookup(["foo"])
+      assert_equal("/custom/dir", captured)
+    end
+  end
+
+  describe "set_context_directory directive" do
+    it "sets custom_context_directory on the tool definition" do
+      loader.add_block do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("/custom/dir", tool.custom_context_directory)
+    end
+
+    it "does not set custom_context_directory if not called" do
+      loader.add_block do
+        tool "foo" do
+          # no set_context_directory
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_nil(tool.custom_context_directory)
+    end
+
+    it "sets the effective context_directory on the tool definition" do
+      loader.add_block do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("/custom/dir", tool.context_directory)
+    end
+
+    it "overrides the source context directory" do
+      loader.add_block(context_directory: "/source/dir") do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("/custom/dir", tool.context_directory)
+    end
+
+    it "nil clears a previously set custom directory and reverts to source" do
+      captured_after_set = nil
+      captured_after_clear = nil
+      loader.add_block(context_directory: "/source/dir") do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+          captured_after_set = context_directory
+          set_context_directory nil
+          captured_after_clear = context_directory
+        end
+      end
+      tool, _remaining = loader.lookup(["foo"])
+      assert_equal("/custom/dir", captured_after_set)
+      assert_nil(tool.custom_context_directory)
+      assert_equal("/source/dir", captured_after_clear)
+    end
+
+    it "is inherited by subtools that have no custom directory" do
+      loader.add_block do
+        tool "foo" do
+          set_context_directory "/custom/dir"
+          tool "bar" do
+            # no set_context_directory
+          end
+        end
+      end
+      child, _remaining = loader.lookup(["foo", "bar"])
+      assert_nil(child.custom_context_directory)
+      assert_equal("/custom/dir", child.context_directory)
+    end
+
+    it "can be overridden in a subtool" do
+      loader.add_block do
+        tool "foo" do
+          set_context_directory "/parent/dir"
+          tool "bar" do
+            set_context_directory "/child/dir"
+          end
+        end
+      end
+      parent, _remaining = loader.lookup(["foo"])
+      child, _remaining = loader.lookup(["foo", "bar"])
+      assert_equal("/parent/dir", parent.context_directory)
+      assert_equal("/child/dir", child.context_directory)
+    end
+  end
+
+  describe "find_data directive" do
+    let(:find_data_dir) { File.join(cases_dir, "data-finder") }
+
+    it "returns nil from an inline block source" do
+      captured = :unset
+      loader.add_block do
+        tool "foo" do
+          captured = find_data("foo/bar.txt")
+        end
+      end
+      loader.lookup(["foo"])
+      assert_nil(captured)
+    end
+
+    it "returns path when file found in current data directory" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-1", "foo"))
+    end
+
+    it "falls back to parent data directory" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-1", "ns-1b", "foo"))
+    end
+
+    it "falls back to root data directory" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-4", "foo"))
+    end
+
+    it "returns nil when file not found in any ancestor data directory" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-3", "foo"))
+    end
+
+    it "filters by type: :file" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-1", "type_file"))
+    end
+
+    it "filters by type: :directory" do
+      cli.loader.add_path(find_data_dir)
+      assert_equal(0, cli.run("ns-1", "type_dir"))
     end
   end
 
