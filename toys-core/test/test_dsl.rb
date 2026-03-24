@@ -1568,22 +1568,23 @@ describe Toys::DSL::Tool do
       assert_equal(1, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter even if the key starts with an underscore" do
+    it "does not define a getter if the key starts with an underscore" do
       loader.add_block do
         static(:_abc_2def!, "hi")
       end
       tool, _remaining = loader.lookup([])
-      assert_equal(true, tool.tool_class.public_method_defined?(:_abc_2def!))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:_abc_2def!))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
-    it "defines a getter even if the key collides with an Object method" do
+    it "does not define a getter if the key collides with an Object method" do
       loader.add_block do
         static(:display, "hi")
       end
       tool, _remaining = loader.lookup([])
       assert_equal(true, tool.tool_class.public_method_defined?(:display))
-      assert_equal(1, tool.tool_class.public_instance_methods(false).size)
+      assert_equal(false, tool.tool_class.public_method_defined?(:display, false))
+      assert_equal(0, tool.tool_class.public_instance_methods(false).size)
     end
 
     it "does not define a getter for a string key" do

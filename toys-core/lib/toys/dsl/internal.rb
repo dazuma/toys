@@ -12,7 +12,7 @@ module Toys
       # @private A list of method names to avoid using as getters
       #
       AVOID_GETTERS = (::Object.instance_methods + [:run, :initialize])
-                      .grep(/^[a-z]\w*$/)
+                      .grep(/^[a-zA-Z]\w*$/)
                       .to_h { |name| [name, true] }
                       .freeze
 
@@ -26,7 +26,7 @@ module Toys
         def prepare(tool_class, words, priority, remaining_words, source, loader)
           unless tool_class.is_a?(DSL::Tool)
             class << tool_class
-              alias_method :super_include, :include
+              alias_method :include_module, :include
             end
             tool_class.extend(DSL::Tool)
           end
@@ -155,7 +155,7 @@ module Toys
               raise Toys::ToolDefinitionError, e.to_s
             end
           else
-            raise Toys::ToolDefinitionError, "Cannot load long desc from file type: #{path}"
+            raise Toys::ToolDefinitionError, "Cannot load long desc from non-text file: #{path}"
           end
         end
 
@@ -198,7 +198,7 @@ module Toys
         def setup_class_dsl(tool_class)
           return if tool_class.name.nil? || tool_class.is_a?(DSL::Tool)
           class << tool_class
-            alias_method :super_include, :include
+            alias_method :include_module, :include
           end
           tool_class.extend(DSL::Tool)
         end
@@ -208,7 +208,7 @@ module Toys
         def class_name_to_tool_name(class_name)
           name = class_name.to_s.sub(/^_+/, "").sub(/_+$/, "").gsub(/_+/, "-")
           while name.sub!(/([^-])([A-Z])/, "\\1-\\2") do end
-          [name.downcase!]
+          [name.downcase]
         end
 
         def parent_from_mod_name_segments(mod_names)

@@ -289,6 +289,7 @@ module Toys
       # directly defined in the tool class.
       #
       # @param value [true,false,nil]
+      # @return [self]
       #
       def add_method(value)
         @add_method =
@@ -299,6 +300,7 @@ module Toys
           else
             false
           end
+        self
       end
 
       ##

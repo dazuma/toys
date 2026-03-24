@@ -767,8 +767,8 @@ module Toys
         raise ToolDefinitionError, "Mixin already included: #{mod.name}"
       end
       @includes_modules = true
-      if tool_class.respond_to?(:super_include)
-        tool_class.super_include(mod)
+      if tool_class.respond_to?(:include_module)
+        tool_class.include_module(mod)
       else
         tool_class.include(mod)
       end
