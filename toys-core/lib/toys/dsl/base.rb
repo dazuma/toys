@@ -29,10 +29,10 @@ def Toys.Tool(*args, name: nil, base: nil) # rubocop:disable Naming/MethodName
   args.each do |arg|
     case arg
     when ::Class
-      raise ::ArgumentError, "Both base keyword argument and class-valud argument received" if base
+      raise ::ArgumentError, "Both base keyword argument and class-valued argument received" if base
       base = arg
     when ::String, ::Symbol
-      raise ::ArgumentError, "Both name keyword argument and string-valud argument received" if name
+      raise ::ArgumentError, "Both name keyword argument and string-valued argument received" if name
       name = arg
     else
       raise ::ArgumentError, "Unrecognized argument: #{arg}"

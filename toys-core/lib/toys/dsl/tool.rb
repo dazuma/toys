@@ -104,7 +104,8 @@ module Toys
       #
       def acceptor(name, spec = nil, type_desc: nil, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        cur_tool&.add_acceptor(name, spec, type_desc: type_desc || name.to_s, &block)
+        return self if cur_tool.nil?
+        cur_tool.add_acceptor(name, spec, type_desc: type_desc || name.to_s, &block)
         self
       end
 
@@ -148,7 +149,8 @@ module Toys
       #
       def mixin(name, mixin_module = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, false)
-        cur_tool&.add_mixin(name, mixin_module, &block)
+        return self if cur_tool.nil?
+        cur_tool.add_mixin(name, mixin_module, &block)
         self
       end
 
@@ -448,7 +450,7 @@ module Toys
       def load_git(remote: nil, path: nil, commit: nil, as: nil, update: false)
         if as
           tool(as) do
-            load_git(remote: remote, path: path, commit: commit)
+            load_git(remote: remote, path: path, commit: commit, update: update)
           end
           return self
         end
@@ -476,6 +478,8 @@ module Toys
       #     will be used.
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     configuration will be loaded into the current namespace.
+      #
+      # @return [self]
       #
       def load_gem(name, *versions, version: nil, path: nil, toys_dir: nil, as: nil)
         version = versions + Array(version)
@@ -605,8 +609,8 @@ module Toys
       #
       # @param strs [Toys::WrappableString,String,Array<String>...]
       # @param file [String] Optional. Read the description from the given file
-      #     provided relative to the current toys file. The file must be a
-      #     plain text file whose suffix is `.txt`.
+      #     provided relative to the directory containing the current toys file.
+      #     The file must be a plain text file whose suffix is `.txt`.
       # @param data [String] Optional. Read the description from the given data
       #     file. The file must be a plain text file whose suffix is `.txt`.
       # @return [self]
@@ -664,7 +668,9 @@ module Toys
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
-      #     for the directives that can be called in this block.
+      #     for the directives that can be called in this block. That object
+      #     is set as `self` within the block, and is also passed to the block
+      #     as an optional argument.
       # @return [self]
       #
       def flag_group(type: :optional, desc: nil, long_desc: nil, name: nil,
@@ -711,7 +717,9 @@ module Toys
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
-      #     for the directives that can be called in this block.
+      #     for the directives that can be called in this block. That object
+      #     is set as `self` within the block, and is also passed to the block
+      #     as an optional argument.
       # @return [self]
       #
       def all_required(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -723,7 +731,7 @@ module Toys
       ##
       # Create a flag group of type `:at_most_one`. If a block is given, flags
       # defined in the block belong to the group. At most one flag in this
-      # group must be provided on the command line.
+      # group may be provided on the command line.
       #
       # ### Example
       #
@@ -754,7 +762,9 @@ module Toys
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
-      #     for the directives that can be called in this block.
+      #     for the directives that can be called in this block. That object
+      #     is set as `self` within the block, and is also passed to the block
+      #     as an optional argument.
       # @return [self]
       #
       def at_most_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -798,7 +808,9 @@ module Toys
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
-      #     for the directives that can be called in this block.
+      #     for the directives that can be called in this block. That object
+      #     is set as `self` within the block, and is also passed to the block
+      #     as an optional argument.
       # @return [self]
       #
       def at_least_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -842,7 +854,9 @@ module Toys
       # @param prepend [Boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
-      #     for the directives that can be called in this block.
+      #     for the directives that can be called in this block. That object
+      #     is set as `self` within the block, and is also passed to the block
+      #     as an optional argument.
       # @return [self]
       #
       def exactly_one(desc: nil, long_desc: nil, name: nil, report_collisions: true,
@@ -1025,7 +1039,9 @@ module Toys
       #     method in the Ruby Object class or collide with any method directly
       #     defined in the tool class.
       # @param block [Proc] Configures the flag. See {Toys::DSL::Flag} for the
-      #     directives that can be called in this block.
+      #     directives that can be called in this block. That object is set as
+      #     `self` within the block, and is also passed to the block as an
+      #     optional argument.
       # @return [self]
       #
       def flag(key, *flags,
@@ -1093,11 +1109,11 @@ module Toys
       # @param display_name [String] A name to use for display (in help text
       #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description for the argument. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
-      #     a description of the allowed formats. (But note that this param
+      #     Long description for the argument. See {Toys::DSL::Tool#long_desc}
+      #     for a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
       # @param add_method [true,false,nil] Whether to add a method for this
@@ -1108,7 +1124,8 @@ module Toys
       #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
-      #     this block.
+      #     this block. That object is set as `self` within the block, and is
+      #     also passed to the block as an optional argument.
       # @return [self]
       #
       def required_arg(key,
@@ -1178,11 +1195,11 @@ module Toys
       # @param display_name [String] A name to use for display (in help text
       #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description for the argument. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
-      #     a description of the allowed formats. (But note that this param
+      #     Long description for the argument. See {Toys::DSL::Tool#long_desc}
+      #     for a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
       # @param add_method [true,false,nil] Whether to add a method for this
@@ -1193,7 +1210,8 @@ module Toys
       #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
-      #     this block.
+      #     this block. That object is set as `self` within the block, and is
+      #     also passed to the block as an optional argument.
       # @return [self]
       #
       def optional_arg(key,
@@ -1263,11 +1281,11 @@ module Toys
       # @param display_name [String] A name to use for display (in help text
       #     and error reports). Defaults to the key in upper case.
       # @param desc [String,Array<String>,Toys::WrappableString] Short
-      #     description for the flag. See {Toys::DSL::Tool#desc} for a
+      #     description for the argument. See {Toys::DSL::Tool#desc} for a
       #     description of the allowed formats. Defaults to the empty string.
       # @param long_desc [Array<String,Array<String>,Toys::WrappableString>]
-      #     Long description for the flag. See {Toys::DSL::Tool#long_desc} for
-      #     a description of the allowed formats. (But note that this param
+      #     Long description for the argument. See {Toys::DSL::Tool#long_desc}
+      #     for a description of the allowed formats. (But note that this param
       #     takes an Array of description lines, rather than a series of
       #     arguments.) Defaults to the empty array.
       # @param add_method [true,false,nil] Whether to add a method for these
@@ -1278,7 +1296,8 @@ module Toys
       #     directly defined in the tool class.
       # @param block [Proc] Configures the positional argument. See
       #     {Toys::DSL::PositionalArg} for the directives that can be called in
-      #     this block.
+      #     this block. That object is set as `self` within the block, and is
+      #     also passed to the block as an optional argument.
       # @return [self]
       #
       def remaining_args(key,
@@ -1299,10 +1318,12 @@ module Toys
       ##
       # Set option values statically and create helper methods.
       #
-      # If any given key is a symbol representing a valid method name, then a
-      # helper method is automatically added to retrieve the value. Otherwise,
-      # if the key is a string or does not represent a valid method name, the
-      # tool can retrieve the value by calling {Toys::Context#get}.
+      # A helper method will be defined to retrieve the value based on the same
+      # logic governing flag and positional argument directives. That is, if
+      # the key is a symbol representing a legal method name that starts with a
+      # letter and does not override any public method in the Ruby Object class
+      # or collide with any method directly defined in the tool class.
+      # Otherwise, the value can be retrieved by calling {Toys::Context#get}.
       #
       # ### Example
       #
@@ -1331,11 +1352,11 @@ module Toys
         if key.is_a?(::Hash)
           cur_tool.default_data.merge!(key)
           key.each_key do |k|
-            DSL::Internal.maybe_add_getter(self, k, true)
+            DSL::Internal.maybe_add_getter(self, k, nil)
           end
         else
           cur_tool.default_data[key] = value
-          DSL::Internal.maybe_add_getter(self, key, true)
+          DSL::Internal.maybe_add_getter(self, key, nil)
         end
         self
       end
@@ -1388,7 +1409,8 @@ module Toys
       #
       def enforce_flags_before_args(state = true)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.enforce_flags_before_args(state)
+        return self if cur_tool.nil?
+        cur_tool.enforce_flags_before_args(state)
         self
       end
 
@@ -1405,7 +1427,8 @@ module Toys
       #
       def require_exact_flag_match(state = true)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.require_exact_flag_match(state)
+        return self if cur_tool.nil?
+        cur_tool.require_exact_flag_match(state)
         self
       end
 
@@ -1430,7 +1453,8 @@ module Toys
       #
       def disable_argument_parsing
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.disable_argument_parsing
+        return self if cur_tool.nil?
+        cur_tool.disable_argument_parsing
         self
       end
 
@@ -1457,7 +1481,8 @@ module Toys
       #
       def disable_flag(*flags)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.disable_flag(*flags)
+        return self if cur_tool.nil?
+        cur_tool.disable_flag(*flags)
         self
       end
 
@@ -1550,7 +1575,8 @@ module Toys
       #
       def to_run(handler = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.run_handler = handler || block
+        return self if cur_tool.nil?
+        cur_tool.run_handler = handler || block
         self
       end
       alias on_run to_run
@@ -1576,14 +1602,15 @@ module Toys
       #       end
       #     end
       #
-      # @param handler [Proc,Symbol,nil] The interrupt callback proc or method
-      #     name. Pass nil to disable interrupt handling.
-      # @param block [Proc] The interrupt callback as a block.
+      # @param handler [Proc,Symbol,nil] The callback proc or method name.
+      #     Pass nil to disable interrupt handling.
+      # @param block [Proc] The callback as a block.
       # @return [self]
       #
       def on_interrupt(handler = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.interrupt_handler = handler || block
+        return self if cur_tool.nil?
+        cur_tool.interrupt_handler = handler || block
         self
       end
 
@@ -1607,14 +1634,15 @@ module Toys
       #     end
       #
       # @param signal [Integer,String,Symbol] The signal name or number
-      # @param handler [Proc,Symbol,nil] The signal callback proc or method
-      #     name. Pass nil to disable signal handling.
-      # @param block [Proc] The signal callback as a block.
+      # @param handler [Proc,Symbol,nil] The callback proc or method name.
+      #     Pass nil to disable signal handling.
+      # @param block [Proc] The callback as a block.
       # @return [self]
       #
       def on_signal(signal, handler = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.set_signal_handler(signal, handler || block)
+        return self if cur_tool.nil?
+        cur_tool.set_signal_handler(signal, handler || block)
         self
       end
 
@@ -1638,14 +1666,15 @@ module Toys
       #       on_usage_error :run
       #     end
       #
-      # @param handler [Proc,Symbol,nil] The interrupt callback proc or method
-      #     name. Pass nil to disable interrupt handling.
-      # @param block [Proc] The interrupt callback as a block.
+      # @param handler [Proc,Symbol,nil] The callback proc or method name.
+      #     Pass nil to disable usage error handling.
+      # @param block [Proc] The callback as a block.
       # @return [self]
       #
       def on_usage_error(handler = nil, &block)
         cur_tool = DSL::Internal.current_tool(self, true)
-        cur_tool&.usage_error_handler = handler || block
+        return self if cur_tool.nil?
+        cur_tool.usage_error_handler = handler || block
         self
       end
 
@@ -1656,6 +1685,9 @@ module Toys
       # You can provide either a module, the string name of a mixin that you
       # have defined in this tool or one of its ancestors, or the symbol name
       # of a well-known mixin.
+      #
+      # The standard Ruby `Module#include` method can be invoked by calling
+      # `include_module` instead of `include`.
       #
       # ### Example
       #
@@ -1776,7 +1808,8 @@ module Toys
       #
       def set_context_directory(dir) # rubocop:disable Naming/AccessorMethodName
         cur_tool = DSL::Internal.current_tool(self, false)
-        cur_tool&.custom_context_directory = dir
+        return self if cur_tool.nil?
+        cur_tool.custom_context_directory = dir
         self
       end
 
