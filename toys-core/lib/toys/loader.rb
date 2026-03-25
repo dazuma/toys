@@ -55,6 +55,8 @@ module Toys
         raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
       end
       require "monitor"
+      # This mutex serializes all loading. It could be held for arbitrary
+      # amounts of time because it surrounds the loading of tools files.
       @mutex = ::Monitor.new
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
@@ -85,7 +87,9 @@ module Toys
     # @param high_priority [Boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
-    # @param source_name [String] A custom name for the root source. Optional.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools loaded from this source. If omitted, a
+    #     default unique string will be generated.
     # @param context_directory [String,nil,:path,:parent] The context directory
     #     for tools loaded from this path. You can pass a directory path as a
     #     string, `:path` to denote the given path, `:parent` to denote the
@@ -123,6 +127,10 @@ module Toys
     # @param high_priority [Boolean] If true, add the paths at the top of the
     #     priority list. Defaults to false, indicating the new paths should be
     #     at the bottom of the priority list.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools loaded from these sources. (Specifically,
+    #     sets the name of the synthetic root source.) If omitted, a default
+    #     unique string will be generated.
     # @param context_directory [String,nil,:path,:parent] The context directory
     #     for tools loaded from this path. You can pass a directory path as a
     #     string, `:path` to denote the given root path, `:parent` to denote
@@ -132,6 +140,7 @@ module Toys
     #
     def add_path_set(root_path, relative_paths,
                      high_priority: false,
+                     source_name: nil,
                      context_directory: :path)
       relative_paths = Array(relative_paths)
       @mutex.synchronize do
@@ -140,10 +149,11 @@ module Toys
         root_source = SourceInfo.create_path_root(root_path, priority,
                                                   context_directory: context_directory,
                                                   data_dir_name: @data_dir_name,
-                                                  lib_dir_name: @lib_dir_name)
+                                                  lib_dir_name: @lib_dir_name,
+                                                  source_name: source_name)
         @roots_by_priority[priority] = root_source
-        relative_paths.each do |path, individual_name|
-          source = root_source.relative_child(path, source_name: individual_name)
+        relative_paths.each do |path|
+          source = root_source.relative_child(path)
           @worklist << [source, [], priority]
         end
       end
@@ -157,8 +167,8 @@ module Toys
     #     priority list. Defaults to false, indicating the block should be at
     #     the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
-    #     documentation for tools defined in this block. If omitted, a default
-    #     unique string will be generated.
+    #     documentation for tools loaded from this source. If omitted, a
+    #     default unique string will be generated.
     # @param block [Proc] The block of configuration, executed in the context
     #     of the tool DSL {Toys::DSL::Tool}.
     # @param context_directory [String,nil] The context directory for tools
@@ -194,6 +204,9 @@ module Toys
     # @param high_priority [Boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools loaded from this source. If omitted, a
+    #     default unique string will be generated.
     # @param update [Boolean] If the commit is not a SHA, pulls any updates
     #     from the remote. Defaults to false, which uses a local cache and does
     #     not update if the commit has been fetched previously.
@@ -204,6 +217,7 @@ module Toys
     #
     def add_git(git_remote, git_path, git_commit,
                 high_priority: false,
+                source_name: nil,
                 update: false,
                 context_directory: nil)
       path = resolve_git_path(git_remote, git_path, git_commit, update)
@@ -212,6 +226,7 @@ module Toys
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
                                             context_directory: context_directory,
+                                            source_name: source_name,
                                             data_dir_name: @data_dir_name,
                                             lib_dir_name: @lib_dir_name)
         @roots_by_priority[priority] = source
@@ -231,6 +246,9 @@ module Toys
     # @param high_priority [Boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
+    # @param source_name [String] The source name that will be shown in
+    #     documentation for tools loaded from this source. If omitted, a
+    #     default unique string will be generated.
     # @param gem_toys_dir [String] The name of the toys directory. Optional.
     #     Defaults to the directory specified in the gem's metadata, or the
     #     value "toys".
@@ -241,6 +259,7 @@ module Toys
     #
     def add_gem(gem_name, gem_version, gem_path,
                 high_priority: false,
+                source_name: nil,
                 gem_toys_dir: nil,
                 context_directory: nil)
       gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
@@ -249,6 +268,7 @@ module Toys
         priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
         source = SourceInfo.create_gem_root(gem_name, gem_version, gem_path, path, priority,
                                             context_directory: context_directory,
+                                            source_name: source_name,
                                             data_dir_name: @data_dir_name,
                                             lib_dir_name: @lib_dir_name)
         @roots_by_priority[priority] = source
@@ -272,6 +292,9 @@ module Toys
     #
     def lookup(args)
       orig_prefix, args = @delimiter_handler.find_orig_prefix(args)
+      # Start looking for a tool with the entire prefix, and continue to
+      # shorten it until a tool is found. Because the root tool always exists,
+      # the final fallback of the empty prefix will always succeed.
       prefix = orig_prefix
       loop do
         tool = lookup_specific(prefix)
@@ -527,7 +550,7 @@ module Toys
       end
     end
 
-    @git_cache_mutex = ::Mutex.new
+    @utils_creation_mutex = ::Mutex.new
     @default_git_cache = nil
     @default_gems_util = nil
 
@@ -537,7 +560,7 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def self.default_git_cache
-      @git_cache_mutex.synchronize do
+      @utils_creation_mutex.synchronize do
         @default_git_cache ||= begin
           require "toys/utils/git_cache"
           Utils::GitCache.new
@@ -551,7 +574,7 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def self.default_gems_util
-      @git_cache_mutex.synchronize do
+      @utils_creation_mutex.synchronize do
         @default_gems_util ||= begin
           require "toys/utils/gems"
           Utils::Gems.new
@@ -655,6 +678,7 @@ module Toys
             raise ToolDefinitionError, "Illegal characters in name #{word.inspect}"
           end
         end
+        words
       end
 
       def top_definition
@@ -879,6 +903,16 @@ module Toys
       end
     end
 
+    ##
+    # This checks if words1 (a target prefix we're looking for) matches words2
+    # (a source we could load).
+    # If the source doesn't match the target and shouldn't be loaded at all,
+    # returns nil.
+    # Otherwise, returns an array indicating the part of target that doesn't
+    # match the source, indicating what to look for as we descend down further
+    # sources. This could be the empty array if we've exhausted the entire
+    # desired target, and thus we should load everything from this point down.
+    #
     def calc_remaining_words(words1, words2)
       index = 0
       lengths = [words1.length, words2.length]
