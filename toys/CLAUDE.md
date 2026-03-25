@@ -8,21 +8,21 @@ This is the **toys** gem — the main CLI executable built on the toys-core fram
 
 ## Development Commands
 
-From within the `toys` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
+From within the `toys` directory, use `toys` to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci --only --current  # Run all CI tasks for this gem
-../toys-dev test                 # Run just the library tests for this gem, omitting integration tests
-../toys-dev test --integration   # Run just the library tests for this gem, including integration tests
-../toys-dev test-builtins        # Run just tests of built-in tools in this gem
-../toys-dev rubocop              # Run just RuboCop for this gem
+toys ci --only --current  # Run all CI tasks for this gem
+toys test                 # Run just the library tests for this gem, omitting integration tests
+toys test --integration   # Run just the library tests for this gem, including integration tests
+toys test-builtins        # Run just tests of built-in tools in this gem
+toys rubocop              # Run just RuboCop for this gem
 ```
 
-To run individual test files directly, pass them as positional command line arguments:
+To run individual test files directly, pass them as positional command line arguments. This must be run from within the `toys` gem directory, and will not work from the repository root.
 
 ```bash
-../toys-dev test test/test_minitest.rb test/test_rspec.rb   # Run only the library tests in the given files
-../toys-dev test-builtins builtins/.test/test_general.rb   # Run only the built-in tool tests in the given file
+toys test test/test_minitest.rb test/test_rspec.rb   # Run only the library tests in the given files
+toys test-builtins builtins/.test/test_general.rb   # Run only the built-in tool tests in the given file
 ```
 
 ## Source Structure

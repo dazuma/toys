@@ -8,19 +8,19 @@ toys-release is a Ruby library release automation system using GitHub Actions an
 
 ## Development Commands
 
-From within the `toys-release` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
+From within the `toys-release` directory, use `toys` to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci --only --current  # Run all CI tasks for this gem
-../toys-dev test                 # Run just the tests for this gem, omitting integration tests
-../toys-dev test --integration   # Run just the tests for this gem, including integration tests
-../toys-dev rubocop              # Run just RuboCop for this gem
+toys ci --only --current  # Run all CI tasks for this gem
+toys test                 # Run just the tests for this gem, omitting integration tests
+toys test --integration   # Run just the tests for this gem, including integration tests
+toys rubocop              # Run just RuboCop for this gem
 ```
 
-To run individual test files directly, pass them as positional command line arguments:
+To run individual test files directly, pass them as positional command line arguments. This must be run from within the `toys-release` gem directory, and will not work from the repository root.
 
 ```bash
-../toys-dev test toys/.test/test_change_set.rb toys/.test/test_repository.rb   # Run only the tests in the given files
+toys test toys/.test/test_change_set.rb toys/.test/test_repository.rb   # Run only the tests in the given files
 ```
 
 Tests run via the built-in `system test` tool pointing at the `toys/` directory, which discovers tests in `toys/.test/`.
