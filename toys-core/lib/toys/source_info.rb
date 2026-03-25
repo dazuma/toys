@@ -122,7 +122,7 @@ module Toys
     # from git.
     #
     # @return [String] The git remote
-    # @return [nil] if this source is not fron git.
+    # @return [nil] if this source is not from git.
     #
     attr_reader :git_remote
 
@@ -131,7 +131,7 @@ module Toys
     # from git.
     #
     # @return [String] The git path. This could be the empty string.
-    # @return [nil] if this source is not fron git.
+    # @return [nil] if this source is not from git.
     #
     attr_reader :git_path
 
@@ -140,7 +140,7 @@ module Toys
     # from git.
     #
     # @return [String] The git commit.
-    # @return [nil] if this source is not fron git.
+    # @return [nil] if this source is not from git.
     #
     attr_reader :git_commit
 
@@ -215,6 +215,9 @@ module Toys
 
     ##
     # Create a SourceInfo.
+    # This lower-level interface should be called only from within the class.
+    # External callers should use the factory class methods which have keyword
+    # arguments and are safer and more readable.
     #
     # @private This interface is internal and subject to change without warning.
     #

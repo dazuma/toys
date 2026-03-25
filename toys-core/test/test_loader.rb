@@ -341,6 +341,7 @@ describe Toys::Loader do
 
       tool, _remaining = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(-2, tool.priority)
     end
 
     it "honors the high-priority flag" do
@@ -350,6 +351,70 @@ describe Toys::Loader do
 
       tool, _remaining = loader.lookup(["tool-1"])
       assert_equal("normal tool-1 short description", tool.desc.to_s)
+      assert_equal(1, tool.priority)
+    end
+
+    it "loads a set at the same priority" do
+      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
+
+      tool1, _remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool1.desc.to_s)
+      assert_equal(-1, tool1.priority)
+
+      tool2, _remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool2.desc.to_s)
+      assert_equal(-1, tool2.priority)
+    end
+
+    it "loads a set at high priority" do
+      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"], high_priority: true)
+
+      tool1, _remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool1.desc.to_s)
+      assert_equal(1, tool1.priority)
+
+      tool2, _remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool2.desc.to_s)
+      assert_equal(1, tool2.priority)
+    end
+  end
+
+  describe "stop_loading_at_priority" do
+    it "cuts off lower priorities" do
+      loader.add_block(source_name: "test block 1") do
+        tool "tool-1" do
+          desc "block 1 tool-1 description"
+        end
+      end
+      loader.add_block(source_name: "test block 2") do
+        tool "tool-2" do
+          desc "block 2 tool-2 description"
+        end
+      end
+      assert(loader.stop_loading_at_priority(-1))
+      tool1, remaining1 = loader.lookup(["tool-1"])
+      assert_equal(-1, tool1.priority)
+      assert_empty(remaining1)
+      tool2, remaining2 = loader.lookup(["tool-2"])
+      refute_equal(-2, tool2.priority)
+      refute_empty(remaining2)
+    end
+
+    it "returns false if a lower priority has already been loaded" do
+      loader.add_block(source_name: "test block 1") do
+        tool "tool-1" do
+          desc "block 1 tool-1 description"
+        end
+      end
+      loader.add_block(source_name: "test block 2") do
+        tool "tool-2" do
+          desc "block 2 tool-2 description"
+        end
+      end
+      tool2, remaining2 = loader.lookup(["tool-2"])
+      assert_equal(-2, tool2.priority)
+      assert_empty(remaining2)
+      refute(loader.stop_loading_at_priority(-1))
     end
   end
 
@@ -571,6 +636,16 @@ describe Toys::Loader do
       assert_equal(["ns3"], subtools[0].full_name)
     end
 
+    it "loads a sublist" do
+      subtools = subtools_loader.list_subtools(["ns3"])
+      assert_equal([["ns3", "tool1"]], subtools.map(&:full_name))
+    end
+
+    it "loads a sublist of a hidden" do
+      subtools = subtools_loader.list_subtools(["_ns1"])
+      assert_equal([["_ns1", "tool1"], ["_ns1", "tool2"]], subtools.map(&:full_name))
+    end
+
     it "loads a list including non-runnable" do
       subtools = subtools_loader.list_subtools([], include_namespaces: true)
       assert_equal(2, subtools.size)
@@ -609,6 +684,63 @@ describe Toys::Loader do
       assert_equal(["ns2", "tool3"], subtools[1].full_name)
       assert_equal(["ns3"], subtools[2].full_name)
       assert_equal(["ns3", "tool1"], subtools[3].full_name)
+    end
+  end
+
+  describe "has_subtools?" do
+    it "returns true when runnable subtools exist" do
+      loader.add_block do
+        tool "ns1" do
+          tool "child" do
+            def run; end
+          end
+        end
+      end
+      assert(loader.has_subtools?(["ns1"]))
+    end
+
+    it "returns true when only non-runnable subtools exist" do
+      loader.add_block do
+        tool "ns1" do
+          tool "child" do
+            desc "not runnable"
+          end
+        end
+      end
+      assert(loader.has_subtools?(["ns1"]))
+    end
+
+    it "returns true when only hidden subtools exist" do
+      loader.add_block do
+        tool "ns1" do
+          tool "_hidden" do
+            def run; end
+          end
+        end
+      end
+      assert(loader.has_subtools?(["ns1"]))
+    end
+
+    it "returns false when no subtools exist" do
+      loader.add_block do
+        tool "ns1" do
+          tool "child" do
+            def run; end
+          end
+        end
+      end
+      refute(loader.has_subtools?(["ns1", "child"]))
+    end
+
+    it "returns false for an empty loader" do
+      refute(loader.has_subtools?([]))
+    end
+
+    it "triggers lazy loading from a path source" do
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      refute(loader.tool_defined?(["namespace-1", "tool-1-1"]))
+      assert(loader.has_subtools?(["namespace-1"]))
+      assert(loader.tool_defined?(["namespace-1", "tool-1-1"]))
     end
   end
 
