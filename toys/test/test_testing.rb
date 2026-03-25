@@ -24,6 +24,13 @@ describe Toys::Testing do
       end
     end
 
+    it "returns the block value" do
+      result = configured_testing.toys_load_tool(["hello"]) do |tool|
+        "#{tool.message}#{tool.message}"
+      end
+      assert_equal("hellohello", result)
+    end
+
     it "parses a command line string" do
       configured_testing.toys_load_tool("hello --shout") do |tool|
         assert_equal("HELLO", tool.message)
@@ -31,15 +38,15 @@ describe Toys::Testing do
     end
 
     it "reports that it fails to find a tool" do
-      result_code = nil
+      result = :unset
       _out, err = capture_io do
-        result_code = configured_testing.toys_load_tool(["bye"]) do
+        result = configured_testing.toys_load_tool(["bye"]) do
           flunk("Shouldn't get here")
           :whoops
         end
       end
       assert_includes(err, "Tool not found: \"bye\"")
-      assert_equal(2, result_code)
+      assert_nil(result)
     end
   end
 

@@ -43,6 +43,9 @@ module Toys
     #     end
     #
     module Key
+      # Implementation note: The Key module is mixed into the context class in
+      # InputFile where the class is created.
+
       ##
       # Context key for the argument list passed to the current tool. Value is
       # an array of strings.
@@ -344,7 +347,7 @@ module Toys
     # @return [nil] if the data was not found.
     #
     def find_data(path, type: nil)
-      @__data[Key::TOOL_SOURCE].find_data(path, type: type)
+      @__data[Key::TOOL_SOURCE]&.find_data(path, type: type)
     end
     alias __find_data find_data
 
@@ -369,6 +372,7 @@ module Toys
     #
     # @param code [Integer] The status code, which should be 0 for no error,
     #     or nonzero for an error condition. Default is 0.
+    #     (Note: if a non-integer is passed in, it is changed to -1.)
     # @return [void]
     #
     def self.exit(code = 0)

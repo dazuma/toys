@@ -319,8 +319,8 @@ module Toys
 
       ##
       # Add a middleware spec to the stack, in the default location, which is
-      # at the end of pre_specs). See {Toys::Middleware.spec} for a description
-      # of the arguments you can pass.
+      # at the end of pre_specs, right before the default_specs. See
+      # {Toys::Middleware.spec} for a description of the arguments you can pass.
       #
       # @overload add(name, *args, **kwargs, &block)
       # @overload add(array)
