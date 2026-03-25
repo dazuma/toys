@@ -8,19 +8,19 @@ toys-ci is a Ruby gem providing a CI tool library for Toys. It supplies a Toys m
 
 ## Development Commands
 
-From within the `toys-ci` directory, use the `../toys-dev` script to run CI/test tasks specific to this gem. For example:
+From within the `toys-ci` directory, use `toys` to run CI/test tasks specific to this gem. For example:
 
 ```bash
-../toys-dev ci --only --current  # Run all CI tasks for this gem
-../toys-dev test                 # Run just the tests for this gem, omitting integration tests
-../toys-dev test --integration   # Run just the tests for this gem, including integration tests
-../toys-dev rubocop              # Run just RuboCop for this gem
+toys ci --only --current  # Run all CI tasks for this gem
+toys test                 # Run just the tests for this gem, omitting integration tests
+toys test --integration   # Run just the tests for this gem, including integration tests
+toys rubocop              # Run just RuboCop for this gem
 ```
 
-To run individual test files directly, pass them as positional command line arguments:
+To run individual test files directly, pass them as positional command line arguments. This must be run from within the `toys-ci` gem directory, and will not work from the repository root.
 
 ```bash
-../toys-dev test test/test_mixin.rb test/test_template.rb  # Run only the tests in the given files
+toys test test/test_mixin.rb test/test_template.rb  # Run only the tests in the given files
 ```
 
 Tests are discovered in `test/` using the `test_*.rb` naming convention.

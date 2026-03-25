@@ -14,23 +14,27 @@ Toys is a configurable command line tool framework for Ruby. It is a **monorepo*
 
 ## Development Commands
 
-Toys is **self-hosted** — it uses itself for all build, test, and CI tasks via the `./toys-dev` bootstrap script (which runs the local development copy).
+Toys is **self-hosted** — it uses itself for all build, test, and CI tasks. The Toys files in this repository redirect all `toys` invocations to use the local development code instead of the installed toys gem. (You can also run the `./toys-dev` local bootstrap script explicitly, but it is easier simply to run `toys` and let the Toys files do the redirecting for you.)
 
-To run CI/test tasks across all gems, run `./toys-dev` from the repository root. For example:
+To run CI/test tasks across all gems, run `toys` from the repository root. For example:
 
 ```bash
-./toys-dev ci                  # Run all CI tasks (test/rubocop/build/yardoc) for all gems
-./toys-dev test                # Run just tests for all gems, omitting integration tests
-./toys-dev test --integration  # Run just tests for all gems, including integration tests
-./toys-dev rubocop             # Run just RuboCop for all gems
+toys ci                  # Run all CI tasks (test/rubocop/build/yardoc) for all gems
+toys test                # Run just tests for all gems, omitting integration tests
+toys test --integration  # Run just tests for all gems, including integration tests
+toys rubocop             # Run just RuboCop for all gems
 ```
 
-To run only the CI/test tasks for a specific gem, run toys-dev from that gem's subdirectory. See the gem subdirectory's CLAUDE.md for gem-specific examples.
-
-Pass the `--help` flag to any toys-dev command to display a manpage describing all available options. For example:
+To run only the CI/test tasks for a specific gem, run toys from that gem's subdirectory. See each gem subdirectory's `CLAUDE.md` for gem-specific examples. In particular, if you want to specify individual test files, you *must* run `toys` from a gem subdirectory; test file specification does not work from the repository root. For example:
 
 ```bash
-./toys-dev ci --help  # Display a manpage showing all available options for toys-dev ci
+cd toys-core && toys test test/test_dsl.rb
+```
+
+Pass the `--help` flag to any toys command to display a manpage describing all available options. For example:
+
+```bash
+toys ci --help  # Display a manpage showing all available options for toys ci
 ```
 
 ## Code Style
@@ -53,7 +57,7 @@ Pass the `--help` flag to any toys-dev command to display a manpage describing a
 ## General coding instructions
 
 - Unless instructed otherwise, always use red-green test-driven development when making code changes. For each step in a coding task, first write tests and confirm they fail. Then write code to make the tests pass.
-- Unless instructed otherwise, always git commit after a step is complete and the tests pass.
+- Unless instructed otherwise, always git commit after a step is complete and the tests and rubocop both pass.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
 - Avoid making changes to multiple gems in the same commit.
 - Prefer Ruby for any one-off scripts you need to write as part of your work.
