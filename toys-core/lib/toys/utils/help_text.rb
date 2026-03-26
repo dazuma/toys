@@ -14,6 +14,13 @@ module Toys
     #
     class HelpText
       ##
+      # A catch-all usage error emitted during help generation that should be
+      # logged by the caller
+      #
+      class HelpGenerationError < ::StandardError
+      end
+
+      ##
       # Default width of first column
       # @return [Integer]
       #
@@ -160,12 +167,30 @@ module Toys
 
       private
 
+      ##
+      # Orchestrates subtool collection: lists, filters, and arranges into assembler-ready form.
+      #
+      # @param recursive [Boolean] whether to list subtools recursively
+      # @param search [String, nil] regex search string, or nil for no filtering
+      # @param include_hidden [Boolean] whether to include hidden subtools and namespaces
+      # @param separate_sources [Boolean] whether to group results by source root
+      # @return [Array<[String, Array<[String, ToolDefinition]>]>] list of
+      #     `[source_name, [[local_name, subtool], ...]]` pairs, sorted by source priority
+      #
       def collect_subtool_info(recursive, search, include_hidden, separate_sources)
         subtools_by_name = list_subtools(recursive, include_hidden)
         filter_subtools(subtools_by_name, search)
         arrange_subtools(subtools_by_name, separate_sources)
       end
 
+      ##
+      # Queries the loader for all subtools of the tool and its delegates, building a flat map.
+      # When a delegate and the tool share a subtool local name, the delegate's entry wins.
+      #
+      # @param recursive [Boolean] whether to list subtools at all depths
+      # @param include_hidden [Boolean] whether to include hidden tools and namespaces
+      # @return [Hash{String => ToolDefinition}] local subtool name to tool definition
+      #
       def list_subtools(recursive, include_hidden)
         subtools_by_name = {}
         ([@tool] + @delegates).each do |tool|
@@ -183,15 +208,37 @@ module Toys
         subtools_by_name
       end
 
+      ##
+      # Removes entries from the map that do not match the search string, checked
+      # case-insensitively against local name and short description. Mutates the map in place.
+      # Raises {HelpGenerationError} if the search string is not a valid regex.
+      #
+      # @param subtools_by_name [Hash{String => ToolDefinition}] mutated in place
+      # @param search [String, nil] regex search string, or nil to skip filtering
+      # @return [void]
+      #
       def filter_subtools(subtools_by_name, search)
         if !search.nil? && !search.empty?
-          regex = ::Regexp.new(search, ::Regexp::IGNORECASE)
+          regex = begin
+            ::Regexp.new(search, ::Regexp::IGNORECASE)
+          rescue ::RegexpError => e
+            raise HelpGenerationError, "Bad search regex: #{e.message}"
+          end
           subtools_by_name.delete_if do |local_name, tool|
             !regex.match?(local_name) && !regex.match?(tool.desc.to_s)
           end
         end
       end
 
+      ##
+      # Sorts subtools alphabetically, groups them by source root (or into a single group if
+      # separate_sources is false), and sorts groups by descending source priority.
+      #
+      # @param subtools_by_name [Hash{String => ToolDefinition}] already-filtered subtool map
+      # @param separate_sources [Boolean] whether to group by source root
+      # @return [Array<[String, Array<[String, ToolDefinition]>]>] list of
+      #     `[source_name, [[local_name, subtool], ...]]` pairs
+      #
       def arrange_subtools(subtools_by_name, separate_sources)
         subtool_list = subtools_by_name.sort_by { |(local_name, _tool)| local_name }
         result = {}
@@ -231,6 +278,11 @@ module Toys
 
         private
 
+        ##
+        # Runs all section-building methods and joins the accumulated lines into the result string.
+        #
+        # @return [void]
+        #
         def assemble
           add_synopsis_section
           add_flag_group_sections
@@ -240,6 +292,12 @@ module Toys
           @result = "#{joined_lines}\n"
         end
 
+        ##
+        # Appends "Usage: ..." lines for the namespace synopsis (if the tool has subtools)
+        # followed by the tool-specific synopsis.
+        #
+        # @return [void]
+        #
         def add_synopsis_section
           synopses = []
           synopses << namespace_synopsis unless @subtools.empty?
@@ -251,6 +309,12 @@ module Toys
           end
         end
 
+        ##
+        # Returns the synopsis line for the tool itself: executable name, optional `[FLAGS...]`,
+        # and positional arg placeholders.
+        #
+        # @return [String]
+        #
         def tool_synopsis
           synopsis = [@executable_name] + @tool.full_name
           synopsis << "[FLAGS...]" unless @tool.flags.empty?
@@ -260,10 +324,21 @@ module Toys
           synopsis.join(" ")
         end
 
+        ##
+        # Returns the synopsis line for dispatching to a subtool:
+        # `executable name TOOL [ARGUMENTS...]`.
+        #
+        # @return [String]
+        #
         def namespace_synopsis
           "#{@executable_name} #{@tool.display_name} TOOL [ARGUMENTS...]"
         end
 
+        ##
+        # Appends one labeled section per non-empty flag group, with each flag as a two-column row.
+        #
+        # @return [void]
+        #
         def add_flag_group_sections
           @tool.flag_groups.each do |group|
             next if group.empty?
@@ -277,6 +352,13 @@ module Toys
           end
         end
 
+        ##
+        # Appends one two-column row for a flag, showing all syntaxes joined by commas.
+        # The value placeholder appears only on the last (canonical) form.
+        #
+        # @param flag [Flag]
+        # @return [void]
+        #
         def add_flag(flag)
           flags = flag.short_flag_syntax + flag.long_flag_syntax
           last_index = flags.size - 1
@@ -287,6 +369,12 @@ module Toys
           add_right_column_desc(flags_str, wrap_desc(flag.desc))
         end
 
+        ##
+        # Appends the "Positional arguments:" section listing each arg as a two-column row.
+        # Does nothing if the tool has no positional args.
+        #
+        # @return [void]
+        #
         def add_positional_arguments_section
           args_to_display = @tool.positional_args
           return if args_to_display.empty?
@@ -297,6 +385,11 @@ module Toys
           end
         end
 
+        ##
+        # Appends a `"Tools:"` (or `"Tools from <source>:"`) section for each group of subtools.
+        #
+        # @return [void]
+        #
         def add_subtool_list_section
           @subtools.each do |source_name, subtool_list|
             @lines << ""
@@ -307,6 +400,14 @@ module Toys
           end
         end
 
+        ##
+        # Appends a two-column row to @lines. The left column is `initial` padded to
+        # `@left_column_width`; if it overflows, the description starts on the next line.
+        #
+        # @param initial [String]
+        # @param desc [Array<String>] pre-wrapped description lines
+        # @return [void]
+        #
         def add_right_column_desc(initial, desc)
           initial = indent_str(initial.ljust(@left_column_width))
           remaining_doc = desc
@@ -321,6 +422,12 @@ module Toys
           end
         end
 
+        ##
+        # Returns the display name for a positional arg, bracketed according to its type.
+        #
+        # @param arg_info [PositionalArg]
+        # @return [String] e.g. `"NAME"`, `"[NAME]"`, or `"[NAME...]"`
+        #
         def arg_name(arg_info)
           case arg_info.type
           when :required
@@ -332,10 +439,22 @@ module Toys
           end
         end
 
+        ##
+        # Wraps a description to fit in the right-column width.
+        #
+        # @param desc [WrappableString, String, nil]
+        # @return [Array<String>]
+        #
         def wrap_desc(desc)
           WrappableString.wrap_lines(desc, @right_column_wrap_width)
         end
 
+        ##
+        # Prepends `@indent` spaces to a string.
+        #
+        # @param str [String]
+        # @return [String]
+        #
         def indent_str(str)
           "#{' ' * @indent}#{str}"
         end
@@ -373,6 +492,11 @@ module Toys
 
         private
 
+        ##
+        # Runs all section-building methods and captures the terminal output as the result string.
+        #
+        # @return [void]
+        #
         def assemble
           add_name_section
           add_synopsis_section
@@ -384,12 +508,25 @@ module Toys
           @result = @lines.output.string
         end
 
+        ##
+        # Appends the NAME section header and the tool name with its short description.
+        #
+        # @return [void]
+        #
         def add_name_section
           @lines << bold("NAME")
           name_str = ([@executable_name] + @tool.full_name).join(" ")
           add_prefix_with_desc(name_str, @tool.desc)
         end
 
+        ##
+        # Appends a "prefix - desc" entry, wrapping desc onto continuation lines at `@indent2`
+        # if desc is a {WrappableString}.
+        #
+        # @param prefix [String]
+        # @param desc [WrappableString, String]
+        # @return [void]
+        #
         def add_prefix_with_desc(prefix, desc)
           if desc.empty?
             @lines << indent_str(prefix)
@@ -404,6 +541,11 @@ module Toys
           end
         end
 
+        ##
+        # Appends the SYNOPSIS section header and all synopsis clauses.
+        #
+        # @return [void]
+        #
         def add_synopsis_section
           @lines << ""
           @lines << bold("SYNOPSIS")
@@ -411,6 +553,13 @@ module Toys
           add_synopsis_clause(tool_synopsis(@tool))
         end
 
+        ##
+        # Appends one synopsis clause, indenting the first line at `@indent` and continuation
+        # lines at `@indent + @indent2`.
+        #
+        # @param synopsis [Array<String>] wrapped synopsis lines
+        # @return [void]
+        #
         def add_synopsis_clause(synopsis)
           first = true
           synopsis.each do |line|
@@ -419,6 +568,13 @@ module Toys
           end
         end
 
+        ##
+        # Builds a wrapped synopsis clause for the given tool: executable name, flag groups
+        # formatted by constraint type, and positional arg placeholders.
+        #
+        # @param tool_for_name [ToolDefinition] tool whose name is rendered in the clause
+        # @return [Array<String>] wrapped synopsis lines
+        #
         def tool_synopsis(tool_for_name)
           synopsis = [full_executable_name(tool_for_name)]
           @tool.flag_groups.each do |flag_group|
@@ -441,18 +597,41 @@ module Toys
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
+        ##
+        # Appends each flag in an ordinary (optional) group to the synopsis token list
+        # as `"[flagspec]"`.
+        #
+        # @param flag_group [FlagGroup]
+        # @param synopsis [Array<String>] token list being built
+        # @return [void]
+        #
         def add_ordinary_group_to_synopsis(flag_group, synopsis)
           flag_group.flags.each do |flag|
             synopsis << "[#{flag_spec_string(flag, true)}]"
           end
         end
 
+        ##
+        # Appends each flag in a required group to the synopsis token list as `"(flagspec)"`.
+        #
+        # @param flag_group [FlagGroup::Required]
+        # @param synopsis [Array<String>] token list being built
+        # @return [void]
+        #
         def add_required_group_to_synopsis(flag_group, synopsis)
           flag_group.flags.each do |flag|
             synopsis << "(#{flag_spec_string(flag, true)})"
           end
         end
 
+        ##
+        # Appends an exactly-one flag group to the synopsis token list
+        # as `"( flag1 | flag2 | ... )"`.
+        #
+        # @param flag_group [FlagGroup::ExactlyOne]
+        # @param synopsis [Array<String>] token list being built
+        # @return [void]
+        #
         def add_exactly_one_group_to_synopsis(flag_group, synopsis)
           return if flag_group.empty?
           synopsis << "("
@@ -468,6 +647,14 @@ module Toys
           synopsis << ")"
         end
 
+        ##
+        # Appends an at-most-one flag group to the synopsis token list
+        # as `"[ flag1 | flag2 | ... ]"`.
+        #
+        # @param flag_group [FlagGroup::AtMostOne]
+        # @param synopsis [Array<String>] token list being built
+        # @return [void]
+        #
         def add_at_most_one_group_to_synopsis(flag_group, synopsis)
           return if flag_group.empty?
           synopsis << "["
@@ -483,6 +670,14 @@ module Toys
           synopsis << "]"
         end
 
+        ##
+        # Appends an at-least-one flag group to the synopsis token list
+        # as `"( [flag1] [flag2] ... )"`.
+        #
+        # @param flag_group [FlagGroup::AtLeastOne]
+        # @param synopsis [Array<String>] token list being built
+        # @return [void]
+        #
         def add_at_least_one_group_to_synopsis(flag_group, synopsis)
           return if flag_group.empty?
           synopsis << "("
@@ -492,6 +687,12 @@ module Toys
           synopsis << ")"
         end
 
+        ##
+        # Builds a wrapped synopsis clause for dispatching to a subtool:
+        # `executable TOOL [ARGUMENTS...]`.
+        #
+        # @return [Array<String>] wrapped synopsis lines
+        #
         def namespace_synopsis
           synopsis = [full_executable_name(@tool),
                       underline("TOOL"),
@@ -499,21 +700,39 @@ module Toys
           wrap_indent_indent2(WrappableString.new(synopsis))
         end
 
+        ##
+        # Returns the bold-styled full executable name string for the given tool.
+        #
+        # @param tool_for_name [ToolDefinition]
+        # @return [String]
+        #
         def full_executable_name(tool_for_name)
           bold(([@executable_name] + tool_for_name.full_name).join(" "))
         end
 
+        ##
+        # Appends the SOURCE section if `@show_source_path` is enabled and the tool has a source
+        # name. Lists source paths for the tool and each delegate.
+        #
+        # @return [void]
+        #
         def add_source_section
           return unless @show_source_path && @tool.source_info&.source_name
           @lines << ""
           @lines << bold("SOURCE")
           @lines << indent_str("Defined in #{@tool.source_info.source_name}")
           @delegates.each do |delegate|
-            @lines << indent_str("Delegated from \"#{delegate.display_name}\"" \
-                                 " defined in #{delegate.source_info.source_name}")
+            location = delegate.source_info&.source_name || "(unknown)"
+            @lines << indent_str("Delegated from \"#{delegate.display_name}\" defined in #{location}")
           end
         end
 
+        ##
+        # Appends the DESCRIPTION section combining the tool's and any delegates' long
+        # descriptions. Does nothing if all descriptions are empty.
+        #
+        # @return [void]
+        #
         def add_description_section
           desc = @tool.long_desc.dup
           @delegates.each do |delegate|
@@ -533,6 +752,12 @@ module Toys
           end
         end
 
+        ##
+        # Appends one styled section per non-empty flag group with an uppercased header,
+        # optional long description, and each flag as an indented entry.
+        #
+        # @return [void]
+        #
         def add_flag_group_sections
           @tool.flag_groups.each do |group|
             next if group.empty?
@@ -554,6 +779,14 @@ module Toys
           end
         end
 
+        ##
+        # Returns the formatted string of all flag syntaxes, joined by `" | "` (in synopsis)
+        # or `", "` (in the flags section), with value labels underlined.
+        #
+        # @param flag [Flag]
+        # @param in_synopsis [Boolean] whether to use the `" | "` separator (default: false)
+        # @return [String]
+        #
         def flag_spec_string(flag, in_synopsis = false)
           flag.flag_syntax.map do |fs|
             str = bold(fs.str_without_value)
@@ -567,6 +800,12 @@ module Toys
           end.join(in_synopsis ? " | " : ", ")
         end
 
+        ##
+        # Appends the POSITIONAL ARGUMENTS section with each arg as an indented entry.
+        # Does nothing if the tool has no positional args.
+        #
+        # @return [void]
+        #
         def add_positional_arguments_section
           args_to_display = @tool.positional_args
           return if args_to_display.empty?
@@ -579,6 +818,12 @@ module Toys
           end
         end
 
+        ##
+        # Appends the TOOLS section with an optional search header, source labels if
+        # `@separate_sources` is set, and each subtool with its short description.
+        #
+        # @return [void]
+        #
         def add_subtool_list_section
           return if @subtools.empty?
           @lines << ""
@@ -601,19 +846,31 @@ module Toys
           end
         end
 
+        ##
+        # Appends a single flag or positional arg entry: header at `@indent`, description at
+        # `@indent + @indent2`. Uses long_desc if present, falling back to desc.
+        #
+        # @param header [String] formatted flag spec or arg name
+        # @param info [Flag, PositionalArg]
+        # @param precede_with_blank [Boolean] whether to insert a blank line before the entry
+        # @return [void]
+        #
         def add_indented_section(header, info, precede_with_blank)
           @lines << "" if precede_with_blank
           @lines << indent_str(header)
-          desc = info
-          unless desc.is_a?(::Array)
-            desc = wrap_indent2(info.long_desc)
-            desc = wrap_indent2(info.desc) if desc.empty?
-          end
+          desc = wrap_indent2(info.long_desc)
+          desc = wrap_indent2(info.desc) if desc.empty?
           desc.each do |line|
             @lines << indent2_str(line)
           end
         end
 
+        ##
+        # Returns the underlined, bracketed display name for a positional arg.
+        #
+        # @param arg_info [PositionalArg]
+        # @return [String] e.g. underlined `"NAME"`, `"[NAME]"`, or `"[NAME...]"`
+        #
         def arg_name(arg_info)
           case arg_info.type
           when :required
@@ -625,34 +882,79 @@ module Toys
           end
         end
 
+        ##
+        # Wraps text to fit within `@wrap_width - @indent` characters, or unwrapped if no
+        # wrap width is set.
+        #
+        # @param input [WrappableString, Array, String]
+        # @return [Array<String>]
+        #
         def wrap_indent(input)
           return WrappableString.wrap_lines(input, nil) unless @wrap_width
           WrappableString.wrap_lines(input, @wrap_width - @indent)
         end
 
+        ##
+        # Wraps text to fit within `@wrap_width - @indent - @indent2` characters, or unwrapped
+        # if no wrap width is set.
+        #
+        # @param input [WrappableString, Array, String]
+        # @return [Array<String>]
+        #
         def wrap_indent2(input)
           return WrappableString.wrap_lines(input, nil) unless @wrap_width
           WrappableString.wrap_lines(input, @wrap_width - @indent - @indent2)
         end
 
+        ##
+        # Wraps text using two column widths: first line at `@wrap_width - @indent`, continuation
+        # lines at `@wrap_width - @indent - @indent2`. Returns unwrapped if no wrap width is set.
+        #
+        # @param input [WrappableString]
+        # @return [Array<String>]
+        #
         def wrap_indent_indent2(input)
           return WrappableString.wrap_lines(input, nil) unless @wrap_width
           WrappableString.wrap_lines(input, @wrap_width - @indent,
                                      @wrap_width - @indent - @indent2)
         end
 
+        ##
+        # Returns str with bold styling applied if styled output is enabled.
+        #
+        # @param str [String]
+        # @return [String]
+        #
         def bold(str)
           @lines.apply_styles(str, :bold)
         end
 
+        ##
+        # Returns str with underline styling applied if styled output is enabled.
+        #
+        # @param str [String]
+        # @return [String]
+        #
         def underline(str)
           @lines.apply_styles(str, :underline)
         end
 
+        ##
+        # Prepends `@indent` spaces to str.
+        #
+        # @param str [String]
+        # @return [String]
+        #
         def indent_str(str)
           "#{' ' * @indent}#{str}"
         end
 
+        ##
+        # Prepends `@indent + @indent2` spaces to str.
+        #
+        # @param str [String]
+        # @return [String]
+        #
         def indent2_str(str)
           "#{' ' * (@indent + @indent2)}#{str}"
         end
@@ -686,6 +988,12 @@ module Toys
 
         private
 
+        ##
+        # Build the list string result, storing it in `@result`.
+        #
+        # @param styled [Boolean] Whether to apply terminal styles.
+        # @return [void]
+        #
         def assemble(styled)
           @lines = Utils::Terminal.new(output: ::StringIO.new, styled: styled)
           add_header
@@ -693,6 +1001,13 @@ module Toys
           @result = @lines.output.string
         end
 
+        ##
+        # Append the list header line (e.g. "List of tools under foo:") and,
+        # if a search term is active, a blank line followed by a search
+        # results notice.
+        #
+        # @return [void]
+        #
         def add_header
           top_line = @recursive ? "Recursive list of tools" : "List of tools"
           @lines <<
@@ -707,6 +1022,12 @@ module Toys
           end
         end
 
+        ##
+        # Append the full subtool listing, iterating over all source groups
+        # and their subtool entries.
+        #
+        # @return [void]
+        #
         def add_list
           @subtools.each do |source_name, subtool_list|
             @lines << ""
@@ -720,6 +1041,15 @@ module Toys
           end
         end
 
+        ##
+        # Append a single subtool entry of the form "prefix - desc", with
+        # word-wrapping and indentation applied to continuation lines when
+        # the description is a {WrappableString}.
+        #
+        # @param prefix [String] The (possibly styled) tool name prefix.
+        # @param desc [String, WrappableString] The tool description.
+        # @return [void]
+        #
         def add_prefix_with_desc(prefix, desc)
           if desc.empty?
             @lines << prefix
@@ -734,19 +1064,46 @@ module Toys
           end
         end
 
+        ##
+        # Wrap a wrappable string using different widths for the first line
+        # and continuation lines. If `@wrap_width` is nil, no wrapping is
+        # applied.
+        #
+        # @param input [WrappableString] The string to wrap.
+        # @return [Array<String>] The wrapped lines.
+        #
         def wrap_indent(input)
           return WrappableString.wrap_lines(input, nil) unless @wrap_width
           WrappableString.wrap_lines(input, @wrap_width, @wrap_width - @indent)
         end
 
+        ##
+        # Apply bold styling to a string via the terminal.
+        #
+        # @param str [String] The string to style.
+        # @return [String] The styled string.
+        #
         def bold(str)
           @lines.apply_styles(str, :bold)
         end
 
+        ##
+        # Apply underline styling to a string via the terminal.
+        #
+        # @param str [String] The string to style.
+        # @return [String] The styled string.
+        #
         def underline(str)
           @lines.apply_styles(str, :underline)
         end
 
+        ##
+        # Prepend `@indent` spaces to a string for continuation-line
+        # indentation.
+        #
+        # @param str [String] The string to indent.
+        # @return [String] The indented string.
+        #
         def indent_str(str)
           "#{' ' * @indent}#{str}"
         end

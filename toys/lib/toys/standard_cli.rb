@@ -222,7 +222,7 @@ module Toys
                         allow_root_args: true,
                         show_source_path: true,
                         separate_sources: true,
-                        use_less: true,
+                        use_pager: true,
                         fallback_execution: true),
         Middleware.spec(:show_root_version,
                         version_string: ::Toys::VERSION,

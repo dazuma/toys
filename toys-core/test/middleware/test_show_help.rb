@@ -91,6 +91,23 @@ describe Toys::StandardMiddleware::ShowHelp do
     assert_match(/bar - was met/, string_io.string)
   end
 
+  it "reports bad search syntax" do
+    cli = make_cli(fallback_execution: true, search_flags: true)
+    cli.add_config_block do
+      tool "foo" do
+        desc "beyond all recognition"
+        def run; end
+      end
+      tool "bar" do
+        desc "was met"
+        def run; end
+      end
+    end
+    result = cli.run("--search", "bar[")
+    assert_match(/Unable to generate help: Bad search regex/, string_io.string)
+    assert_equal(1, result)
+  end
+
   it "does not show hidden tools by default" do
     cli = make_cli(fallback_execution: true, show_all_subtools_flags: true)
     cli.add_config_block do
@@ -173,6 +190,83 @@ describe Toys::StandardMiddleware::ShowHelp do
     end
     cli.run("--no-recursive")
     refute_match(/bar - was met/, string_io.string)
+  end
+
+  describe "proc-valued flag specs" do
+    it "uses default help flags when the proc returns true" do
+      cli = make_cli(help_flags: proc { |_tool| true })
+      cli.add_config_block do
+        tool "foo" do
+          # Empty tool
+        end
+      end
+      cli.run("foo", "--help")
+      assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+    end
+
+    it "uses custom help flags when the proc returns an array" do
+      cli = make_cli(help_flags: proc { |_tool| ["-H", "--info"] })
+      cli.add_config_block do
+        tool "foo" do
+          # Empty tool
+        end
+      end
+      cli.run("foo", "-H")
+      assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+    end
+
+    it "passes the tool to the proc so flags can be applied conditionally" do
+      cli = make_cli(
+        help_flags: proc { |tool| tool.full_name == ["foo"] },
+        fallback_execution: true
+      )
+      cli.add_config_block do
+        tool "foo" do
+          # Empty non-runnable tool
+        end
+        tool "bar" do
+          # Empty non-runnable tool
+        end
+      end
+      cli.run("foo", "--help")
+      assert_match(/SYNOPSIS.*toys foo/m, string_io.string)
+      string_io.truncate(0)
+      string_io.rewind
+      cli.run("bar")
+      assert_match(/SYNOPSIS.*toys bar/m, string_io.string)
+      refute_includes(string_io.string, "--help")
+    end
+  end
+
+  describe "report_usage_error" do
+    let(:cli) {
+      make_cli(help_flags: true, allow_root_args: true)
+    }
+
+    before do
+      cli.add_config_block do
+        tool "foo" do
+          desc "the foo tool"
+          tool "bar" do
+            desc "the bar tool"
+          end
+        end
+      end
+    end
+
+    it "shows an error and exits 1 when the root arg tool is not found" do
+      exit_code = cli.run("--help", "nonexistent")
+      assert_equal(1, exit_code)
+      assert_match(/Tool not found: "nonexistent"/, string_io.string)
+      assert_match(/Usage:/, string_io.string)
+    end
+
+    it "shows the parent tool usage when a subtool of a root arg is not found" do
+      exit_code = cli.run("--help", "foo", "nonexistent")
+      assert_equal(1, exit_code)
+      assert_match(/Tool not found: "foo nonexistent"/, string_io.string)
+      assert_match(/toys foo/, string_io.string)
+    end
   end
 
   describe "when a runnable tool has subtools" do
