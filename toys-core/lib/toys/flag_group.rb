@@ -113,7 +113,7 @@ module Toys
 
       ##
       # Returns true if this group is empty
-      # @return [Boolean]
+      # @return [boolean]
       #
       def empty?
         flags.empty?

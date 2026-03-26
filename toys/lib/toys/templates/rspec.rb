@@ -73,12 +73,12 @@ module Toys
       #     {DEFAULT_ORDER}.
       # @param format [String] The formatter code. Default is {DEFAULT_FORMAT}.
       # @param out [String] Write output to a file instead of stdout.
-      # @param backtrace [Boolean] Enable full backtrace (default is false).
+      # @param backtrace [boolean] Enable full backtrace (default is false).
       # @param pattern [String] A glob indicating the spec files to load.
       #     Defaults to {DEFAULT_PATTERN}.
-      # @param warnings [Boolean] If true, runs specs with Ruby warnings.
+      # @param warnings [boolean] If true, runs specs with Ruby warnings.
       #     Defaults to true.
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     used unless enabled via command line argument. If `true` or a Hash
       #     of options, bundler is enabled by default unless disabled via a
       #     command line argument. See the documentation for the
@@ -204,8 +204,8 @@ module Toys
       ##
       # Whether to enable full backtraces.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :backtrace
 
@@ -221,8 +221,8 @@ module Toys
       ##
       # Whether to run with Ruby warnings.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :warnings
 
@@ -242,8 +242,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 

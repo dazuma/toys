@@ -146,7 +146,7 @@ module Toys
       ##
       # Create a new candidate
       # @param string [String] The candidate string
-      # @param partial [Boolean] Whether the candidate is partial. Defaults
+      # @param partial [boolean] Whether the candidate is partial. Defaults
       #     to `false`.
       #
       def initialize(string, partial: false)
@@ -163,7 +163,7 @@ module Toys
 
       ##
       # Determine whether the candidate is partial completion.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def partial?
         @partial
@@ -171,7 +171,7 @@ module Toys
 
       ##
       # Determine whether the candidate is a final completion.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def final?
         !@partial
@@ -238,8 +238,8 @@ module Toys
       # system.
       #
       # @param cwd [String] Working directory (defaults to the current dir).
-      # @param omit_files [Boolean] Omit files from candidates
-      # @param omit_directories [Boolean] Omit directories from candidates
+      # @param omit_files [boolean] Omit files from candidates
+      # @param omit_directories [boolean] Omit directories from candidates
       # @param prefix_constraint [String,Regexp] Constraint on the fragment
       #     prefix. Defaults to requiring the prefix be empty.
       #
@@ -253,13 +253,13 @@ module Toys
 
       ##
       # Whether files are included in the completion candidates.
-      # @return [Boolean]
+      # @return [boolean]
       #
       attr_reader :include_files
 
       ##
       # Whether directories are included in the completion candidates.
-      # @return [Boolean]
+      # @return [boolean]
       #
       attr_reader :include_directories
 

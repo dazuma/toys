@@ -270,7 +270,7 @@ module Toys
     # @param cli [Toys::CLI] The CLI in effect.
     # @param tool [Toys::ToolDefinition] The tool defining the argument format.
     # @param default_data [Hash] Additional initial data (such as verbosity).
-    # @param require_exact_flag_match [Boolean] Whether to require flag matches
+    # @param require_exact_flag_match [boolean] Whether to require flag matches
     #     be exact (not partial). Default is false.
     #
     def initialize(cli, tool, default_data: {}, require_exact_flag_match: false)
@@ -344,7 +344,7 @@ module Toys
 
     ##
     # Whether flags are currently allowed. Returns false after `--` is received.
-    # @return [Boolean]
+    # @return [boolean]
     #
     def flags_allowed?
       @flags_allowed
@@ -352,7 +352,7 @@ module Toys
 
     ##
     # Determine if this parser is finished
-    # @return [Boolean]
+    # @return [boolean]
     #
     def finished?
       @finished

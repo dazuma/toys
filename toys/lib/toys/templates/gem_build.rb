@@ -42,10 +42,10 @@ module Toys
       #     set the output path. Optional. If not provided, no flags are
       #     created. You may set this to an array of flags (e.g. `["-o"]`) or
       #     set to `true` to choose {DEFAULT_OUTPUT_FLAGS}.
-      # @param push_gem [Boolean] If true, pushes the built gem to rubygems.
-      # @param install_gem [Boolean] If true, installs the built gem locally.
-      # @param tag [Boolean] If true, tags the git repo with the gem version.
-      # @param push_tag [Boolean,String] If truthy, pushes the new tag to
+      # @param push_gem [boolean] If true, pushes the built gem to rubygems.
+      # @param install_gem [boolean] If true, installs the built gem locally.
+      # @param tag [boolean] If true, tags the git repo with the gem version.
+      # @param push_tag [boolean,String] If truthy, pushes the new tag to
       #     a git remote. You may specify which remote by setting the value to
       #     a string. Otherwise, if the value is simply `true`, the "origin"
       #     remote is used by default.
@@ -110,24 +110,24 @@ module Toys
       ##
       # Whether the tool should push the gem to Rubygems.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :push_gem
 
       ##
       # Whether the tool should install the built gen locally.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :install_gem
 
       ##
       # Whether to tag the git repo with the gem version.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :tag
 
@@ -136,8 +136,8 @@ module Toys
       # name of the remote as a string, to `true` to use {DEFAULT_PUSH_REMOTE}
       # by default, or to `false` to disable pushing.
       #
-      # @param value [Boolean,String]
-      # @return [Boolean,String]
+      # @param value [boolean,String]
+      # @return [boolean,String]
       #
       attr_writer :push_tag
 

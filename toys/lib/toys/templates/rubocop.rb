@@ -27,11 +27,11 @@ module Toys
       #     {DEFAULT_TOOL_NAME}.
       # @param gem_version [String,Array<String>] Version requirements for
       #     the rubocop gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
-      # @param fail_on_error [Boolean] If true, exits with a nonzero code if
+      # @param fail_on_error [boolean] If true, exits with a nonzero code if
       #     Rubocop fails. Defaults to true.
       # @param options [Array<String>] Additional options passed to the Rubocop
       #     CLI.
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     enabled for this tool. If `true` or a Hash of options, bundler is
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
@@ -75,8 +75,8 @@ module Toys
       ##
       # Whether to exit with a nonzero code if Rubocop fails.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :fail_on_error
 
@@ -104,8 +104,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 

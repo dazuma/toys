@@ -171,7 +171,7 @@ module Toys
       #     completion by default. To customize completion, set this to the
       #     name of a previously defined completion, or any spec recognized by
       #     {Toys::Completion.create}.
-      # @param report_collisions [Boolean] Raise an exception if a flag is
+      # @param report_collisions [boolean] Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
       # @param desc [String,Array<String>,Toys::WrappableString] Short

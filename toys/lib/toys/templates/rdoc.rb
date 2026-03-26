@@ -55,7 +55,7 @@ module Toys
       # @param generator [String] Name of the format generator. If not
       #     specified, RDoc will use its default generator.
       # @param options [Array<String>] Additional options to pass to RDoc.
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     enabled for this tool. If `true` or a Hash of options, bundler is
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
@@ -194,8 +194,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 

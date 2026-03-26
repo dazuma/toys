@@ -317,7 +317,7 @@ module Toys
     #
     # @param path [String] A path to add. May reference a single Toys file or
     #     a Toys directory.
-    # @param high_priority [Boolean] Add the config at the head of the priority
+    # @param high_priority [boolean] Add the config at the head of the priority
     #     list rather than the tail.
     # @param source_name [String] A custom name for the root source. Optional.
     # @param context_directory [String,nil,:path,:parent] The context directory
@@ -344,7 +344,7 @@ module Toys
     # This is used to create tools "inline", and is useful for simple command
     # line executables based on Toys.
     #
-    # @param high_priority [Boolean] Add the config at the head of the priority
+    # @param high_priority [boolean] Add the config at the head of the priority
     #     list rather than the tail.
     # @param source_name [String] The source name that will be shown in
     #     documentation for tools defined in this block. If omitted, a default
@@ -375,7 +375,7 @@ module Toys
     # in the `TOYS_PATH`.
     #
     # @param search_path [String] A path to search for configs.
-    # @param high_priority [Boolean] Add the configs at the head of the
+    # @param high_priority [boolean] Add the configs at the head of the
     #     priority list rather than the tail.
     # @param context_directory [String,nil,:path,:parent] The context directory
     #     for tools loaded from this path. You can pass a directory path as a
@@ -415,7 +415,7 @@ module Toys
     #     terminate the search. If the walk up the directory tree encounters
     #     one of these directories, the search is halted without checking the
     #     terminating directory.
-    # @param high_priority [Boolean] Add the configs at the head of the
+    # @param high_priority [boolean] Add the configs at the head of the
     #     priority list rather than the tail.
     # @return [self]
     #

@@ -181,7 +181,7 @@ module Toys
       # Set whether to raise an exception if a flag is requested that is
       # already in use or marked as disabled.
       #
-      # @param setting [Boolean]
+      # @param setting [boolean]
       # @return [self]
       #
       def report_collisions(setting)

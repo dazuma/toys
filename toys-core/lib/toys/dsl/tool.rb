@@ -438,7 +438,7 @@ module Toys
       #     current commit if already loading from git, or to `HEAD`.
       # @param as [String] Load into the given tool/namespace. If omitted,
       #     configuration will be loaded into the current namespace.
-      # @param update [Boolean,Integer] Whether and when to force-fetch from
+      # @param update [boolean,Integer] Whether and when to force-fetch from
       #     the remote (unless the commit is a SHA). Force-fetching will ensure
       #     that symbolic commits, such as branch names or HEAD, are up to date.
       #     You can pass `true` or `false` to specify whether to update, or an
@@ -662,10 +662,10 @@ module Toys
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param report_collisions [Boolean] If `true`, raise an exception if a
+      # @param report_collisions [boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param prepend [Boolean] If `true`, prepend rather than append the
+      # @param prepend [boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
       #     for the directives that can be called in this block. That object
@@ -711,10 +711,10 @@ module Toys
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param report_collisions [Boolean] If `true`, raise an exception if a
+      # @param report_collisions [boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param prepend [Boolean] If `true`, prepend rather than append the
+      # @param prepend [boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
       #     for the directives that can be called in this block. That object
@@ -756,10 +756,10 @@ module Toys
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param report_collisions [Boolean] If `true`, raise an exception if a
+      # @param report_collisions [boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param prepend [Boolean] If `true`, prepend rather than append the
+      # @param prepend [boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
       #     for the directives that can be called in this block. That object
@@ -802,10 +802,10 @@ module Toys
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param report_collisions [Boolean] If `true`, raise an exception if a
+      # @param report_collisions [boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param prepend [Boolean] If `true`, prepend rather than append the
+      # @param prepend [boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
       #     for the directives that can be called in this block. That object
@@ -848,10 +848,10 @@ module Toys
       #     Defaults to the empty array.
       # @param name [String,Symbol,nil] The name of the group, or nil for no
       #     name.
-      # @param report_collisions [Boolean] If `true`, raise an exception if a
+      # @param report_collisions [boolean] If `true`, raise an exception if a
       #     the given name is already taken. If `false`, ignore. Default is
       #     `true`.
-      # @param prepend [Boolean] If `true`, prepend rather than append the
+      # @param prepend [boolean] If `true`, prepend rather than append the
       #     group to the list. Default is `false`.
       # @param block [Proc] Adds flags to the group. See {Toys::DSL::FlagGroup}
       #     for the directives that can be called in this block. That object
@@ -1016,7 +1016,7 @@ module Toys
       #     completion by default. To customize completion, set this to the
       #     name of a previously defined completion, or any spec recognized by
       #     {Toys::Completion.create}.
-      # @param report_collisions [Boolean] Raise an exception if a flag is
+      # @param report_collisions [boolean] Raise an exception if a flag is
       #     requested that is already in use or marked as unusable. Default is
       #     true.
       # @param group [Toys::FlagGroup,String,Symbol,nil] Group for this flag.
@@ -1404,7 +1404,7 @@ module Toys
       # Issuing this directive by itself turns on enforcement. You may turn it
       # off by passsing `false` as the parameter.
       #
-      # @param state [Boolean]
+      # @param state [boolean]
       # @return [self]
       #
       def enforce_flags_before_args(state = true)
@@ -1422,7 +1422,7 @@ module Toys
       # Issuing this directive by itself turns on exact match. You may turn it
       # off by passsing `false` as the parameter.
       #
-      # @param state [Boolean]
+      # @param state [boolean]
       # @return [self]
       #
       def require_exact_flag_match(state = true)
@@ -1726,7 +1726,7 @@ module Toys
       #
       # @param mod [Module,Symbol,String] Module or module name.
       #
-      # @return [Boolean] Whether the mixin is included
+      # @return [boolean] Whether the mixin is included
       # @return [nil] if the current tool is not active.
       #
       def include?(mod)
@@ -1882,7 +1882,7 @@ module Toys
       # Determines whether the current Toys version satisfies the given
       # requirements.
       #
-      # @return [Boolean] whether or not the requirements are satisfied
+      # @return [boolean] whether or not the requirements are satisfied
       #
       def toys_version?(*requirements)
         require "rubygems"

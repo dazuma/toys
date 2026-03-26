@@ -21,12 +21,12 @@ module Toys
       #     the rake gem. Defaults to nil, indicating no version requirement.
       # @param rakefile_path [String] Path to the Rakefile. Defaults to
       #     {DEFAULT_RAKEFILE_PATH}.
-      # @param only_described [Boolean] If true, tools are generated only for
+      # @param only_described [boolean] If true, tools are generated only for
       #     rake tasks with descriptions. Default is false.
-      # @param use_flags [Boolean] Generated tools use flags instead of
+      # @param use_flags [boolean] Generated tools use flags instead of
       #     positional arguments to pass arguments to rake tasks. Default is
       #     false.
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     enabled for Rake tools. If `true` or a Hash of options, bundler is
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
@@ -70,8 +70,8 @@ module Toys
       ##
       # Whether to generate tools only for rake tasks with descriptions.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :only_described
 
@@ -79,8 +79,8 @@ module Toys
       # Whether generated tools should use flags instead of positional
       # arguments to pass arguments to rake tasks.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :use_flags
 
@@ -100,8 +100,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 
