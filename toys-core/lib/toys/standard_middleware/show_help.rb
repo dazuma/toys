@@ -86,64 +86,59 @@ module Toys
       SHOW_ALL_SUBTOOLS_KEY = ::Object.new.freeze
 
       ##
-      # Key for the tool name
-      # @return [Object]
-      #
-      TOOL_NAME_KEY = ::Object.new.freeze
-
-      ##
       # Create a ShowHelp middleware.
       #
       # @param help_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display help. The value may be any of the following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_HELP_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use {DEFAULT_HELP_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param usage_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display usage. The value may be any of the following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_USAGE_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use {DEFAULT_USAGE_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param list_flags [Boolean,Array<String>,Proc] Specify flags to
       #     display subtool list. The value may be any of the following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_LIST_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use {DEFAULT_LIST_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param recursive_flags [Boolean,Array<String>,Proc] Specify flags
       #     to control recursive subtool search. The value may be any of the
       #     following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_RECURSIVE_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use {DEFAULT_RECURSIVE_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param search_flags [Boolean,Array<String>,Proc] Specify flags
       #     to search subtools for a search term. The value may be any of
       #     the following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_SEARCH_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use {DEFAULT_SEARCH_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param show_all_subtools_flags [Boolean,Array<String>,Proc] Specify
       #     flags to show all subtools, including hidden tools and non-runnable
       #     namespaces. The value may be any of the following:
       #
-      #     *  An array of flags.
-      #     *  The `true` value to use {DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS}.
-      #     *  The `false` value for no flags. (Default)
-      #     *  A proc that takes a tool and returns any of the above.
+      #      *  An array of flags.
+      #      *  The `true` value or `:default` to use
+      #         {DEFAULT_SHOW_ALL_SUBTOOLS_FLAGS}.
+      #      *  The `false` value for no flags. (Default)
+      #      *  A proc that takes a tool and returns any of the above.
       #
       # @param default_recursive [Boolean] Whether to search recursively for
       #     subtools by default. Default is `false`.
@@ -161,8 +156,13 @@ module Toys
       #     is `false`.
       # @param separate_sources [Boolean] Split up tool list by source root.
       #     Defaults to false.
-      # @param use_less [Boolean] If the `less` tool is available, and the
-      #     output stream is a tty, then use `less` to display help text.
+      # @param use_pager [boolean,String,Array<String>] Use a pager to display
+      #     help text, if the output stream is a tty. You can set this to the
+      #     command to use to invoke the pager, either a string to be passed to
+      #     the shell or an array of strings representing a full command, or
+      #     true to use a default pager (typically `less` if available).
+      #     Default is false. Has no effect (i.e. always behaves as if set to
+      #     false) if the output stream is not a tty.
       # @param stream [IO] Output stream to write to. Default is stdout.
       # @param styled_output [Boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
@@ -180,7 +180,7 @@ module Toys
                      allow_root_args: false,
                      show_source_path: false,
                      separate_sources: false,
-                     use_less: false,
+                     use_pager: false,
                      stream: $stdout,
                      styled_output: nil)
         @help_flags = help_flags
@@ -197,7 +197,7 @@ module Toys
         @separate_sources = separate_sources
         @stream = stream
         @styled_output = styled_output
-        @use_less = use_less && !Compat.jruby?
+        @use_pager = Compat.jruby? || !@stream.tty? ? false : use_pager
       end
 
       ##
@@ -215,6 +215,12 @@ module Toys
           can_display_help = !help_flags.empty? || !list_flags.empty? ||
                              !usage_flags.empty? || @fallback_execution
           if can_display_help && has_subtools && !tool.runnable?
+            # These flags are specifically for displaying subtools within a
+            # namespace's help screen. They are not added if the tool is
+            # runnable, because displaying subtools is not expected to be a
+            # normal use case for a runnable tool, and so that we do not
+            # collide with or otherwise confuse flags that are actually used by
+            # the runnable tool.
             add_recursive_flags(tool)
             add_search_flags(tool)
             add_show_all_subtools_flags(tool)
@@ -243,6 +249,9 @@ module Toys
             show_help(context, false)
           end
         end
+      rescue Utils::HelpText::HelpGenerationError => e
+        terminal.puts("Unable to generate help: #{e.message}", :bright_red)
+        Context.exit(1)
       end
 
       private
@@ -288,8 +297,7 @@ module Toys
           wrap_width: terminal.width
         )
         require "toys/utils/pager"
-        use_pager = @use_less && @stream.tty?
-        Utils::Pager.start(command: use_pager, fallback_io: terminal) do |io|
+        Utils::Pager.start(command: @use_pager, fallback_io: terminal) do |io|
           io.puts(str)
         end
       end

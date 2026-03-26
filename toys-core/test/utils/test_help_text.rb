@@ -589,6 +589,136 @@ describe Toys::Utils::HelpText do
         assert_equal("        on two lines", help_array[index + 3])
         assert_equal(index + 4, help_array.size)
       end
+
+      it "filters by subtool name when searching" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+        help_array = help.help_string(styled: false, search: "tw").split("\n")
+        index = help_array.index("TOOLS")
+        refute_nil(index)
+        assert_equal("    Showing search results for \"tw\"", help_array[index + 1])
+        assert_equal("", help_array[index + 2])
+        assert_equal("    two", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
+      end
+
+      it "filters by subtool desc when searching" do
+        subtool_one.desc = "first tool"
+        subtool_two.desc = "other tool"
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+        help_array = help.help_string(styled: false, search: "first").split("\n")
+        index = help_array.index("TOOLS")
+        refute_nil(index)
+        assert_equal("    Showing search results for \"first\"", help_array[index + 1])
+        assert_equal("", help_array[index + 2])
+        assert_equal("    one - first tool", help_array[index + 3])
+        assert_equal(index + 4, help_array.size)
+      end
+
+      it "shows no tools section when search matches nothing" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+        help_array = help.help_string(styled: false, search: "zzznomatch").split("\n")
+        assert_nil(help_array.index("TOOLS"))
+      end
+
+      it "raises HelpGenerationError for invalid search regex" do
+        help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+        assert_raises(Toys::Utils::HelpText::HelpGenerationError) do
+          help.help_string(styled: false, search: "foo[")
+        end
+      end
+
+      it "shows separate sources when requested" do
+        loader = Toys::Loader.new
+        loader.add_block(source_name: "block 1") do
+          tool "foo bar" do
+            tool "one" do
+              desc "one description"
+              def run; end
+            end
+          end
+        end
+        loader.add_block(source_name: "block 2") do
+          tool "foo bar" do
+            tool "two" do
+              desc "two description"
+              def run; end
+            end
+          end
+        end
+        base_tool, _remaining = loader.lookup(["foo", "bar"])
+        help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
+        help_array = help.help_string(styled: false, separate_sources: true).split("\n")
+        index = help_array.index("TOOLS")
+        refute_nil(index)
+        assert_equal("    From block 1", help_array[index + 1])
+        assert_equal("", help_array[index + 2])
+        assert_equal("    one - one description", help_array[index + 3])
+        assert_equal("", help_array[index + 4])
+        assert_equal("    From block 2", help_array[index + 5])
+        assert_equal("", help_array[index + 6])
+        assert_equal("    two - two description", help_array[index + 7])
+        assert_equal(index + 8, help_array.size)
+      end
+    end
+
+    describe "source section" do
+      let(:source_loader) {
+        loader = Toys::Loader.new
+        loader.add_block(source_name: "myfile.rb") do
+          tool "foo" do
+            def run; end
+          end
+        end
+        loader
+      }
+      let(:source_tool) {
+        source_loader.lookup(["foo"]).first
+      }
+
+      it "is not present by default" do
+        help = Toys::Utils::HelpText.new(source_tool, source_loader, executable_name)
+        help_array = help.help_string(styled: false).split("\n")
+        assert_nil(help_array.index("SOURCE"))
+      end
+
+      it "shows source path when show_source_path is true" do
+        help = Toys::Utils::HelpText.new(source_tool, source_loader, executable_name)
+        help_array = help.help_string(styled: false, show_source_path: true).split("\n")
+        index = help_array.index("SOURCE")
+        refute_nil(index)
+        assert_equal("    Defined in myfile.rb", help_array[index + 1])
+        assert_equal(index + 2, help_array.size)
+      end
+
+      it "is not present when show_source_path is true but tool has no source info" do
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, executable_name)
+        help_array = help.help_string(styled: false, show_source_path: true).split("\n")
+        assert_nil(help_array.index("SOURCE"))
+      end
+
+      it "shows the delegation source path" do
+        loader = Toys::Loader.new
+        loader.add_block(source_name: "target.rb") do
+          tool "foo" do
+            def run; end
+          end
+        end
+        loader.add_block(source_name: "delegator.rb") do
+          tool "bar" do
+            def run; end
+          end
+        end
+        target_tool, = loader.lookup(["foo"])
+        delegator_tool, = loader.lookup(["bar"])
+        help = Toys::Utils::HelpText.new(target_tool, loader, executable_name,
+                                         delegates: [delegator_tool])
+        help_array = help.help_string(styled: false, show_source_path: true).split("\n")
+        index = help_array.index("SOURCE")
+        refute_nil(index)
+        assert_equal("    Defined in target.rb", help_array[index + 1])
+        assert_equal("    Delegated from \"bar\" defined in delegator.rb", help_array[index + 2])
+        assert_equal(index + 3, help_array.size)
+      end
     end
   end
 
@@ -652,6 +782,70 @@ describe Toys::Utils::HelpText do
       assert_equal("two - two desc", list_array[3])
       assert_equal("    on two lines", list_array[4])
       assert_equal(5, list_array.size)
+    end
+
+    it "filters by subtool name when searching" do
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+      list_array = help.list_string(styled: false, search: "tw").split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("Showing search results for \"tw\"", list_array[2])
+      assert_equal("", list_array[3])
+      assert_equal("two", list_array[4])
+      assert_equal(5, list_array.size)
+    end
+
+    it "filters by subtool desc when searching" do
+      subtool_one.desc = "first tool"
+      subtool_two.desc = "other tool"
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+      list_array = help.list_string(styled: false, search: "first").split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("Showing search results for \"first\"", list_array[2])
+      assert_equal("", list_array[3])
+      assert_equal("one - first tool", list_array[4])
+      assert_equal(5, list_array.size)
+    end
+
+    it "raises HelpGenerationError for invalid search regex" do
+      help = Toys::Utils::HelpText.new(namespace_tool, namespace_loader, executable_name)
+      assert_raises(Toys::Utils::HelpText::HelpGenerationError) do
+        help.list_string(styled: false, search: "foo[")
+      end
+    end
+
+    it "shows separate sources when requested" do
+      loader = Toys::Loader.new
+      loader.add_block(source_name: "block 1") do
+        tool "foo bar" do
+          tool "one" do
+            desc "one description"
+            def run; end
+          end
+        end
+      end
+      loader.add_block(source_name: "block 2") do
+        tool "foo bar" do
+          tool "two" do
+            desc "two description"
+            def run; end
+          end
+        end
+      end
+      base_tool, _remaining = loader.lookup(["foo", "bar"])
+      help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
+      list_array = help.list_string(styled: false, separate_sources: true).split("\n")
+      assert_equal("List of tools under foo bar:", list_array[0])
+      assert_equal("", list_array[1])
+      assert_equal("From: block 1", list_array[2])
+      assert_equal("", list_array[3])
+      assert_equal("one - one description", list_array[4])
+      assert_equal("", list_array[5])
+      assert_equal("From: block 2", list_array[6])
+      assert_equal("", list_array[7])
+      assert_equal("two - two description", list_array[8])
+      assert_equal(9, list_array.size)
     end
   end
 
