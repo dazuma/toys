@@ -541,6 +541,45 @@ describe Toys::CLI do
     end
   end
 
+  describe "load_tool" do
+    it "runs a block" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            puts(message)
+          end
+
+          def message
+            "hello"
+          end
+        end
+      end
+      result = cli.load_tool("foo") do |tool|
+        "#{tool.message}#{tool.message}"
+      end
+      assert_equal("hellohello", result)
+    end
+
+    it "handles usage errors" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            puts(message)
+          end
+
+          def message
+            "hello 1"
+          end
+        end
+      end
+      assert_raises(Toys::ArgParsingError) do
+        cli.load_tool("bar") do
+          flunk("Did not expect the block to run")
+        end
+      end
+    end
+  end
+
   describe "child" do
     let(:logger2) {
       Logger.new(logger_io).tap do |lgr|
@@ -577,6 +616,14 @@ describe Toys::CLI do
       assert_same(logger, cli.logger_factory.call)
       child = cli.child(logger: logger2)
       assert_same(logger2, child.logger_factory.call)
+    end
+
+    it "can drop the logger, falling back to the default factory" do
+      assert_same(logger, cli.logger_factory.call)
+      child = cli.child(logger: nil)
+      assert_nil(child.logger)
+      refute_same(logger, child.logger_factory.call)
+      assert_instance_of(Logger, child.logger_factory.call)
     end
   end
 end

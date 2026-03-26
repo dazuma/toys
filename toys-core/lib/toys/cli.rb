@@ -55,7 +55,7 @@ module Toys
     #      *  `error_handler`: Callback for handling exceptions
     #      *  `executable_name`: The name of the executable
     #  *  Options affecting tool specification
-    #      *  `extra_delimibers`: Tool name delimiters besides space
+    #      *  `extra_delimiters`: Tool name delimiters besides space
     #      *  `completion`: Tab completion handler
     #  *  Options affecting tool definition
     #      *  `middleware_stack`: The middleware applied to all tools
@@ -200,6 +200,7 @@ module Toys
       @error_handler = error_handler || CLI.default_error_handler
       @completion = completion || CLI.default_completion
       @logger = logger
+      @param_logger_factory = logger_factory
       @logger_factory = logger ? proc { logger } : logger_factory || CLI.default_logger_factory
       @base_level = base_level
       @extra_delimiters = extra_delimiters
@@ -252,7 +253,7 @@ module Toys
         middleware_lookup: @middleware_lookup,
         template_lookup: @template_lookup,
         logger: @logger,
-        logger_factory: @logger_factory,
+        logger_factory: @param_logger_factory,
         base_level: @base_level,
         error_handler: @error_handler,
         completion: @completion,
@@ -477,14 +478,18 @@ module Toys
     #     array of strings, or a series of string arguments.
     # @yieldparam context [Toys::Context] Yields the tool context.
     #
-    # @return [Object] The value returned from the block.
+    # @return [Object] The value returned from the block. Returns nil if the
+    #     block did not execute because of an error such as failure to parse
+    #     arguments or load the requested tool.
     #
     def load_tool(*args)
       tool, remaining = @loader.lookup(args.flatten)
       context = build_context(tool, remaining)
+      result = nil
       execute_tool(tool, context) do |ctx|
-        ctx.exit(yield ctx)
+        result = yield ctx
       end
+      result
     end
 
     class << self

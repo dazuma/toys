@@ -171,7 +171,7 @@ module Toys
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for flag \"#{name}\".",
-              name: name, suggestions: suggestions)
+              name: name, value: value, suggestions: suggestions)
       end
     end
 
@@ -192,7 +192,7 @@ module Toys
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for positional argument \"#{name}\".",
-              name: name, suggestions: suggestions)
+              name: name, value: value, suggestions: suggestions)
       end
     end
 
@@ -247,7 +247,6 @@ module Toys
       def initialize(message = nil, value: nil, values: nil, suggestions: nil)
         super(message || "Tool not found: \"#{Array(values).join(' ')}\"",
               value: value, suggestions: suggestions)
-        @name = name
       end
     end
 
