@@ -25,7 +25,7 @@ module Toys
       ##
       # Create a AddVerbosityFlags middleware.
       #
-      # @param verbose_flags [Boolean,Array<String>,Proc] Specify flags
+      # @param verbose_flags [boolean,Array<String>,Proc] Specify flags
       #     to increase verbosity. The value may be any of the following:
       #
       #     *  An array of flags that increase verbosity.
@@ -33,7 +33,7 @@ module Toys
       #     *  The `false` value to disable verbose flags.
       #     *  A proc that takes a tool and returns any of the above.
       #
-      # @param quiet_flags [Boolean,Array<String>,Proc] Specify flags
+      # @param quiet_flags [boolean,Array<String>,Proc] Specify flags
       #     to decrease verbosity. The value may be any of the following:
       #
       #     *  An array of flags that decrease verbosity.

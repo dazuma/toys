@@ -110,12 +110,12 @@ module Toys
       #
       #     The default is `:error`.
       #
-      # @param default_confirm [Boolean] The default confirmation result, if
+      # @param default_confirm [boolean] The default confirmation result, if
       #     `on_missing` is set to `:confirm`. Defaults to true.
       # @param terminal [Toys::Utils::Terminal] Terminal to use (optional)
       # @param input [IO] Input IO (optional, defaults to STDIN)
       # @param output [IO] Output IO (optional, defaults to STDOUT)
-      # @param suppress_confirm [Boolean] Deprecated. Use `on_missing` instead.
+      # @param suppress_confirm [boolean] Deprecated. Use `on_missing` instead.
       #
       def initialize(on_missing: nil,
                      on_conflict: nil,

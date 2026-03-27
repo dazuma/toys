@@ -74,11 +74,11 @@ module Toys
       # @param files [Array<String>] An array of globs indicating the test
       #     files to load. Defaults to {DEFAULT_FILES}.
       # @param seed [Integer] The random seed, if any. Optional.
-      # @param verbose [Boolean] Whether to produce verbose output. Defaults to
+      # @param verbose [boolean] Whether to produce verbose output. Defaults to
       #     false.
-      # @param warnings [Boolean] If true, runs tests with Ruby warnings.
+      # @param warnings [boolean] If true, runs tests with Ruby warnings.
       #     Defaults to true.
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     used unless enabled via command line argument. If `true` or a Hash
       #     of options, bundler is enabled by default unless disabled via a
       #     command line argument. See the documentation for the
@@ -228,16 +228,16 @@ module Toys
       ##
       # Whether to produce verbose output.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :verbose
 
       ##
       # Whether to run tests with Ruby warnings.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :warnings
 
@@ -257,8 +257,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 

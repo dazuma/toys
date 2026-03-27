@@ -22,7 +22,7 @@ module Toys
     #
     # The following parameters can be passed when including this mixin:
     #
-    #  *  `:static` (Boolean) Has the same effect as passing `:static` to the
+    #  *  `:static` (boolean) Has the same effect as passing `:static` to the
     #     `:setup` parameter. This is present largely for historical
     #     compatibility, but it is supported and _not_ deprecated.
     #

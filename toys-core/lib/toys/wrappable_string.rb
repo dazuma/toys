@@ -46,7 +46,7 @@ module Toys
     ##
     # Returns true if the string is empty (i.e. has no fragments)
     #
-    # @return [Boolean]
+    # @return [boolean]
     #
     def empty?
       @fragments.empty?
@@ -65,7 +65,7 @@ module Toys
     ##
     # Tests two wrappable strings for equality
     # @param other [Object]
-    # @return [Boolean]
+    # @return [boolean]
     #
     def ==(other)
       return false unless other.is_a?(WrappableString)

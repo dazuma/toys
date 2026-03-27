@@ -100,9 +100,9 @@ module Toys
       # @param prompt [String] Prompt string. Defaults to `"Proceed?"`.
       # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     prompt.
-      # @param default [Boolean,nil] Default value, or `nil` for no default.
+      # @param default [boolean,nil] Default value, or `nil` for no default.
       #     Uses `nil` if not specified.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def confirm(prompt = "Proceed?", *styles, default: nil)
         self[KEY].confirm(prompt, *styles, default: default)

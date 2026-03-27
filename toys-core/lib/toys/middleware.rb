@@ -247,7 +247,7 @@ module Toys
       # Equality check
       #
       # @param other [Object]
-      # @return [Boolean]
+      # @return [boolean]
       #
       def ==(other)
         other.is_a?(Spec) &&
@@ -354,7 +354,7 @@ module Toys
       # Equality check
       #
       # @param other [Object]
-      # @return [Boolean]
+      # @return [boolean]
       #
       def ==(other)
         other.is_a?(Stack) &&

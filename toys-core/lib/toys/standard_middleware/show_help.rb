@@ -88,7 +88,7 @@ module Toys
       ##
       # Create a ShowHelp middleware.
       #
-      # @param help_flags [Boolean,Array<String>,Proc] Specify flags to
+      # @param help_flags [boolean,Array<String>,Proc] Specify flags to
       #     display help. The value may be any of the following:
       #
       #      *  An array of flags.
@@ -96,7 +96,7 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param usage_flags [Boolean,Array<String>,Proc] Specify flags to
+      # @param usage_flags [boolean,Array<String>,Proc] Specify flags to
       #     display usage. The value may be any of the following:
       #
       #      *  An array of flags.
@@ -104,7 +104,7 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param list_flags [Boolean,Array<String>,Proc] Specify flags to
+      # @param list_flags [boolean,Array<String>,Proc] Specify flags to
       #     display subtool list. The value may be any of the following:
       #
       #      *  An array of flags.
@@ -112,7 +112,7 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param recursive_flags [Boolean,Array<String>,Proc] Specify flags
+      # @param recursive_flags [boolean,Array<String>,Proc] Specify flags
       #     to control recursive subtool search. The value may be any of the
       #     following:
       #
@@ -121,7 +121,7 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param search_flags [Boolean,Array<String>,Proc] Specify flags
+      # @param search_flags [boolean,Array<String>,Proc] Specify flags
       #     to search subtools for a search term. The value may be any of
       #     the following:
       #
@@ -130,7 +130,7 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param show_all_subtools_flags [Boolean,Array<String>,Proc] Specify
+      # @param show_all_subtools_flags [boolean,Array<String>,Proc] Specify
       #     flags to show all subtools, including hidden tools and non-runnable
       #     namespaces. The value may be any of the following:
       #
@@ -140,21 +140,21 @@ module Toys
       #      *  The `false` value for no flags. (Default)
       #      *  A proc that takes a tool and returns any of the above.
       #
-      # @param default_recursive [Boolean] Whether to search recursively for
+      # @param default_recursive [boolean] Whether to search recursively for
       #     subtools by default. Default is `false`.
-      # @param default_show_all_subtools [Boolean] Whether to show all subtools
+      # @param default_show_all_subtools [boolean] Whether to show all subtools
       #     by default. Default is `false`.
-      # @param fallback_execution [Boolean] Cause the tool to display its own
+      # @param fallback_execution [boolean] Cause the tool to display its own
       #     help text if it is not otherwise runnable. This is mostly useful
       #     for namespaces, which have children are not runnable. Default is
       #     `false`.
-      # @param allow_root_args [Boolean] If the root tool includes flags for
+      # @param allow_root_args [boolean] If the root tool includes flags for
       #     help or usage, and doesn't otherwise use positional arguments,
       #     then a tool name can be passed as arguments to display help for
       #     that tool.
-      # @param show_source_path [Boolean] Show the source path section. Default
+      # @param show_source_path [boolean] Show the source path section. Default
       #     is `false`.
-      # @param separate_sources [Boolean] Split up tool list by source root.
+      # @param separate_sources [boolean] Split up tool list by source root.
       #     Defaults to false.
       # @param use_pager [boolean,String,Array<String>] Use a pager to display
       #     help text, if the output stream is a tty. You can set this to the
@@ -164,7 +164,7 @@ module Toys
       #     Default is false. Has no effect (i.e. always behaves as if set to
       #     false) if the output stream is not a tty.
       # @param stream [IO] Output stream to write to. Default is stdout.
-      # @param styled_output [Boolean,nil] Cause the tool to display help text
+      # @param styled_output [boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #

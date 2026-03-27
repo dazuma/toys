@@ -349,7 +349,7 @@ module Toys
       # @param into [String] If provided, copies the specified files into the
       #     given directory path. If omitted or `nil`, populates and returns a
       #     shared source file or directory.
-      # @param update [Boolean,Integer] Whether to update non-SHA commit
+      # @param update [boolean,Integer] Whether to update non-SHA commit
       #     references if they were previously loaded. This is useful, for
       #     example, if the commit is `HEAD` or a branch name. Pass `true` or
       #     `false` to specify whether to update, or an integer to update if

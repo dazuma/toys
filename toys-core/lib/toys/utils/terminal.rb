@@ -109,7 +109,7 @@ module Toys
       #
       # @param input [IO,nil] Input stream.
       # @param output [IO,Logger,nil] Output stream or logger.
-      # @param styled [Boolean,nil] Whether to output ansi styles. If `nil`, the
+      # @param styled [boolean,nil] Whether to output ansi styles. If `nil`, the
       #     setting is inferred from whether the output has a tty.
       #
       def initialize(input: $stdin, output: $stdout, styled: nil)
@@ -141,7 +141,7 @@ module Toys
 
       ##
       # Whether output is styled
-      # @return [Boolean]
+      # @return [boolean]
       #
       attr_reader :styled
 
@@ -248,9 +248,9 @@ module Toys
       # @param prompt [String] Prompt string. Defaults to `"Proceed?"`.
       # @param styles [Symbol,String,Array<Integer>...] Styles to apply to the
       #     prompt.
-      # @param default [Boolean,nil] Default value, or `nil` for no default.
+      # @param default [boolean,nil] Default value, or `nil` for no default.
       #     Uses `nil` if not specified.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def confirm(prompt = "Proceed? ", *styles, default: nil)
         default_val, trailing_text =

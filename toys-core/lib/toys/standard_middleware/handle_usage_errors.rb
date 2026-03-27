@@ -21,7 +21,7 @@ module Toys
       # @param exit_code [Integer] The exit code to return if a usage error
       #     occurs. Default is {USAGE_ERROR_EXIT_CODE}.
       # @param stream [IO] Output stream to write to. Default is stderr.
-      # @param styled_output [Boolean,nil] Cause the tool to display help text
+      # @param styled_output [boolean,nil] Cause the tool to display help text
       #     with ansi styles. If `nil`, display styles if the output stream is
       #     a tty. Default is `nil`.
       #

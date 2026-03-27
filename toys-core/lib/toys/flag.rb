@@ -188,7 +188,7 @@ module Toys
 
       ##
       # Whether an exact match of the string was found
-      # @return [Boolean]
+      # @return [boolean]
       #
       def found_exact?
         @found_exact
@@ -204,7 +204,7 @@ module Toys
 
       ##
       # Whether a single unique match was found.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def found_unique?
         @flags.size == 1
@@ -212,7 +212,7 @@ module Toys
 
       ##
       # Whether no matches were found.
-      # @return [Boolean]
+      # @return [boolean]
       #
       def not_found?
         @flags.empty?
@@ -220,7 +220,7 @@ module Toys
 
       ##
       # Whether multiple matches were found (i.e. ambiguous input).
-      # @return [Boolean]
+      # @return [boolean]
       #
       def found_multiple?
         @flags.size > 1
@@ -247,7 +247,7 @@ module Toys
       ##
       # Return whether the unique match was a hit on the negative (`--no-*`)
       # case, or `nil` if not found or not unique.
-      # @return [Boolean,nil]
+      # @return [boolean,nil]
       #
       def unique_flag_negative?
         found_unique? ? @flags.first[2] : nil
@@ -296,9 +296,9 @@ module Toys
       # Create a completion given configuration options.
       #
       # @param flag [Toys::Flag] The flag definition.
-      # @param include_short [Boolean] Whether to include short flags.
-      # @param include_long [Boolean] Whether to include long flags.
-      # @param include_negative [Boolean] Whether to include `--no-*` forms.
+      # @param include_short [boolean] Whether to include short flags.
+      # @param include_long [boolean] Whether to include long flags.
+      # @param include_negative [boolean] Whether to include `--no-*` forms.
       #
       def initialize(flag:, include_short: true, include_long: true, include_negative: true)
         super()
@@ -310,7 +310,7 @@ module Toys
 
       ##
       # Whether to include short flags
-      # @return [Boolean]
+      # @return [boolean]
       #
       def include_short?
         @include_short
@@ -318,7 +318,7 @@ module Toys
 
       ##
       # Whether to include long flags
-      # @return [Boolean]
+      # @return [boolean]
       #
       def include_long?
         @include_long
@@ -326,7 +326,7 @@ module Toys
 
       ##
       # Whether to include negative long flags
-      # @return [Boolean]
+      # @return [boolean]
       #
       def include_negative?
         @include_negative
@@ -423,7 +423,7 @@ module Toys
     # @param complete_values [Object] A specifier for shell tab completion for
     #     flag values associated with this flag. Pass any spec recognized by
     #     {Toys::Completion.create}.
-    # @param report_collisions [Boolean] Raise an exception if a flag is
+    # @param report_collisions [boolean] Raise an exception if a flag is
     #     requested that is already in use or marked as disabled. Default is
     #     true.
     # @param group [Toys::FlagGroup] Group containing this flag.
@@ -635,7 +635,7 @@ module Toys
     ##
     # Whether this flag is active--that is, it has a nonempty flags list.
     #
-    # @return [Boolean]
+    # @return [boolean]
     #
     def active?
       !effective_flags.empty?

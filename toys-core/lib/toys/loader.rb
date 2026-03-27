@@ -84,7 +84,7 @@ module Toys
     # Add a configuration file/directory to the loader.
     #
     # @param path [String] A single path to add.
-    # @param high_priority [Boolean] If true, add this path at the top of the
+    # @param high_priority [boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
@@ -124,7 +124,7 @@ module Toys
     #     should generally be a directory containing the paths to add.
     # @param relative_paths [String,Array<String>] One or more paths to add, as
     #     relative paths from the common root.
-    # @param high_priority [Boolean] If true, add the paths at the top of the
+    # @param high_priority [boolean] If true, add the paths at the top of the
     #     priority list. Defaults to false, indicating the new paths should be
     #     at the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
@@ -163,7 +163,7 @@ module Toys
     ##
     # Add a configuration block to the loader.
     #
-    # @param high_priority [Boolean] If true, add this block at the top of the
+    # @param high_priority [boolean] If true, add this block at the top of the
     #     priority list. Defaults to false, indicating the block should be at
     #     the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
@@ -201,13 +201,13 @@ module Toys
     # @param git_path [String] The path to the relevant file or directory in
     #     the repo. Specify the empty string to use the entire repo.
     # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name)
-    # @param high_priority [Boolean] If true, add this path at the top of the
+    # @param high_priority [boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
     #     documentation for tools loaded from this source. If omitted, a
     #     default unique string will be generated.
-    # @param update [Boolean] If the commit is not a SHA, pulls any updates
+    # @param update [boolean] If the commit is not a SHA, pulls any updates
     #     from the remote. Defaults to false, which uses a local cache and does
     #     not update if the commit has been fetched previously.
     # @param context_directory [String,nil] The context directory for tools
@@ -243,7 +243,7 @@ module Toys
     # @param gem_path [String] The path from the gem's toys directory to the
     #     relevant file or directory. Specify the empty string to use the
     #     entire toys directory.
-    # @param high_priority [Boolean] If true, add this path at the top of the
+    # @param high_priority [boolean] If true, add this path at the top of the
     #     priority list. Defaults to false, indicating the new path should be
     #     at the bottom of the priority list.
     # @param source_name [String] The source name that will be shown in
@@ -328,14 +328,14 @@ module Toys
     # configuration if necessary. The list will be sorted by name.
     #
     # @param words [Array<String>] The name of the parent tool
-    # @param recursive [Boolean] If true, return all subtools recursively
+    # @param recursive [boolean] If true, return all subtools recursively
     #     rather than just the immediate children (the default)
-    # @param include_hidden [Boolean] If true, include hidden subtools,
+    # @param include_hidden [boolean] If true, include hidden subtools,
     #     i.e. names beginning with underscores. Defaults to false.
-    # @param include_namespaces [Boolean] If true, include namespaces,
+    # @param include_namespaces [boolean] If true, include namespaces,
     #     i.e. tools that are not runnable but have descendents that would have
     #     been listed by the current filters. Defaults to false.
-    # @param include_non_runnable [Boolean] If true, include tools that have
+    # @param include_non_runnable [boolean] If true, include tools that have
     #     no children and are not runnable. Defaults to false.
     # @return [Array<Toys::ToolDefinition>] An array of subtools.
     #
@@ -362,7 +362,7 @@ module Toys
     # hidden or non-runnable. Loads from the configuration if necessary.
     #
     # @param words [Array<String>] The name of the parent tool
-    # @return [Boolean]
+    # @return [boolean]
     #
     def has_subtools?(words) # rubocop:disable Naming/PredicatePrefix
       load_for_prefix(words)

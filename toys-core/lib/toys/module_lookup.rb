@@ -66,7 +66,7 @@ module Toys
     # @param path_base [String] The base require path
     # @param module_base [Module] The base module, or `nil` (the default) to
     #     infer a default from the path base.
-    # @param high_priority [Boolean] If true, add to the head of the lookup
+    # @param high_priority [boolean] If true, add to the head of the lookup
     #     path, otherwise add to the end.
     # @return [self]
     #

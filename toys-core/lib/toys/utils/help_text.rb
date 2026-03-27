@@ -76,11 +76,11 @@ module Toys
       ##
       # Generate a short usage string.
       #
-      # @param recursive [Boolean] If true, and the tool is a namespace,
+      # @param recursive [boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
-      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
+      # @param include_hidden [boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param separate_sources [Boolean] Split up tool list by source root.
+      # @param separate_sources [boolean] Split up tool list by source root.
       #     Defaults to false.
       # @param left_column_width [Integer] Width of the first column. Default
       #     is {DEFAULT_LEFT_COLUMN_WIDTH}.
@@ -105,22 +105,22 @@ module Toys
       ##
       # Generate a long help string.
       #
-      # @param recursive [Boolean] If true, and the tool is a namespace,
+      # @param recursive [boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
       # @param search [String,nil] An optional string to search for when
       #     listing subtools. Defaults to `nil` which finds all subtools.
-      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
+      # @param include_hidden [boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param show_source_path [Boolean] If true, shows the source path
+      # @param show_source_path [boolean] If true, shows the source path
       #     section. Defaults to false.
-      # @param separate_sources [Boolean] Split up tool list by source root.
+      # @param separate_sources [boolean] Split up tool list by source root.
       #     Defaults to false.
       # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
       # @param indent2 [Integer] Second indent width. Default is
       #     {DEFAULT_INDENT}.
       # @param wrap_width [Integer,nil] Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
-      # @param styled [Boolean] Output ansi styles. Default is `true`.
+      # @param styled [boolean] Output ansi styles. Default is `true`.
       #
       # @return [String] A usage string.
       #
@@ -141,18 +141,18 @@ module Toys
       ##
       # Generate a subtool list string.
       #
-      # @param recursive [Boolean] If true, and the tool is a namespace,
+      # @param recursive [boolean] If true, and the tool is a namespace,
       #     display all subtools recursively. Defaults to false.
       # @param search [String,nil] An optional string to search for when
       #     listing subtools. Defaults to `nil` which finds all subtools.
-      # @param include_hidden [Boolean] Include hidden subtools (i.e. whose
+      # @param include_hidden [boolean] Include hidden subtools (i.e. whose
       #     names begin with underscore.) Default is false.
-      # @param separate_sources [Boolean] Split up tool list by source root.
+      # @param separate_sources [boolean] Split up tool list by source root.
       #     Defaults to false.
       # @param indent [Integer] Indent width. Default is {DEFAULT_INDENT}.
       # @param wrap_width [Integer,nil] Wrap width of the column, or `nil` to
       #     disable wrap. Default is `nil`.
-      # @param styled [Boolean] Output ansi styles. Default is `true`.
+      # @param styled [boolean] Output ansi styles. Default is `true`.
       #
       # @return [String] A usage string.
       #
@@ -170,10 +170,10 @@ module Toys
       ##
       # Orchestrates subtool collection: lists, filters, and arranges into assembler-ready form.
       #
-      # @param recursive [Boolean] whether to list subtools recursively
+      # @param recursive [boolean] whether to list subtools recursively
       # @param search [String, nil] regex search string, or nil for no filtering
-      # @param include_hidden [Boolean] whether to include hidden subtools and namespaces
-      # @param separate_sources [Boolean] whether to group results by source root
+      # @param include_hidden [boolean] whether to include hidden subtools and namespaces
+      # @param separate_sources [boolean] whether to group results by source root
       # @return [Array<[String, Array<[String, ToolDefinition]>]>] list of
       #     `[source_name, [[local_name, subtool], ...]]` pairs, sorted by source priority
       #
@@ -187,8 +187,8 @@ module Toys
       # Queries the loader for all subtools of the tool and its delegates, building a flat map.
       # When a delegate and the tool share a subtool local name, the delegate's entry wins.
       #
-      # @param recursive [Boolean] whether to list subtools at all depths
-      # @param include_hidden [Boolean] whether to include hidden tools and namespaces
+      # @param recursive [boolean] whether to list subtools at all depths
+      # @param include_hidden [boolean] whether to include hidden tools and namespaces
       # @return [Hash{String => ToolDefinition}] local subtool name to tool definition
       #
       def list_subtools(recursive, include_hidden)
@@ -235,7 +235,7 @@ module Toys
       # separate_sources is false), and sorts groups by descending source priority.
       #
       # @param subtools_by_name [Hash{String => ToolDefinition}] already-filtered subtool map
-      # @param separate_sources [Boolean] whether to group by source root
+      # @param separate_sources [boolean] whether to group by source root
       # @return [Array<[String, Array<[String, ToolDefinition]>]>] list of
       #     `[source_name, [[local_name, subtool], ...]]` pairs
       #
@@ -784,7 +784,7 @@ module Toys
         # or `", "` (in the flags section), with value labels underlined.
         #
         # @param flag [Flag]
-        # @param in_synopsis [Boolean] whether to use the `" | "` separator (default: false)
+        # @param in_synopsis [boolean] whether to use the `" | "` separator (default: false)
         # @return [String]
         #
         def flag_spec_string(flag, in_synopsis = false)
@@ -852,7 +852,7 @@ module Toys
         #
         # @param header [String] formatted flag spec or arg name
         # @param info [Flag, PositionalArg]
-        # @param precede_with_blank [Boolean] whether to insert a blank line before the entry
+        # @param precede_with_blank [boolean] whether to insert a blank line before the entry
         # @return [void]
         #
         def add_indented_section(header, info, precede_with_blank)
@@ -991,7 +991,7 @@ module Toys
         ##
         # Build the list string result, storing it in `@result`.
         #
-        # @param styled [Boolean] Whether to apply terminal styles.
+        # @param styled [boolean] Whether to apply terminal styles.
         # @return [void]
         #
         def assemble(styled)

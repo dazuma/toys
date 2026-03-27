@@ -41,24 +41,24 @@ module Toys
       #     the yard gem. Defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS}.
       # @param files [Array<String>] An array of globs indicating the files
       #     to document. Defaults to {DEFAULT_FILES}.
-      # @param generate_output [Boolean] Whether to generate output. Setting to
+      # @param generate_output [boolean] Whether to generate output. Setting to
       #     false causes yardoc to emit warnings/errors but not generate html.
       #     Defaults to true.
-      # @param generate_output_flag [Boolean] Whether to create a flag
+      # @param generate_output_flag [boolean] Whether to create a flag
       #     `--[no-]output` that can control whether output is generated.
       #     Defaults to false.
       # @param output_dir [String,nil] Output directory. Defaults to
       #     {DEFAULT_OUTPUT_DIR}.
-      # @param fail_on_warning [Boolean] Whether the tool should return a
+      # @param fail_on_warning [boolean] Whether the tool should return a
       #     nonzero error code if any warnings happen. Defaults to false.
-      # @param fail_on_undocumented_objects [Boolean] Whether the tool should
+      # @param fail_on_undocumented_objects [boolean] Whether the tool should
       #     return a nonzero error code if any objects remain undocumented.
       #     Defaults to false.
-      # @param show_public [Boolean] Show public methods. Defaults to true.
-      # @param show_protected [Boolean] Show protected methods. Defaults to
+      # @param show_public [boolean] Show public methods. Defaults to true.
+      # @param show_protected [boolean] Show protected methods. Defaults to
       #     false.
-      # @param show_private [Boolean] Show private methods. Defaults to false.
-      # @param hide_private_tag [Boolean] Hide methods with the `@private` tag.
+      # @param show_private [boolean] Show private methods. Defaults to false.
+      # @param hide_private_tag [boolean] Hide methods with the `@private` tag.
       #     Defaults to false.
       # @param readme [String,nil] Name of the readme file used as the title
       #     page. If not provided, YARD will choose a default.
@@ -73,7 +73,7 @@ module Toys
       # @param options [Array<String>] Additional options passed to YARD
       # @param stats_options [Array<String>] Additional stats options passed to
       #     YARD
-      # @param bundler [Boolean,Hash] If `false` (the default), bundler is not
+      # @param bundler [boolean,Hash] If `false` (the default), bundler is not
       #     enabled for this tool. If `true` or a Hash of options, bundler is
       #     enabled. See the documentation for the
       #     [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
@@ -156,8 +156,8 @@ module Toys
       # Whether to generate output. Setting to false causes yardoc to emit
       # warnings/errors but not generate html.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :generate_output
 
@@ -165,8 +165,8 @@ module Toys
       # Whether to create a flag `--[no-]output` that can control whether
       # output is generated.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :generate_output_flag
 
@@ -183,8 +183,8 @@ module Toys
       # Whether the tool should return a nonzero error code if any warnings
       # happen.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :fail_on_warning
 
@@ -192,40 +192,40 @@ module Toys
       # Whether the tool should return a nonzero error code if any objects
       # remain undocumented.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :fail_on_undocumented_objects
 
       ##
       # Whether to document public methods.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :show_public
 
       ##
       # Whether to document protected methods.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :show_protected
 
       ##
       # Whether to document private methods.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :show_private
 
       ##
       # Whether to hide methods with the `@private` tag.
       #
-      # @param value [Boolean]
-      # @return [Boolean]
+      # @param value [boolean]
+      # @return [boolean]
       #
       attr_writer :hide_private_tag
 
@@ -306,8 +306,8 @@ module Toys
       # [bundler mixin](https://dazuma.github.io/toys/gems/toys-core/latest/Toys/StandardMixins/Bundler)
       # for information on the options that can be passed.
       #
-      # @param value [Boolean,Hash]
-      # @return [Boolean,Hash]
+      # @param value [boolean,Hash]
+      # @return [boolean,Hash]
       #
       attr_writer :bundler
 

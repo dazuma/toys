@@ -252,9 +252,9 @@ module Toys
     #     Keys represent variable names and should be strings. Values should be
     #     either strings or `nil`, which unsets the variable.
     #
-    #  *  `:background` (Boolean) Runs the process in the background if `true`.
+    #  *  `:background` (boolean) Runs the process in the background if `true`.
     #
-    #  *  `:unbundle` (Boolean) Disables any existing bundle when running the
+    #  *  `:unbundle` (boolean) Disables any existing bundle when running the
     #     subprocess. Has no effect if Bundler isn't active at the call point.
     #     Cannot be used when executing in a fork, e.g. via {#exec_proc}.
     #
@@ -264,10 +264,10 @@ module Toys
     #     passed the result object, when the subprocess exits. You can provide
     #     a `Proc` object, or the name of a method as a `Symbol`.
     #
-    #  *  `:exit_on_nonzero_status` (Boolean) If set to true, a nonzero exit
+    #  *  `:exit_on_nonzero_status` (boolean) If set to true, a nonzero exit
     #     code will cause the tool to exit immediately with that same code.
     #
-    #  *  `:e` (Boolean) A short name for `:exit_on_nonzero_status`.
+    #  *  `:e` (boolean) A short name for `:exit_on_nonzero_status`.
     #
     # Options for connecting input and output streams. See the section above on
     # stream handling for info on the values that can be passed.
@@ -302,16 +302,16 @@ module Toys
     #
     #  *  `:chdir` (String) Set the working directory for the command.
     #
-    #  *  `:close_others` (Boolean) Whether to close non-redirected
+    #  *  `:close_others` (boolean) Whether to close non-redirected
     #     non-standard file descriptors.
     #
-    #  *  `:new_pgroup` (Boolean) Create new process group (Windows only).
+    #  *  `:new_pgroup` (boolean) Create new process group (Windows only).
     #
     #  *  `:pgroup` (Integer,true,nil) The process group setting.
     #
     #  *  `:umask` (Integer) Umask setting for the new process.
     #
-    #  *  `:unsetenv_others` (Boolean) Clear environment variables except those
+    #  *  `:unsetenv_others` (boolean) Clear environment variables except those
     #     explicitly set.
     #
     # Any other option key will result in an `ArgumentError`.
@@ -765,7 +765,7 @@ module Toys
       # current verbosity level. This is useful when you want to spawn tools
       # with the same verbosity level as the current tool.
       #
-      # @param short [Boolean] Whether to emit short rather than long flags.
+      # @param short [boolean] Whether to emit short rather than long flags.
       #     Default is false.
       # @return [Array<String>]
       #
