@@ -4,7 +4,7 @@
   spec.name = "toys-core-multi-file-example"
   spec.version = "0.0.1"
   spec.authors = ["Daniel Azuma"]
-  spec.email = ["dazuma@gmail.com.com"]
+  spec.email = ["dazuma@gmail.com"]
 
   spec.summary = "An example command line gem created using toys-core"
   spec.description =
@@ -21,5 +21,5 @@
   spec.bindir = "bin"
   spec.executables = ["toys-core-multi-file-example"]
 
-  spec.add_dependency "toys-core", ">= 0.15.6"
+  spec.add_dependency "toys-core", "~> 0.21"
 end

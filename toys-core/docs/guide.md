@@ -28,8 +28,6 @@ This user's guide covers all the features of Toys-Core in much more depth. Read
 it when you're ready to unlock all the capabilities of Toys-Core to create
 sophisticated command line tools.
 
-**(This user's guide is still under construction.)**
-
 ## Conceptual overview
 
 Toys-Core is a **command line framework** in the traditional sense. It is
@@ -102,6 +100,15 @@ result = cli.run(*ARGV)
 
 # Handle the result code.
 exit(result)
+```
+
+Try testing out that script, by writing it into a file, e.g `greet.rb`, setting
+the execute bit, and running it.
+
+```
+$ chmod a+x greet.rb
+$ ./greet.rb
+$ ./greet.rb --whom=Ruby
 ```
 
 ### CLI execution
@@ -193,7 +200,8 @@ The execution phase involves:
     subsequent middleware and the final tool execution, and has the opportunity
     to inject functionality before and after the main execution, or even to
     forgo or replace the main functionality, similar to Rack middleware.
- *  Executing the tool itself by calling its `run` method.
+ *  Executing the tool itself by calling its `run` method (or any alternate
+    entrypoint set by the tool).
 
 The CLI also implements error and signal handling, directing control either to
 the tool's callbacks or to fallback handlers that can be configured into the
@@ -217,12 +225,9 @@ These features include:
  *  Middleware, providing common behavior for all tools. See the section on
     [customizing the middleware stack](#customizing-default-behavior).
  *  Common mixins and templates available to all tools. See the section on
-    [how to define mixins and templates](#defining-mixins-and-templates).
+    [customizing the built-in mixins and templates](#customizing-built-in-mixins-and-templates).
  *  How logs, errors, and signals are reported. See the section on
-    [customizing tool output](#customizing-tool-output).
- *  How the executable interacts with the shell, including setting up tab
-    completion. See the
-    [corresponding section](#shell-and-command-line-integration).
+    [customizing diagnostic output](#customizing-diagnostic-output).
 
 Each of the actual parameters is covered in detail in the documentation for
 {Toys::CLI#initialize}. The configuration of a CLI cannot be changed once the
@@ -321,6 +326,13 @@ by passing appropriate options to the CLI constructor.) These methods,
 {Toys::CLI#add_search_path} and {Toys::CLI#add_search_path_hierarchy},
 implement the actual behavior of Toys in which it looks for any available files
 in the current directory or its parents.
+
+One particularly common use case is to package your command line executable
+along with the tool files it uses, into a gem for distribution. In such a case,
+you can define your tools in a particular directory in the gem and use
+{Toys::CLI#add_config_path} to point to that directory. See the section on
+[packaging your executable](#packaging-your-executable) for details on this
+technique.
 
 ### Tool priority
 
@@ -834,29 +846,353 @@ my_middleware_stack = [
 cli = Toys::CLI.new(middleware_stack: my_middleware_stack)
 ```
 
-Now, every tool run by this CLI wil have the `--show-timing` flag and
+Now, every tool run by this CLI will have the `--show-timing` flag and
 associated functionality.
-
-## Shell and command line integration
-
-(TODO)
-
-### Interpreting tool names
-
-(TODO)
-
-### Tab completion
-
-(TODO)
 
 ## Packaging your executable
 
-(TODO)
+Simple executables can be written into a single Ruby file and run as a script.
+We saw an example of this at the [beginning](#using-the-cli-object) of this
+guide. The only requirement is that the user must have Ruby installed, as well
+as the toys-core gem.
 
-## Extending Toys
+However, if you want to distribute an executable using Toys-Core, you may find
+it best to create a Rubygem. Your users can install your gem, which can be
+configured to bring in the toys-core gem automatically as a dependency, and the
+executable will be added to their path. For more information on the basic
+Rubygems mechanism for this, see the
+[Rubygems documentation](https://guides.rubygems.org/make-your-own-gem/#adding-an-executable).
 
-(TODO)
+The Toys GitHub repository https://github.com/dazuma/toys includes some
+examples of executables packaged in gems. Let's take a look at these.
+
+### A gem with a simple executable
+
+The [`simple-gem` example](https://github.com/dazuma/toys/tree/main/toys-core/examples/simple-gem)
+illustrates packaging a simple executable that can be implemented in a single
+file using {Toys::CLI#add_config_block}. It demonstrates the gem
+`toys-core-simple-example` that provides an executable also called
+`toys-core-simple-example`.
+
+```
+simple-gem/
+|
++- bin/
+|  |
+|  +- toys-core-simple-example
+|
++- lib/
+|  |
+|  +- toys-core-simple-example.rb
+|
++- toys-core-simple-example.gemspec
+```
+
+The executable file `toys-core-simple-example` should live in the `bin/`
+directory in the Rubygem. By convention, Rubygems expects executables to live
+there, and it will ensure they are available in the user's `$PATH`. The file
+should have its executable bit set (e.g. `rwxr-xr-x`.) For this example, we
+just used the code from the [beginning of this guide](#using-the-cli-object).
+
+```ruby
+require "toys-core"
+
+cli = ::Toys::CLI.new
+
+cli.add_config_block do
+  desc "Display a simple greeting"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
+
+exit(cli.run(::ARGV))
+```
+
+Note that there is also a `lib/toys-core-simple-example.rb` file that is
+basically empty. Rubygems are meant to contain Ruby libraries, and get confused
+if there aren't any Ruby library files. So we include this token file. It
+doesn't actually need to include anything; it just needs to be present.
+
+Finally, let's note a few features of the gemspec:
+
+```ruby
+::Gem::Specification.new do |spec|
+  spec.name = "toys-core-simple-example"
+  spec.version = "0.0.1"
+  spec.authors = ["Daniel Azuma"]
+  spec.email = ["dazuma@gmail.com"]
+
+  spec.summary = "An example command line gem created using toys-core"
+  spec.description =
+    "An example command line gem created using toys-core. For more" \
+    " information on toys-core, see https://github.com/dazuma/toys"
+  spec.license = "MIT"
+  spec.homepage = "https://github.com/dazuma/toys"
+
+  spec.files = ::Dir.glob("*.md") + ::Dir.glob("bin/*")
+  spec.required_ruby_version = ">= 2.7.0"
+  spec.require_paths = ["lib"]
+
+  spec.bindir = "bin"
+  spec.executables = ["toys-core-simple-example"]
+
+  spec.add_dependency "toys-core", "~> 0.21"
+end
+```
+
+First, the bin directory and the executable file needs to be included in the
+gem (i.e. present in `spec.files`.) Second, we declare the executable by
+setting `spec.bindir` and `spec.executables`, so that Rubygems knows the
+executable should be present in the user's `$PATH`. Finally, note that
+`toys-core` is declared as a dependency.
+
+That's all there is to it. You can build and install this gem, and the command
+line executable program `toys-core-simple-example` will be made available.
+
+### A gem using a tools directory
+
+For more complex programs, you may want the actual tool definitions to live in
+a directory of files, much like you'd use a `.toys` directory to write and
+manage more complex sets of Toys tools. To package such a program in a gem,
+just include the `tools` directory in the gem, and load it into the CLI using
+{Toys::CLI#add_config_path}. The
+[`multi-file-gem` example](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem)
+example illustrates how to do this.
+
+```
+multi-file-gem/
+|
++- bin/
+|  |
+|  +- toys-core-multi-file-example
+|
++- lib/
+|  |
+|  +- toys-core-multi-file-example.rb
+|
++- tools/
+|  |
+|  +- greet.rb
+|  |
+|  +- new-repo.rb
+|
++- toys-core-multi-file-example.gemspec
+```
+
+In this example, we chose to implement the application in the `lib` directory,
+and just have the executable be a brief script that loads and runs that
+implementation.
+
+The executable `bin/toys-core-multi-file-example`:
+
+```ruby
+#!/usr/bin/env ruby
+require "toys-core-multi-file-example"
+ToysCoreExample.new.run
+```
+
+And the library that gets required `lib/toys-core-multi-file-example.rb`:
+
+```ruby
+require "toys-core"
+
+class ToysCoreExample
+  def initialize
+    @cli = ::Toys::CLI.new
+    @cli.add_config_path(::File.join(::File.dirname(__dir__), "tools"))
+  end
+
+  def run
+    exit(@cli.run(::ARGV))
+  end
+end
+```
+
+Note that `add_config_path` backs out to the gem's root directory, and adds the
+`tools` directory from there. You can do this because the lib and tools
+directories will always be installed as part of the gem. (You might want to do
+this instead of creating that relative path from the executable itself, so that
+it's possible to move the executable elsewhere.)
+
+In the `tools/` directory, you can define tools just like you would normally.
+You also have access to all the features of Toys tool definition, such as
+hierarchical subtools, and even `.lib` and `.data` subdirectories if you need
+shared code or data.
+
+Finally, the gemspec:
+
+```ruby
+::Gem::Specification.new do |spec|
+  spec.name = "toys-core-multi-file-example"
+  spec.version = "0.0.1"
+  spec.authors = ["Daniel Azuma"]
+  spec.email = ["dazuma@gmail.com"]
+
+  spec.summary = "An example command line gem created using toys-core"
+  spec.description =
+    "An example command line gem created using toys-core. For more" \
+    " information on toys-core, see https://github.com/dazuma/toys"
+  spec.license = "MIT"
+  spec.homepage = "https://github.com/dazuma/toys"
+
+  spec.files = ::Dir.glob("*.md") + ::Dir.glob("bin/*") +
+               ::Dir.glob("lib/**/*.rb") + ::Dir.glob("tools/**/*.rb")
+  spec.required_ruby_version = ">= 2.7.0"
+  spec.require_paths = ["lib"]
+
+  spec.bindir = "bin"
+  spec.executables = ["toys-core-multi-file-example"]
+
+  spec.add_dependency "toys-core", "~> 0.21"
+end
+```
+
+Note that we include the tools directory and its contents in `spec.files` to
+ensure they are included in the gem.
 
 ## Overview of Toys-Core classes
 
-(TODO)
+This reference section provides a roadmap to the classes in Toys-Core.
+
+The Toys-Core framework can roughly be divided into sections, as follows. Each
+of these is implemented in the corresponding Ruby file under `lib`.
+
+### Tool definition classes
+
+These provide the objects that make up the definition of a tool.
+
+ *  {Toys::ToolDefinition} - This is the main class, representing the
+    complete definition of a single tool.
+ *  {Toys::Flag} - The definition of a single flag, which may have arguments.
+    Contained in a tool definition.
+ *  {Toys::FlagGroup} - The definition of a flag group, a collection of related
+    flags that may have common requirement settings. Contained in a tool
+    definition.
+ *  {Toys::PositionalArg} - The definition of a positional argument, which
+    could be required or optional. There is also a special case for an
+    arbitrary-length array of "remaining" args. Contained in a tool definition.
+ *  {Toys::Acceptor} - Represents how to validate arguments (either positional
+    or flag arguments) and optionally convert from strings to Ruby objects.
+    This module contains various classes implementing both "well-known"
+    acceptors as defined in the OptionParser interface, and provides various
+    additional options as well as the interface for custom acceptors.
+ *  {Toys::Completion} - Represents how to autocomplete command line arguments.
+    Like acceptor, this module contains classes for well-known completion
+    techniques, and the interfaces needed for implementing custom completions.
+
+### Tool definition DSL
+
+The DSL is implemented under the `lib/dsl` subdirectory, and provides the
+objects defining the DSL directives.
+
+ *  {Toys::DSL::Tool} - This defines the main DSL, including all directives for
+    defining a tool, including the `tool` directive that defines a subtool
+    block.
+ *  {Toys::DSL::Flag} - This defines the directives available within a `flag`
+    directive block.
+ *  {Toys::DSL::FlagGroup} - This defines the directives available within a
+    `flag_group` directive block and related directives such as `exactly_one`.
+ *  {Toys::DSL::PositionalArg} - This defines the directives available within
+    blocks passed to the positional argument directives such as `required_arg`.
+ *  {Toys::Tool} - This is a base class that you can use to define tools using
+    the class syntax.
+
+### Tool loading and resolution
+
+This section includes classes implementing the tool loading logic as described
+above under [the Loader](#the-loader).
+
+ *  {Toys::Loader} - This class implements the lazy tool loader. It keeps track
+    of the various sources of tool definitions (such as files and blocks) and
+    responds to requests for tools by name, returning a {Toys::ToolDefinition}.
+ *  {Toys::SourceInfo} - This object provides metadata about a source for a
+    tool definition, which could be a directory, a file, or a block. This
+    information is used to reference at the source when listing tools, and when
+    reporting errors.
+ *  {Toys::InputFile} - This is the module that contains actual tool definition
+    classes. Tool definitions (and any other constants and classes defined with
+    them) are not placed at the top level, but in submodules of InputFile, so
+    that they do not clash with other definitions.
+
+### Tool execution
+
+This section includes classes involved in tool execution
+
+ *  {Toys::CLI} - The main execution entry point. It provides a general
+    configuration interface for all of the Toys features, owns a {Toys::Loader}
+    that it uses to load tool definitions, and then responds to command line
+    invocations.
+ *  {Toys::ArgParser} - A service that parses command line argument lists,
+    matches the given arguments against the tool's formal flags and arguments
+    definition, and populates the tool's execution context.
+ *  {Toys::Context} - This class is `self` during a tool's execution, and the
+    tool's methods, including the entrypoint `run` method, are defined in a
+    subclass of this class. This class also provides methods for retrieving
+    flag and argument values and other contextual information.
+
+### Code sharing
+
+The mixin definition is {Toys::Mixin}; this module should be included in every
+mixin. Toys-Core also provides a suite of standard mixins under the
+{Toys::StandardMixins} module.
+
+The middleware interface is defined by {Toys::Middleware}, which also provides
+a set of module methods and classes for defining middleware specifications as
+used to configure a {Toys::CLI}.
+
+The template definition is {Toys::Template}; this module should be included in
+every template. Toys-Core does not itself provide any templates, but the `toys`
+gem includes a suite of common templates useful for Ruby project tools such as
+builds and tests.
+
+### Exception classes
+
+Exception classes are defined in `lib/errors.rb`.
+
+ *  {Toys::ContextualError} - This is the error that is generally raised from
+    {Toys::CLI#run}. It wraps an actual error, and provides source information
+    indicating where in the tool definition the error was raised.
+ *  {Toys::ArgParsingError} - Raised during argument parsing to indicate that
+    parsing failed. If present, it will contain one or more individual
+    {Toys::ArgParser::UsageError} exceptions.
+ *  {Toys::LoaderError} - Raised during loading to indicate the {Toys::Loader}
+    failed.
+ *  {Toys::NotRunnableError} - Raised during tool execution if the tool has no
+    entrypoint. (In the `toys` gem, this is generally caught by the help system
+    and redirected to display the usage screen.)
+ *  {Toys::ToolDefinitionError} - Raised during tool definition in response to
+    semantic issues with the definition.
+
+### Support and utility classes
+
+These classes provide functional support for different parts of the system
+
+ *  {Toys::Compat} - A set of logic for distinguishing differences in Ruby
+    capability by Ruby version and platform.
+ *  {Toys::ModuleLookup} - A utility for looking up modules by symbolic name.
+    This is how "well-known" mixins and templates are looked up by symbol.
+ *  {Toys::Settings} - A generic settings class
+ *  {Toys::WrappableString} - An object representing a string that knows how to
+    be text-wrapped. This is used in fields such as descriptions.
+
+Additional classes live under `lib/utils/`. These are distinguished because,
+unlike all other classes under toys-core, they are *not* loaded by default. Any
+use of these classes must be preceded by an appropriate `require`. In general,
+classes are put here if they are both (1) of a utility nature, and (2) not
+necessarily going to be used by every tool execution, so it may be beneficial
+to defer `require`-ing the file until/unless it's actually needed.
+
+ *  {Toys::Utils::CompletionEngine} - Adapters for connecting the bash and zsh
+    completion systems to the Toys completion interfaces
+ *  {Toys::Utils::Exec} - Process execution service
+ *  {Toys::Utils::GitCache} - Cache of cloned git data
+ *  {Toys::Utils::HelpText} - Online help generator
+ *  {Toys::Utils::Pager} - A tool for wrapping long output in a pager such as
+    `less`.
+ *  {Toys::Utils::StandardUI} - Implementations of the logging, error handling,
+    and other UI formatting used by the `toys` program.
+ *  {Toys::Utils::Terminal} - Simple terminal tools such as styled output and
+    simple online prompts
+ *  {Toys::Utils::XDG} - Simple implementation of the XDG Base Directory Spec

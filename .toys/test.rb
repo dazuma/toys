@@ -42,4 +42,9 @@ expand(Toys::CI::Template) do |ci|
               ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"], chdir: "toys-release",
               flag: :toys_release,
               trigger_paths: ["toys-core/", "toys-release/"])
+  ci.tool_job("Tests for global stuff",
+              ["test-root"],
+              flag: :root,
+              trigger_paths: ["toys/docs/", "toys-core/docs/", "toys-release/docs/", "README.md",
+                              "toys/README.md", "toys-core/README.md", "toys-ci/README.md", "toys-release/README.md"])
 end

@@ -20,43 +20,48 @@ and produces a final report of the results.
 
 Given the following `.toys.rb`:
 
-    # Create a "test" tool that runs minitest-based tests
-    expand :minitest, bundler: true
+```ruby
+# Create a "test" tool that runs minitest-based tests
+expand :minitest, bundler: true
 
-    # Create a "rubocop" tool that checks the code base
-    expand :rubocop, bundler: true
+# Create a "rubocop" tool that checks the code base
+expand :rubocop, bundler: true
 
-    # Create a "ci" tool that runs the above tools and
-    # summarizes their results
-    tool "ci" do
-      load_gem "toys-ci"
+# Create a "ci" tool that runs the above tools and
+# summarizes their results
+tool "ci" do
+  load_gem "toys-ci"
 
-      expand(Toys::CI::Template) do |ci|
-        ci.only_flag = true
-        ci.tool_job("Run Rubocop", ["rubocop"], flag: :rubocop)
-        ci.tool_job("Run tests", ["test"], flag: :tests)
-      end
-    end
+  expand(Toys::CI::Template) do |ci|
+    ci.only_flag = true
+    ci.tool_job("Run Rubocop", ["rubocop"], flag: :rubocop)
+    ci.tool_job("Run tests", ["test"], flag: :tests)
+  end
+end
+```
 
 Now you can:
 
-    $ toys ci                 # Runs both jobs
-    $ toys ci --only --tests  # Runs only the tests
+```
+$ toys ci                 # Runs both jobs
+$ toys ci --only --tests  # Runs only the tests
+```
 
 ### Key features
 
-* Two interfaces: a high level Template interface that generates an entire tool
-  for you including configuration flags, and a low-level Mixin interface that
-  provides convenient methods that you can call to write your own CI tool.
+ *  Two interfaces: a high level Template interface that generates an entire
+    tool for you including configuration flags, and a low-level Mixin interface
+    that provides convenient methods that you can call to write your own CI
+    tool.
 
-* The high-level interface generates flags that allow selection of individual
-  jobs and groups of jobs to execute.
+ *  The high-level interface generates flags that allow selection of individual
+    jobs and groups of jobs to execute.
 
-* Optionally analyzes diffs and skips jobs that do not need executing because
-  no relevant changes have occurred.
+ *  Optionally analyzes diffs and skips jobs that do not need executing because
+    no relevant changes have occurred.
 
-* Customize your tool, including implementing additional flags and
-  functionality, using the power of the Toys framework.
+ *  Customize your tool, including implementing additional flags and
+    functionality, using the power of the Toys framework.
 
 ### System requirements
 

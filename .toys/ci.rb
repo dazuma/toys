@@ -48,7 +48,7 @@ expand(Toys::CI::Template) do |ci|
   end
 
   ci.tool_job("Rubocop for the repo tools and common tools",
-              ["rubocop", "_root"],
+              ["rubocop-root"],
               flag: :rubocop_root,
               trigger_paths: [".toys/", "common-tools/"])
   ci.tool_job("Rubocop for toys-core",
@@ -88,6 +88,11 @@ expand(Toys::CI::Template) do |ci|
               ["system", "test", "-d", "toys", "--minitest-focus", "--minitest-rg"], chdir: "toys-release",
               flag: :test_toys_release,
               trigger_paths: ["toys-core/", "toys-release/"])
+  ci.tool_job("Tests for global stuff",
+              ["test-root"],
+              flag: :test_root,
+              trigger_paths: ["toys/docs/", "toys-core/docs/", "toys-release/docs/", "README.md",
+                              "toys/README.md", "toys-core/README.md", "toys-ci/README.md", "toys-release/README.md"])
 
   ci.tool_job("Yardoc generation for toys-core",
               ["yardoc-test"], chdir: "toys-core",
@@ -128,14 +133,14 @@ expand(Toys::CI::Template) do |ci|
   ci.collection("Rubocop jobs", :rubocop_all,
                 [:rubocop_toys_core, :rubocop_toys, :rubocop_toys_ci, :rubocop_toys_release, :rubocop_root])
   ci.collection("Test jobs", :test_all,
-                [:test_toys_core, :test_toys, :test_builtins, :test_toys_ci, :test_toys_release])
+                [:test_toys_core, :test_toys, :test_builtins, :test_toys_ci, :test_toys_release, :test_root])
   ci.collection("Yardoc generation jobs", :yard_all,
                 [:yard_toys_core, :yard_toys, :yard_toys_ci, :yard_toys_release])
   ci.collection("Gem build jobs", :build_all,
                 [:build_toys_core, :build_toys, :build_toys_ci, :build_toys_release])
 
   ci.collection("Jobs for the repo root", :all_root,
-                [:bundle_root, :rubocop_root])
+                [:bundle_root, :rubocop_root, :test_root])
   ci.collection("Jobs for the toys-core gem", :all_toys_core,
                 [:bundle_toys_core, :rubocop_toys_core, :test_toys_core, :yard_toys_core, :build_toys_core],
                 override_flags: (local_dir == "toys-core" ? ["all-toys-core", "current"] : nil))

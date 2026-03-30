@@ -6,3 +6,15 @@
 ::Kernel.exec(::File.join(context_directory, "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
 expand :clean, paths: :gitignore, preserve: ".claude/"
+
+expand :rubocop do |t|
+  t.name = "rubocop-root"
+  t.use_bundler
+  t.options = ["--config=.rubocop-root.yml"]
+end
+
+expand :minitest do |t|
+  t.name = "test-root"
+  t.libs = ["test"]
+  t.use_bundler
+end
