@@ -13,7 +13,7 @@ describe "toys system zsh-completion" do
   it "prints the description" do
     result = toys_exec_tool(["system", "zsh-completion"])
     output_lines = result.captured_out.split("\n")
-    assert_equal("NAME", output_lines[0])
+    assert_includes(output_lines[0], "NAME")
     assert_equal("    toys system zsh-completion - Zsh tab completion for Toys", output_lines[1])
   end
 

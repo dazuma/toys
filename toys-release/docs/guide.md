@@ -69,14 +69,14 @@ happens in GitHub Actions and does not require any local installation.
 If you do not have Ruby or Toys installed locally, do so first. Install
 Ruby 2.7 or later, and then install the Toys RubyGem using:
 
-```sh
+```
 $ gem install toys
 ```
 
 Toys-Release requires Toys 0.20 or later. If you have an older version of Toys,
 update it using:
 
-```sh
+```
 $ toys system update
 ```
 
@@ -84,7 +84,7 @@ Finally, you also need the GitHub command line tool, `gh`. Find installation
 instructions at https://cli.github.com/. If you are running on MacOS, for
 example, the easiest way to install it is via homebrew:
 
-```sh
+```
 $ brew install gh
 ```
 
@@ -104,7 +104,7 @@ load_gem "toys-release"
 
 Test the install by displaying the online help for toys-release:
 
-```sh
+```
 $ toys release --help
 ```
 
@@ -132,7 +132,7 @@ To get you started, Toys-Release provides a config generation tool. Once the
 release tool is installed as described above, you can run this from your local
 repository clone directory:
 
-```sh
+```
 $ toys release gen-config
 ```
 
@@ -154,13 +154,13 @@ line using the release tool.
 
 To create the GitHub repo labels, run this from your local repo clone directory:
 
-```sh
+```
 $ toys release create-labels
 ```
 
 Then, to generate the GitHub Actions workflows, run:
 
-```sh
+```
 $ toys release gen-workflows
 ```
 
@@ -452,7 +452,7 @@ To set up documentation, do the following:
 
  *  Create a starting gh-pages branch by running:
 
-    ```sh
+    ```
     $ toys release gen-gh-pages
     ```
 

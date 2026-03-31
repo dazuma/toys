@@ -29,7 +29,9 @@ need to be modified if you're running on Windows.
 
 Install the **toys-core** gem using:
 
-    $ gem install toys-core
+```
+$ gem install toys-core
+```
 
 You can also install the **toys** gem, which brings in **toys-core** as a
 dependency.
@@ -39,22 +41,28 @@ dependency.
 We'll start by creating an executable Ruby script. Using your favorite text
 editor, create a new file called `mycmd` with the following contents:
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    exit(cli.run(*ARGV))
+exit(cli.run(*ARGV))
+```
 
 Make sure the file's executable bit is set:
 
-    $ chmod a+x mycmd
+```
+$ chmod a+x mycmd
+```
 
 That's it! This is a fully-functional Toys-based executable! Let's see what
 happens when you run it:
 
-    $ ./mycmd
+```
+$ ./mycmd
+```
 
 Just as with Toys itself, you get a help screen by default (since we haven't
 yet actually implemented any behavior.) As you can see, some of the same
@@ -71,30 +79,34 @@ information to the Toys CLI object in a block.
 
 Let's add some functionality to `mycmd`.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    #### Insert the following block ...
-    cli.add_config_block do
-      desc "My first executable!"
-      flag :whom, default: "world"
-      def run
-        puts "Hello, #{whom}!"
-      end
-    end
+#### Insert the following block ...
+cli.add_config_block do
+  desc "My first executable!"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
 
-    exit(cli.run(*ARGV))
+exit(cli.run(*ARGV))
+```
 
 If you went through the tutorial in the README for the Toys gem, this should
 look familiar. Let's run it now, and experiment with passing flags to it.
 
-    $ ./mycmd
-    $ ./mycmd --whom=ruby
-    $ ./mycmd --bye
-    $ ./mycmd --help
+```
+$ ./mycmd
+$ ./mycmd --whom=ruby
+$ ./mycmd --bye
+$ ./mycmd --help
+```
 
 Notice that we did not create a `tool` block, but instead set up description,
 flags, and functionality directly in the configuration block. This configures
@@ -109,40 +121,46 @@ But perhaps you want your executable to have multiple "tools", similar to other
 familiar executables like git or kubectl. You can define tools, including
 nested tools, by writing `tool` blocks in your config. Here's an example:
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    cli = Toys::CLI.new
+cli = Toys::CLI.new
 
-    #### Change the config block as follows ...
-    cli.add_config_block do
-      # Things outside any tool block still apply to the root
-      desc "My first executable with several tools"
+#### Change the config block as follows ...
+cli.add_config_block do
+  # Things outside any tool block still apply to the root
+  desc "My first executable with several tools"
 
-      # We'll put the greet function here
-      tool "greet" do
-        desc "My first tool!"
-        flag :whom, default: "world"
-        def run
-          puts "Hello, #{whom}!"
-        end
-      end
-
-      # Try writing a second tool here. You could use the "new-repo"
-      # example from the Toys tutorial.
+  # We'll put the greet function here
+  tool "greet" do
+    desc "My first tool!"
+    flag :whom, default: "world"
+    def run
+      puts "Hello, #{whom}!"
     end
+  end
 
-    exit(cli.run(*ARGV))
+  # Try writing a second tool here. You could use the "new-repo"
+  # example from the Toys tutorial.
+end
+
+exit(cli.run(*ARGV))
+```
 
 Now you can run `greet` as a tool:
 
-    $ ./mycmd greet
+```
+$ ./mycmd greet
+```
 
 The "root" functionality once again shows global help, including a list of the
 available tools.
 
-    $ ./mycmd
+```
+$ ./mycmd
+```
 
 Notice that the description set at the "root" of the config block (outside the
 tool blocks) shows up here.
@@ -157,43 +175,47 @@ These and many more aspects of the behavior of our executable can be customized
 by passing options to the `Toys::CLI` constructor. Here's an example that
 modifies error handling and delimiter parsing.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    #### Pass some additional options to the CLI constructor ...
-    cli = Toys::CLI.new(
-      extra_delimiters: ":",
-      error_handler: ->(err) {
-        puts "Aww shucks, an error happened: #{err.message}"
-        return 1
-      }
-    )
+#### Pass some additional options to the CLI constructor ...
+cli = Toys::CLI.new(
+  extra_delimiters: ":",
+  error_handler: ->(err) {
+    puts "Aww shucks, an error happened: #{err.message}"
+    return 1
+  }
+)
 
-    #### Change the config block as follows ...
-    cli.add_config_block do
-      tool "example" do
-        tool "greet" do
-          def run
-            puts "Hello, world!"
-          end
-        end
-        tool "error" do
-          def run
-            raise "Whoops!"
-          end
-        end
+#### Change the config block as follows ...
+cli.add_config_block do
+  tool "example" do
+    tool "greet" do
+      def run
+        puts "Hello, world!"
       end
     end
+    tool "error" do
+      def run
+        raise "Whoops!"
+      end
+    end
+  end
+end
 
-    exit(cli.run(*ARGV))
+exit(cli.run(*ARGV))
+```
 
 Try these runs. Do they behave as you expected?
 
-    $ ./mycmd example greet
-    $ ./mycmd example:greet
-    $ ./mycmd example.greet
-    $ ./mycmd example error
+```
+$ ./mycmd example greet
+$ ./mycmd example:greet
+$ ./mycmd example.greet
+$ ./mycmd example error
+```
 
 ### Configuring middleware
 
@@ -204,32 +226,36 @@ your tools by default.
 The next example provides a custom middleware stack, resulting in a different
 set of common tool functionality.
 
-    #!/usr/bin/env ruby
+```ruby
+#!/usr/bin/env ruby
 
-    require "toys-core"
+require "toys-core"
 
-    #### Change the CLI construction again ...
-    middlewares = [
-      [:set_default_descriptions, default_tool_desc: "Hey look, a tool!"],
-      [:show_help, help_flags: true]
-    ]
-    cli = Toys::CLI.new middleware_stack: middlewares
+#### Change the CLI construction again ...
+middlewares = [
+  [:set_default_descriptions, default_tool_desc: "Hey look, a tool!"],
+  [:show_help, help_flags: true]
+]
+cli = Toys::CLI.new middleware_stack: middlewares
 
-    #### Use this config block ...
-    cli.add_config_block do
-      tool "greet" do
-        def run
-          puts "Hello, world!"
-        end
-      end
+#### Use this config block ...
+cli.add_config_block do
+  tool "greet" do
+    def run
+      puts "Hello, world!"
     end
+  end
+end
 
-    exit(cli.run(*ARGV))
+exit(cli.run(*ARGV))
+```
 
 We've now modified the default description applied to tools that don't provide
 their own description. See the effect with:
 
-    $ ./mycmd greet --help
+```
+$ ./mycmd greet --help
+```
 
 We've also omitted some of the default middleware, including the one that adds
 the `--verbose` and `--quiet` flags to all your tools. Notice those flags are
@@ -240,7 +266,9 @@ We've also omitted the middleware that provides default execution behavior
 haven't defined a top-level `run` method in this last example, invoking the
 root tool will cause an error:
 
-    $ ./mycmd
+```
+$ ./mycmd
+```
 
 It is even possible to write your own middleware. In general, while the
 `Toys::CLI` constructor provides defaults that should work for many use cases,
@@ -258,12 +286,16 @@ includes a few simple examples that you can use as a starting point.
 
 To experiment with the examples, clone the Toys repo from GitHub:
 
-    $ git clone https://github.com/dazuma/toys.git
-    $ cd toys
+```
+$ git clone https://github.com/dazuma/toys.git
+$ cd toys
+```
 
 Navigate to the simple-gem example:
 
-    $ cd toys-core/examples/simple-gem
+```
+$ cd toys-core/examples/simple-gem
+```
 
 This example wraps the simple "greet" executable that we covered earlier, in a
 gem. You can see the
@@ -273,23 +305,31 @@ in the bin directory.
 Try it out by building and installing the gem. From the `examples/simple-gem`
 directory, run:
 
-    $ toys install
+```
+$ toys install
+```
 
 Once the gem has successfully installed, you can run the executable, which
 RubyGems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
-    $ toys-core-simple-example --whom=Toys
+```
+$ toys-core-simple-example --whom=Toys
+```
 
 Clean up by uninstalling the gem:
 
-    $ gem uninstall toys-core-simple-example
+```
+$ gem uninstall toys-core-simple-example
+```
 
 If the implementation of your executable is more complex, you might want to
 break it up into multiple files. The multi-file gem example demonstrates this.
 
-    $ cd ../multi-file-gem
+```
+$ cd ../multi-file-gem
+```
 
 This executable's implementation resides in its
 [lib directory](https://github.com/dazuma/toys/tree/main/toys-core/examples/multi-file-gem/lib),
@@ -305,18 +345,24 @@ as you can see in
 
 Try it out now. From the `examples/multi-file-gem` directory, run:
 
-    $ toys install
+```
+$ toys install
+```
 
 Once the gem has successfully installed, you can run the executable, which
 RubyGems should have added to your path. (Note: if you are using a ruby
 installation manager, you may need to "rehash" or "reshim" to gain access to
 the executable.)
 
-    $ toys-core-multi-file-example greet
+```
+$ toys-core-multi-file-example greet
+```
 
 Clean up by uninstalling the gem:
 
-    $ gem uninstall toys-core-multi-file-example
+```
+$ gem uninstall toys-core-multi-file-example
+```
 
 ### Learning more
 

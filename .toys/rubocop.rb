@@ -18,7 +18,7 @@ expand(Toys::CI::Template) do |ci|
   ci.use_github_base_ref_flag = true
 
   ci.tool_job("Rubocop for the repo tools and common tools",
-              ["rubocop", "_root"],
+              ["rubocop-root"],
               flag: :root,
               trigger_paths: [".toys/", "common-tools/"])
   ci.tool_job("Rubocop for toys-core",
@@ -37,10 +37,4 @@ expand(Toys::CI::Template) do |ci|
               ["rubocop"], chdir: "toys-release",
               flag: :toys_release,
               trigger_paths: ["toys-release/"])
-end
-
-expand :rubocop do |t|
-  t.name = "_root"
-  t.use_bundler
-  t.options = ["--config=.rubocop-root.yml"]
 end

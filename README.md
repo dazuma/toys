@@ -12,13 +12,21 @@ users who want to write and organize scripts to automate their workflows. It
 can also be used as a replacement for Rake, providing a more natural command
 line interface for your project's build tasks.
 
-This repository includes the source for two gems:
+This repository includes the source for the two core Toys gems:
 
-*   **[toys](https://rubygems.org/gems/toys)** provides the Toys executable
-    itself and all its capabilities.
-*   **[toys-core](https://rubygems.org/gems/toys-core)** provides the
-    underlying command line framework, and can be used to build other command
-    line executables.
+ *  **[toys](https://rubygems.org/gems/toys)**
+    provides the Toys executable itself and all its capabilities.
+ *  **[toys-core](https://rubygems.org/gems/toys-core)**
+    provides the underlying command line framework, and can be used to build
+    other command line executables.
+
+Additionally, this repository includes the source for the following gems that
+provide useful tools for Ruby projects:
+
+ *  **[toys-ci](https://rubygems.org/gems/toys-ci)**
+    provides a mixin and template that can be used to implement CI tools.
+ *  **[toys-release](https://rubygems.org/gems/toys-release)**
+    provides a build and release system that can publish gems and documentation.
 
 ## Introductory tutorial
 
@@ -28,12 +36,16 @@ Here's a tutorial to help you get a feel of what Toys can do.
 
 Install the **toys** gem using:
 
-    $ gem install toys
+```
+$ gem install toys
+```
 
 This installs the `toys` executable, along with some built-in tools and
 libraries. You can run the executable immediately:
 
-    $ toys
+```
+$ toys
+```
 
 This displays overall help for Toys. If you have `less` installed, Toys will
 use it to display the help screen. Press `q` to exit.
@@ -41,19 +53,25 @@ use it to display the help screen. Press `q` to exit.
 You may notice that the help screen lists some tools that are pre-installed.
 Let's run one of them:
 
-    $ toys system version
+```
+$ toys system version
+```
 
 The `system version` tool displays the current version of the toys gem.
 
-Toys also provides optional tab completion for bash. To install it, execute the
-following command in your shell, or add it to your bash configuration file
-(e.g. `~/.bashrc`).
+Toys also provides optional tab completion for bash and zsh. To install for
+bash, execute the following command in your shell, or add it to your bash
+configuration file (e.g. `~/.bashrc`).
 
-    $(toys system bash-completion install)
+```
+$(toys system bash-completion install)
+```
 
-Toys does not yet specially implement tab completion for zsh or other shells.
-However, if you are using zsh, installing bash completion using `bashcompinit`
-*mostly* works.
+To install for zsh, execute this or add to your `~/.zshrc`.
+
+```
+$(toys system zsh-completion install)
+```
 
 ### Write your first tool
 
@@ -61,32 +79,42 @@ You can define tools by creating a *Toys file*. Go into any directory, and,
 using your favorite editor, create a new file called `.toys.rb` (note the
 leading period). Copy the following text into the file, and save it:
 
-    tool "greet" do
-      desc "My first tool!"
-      flag :whom, default: "world"
-      def run
-        puts "Hello, #{whom}!"
-      end
-    end
+```ruby
+tool "greet" do
+  desc "My first tool!"
+  flag :whom, default: "world"
+  def run
+    puts "Hello, #{whom}!"
+  end
+end
+```
 
 This defines a tool named "greet". Try running it:
 
-    $ toys greet
+```
+$ toys greet
+```
 
 The tool also recognizes a flag on the command line. Try this:
 
-    $ toys greet --whom=ruby
+```
+$ toys greet --whom=ruby
+```
 
 Toys provides a rich set of features for defining command line arguments and
 flags. It can also validate arguments. Try this:
 
-    $ toys greet --bye
+```
+$ toys greet --bye
+```
 
 Notice that Toys automatically generated a usage summary for your tool. It also
 automatically generates a full help screen, which you can view using the
 `--help` flag:
 
-    $ toys greet --help
+```
+$ toys greet --help
+```
 
 Toys searches up the directory hierarchy for Toys files. So it will find this
 `.toys.rb` if you are located in this directory or any subdirectory. It will
@@ -104,53 +132,59 @@ likely to see in real-world usage. Add the following to your `.toys.rb` file.
 (You don't need to replace the greet tool you just wrote; just add this new
 tool to the end of the file.)
 
-    tool "new-repo" do
-      desc "Create a new git repo"
+```ruby
+tool "new-repo" do
+  desc "Create a new git repo"
 
-      optional_arg :name, desc: "Name of the directory to create"
+  optional_arg :name, desc: "Name of the directory to create"
 
-      include :exec, exit_on_nonzero_status: true
-      include :fileutils
-      include :terminal
+  include :exec, exit_on_nonzero_status: true
+  include :fileutils
+  include :terminal
 
-      def run
-        if name.nil?
-          response = ask "Please enter a directory name: "
-          set :name, response
-        end
-        if File.exist? name
-          puts "Aborting because #{name} already exists", :red, :bold
-          exit 1
-        end
-        logger.info "Creating new repo in directory #{name}..."
-        mkdir name
-        cd name do
-          create_repo
-        end
-        puts "Created repo in #{name}", :green, :bold
-      end
-
-      def create_repo
-        exec "git init"
-        File.write ".gitignore", <<~CONTENT
-          tmp
-          .DS_Store
-        CONTENT
-        # You can add additional files here.
-        exec "git add ."
-        exec "git commit -m 'Initial commit'"
-      end
+  def run
+    if name.nil?
+      response = ask "Please enter a directory name: "
+      set :name, response
     end
+    if File.exist? name
+      puts "Aborting because #{name} already exists", :red, :bold
+      exit 1
+    end
+    logger.info "Creating new repo in directory #{name}..."
+    mkdir name
+    cd name do
+      create_repo
+    end
+    puts "Created repo in #{name}", :green, :bold
+  end
+
+  def create_repo
+    exec "git init"
+    File.write ".gitignore", <<~CONTENT
+      tmp
+      .DS_Store
+    CONTENT
+    # You can add additional files here.
+    exec "git add ."
+    exec "git commit -m 'Initial commit'"
+  end
+end
+```
 
 Now you should have an additional tool called `new-repo` available. Type:
 
-    $ toys
+```
+$ toys
+```
 
 The help screen lists both the `greet` tool we started with, and the new
 `new-repo` tool. This new tool creates a directory containing a newly created
 git repo. (It assumes you have `git` available on your path.) Try running it:
 
-    $ toys new-repo foo
+```
+$ toys new-repo foo
+```
 
 That should create a directory `foo`, initialize a git repository within it,
 and make a commit.
@@ -160,7 +194,9 @@ any combination of flags and required and optional arguments. This tool's
 argument is declared with a description string, which you can see if you view
 the tool's help:
 
-    $ toys new-repo --help
+```
+$ toys new-repo --help
+```
 
 The argument is marked as "optional" which means you can omit it. Notice that
 the tool's code detects that it has been omitted and responds by prompting you
@@ -177,7 +213,7 @@ than modules. These symbols are the names of some of Toys's built-in helper
 *mixins*, which are configurable modules that enhance your tool. They may
 provide methods your tool can call, or invoke other behavior. In our example:
 
-*   The `:exec` mixin provides a variety of methods for running external
+ *  The `:exec` mixin provides a variety of methods for running external
     commands. In this example, we use the `exec` method to run shell
     commands, but you can also signal and control these commands, capture
     and redirect streams, and so forth. Note that we pass the
@@ -186,10 +222,10 @@ provide methods your tool can call, or invoke other behavior. In our example:
     to `set -e` in bash). This is a common pattern when writing tools that
     invoke external commands. (If you want more control, the `:exec` mixin also
     provides ways to respond to result codes individually.)
-*   The `:fileutils` mixin provides the methods of the Ruby `FileUtils`
+ *  The `:fileutils` mixin provides the methods of the Ruby `FileUtils`
     library, such as `mkdir` and `cd` used in this example. It's effectively
     shorthand for `require "fileutils"; include ::FileUtils`.
-*   The `:terminal` mixin provides styled output, as you can see with the style
+ *  The `:terminal` mixin provides styled output, as you can see with the style
     codes being passed to `puts`. It also provides some user interaction
     commands such as `ask`, as well as spinners and other controls. You can see
     operation of the `:terminal` mixin in the tool's output, which is styled
@@ -198,7 +234,9 @@ provide methods your tool can call, or invoke other behavior. In our example:
 
 Now try running this:
 
-    $ toys new-repo bar --verbose
+```
+$ toys new-repo bar --verbose
+```
 
 You'll notice some diagnostic log output. Toys provides a standard Ruby Logger
 for each tool, and you can use it to emit diagnostic logs directly as
@@ -224,14 +262,18 @@ If you have a project with a Rakefile, move into that directory and create a
 new file called `.toys.rb` in that same directory (next to the Rakefile). Add
 the following line to your `.toys.rb` file:
 
-    expand :rake
+```ruby
+expand :rake
+```
 
 This syntax is called a "template expansion." It's a way to generate tools
 programmatically. In this case, Toys provides the `:rake` template, which reads
 your Rakefile and generates Toys tools corresponding to all your Rake tasks!
 Now if you run:
 
-    $ toys
+```
+$ toys
+```
 
 You'll see that you now have tools associated with each of your Rake tasks. So
 if you have a `rake test` task, you can run it using `toys test`.
@@ -331,7 +373,7 @@ because it has a few known bugs that affect Toys.
 
 ## License
 
-Copyright 2019-2025 Daniel Azuma and the Toys contributors
+Copyright 2019-2026 Daniel Azuma and the Toys contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

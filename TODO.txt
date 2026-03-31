@@ -15,5 +15,4 @@ are covered in GitHub issues (https://github.com/dazuma/toys/issues).
 * Generalized classes for generating output formats
 * Namespace clearing/locking
 * Additional ways to find terminal size (there's a gem for unicode line length)
-* Should it be possible to auto-terminate an exec at the end of a controller block?
 * Should toys-release auto-initialize gh-pages during the release pipeline?

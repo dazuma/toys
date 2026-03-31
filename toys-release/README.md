@@ -43,19 +43,19 @@ by closing the pull request without merging.
 
 ### Key features
 
-* Tight integration with GitHub Actions provides a convenient workflow for
-  GitHub-based projects.
-* Automatically generates changelogs based on Conventional Commit messages.
-* Automatically proposes releases with semver-aligned version increments based
-  on the semantics implied by the commit messages.
-* Approve and adjust releases and changelogs by editing pull requests.
-* Automatic pre-release checks verify that CI passes and release status is
-  consistent.
-* Fix and retry failed releases via GitHub Actions or command line.
-* Supports single-library repositories and multi-library monorepos.
-* Support for groups of libraries that must be released together.
-* Support for publishing reference documentation to gh-pages.
-* Fine-grained configuration of the release pipeline.
+ *  Tight integration with GitHub Actions provides a convenient workflow for
+    GitHub-based projects.
+ *  Automatically generates changelogs based on Conventional Commit messages.
+ *  Automatically proposes releases with semver-aligned version increments
+    based on the semantics implied by the commit messages.
+ *  Approve and adjust releases and changelogs by editing pull requests.
+ *  Automatic pre-release checks verify that CI passes and release status is
+    consistent.
+ *  Fix and retry failed releases via GitHub Actions or command line.
+ *  Supports single-library repositories and multi-library monorepos.
+ *  Support for groups of libraries that must be released together.
+ *  Support for publishing reference documentation to gh-pages.
+ *  Fine-grained configuration of the release pipeline.
 
 ### System requirements
 
