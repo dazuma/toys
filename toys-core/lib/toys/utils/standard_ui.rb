@@ -68,37 +68,37 @@ module Toys
       #
       def cli_args
         {
-          error_handler: error_handler,
-          logger_factory: logger_factory,
+          error_handler: error_handler_proc,
+          logger_factory: logger_factory_proc,
         }
       end
 
       ##
-      # Returns an error handler conforming to the `:error_handler` argument to
-      # the {Toys::CLI} constructor. Specifically, it returns the
-      # {#error_handler_impl} method as a proc.
+      # Convenience method that returns the error handler proc implemented by
+      # this UI (in the {#handle_error} method). This proc can be passed to
+      # the `:error_handler` argument in the {Toys::CLI} constructor.
       #
       # @return [Proc]
       #
-      def error_handler
-        @error_handler ||= method(:error_handler_impl).to_proc
+      def error_handler_proc
+        method(:handle_error).to_proc
       end
 
       ##
-      # Returns a logger factory conforming to the `:logger_factory` argument
-      # to the {Toys::CLI} constructor. Specifically, it returns the
-      # {#logger_factory_impl} method as a proc.
+      # Convenience method that returns the logger factory proc implemented by
+      # this UI (in the {#create_logger} method). This proc can be passed to
+      # the `:logger_factory` argument in the {Toys::CLI} constructor.
       #
       # @return [Proc]
       #
-      def logger_factory
-        @logger_factory ||= method(:logger_factory_impl).to_proc
+      def logger_factory_proc
+        method(:create_logger).to_proc
       end
 
       ##
-      # Implementation of the error handler. As dictated by the error handler
+      # Implementation of an error handler. As dictated by the error handler
       # specification in {Toys::CLI}, this must take a {Toys::ContextualError}
-      # as an argument, and return an exit code.
+      # as an argument, and return an exit code or raise an exception.
       #
       # The base implementation uses {#display_error_notice} and
       # {#display_signal_notice} to print an appropriate message to the UI's
@@ -110,7 +110,7 @@ module Toys
       # @param error [Toys::ContextualError] The error received
       # @return [Integer] The exit code
       #
-      def error_handler_impl(error)
+      def handle_error(error)
         cause = error.cause
         if cause.is_a?(::SignalException)
           display_signal_notice(cause)
@@ -121,22 +121,22 @@ module Toys
       end
 
       ##
-      # Implementation of the logger factory. As dictated by the logger factory
+      # Implementation of a logger factory. As dictated by the logger factory
       # specification in {Toys::CLI}, this must take a {Toys::ToolDefinition}
       # as an argument, and return a `Logger`.
       #
       # The base implementation returns a logger that writes to the UI's
-      # terminal, using {#logger_formatter_impl} as the formatter. It sets the
-      # level to `Logger::WARN` by default. Either this method or the helper
-      # methods can be overridden to change this behavior.
+      # terminal, using {#format_log_entry} as the formatter. It sets the level
+      # to `Logger::WARN` by default. Either this method or the helper methods
+      # can be overridden to change this behavior.
       #
       # @param _tool {Toys::ToolDefinition} The tool definition of the tool to
       #     be executed
       # @return [Logger]
       #
-      def logger_factory_impl(_tool)
+      def create_logger(_tool)
         logger = ::Logger.new(@terminal)
-        logger.formatter = method(:logger_formatter_impl).to_proc
+        logger.formatter = method(:format_log_entry).to_proc
         logger.level = ::Logger::WARN
         logger
       end
@@ -148,8 +148,8 @@ module Toys
       # runnable errors (returning the conventional value of 126), and defaults
       # to 1 for all other error types.
       #
-      # This method is used by {#error_handler_impl} and can be overridden to
-      # change its behavior.
+      # This method is used by {#handle_error} and can be overridden to change
+      # its behavior.
       #
       # @param error [Exception] The exception raised. This method expects the
       #     original exception, rather than a ContextualError.
@@ -171,8 +171,8 @@ module Toys
       ##
       # Displays a default output for a signal received.
       #
-      # This method is used by {#error_handler_impl} and can be overridden to
-      # change its behavior.
+      # This method is used by {#handle_error} and can be overridden to change
+      # its behavior.
       #
       # @param error [SignalException]
       #
@@ -190,8 +190,8 @@ module Toys
       # backtrace, and contextual information regarding what tool was run and
       # where in its code the error occurred.
       #
-      # This method is used by {#error_handler_impl} and can be overridden to
-      # change its behavior.
+      # This method is used by {#handle_error} and can be overridden to change
+      # its behavior.
       #
       # @param error [Toys::ContextualError]
       #
@@ -215,7 +215,7 @@ module Toys
       # @param msg [Object]
       # @return [String]
       #
-      def logger_formatter_impl(severity, time, _progname, msg)
+      def format_log_entry(severity, time, _progname, msg)
         msg_str =
           case msg
           when ::String
@@ -235,11 +235,12 @@ module Toys
       private
 
       def cause_string(cause)
-        lines = ["#{cause.class}: #{cause.message}"]
-        cause.backtrace.each_with_index.reverse_each do |bt, i|
+        lines = []
+        (cause.backtrace || []).each_with_index do |bt, i|
           lines << "    #{(i + 1).to_s.rjust(3)}: #{bt}"
         end
-        lines.join("\n")
+        lines << "#{cause.class}: #{cause.message}"
+        lines.reverse.join("\n")
       end
 
       def context_string(error)

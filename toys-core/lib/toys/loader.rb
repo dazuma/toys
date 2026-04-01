@@ -151,6 +151,9 @@ module Toys
                                                   data_dir_name: @data_dir_name,
                                                   lib_dir_name: @lib_dir_name,
                                                   source_name: source_name)
+        unless root_source.source_type == :directory
+          raise ::ArgumentError, "Root path #{root_path.inspect} for add_path_set was not a directory"
+        end
         @roots_by_priority[priority] = root_source
         relative_paths.each do |path|
           source = root_source.relative_child(path)
@@ -500,7 +503,7 @@ module Toys
     #
     def load_path(parent_source, path, words, remaining_words, priority)
       if parent_source.git_remote
-        raise LoaderError, "Git source #{parent_source.source_name} tried to load from the local file system"
+        raise ToolDefinitionError, "Git source #{parent_source.source_name} tried to load from the local file system"
       end
       source = parent_source.absolute_child(path)
       @mutex.synchronize do
@@ -745,7 +748,7 @@ module Toys
       gems_util = @gems_util || Loader.default_gems_util
       gems_util.activate(gem_name, *Array(gem_version))
       gem_spec = ::Gem.loaded_specs[gem_name]
-      raise LoaderError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
+      raise ToolDefinitionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
       gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
       gem_path = gem_path ? ::File.join(gem_toys_dir, gem_path) : gem_toys_dir
       path = ::File.join(gem_spec.gem_dir, gem_path)
@@ -799,7 +802,7 @@ module Toys
         update_min_loaded_priority(priority)
         tool_class = get_tool(words, priority).tool_class
         DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, self) do
-          ContextualError.capture("Error while loading Toys config!") do
+          ContextualError.capture(banner: "Error while loading Toys config") do
             tool_class.class_eval(&source.source_proc)
           end
         end

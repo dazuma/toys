@@ -130,5 +130,19 @@ module Toys
         []
       end
     end
+
+    ##
+    # @private
+    # Sets the backtrace on an exception. In Ruby < 3.4, Exception#set_backtrace
+    # required a string array, whereas in newer Rubies, it would accept an array
+    # of backtrace locations.
+    #
+    # @param [Exception] exception
+    # @param [nil,Array<String>,Array<Thread::Backtrace::Location>] backtrace
+    #
+    def self.set_backtrace(exception, backtrace)
+      backtrace = backtrace.map(&:to_s) if RUBY_VERSION_CODE < 30400 && !backtrace.nil?
+      exception.set_backtrace(backtrace)
+    end
   end
 end

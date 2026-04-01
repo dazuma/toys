@@ -139,7 +139,7 @@ describe Toys::SourceInfo do
     end
 
     it "errors when attempting to create a file system root with a nonexistent path" do
-      assert_raises(Toys::LoaderError) do
+      assert_raises(Toys::ToolDefinitionError) do
         Toys::SourceInfo.create_path_root(bad_path, priority,
                                           data_dir_name: data_dir_name,
                                           lib_dir_name: lib_dir_name)
@@ -223,7 +223,7 @@ describe Toys::SourceInfo do
       parent = Toys::SourceInfo.create_path_root(file_path, priority,
                                                  data_dir_name: data_dir_name,
                                                  lib_dir_name: lib_dir_name)
-      assert_raises(Toys::LoaderError) do
+      assert_raises(::ArgumentError) do
         parent.relative_child(".toys.rb")
       end
     end
@@ -233,7 +233,7 @@ describe Toys::SourceInfo do
                                                  source_name: custom_source_name,
                                                  data_dir_name: data_dir_name,
                                                  lib_dir_name: lib_dir_name)
-      assert_raises(Toys::LoaderError) do
+      assert_raises(::ArgumentError) do
         parent.relative_child(".toys.rb")
       end
     end
