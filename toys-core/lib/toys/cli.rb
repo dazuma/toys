@@ -89,10 +89,11 @@ module Toys
     #     loading a toys config file subclassing `SyntaxError`, or an unhandled
     #     signal subclassing `SignalException`) is detected. The proc should
     #     take a {Toys::ContextualError}, whose cause is the unhandled
-    #     exception, as the sole argument, and report the error. It should
-    #     return an exit code (normally nonzero) appropriate to the error.
-    #     Optional. If not provided, {Toys::CLI.default_error_handler} is
-    #     called to get a basic default handler.
+    #     exception, as the sole argument, and report the error. It could
+    #     simply reraise the exception, or it could display an error message
+    #     and/or return an exit code (normally nonzero) appropriate to the
+    #     error. Optional. If not provided, {Toys::CLI.default_error_handler}
+    #     is called to get a basic default handler that reraises the exception.
     # @param executable_name [String] The executable name displayed in help
     #     text. Optional. Defaults to the ruby program name.
     #
@@ -451,11 +452,12 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0, delegated_from: nil)
-      tool, remaining = ContextualError.capture("Error finding tool definition") do
+      tool, remaining = ContextualError.capture(banner: "Error finding tool definition") do
         @loader.lookup(args.flatten)
       end
-      ContextualError.capture_path(
-        "Error during tool execution!", tool.source_info&.source_path,
+      ContextualError.capture(
+        banner: "Error during tool execution",
+        path: tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
         context = build_context(tool, remaining,
@@ -557,7 +559,7 @@ module Toys
       #
       def default_error_handler
         proc do |error|
-          cause = error.respond_to?(:underlying_error) ? error.underlying_error : error.cause
+          cause = error.cause
           raise cause.is_a?(::SignalException) ? cause : error
         end
       end

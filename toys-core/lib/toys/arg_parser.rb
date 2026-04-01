@@ -11,10 +11,12 @@ module Toys
     ##
     # Base representation of a usage error reported by the ArgParser.
     #
-    # This functions similarly to an exception, but is not raised. Rather, it
-    # is returned in the {Toys::ArgParser#errors} array.
+    # This is normally not raised directly, but returned as an element in the
+    # {Toys::ArgParser#errors} array. It will, however, have the normal
+    # message and backtrace attributes, along with additional fields as defined
+    # in this class, and it can be raised later if desired.
     #
-    class UsageError
+    class UsageError < ::StandardError
       ##
       # Create a UsageError given a message and common data
       #
@@ -26,18 +28,22 @@ module Toys
       #     applicable.
       # @param suggestions [Array<String>,nil] An array of suggestions from
       #     DidYouMean, or nil if not applicable.
+      # @param skip_frames [Integer] Number of call frames to skip when
+      #     constructing a backtrace, in addition to this initialize call
+      #     itself. Subclasses calling super from their constructor should set
+      #     this to 1 to skip their own initialize frame.
       #
-      def initialize(message, name: nil, value: nil, suggestions: nil)
+      def initialize(message, name: nil, value: nil, suggestions: nil, skip_frames: 0)
+        super(message)
         @message = message
         @name = name
         @value = value
         @suggestions = suggestions
+        ::Toys::Compat.set_backtrace(self, caller_locations(skip_frames + 1))
       end
 
       ##
-      # The basic error message. Does not include suggestions, if any.
-      #
-      # @return [String]
+      # @return [String] The error message, not including any suggestions.
       #
       attr_reader :message
 
@@ -71,15 +77,15 @@ module Toys
       #
       # @return [String]
       #
-      def full_message
+      def message_with_suggestions
         if suggestions && !suggestions.empty?
           alts_str = suggestions.join("\n                 ")
-          "#{message}\nDid you mean...  #{alts_str}"
+          "#{@message}\nDid you mean...  #{alts_str}"
         else
-          message
+          @message
         end
       end
-      alias to_s full_message
+      alias to_s message_with_suggestions
     end
 
     ##
@@ -95,7 +101,8 @@ module Toys
       # @param name [String] The name of the flag. Normally required.
       #
       def initialize(message = nil, name: nil)
-        super(message || "Flag \"#{name}\" should not take an argument.", name: name)
+        super(message || "Flag \"#{name}\" should not take an argument.",
+              name: name, skip_frames: 1)
       end
     end
 
@@ -112,7 +119,8 @@ module Toys
       # @param name [String] The name of the flag. Normally required.
       #
       def initialize(message = nil, name: nil)
-        super(message || "Flag \"#{name}\" is missing a value.", name: name)
+        super(message || "Flag \"#{name}\" is missing a value.",
+              name: name, skip_frames: 1)
       end
     end
 
@@ -131,7 +139,7 @@ module Toys
       #
       def initialize(message = nil, value: nil, suggestions: nil)
         super(message || "Flag \"#{value}\" is not recognized.",
-              value: value, suggestions: suggestions)
+              value: value, suggestions: suggestions, skip_frames: 1)
       end
     end
 
@@ -151,7 +159,7 @@ module Toys
       #
       def initialize(message = nil, value: nil, suggestions: nil)
         super(message || "Flag prefix \"#{value}\" is ambiguous.",
-              value: value, suggestions: suggestions)
+              value: value, suggestions: suggestions, skip_frames: 1)
       end
     end
 
@@ -171,7 +179,7 @@ module Toys
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for flag \"#{name}\".",
-              name: name, value: value, suggestions: suggestions)
+              name: name, value: value, suggestions: suggestions, skip_frames: 1)
       end
     end
 
@@ -192,7 +200,7 @@ module Toys
       #
       def initialize(message = nil, name: nil, value: nil, suggestions: nil)
         super(message || "Unacceptable value \"#{value}\" for positional argument \"#{name}\".",
-              name: name, value: value, suggestions: suggestions)
+              name: name, value: value, suggestions: suggestions, skip_frames: 1)
       end
     end
 
@@ -208,7 +216,8 @@ module Toys
       # @param name [String] The name of the argument. Normally required.
       #
       def initialize(message = nil, name: nil)
-        super(message || "Required positional argument \"#{name}\" is missing.", name: name)
+        super(message || "Required positional argument \"#{name}\" is missing.",
+              name: name, skip_frames: 1)
       end
     end
 
@@ -221,12 +230,18 @@ module Toys
       #
       # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param value [String] The first extra argument. Normally required.
-      # @param values [Array<String>] All extra arguments. Normally required.
+      # @param arguments [Array<String>] All extra arguments. Normally required.
       #
-      def initialize(message = nil, value: nil, values: nil)
-        super(message || "Extra arguments: \"#{Array(values).join(' ')}\".", value: value)
+      def initialize(message = nil, arguments: nil)
+        @arguments = Array(arguments)
+        super(message || "Extra arguments: \"#{@arguments.join(' ')}\".",
+              value: @arguments.first, skip_frames: 1)
       end
+
+      ##
+      # @return [Array<String>] All extra arguments
+      #
+      attr_reader :arguments
     end
 
     ##
@@ -238,16 +253,21 @@ module Toys
       #
       # @param message [String,nil] A custom message. Normally omitted, in
       #     which case an appropriate default is supplied.
-      # @param value [String] The requested subtool. Normally required.
-      # @param values [Array<String>] The full path of the requested tool.
+      # @param full_name [Array<String>] The full path of the requested tool.
       #     Normally required.
       # @param suggestions [Array<String>] An array of suggestions to present
       #     to the user. Optional.
       #
-      def initialize(message = nil, value: nil, values: nil, suggestions: nil)
-        super(message || "Tool not found: \"#{Array(values).join(' ')}\"",
-              value: value, suggestions: suggestions)
+      def initialize(message = nil, full_name: nil, suggestions: nil)
+        @full_name = Array(full_name)
+        super(message || "Tool not found: \"#{@full_name.join(' ')}\"",
+              value: @full_name.last, suggestions: suggestions, skip_frames: 1)
       end
+
+      ##
+      # @return [Array<String>] The full name of the tool
+      #
+      attr_reader :full_name
     end
 
     ##
@@ -259,8 +279,9 @@ module Toys
       #
       # @param message [String] The message. Required.
       #
-      def initialize(message)
-        super(message, name: nil)
+      def initialize(message = nil)
+        super(message || "A flag group constraint was violated",
+              skip_frames: 1)
       end
     end
 
@@ -577,14 +598,13 @@ module Toys
         @errors << ArgMissingError.new(name: arg_def.display_name)
       end
       unless @unmatched_positional.empty?
-        first_arg = @unmatched_positional.first
         @errors <<
           if @tool.runnable? || !@seen_flag_keys.empty?
-            ExtraArgumentsError.new(values: @unmatched_positional, value: first_arg)
+            ExtraArgumentsError.new(arguments: @unmatched_positional)
           else
             dictionary = @loader.list_subtools(@tool.full_name).map(&:simple_name)
-            ToolUnrecognizedError.new(values: @tool.full_name + [first_arg],
-                                      value: first_arg,
+            first_arg = @unmatched_positional.first
+            ToolUnrecognizedError.new(full_name: @tool.full_name + [first_arg],
                                       suggestions: Compat.suggestions(first_arg, dictionary))
           end
       end

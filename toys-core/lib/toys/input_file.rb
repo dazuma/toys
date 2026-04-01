@@ -33,7 +33,7 @@ module Toys::InputFile # rubocop:disable Style/ClassAndModuleChildren
     if str
       const_set(name, namespace)
       ::Toys::DSL::Internal.prepare(tool_class, words, priority, remaining_words, source, loader) do
-        ::Toys::ContextualError.capture_path("Error while loading Toys config!", path) do
+        ::Toys::ContextualError.capture(banner: "Error while loading Toys config", path: path) do
           eval(str, __binding, path) # rubocop:disable Security/Eval
         end
       end

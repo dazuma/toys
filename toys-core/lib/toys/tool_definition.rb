@@ -1426,7 +1426,7 @@ module Toys
     #
     def finish_definition(loader)
       unless @definition_finished
-        ContextualError.capture("Error installing tool middleware!", tool_name: full_name) do
+        ContextualError.capture(banner: "Error installing tool middleware", tool_name: full_name) do
           config_proc = proc {}
           @built_middleware.reverse_each do |middleware|
             config_proc = make_config_proc(middleware, loader, config_proc)

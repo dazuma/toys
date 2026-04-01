@@ -584,19 +584,19 @@ cli = Toys::CLI.new(logger_factory: my_logger_factory)
 {Toys::Utils::StandardUI} implements the logger used by the `toys` gem, which
 formats log entries with the severity and timestamp using ANSI coloring.
 
-You can use this logger by passing {Toys::Utils::StandardUI#logger_factory} to
-the CLI constructor:
+You can use this logger by passing the proc returned by
+{Toys::Utils::StandardUI#logger_factory_proc} to the CLI constructor:
 
 ```ruby
 standard_ui = Toys::Utils::StandardUI.new
-cli = Toys::CLI.new(logger_factory: standard_ui.logger_factory)
+cli = Toys::CLI.new(logger_factory: standard_ui.logger_factory_proc)
 ```
 
 You can also customize the logger by subclassing StandardUI and overriding its
 methods or adjusting its parameters. In particular, you can alter the
 {Toys::Utils::StandardUI#log_header_severity_styles} mapping to adjust styling,
-or override {Toys::Utils::StandardUI#logger_factory_impl} or
-{Toys::Utils::StandardUI#logger_formatter_impl} to adjust content and
+or override {Toys::Utils::StandardUI#create_logger} or
+{Toys::Utils::StandardUI#format_log_entry} to adjust content and
 formatting.
 
 ### Handling errors
@@ -644,12 +644,12 @@ appropriate result code, typically 1. For signals, this standard handler
 displays a brief message noting the signal or interrupt, and returns the
 conventional result code of `128 + signo` (e.g. 130 for interrupts).
 
-You can use this error handler by passing
-{Toys::Utils::StandardUI#error_handler} to the CLI constructor:
+You can use this error handler by passing the proc returned by
+{Toys::Utils::StandardUI#error_handler_proc} to the CLI constructor:
 
 ```ruby
 standard_ui = Toys::Utils::StandardUI.new
-cli = Toys::CLI.new(error_handler: standard_ui.error_handler)
+cli = Toys::CLI.new(error_handler: standard_ui.error_handler_proc)
 ```
 
 You can also customize the error handler by subclassing StandardUI and
@@ -1157,13 +1157,12 @@ Exception classes are defined in `lib/errors.rb`.
  *  {Toys::ArgParsingError} - Raised during argument parsing to indicate that
     parsing failed. If present, it will contain one or more individual
     {Toys::ArgParser::UsageError} exceptions.
- *  {Toys::LoaderError} - Raised during loading to indicate the {Toys::Loader}
-    failed.
  *  {Toys::NotRunnableError} - Raised during tool execution if the tool has no
     entrypoint. (In the `toys` gem, this is generally caught by the help system
     and redirected to display the usage screen.)
  *  {Toys::ToolDefinitionError} - Raised during tool definition in response to
-    semantic issues with the definition.
+    semantic issues with the definition or failure to load files or other
+    resources involved in the definition.
 
 ### Support and utility classes
 

@@ -252,9 +252,7 @@ module Toys
     # @private This interface is internal and subject to change without warning.
     #
     def relative_child(filename, source_name: nil)
-      unless source_type == :directory
-        raise LoaderError, "relative_child is valid only on a directory source"
-      end
+      raise ::ArgumentError, "relative_child is valid only on a directory source" unless source_type == :directory
       child_path, type = SourceInfo.check_path(::File.join(source_path, filename), true)
       return nil unless child_path
       child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
@@ -389,19 +387,19 @@ module Toys
     def self.check_path(path, lenient)
       path = ::File.expand_path(path)
       unless ::File.readable?(path)
-        raise LoaderError, "Cannot read: #{path}" unless lenient
+        raise ToolDefinitionError, "Cannot read: #{path}" unless lenient
         return [nil, nil]
       end
       if ::File.file?(path)
         unless ::File.extname(path) == ".rb"
-          raise LoaderError, "File is not a ruby file: #{path}" unless lenient
+          raise ToolDefinitionError, "File is not a ruby file: #{path}" unless lenient
           return [nil, nil]
         end
         [path, :file]
       elsif ::File.directory?(path)
         [path, :directory]
       else
-        raise LoaderError, "Unknown type: #{path}" unless lenient
+        raise ToolDefinitionError, "Not a ruby file or directory: #{path}" unless lenient
         [nil, nil]
       end
     end

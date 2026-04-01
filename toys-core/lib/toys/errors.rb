@@ -34,42 +34,30 @@ module Toys
   end
 
   ##
-  # An exception indicating a problem during tool lookup
-  #
-  class LoaderError < ::StandardError
-  end
-
-  ##
   # A wrapper exception used to provide user-oriented context for an error
   # thrown during tool execution.
   #
   class ContextualError < ::StandardError
     ##
     # Construct a ContextualError. This exception type is thrown from
-    # {ContextualError.capture} and {ContextualError.capture_path} and should
-    # not be constructed directly.
+    # {ContextualError.capture} and should not be constructed directly.
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def initialize(underlying_error, banner,
-                   config_path: nil, config_line: nil,
-                   tool_name: nil, tool_args: nil)
-      super("#{banner} : #{underlying_error.message} (#{underlying_error.class})")
-      @underlying_error = underlying_error
+    def initialize(cause, banner, path, tool_name, tool_args)
+      banner ||= "Unexpected error"
+      super("#{banner}: #{cause.message} (#{cause.class})")
+      set_backtrace(cause.backtrace)
       @banner = banner
-      @config_path = config_path
-      @config_line = config_line
       @tool_name = tool_name
       @tool_args = tool_args
-      set_backtrace(underlying_error.backtrace)
+      @config_path = @config_line = nil
+      line = line_from_cause(path, cause)
+      if line
+        @config_path = path
+        @config_line = line
+      end
     end
-
-    ##
-    # The underlying exception.
-    # Generally the same as `Exception#cause`.
-    # @return [::StandardError]
-    #
-    attr_reader :underlying_error
 
     ##
     # An overall banner message
@@ -104,22 +92,34 @@ module Toys
     ##
     # @private
     #
-    attr_writer :config_path
+    def update_fields!(path: nil, tool_name: nil, tool_args: nil)
+      if @config_path.nil? && @config_line.nil?
+        line = line_from_cause(path, cause)
+        if line
+          @config_path = path
+          @config_line = line
+        end
+      end
+      @tool_name = tool_name if @tool_name.nil? && !tool_name.nil?
+      @tool_args = tool_args if @tool_args.nil? && !tool_args.nil?
+    end
+
+    private
 
     ##
-    # @private
+    # Extract a line number from a cause exception
     #
-    attr_writer :config_line
-
-    ##
-    # @private
-    #
-    attr_writer :tool_name
-
-    ##
-    # @private
-    #
-    attr_writer :tool_args
+    def line_from_cause(path, cause)
+      return nil if path.nil? || cause.nil?
+      if cause.is_a?(::SyntaxError)
+        match = /#{::Regexp.escape(path)}:(\d+)/.match(cause.message)
+        return match[1].to_i if match
+      end
+      loc = (cause.backtrace_locations || []).find do |elem|
+        elem.absolute_path == path || elem.path == path
+      end
+      loc&.lineno
+    end
 
     class << self
       ##
@@ -129,58 +129,13 @@ module Toys
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def capture_path(banner, path, **opts)
+      def capture(banner: nil, path: nil, tool_name: nil, tool_args: nil)
         yield
       rescue ContextualError => e
-        add_fields_if_missing(e, opts)
-        add_config_path_if_missing(e, path)
-        raise e
-      rescue ::SyntaxError => e
-        if (match = /#{::Regexp.escape(path)}:(\d+)/.match(e.message))
-          opts = opts.merge(config_path: path, config_line: match[1].to_i)
-          e = ContextualError.new(e, banner, **opts)
-        end
+        e.update_fields!(path: path, tool_name: tool_name, tool_args: tool_args)
         raise e
       rescue ::ScriptError, ::StandardError, ::SignalException => e
-        ce = ContextualError.new(e, banner)
-        add_fields_if_missing(ce, opts)
-        add_config_path_if_missing(ce, path)
-        raise ce
-      end
-
-      ##
-      # Execute the given block, and wrap any exceptions thrown with a
-      # ContextualError.
-      #
-      # @private This interface is internal and subject to change without warning.
-      #
-      def capture(banner, **opts)
-        yield
-      rescue ContextualError => e
-        add_fields_if_missing(e, opts)
-        raise e
-      rescue ::ScriptError, ::StandardError, ::SignalException => e
-        raise ContextualError.new(e, banner, **opts)
-      end
-
-      private
-
-      def add_fields_if_missing(error, opts)
-        opts.each do |k, v|
-          error.send(:"#{k}=", v) if error.send(k).nil?
-        end
-      end
-
-      def add_config_path_if_missing(error, path)
-        if error.config_path.nil? && error.config_line.nil?
-          l = (error.underlying_error.backtrace_locations || []).find do |b|
-            b.absolute_path == path || b.path == path
-          end
-          if l
-            error.config_path = path
-            error.config_line = l.lineno
-          end
-        end
+        raise ContextualError.new(e, banner, path, tool_name, tool_args)
       end
     end
   end
