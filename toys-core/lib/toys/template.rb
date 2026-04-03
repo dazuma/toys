@@ -25,6 +25,13 @@ module Toys
   # this block are "inserted" into the user's configuration. The template
   # object is passed to the block so you have access to the template options.
   #
+  # Note that a template performs two functions: a public interface for the
+  # user of the template to _write_ configuration data, and code generation
+  # that will need to _read_ that data. Hence, a template class will generally
+  # include a number of external-facing "writer" methods (e.g. using
+  # `attr_writer`) and a number of corresponding internal-facing "reader"
+  # methods called only from the `on_expand` block.
+  #
   # ### Example
   #
   # This is a simple template that generates a "hello" tool. The tool simply
@@ -44,7 +51,12 @@ module Toys
   #
   #       # The template is passed to the expand block, so a user of the
   #       # template may also call this method to set the name.
-  #       attr_accessor :name
+  #       attr_writer :name
+  #
+  #       # @private
+  #       # Make the name available within the `on_expand` block below. This is
+  #       # not part of the "public" interface of the template.
+  #       attr_reader :name
   #
   #       # The following block is inserted when the template is expanded.
   #       on_expand do |template|
@@ -109,16 +121,17 @@ module Toys
       #
       # @return [Proc] The expansion of this template.
       #
-      attr_accessor :expansion
+      attr_writer :expansion
+
+      # @private
+      attr_reader :expansion
     end
 
     ##
     # @private
     #
     def self.included(mod)
-      return if mod.respond_to?(:on_expand)
-      mod.extend(ClassMethods)
-      mod.include(Context::Key)
+      mod.extend(ClassMethods) unless mod.is_a?(ClassMethods)
     end
   end
 end

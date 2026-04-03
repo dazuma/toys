@@ -34,12 +34,12 @@ module Toys
       # @return [Toys::Utils::GitCache]
       #
       def git_cache
-        self[KEY]
+        self[::Toys::StandardMixins::GitCache::KEY]
       end
 
       on_initialize do
         require "toys/utils/git_cache"
-        self[KEY] = Utils::GitCache.new
+        self[::Toys::StandardMixins::GitCache::KEY] = Utils::GitCache.new
       end
     end
   end

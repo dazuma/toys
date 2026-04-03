@@ -8,6 +8,7 @@ require "toys/utils/gems"
 
 describe Toys::Utils::Gems do
   let(:gem_base_dir) { File.dirname(File.dirname(__dir__)) }
+  let(:gem_gemfile_path) { File.join(gem_base_dir, "Gemfile") }
   let(:gems_cases_dir) { File.join(gem_base_dir, "test-data", "gems-cases") }
   let(:exec_service) { Toys::Utils::Exec.new }
 
@@ -42,13 +43,43 @@ describe Toys::Utils::Gems do
       ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
     }
 
+    def clean_files_for_multi_tests
+      files = ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
+      files.each { |file| FileUtils.rm_f(file) }
+    end
+
     it "sets up a bundle without toys" do
       setup_case("bundle-without-toys") do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
         assert(result.success?)
+        assert_match(/result: :\w+/, result.captured_out)
         result = run_script
         assert(result.success?)
+        assert_includes(result.captured_out, "result: :setup")
+      end
+    end
+
+    it "sets up a bundle twice" do
+      setup_case("bundle-repeated") do
+        FileUtils.rm_f("Gemfile.lock")
+        result = run_script
+        assert(result.success?)
+        assert_match(/result: :\w+/, result.captured_out)
+        assert_includes(result.captured_out, "result2: :setup")
+      end
+    end
+
+    it "errors when setting up a bundle with BUNDLE_GEMFILE already set to something else" do
+      old_gemfile_path = ENV["BUNDLE_GEMFILE"]
+      setup_case("bundle-without-toys") do
+        FileUtils.rm_f("Gemfile.lock")
+        ENV["BUNDLE_GEMFILE"] = gem_gemfile_path
+        result = run_script
+        refute(result.success?)
+        assert_includes(result.captured_err, "Could not set up bundle because another is already set up")
+      ensure
+        ENV["BUNDLE_GEMFILE"] = old_gemfile_path
       end
     end
 
@@ -57,8 +88,10 @@ describe Toys::Utils::Gems do
         FileUtils.rm_f("Gemfile.lock")
         result = run_script
         assert(result.success?)
+        assert_match(/result: :\w+/, result.captured_out)
         result = run_script
         assert(result.success?)
+        assert_includes(result.captured_out, "result: :setup")
       end
     end
 
@@ -79,8 +112,10 @@ describe Toys::Utils::Gems do
         FileUtils.rm_rf("vendor")
         result = run_script
         assert(result.success?)
+        assert_match(/result: :\w+/, result.captured_out)
         result = run_script
         assert(result.success?)
+        assert_includes(result.captured_out, "result: :setup")
       end
     end
 
@@ -94,11 +129,6 @@ describe Toys::Utils::Gems do
         orig_lockfile = File.read("Gemfile.lock.orig")
         assert_equal(orig_lockfile, cur_lockfile)
       end
-    end
-
-    def clean_files_for_multi_tests
-      files = ["Gemfile", "gems.rb", ".gems.rb", "Gemfile.lock", "gems.locked", ".gems.rb.lock"]
-      files.each { |file| FileUtils.rm_f(file) }
     end
 
     it "chooses gems.rb over Gemfile" do
@@ -211,9 +241,20 @@ describe Toys::Utils::Gems do
         result = run_script
         assert(result.success?)
         assert_match(/Gem needed: .* Install\?/, result.captured_out)
+        assert_includes(result.captured_out, "result: :installed")
         result = run_script
         assert(result.success?)
         refute_match(/Gem needed: .* Install\?/, result.captured_out)
+        assert_includes(result.captured_out, "result: :activated")
+      end
+    end
+
+    it "handles re-activation" do
+      setup_case("activate-repeated") do
+        result = run_script
+        assert(result.success?)
+        assert_match(/result: :\w+/, result.captured_out)
+        assert_includes(result.captured_out, "result2: false")
       end
     end
   end

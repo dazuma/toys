@@ -42,99 +42,99 @@ module Toys
       # @return [::HighLine]
       #
       def highline
-        self[KEY]
+        self[::Toys::StandardMixins::Highline::KEY]
       end
 
       ##
       # Calls [HighLine#agree](https://www.rubydoc.info/gems/highline/HighLine:agree)
       #
       def agree(...)
-        self[KEY].agree(...)
+        self[::Toys::StandardMixins::Highline::KEY].agree(...)
       end
 
       ##
       # Calls [HighLine#ask](https://www.rubydoc.info/gems/highline/HighLine:ask)
       #
       def ask(...)
-        self[KEY].ask(...)
+        self[::Toys::StandardMixins::Highline::KEY].ask(...)
       end
 
       ##
       # Calls [HighLine#choose](https://www.rubydoc.info/gems/highline/HighLine:choose)
       #
       def choose(...)
-        self[KEY].choose(...)
+        self[::Toys::StandardMixins::Highline::KEY].choose(...)
       end
 
       ##
       # Calls [HighLine#list](https://www.rubydoc.info/gems/highline/HighLine:list)
       #
       def list(...)
-        self[KEY].list(...)
+        self[::Toys::StandardMixins::Highline::KEY].list(...)
       end
 
       ##
       # Calls [HighLine#say](https://www.rubydoc.info/gems/highline/HighLine:say)
       #
       def say(...)
-        self[KEY].say(...)
+        self[::Toys::StandardMixins::Highline::KEY].say(...)
       end
 
       ##
       # Calls [HighLine#indent](https://www.rubydoc.info/gems/highline/HighLine:indent)
       #
       def indent(...)
-        self[KEY].indent(...)
+        self[::Toys::StandardMixins::Highline::KEY].indent(...)
       end
 
       ##
       # Calls [HighLine#newline](https://www.rubydoc.info/gems/highline/HighLine:newline)
       #
       def newline
-        self[KEY].newline
+        self[::Toys::StandardMixins::Highline::KEY].newline
       end
 
       ##
       # Calls [HighLine#puts](https://www.rubydoc.info/gems/highline/HighLine:puts)
       #
       def puts(*args)
-        self[KEY].puts(*args)
+        self[::Toys::StandardMixins::Highline::KEY].puts(*args)
       end
 
       ##
       # Calls [HighLine#color](https://www.rubydoc.info/gems/highline/HighLine:color)
       #
       def color(*args)
-        self[KEY].color(*args)
+        self[::Toys::StandardMixins::Highline::KEY].color(*args)
       end
 
       ##
       # Calls [HighLine#color_code](https://www.rubydoc.info/gems/highline/HighLine:color_code)
       #
       def color_code(*args)
-        self[KEY].color_code(*args)
+        self[::Toys::StandardMixins::Highline::KEY].color_code(*args)
       end
 
       ##
       # Calls [HighLine#uncolor](https://www.rubydoc.info/gems/highline/HighLine:uncolor)
       #
       def uncolor(*args)
-        self[KEY].uncolor(*args)
+        self[::Toys::StandardMixins::Highline::KEY].uncolor(*args)
       end
 
       ##
       # Calls [HighLine#new_scope](https://www.rubydoc.info/gems/highline/HighLine:new_scope)
       #
       def new_scope
-        self[KEY].new_scope
+        self[::Toys::StandardMixins::Highline::KEY].new_scope
       end
 
       on_initialize do |*args|
         require "toys/utils/gems"
         ::Toys::Utils::Gems.activate("highline", "~> 2.0")
         require "highline"
-        self[KEY] = ::HighLine.new(*args)
-        self[KEY].use_color = $stdout.tty?
+        self[::Toys::StandardMixins::Highline::KEY] = ::HighLine.new(*args)
+        self[::Toys::StandardMixins::Highline::KEY].use_color = $stdout.tty?
       end
     end
   end

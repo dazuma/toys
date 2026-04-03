@@ -250,8 +250,11 @@ module Toys
           include :fileutils
           include :terminal
 
+          ##
           # @private
-          def run # rubocop:disable all
+          # Generated entrypoint for a gem-build tool
+          #
+          def run
             require "rubygems"
             require "rubygems/package"
             ::Dir.chdir(context_directory || ::Dir.getwd) do
@@ -264,23 +267,35 @@ module Toys
                 mkdir_p(::File.dirname(archive_path))
                 mv(archive_name, archive_path)
               end
-              if install_gem
-                exit(1) unless yes || confirm("Install #{gem_name} #{version}? ", default: true)
-                exec ["gem", "install", archive_path]
-              end
-              if push_gem
-                if ::File.directory?(".git") && capture("git status -s").strip != ""
-                  logger.error "Cannot push the gem when there are uncommited changes"
-                  exit(1)
-                end
-                exit(1) unless yes || confirm("Release #{gem_name} #{version}? ", default: true)
-                exec(["gem", "push", archive_path])
-                if tag
-                  exec(["git", "tag", "v#{version}"])
-                  if push_tag
-                    exec(["git", "push", push_tag, "v#{version}"])
-                  end
-                end
+              do_install(version, archive_path) if install_gem
+              do_push(version, archive_path) if push_gem
+            end
+          end
+
+          ##
+          # @private
+          # Install a built gem
+          #
+          def do_install(version, archive_path)
+            exit(1) unless yes || confirm("Install #{gem_name} #{version}? ", default: true)
+            exec ["gem", "install", archive_path]
+          end
+
+          ##
+          # @private
+          # Push a built gem
+          #
+          def do_push(version, archive_path)
+            if ::File.directory?(".git") && capture("git status -s").strip != ""
+              logger.error "Cannot push the gem when there are uncommitted changes"
+              exit(1)
+            end
+            exit(1) unless yes || confirm("Release #{gem_name} #{version}? ", default: true)
+            exec(["gem", "push", archive_path])
+            if tag
+              exec(["git", "tag", "v#{version}"])
+              if push_tag
+                exec(["git", "push", push_tag, "v#{version}"])
               end
             end
           end
