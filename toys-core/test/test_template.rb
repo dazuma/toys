@@ -10,9 +10,18 @@ describe Toys::Template do
     assert_equal(true, klass.respond_to?(:expansion=))
   end
 
-  it "includes context key constants" do
-    klass = Toys::Template.create
-    assert_equal(Toys::Context::Key::TOOL, klass::TOOL)
+  it "acts on inclusion" do
+    klass = Class.new do
+      include Toys::Template
+      def mithrandir
+        :mithrandir
+      end
+      on_expand do
+        :gandalf
+      end
+    end
+    assert_equal(:mithrandir, klass.new.mithrandir)
+    assert_equal(:gandalf, klass.expansion.call)
   end
 
   it "allows block configuration" do

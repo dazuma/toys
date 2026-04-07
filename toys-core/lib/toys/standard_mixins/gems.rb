@@ -51,11 +51,17 @@ module Toys
       include Mixin
 
       ##
-      # A tool-wide instance of {Toys::Utils::Gems}.
+      # Context key for the tool-wide {Toys::Utils::Gems} object.
+      # @return [Object]
+      #
+      KEY = ::Object.new.freeze
+
+      ##
+      # Returns a tool-wide instance of {Toys::Utils::Gems}.
       # @return [Toys::Utils::Gems]
       #
       def gems
-        self.class.gems
+        self[::Toys::StandardMixins::Gems::KEY]
       end
 
       ##
@@ -64,40 +70,61 @@ module Toys
       #
       # @param name [String] Name of the gem
       # @param requirements [String...] Version requirements
-      # @return [void]
+      # @param options [keywords] Additional options to pass to the
+      #     {Toys::Utils::Gems} constructor
+      #
+      # @return [:activated] if the gem was activated
+      # @return [:installed] if the gem was installed and activated
+      # @return [false] if the gem had already been activated
+      #
+      # @raise [ActivationFailedError] if activation or install failed
       #
       def gem(name, *requirements, **options)
-        self.class.gem(name, *requirements, **options)
+        gems_util = options.empty? ? gems : Utils::Gems.new(**options)
+        gems_util.activate(name, *requirements)
       end
 
-      on_include do |**opts|
-        @__gems_opts = opts
-
+      ##
+      # This module extends the tool class when you include the Gems mixin,
+      # so that the `gems` and `gem` directives defined in this module are
+      # available.
+      #
+      module ClassMethods
         ##
-        # @private
+        # Returns a tool-wide instance of {Toys::Utils::Gems}.
+        # @return [Toys::Utils::Gems]
         #
-        def self.gems
-          # rubocop:disable Naming/MemoizedInstanceVariableName
-          @__gems ||= begin
-            require "toys/utils/gems"
-            Utils::Gems.new(**@__gems_opts)
-          end
-          # rubocop:enable Naming/MemoizedInstanceVariableName
+        def gems
+          @__default_gems_util
         end
 
         ##
-        # @private
+        # Activate the given gem. If it is not present, attempt to install it
+        # (or inform the user to update the bundle).
         #
-        def self.gem(name, *requirements, **options)
-          gems_util =
-            if options.empty?
-              gems
-            else
-              require "toys/utils/gems"
-              Utils::Gems.new(**options)
-            end
+        # @param name [String] Name of the gem
+        # @param requirements [String...] Version requirements
+        # @param options [keywords] Additional options to pass to the
+        #     {Toys::Utils::Gems} constructor
+        #
+        # @return [:activated] if the gem was activated
+        # @return [:installed] if the gem was installed and activated
+        # @return [false] if the gem had already been activated
+        #
+        # @raise [ActivationFailedError] if activation or install failed
+        #
+        def gem(name, *requirements, **options)
+          gems_util = options.empty? ? gems : Utils::Gems.new(**options)
           gems_util.activate(name, *requirements)
         end
+      end
+
+      # Install the class methods and set up the needed object references
+      on_include do |**opts|
+        require "toys/utils/gems"
+        @__default_gems_util = Utils::Gems.new(**opts)
+        set(::Toys::StandardMixins::Gems::KEY, @__default_gems_util)
+        extend(::Toys::StandardMixins::Gems::ClassMethods) unless is_a?(::Toys::StandardMixins::Gems::ClassMethods)
       end
     end
   end

@@ -14,12 +14,13 @@ module Toys
     module Fileutils
       include Mixin
 
-      ##
-      # @private
-      #
-      def self.included(mod)
+      on_include do
         require "fileutils"
-        mod.include(::FileUtils)
+        if respond_to?(:include_module)
+          include_module(::FileUtils)
+        else
+          include(::FileUtils)
+        end
       end
     end
   end

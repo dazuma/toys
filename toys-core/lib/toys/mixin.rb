@@ -116,9 +116,12 @@ module Toys
       # to the `include` directive. It can perform any runtime initialization
       # needed by the mixin.
       #
-      # @return [Proc] The iniitiliazer for this mixin.
+      # You can also set the initializer proc by passing a block to
+      # {#on_initialize}.
       #
-      attr_accessor :initializer
+      # @return [Proc] The initializer for this mixin.
+      #
+      attr_writer :initializer
 
       ##
       # Set an inclusion proc for this mixin. This block is evaluated in the
@@ -138,17 +141,24 @@ module Toys
       # class immediately after the mixin is included, and is passed any
       # arguments provided to the `include` directive.
       #
+      # You can also set the inclusion proc by passing a block to {#on_include}.
+      #
       # @return [Proc] The inclusion procedure for this mixin.
       #
-      attr_accessor :inclusion
+      attr_writer :inclusion
+
+      # @private
+      attr_reader :initializer
+
+      # @private
+      attr_reader :inclusion
     end
 
     ##
     # @private
     #
     def self.included(mod)
-      return if mod.respond_to?(:on_initialize)
-      mod.extend(ModuleMethods)
+      mod.extend(ModuleMethods) unless mod.is_a?(ModuleMethods)
     end
   end
 end

@@ -83,7 +83,12 @@ module Toys
       #
       # @param name [String] Name of the gem
       # @param requirements [String...] Version requirements
-      # @return [void]
+      #
+      # @return [:activated] if the gem was activated
+      # @return [:installed] if the gem was installed and activated
+      # @return [false] if the gem had already been activated
+      #
+      # @raise [ActivationFailedError] if activation or install failed
       #
       def self.activate(name, *requirements)
         new.activate(name, *requirements)
@@ -149,11 +154,16 @@ module Toys
       #
       # @param name [String] Name of the gem
       # @param requirements [String...] Version requirements
-      # @return [void]
+      #
+      # @return [:activated] if the gem was activated
+      # @return [:installed] if the gem was installed and activated
+      # @return [false] if the gem had already been activated
+      #
+      # @raise [ActivationFailedError] if activation or install failed
       #
       def activate(name, *requirements)
         Gems.synchronize do
-          gem(name, *requirements)
+          gem(name, *requirements) ? :activated : false
         rescue ::Gem::LoadError => e
           handle_activation_error(e, name, requirements)
         end
@@ -163,22 +173,24 @@ module Toys
       # Search for an appropriate Gemfile, and set up the bundle.
       #
       # @param groups [Array<String>] The groups to include in setup.
-      #
       # @param gemfile_path [String] The path to the Gemfile to use. If `nil`
       #     or not given, the `:search_dirs` will be searched for a Gemfile.
-      #
       # @param search_dirs [String,Array<String>] Directories in which to
       #     search for a Gemfile, if gemfile_path is not given. You can provide
       #     a single directory or an array of directories.
-      #
       # @param gemfile_names [String,Array<String>] File names that are
       #     recognized as Gemfiles, when searching because gemfile_path is not
       #     given. Defaults to {DEFAULT_GEMFILE_NAMES}.
-      #
       # @param retries [Integer] Number of times to retry bundler operations.
       #     Optional.
       #
-      # @return [void]
+      # @return [:setup] if the bundle was set up with no install needed
+      # @return [:installed] if the bundle was installed and set up
+      # @return [:updated] if the bundle was updated and set up
+      # @return [false] on a bundle conflict if configured not to raise an
+      #     exception
+      #
+      # @raise [BundlerFailedError] if bundle setup failed
       #
       def bundle(groups: nil,
                  gemfile_path: nil,
@@ -260,11 +272,11 @@ module Toys
           end
         if !is_missing_spec || @on_missing == :error
           report_activation_error(name, requirements, error)
-          return
         end
         confirm_and_install_gem(name, requirements)
         begin
           gem(name, *requirements)
+          :installed
         rescue ::Gem::LoadError => e
           report_activation_error(name, requirements, e)
         end
@@ -304,47 +316,46 @@ module Toys
           activate_bundler
           check_gemfile_compatibility(gemfile_path)
           modified_gemfile_path = create_modified_gemfile(gemfile_path)
-          success = false
+          result = nil
           begin
             attempt_setup_bundle(modified_gemfile_path, groups)
-            success = true
+            result = :setup
           rescue *bundler_exceptions
             ::Bundler.reset!
             restore_toys_libs
-            install_bundle(modified_gemfile_path, retries: retries)
+            install_result = install_bundle(modified_gemfile_path, retries: retries)
             attempt_setup_bundle(modified_gemfile_path, groups)
-            success = true
+            result = install_result
           ensure
             delete_modified_gemfile(modified_gemfile_path)
-            ::Bundler.reset! unless success
+            ::Bundler.reset! if result.nil?
             restore_toys_libs
           end
-          true
+          result
         end
       end
 
       def configure_gemfile(gemfile_path)
         old_path = ::ENV["BUNDLE_GEMFILE"]
-        if old_path
-          if gemfile_path != old_path
-            case @on_conflict
-            when :warn
-              terminal.puts("Warning: could not set up bundler because it is already set up.", :red)
-            when :error
-              raise AlreadyBundledError, "Could not set up bundler because it is already set up"
-            end
+        if old_path && gemfile_path != old_path
+          case @on_conflict
+          when :warn
+            terminal.puts("Warning: could not set up bundle because another is already set up.", :red)
+          when :error
+            raise AlreadyBundledError, "Could not set up bundle because another is already set up"
           end
           return false
         end
         ::ENV["BUNDLE_GEMFILE"] = gemfile_path
         success = false
+        result = nil
         begin
-          yield
+          result = yield
           success = true
         ensure
           ::ENV["BUNDLE_GEMFILE"] = success ? gemfile_path : old_path
         end
-        true
+        result
       end
 
       def activate_bundler
@@ -485,15 +496,15 @@ module Toys
         args << "--retry=#{retries}" if retries.positive?
         bundler_bin = ::Gem.bin_path("bundler", "bundle", ::Bundler::VERSION)
         result = exec_util.exec_ruby([bundler_bin, "install"] + args)
-        return if result.success?
-        terminal.puts("Failed to install. Trying update...")
-        result = exec_util.exec_ruby([bundler_bin, "update"] + args)
-        return if result.success?
-        terminal.puts("Failed to update. Trying update with clean lockfile...")
+        return :installed if result.success?
+        terminal.puts("Failed to install bundle. Trying update...")
+        result = exec_util.exec_ruby([bundler_bin, "update", "--all"] + args)
+        return :updated if result.success?
+        terminal.puts("Failed to update bundle. Trying update with clean lockfile...")
         lockfile_path = find_lockfile_path(gemfile_path)
         ::File.delete(lockfile_path) if ::File.exist?(lockfile_path) # rubocop:disable Lint/NonAtomicFileOperation
-        result = exec_util.exec_ruby([bundler_bin, "update"] + args)
-        return if result.success?
+        result = exec_util.exec_ruby([bundler_bin, "update", "--all"] + args)
+        return :updated if result.success?
         raise ::Bundler::InstallError, "Failed to install or update bundle: #{gemfile_path}"
       end
 

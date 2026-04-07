@@ -41,6 +41,25 @@ module Toys
       include ::Toys::Template
 
       ##
+      # Create the CI template.
+      # This template provides no direct arguments.
+      # All configuration of this template should be done by calling methods
+      # on the template in the expand block.
+      #
+      def initialize
+        @jobs = []
+        @collections = []
+        @all_flag = nil
+        @only_flag = nil
+        @jobs_disabled_by_default = nil
+        @fail_fast_flag = nil
+        @fail_fast_default = false
+        @base_ref_flag = nil
+        @use_github_base_ref_flag = nil
+        @prerun = nil
+      end
+
+      ##
       # Add a job implemented by a tool call.
       #
       # @param name [String] A user-visible name for the job. Required.
@@ -271,20 +290,6 @@ module Toys
       #
       def use_github_base_ref_flag=(value)
         @use_github_base_ref_flag = value
-      end
-
-      # @private
-      def initialize
-        @jobs = []
-        @collections = []
-        @all_flag = nil
-        @only_flag = nil
-        @jobs_disabled_by_default = nil
-        @fail_fast_flag = nil
-        @fail_fast_default = false
-        @base_ref_flag = nil
-        @use_github_base_ref_flag = nil
-        @prerun = nil
       end
 
       # @private

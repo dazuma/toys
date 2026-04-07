@@ -62,7 +62,7 @@ module Toys
       attr_writer :name
 
       ##
-      # Version requirements for the rdoc gem.
+      # Version requirements for the rubocop gem.
       # If set to `nil`, uses the bundled version if bundler is enabled, or
       # defaults to {DEFAULT_GEM_VERSION_REQUIREMENTS} if bundler is not
       # enabled.

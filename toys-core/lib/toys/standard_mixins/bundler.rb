@@ -188,6 +188,8 @@ module Toys
 
       ##
       # @private
+      # This is an internal class, and its interfaces are subject to change
+      # without warning.
       #
       class GemfileFinder
         ##

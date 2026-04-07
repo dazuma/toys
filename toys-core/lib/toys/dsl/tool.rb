@@ -204,9 +204,9 @@ module Toys
       #     expand "hello-generator", "mytool", "mytool is running!"
       #
       # @param name [String] Name of the template
-      # @param template_class [Class] Module to use as the mixin. Optional.
-      #     Either pass a module here, *or* provide a block and define the
-      #     mixin within the block.
+      # @param template_class [Class] Class to use as the template. Optional.
+      #     Either pass a class here, *or* provide a block and define the
+      #     template within the block.
       # @param block [Proc] Defines the template class.
       # @return [self]
       #
