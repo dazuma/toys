@@ -440,7 +440,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "sets shell param to :zsh" do
       completion.run_internal("toys three four --hello 123")
-      assert_equal(:zsh, @context[:params][:shell])
+      assert_equal(:zsh, @context[:shell])
     end
 
     it "constructs context for no active flag" do

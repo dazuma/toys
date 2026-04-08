@@ -83,8 +83,9 @@ end
 describe Toys::Completion::FileSystem do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "test-data", "data1") }
   let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
-  def context(str)
-    Toys::Completion::Context.new(cli: nil, fragment: str)
+
+  def context(str, **params)
+    Toys::Completion::Context.new(cli: nil, fragment: str, **params)
   end
 
   it "returns objects when passed an empty string" do
@@ -111,20 +112,25 @@ describe Toys::Completion::FileSystem do
     assert_equal([], candidates)
   end
 
-  it "returns objects when passed a glob that begins with a star" do
+  it "does not expand globs when the shell is not set to bash" do
     candidates = completion.call(context("*.txt"))
+    assert_empty(candidates)
+  end
+
+  it "returns objects when passed a glob that begins with a star for bash" do
+    candidates = completion.call(context("*.txt", shell: :bash))
     expected = Toys::Completion::Candidate.new_multi(["input.txt"])
     assert_equal(expected, candidates)
   end
 
   it "returns dotfiles when passed a glob that begins with a dot" do
-    candidates = completion.call(context(".*"))
+    candidates = completion.call(context(".*", shell: :bash))
     expected = Toys::Completion::Candidate.new_multi([".dotfile"])
     assert_equal(expected, candidates)
   end
 
   it "returns non dotfiles when passed a star" do
-    candidates = completion.call(context("*"))
+    candidates = completion.call(context("*", shell: :bash))
     expected = [
       Toys::Completion::Candidate.new("indirectory/", partial: true),
       Toys::Completion::Candidate.new("input.txt"),
@@ -147,7 +153,7 @@ describe Toys::Completion::FileSystem do
   end
 
   it "returns glob in a directory" do
-    candidates = completion.call(context("indirectory/c*"))
+    candidates = completion.call(context("indirectory/c*", shell: :bash))
     expected = Toys::Completion::Candidate.new_multi(["indirectory/content.txt"])
     assert_equal(expected, candidates)
   end
