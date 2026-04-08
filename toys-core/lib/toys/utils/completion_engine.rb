@@ -55,11 +55,11 @@ module Toys
         end
 
         ##
-        # Internal completion method designed for testing.
+        # @private
+        #
+        # Internal completion method. Test-accessible.
         # Returns `[quote_type, Array<Toys::Completion::Candidate>]`, or `nil`
         # if the line cannot be parsed (e.g. the executable name is missing).
-        #
-        # @private
         #
         def run_internal(line)
           words = CompletionEngine.split(line)
@@ -73,7 +73,7 @@ module Toys
           end
           context = Completion::Context.new(
             cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
-            params: { shell: shell_name, quote_type: quote_type }
+            shell: shell_name, quote_type: quote_type
           )
           [quote_type, @cli.completion.call(context).uniq.sort]
         end

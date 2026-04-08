@@ -18,6 +18,28 @@ long_desc \
   "The \"eval\" tool is the actual completion command invoked by zsh when it needs to" \
     " complete a toys command line. You shouldn't need to invoke it directly."
 
+tool "eval" do
+  desc "Tab completion command (executed by zsh)"
+
+  long_desc \
+    "Completion command invoked by zsh to complete a toys command line. Generally you do not" \
+      " need to invoke this directly. It reads the command line context from the COMP_LINE" \
+      " and COMP_POINT environment variables, and outputs completion candidates to stdout in" \
+      " two sections separated by a blank line: final completions first, then partial" \
+      " completions (such as directory paths)."
+
+  disable_argument_parsing
+
+  def run
+    require "toys/utils/completion_engine"
+    result = ::Toys::Utils::CompletionEngine::Zsh.new(cli).run
+    if result > 1
+      logger.fatal("This tool must be invoked as a zsh completion command.")
+    end
+    exit(result)
+  end
+end
+
 tool "install" do
   desc "Install zsh tab completion"
 
@@ -65,27 +87,5 @@ tool "remove" do
     path = ::File.join(::File.dirname(::File.dirname(__dir__)), "share", "zsh-completion-remove.sh")
     exes = executable_names.empty? ? [::Toys::StandardCLI::EXECUTABLE_NAME] : executable_names
     puts ::Shellwords.join(["source", path] + exes)
-  end
-end
-
-tool "eval" do
-  desc "Tab completion command (executed by zsh)"
-
-  long_desc \
-    "Completion command invoked by zsh to complete a toys command line. Generally you do not" \
-      " need to invoke this directly. It reads the command line context from the COMP_LINE" \
-      " and COMP_POINT environment variables, and outputs completion candidates to stdout in" \
-      " two sections separated by a blank line: final completions first, then partial" \
-      " completions (such as directory paths)."
-
-  disable_argument_parsing
-
-  def run
-    require "toys/utils/completion_engine"
-    result = ::Toys::Utils::CompletionEngine::Zsh.new(cli).run
-    if result > 1
-      logger.fatal("This tool must be invoked as a zsh completion command.")
-    end
-    exit(result)
   end
 end

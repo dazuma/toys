@@ -17,7 +17,15 @@ module Toys
     #
     class Context
       ##
-      # Create a completion context
+      # Create a completion context.
+      #
+      # Extra params are optional and can be used to affect the behavior in
+      # specific cases. Currently these are:
+      #
+      # * `shell: :bash` causes the FileSystem completion to include glob
+      #   expansions, since bash doesn't handle those directly
+      # * `disable_flags: true` causes tool completion to omit flag completions
+      #   which is used by the `toys do` built-in tool
       #
       # @param cli [Toys::CLI] The CLI being run. Required.
       # @param previous_words [Array<String>] Array of complete strings that
@@ -202,7 +210,7 @@ module Toys
       # Create an array of candidates given an array of strings.
       #
       # @param array [Array<String>]
-      # @return [Array<Toys::Completion::Candidate]
+      # @return [Array<Toys::Completion::Candidate>]
       #
       def self.new_multi(array, partial: false)
         array.map { |s| new(s, partial: partial) }
@@ -294,12 +302,15 @@ module Toys
         dir = ::File.expand_path(prefix, @cwd)
         return [] unless ::File.directory?(dir)
         prefix = nil if [".", ""].include?(prefix)
-        omits = [".", "..", ""]
-        children = ::Dir.glob(name, base: dir).find_all do |child|
-          !omits.include?(child)
+        children = []
+        if context[:shell] == :bash
+          # Bash completion requires that you handle globs explicitly.
+          ::Dir.glob(name, base: dir).each do |child|
+            children << child unless /^\.{0,2}$/.match?(child)
+          end
         end
-        children += ::Dir.entries(dir).find_all do |child|
-          child.start_with?(name) && !omits.include?(child)
+        ::Dir.children(dir).each do |child|
+          children << child if child.start_with?(name)
         end
         generate_candidates(children.uniq.sort, prefix, dir)
       end
@@ -338,13 +349,13 @@ module Toys
       #
       def initialize(values, prefix_constraint: "")
         super()
-        @values = values.flatten.map { |v| Candidate.new(v) }.sort
+        @values = values.flatten.uniq.map { |v| Candidate.new(v) }.sort
         @prefix_constraint = prefix_constraint
       end
 
       ##
       # The array of completion candidates.
-      # @return [Array<String>]
+      # @return [Array<Toys::Completion::Candidate>]
       #
       attr_reader :values
 

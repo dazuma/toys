@@ -108,12 +108,19 @@ module Toys
 
       private
 
+      ##
+      # Return a list of completion candidates of the form "--flag=val".
+      # Returns the empty array if the context demands such a form but there
+      # are no suitable completions. Returns nil if the context demands a
+      # different form.
+      #
       def valued_flag_candidates(context)
         return unless @complete_flag_values
         arg_parser = context.arg_parser
         return unless arg_parser.flags_allowed?
-        active_flag_def = arg_parser.active_flag_def
-        return if active_flag_def && active_flag_def.value_type == :required
+        # Bail if the previous arg was a flag that requires a value, so that
+        # the current argument must be that value (and thus cannot be a flag)
+        return if arg_parser.active_flag_def&.value_type == :required
         match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
         return unless match
         flag_value_context = context.with(fragment_prefix: match[2])
@@ -122,12 +129,21 @@ module Toys
         flag_def.value_completion.call(flag_value_context)
       end
 
+      ##
+      # Returns a list of completion candidates that are not flags or their
+      # values (i.e. are subtools or normal args)
+      #
       def subtool_or_arg_candidates(context)
         return [] if context.arg_parser.active_flag_def
         return [] if context.arg_parser.flags_allowed? && context.fragment.start_with?("-")
         subtool_candidates(context) || arg_candidates(context)
       end
 
+      ##
+      # Returns a list of completion candidates that are subtools. Returns nil
+      # if subtool completion is disabled or the context demands that we are
+      # no longer parsing subtools.
+      #
       def subtool_candidates(context)
         return if !@complete_subtools || !context.args.empty?
         tool_name, prefix, fragment = analyze_subtool_fragment(context)
@@ -167,13 +183,21 @@ module Toys
         [tool_name, prefix, fragment]
       end
 
+      ##
+      # Returns a list of completion candidates that are non-flag arguments.
+      # Does not return nil.
+      #
       def arg_candidates(context)
-        return unless @complete_args
+        return [] unless @complete_args
         arg_def = context.arg_parser.next_arg_def
         return [] unless arg_def
         arg_def.completion.call(context)
       end
 
+      ##
+      # Returns a list of completion candidates that are flags.
+      # Does not return nil.
+      #
       def plain_flag_candidates(context)
         return [] if !@complete_flags || context[:disable_flags]
         arg_parser = context.arg_parser
@@ -186,8 +210,12 @@ module Toys
         end
       end
 
+      ##
+      # Returns a list of completion candidates that are flag values.
+      # Does not return nil.
+      #
       def flag_value_candidates(context)
-        return unless @complete_flag_values
+        return [] unless @complete_flag_values
         arg_parser = context.arg_parser
         flag_def = arg_parser.active_flag_def
         return [] unless flag_def
