@@ -1433,24 +1433,33 @@ describe Toys::ToolDefinition do
     end
   end
 
-  describe "settings" do
-    it "honors propagate_helper_methods false" do
+  describe "inheritable_helper_methods" do
+    it "defaults to false" do
       tool.tool_class.class_eval do
         def foo
           5
         end
       end
+      assert_equal(false, tool.inheritable_helper_methods?)
       assert_equal(Toys::Context, subtool.tool_class.superclass)
       refute_includes(subtool.tool_class.public_instance_methods, :foo)
+      subtool.run_handler = proc do
+        exit(foo)
+      end
+      err = assert_raises(::Toys::ContextualError) do
+        cli.run(tool_name, subtool_name)
+      end
+      assert_kind_of(::NameError, err.cause)
     end
 
-    it "honors propagate_helper_methods true" do
-      tool.settings.propagate_helper_methods = true
+    it "honors inheritable_helper_methods = true" do
+      tool.inheritable_helper_methods = true
       tool.tool_class.class_eval do
         def foo
           5
         end
       end
+      assert_equal(true, tool.inheritable_helper_methods?)
       assert_equal(tool.tool_class, subtool.tool_class.superclass)
       assert_includes(subtool.tool_class.public_instance_methods, :foo)
       subtool.run_handler = proc do

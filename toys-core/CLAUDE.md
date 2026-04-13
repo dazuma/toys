@@ -61,7 +61,6 @@ All source lives under `lib/toys/`. The framework has a layered architecture:
 
 ### Support Layer
 
-- **`settings.rb`** (~30KB) - Type-safe hierarchical configuration system with field definitions and group nesting.
 - **`mixin.rb`** - Module mixin infrastructure for tools.
 - **`template.rb`** - Template infrastructure for reusable tool generators.
 - **`module_lookup.rb`** - Name-to-module resolution for mixins, middleware, and templates.
@@ -96,7 +95,7 @@ Built-in middleware: `show_help`, `handle_usage_errors`, `set_default_descriptio
 - Tests are in `test/` using Minitest spec style (`describe`/`it`) with assertions (not expectations)
 - Test helper: `test/helper.rb` provides `Toys::TestHelper` with `isolate_ruby` for subprocess testing
 - Test fixtures: `test-data/` contains tool definitions and gem fixtures organized by test scenario
-- Subdirectories `test/middleware/`, `test/mixins/`, `test/settings/`, `test/utils/` mirror the source structure
+- Subdirectories `test/middleware/`, `test/mixins/`, `test/utils/` mirror the source structure
 - Integration tests are gated behind `TOYS_TEST_INTEGRATION=true`
 - YARD docs must build with zero warnings and full coverage (`--fail-on-warning`, `--fail-on-undocumented-objects`)
 

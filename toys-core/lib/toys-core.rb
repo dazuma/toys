@@ -37,7 +37,6 @@
 # * The process of finding and loading a tool definition given a tool name, is
 #   implemented by {Toys::Loader}.
 # * Text wrapping is handled by {Toys::WrappableString}.
-# * The settings system is implemented by {Toys::Settings}.
 #
 module Toys
   ##
@@ -143,7 +142,6 @@ require "toys/middleware"
 require "toys/mixin"
 require "toys/module_lookup"
 require "toys/positional_arg"
-require "toys/settings"
 require "toys/source_info"
 require "toys/template"
 require "toys/tool_definition"

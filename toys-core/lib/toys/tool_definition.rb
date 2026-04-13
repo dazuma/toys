@@ -226,18 +226,6 @@ module Toys
     end
 
     ##
-    # Tool-based settings class.
-    #
-    # The following settings are supported:
-    #
-    #  *  `propagate_helper_methods` (_boolean_) - Whether subtools should
-    #     inherit methods defined by parent tools. Defaults to `false`.
-    #
-    class Settings < ::Toys::Settings
-      settings_attr :propagate_helper_methods, default: false
-    end
-
-    ##
     # @private
     # A spec for a completion or acceptor, as a single object
     #
@@ -275,7 +263,6 @@ module Toys
     def initialize(parent, full_name, priority, source_root, middleware_stack, middleware_lookup,
                    tool_class = nil)
       @parent = parent
-      @settings = Settings.new(parent: parent&.settings)
       @full_name = full_name.dup.freeze
       @priority = priority
       @source_root = source_root
@@ -299,7 +286,7 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def reset_definition
+    def reset_definition # rubocop:disable Metrics/MethodLength
       @tool_class = @precreated_class || create_class
 
       @source_info = nil
@@ -326,6 +313,7 @@ module Toys
       @require_exact_flag_match = false
       @includes_modules = false
       @custom_context_directory = nil
+      @inheritable_helper_methods = nil
 
       @run_handler = :run
       @signal_handlers = {}
@@ -334,13 +322,6 @@ module Toys
 
       @completion = DefaultCompletion.new
     end
-
-    ##
-    # Settings for this tool
-    #
-    # @return [Toys::ToolDefinition::Settings]
-    #
-    attr_reader :settings
 
     ##
     # The name of the tool as an array of strings.
@@ -706,6 +687,19 @@ module Toys
     #
     def exact_flag_match_required?
       @require_exact_flag_match
+    end
+
+    ##
+    # Returns true if helper methods defined in this class are inherited by
+    # subtools.
+    # @return [true,false]
+    #
+    def inheritable_helper_methods?
+      if @inheritable_helper_methods.nil?
+        @parent&.inheritable_helper_methods? || false
+      else
+        @inheritable_helper_methods
+      end
     end
 
     ##
@@ -1387,6 +1381,26 @@ module Toys
     end
 
     ##
+    # Set whether helper methods defined in this tool are inherited by subtools.
+    #
+    # @param val [true,false,nil] The boolean value. If nil (the default),
+    #     unsets the value, causing it to revert to the setting of the parent
+    #     tool if any, or false for the root tool.
+    #
+    def inheritable_helper_methods=(val)
+      check_definition_state
+      @inheritable_helper_methods =
+        case val
+        when nil
+          nil
+        when false
+          false
+        else
+          true
+        end
+    end
+
+    ##
     # Return the effective context directory.
     # If there is a custom context directory, uses that. Otherwise, looks for
     # a custom context directory up the tool ancestor chain. If none is
@@ -1505,7 +1519,7 @@ module Toys
     private
 
     def create_class
-      ::Class.new(@parent&.settings&.propagate_helper_methods ? @parent.tool_class : ::Toys::Context)
+      ::Class.new(@parent&.inheritable_helper_methods? ? @parent.tool_class : ::Toys::Context)
     end
 
     def make_config_proc(middleware, loader, next_config)

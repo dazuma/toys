@@ -2373,26 +2373,21 @@ describe Toys::DSL::Tool do
     end
   end
 
-  describe "settings directive" do
-    it "returns the settings" do
-      t = self
+  describe "inheritable_helper_methods directive" do
+    it "defaults the setting to false if not present" do
       loader.add_block do
-        t.assert_equal(false, settings.propagate_helper_methods)
-        settings.propagate_helper_methods = true
-        t.assert_equal(true, settings.propagate_helper_methods)
+        desc "hello"
       end
-      loader.lookup(["blah"])
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.inheritable_helper_methods?)
     end
 
-    it "inherits settings of parent tool" do
-      t = self
+    it "modifies the setting on the tool" do
       loader.add_block do
-        settings.propagate_helper_methods = true
-        tool "tool-1" do
-          t.assert_equal(true, settings.propagate_helper_methods)
-        end
+        inheritable_helper_methods true
       end
-      loader.lookup(["blah"])
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.inheritable_helper_methods?)
     end
   end
 
