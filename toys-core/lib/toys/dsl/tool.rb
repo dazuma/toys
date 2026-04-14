@@ -1870,12 +1870,18 @@ module Toys
       end
 
       ##
-      # Get the settings for this tool.
+      # Set whether this tool's helper methods are inherited by subtools.
       #
-      # @return [Toys::ToolDefinition::Settings] Tool-specific settings.
+      # @param val [true,false,nil] The boolean value. Setting to `nil` unsets
+      #     the value, causing it to revert to the setting of the parent tool
+      #     if any, or false for the root tool.
+      # @return [self]
       #
-      def settings
-        DSL::Internal.current_tool(self, false)&.settings
+      def inheritable_helper_methods(val)
+        cur_tool = DSL::Internal.current_tool(self, false)
+        return self if cur_tool.nil?
+        cur_tool.inheritable_helper_methods = val
+        self
       end
 
       ##

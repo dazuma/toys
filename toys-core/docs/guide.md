@@ -680,10 +680,10 @@ class as described above, but others are implemented and configured using
 
 Toys Middleware is analogous to middleware in other frameworks. It is code that
 "wraps" tools defined in a Toys CLI and makes modifications. Middleware can,
-for example, modify the tool's properties such as its description or settings,
-modify the arguments accepted by the tool, and/or modify the execution of the
-tool, by injecting code before and/or after the tool's execution, or even
-replacing the execution altogether.
+for example, modify the tool's properties such as its description, modify the
+arguments accepted by the tool, and/or modify the execution of the tool, by
+injecting code before and/or after the tool's execution, or even replacing the
+execution altogether.
 
 ### Introducing middleware
 
@@ -1172,7 +1172,6 @@ These classes provide functional support for different parts of the system
     capability by Ruby version and platform.
  *  {Toys::ModuleLookup} - A utility for looking up modules by symbolic name.
     This is how "well-known" mixins and templates are looked up by symbol.
- *  {Toys::Settings} - A generic settings class
  *  {Toys::WrappableString} - An object representing a string that knows how to
     be text-wrapped. This is used in fields such as descriptions.
 
