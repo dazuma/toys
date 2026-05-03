@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # This file is vendored from the exec_service gem.
-# Do not edit directly; run `toys vendor-exec` to regenerate.
+# Do not edit directly; run `toys vendor-util exec` to regenerate.
 
 module Toys
   module Utils
