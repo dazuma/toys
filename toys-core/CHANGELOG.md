@@ -1,5 +1,69 @@
 # Release History
 
+### v0.22.0 / 2026-05-04
+
+* BREAKING CHANGE: `Toys::Acceptor::Enum#values` now returns the values themselves instead of a zipped array that includes strings
+* BREAKING CHANGE: `Toys::FlagGroup::Base` is no longer instantiable; use `Toys::FlagGroup::Optional` instead
+* BREAKING CHANGE: The `acceptor` and `display_name` attributes of `Toys::PositionalArg` are no longer writable and must be set in the constructor
+* BREAKING CHANGE: The `delegation_target` attribute of `Toys::ToolDefinition::DefaultCompletion` is no longer writable and must be set in the constructor
+* BREAKING CHANGE: `Toys::Completion#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* BREAKING CHANGE: `Toys::Acceptor#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* BREAKING CHANGE: You can no longer override a completion class using the `:""` key. (This was undocumented but worked previously.) Just pass a fully constructed completion object if you need a custom object.
+* BREAKING CHANGE: The `static` directive no longer "forces" creating of helper methods, instead using the same logic as the flag and argument directives. In particular, by default it will not create a method starting with underscore
+* BREAKING CHANGE: The original `Module#include` method is now available in the DSL as `include_module` instead of `super_include`
+* BREAKING CHANGE: Dropped undocumented `Loader#add_path_set` option to include individual source names in the relative_paths argument
+* BREAKING CHANGE: Renamed `use_less` in the `Toys::StandardMiddleware::ShowHelp` constructor to `use_pager`, and added support for custom pagers
+* BREAKING CHANGE: Renamed many of the methods in `StandardUI` to reduce confusion
+* BREAKING CHANGE: Removed `LoaderError` and used `ToolDefinitionError` for those cases, as it was decided that the distinction was ambiguous and dependent on internal details
+* BREAKING CHANGE: Removed `ContextualError#underlying_error` as it was synonymous with `cause`.
+* BREAKING CHANGE: Consolidated `ContextualError` public interface into a single `capture` method
+* BREAKING CHANGE: `ArgParser::ExtraArgumentsError` now takes `:arguments` instead of `:values`, and provides an accessor for the same
+* BREAKING CHANGE: `ArgParser::ToolUnrecognizedError` now takes `:full_name` instead of `:values`, and provides an accessor for the same
+* BREAKING CHANGE: Renamed `ArgParser::UsageError#full_message` to `message_with_suggestions` to avoid overriding `Exception#full_message`
+* BREAKING CHANGE: Template classes no longer automatically include `Toys::Context::Key`. This behavior was undocumented and inconsistent between different ways of defining templates.
+* BREAKING CHANGE: Removed settings and moved inheritable_helper_methods to a dedicated tool attribute. Use the basic_settings gem if you need the old settings class
+* ADDED: A custom source_name can be provided to `Loader#add_path_set`, `Loader#add_git`, and `Loader#add_gem`
+* ADDED: Renamed `use_less` in the `Toys::StandardMiddleware::ShowHelp` constructor to `use_pager`, and added support for custom pagers
+* ADDED: The `:gems` mixin provides a context key for retrieving the underlying `Toys::Utils::Gems` service object
+* ADDED: The `:gems` mixin provides an explicit `Toys::Utils::Gems::ClassMethods` module defining the directives added to the tool class
+* ADDED: The `activate` and `bundle` methods in the Gems utility now return useful results
+* ADDED: Converted the exec utility class to a vendoring of the exec_service gem
+* ADDED: Converted the xdg utility class to a vendoring of the simple_xdg gem
+* FIXED: The range acceptor supports beginless and endless ranges.
+* FIXED: `Toys::Acceptor::Enum#values` now returns the values themselves instead of a zipped array that includes strings
+* FIXED: `Toys::FlagGroup::Base` is no longer instantiable; use `Toys::FlagGroup::Optional` instead
+* FIXED: The `acceptor` and `display_name` attributes of `Toys::PositionalArg` are no longer writable and must be set in the constructor
+* FIXED: The `delegation_target` attribute of `Toys::ToolDefinition::DefaultCompletion` is no longer writable and must be set in the constructor
+* FIXED: `Toys::Completion#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* FIXED: `Toys::Acceptor#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* FIXED: You can no longer override a completion class using the `:""` key. (This was undocumented but worked previously.) Just pass a fully constructed completion object if you need a custom object.
+* FIXED: The `:update` argument to the `load_git` directive had no effect if the `:as` argument was provided
+* FIXED: The `static` directive no longer "forces" creating of helper methods, instead using the same logic as the flag and argument directives. In particular, by default it will not create a method starting with underscore
+* FIXED: The original `Module#include` method is now available in the DSL as `include_module` instead of `super_include`
+* FIXED: Dropped undocumented `Loader#add_path_set` option to include individual source names in the relative_paths argument
+* FIXED: Made `Toys::Testing#toys_load_tool` return the block value rather than the exit_code
+* FIXED: Made `Toys::CLI#load_tool` return the block value rather than the exit_code
+* FIXED: FlagValueUnacceptableError and ArgValueUnacceptableError have their value set correctly
+* FIXED: If a CLI has a static (shared) logger, creating a child with `logger: nil` actually clears it
+* FIXED: Removed unused `Toys::StandardMiddleware::ShowHelp::TOOL_NAME_KEY`
+* FIXED: ShowHelp middleware displays an error message instead of raising an exception when help cannot be generated due to a bad search regex
+* FIXED: Renamed many of the methods in `StandardUI` to reduce confusion
+* FIXED: Removed `LoaderError` and used `ToolDefinitionError` for those cases, as it was decided that the distinction was ambiguous and dependent on internal details
+* FIXED: Removed `ContextualError#underlying_error` as it was synonymous with `cause`.
+* FIXED: Consolidated `ContextualError` public interface into a single `capture` method
+* FIXED: `ArgParser::ExtraArgumentsError` now takes `:arguments` instead of `:values`, and provides an accessor for the same
+* FIXED: `ArgParser::ToolUnrecognizedError` now takes `:full_name` instead of `:values`, and provides an accessor for the same
+* FIXED: `ArgParser::UsageError` is now a proper exception
+* FIXED: Renamed `ArgParser::UsageError#full_message` to `message_with_suggestions` to avoid overriding `Exception#full_message`
+* FIXED: `ContextualError` does a better job of capturing relevant syntax errors
+* FIXED: Template classes no longer automatically include `Toys::Context::Key`. This behavior was undocumented and inconsistent between different ways of defining templates.
+* FIXED: Minor completion system fixes
+* FIXED: Removed settings and moved inheritable_helper_methods to a dedicated tool attribute. Use the basic_settings gem if you need the old settings class
+* DOCS: Several clarifications and typo corrections in the reference documentation
+* DOCS: Various clarifications to the DSL reference documentation
+* DOCS: Updates to readme and user guide documentation
+* DOCS: Various documentation updates
+
 ### v0.21.0 / 2026-03-23
 
 This release includes a variety of small fixes and updates toward improving product polish in preparation for a 1.0 release. It focuses on the following areas:
