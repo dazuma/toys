@@ -23,6 +23,19 @@ GEM_DATA = {
     source_files: ["lib/simple_xdg.rb", "lib/simple_xdg/*.rb"],
     dest_class: "XDG",
   },
+  "git_cache" => {
+    source_gem: "git_cache",
+    source_class: "GitCache",
+    source_files: ["lib/git_cache.rb", "lib/git_cache/*.rb"],
+    dest_class: "GitCache",
+    additional_changes: {
+      /\bExecService\b/ => "Toys::Utils::Exec",
+      /\bSimpleXDG\b/ => "Toys::Utils::XDG",
+      /\bGIT_CACHE_WRITABLE\b/ => "TOYS_GIT_CACHE_WRITABLE",
+      'require "exec_service"' => 'require "toys/utils/exec"',
+      'require "simple_xdg"' => 'require "toys/utils/xdg"',
+    },
+  },
 }
 
 flag(:all, "--all[=BASE_PATH]") do
@@ -68,6 +81,7 @@ def setup_lib(name, path)
   @dest_class = gem_data[:dest_class]
   @source_gem_name = gem_data[:source_gem]
   @source_class = gem_data[:source_class]
+  @additional_changes = gem_data[:additional_changes] || {}
   source_root = ::File.expand_path(path || "../../#{@source_gem_name}")
   unless ::File.directory?(source_root)
     logger.error("Source directory not found: #{source_root}")
@@ -120,10 +134,14 @@ def wrap(body)
 end
 
 def rename(content)
-  content
+  content = content
     .gsub(/\bclass\s+#{@source_class}\b/, "class #{@dest_class}")
-    .gsub(/\b#{@source_class}\b/, "Toys::Utils::#{@dest_class}")
+    .gsub(/(?<!class |\w)#{@source_class}\b/, "Toys::Utils::#{@dest_class}")
     .gsub(/require "#{@source_gem_name}"/, "require \"toys/utils/#{@dest_filebase}\"")
+  @additional_changes.each do |from, to|
+    content = content.gsub(from, to)
+  end
+  content
 end
 
 def indent(content, prefix)
