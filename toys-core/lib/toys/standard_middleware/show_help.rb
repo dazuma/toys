@@ -249,9 +249,6 @@ module Toys
             show_help(context, false)
           end
         end
-      rescue Utils::HelpText::HelpGenerationError => e
-        terminal.puts("Unable to generate help: #{e.message}", :bright_red)
-        Context.exit(1)
       end
 
       private
@@ -272,6 +269,9 @@ module Toys
           wrap_width: terminal.width
         )
         terminal.puts(str)
+      rescue Utils::HelpText::HelpGenerationError => e
+        terminal.puts("Unable to generate help: #{e.message}", :bright_red)
+        Context.exit(1)
       end
 
       def show_list(context)
@@ -284,6 +284,9 @@ module Toys
           wrap_width: terminal.width
         )
         terminal.puts(str)
+      rescue Utils::HelpText::HelpGenerationError => e
+        terminal.puts("Unable to generate help: #{e.message}", :bright_red)
+        Context.exit(1)
       end
 
       def show_help(context, use_extra_args)
@@ -300,6 +303,9 @@ module Toys
         Utils::Pager.start(command: @use_pager, fallback_io: terminal) do |io|
           io.puts(str)
         end
+      rescue Utils::HelpText::HelpGenerationError => e
+        terminal.puts("Unable to generate help: #{e.message}", :bright_red)
+        Context.exit(1)
       end
 
       def get_help_text(context, use_extra_args)

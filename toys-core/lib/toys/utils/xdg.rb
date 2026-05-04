@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# This file is vendored from the simple_xdg gem.
+# Do not edit directly; run `toys vendor-util xdg` to regenerate.
+
 module Toys
   module Utils
     ##
@@ -10,8 +13,6 @@ module Toys
     # search paths for application state, configuration, caches, and other
     # data, according to the [XDG Base Directory Spec version
     # 0.8](https://specifications.freedesktop.org/basedir/0.8/).
-    #
-    # Tools can use the `:xdg` mixin for convenient access to this class.
     #
     # ### Example
     #
@@ -29,16 +30,16 @@ module Toys
     # to Windows without modification. In general, this class will function on
     # Windows, but with the following caveats:
     #
-    #  *   All file paths must use Windows-style absolute paths, beginning with
-    #      the drive letter.
-    #  *   Environment variables that can contain multiple paths (`XDG_*_DIRS`)
-    #      use the Windows path delimiter (`;`) rather than the unix path
-    #      delimiter (`:`).
-    #  *   Defaults for home directories (`XDG_*_HOME`) will follow unix
-    #      conventions, using subdirectories under the user's profile directory
-    #      rather than the Windows known folder paths.
-    #  *   Defaults for search paths (`XDG_*_DIRS`) will be empty and will not
-    #      use the Windows known folder paths.
+    #  *  All file paths must use Windows-style absolute paths, beginning with
+    #     the drive letter.
+    #  *  Environment variables that can contain multiple paths (`XDG_*_DIRS`)
+    #     use the Windows path delimiter (`;`) rather than the unix path
+    #     delimiter (`:`).
+    #  *  Defaults for home directories (`XDG_*_HOME`) will follow unix
+    #     conventions, using subdirectories under the user's profile directory
+    #     rather than the Windows known folder paths.
+    #  *  Defaults for search paths (`XDG_*_DIRS`) will be empty and will not
+    #     use the Windows known folder paths.
     #
     class XDG
       ##
@@ -410,6 +411,14 @@ module Toys
         ::FileUtils.mkdir_p(path, mode: 0o700)
         path
       end
+    end
+
+    class XDG
+      ##
+      # Version of the simple_xdg gem
+      # @return [String]
+      #
+      VERSION = "0.1.0"
     end
   end
 end
