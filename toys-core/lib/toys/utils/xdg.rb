@@ -418,7 +418,7 @@ module Toys
       # Version of the simple_xdg gem
       # @return [String]
       #
-      VERSION = "0.1.0"
+      VERSION = "0.1.1"
     end
   end
 end

@@ -23,7 +23,7 @@ describe Toys::Utils::GitCache do
 
   it "uses the default cache dir" do
     git_cache = Toys::Utils::GitCache.new
-    expected_cache_dir = File.join(Dir.home, ".cache", "toys", "git")
+    expected_cache_dir = File.join(Dir.home, ".cache", "git-cache", "v1")
     assert_equal(expected_cache_dir, git_cache.cache_dir)
     expected_remote_dir = Digest::MD5.hexdigest(sample_remote)
     assert_equal(expected_remote_dir, Toys::Utils::GitCache.remote_dir_name(sample_remote))
