@@ -2,7 +2,7 @@
 
 ### v0.9.1 / 2026-05-05
 
-* DOCS: Updates to readme and user guide documentation
+* DOCS: Minor documentation updates
 
 ### v0.9.0 / 2026-03-23
 
