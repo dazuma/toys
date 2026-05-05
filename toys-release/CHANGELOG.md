@@ -1,5 +1,9 @@
 # Release History
 
+### v0.9.1 / 2026-05-05
+
+* DOCS: Minor documentation updates
+
 ### v0.9.0 / 2026-03-23
 
 * ADDED: Provided a `version_from_code` setting that allows the current VERSION constant to determine the release version
