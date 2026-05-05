@@ -1,5 +1,60 @@
 # Release History
 
+### v0.22.0 / 2026-05-05
+
+Toys-core 0.22 is a major release focused on polish and cleanup in preparation for version 1.0. It includes a number of small breaking changes where needed to clean up the interfaces.
+
+Breaking interface changes:
+
+* The `static` directive no longer "forces" creating of helper methods, instead using the same logic as the flag and argument directives. In particular, by default it will not create a method starting with underscore.
+* Removed `Toys::Settings` and moved inheritable_helper_methods to a dedicated tool attribute. Use the `basic_settings` gem if you need the old settings class.
+* `Toys::Acceptor#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* `Toys::Acceptor::Enum#values` now returns the values themselves instead of a zipped array that includes strings.
+* `Toys::FlagGroup::Base` is no longer instantiable; use `Toys::FlagGroup::Optional` instead.
+* The `acceptor` and `display_name` attributes of `Toys::PositionalArg` are no longer writable and must be set in the constructor.
+* `Toys::Completion#create` no longer takes a hash as the spec. (This was undocumented but worked previously.) To construct an object, pass the class as the main spec object, and the keyword arguments in the options.
+* The `delegation_target` attribute of `Toys::ToolDefinition::DefaultCompletion` is no longer writable and must be set in the constructor.
+* You can no longer override a completion class using the `:""` key. (This was undocumented but worked previously.) Just pass a fully constructed completion object if you need a custom object.
+* The original `Module#include` method is now available in the DSL as `include_module` instead of `super_include`.
+* Template classes no longer automatically include `Toys::Context::Key`. This behavior was undocumented and inconsistent between different ways of defining templates.
+* Made `Toys::CLI#load_tool` return the block value rather than the exit_code.
+* Dropped undocumented `Loader#add_path_set` option to include individual source names in the relative_paths argument.
+* Renamed `use_less` in the `Toys::StandardMiddleware::ShowHelp` constructor to `use_pager`, and added support for custom pagers.
+* Renamed many of the methods in `StandardUI` to reduce confusion.
+* Removed `LoaderError` and used `ToolDefinitionError` for those cases, as it was decided that the distinction was ambiguous and dependent on internal details.
+* Removed `ContextualError#underlying_error` as it was synonymous with `cause`.
+* Consolidated `ContextualError` public interface into a single `capture` method.
+* `ArgParser::ExtraArgumentsError` now takes `:arguments` instead of `:values`, and provides an accessor for the same.
+* `ArgParser::ToolUnrecognizedError` now takes `:full_name` instead of `:values`, and provides an accessor for the same.
+* Renamed `ArgParser::UsageError#full_message` to `message_with_suggestions` to avoid overriding `Exception#full_message`.
+
+New features:
+
+* The range acceptor supports beginless and endless ranges.
+* A custom source_name can be provided to `Loader#add_path_set`, `Loader#add_git`, and `Loader#add_gem`.
+* The `:gems` mixin provides a context key for retrieving the underlying `Toys::Utils::Gems` service object.
+* The `:gems` mixin provides an explicit `Toys::Utils::Gems::ClassMethods` module defining the directives added to the tool class.
+* The `activate` and `bundle` methods in the Gems utility now return useful results.
+
+Other fixes:
+
+* The `:update` argument to the `load_git` directive had no effect if the `:as` argument was provided.
+* `FlagValueUnacceptableError` and `ArgValueUnacceptableError` have their value set correctly.
+* If a CLI has a static (shared) logger, creating a child with `logger: nil` actually clears it.
+* Removed unused `Toys::StandardMiddleware::ShowHelp::TOOL_NAME_KEY`.
+* ShowHelp middleware displays an error message instead of raising an exception when help cannot be generated due to a bad search regex.
+* `ArgParser::UsageError` is now a proper exception.
+* `ContextualError` does a better job of capturing relevant syntax errors.
+* Various minor completion system fixes.
+
+Several libraries under `toys/utils` were extracted into their own gems. The current code remains under `Toys::Utils` as a vendored copy of the external gem, so the extracted gems are not actually dependencies of Toys. The affected libraries are:
+
+* `Toys::Utils::Exec` which was extracted to the gem `exec_service`.
+* `Toys::Utils::XDG` which was extracted to the gem `simple_xdg`.
+* `Toys::Utils::GitCache` which was extracted to the gem `git_cache`.
+
+Finally, a variety of clarifications and fixes were made to the reference documentation, readme, and user's guide.
+
 ### v0.21.0 / 2026-03-23
 
 This release includes a variety of small fixes and updates toward improving product polish in preparation for a 1.0 release. It focuses on the following areas:
