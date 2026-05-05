@@ -1,5 +1,24 @@
 # Release History
 
+### v0.22.0 / 2026-05-05
+
+* BREAKING CHANGE: Renamed `use_less` in the `Toys::StandardMiddleware::ShowHelp` constructor to `use_pager`, and added support for custom pagers
+* BREAKING CHANGE: Template classes no longer automatically include `Toys::Context::Key`. This behavior was undocumented and inconsistent between different ways of defining templates.
+* ADDED: Renamed `use_less` in the `Toys::StandardMiddleware::ShowHelp` constructor to `use_pager`, and added support for custom pagers
+* ADDED: The `:gems` mixin provides a context key for retrieving the underlying `Toys::Utils::Gems` service object
+* ADDED: The `:gems` mixin provides an explicit `Toys::Utils::Gems::ClassMethods` module defining the directives added to the tool class
+* ADDED: The `activate` and `bundle` methods in the Gems utility now return useful results
+* FIXED: Made `Toys::Testing#toys_load_tool` return the block value rather than the exit_code
+* FIXED: Made `Toys::CLI#load_tool` return the block value rather than the exit_code
+* FIXED: FlagValueUnacceptableError and ArgValueUnacceptableError have their value set correctly
+* FIXED: If a CLI has a static (shared) logger, creating a child with `logger: nil` actually clears it
+* FIXED: Removed unused `Toys::StandardMiddleware::ShowHelp::TOOL_NAME_KEY`
+* FIXED: ShowHelp middleware displays an error message instead of raising an exception when help cannot be generated due to a bad search regex
+* FIXED: Template classes no longer automatically include `Toys::Context::Key`. This behavior was undocumented and inconsistent between different ways of defining templates.
+* FIXED: Minor completion system fixes
+* DOCS: Updates to readme and user guide documentation
+* DOCS: Various documentation updates
+
 ### v0.21.0 / 2026-03-23
 
 This release includes a variety of small fixes and updates toward improving product polish in preparation for a 1.0 release. It focuses on the following areas:
