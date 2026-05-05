@@ -31,6 +31,7 @@ Breaking interface changes:
 
 New features:
 
+* The range acceptor supports beginless and endless ranges.
 * A custom source_name can be provided to `Loader#add_path_set`, `Loader#add_git`, and `Loader#add_gem`.
 * The `:gems` mixin provides a context key for retrieving the underlying `Toys::Utils::Gems` service object.
 * The `:gems` mixin provides an explicit `Toys::Utils::Gems::ClassMethods` module defining the directives added to the tool class.
@@ -38,7 +39,6 @@ New features:
 
 Other fixes:
 
-* The range acceptor supports beginless and endless ranges.
 * The `:update` argument to the `load_git` directive had no effect if the `:as` argument was provided.
 * `FlagValueUnacceptableError` and `ArgValueUnacceptableError` have their value set correctly.
 * If a CLI has a static (shared) logger, creating a child with `logger: nil` actually clears it.
@@ -48,7 +48,7 @@ Other fixes:
 * `ContextualError` does a better job of capturing relevant syntax errors.
 * Various minor completion system fixes.
 
-Several libraries under `toys/utils` were extracted into their own gems. The current code remains under `Toys::Utils` as a vendored copy of the external gem. The affected libraries are:
+Several libraries under `toys/utils` were extracted into their own gems. The current code remains under `Toys::Utils` as a vendored copy of the external gem, so the extracted gems are not actually dependencies of Toys. The affected libraries are:
 
 * `Toys::Utils::Exec` which was extracted to the gem `exec_service`.
 * `Toys::Utils::XDG` which was extracted to the gem `simple_xdg`.
