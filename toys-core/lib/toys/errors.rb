@@ -39,8 +39,8 @@ module Toys
   #
   class ContextualError < ::StandardError
     ##
-    # Construct a ContextualError. This exception type is thrown from
-    # {ContextualError.capture} and should not be constructed directly.
+    # Construct a ContextualError. This exception type is thrown by the CLI
+    # and should not be constructed directly.
     #
     # @private This interface is internal and subject to change without warning.
     #

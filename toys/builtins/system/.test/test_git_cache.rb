@@ -177,7 +177,7 @@ describe "toys system git-cache" do
       git_cache.get(local_remote)
       repo_dir = git_cache.repo_info(local_remote).base_dir
       assert(File.directory?(repo_dir))
-      output = capture_git_cache_output(["remove", "/unknown/remote", local_remote])
+      output = capture_git_cache_output(["remove", "/unknown/remote2", local_remote])
       expected = {
         "removed" => [local_remote]
       }
