@@ -472,15 +472,56 @@ module Toys
       when "--"
         @flags_allowed = false
       when /\A(--\w[?\w-]*)=(.*)\z/m
-        handle_valued_flag(::Regexp.last_match(1), ::Regexp.last_match(2))
+        name = ::Regexp.last_match(1)
+        return false if redirect_flag?(name)
+        handle_valued_flag(name, ::Regexp.last_match(2))
       when /\A--.+\z/
+        return false if redirect_flag?(arg)
         handle_plain_flag(arg)
       when /\A-(.+)\z/
-        handle_single_flags(::Regexp.last_match(1))
+        str = ::Regexp.last_match(1)
+        return false if redirect_cluster?(str)
+        handle_single_flags(str)
       else
         return false
       end
       true
+    end
+
+    ##
+    # Determine whether the given flag name should be redirected to the
+    # positional arguments rather than resolved as a flag. Always false unless
+    # the tool has enabled the behavior.
+    #
+    def redirect_flag?(name)
+      return false unless @tool.unknown_flags_are_args?
+      unknown_flag?(@tool.resolve_flag(name))
+    end
+
+    ##
+    # Determine whether a cluster of single-character flags should be
+    # redirected to the positional arguments. This walks the cluster in the
+    # same manner as {#handle_single_flags}, and returns true if any character
+    # that would be interpreted as a flag is unknown. An ambiguous character is
+    # not considered unknown, and is left for the normal parsing path to
+    # report.
+    #
+    def redirect_cluster?(str)
+      return false unless @tool.unknown_flags_are_args?
+      until str.empty?
+        flag_result = @tool.resolve_flag("-#{str[0]}")
+        return true if unknown_flag?(flag_result)
+        flag_def = flag_result.unique_flag
+        # An ambiguous or value-taking flag terminates the cluster, either
+        # because it is an error or because it consumes the remaining text.
+        return false if flag_def.nil? || flag_def.flag_type != :boolean
+        str = str[1..]
+      end
+      false
+    end
+
+    def unknown_flag?(flag_result)
+      flag_result.not_found? || (@require_exact_flag_match && !flag_result.found_exact?)
     end
 
     def handle_single_flags(str)
@@ -541,7 +582,7 @@ module Toys
 
     def find_flag(name)
       flag_result = @tool.resolve_flag(name)
-      if flag_result.not_found? || (@require_exact_flag_match && !flag_result.found_exact?)
+      if unknown_flag?(flag_result)
         @errors << FlagUnrecognizedError.new(
           value: name, suggestions: Compat.suggestions(name, @tool.used_flags)
         )

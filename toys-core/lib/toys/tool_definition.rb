@@ -311,6 +311,7 @@ module Toys
       @disable_argument_parsing = false
       @enforce_flags_before_args = false
       @require_exact_flag_match = false
+      @treat_unknown_flags_as_args = false
       @includes_modules = false
       @custom_context_directory = nil
       @inheritable_helper_methods = nil
@@ -690,6 +691,14 @@ module Toys
     end
 
     ##
+    # Returns true if this tool treats unknown flags as positional arguments.
+    # @return [true,false]
+    #
+    def unknown_flags_are_args?
+      @treat_unknown_flags_as_args
+    end
+
+    ##
     # Returns true if helper methods defined in this class are inherited by
     # subtools.
     # @return [true,false]
@@ -1000,6 +1009,24 @@ module Toys
               " #{display_name.inspect} because parsing is disabled."
       end
       @require_exact_flag_match = state
+      self
+    end
+
+    ##
+    # Treat unknown flags as positional arguments rather than reporting them
+    # as usage errors.
+    #
+    # @param state [true,false]
+    # @return [self]
+    #
+    def treat_unknown_flags_as_args(state = true)
+      check_definition_state
+      if argument_parsing_disabled?
+        raise ToolDefinitionError,
+              "Cannot treat unknown flags as args for tool" \
+              " #{display_name.inspect} because parsing is disabled."
+      end
+      @treat_unknown_flags_as_args = state
       self
     end
 

@@ -1948,6 +1948,44 @@ describe Toys::DSL::Tool do
     end
   end
 
+  describe "treat_unknown_flags_as_args directive" do
+    it "modifies the setting on the tool" do
+      loader.add_block do
+        treat_unknown_flags_as_args
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(true, tool.unknown_flags_are_args?)
+    end
+
+    it "defaults to disabled" do
+      loader.add_block do
+        # Empty tool
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.unknown_flags_are_args?)
+    end
+
+    it "can be disabled explicitly" do
+      loader.add_block do
+        treat_unknown_flags_as_args
+        treat_unknown_flags_as_args false
+      end
+      tool, _remaining = loader.lookup([])
+      assert_equal(false, tool.unknown_flags_are_args?)
+    end
+
+    it "cannot be invoked if argument parsing is disabled" do
+      t = self
+      loader.add_block do
+        disable_argument_parsing
+        t.assert_raises(Toys::ToolDefinitionError) do
+          treat_unknown_flags_as_args
+        end
+      end
+      loader.lookup([])
+    end
+  end
+
   describe "disable_flag directive" do
     it "adds a flag to the used list" do
       loader.add_block do
