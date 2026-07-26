@@ -560,7 +560,17 @@ module Toys
       def default_error_handler
         proc do |error|
           cause = error.cause
-          raise cause.is_a?(::SignalException) ? cause : error
+          # The explicit `cause: nil` suppresses only the *implicit* adoption of
+          # `$!` (i.e. `error`) as the reraised exception's cause. It never
+          # clears a cause the exception already carries, so the original cause
+          # chain is preserved in both branches below.
+          #
+          # It is needed because reraising the SignalException while `$!` is
+          # `error` (whose cause is that same SignalException) would be
+          # circular. MRI declines to set a circular cause silently, but JRuby
+          # 10.1.1.0 raises `ArgumentError: circular causes`. See
+          # https://github.com/jruby/jruby/issues/9551
+          raise((cause.is_a?(::SignalException) ? cause : error), cause: nil)
         end
       end
 
