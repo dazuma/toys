@@ -978,7 +978,7 @@ module Toys
 
     ##
     # Enforce that flags must come before args for this tool.
-    # You may disable enforcement by passoing `false` for the state.
+    # You may disable enforcement by passing `false` for the state.
     #
     # @param state [true,false]
     # @return [self]

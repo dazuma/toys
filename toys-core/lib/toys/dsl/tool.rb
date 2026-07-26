@@ -1402,7 +1402,7 @@ module Toys
       # line arguments, flag parsing is disabled as if `--` had appeared.
       #
       # Issuing this directive by itself turns on enforcement. You may turn it
-      # off by passsing `false` as the parameter.
+      # off by passing `false` as the parameter.
       #
       # @param state [boolean]
       # @return [self]
@@ -1420,7 +1420,7 @@ module Toys
       # accepted as long as they are unambiguous.)
       #
       # Issuing this directive by itself turns on exact match. You may turn it
-      # off by passsing `false` as the parameter.
+      # off by passing `false` as the parameter.
       #
       # @param state [boolean]
       # @return [self]
