@@ -133,7 +133,7 @@ module Toys
 
     ##
     # Runs the tool corresponding to the given command line, in a separate
-    # forked process, and returns a {Toys::Exec::Result}. You can either
+    # forked process, and returns a {Toys::Utils::Exec::Result}. You can either
     # provide a block to control the process, or simply let it run and capture
     # its output.
     #
