@@ -4081,6 +4081,47 @@ $ toys my-tool --long-flag-name --another-long-flag
 Currently you can require exact flag matches only at the tool level, applied to
 all flags for that tool. You cannot set this option for individual flags.
 
+### Treating unknown flags as positional args
+
+By default, if an argument looks like a flag but does not match any flag
+defined for the tool, Toys reports a usage error. Some tools, however, pass
+their trailing arguments along to another command, and want to accept flags
+intended for that command without having to declare them. Such a tool can use
+the `treat_unknown_flags_as_args` directive, which sends any unknown flag to
+the tool's positional arguments instead of reporting an error.
+
+```ruby
+tool "run-in-container" do
+  treat_unknown_flags_as_args
+  flag :image, "--image=IMAGE"
+  remaining_args :command
+  def run
+    # Invoking:
+    #     toys run-in-container --image=ubuntu ls -l --color
+    # sets image to "ubuntu" and command to ["ls", "-l", "--color"],
+    # even though -l and --color are not defined by this tool.
+  end
+end
+```
+
+An unknown argument is redirected in its entirety, so `--color=always` becomes
+the single positional argument `--color=always`. Similarly, a cluster of
+single-character flags such as `-la` is redirected as a whole if any of its
+characters is unknown. In that case none of the flags in the cluster are set,
+even those that the tool does recognize.
+
+This directive applies only to flags that fail to match. An argument that
+matches a prefix of two or more flags is still ambiguous, and still reports a
+usage error. Similarly, an abbreviation such as `--im` for `--image` continues
+to be recognized as a flag, unless you have also enabled
+[exact flag matches](#requiring-exact-flag-matches), in which case it too is
+treated as positional.
+
+Note that the redirected argument is subject to the tool's normal positional
+argument handling. If the tool has no positional argument left to accept it,
+you will get the usual "extra arguments" error. This directive is thus most
+useful for a tool that declares `remaining_args`.
+
 ### Disabling argument parsing
 
 Normally Toys handles parsing command line arguments for you. This makes
