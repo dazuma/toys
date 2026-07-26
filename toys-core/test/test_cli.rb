@@ -210,6 +210,25 @@ describe Toys::CLI do
       assert_equal("whoops", error.cause.message)
     end
 
+    it "preserves the full cause chain when reraising a non-signal error" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            raise ::ArgumentError, "root"
+          rescue ::ArgumentError
+            raise "whoops"
+          end
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo")
+      end
+      cause = error.cause
+      assert_equal("whoops", cause.message)
+      assert_kind_of(::ArgumentError, cause.cause)
+      assert_equal("root", cause.cause.message)
+    end
+
     it "supports a custom handler that receives definition errors" do
       my_handler = proc do |error|
         assert_nil(error.tool_name)
