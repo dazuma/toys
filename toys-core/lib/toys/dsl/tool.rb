@@ -1402,7 +1402,7 @@ module Toys
       # line arguments, flag parsing is disabled as if `--` had appeared.
       #
       # Issuing this directive by itself turns on enforcement. You may turn it
-      # off by passsing `false` as the parameter.
+      # off by passing `false` as the parameter.
       #
       # @param state [boolean]
       # @return [self]
@@ -1420,7 +1420,7 @@ module Toys
       # accepted as long as they are unambiguous.)
       #
       # Issuing this directive by itself turns on exact match. You may turn it
-      # off by passsing `false` as the parameter.
+      # off by passing `false` as the parameter.
       #
       # @param state [boolean]
       # @return [self]
@@ -1429,6 +1429,46 @@ module Toys
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
         cur_tool.require_exact_flag_match(state)
+        self
+      end
+
+      ##
+      # Treat unknown flags as positional arguments. That is, if an argument
+      # looks like a flag but does not match any flag defined for this tool,
+      # it is passed to the tool's positional arguments instead of reporting a
+      # usage error.
+      #
+      # An argument is redirected in its entirety. Thus, an argument of the
+      # form `--foo=bar` is treated as a single positional argument, and a
+      # cluster of single-character flags such as `-abc` is treated as a
+      # single positional argument if any of its characters is unknown. (In
+      # particular, none of the flags in such a cluster are set.)
+      #
+      # This directive does not affect ambiguous flags. If an argument matches
+      # a prefix of multiple flags, it is still reported as a usage error.
+      #
+      # Issuing this directive by itself turns on the behavior. You may turn
+      # it off by passing `false` as the parameter.
+      #
+      # ### Example
+      #
+      #     tool "mytool" do
+      #       treat_unknown_flags_as_args
+      #       flag :verbose, "--verbose"
+      #       remaining_args :command
+      #       def run
+      #         # Invoking `mytool --verbose ls -l` sets verbose to true and
+      #         # command to ["ls", "-l"].
+      #       end
+      #     end
+      #
+      # @param state [boolean]
+      # @return [self]
+      #
+      def treat_unknown_flags_as_args(state = true)
+        cur_tool = DSL::Internal.current_tool(self, true)
+        return self if cur_tool.nil?
+        cur_tool.treat_unknown_flags_as_args(state)
         self
       end
 

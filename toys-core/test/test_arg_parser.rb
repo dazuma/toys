@@ -678,6 +678,153 @@ describe Toys::ArgParser do
     end
   end
 
+  describe "treat_unknown_flags_as_args" do
+    before do
+      tool.treat_unknown_flags_as_args
+    end
+
+    it "treats an unknown long flag as positional" do
+      tool.add_flag(:a, ["-a", "--aa"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-a", "--bb", "hello"])
+      arg_parser.finish
+      assert_data_includes({a: true, r: ["--bb", "hello"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+      assert_empty(arg_parser.unmatched_flags)
+      assert_empty(arg_parser.unmatched_args)
+    end
+
+    it "treats an unknown valued long flag as positional in its entirety" do
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["--bb=hello"])
+      arg_parser.finish
+      assert_data_includes({r: ["--bb=hello"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "treats an unknown short flag as positional" do
+      tool.add_flag(:a, ["-a"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-b", "-a"])
+      arg_parser.finish
+      assert_data_includes({a: true, r: ["-b"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "honors a fully recognized cluster of short flags" do
+      tool.add_flag(:a, ["-a"])
+      tool.add_flag(:b, ["-b"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-ab"])
+      arg_parser.finish
+      assert_data_includes({a: true, b: true, r: []}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "treats a partially recognized cluster as positional without applying any flags" do
+      tool.add_flag(:a, ["-a"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-abc"])
+      arg_parser.finish
+      assert_data_includes({a: nil, r: ["-abc"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "allows a value flag in a cluster to consume an unknown-looking tail" do
+      tool.add_flag(:a, ["-a VALUE"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-axyz"])
+      arg_parser.finish
+      assert_data_includes({a: "xyz", r: []}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "allows a value flag at the end of a cluster to take the next argument" do
+      tool.add_flag(:a, ["-a"])
+      tool.add_flag(:b, ["-b VALUE"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-ab", "xyz"])
+      arg_parser.finish
+      assert_data_includes({a: true, b: "xyz", r: []}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "still errors on an ambiguous flag prefix" do
+      tool.add_flag(:abc)
+      tool.add_flag(:abd)
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["--ab"])
+      arg_parser.finish
+      assert_errors_include('Flag prefix "--ab" is ambiguous.', arg_parser.errors)
+      assert_includes(arg_parser.unmatched_flags, "--ab")
+    end
+
+    it "still matches partially by default" do
+      tool.add_flag(:abcde)
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["--ab"])
+      arg_parser.finish
+      assert_data_includes({abcde: true, r: []}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "treats an inexact match as positional when exact matches are required" do
+      tool.add_flag(:abcde)
+      tool.set_remaining_args(:r)
+      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser.parse(["--abcd"])
+      arg_parser.finish
+      assert_data_includes({abcde: nil, r: ["--abcd"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "still stops flag parsing after --" do
+      tool.add_flag(:a, ["-a", "--aa"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["--", "--aa", "--bb"])
+      arg_parser.finish
+      assert_data_includes({a: nil, r: ["--aa", "--bb"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "does not interfere with an optional flag value" do
+      tool.add_flag(:a, ["-a [VALUE]"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-a", "--bb"])
+      arg_parser.finish
+      assert_data_includes({a: true, r: ["--bb"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "fills ordinary positional args" do
+      tool.add_optional_arg(:b)
+      arg_parser.parse(["--bb"])
+      arg_parser.finish
+      assert_data_includes({b: "--bb"}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+
+    it "reports extra arguments when no positional arg is available" do
+      tool.add_flag(:a, ["-a"])
+      tool.run_handler = proc {}
+      arg_parser.parse(["--bb"])
+      arg_parser.finish
+      assert_errors_include(Toys::ArgParser::ExtraArgumentsError, arg_parser.errors)
+      assert_equal(["--bb"], arg_parser.unmatched_positional)
+      assert_empty(arg_parser.unmatched_flags)
+    end
+
+    it "interacts with enforce_flags_before_args" do
+      tool.enforce_flags_before_args
+      tool.add_flag(:a, ["-a"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["--bb", "-a"])
+      arg_parser.finish
+      assert_data_includes({a: nil, r: ["--bb", "-a"]}, arg_parser.data)
+      assert_empty(arg_parser.errors)
+    end
+  end
+
   describe "flag group" do
     describe "of type required" do
       before do

@@ -793,6 +793,33 @@ describe Toys::ToolDefinition do
         assert_equal([:req1, :opt1], tool.positional_args.map(&:key))
       end
     end
+
+    describe "treat_unknown_flags_as_args" do
+      it "defaults to disabled" do
+        assert_equal(false, tool.unknown_flags_are_args?)
+      end
+
+      it "enables the setting" do
+        tool.treat_unknown_flags_as_args
+        assert_equal(true, tool.unknown_flags_are_args?)
+      end
+
+      it "disables the setting" do
+        tool.treat_unknown_flags_as_args
+        tool.treat_unknown_flags_as_args(false)
+        assert_equal(false, tool.unknown_flags_are_args?)
+      end
+
+      it "errors if argument parsing is disabled" do
+        tool.disable_argument_parsing
+        assert_raises(Toys::ToolDefinitionError) { tool.treat_unknown_flags_as_args }
+      end
+
+      it "errors if definition is finished" do
+        tool.finish_definition(loader)
+        assert_raises(Toys::ToolDefinitionError) { tool.treat_unknown_flags_as_args }
+      end
+    end
   end
 
   describe "acceptor" do
