@@ -24,6 +24,8 @@ toys test test/test_cli.rb test/test_loader.rb   # Run only the tests in the giv
 toys test --integration test/test_cli.rb test/test_loader.rb   # Include integration tests
 ```
 
+To exercise a DSL or argument-parsing change end-to-end, beyond the unit tests, create a scratch directory containing a `.toys.rb` that defines a test tool, and run the repository's `./toys-dev` script from that directory by absolute path.
+
 ## Source Architecture
 
 All source lives under `lib/toys/`. The framework has a layered architecture:
