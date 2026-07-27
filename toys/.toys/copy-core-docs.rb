@@ -77,5 +77,5 @@ def remove_extra_vertical_space(content)
 end
 
 def add_notice(content)
-  content.gsub!(/^(?<in> *)##\n(?<def>(?:\k<in>#[^\n]*\n)+\k<in>(?:module|class) [A-Z]\w+)/, "\\k<in>##\n\\k<in># **_Defined in the toys-core gem_**\n\\k<in>#\n\\k<def>")
+  content.gsub!(/^(?<in> *)##\n(?<doc>(?:\k<in>#[^\n]*\n)+?)(?:\k<in>#\n)*(?<def>\k<in>(?:module|class) [A-Z]\w+)/, "\\k<in>##\n\\k<doc>\\k<in>#\n\\k<in># **_Defined in the toys-core gem_**\n\\k<in>#\n\\k<def>")
 end
