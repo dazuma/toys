@@ -235,6 +235,22 @@ CLI is constructed. If you need a CLI with modified configuration, use
 {Toys::CLI#child}, which creates a _copy_ of the CLI with any modifications you
 request.
 
+By default, the copy starts with an empty loader, containing none of the tool
+sources of the original. This is useful if you want to run a tool loaded from
+an entirely different configuration. If instead you want the copy to see the
+same tools as the original, pass `copy_loader_sources: true`. This is the way
+to run a tool with an _additional_ source, because sources cannot be added to a
+loader once it has begun loading tools. For example:
+
+```ruby
+# Run a tool, also making the tools from the "my-tools" gem available, and
+# giving them priority over the tools that this CLI already knows about.
+child_cli = cli.child(copy_loader_sources: true) do |child|
+  child.add_config_gem("my-tools", high_priority: true)
+end
+child_cli.run("some-tool")
+```
+
 ## Defining functionality
 
 Toys-Core uses (and indeed, provides the underlying implementation of) the

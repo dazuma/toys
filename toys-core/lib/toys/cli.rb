@@ -227,10 +227,21 @@ module Toys
     end
 
     ##
-    # Make a clone with the same settings but no config blocks and no paths in
-    # the loader. This is sometimes useful for calling another tool that has to
-    # be loaded from a different configuration.
+    # Make a clone with the same settings. By default, the new CLI has no
+    # config blocks and no paths in its loader, which is sometimes useful for
+    # calling another tool that has to be loaded from a different
+    # configuration. Alternately, you can pass `copy_loader_sources: true` to
+    # start with the same sources as the original. This is useful if you need
+    # to run a tool with an additional source, because sources cannot be added
+    # to a loader once it has started loading tools.
     #
+    # Sources are copied before the block (if any) is called, so any sources
+    # the block adds at high priority will take priority over the copies.
+    #
+    # @param copy_loader_sources [boolean] If true, the new CLI's loader is
+    #     populated with the same sources as the original CLI's loader. The
+    #     sources are not reresolved; in particular, gems are not reactivated
+    #     and git repos are not refetched. Defaults to false.
     # @param opts [keywords] Any configuration arguments that should be
     #     modified from the original. See {#initialize} for a list of
     #     recognized keywords.
@@ -238,7 +249,7 @@ module Toys
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
-    def child(**opts)
+    def child(copy_loader_sources: false, **opts)
       args = {
         executable_name: @executable_name,
         config_dir_name: @config_dir_name,
@@ -260,6 +271,7 @@ module Toys
         completion: @completion,
       }.merge(opts)
       cli = CLI.new(**args)
+      cli.loader.add_source_root_records(@loader.source_root_records) if copy_loader_sources
       yield cli if block_given?
       cli
     end
@@ -365,6 +377,81 @@ module Toys
                         source_name: source_name,
                         context_directory: context_directory,
                         &block)
+      self
+    end
+
+    ##
+    # Add the tools from a gem to the loader.
+    #
+    # The gem is activated, installing it if necessary, and tools are loaded
+    # from the gem's toys directory (or a file or subdirectory within it).
+    #
+    # @param gem_name [String] The name of the gem.
+    # @param gem_version [String,Array<String>] Version requirements for the
+    #     gem. Optional. If not provided, any version is allowed.
+    # @param gem_path [String,nil] The path from the gem's toys directory to
+    #     the relevant file or directory. Optional. If not provided, the entire
+    #     toys directory is used.
+    # @param high_priority [boolean] Add the config at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param gem_toys_dir [String] The name of the gem's toys directory.
+    #     Optional. Defaults to the directory specified in the gem's metadata,
+    #     or the value "toys".
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this source. You can pass a directory path as a string,
+    #     or `nil` to denote no context. Defaults to `nil`.
+    # @return [self]
+    #
+    def add_config_gem(gem_name,
+                       gem_version: [],
+                       gem_path: nil,
+                       high_priority: false,
+                       source_name: nil,
+                       gem_toys_dir: nil,
+                       context_directory: nil)
+      @loader.add_gem(gem_name, gem_version, gem_path,
+                      high_priority: high_priority,
+                      source_name: source_name,
+                      gem_toys_dir: gem_toys_dir,
+                      context_directory: context_directory)
+      self
+    end
+
+    ##
+    # Add the tools from a git repository to the loader.
+    #
+    # The repository is fetched into a local cache, and tools are loaded from
+    # it (or from a file or subdirectory within it).
+    #
+    # @param git_remote [String] The git repo URL.
+    # @param git_path [String] The path to the relevant file or directory in
+    #     the repo. Optional. Defaults to the entire repo.
+    # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name).
+    #     Optional. Defaults to `"HEAD"`.
+    # @param high_priority [boolean] Add the config at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
+    # @param update [boolean] If the commit is not a SHA, pulls any updates
+    #     from the remote. Defaults to false, which uses a local cache and does
+    #     not update if the commit has been fetched previously.
+    # @param context_directory [String,nil] The context directory for tools
+    #     loaded from this source. You can pass a directory path as a string,
+    #     or `nil` to denote no context. Defaults to `nil`.
+    # @return [self]
+    #
+    def add_config_git(git_remote,
+                       git_path: "",
+                       git_commit: "HEAD",
+                       high_priority: false,
+                       source_name: nil,
+                       update: false,
+                       context_directory: nil)
+      @loader.add_git(git_remote, git_path, git_commit,
+                      high_priority: high_priority,
+                      source_name: source_name,
+                      update: update,
+                      context_directory: context_directory)
       self
     end
 
