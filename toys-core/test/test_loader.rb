@@ -896,6 +896,15 @@ describe Toys::Loader do
                    tool.source_info.source_name)
     end
 
+    it "copies git sources without refetching the repo" do
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
     it "preserves priority order" do
       loader.add_path(File.join(cases_dir, "config-items", ".toys"))
       loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))

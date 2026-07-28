@@ -754,6 +754,29 @@ describe Toys::CLI do
       assert_equal(4, child.run("foo"))
     end
 
+    it "refuses to change data_dir_name while copying loader sources" do
+      error = assert_raises(ArgumentError) do
+        cli.child(copy_loader_sources: true, data_dir_name: "other-data")
+      end
+      assert_match(/Cannot change data_dir_name while copying loader sources/, error.message)
+    end
+
+    it "refuses to change lib_dir_name while copying loader sources" do
+      assert_raises(ArgumentError) do
+        cli.child(copy_loader_sources: true, lib_dir_name: "other-lib")
+      end
+    end
+
+    it "allows an identical data_dir_name while copying loader sources" do
+      child = cli.child(copy_loader_sources: true, data_dir_name: ".data")
+      assert_instance_of(Toys::CLI, child)
+    end
+
+    it "allows changing data_dir_name when not copying loader sources" do
+      child = cli.child(data_dir_name: "other-data")
+      assert_instance_of(Toys::CLI, child)
+    end
+
     it "does not affect the original cli when the child adds sources" do
       cli.add_config_block do
         tool "foo" do

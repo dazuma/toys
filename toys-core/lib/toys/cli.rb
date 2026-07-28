@@ -242,35 +242,28 @@ module Toys
     #     populated with the same sources as the original CLI's loader. The
     #     sources are not reresolved; in particular, gems are not reactivated
     #     and git repos are not refetched. Defaults to false.
+    #
+    #     Note that the `data_dir_name` and `lib_dir_name` settings are
+    #     captured by each source when it is added, so a copied source retains
+    #     the values from the original CLI. Rather than apply such a change
+    #     inconsistently, this method raises if you try to modify either
+    #     setting while also copying sources. This is a current limitation and
+    #     may be lifted in the future.
     # @param opts [keywords] Any configuration arguments that should be
     #     modified from the original. See {#initialize} for a list of
     #     recognized keywords.
     # @return [Toys::CLI]
+    # @raise [ArgumentError] if `copy_loader_sources` is true and either
+    #     `data_dir_name` or `lib_dir_name` is modified.
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
     def child(copy_loader_sources: false, **opts)
-      args = {
-        executable_name: @executable_name,
-        config_dir_name: @config_dir_name,
-        config_file_name: @config_file_name,
-        index_file_name: @index_file_name,
-        preload_dir_name: @preload_dir_name,
-        preload_file_name: @preload_file_name,
-        data_dir_name: @data_dir_name,
-        lib_dir_name: @lib_dir_name,
-        middleware_stack: @middleware_stack,
-        extra_delimiters: @extra_delimiters,
-        mixin_lookup: @mixin_lookup,
-        middleware_lookup: @middleware_lookup,
-        template_lookup: @template_lookup,
-        logger: @logger,
-        logger_factory: @param_logger_factory,
-        base_level: @base_level,
-        error_handler: @error_handler,
-        completion: @completion,
-      }.merge(opts)
-      cli = CLI.new(**args)
+      if copy_loader_sources
+        check_source_copy_conflict(opts, :data_dir_name, @data_dir_name)
+        check_source_copy_conflict(opts, :lib_dir_name, @lib_dir_name)
+      end
+      cli = CLI.new(**current_settings, **opts)
       cli.loader.add_source_root_records(@loader.source_root_records) if copy_loader_sources
       yield cli if block_given?
       cli
@@ -686,6 +679,44 @@ module Toys
     end
 
     private
+
+    ##
+    # The configuration settings of this CLI, as a hash of constructor
+    # arguments suitable for creating a copy.
+    #
+    def current_settings
+      {
+        executable_name: @executable_name,
+        config_dir_name: @config_dir_name,
+        config_file_name: @config_file_name,
+        index_file_name: @index_file_name,
+        preload_dir_name: @preload_dir_name,
+        preload_file_name: @preload_file_name,
+        data_dir_name: @data_dir_name,
+        lib_dir_name: @lib_dir_name,
+        middleware_stack: @middleware_stack,
+        extra_delimiters: @extra_delimiters,
+        mixin_lookup: @mixin_lookup,
+        middleware_lookup: @middleware_lookup,
+        template_lookup: @template_lookup,
+        logger: @logger,
+        logger_factory: @param_logger_factory,
+        base_level: @base_level,
+        error_handler: @error_handler,
+        completion: @completion,
+      }
+    end
+
+    ##
+    # Raise if the given options would modify a setting that is captured by the
+    # sources being copied, and thus could not be applied to them.
+    #
+    def check_source_copy_conflict(opts, key, current_value)
+      return unless opts.key?(key) && opts[key] != current_value
+      raise ::ArgumentError,
+            "Cannot change #{key} while copying loader sources, because the setting is" \
+            " captured in the copied sources."
+    end
 
     def build_context(tool, args, verbosity: 0, delegated_from: nil)
       default_data = {
