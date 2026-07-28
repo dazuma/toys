@@ -2007,6 +2007,19 @@ would otherwise find, and gives them priority if there is a name conflict. You
 can pass the flag multiple times to make several gems available; if two gems
 define the same tool, the gem appearing earlier on the command line wins.
 
+You can also include version requirements, separated from the gem name and from
+one another by commas. They use the same syntax as Rubygems and Bundler, so the
+value reads much like a line from a Gemfile:
+
+```
+$ toys do --gem="my-tools, ~> 1.5, >= 1.5.2" greet
+```
+
+Remember to quote the value, both because version requirements contain
+characters that are meaningful to the shell, and because the commas inside the
+value are part of the `--gem` flag and have nothing to do with the delimiter
+that separates the tools `do` runs.
+
 #### Publishing a tools Ruby gem
 
 Publishing a Ruby gem that includes tools is as simple as publishing a gem with

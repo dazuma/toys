@@ -20,7 +20,11 @@ long_desc \
   "You may also make the tools from a gem available to the tools you run, by passing the" \
     " --gem flag. For example:",
   ["    toys do --gem=my-tools deploy --migrate"],
-  "The tools from the gem take priority over the tools that would otherwise be found."
+  "The tools from the gem take priority over the tools that would otherwise be found. You may" \
+    " also include version requirements for the gem. For example:",
+  ["    toys do --gem=\"my-tools, ~> 1.5, >= 1.5.2\" deploy --migrate"],
+  "Note that the commas separating the version requirements are part of the --gem flag value," \
+    " and are unrelated to the delimiter that separates the tools to run."
 
 flag :delim do
   flags "-d", "--delim=VALUE"
@@ -30,7 +34,7 @@ flag :delim do
 end
 
 flag :gems do
-  flags "--gem=NAME"
+  flags "--gem=GEM"
   handler :push
   default []
   desc "Make the tools from the given gem available"
@@ -38,7 +42,12 @@ flag :gems do
     "Adds the tools from the given gem, installing the gem if necessary. These tools take" \
       " priority over the tools that would otherwise be found. This flag may be provided" \
       " multiple times to add multiple gems; if two gems define the same tool, the gem" \
-      " appearing earlier on the command line takes priority."
+      " appearing earlier on the command line takes priority.",
+    "",
+    "The value is the gem name, optionally followed by any number of version requirements," \
+      " all separated by commas. Whitespace surrounding each element is ignored. The version" \
+      " requirements use the same syntax as Rubygems and Bundler. For example:",
+    ["    --gem=\"my-tools, ~> 1.5, >= 1.5.2\""]
 end
 
 remaining_args :commands do
@@ -71,9 +80,30 @@ end
 # the highest priority.
 def build_cli
   return cli if gems.empty?
+  gem_specs = gems.map { |gem_spec| parse_gem_spec(gem_spec) }
   cli.child(copy_loader_sources: true) do |child_cli|
-    gems.reverse_each do |gem_name|
-      child_cli.add_config_gem(gem_name, high_priority: true)
+    gem_specs.reverse_each do |gem_name, gem_version|
+      add_gem(child_cli, gem_name, gem_version)
     end
   end
+end
+
+# Splits a --gem flag value into the gem name and its version requirements.
+# The requirements themselves are passed through to Rubygems as given.
+def parse_gem_spec(gem_spec)
+  gem_name, *gem_version = gem_spec.split(",", -1).map(&:strip)
+  if gem_name.nil? || gem_name.empty? || gem_version.any?(&:empty?)
+    logger.fatal("Illformed gem specification: #{gem_spec.inspect}")
+    exit(1)
+  end
+  [gem_name, gem_version]
+end
+
+# Adds a single gem to the given CLI, reporting a malformed version
+# requirement as an error message rather than letting Rubygems raise.
+def add_gem(child_cli, gem_name, gem_version)
+  child_cli.add_config_gem(gem_name, gem_version: gem_version, high_priority: true)
+rescue ::Gem::Requirement::BadRequirementError => e
+  logger.fatal("Illformed version requirement for gem #{gem_name.inspect}: #{e.message}")
+  exit(1)
 end
