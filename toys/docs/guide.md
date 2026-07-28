@@ -1995,6 +1995,18 @@ directive. This can be useful if a gem has multiple toys directories:
 load_gem "my-tools", toys_dir: "uncommon-tools"
 ```
 
+If you want to run a tool from a gem without referencing that gem from a toys
+file, you can pass the `--gem` flag to the built-in `do` tool. For example:
+
+```
+$ toys do --gem=my-tools greet
+```
+
+This makes the tools from the gem available, in addition to the tools Toys
+would otherwise find, and gives them priority if there is a name conflict. You
+can pass the flag multiple times to make several gems available; if two gems
+define the same tool, the gem appearing earlier on the command line wins.
+
 #### Publishing a tools Ruby gem
 
 Publishing a Ruby gem that includes tools is as simple as publishing a gem with
