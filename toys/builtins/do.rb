@@ -39,10 +39,10 @@ flag :gems do
   default []
   desc "Make the tools from the given gem available"
   long_desc \
-    "Adds the tools from the given gem, installing the gem if necessary. These tools take" \
-      " priority over the tools that would otherwise be found. This flag may be provided" \
-      " multiple times to add multiple gems; if two gems define the same tool, the gem" \
-      " appearing earlier on the command line takes priority.",
+    "Adds the tools from the given gem, prompting to install the gem if it is not present." \
+      " These tools take priority over the tools that would otherwise be found. This flag" \
+      " may be provided multiple times to add multiple gems; if two gems define the same" \
+      " tool, the gem appearing earlier on the command line takes priority.",
     "",
     "The value is the gem name, optionally followed by any number of version requirements," \
       " all separated by commas. Whitespace surrounding each element is ignored. The version" \
@@ -78,32 +78,45 @@ end
 # CLI copies the current sources and adds the gems on top of them. The gems are
 # added in reverse order so that the first gem on the command line ends up with
 # the highest priority.
+#
+# All the requests are parsed and checked up front, in command line order,
+# because adding a gem can have side effects such as installing it. That way a
+# malformed request is reported before any gem is activated, and is reported
+# against the first offending flag rather than the last.
 def build_cli
-  return cli if gems.empty?
-  gem_specs = gems.map { |gem_spec| parse_gem_spec(gem_spec) }
+  require "toys/utils/gems"
+  gem_requests = gems.map { |gem_request| parse_gem_request(gem_request) }
+  return cli if gem_requests.empty?
   cli.child(copy_loader_sources: true) do |child_cli|
-    gem_specs.reverse_each do |gem_name, gem_version|
+    gem_requests.reverse_each do |gem_name, gem_version|
       add_gem(child_cli, gem_name, gem_version)
     end
   end
 end
 
-# Splits a --gem flag value into the gem name and its version requirements.
-# The requirements themselves are passed through to Rubygems as given.
-def parse_gem_spec(gem_spec)
-  gem_name, *gem_version = gem_spec.split(",", -1).map(&:strip)
+# Splits a --gem flag value into the gem name and its version requirements,
+# and checks that both are wellformed. The requirements are validated by
+# Rubygems itself, but are passed along as the original strings.
+def parse_gem_request(gem_request)
+  gem_name, *gem_version = gem_request.split(",", -1).map(&:strip)
   if gem_name.nil? || gem_name.empty? || gem_version.any?(&:empty?)
-    logger.fatal("Illformed gem specification: #{gem_spec.inspect}")
+    logger.fatal("Illformed gem specification: #{gem_request.inspect}")
+    exit(1)
+  end
+  begin
+    ::Gem::Requirement.create(*gem_version)
+  rescue ::Gem::Requirement::BadRequirementError => e
+    logger.fatal("Illformed version requirement for gem #{gem_name.inspect}: #{e.message}")
     exit(1)
   end
   [gem_name, gem_version]
 end
 
-# Adds a single gem to the given CLI, reporting a malformed version
-# requirement as an error message rather than letting Rubygems raise.
+# Adds a single gem to the given CLI, reporting a failure to activate the gem
+# or to find its tools as an error message rather than a stack trace.
 def add_gem(child_cli, gem_name, gem_version)
   child_cli.add_config_gem(gem_name, gem_version: gem_version, high_priority: true)
-rescue ::Gem::Requirement::BadRequirementError => e
-  logger.fatal("Illformed version requirement for gem #{gem_name.inspect}: #{e.message}")
+rescue ::Toys::ToolDefinitionError, ::Toys::Utils::Gems::ActivationFailedError => e
+  logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
   exit(1)
 end

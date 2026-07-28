@@ -2005,7 +2005,9 @@ $ toys do --gem=my-tools greet
 This makes the tools from the gem available, in addition to the tools Toys
 would otherwise find, and gives them priority if there is a name conflict. You
 can pass the flag multiple times to make several gems available; if two gems
-define the same tool, the gem appearing earlier on the command line wins.
+define the same tool, the gem appearing earlier on the command line wins. As
+with `load_gem`, Toys prompts you to confirm the install if the gem is not
+already present.
 
 You can also include version requirements, separated from the gem name and from
 one another by commas. They use the same syntax as Rubygems and Bundler, so the

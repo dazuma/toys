@@ -57,18 +57,24 @@ describe "toys do --gem" do
   # "toys" directory.
   # The "fake-tools-one" gem is registered at two versions, which carry the
   # same tools except for "version-tool", so that version requirements can be
-  # tested by observing which version gets selected.
-  GEM_HOME_DIR = File.expand_path("../../test-data/gem-source-cases/gem-home", __dir__)
-  FAKE_GEMS = [
-    ["fake-tools-one", "1.0.0"],
-    ["fake-tools-one", "2.0.0"],
-    ["fake-tools-two", "1.0.0"],
-  ].freeze
+  # tested by observing which version gets selected. The "fake-no-tools" gem
+  # deliberately has no toys directory at all.
+  let(:gem_home_dir) {
+    File.expand_path("../../test-data/gem-source-cases/gem-home", __dir__)
+  }
+  let(:fake_gems) {
+    [
+      ["fake-tools-one", "1.0.0"],
+      ["fake-tools-one", "2.0.0"],
+      ["fake-tools-two", "1.0.0"],
+      ["fake-no-tools", "1.0.0"],
+    ]
+  }
 
   before do
     # Fresh spec objects each time, so that a gem activated by an earlier test
     # does not conflict with a version requested by a later one.
-    @fake_gem_specs = FAKE_GEMS.map do |gem_name, gem_version|
+    @fake_gem_specs = fake_gems.map do |gem_name, gem_version|
       spec = Gem::Specification.new do |s|
         s.name = gem_name
         s.version = gem_version
@@ -77,7 +83,7 @@ describe "toys do --gem" do
         s.require_paths = []
       end
       spec.loaded_from =
-        File.join(GEM_HOME_DIR, "specifications", "#{gem_name}-#{gem_version}.gemspec")
+        File.join(gem_home_dir, "specifications", "#{gem_name}-#{gem_version}.gemspec")
       Gem::Specification.add_spec(spec)
       spec
     end
@@ -195,5 +201,43 @@ describe "toys do --gem" do
       refute_equal(0, toys_run_tool(["do", "--gem=,>= 1.0", "version-tool"]))
     end
     assert_match(/Illformed gem specification/, err)
+  end
+
+  it "reports a gem with no toys directory without a stack trace" do
+    out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-no-tools", "base-tool"]))
+    end
+    assert_equal("", out)
+    assert_match(/Cannot load tools from gem "fake-no-tools"/, err)
+    refute_match(/toys-core\/lib/, err)
+  end
+
+  it "reports an illformed version requirement for the first offending gem" do
+    _out, err = capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense",
+                                     "--gem=fake-tools-two,alsononsense", "version-tool"]))
+    end
+    assert_match(/Illformed version requirement for gem "fake-tools-one"/, err)
+    refute_match(/fake-tools-two/, err)
+  end
+
+  it "does not activate later gems when an earlier gem is illformed" do
+    capture_subprocess_io do
+      refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense",
+                                     "--gem=fake-tools-two", "version-tool"]))
+    end
+    refute(Gem.loaded_specs.key?("fake-tools-two"))
+  end
+
+  it "reuses the original cli when no gem is requested" do
+    toys_load_tool(["do"]) do |context|
+      assert_same(context.cli, context.build_cli)
+    end
+  end
+
+  it "builds a new cli when a gem is requested" do
+    toys_load_tool(["do", "--gem=fake-tools-one"]) do |context|
+      refute_same(context.cli, context.build_cli)
+    end
   end
 end
