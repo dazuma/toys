@@ -89,5 +89,7 @@ Each template has a corresponding test file in `test/test_<template>.rb`.
 - Tests in `test/` use Minitest spec style (`describe`/`it`) with assertions
 - Test fixtures in `test-data/` organized by template (minitest-cases, rake-dirs, rspec-cases, etc.)
 - Builtin tool tests live in `builtins/.test/` and `builtins/system/.test/`, run separately via `test-builtins`
+- Unlike `test`, `test-builtins` runs in a process with no Bundler and without the `toys` or `toys-core` gems activated. A test that needs an activatable gem must register a synthetic `Gem::Specification` (see `builtins/.test/test_do.rb`)
+- RuboCop does not cover `builtins/.test/**`, so builtin test files are not linted
 - Integration tests are gated behind `TOYS_TEST_INTEGRATION=true`
 - The YARD build copies toys-core source into `core-docs/` for cross-referencing; the `yardoc-test` tool verifies that optimized and unoptimized builds produce identical output
