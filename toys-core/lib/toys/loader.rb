@@ -39,7 +39,7 @@ module Toys
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
     #
-    def initialize(index_file_name: nil,
+    def initialize(index_file_name: nil, # rubocop:disable Metrics/MethodLength
                    preload_dir_name: nil,
                    preload_file_name: nil,
                    data_dir_name: nil,
@@ -68,6 +68,7 @@ module Toys
       @lib_dir_name = lib_dir_name
       @loading_started = false
       @worklist = []
+      @source_root_records = []
       @tool_data = {}
       @roots_by_priority = {}
       @max_priority = @min_priority = 0
@@ -101,18 +102,12 @@ module Toys
                  high_priority: false,
                  source_name: nil,
                  context_directory: :parent)
-      @mutex.synchronize do
-        raise "Cannot add a path after tool loading has started" if @loading_started
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_path_root(path, priority,
-                                             context_directory: context_directory,
-                                             data_dir_name: @data_dir_name,
-                                             lib_dir_name: @lib_dir_name,
-                                             source_name: source_name)
-        @roots_by_priority[priority] = source
-        @worklist << [source, [], priority]
-      end
-      self
+      source = SourceInfo.create_path_root(path, 0,
+                                           context_directory: context_directory,
+                                           data_dir_name: @data_dir_name,
+                                           lib_dir_name: @lib_dir_name,
+                                           source_name: source_name)
+      add_source_root(source, nil, high_priority, "path")
     end
 
     ##
@@ -143,24 +138,15 @@ module Toys
                      source_name: nil,
                      context_directory: :path)
       relative_paths = Array(relative_paths)
-      @mutex.synchronize do
-        raise "Cannot add a path after tool loading has started" if @loading_started
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        root_source = SourceInfo.create_path_root(root_path, priority,
-                                                  context_directory: context_directory,
-                                                  data_dir_name: @data_dir_name,
-                                                  lib_dir_name: @lib_dir_name,
-                                                  source_name: source_name)
-        unless root_source.source_type == :directory
-          raise ::ArgumentError, "Root path #{root_path.inspect} for add_path_set was not a directory"
-        end
-        @roots_by_priority[priority] = root_source
-        relative_paths.each do |path|
-          source = root_source.relative_child(path)
-          @worklist << [source, [], priority]
-        end
+      root_source = SourceInfo.create_path_root(root_path, 0,
+                                                context_directory: context_directory,
+                                                data_dir_name: @data_dir_name,
+                                                lib_dir_name: @lib_dir_name,
+                                                source_name: source_name)
+      unless root_source.source_type == :directory
+        raise ::ArgumentError, "Root path #{root_path.inspect} for add_path_set was not a directory"
       end
-      self
+      add_source_root(root_source, relative_paths, high_priority, "path")
     end
 
     ##
@@ -183,18 +169,12 @@ module Toys
                   source_name: nil,
                   context_directory: nil,
                   &block)
-      @mutex.synchronize do
-        raise "Cannot add a block after tool loading has started" if @loading_started
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_proc_root(block, priority,
-                                             context_directory: context_directory,
-                                             source_name: source_name,
-                                             data_dir_name: @data_dir_name,
-                                             lib_dir_name: @lib_dir_name)
-        @roots_by_priority[priority] = source
-        @worklist << [source, [], priority]
-      end
-      self
+      source = SourceInfo.create_proc_root(block, 0,
+                                           context_directory: context_directory,
+                                           source_name: source_name,
+                                           data_dir_name: @data_dir_name,
+                                           lib_dir_name: @lib_dir_name)
+      add_source_root(source, nil, high_priority, "block")
     end
 
     ##
@@ -224,18 +204,12 @@ module Toys
                 update: false,
                 context_directory: nil)
       path = resolve_git_path(git_remote, git_path, git_commit, update)
-      @mutex.synchronize do
-        raise "Cannot add a git source after tool loading has started" if @loading_started
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, priority,
-                                            context_directory: context_directory,
-                                            source_name: source_name,
-                                            data_dir_name: @data_dir_name,
-                                            lib_dir_name: @lib_dir_name)
-        @roots_by_priority[priority] = source
-        @worklist << [source, [], priority]
-      end
-      self
+      source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, 0,
+                                          context_directory: context_directory,
+                                          source_name: source_name,
+                                          data_dir_name: @data_dir_name,
+                                          lib_dir_name: @lib_dir_name)
+      add_source_root(source, nil, high_priority, "git source")
     end
 
     ##
@@ -266,18 +240,12 @@ module Toys
                 gem_toys_dir: nil,
                 context_directory: nil)
       gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
-      @mutex.synchronize do
-        raise "Cannot add a gem source after tool loading has started" if @loading_started
-        priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
-        source = SourceInfo.create_gem_root(gem_name, gem_version, gem_path, path, priority,
-                                            context_directory: context_directory,
-                                            source_name: source_name,
-                                            data_dir_name: @data_dir_name,
-                                            lib_dir_name: @lib_dir_name)
-        @roots_by_priority[priority] = source
-        @worklist << [source, [], priority]
-      end
-      self
+      source = SourceInfo.create_gem_root(gem_name, gem_version, gem_path, path, 0,
+                                          context_directory: context_directory,
+                                          source_name: source_name,
+                                          data_dir_name: @data_dir_name,
+                                          lib_dir_name: @lib_dir_name)
+      add_source_root(source, nil, high_priority, "gem source")
     end
 
     ##
@@ -390,6 +358,37 @@ module Toys
     end
 
     #### INTERNAL METHODS ####
+
+    ##
+    # Return a recording of the source roots that have been added to this
+    # loader, in the order they were added. The recording can be played back
+    # on another loader using {#add_source_root_records}.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def source_root_records
+      @mutex.synchronize { @source_root_records.dup }
+    end
+
+    ##
+    # Add the source roots from the given recording, which should have been
+    # obtained from {#source_root_records}. The sources are added in the order
+    # they were originally added, and are assigned fresh priorities in this
+    # loader. Sources are not reresolved; in particular, gems are not
+    # reactivated and git repos are not refetched.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def add_source_root_records(records)
+      @mutex.synchronize do
+        raise "Cannot add sources after tool loading has started" if @loading_started
+        records.each do |root_source, relative_paths, high_priority|
+          @source_root_records << [root_source, relative_paths, high_priority]
+          install_source_root(root_source, relative_paths, high_priority)
+        end
+      end
+      self
+    end
 
     ##
     # Get or create the tool definition for the given name and priority.
@@ -732,6 +731,40 @@ module Toys
     end
 
     private
+
+    ##
+    # Record and install a source root. The given root source should have been
+    # created with a placeholder priority; the real priority is assigned here.
+    # The relative_paths argument is a list of paths relative to the root that
+    # should be loaded instead of the root itself, or nil to load the root.
+    # The noun is used in the error message if loading has already started.
+    #
+    def add_source_root(root_source, relative_paths, high_priority, noun)
+      @mutex.synchronize do
+        raise "Cannot add a #{noun} after tool loading has started" if @loading_started
+        @source_root_records << [root_source, relative_paths, high_priority]
+        install_source_root(root_source, relative_paths, high_priority)
+      end
+      self
+    end
+
+    ##
+    # Assign a priority to the given root source and add it and its worklist
+    # entries to this loader.
+    # Caller must own the mutex.
+    #
+    def install_source_root(root_source, relative_paths, high_priority)
+      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      root_source = root_source.with_priority(priority)
+      @roots_by_priority[priority] = root_source
+      if relative_paths
+        relative_paths.each do |path|
+          @worklist << [root_source.relative_child(path), [], priority]
+        end
+      else
+        @worklist << [root_source, [], priority]
+      end
+    end
 
     ##
     # Resolve the file system path to the given object in the git cache
