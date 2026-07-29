@@ -50,50 +50,34 @@ describe "toys do --gem" do
   toys_include_builtins(false)
 
   # None of the gems available to these tests carry a toys directory, so we
-  # register a couple of synthetic gems whose gem directories are the fixtures
-  # under test-data/gem-source-cases/gem-home. That directory is laid out the
-  # way rubygems expects a gem home to look, so that Gem::Specification#gem_dir
-  # resolves to the fixture, and each gem's tools are found in its default
-  # "toys" directory.
-  # The "fake-tools-one" gem is registered at two versions, which carry the
-  # same tools except for "version-tool", so that version requirements can be
-  # tested by observing which version gets selected. The "fake-no-tools" gem
+  # point rubygems at the fixtures under test-data/gem-source-cases/gem-home.
+  # That directory is laid out the way rubygems expects a gem home to look, so
+  # adding it to the gem path is enough for rubygems to discover the gemspecs
+  # under "specifications" and resolve each gem directory under "gems", where
+  # the tools are found in the default "toys" subdirectory.
+  # The "fake-tools-one" gem is present at two versions, which carry the same
+  # tools except for "version-tool", so that version requirements can be tested
+  # by observing which version gets selected. The "fake-no-tools" gem
   # deliberately has no toys directory at all.
   let(:gem_home_dir) {
     File.expand_path("../../test-data/gem-source-cases/gem-home", __dir__)
   }
-  let(:fake_gems) {
-    [
-      ["fake-tools-one", "1.0.0"],
-      ["fake-tools-one", "2.0.0"],
-      ["fake-tools-two", "1.0.0"],
-      ["fake-no-tools", "1.0.0"],
-    ]
+  let(:fake_gem_names) {
+    ["fake-tools-one", "fake-tools-two", "fake-no-tools"]
   }
 
   before do
-    # Fresh spec objects each time, so that a gem activated by an earlier test
-    # does not conflict with a version requested by a later one.
-    @fake_gem_specs = fake_gems.map do |gem_name, gem_version|
-      spec = Gem::Specification.new do |s|
-        s.name = gem_name
-        s.version = gem_version
-        s.summary = "Fake gem providing toys fixtures"
-        s.authors = ["nobody"]
-        s.require_paths = []
-      end
-      spec.loaded_from =
-        File.join(gem_home_dir, "specifications", "#{gem_name}-#{gem_version}.gemspec")
-      Gem::Specification.add_spec(spec)
-      spec
-    end
+    # Changing the gem path resets the rubygems spec cache, so each test sees
+    # fresh spec objects and a gem activated by an earlier test does not
+    # conflict with a version requested by a later one.
+    @original_gem_home = Gem.dir
+    @original_gem_path = Gem.path.dup
+    Gem.use_paths(@original_gem_home, @original_gem_path + [gem_home_dir])
   end
 
   after do
-    @fake_gem_specs.each do |spec|
-      Gem::Specification.remove_spec(spec)
-      Gem.loaded_specs.delete(spec.name)
-    end
+    Gem.use_paths(@original_gem_home, @original_gem_path)
+    fake_gem_names.each { |gem_name| Gem.loaded_specs.delete(gem_name) }
   end
 
   it "runs a tool from the given gem" do
