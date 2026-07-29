@@ -84,9 +84,9 @@ end
 # malformed request is reported before any gem is activated, and is reported
 # against the first offending flag rather than the last.
 def build_cli
-  require "toys/utils/gems"
   gem_requests = gems.map { |gem_request| parse_gem_request(gem_request) }
   return cli if gem_requests.empty?
+  require "toys/utils/gems"
   cli.child(copy_loader_sources: true) do |child_cli|
     gem_requests.reverse_each do |gem_name, gem_version|
       add_gem(child_cli, gem_name, gem_version)
@@ -95,18 +95,18 @@ def build_cli
 end
 
 # Splits a --gem flag value into the gem name and its version requirements,
-# and checks that both are wellformed. The requirements are validated by
-# Rubygems itself, but are passed along as the original strings.
+# and checks that both are valid. The requirements are validated by Rubygems
+# itself, but are passed along as the original strings.
 def parse_gem_request(gem_request)
   gem_name, *gem_version = gem_request.split(",", -1).map(&:strip)
   if gem_name.nil? || gem_name.empty? || gem_version.any?(&:empty?)
-    logger.fatal("Illformed gem specification: #{gem_request.inspect}")
+    logger.fatal("Invalid --gem value: #{gem_request.inspect}")
     exit(1)
   end
   begin
     ::Gem::Requirement.create(*gem_version)
   rescue ::Gem::Requirement::BadRequirementError => e
-    logger.fatal("Illformed version requirement for gem #{gem_name.inspect}: #{e.message}")
+    logger.fatal("Invalid version requirement for gem #{gem_name.inspect}: #{e.message}")
     exit(1)
   end
   [gem_name, gem_version]

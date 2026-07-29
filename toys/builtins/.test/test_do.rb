@@ -164,12 +164,12 @@ describe "toys do --gem" do
     assert_equal(["fake-tools-one 1.0.0"], out.split("\n"))
   end
 
-  it "reports an illformed version requirement without a stack trace" do
+  it "reports an invalid version requirement without a stack trace" do
     out, err = capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense", "version-tool"]))
     end
     assert_equal("", out)
-    assert_match(/Illformed version requirement for gem "fake-tools-one"/, err)
+    assert_match(/Invalid version requirement for gem "fake-tools-one"/, err)
     refute_match(/toys-core\/lib/, err)
   end
 
@@ -177,14 +177,14 @@ describe "toys do --gem" do
     _out, err = capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,", "version-tool"]))
     end
-    assert_match(/Illformed gem specification/, err)
+    assert_match(/Invalid --gem value/, err)
   end
 
   it "rejects an empty gem name" do
     _out, err = capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=,>= 1.0", "version-tool"]))
     end
-    assert_match(/Illformed gem specification/, err)
+    assert_match(/Invalid --gem value/, err)
   end
 
   it "reports a gem with no toys directory without a stack trace" do
@@ -196,16 +196,16 @@ describe "toys do --gem" do
     refute_match(/toys-core\/lib/, err)
   end
 
-  it "reports an illformed version requirement for the first offending gem" do
+  it "reports an invalid version requirement for the first offending gem" do
     _out, err = capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense",
                                      "--gem=fake-tools-two,alsononsense", "version-tool"]))
     end
-    assert_match(/Illformed version requirement for gem "fake-tools-one"/, err)
+    assert_match(/Invalid version requirement for gem "fake-tools-one"/, err)
     refute_match(/fake-tools-two/, err)
   end
 
-  it "does not activate later gems when an earlier gem is illformed" do
+  it "does not activate later gems when an earlier gem is invalid" do
     capture_subprocess_io do
       refute_equal(0, toys_run_tool(["do", "--gem=fake-tools-one,nonsense",
                                      "--gem=fake-tools-two", "version-tool"]))
