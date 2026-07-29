@@ -886,6 +886,15 @@ describe Toys::Loader do
       assert_equal(-1, tool2.priority)
     end
 
+    it "is unaffected by later mutation of the array passed to add_path_set" do
+      relative_paths = [".toys.rb"]
+      loader.add_path_set(File.join(cases_dir, "config-items"), relative_paths)
+      relative_paths << ".toys"
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      assert_equal([["tool-1"]], copy_loader.list_subtools([]).map(&:full_name))
+    end
+
     it "copies gem sources without reresolving the gem" do
       loader.add_gem("toys-core", [], ".toys.rb", gem_toys_dir: gem_toys_dir)
       copy_loader.add_source_root_records(loader.source_root_records)

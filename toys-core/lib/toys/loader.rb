@@ -739,7 +739,13 @@ module Toys
     # should be loaded instead of the root itself, or nil to load the root.
     # The noun is used in the error message if loading has already started.
     #
+    # The record retains relative_paths for the lifetime of this loader, so we
+    # take a frozen copy rather than aliasing an array the caller could mutate
+    # later. Freezing the copy also keeps it safe to share with loaders that
+    # subsequently copy these records.
+    #
     def add_source_root(root_source, relative_paths, high_priority, noun)
+      relative_paths = relative_paths&.dup&.freeze
       @mutex.synchronize do
         raise "Cannot add a #{noun} after tool loading has started" if @loading_started
         @source_root_records << [root_source, relative_paths, high_priority]
