@@ -599,6 +599,62 @@ describe Toys::CLI do
     end
   end
 
+  describe "add_config_gem" do
+    let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
+
+    it "adds tools from a gem" do
+      cli.add_config_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir)
+      tool, remaining = cli.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal([], remaining)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "defaults to the entire toys directory" do
+      cli.add_config_gem("toys-core", gem_toys_dir: "#{gem_toys_dir}/.toys")
+      tool, _remaining = cli.loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool.desc.to_s)
+    end
+
+    it "honors high_priority" do
+      cli.add_config_path(File.join(lookup_cases_dir, "normal-file-hierarchy"))
+      cli.add_config_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir,
+                         high_priority: true)
+      tool, _remaining = cli.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
+    it "returns self" do
+      result = cli.add_config_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir)
+      assert_same(cli, result)
+    end
+  end
+
+  describe "add_config_git" do
+    let(:git_remote) { "https://github.com/dazuma/toys.git" }
+
+    before do
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+    end
+
+    it "adds tools from a git source" do
+      cli.add_config_git(git_remote,
+                         git_path: "toys-core/test-data/lookup-cases/config-items/.toys.rb",
+                         git_commit: "main")
+      tool, remaining = cli.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal([], remaining)
+    end
+
+    it "returns self" do
+      result = cli.add_config_git(git_remote,
+                                  git_path: "toys-core/test-data/lookup-cases/config-items/.toys.rb",
+                                  git_commit: "main")
+      assert_same(cli, result)
+    end
+  end
+
   describe "child" do
     let(:logger2) {
       Logger.new(logger_io).tap do |lgr|
@@ -643,6 +699,101 @@ describe Toys::CLI do
       assert_nil(child.logger)
       refute_same(logger, child.logger_factory.call)
       assert_instance_of(Logger, child.logger_factory.call)
+    end
+
+    it "does not copy loader sources by default" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      child = cli.child
+      tool, remaining = child.loader.lookup(["foo"])
+      assert_empty(tool.full_name)
+      assert_equal(["foo"], remaining)
+    end
+
+    it "copies loader sources when requested" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      child = cli.child(copy_loader_sources: true)
+      assert_equal(3, child.run("foo"))
+    end
+
+    it "copies loader sources added from paths" do
+      cli.add_config_path(File.join(lookup_cases_dir, "config-items", ".toys.rb"))
+      child = cli.child(copy_loader_sources: true)
+      tool, _remaining = child.loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
+    it "lets sources added in the child block take priority over copied sources" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      child = cli.child(copy_loader_sources: true) do |c|
+        c.add_config_block(high_priority: true) do
+          tool "foo" do
+            def run
+              exit(4)
+            end
+          end
+        end
+      end
+      assert_equal(4, child.run("foo"))
+    end
+
+    it "refuses to change data_dir_name while copying loader sources" do
+      error = assert_raises(ArgumentError) do
+        cli.child(copy_loader_sources: true, data_dir_name: "other-data")
+      end
+      assert_match(/Cannot change data_dir_name while copying loader sources/, error.message)
+    end
+
+    it "refuses to change lib_dir_name while copying loader sources" do
+      assert_raises(ArgumentError) do
+        cli.child(copy_loader_sources: true, lib_dir_name: "other-lib")
+      end
+    end
+
+    it "allows an identical data_dir_name while copying loader sources" do
+      child = cli.child(copy_loader_sources: true, data_dir_name: ".data")
+      assert_instance_of(Toys::CLI, child)
+    end
+
+    it "allows changing data_dir_name when not copying loader sources" do
+      child = cli.child(data_dir_name: "other-data")
+      assert_instance_of(Toys::CLI, child)
+    end
+
+    it "does not affect the original cli when the child adds sources" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            exit(3)
+          end
+        end
+      end
+      child = cli.child(copy_loader_sources: true)
+      child.add_config_block(high_priority: true) do
+        tool "foo" do
+          def run
+            exit(4)
+          end
+        end
+      end
+      assert_equal(3, cli.run("foo"))
     end
   end
 end

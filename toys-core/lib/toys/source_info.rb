@@ -311,6 +311,21 @@ module Toys
     end
 
     ##
+    # Create a copy of this root SourceInfo with a different priority. All
+    # other state, including the already-resolved source path and context
+    # directory, is preserved. This is used when copying the sources of one
+    # loader into another loader that assigns different priority values.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def with_priority(priority)
+      raise ::ArgumentError, "with_priority is valid only on a root source" if parent
+      SourceInfo.new(nil, priority, context_directory, source_type, source_path, source_proc,
+                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+                     source_name, @data_dir_name, @lib_dir_name)
+    end
+
+    ##
     # Create a root source info for a file path.
     #
     # @private This interface is internal and subject to change without warning.

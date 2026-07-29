@@ -825,4 +825,143 @@ describe Toys::Loader do
       assert_instance_of(Toys::StandardMiddleware::ShowHelp, built_middleware[2])
     end
   end
+
+  describe "source root records" do
+    let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
+    let(:unusable_gems_util) {
+      gems_util = Object.new
+      def gems_util.activate(*_args)
+        raise "gems_util should not have been called"
+      end
+      gems_util
+    }
+    let(:unusable_git_cache) {
+      git_cache = Object.new
+      def git_cache.get(*_args, **_opts)
+        raise "git_cache should not have been called"
+      end
+      git_cache
+    }
+    let(:copy_loader) {
+      Toys::Loader.new(index_file_name: ".toys.rb",
+                       extra_delimiters: ":",
+                       git_cache: unusable_git_cache,
+                       gems_util: unusable_gems_util)
+    }
+
+    it "copies path sources" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool1, remaining1 = copy_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool1.desc.to_s)
+      assert_equal([], remaining1)
+      tool2, _remaining2 = copy_loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool2.desc.to_s)
+    end
+
+    it "copies block sources" do
+      loader.add_block(source_name: "test block") do
+        tool "tool-1" do
+          desc "block tool-1 description"
+        end
+      end
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("block tool-1 description", tool.desc.to_s)
+      assert_equal("test block", tool.source_info.source_name)
+    end
+
+    it "copies path set sources" do
+      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool1, _remaining1 = copy_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool1.desc.to_s)
+      assert_equal(-1, tool1.priority)
+      tool2, _remaining2 = copy_loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool2.desc.to_s)
+      assert_equal(-1, tool2.priority)
+    end
+
+    it "is unaffected by later mutation of the array passed to add_path_set" do
+      relative_paths = [".toys.rb"]
+      loader.add_path_set(File.join(cases_dir, "config-items"), relative_paths)
+      relative_paths << ".toys"
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      assert_equal([["tool-1"]], copy_loader.list_subtools([]).map(&:full_name))
+    end
+
+    it "copies gem sources without reresolving the gem" do
+      loader.add_gem("toys-core", [], ".toys.rb", gem_toys_dir: gem_toys_dir)
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
+                   tool.source_info.source_name)
+    end
+
+    it "copies git sources without refetching the repo" do
+      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
+      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
+    it "preserves priority order" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+      copy_loader.add_source_root_records(loader.source_root_records)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("normal tool-1 short description", tool.desc.to_s)
+      assert_equal(1, tool.priority)
+    end
+
+    it "lets a source added after the copy take high priority" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      copy_loader.add_source_root_records(loader.source_root_records)
+      copy_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+
+      tool, _remaining = copy_loader.lookup(["tool-1"])
+      assert_equal("normal tool-1 short description", tool.desc.to_s)
+      assert_equal(1, tool.priority)
+    end
+
+    it "records copied sources so they can be copied again" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      copy_loader.add_source_root_records(loader.source_root_records)
+      grandchild_loader = Toys::Loader.new(index_file_name: ".toys.rb")
+      grandchild_loader.add_source_root_records(copy_loader.source_root_records)
+
+      tool, _remaining = grandchild_loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+    end
+
+    it "does not modify the source loader" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      copy_loader.add_source_root_records(loader.source_root_records)
+      copy_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+
+      tool, _remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool.desc.to_s)
+      assert_equal(-1, tool.priority)
+    end
+
+    it "raises if the receiving loader has already started loading" do
+      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      records = loader.source_root_records
+      copy_loader.lookup(["tool-1"])
+      assert_raises(RuntimeError) do
+        copy_loader.add_source_root_records(records)
+      end
+    end
+  end
 end
