@@ -132,6 +132,9 @@ module Toys
     #     the given root path's parent directory, or `nil` to denote no context.
     #     Defaults to `:path`.
     # @return [self]
+    # @raise [ArgumentError] if the root path is not a directory.
+    # @raise [Toys::ToolDefinitionError] if any of the relative paths does not
+    #     point at a readable Ruby file or directory.
     #
     def add_path_set(root_path, relative_paths,
                      high_priority: false,
@@ -765,7 +768,10 @@ module Toys
       @roots_by_priority[priority] = root_source
       if relative_paths
         relative_paths.each do |path|
-          @worklist << [root_source.relative_child(path), [], priority]
+          # Resolve strictly, so a path that is missing or is not a config
+          # raises here, naming the offending path, rather than putting a nil
+          # on the worklist that fails confusingly at lookup time.
+          @worklist << [root_source.relative_child(path, lenient: false), [], priority]
         end
       else
         @worklist << [root_source, [], priority]

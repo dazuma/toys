@@ -251,9 +251,9 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def relative_child(filename, source_name: nil)
+    def relative_child(filename, source_name: nil, lenient: true)
       raise ::ArgumentError, "relative_child is valid only on a directory source" unless source_type == :directory
-      child_path, type = SourceInfo.check_path(::File.join(source_path, filename), true)
+      child_path, type = SourceInfo.check_path(::File.join(source_path, filename), lenient)
       return nil unless child_path
       child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
       child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
