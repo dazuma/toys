@@ -393,6 +393,28 @@ describe Toys::Loader do
       end
       assert_equal("File is not a ruby file: #{File.join(root_path, 'hello.txt')}", error.message)
     end
+
+    it "leaves the loader unmodified if a member of a set is bad" do
+      root_path = File.join(cases_dir, "config-items")
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+      end
+      assert_empty(loader.source_root_records)
+
+      _tool, remaining = loader.lookup(["tool-2"])
+      assert_equal(["tool-2"], remaining)
+    end
+
+    it "does not consume a priority if a member of a set is bad" do
+      root_path = File.join(cases_dir, "config-items")
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+      end
+      loader.add_path_set(root_path, [".toys", ".toys.rb"])
+
+      tool1, _remaining = loader.lookup(["tool-1"])
+      assert_equal(-1, tool1.priority)
+    end
   end
 
   describe "stop_loading_at_priority" do

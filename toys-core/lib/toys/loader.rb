@@ -133,8 +133,8 @@ module Toys
     #     Defaults to `:path`.
     # @return [self]
     # @raise [ArgumentError] if the root path is not a directory.
-    # @raise [Toys::ToolDefinitionError] if any of the relative paths does not
-    #     point at a readable Ruby file or directory.
+    # @raise [Toys::ToolDefinitionError] if any relative path does not point at
+    #     a readable Ruby file or directory.
     #
     def add_path_set(root_path, relative_paths,
                      high_priority: false,
@@ -386,8 +386,8 @@ module Toys
       @mutex.synchronize do
         raise "Cannot add sources after tool loading has started" if @loading_started
         records.each do |root_source, relative_paths, high_priority|
-          @source_root_records << [root_source, relative_paths, high_priority]
           install_source_root(root_source, relative_paths, high_priority)
+          @source_root_records << [root_source, relative_paths, high_priority]
         end
       end
       self
@@ -751,8 +751,11 @@ module Toys
       relative_paths = relative_paths&.dup&.freeze
       @mutex.synchronize do
         raise "Cannot add a #{noun} after tool loading has started" if @loading_started
-        @source_root_records << [root_source, relative_paths, high_priority]
+        # Record only after a successful install, so a source that fails to
+        # resolve does not leave a record that would fail again every time
+        # these records are replayed into another loader.
         install_source_root(root_source, relative_paths, high_priority)
+        @source_root_records << [root_source, relative_paths, high_priority]
       end
       self
     end
@@ -763,19 +766,26 @@ module Toys
     # Caller must own the mutex.
     #
     def install_source_root(root_source, relative_paths, high_priority)
-      priority = high_priority ? (@max_priority += 1) : (@min_priority -= 1)
+      priority = high_priority ? @max_priority + 1 : @min_priority - 1
       root_source = root_source.with_priority(priority)
-      @roots_by_priority[priority] = root_source
-      if relative_paths
-        relative_paths.each do |path|
-          # Resolve strictly, so a path that is missing or is not a config
-          # raises here, naming the offending path, rather than putting a nil
-          # on the worklist that fails confusingly at lookup time.
-          @worklist << [root_source.relative_child(path, lenient: false), [], priority]
+      # Resolve strictly, so a path that is missing or is not a config raises
+      # here, naming the offending path, rather than putting a nil on the
+      # worklist that fails confusingly at lookup time. Resolve every member
+      # before mutating any loader state, so a failure partway through a set
+      # leaves this loader untouched rather than half-installed.
+      entries =
+        if relative_paths
+          relative_paths.map { |path| [root_source.relative_child(path, lenient: false), [], priority] }
+        else
+          [[root_source, [], priority]]
         end
+      if high_priority
+        @max_priority = priority
       else
-        @worklist << [root_source, [], priority]
+        @min_priority = priority
       end
+      @roots_by_priority[priority] = root_source
+      @worklist.concat(entries)
     end
 
     ##
