@@ -377,6 +377,44 @@ describe Toys::Loader do
       assert_equal("directory tool-2 short description", tool2.desc.to_s)
       assert_equal(1, tool2.priority)
     end
+
+    it "raises immediately if a member of a set does not exist" do
+      root_path = File.join(cases_dir, "config-items")
+      error = assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+      end
+      assert_equal("Cannot read: #{File.join(root_path, '.nonexistent')}", error.message)
+    end
+
+    it "raises immediately if a member of a set is not a ruby file" do
+      root_path = File.join(cases_dir, "normal-file-hierarchy")
+      error = assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, ["hello.txt"])
+      end
+      assert_equal("File is not a ruby file: #{File.join(root_path, 'hello.txt')}", error.message)
+    end
+
+    it "leaves the loader unmodified if a member of a set is bad" do
+      root_path = File.join(cases_dir, "config-items")
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+      end
+      assert_empty(loader.source_root_records)
+
+      _tool, remaining = loader.lookup(["tool-2"])
+      assert_equal(["tool-2"], remaining)
+    end
+
+    it "does not consume a priority if a member of a set is bad" do
+      root_path = File.join(cases_dir, "config-items")
+      assert_raises(Toys::ToolDefinitionError) do
+        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+      end
+      loader.add_path_set(root_path, [".toys", ".toys.rb"])
+
+      tool1, _remaining = loader.lookup(["tool-1"])
+      assert_equal(-1, tool1.priority)
+    end
   end
 
   describe "stop_loading_at_priority" do
@@ -884,6 +922,18 @@ describe Toys::Loader do
       tool2, _remaining2 = copy_loader.lookup(["tool-2"])
       assert_equal("directory tool-2 short description", tool2.desc.to_s)
       assert_equal(-1, tool2.priority)
+    end
+
+    it "raises when copying a path set whose member has since been deleted" do
+      Dir.mktmpdir do |root_path|
+        FileUtils.mkdir(File.join(root_path, ".toys"))
+        loader.add_path_set(root_path, [".toys"])
+        FileUtils.rm_rf(File.join(root_path, ".toys"))
+        error = assert_raises(Toys::ToolDefinitionError) do
+          copy_loader.add_source_root_records(loader.source_root_records)
+        end
+        assert_equal("Cannot read: #{File.join(root_path, '.toys')}", error.message)
+      end
     end
 
     it "is unaffected by later mutation of the array passed to add_path_set" do
