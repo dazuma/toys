@@ -501,8 +501,17 @@ module Toys
     # however, typically a tool is made non-runnable simply by leaving the run
     # handler set to `:run` and not defining the method.
     #
+    # Additionally, if this tool delegates to another tool, the run handler is
+    # the full name of the delegate target, as an array of strings. Note that
+    # this value cannot be assigned through {#run_handler=}, which accepts only
+    # a proc, symbol, or nil. Delegation is configured by calling
+    # {#delegate_to}, which sets this attribute along with the rest of the
+    # delegation state. The getter and setter are thus not symmetrical: the
+    # getter can return an array that the setter would reject.
+    #
     # @return [Proc] if the run handler is defined as a Proc
     # @return [Symbol] if the run handler is defined as a method
+    # @return [Array<String>] if this tool delegates to another tool
     # @return [nil] if the tool is explicitly made non-runnable
     #
     attr_reader :run_handler
@@ -590,7 +599,7 @@ module Toys
     # @return [true,false]
     #
     def runnable?
-      @run_handler.is_a?(::Proc) ||
+      @run_handler.is_a?(::Proc) || @run_handler.is_a?(::Array) ||
         (@run_handler.is_a?(::Symbol) && tool_class.public_instance_methods(false).include?(@run_handler))
     end
 
@@ -1297,6 +1306,11 @@ module Toys
     # however, typically a tool is made non-runnable simply by leaving the run
     # handler set to `:run` and not defining the method.
     #
+    # This setter does not accept an array, even though {#run_handler} may
+    # return one for a delegating tool. Delegation involves more state than
+    # just the run handler, so it must be configured by calling
+    # {#delegate_to}.
+    #
     # @param handler [Proc,Symbol,nil] the run handler
     #
     def run_handler=(handler)
@@ -1461,7 +1475,8 @@ module Toys
               " some implementation has already been created for it."
       end
       disable_argument_parsing
-      self.run_handler = make_delegation_run_handler(target)
+      check_definition_state(is_method: true)
+      @run_handler = target
       self.completion = DefaultCompletion.new(delegation_target: target)
       @delegate_target = target
       self
@@ -1554,27 +1569,6 @@ module Toys
         proc { middleware.config(self, loader, &next_config) }
       else
         next_config
-      end
-    end
-
-    def make_delegation_run_handler(target)
-      lambda do
-        path = [target.join(" ").inspect]
-        walk_context = self
-        until walk_context.nil?
-          name = walk_context[::Toys::Context::Key::TOOL_NAME]
-          path << name.join(" ").inspect
-          if name == target
-            raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}"
-          end
-          walk_context = walk_context[::Toys::Context::Key::DELEGATED_FROM]
-        end
-        cli = self[::Toys::Context::Key::CLI]
-        cli.loader.load_for_prefix(target)
-        unless cli.loader.tool_defined?(target)
-          raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
-        end
-        exit(cli.run(target + self[::Toys::Context::Key::ARGS], delegated_from: self))
       end
     end
 

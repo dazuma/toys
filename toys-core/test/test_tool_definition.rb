@@ -1205,6 +1205,16 @@ describe Toys::ToolDefinition do
       assert_equal(true, tool.argument_parsing_disabled?)
     end
 
+    it "sets the run handler to the target" do
+      tool.delegate_to(["bar"])
+      assert_equal(["bar"], tool.run_handler)
+    end
+
+    it "is runnable" do
+      tool.delegate_to(["bar"])
+      assert(tool.runnable?)
+    end
+
     it "does not override an existing description" do
       tool.desc = "Existing description"
       tool.delegate_to(["bar"])
@@ -1342,6 +1352,13 @@ describe Toys::ToolDefinition do
         end
       end
       refute(tool.runnable?)
+    end
+
+    it "cannot be set to an array" do
+      error = assert_raises(Toys::ToolDefinitionError) do
+        tool.run_handler = ["bar"]
+      end
+      assert_equal("Run handler must be a proc or symbol", error.message)
     end
   end
 
