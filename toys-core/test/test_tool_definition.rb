@@ -1298,67 +1298,6 @@ describe Toys::ToolDefinition do
         tool.delegate_to(["bar"])
       end
     end
-
-    it "executes the delegate" do
-      subtool.run_handler = proc do
-        exit(4)
-      end
-      tool.delegate_to([tool_name, subtool_name])
-      assert_equal(4, cli.run(tool_name))
-    end
-
-    it "passes arguments to the delegate" do
-      test = self
-      subtool.add_flag(:foo, ["--foo=VAL"])
-      subtool.run_handler = proc do
-        test.assert_equal("hello", get(:foo))
-        exit(4)
-      end
-      tool.delegate_to([tool_name, subtool_name])
-      assert_equal(4, cli.run(tool_name, "--foo", "hello"))
-    end
-
-    it "executes the delegate when the tool has a private exit method" do
-      mixin = ::Module.new do
-        private
-
-        def exit(code = 0)
-          Toys::Context.exit(code)
-        end
-      end
-      subtool.run_handler = proc do
-        exit(4)
-      end
-      tool.delegate_to([tool_name, subtool_name])
-      tool.tool_class.include(mixin)
-      assert_equal(4, cli.run(tool_name))
-    end
-
-    it "delegates to a namespace" do
-      subtool.run_handler = proc do
-        exit(4)
-      end
-      tool2.delegate_to([tool_name])
-      assert_equal(4, cli.run(tool2_name, subtool_name))
-    end
-
-    it "detects dangling references" do
-      tool.delegate_to([tool2_name])
-      error = assert_raises(Toys::ContextualError) do
-        cli.run(tool_name)
-      end
-      assert_equal("Delegate target not found: \"#{tool2_name}\"", error.cause.message)
-    end
-
-    it "detects circular references" do
-      tool.delegate_to([tool2_name])
-      tool2.delegate_to([tool_name])
-      error = assert_raises(Toys::ContextualError) do
-        cli.run(tool_name)
-      end
-      assert_equal("Delegation loop: \"#{tool_name}\" <- \"#{tool2_name}\" <- \"#{tool_name}\"",
-                   error.cause.message)
-    end
   end
 
   describe "run handler" do

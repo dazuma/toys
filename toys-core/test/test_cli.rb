@@ -195,6 +195,104 @@ describe Toys::CLI do
     end
   end
 
+  describe "delegation" do
+    it "executes the delegate" do
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            def run
+              exit(4)
+            end
+          end
+          delegate_to ["foo", "bar"]
+        end
+      end
+      assert_equal(4, cli.run("foo"))
+    end
+
+    it "passes arguments to the delegate" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            flag :foo, "--foo=VAL"
+            to_run do
+              test.assert_equal("hello", get(:foo))
+              exit(4)
+            end
+          end
+          delegate_to ["foo", "bar"]
+        end
+      end
+      assert_equal(4, cli.run("foo", "--foo", "hello"))
+    end
+
+    it "executes the delegate when the tool has a private exit method" do
+      exit_mixin = ::Module.new do
+        private
+
+        def exit(code = 0)
+          Toys::Context.exit(code)
+        end
+      end
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            def run
+              exit(4)
+            end
+          end
+          delegate_to ["foo", "bar"]
+          include exit_mixin
+        end
+      end
+      assert_equal(4, cli.run("foo"))
+    end
+
+    it "delegates to a namespace" do
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            def run
+              exit(4)
+            end
+          end
+        end
+        tool "boo" do
+          delegate_to ["foo"]
+        end
+      end
+      assert_equal(4, cli.run("boo", "bar"))
+    end
+
+    it "detects dangling references" do
+      cli.add_config_block do
+        tool "foo" do
+          delegate_to ["boo"]
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo")
+      end
+      assert_equal("Delegate target not found: \"boo\"", error.cause.message)
+    end
+
+    it "detects circular references" do
+      cli.add_config_block do
+        tool "foo" do
+          delegate_to ["boo"]
+        end
+        tool "boo" do
+          delegate_to ["foo"]
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("foo")
+      end
+      assert_equal("Delegation loop: \"foo\" <- \"boo\" <- \"foo\"", error.cause.message)
+    end
+  end
+
   describe "error handling" do
     it "raises the error by default" do
       cli.add_config_block do
