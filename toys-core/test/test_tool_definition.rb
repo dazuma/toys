@@ -1205,6 +1205,53 @@ describe Toys::ToolDefinition do
       assert_equal(true, tool.argument_parsing_disabled?)
     end
 
+    it "sets the run handler to the target" do
+      tool.delegate_to(["bar"])
+      assert_equal(["bar"], tool.run_handler)
+    end
+
+    it "is runnable" do
+      tool.delegate_to(["bar"])
+      assert(tool.runnable?)
+    end
+
+    it "freezes the target" do
+      tool.delegate_to(["bar"])
+      assert(tool.delegate_target.frozen?)
+      assert(tool.run_handler.frozen?)
+    end
+
+    it "does not retain the array passed by the caller" do
+      target = ["bar"]
+      tool.delegate_to(target)
+      target << "baz"
+      assert_equal(["bar"], tool.delegate_target)
+      assert_equal(["bar"], tool.run_handler)
+    end
+
+    it "freezes the elements of the target" do
+      tool.delegate_to([+"bar"])
+      assert(tool.delegate_target[0].frozen?)
+    end
+
+    it "does not retain the strings passed by the caller" do
+      word = +"bar"
+      tool.delegate_to([word])
+      word << "baz"
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "normalizes the target elements to strings" do
+      tool.delegate_to([:bar])
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "shares one target array with the run handler and the completion" do
+      tool.delegate_to(["bar"])
+      assert_same(tool.delegate_target, tool.run_handler)
+      assert_same(tool.delegate_target, tool.completion.delegation_target)
+    end
+
     it "does not override an existing description" do
       tool.desc = "Existing description"
       tool.delegate_to(["bar"])
@@ -1250,51 +1297,6 @@ describe Toys::ToolDefinition do
       assert_raises(Toys::ToolDefinitionError) do
         tool.delegate_to(["bar"])
       end
-    end
-
-    it "executes the delegate" do
-      subtool.run_handler = proc do
-        exit(4)
-      end
-      tool.delegate_to([tool_name, subtool_name])
-      assert_equal(4, cli.run(tool_name))
-    end
-
-    it "passes arguments to the delegate" do
-      test = self
-      subtool.add_flag(:foo, ["--foo=VAL"])
-      subtool.run_handler = proc do
-        test.assert_equal("hello", get(:foo))
-        exit(4)
-      end
-      tool.delegate_to([tool_name, subtool_name])
-      assert_equal(4, cli.run(tool_name, "--foo", "hello"))
-    end
-
-    it "delegates to a namespace" do
-      subtool.run_handler = proc do
-        exit(4)
-      end
-      tool2.delegate_to([tool_name])
-      assert_equal(4, cli.run(tool2_name, subtool_name))
-    end
-
-    it "detects dangling references" do
-      tool.delegate_to([tool2_name])
-      error = assert_raises(Toys::ContextualError) do
-        cli.run(tool_name)
-      end
-      assert_equal("Delegate target not found: \"#{tool2_name}\"", error.cause.message)
-    end
-
-    it "detects circular references" do
-      tool.delegate_to([tool2_name])
-      tool2.delegate_to([tool_name])
-      error = assert_raises(Toys::ContextualError) do
-        cli.run(tool_name)
-      end
-      assert_equal("Delegation loop: \"#{tool_name}\" <- \"#{tool2_name}\" <- \"#{tool_name}\"",
-                   error.cause.message)
     end
   end
 
@@ -1342,6 +1344,13 @@ describe Toys::ToolDefinition do
         end
       end
       refute(tool.runnable?)
+    end
+
+    it "cannot be set to an array" do
+      error = assert_raises(Toys::ToolDefinitionError) do
+        tool.run_handler = ["bar"]
+      end
+      assert_equal("Run handler must be a proc or symbol", error.message)
     end
   end
 

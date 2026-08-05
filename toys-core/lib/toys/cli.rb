@@ -732,15 +732,44 @@ module Toys
 
     def make_run_handler(tool)
       run_handler = tool.run_handler
-      if run_handler.is_a?(::Symbol)
+      case run_handler
+      when ::Symbol
         proc do |context|
           context.send(run_handler)
+        end
+      when ::Array
+        proc do |context|
+          run_delegation(context, run_handler)
         end
       else
         proc do |context|
           context.instance_exec(&run_handler)
         end
       end
+    end
+
+    # Runs the delegate target of a delegating tool. The tool's run handler is
+    # the full name of the target, and the current context is passed along as
+    # the delegating context.
+    def run_delegation(context, target)
+      path = [target.join(" ").inspect]
+      walk_context = context
+      until walk_context.nil?
+        name = walk_context[Context::Key::TOOL_NAME]
+        path << name.join(" ").inspect
+        if name == target
+          raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}"
+        end
+        walk_context = walk_context[Context::Key::DELEGATED_FROM]
+      end
+      cli = context[Context::Key::CLI]
+      cli.loader.load_for_prefix(target)
+      unless cli.loader.tool_defined?(target)
+        raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
+      end
+      # Uses Context.exit rather than context.exit because a tool is allowed to
+      # override the exit method, and this control flow must not be intercepted.
+      Context.exit(cli.run(target + context[Context::Key::ARGS], delegated_from: context))
     end
 
     def execute_tool(tool, context, &block)
