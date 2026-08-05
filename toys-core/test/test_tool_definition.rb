@@ -1229,6 +1229,29 @@ describe Toys::ToolDefinition do
       assert_equal(["bar"], tool.run_handler)
     end
 
+    it "freezes the elements of the target" do
+      tool.delegate_to([+"bar"])
+      assert(tool.delegate_target[0].frozen?)
+    end
+
+    it "does not retain the strings passed by the caller" do
+      word = +"bar"
+      tool.delegate_to([word])
+      word << "baz"
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "normalizes the target elements to strings" do
+      tool.delegate_to([:bar])
+      assert_equal(["bar"], tool.delegate_target)
+    end
+
+    it "shares one target array with the run handler and the completion" do
+      tool.delegate_to(["bar"])
+      assert_same(tool.delegate_target, tool.run_handler)
+      assert_same(tool.delegate_target, tool.completion.delegation_target)
+    end
+
     it "does not override an existing description" do
       tool.desc = "Existing description"
       tool.delegate_to(["bar"])
@@ -1293,6 +1316,22 @@ describe Toys::ToolDefinition do
       end
       tool.delegate_to([tool_name, subtool_name])
       assert_equal(4, cli.run(tool_name, "--foo", "hello"))
+    end
+
+    it "executes the delegate when the tool has a private exit method" do
+      mixin = ::Module.new do
+        private
+
+        def exit(code = 0)
+          Toys::Context.exit(code)
+        end
+      end
+      subtool.run_handler = proc do
+        exit(4)
+      end
+      tool.delegate_to([tool_name, subtool_name])
+      tool.tool_class.include(mixin)
+      assert_equal(4, cli.run(tool_name))
     end
 
     it "delegates to a namespace" do

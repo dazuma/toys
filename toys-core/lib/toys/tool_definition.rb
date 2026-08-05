@@ -1460,7 +1460,14 @@ module Toys
     ##
     # Causes this tool to delegate to another tool.
     #
-    # @param target [Array<String>] The full path to the delegate tool.
+    # This sets {#run_handler} to the name of the target, disables argument
+    # parsing, and replaces {#completion} with one that defers to the target.
+    # It is the only supported way to configure delegation; {#run_handler=}
+    # does not accept a target name.
+    #
+    # @param target [Array<String>] The full path to the delegate tool. The
+    #     elements are converted to strings, and a frozen copy of the array is
+    #     retained.
     # @return [self]
     #
     def delegate_to(target)
@@ -1475,7 +1482,7 @@ module Toys
               "Cannot delegate tool #{display_name.inspect} because" \
               " some implementation has already been created for it."
       end
-      target = target.dup.freeze
+      target = target.map { |word| word.to_s.dup.freeze }.freeze
       disable_argument_parsing
       check_definition_state(is_method: true)
       @run_handler = target

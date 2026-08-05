@@ -767,7 +767,9 @@ module Toys
       unless cli.loader.tool_defined?(target)
         raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
       end
-      context.exit(cli.run(target + context[Context::Key::ARGS], delegated_from: context))
+      # Uses Context.exit rather than context.exit because a tool is allowed to
+      # override the exit method, and this control flow must not be intercepted.
+      Context.exit(cli.run(target + context[Context::Key::ARGS], delegated_from: context))
     end
 
     def execute_tool(tool, context, &block)
