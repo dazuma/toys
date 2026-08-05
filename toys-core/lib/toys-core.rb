@@ -36,8 +36,8 @@
 # noted below, dependencies point downward.
 #
 # * **Execution** — carries out a single invocation. {Toys::CLI} is the main
-#   entrypoint, {Toys::ArgParser} parses the command line, {Toys::Context} is
-#   the base class for tool runtime, and {Toys::Middleware} wraps execution.
+#   entrypoint, {Toys::ArgParser} parses the command line, and {Toys::Context}
+#   is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them.
@@ -45,9 +45,11 @@
 #   class, with {Toys::Flag}, {Toys::FlagGroup}, and {Toys::PositionalArg} as
 #   its components, along with the pluggable {Toys::Acceptor} and
 #   {Toys::Completion} types that the DSL attaches to flags and args.
-# * **Support** — shared vocabulary used by all of the above:
-#   {Toys::WrappableString}, {Toys::ModuleLookup}, {Toys::Mixin},
-#   {Toys::Template}, and the error classes.
+# * **Support** — shared vocabulary used by all of the above. This includes
+#   the pluggable extension types {Toys::Mixin}, {Toys::Template}, and
+#   {Toys::Middleware}, which are resolved by name through
+#   {Toys::ModuleLookup}, as well as {Toys::WrappableString} and the error
+#   classes.
 #
 # There is one deliberate upward dependency: the definition layer builds each
 # tool class as a subclass of {Toys::Context}, so that a tool's implementation
