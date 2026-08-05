@@ -653,7 +653,8 @@ module Toys
 
     def finish_flag_groups
       @tool.flag_groups.each do |group|
-        @errors += Array(group.validation_errors(@seen_flag_keys))
+        messages = Array(group.validation_errors(@seen_flag_keys))
+        @errors += messages.map { |message| FlagGroupConstraintError.new(message) }
       end
     end
 
