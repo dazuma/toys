@@ -29,14 +29,29 @@
 #   the implementations of corresponding mixins.
 # * The main entrypoint for the command line framework is {Toys::CLI}.
 #
-# Other important internal classes are listed below.
+# ## Architecture layers
 #
-# * The definition of a tool is represented by {Toys::ToolDefinition} along
-#   the helpers {Toys::Flag}, {Toys::PositionalArg}, and {Toys::FlagGroup}.
-# * Argument parsing is implemented by {Toys::ArgParser}.
-# * The process of finding and loading a tool definition given a tool name, is
-#   implemented by {Toys::Loader}.
-# * Text wrapping is handled by {Toys::WrappableString}.
+# The classes directly under the {Toys} module are not grouped by directory,
+# but fall into four layers, listed here from the outside in. Except where
+# noted below, dependencies point downward.
+#
+# * **Execution** — carries out a single invocation. {Toys::CLI} is the main
+#   entrypoint, {Toys::ArgParser} parses the command line, {Toys::Context} is
+#   the base class for tool runtime, and {Toys::Middleware} wraps execution.
+# * **Loading** — resolves a tool name to a definition. {Toys::Loader}
+#   discovers and loads Toys files, {Toys::SourceInfo} tracks their
+#   provenance, and {Toys::InputFile} evaluates them.
+# * **Definition** — models a tool. {Toys::ToolDefinition} is the central
+#   class, with {Toys::Flag}, {Toys::FlagGroup}, and {Toys::PositionalArg} as
+#   its components, along with the pluggable {Toys::Acceptor} and
+#   {Toys::Completion} types that the DSL attaches to flags and args.
+# * **Support** — shared vocabulary used by all of the above:
+#   {Toys::WrappableString}, {Toys::ModuleLookup}, {Toys::Mixin},
+#   {Toys::Template}, and the error classes.
+#
+# There is one deliberate upward dependency: the definition layer builds each
+# tool class as a subclass of {Toys::Context}, so that a tool's implementation
+# inherits the runtime methods defined there.
 #
 module Toys
   ##

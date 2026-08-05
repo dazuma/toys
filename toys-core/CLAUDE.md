@@ -28,69 +28,7 @@ To exercise a DSL or argument-parsing change end-to-end, beyond the unit tests, 
 
 ## Source Architecture
 
-All source lives under `lib/toys/`. The framework has a layered architecture:
-
-### Tool Definition Layer
-
-- **`tool_definition.rb`** (~52KB) - The central class. A `ToolDefinition` holds everything about a tool: flags, positional args, execution blocks, descriptions, middleware, mixins, source info, and settings. Most other classes feed into or read from this.
-- **`flag.rb`** - Models flag definitions (e.g., `--verbose`, `-n VALUE`). Handles flag syntax parsing, default values, acceptors, and flag resolution.
-- **`flag_group.rb`** - Groups flags with constraints (required, exactly one, at most one, at least one).
-- **`positional_arg.rb`** - Models required, optional, and remaining positional arguments.
-- **`acceptor.rb`** - Validates and converts string arguments. Built-in acceptors for common types (Integer, Float, etc.) plus custom regex/block-based acceptors.
-
-### DSL Layer (`dsl/`)
-
-- **`dsl/tool.rb`** - The main DSL module users interact with in `.toys.rb` files. Provides `desc`, `flag`, `required_arg`, `optional_arg`, `remaining_args`, `include` (for mixins), `expand` (for templates), `tool` (for subtools), and `def run`.
-- **`dsl/flag.rb`** - DSL for configuring individual flags within a block.
-- **`dsl/flag_group.rb`** - DSL for flag group blocks.
-- **`dsl/positional_arg.rb`** - DSL for configuring positional args within a block.
-- **`dsl/base.rb`** - Base DSL for top-level `.toys.rb` files (delegating to Tool).
-- **`dsl/internal.rb`** - Internal DSL support.
-
-### Loading & Resolution Layer
-
-- **`loader.rb`** (~35KB) - Discovers and loads `.toys.rb` files from directories, gems, and blocks. Manages the tool namespace hierarchy and lazy-loads tool definitions on demand.
-- **`source_info.rb`** - Tracks provenance of tool definitions (which file, directory, or gem they came from). Provides access to data directories and context directories.
-- **`input_file.rb`** - Handles reading and evaluating `.toys.rb` input files.
-
-### Execution Layer
-
-- **`cli.rb`** (~28KB) - The main entry point. Configures the loader, middleware stack, and mixin/template/middleware lookups. Orchestrates parsing and running tools.
-- **`arg_parser.rb`** (~20KB) - Parses command line arguments against a tool definition. Handles flags, positional args, and subtool dispatch.
-- **`context.rb`** - The runtime context (`self` inside a tool's `run` method). Provides access to parsed arguments, options, and exit codes.
-- **`middleware.rb`** - Middleware pipeline wrapping tool execution. Each middleware can intercept before/after tool run.
-- **`completion.rb`** - Shell tab-completion support.
-
-### Support Layer
-
-- **`mixin.rb`** - Module mixin infrastructure for tools.
-- **`template.rb`** - Template infrastructure for reusable tool generators.
-- **`module_lookup.rb`** - Name-to-module resolution for mixins, middleware, and templates.
-- **`errors.rb`** - Custom exception classes.
-- **`wrappable_string.rb`** - Terminal-aware text wrapping.
-- **`compat.rb`** - Ruby version compatibility shims.
-
-### Utils (`utils/`)
-
-Utility classes used by the framework and available to tool authors:
-
-- **`exec.rb`** (~54KB) - Subprocess execution with streaming I/O, capture, and controller support.
-- **`git_cache.rb`** - Git repository caching for remote sources.
-- **`help_text.rb`** - Generates formatted help text for tools.
-- **`terminal.rb`** - Terminal I/O with styling, spinners, and prompts.
-- **`pager.rb`** - Pager support (less/more).
-- **`standard_ui.rb`** - Standard UI patterns for tools.
-- **`gems.rb`** - On-demand gem activation and installation.
-- **`xdg.rb`** - XDG Base Directory support.
-- **`completion_engine.rb`** - Drives shell completion.
-
-### Standard Mixins (`standard_mixins/`)
-
-Mixins that tools include via `include :mixin_name`: `:exec`, `:terminal`, `:fileutils`, `:bundler`, `:gems`, `:git_cache`, `:highline`, `:pager`, `:xdg`.
-
-### Standard Middleware (`standard_middleware/`)
-
-Built-in middleware: `show_help`, `handle_usage_errors`, `set_default_descriptions`, `add_verbosity_flags`, `show_root_version`, `apply_config`.
+The classes under `lib/toys/` are organized into layers (execution, loading, definition, support). The layer map, and the one intentional upward dependency, are documented in the `Toys` module comment at the top of `lib/toys-core.rb`.
 
 ## Testing
 

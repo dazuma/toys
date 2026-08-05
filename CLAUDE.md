@@ -39,12 +39,8 @@ toys ci --help  # Display a manpage showing all available options for toys ci
 
 ## Code Style
 
-- Ruby 2.7+ target
-- Double-quoted strings (`Style/StringLiterals: double_quotes`)
-- Trailing commas in multiline arrays and hashes
-- Bracket-style symbol and word arrays (`[:foo, :bar]` not `%i[foo bar]`)
-- Max line length: 120
-- `Style/DocumentationMethod: Enabled` — public methods require YARD docs
+Formatting and lint rules are enforced by RuboCop (see `.rubocop-common.yml`). Beyond those:
+
 - Tests use Minitest spec style with assertions (not expectations)
 - Top-level constants must be prefixed with `::` (e.g. `::File`, `::Regexp`, `::Gem::Version`) to avoid ambiguous resolution within nested namespaces. Relative constants defined within the current namespace should not be prefixed. Note that Kernel method calls such as `Array(x)`, `Integer(x)`, `Float(x)` look like constants but are not and do not get the prefix.
 
@@ -60,4 +56,3 @@ toys ci --help  # Display a manpage showing all available options for toys ci
 - Unless instructed otherwise, always git commit after a step is complete and the tests and rubocop both pass.
 - Conventional Commits format required (`fix:`, `feat:`, `docs:`, etc.)
 - Avoid making changes to multiple gems in the same commit.
-- Prefer Ruby for any one-off scripts you need to write as part of your work.
