@@ -502,12 +502,12 @@ module Toys
     # handler set to `:run` and not defining the method.
     #
     # Additionally, if this tool delegates to another tool, the run handler is
-    # the full name of the delegate target, as an array of strings. Note that
-    # this value cannot be assigned through {#run_handler=}, which accepts only
-    # a proc, symbol, or nil. Delegation is configured by calling
-    # {#delegate_to}, which sets this attribute along with the rest of the
-    # delegation state. The getter and setter are thus not symmetrical: the
-    # getter can return an array that the setter would reject.
+    # the full name of the delegate target, as an array of strings. This array
+    # may not be modified. Note also that this value cannot be assigned through
+    # {#run_handler=}, which accepts only a proc, symbol, or nil. Delegation is
+    # configured by calling {#delegate_to}, which sets this attribute along
+    # with the rest of the delegation state. The getter and setter are thus not
+    # symmetrical: the getter can return an array that the setter would reject.
     #
     # @return [Proc] if the run handler is defined as a Proc
     # @return [Symbol] if the run handler is defined as a method
@@ -533,6 +533,7 @@ module Toys
 
     ##
     # The full name of the delegate target, if any.
+    # This array may not be modified.
     #
     # @return [Array<String>] if this tool delegates
     # @return [nil] if this tool does not delegate
@@ -1474,6 +1475,7 @@ module Toys
               "Cannot delegate tool #{display_name.inspect} because" \
               " some implementation has already been created for it."
       end
+      target = target.dup.freeze
       disable_argument_parsing
       check_definition_state(is_method: true)
       @run_handler = target

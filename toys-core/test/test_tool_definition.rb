@@ -1215,6 +1215,20 @@ describe Toys::ToolDefinition do
       assert(tool.runnable?)
     end
 
+    it "freezes the target" do
+      tool.delegate_to(["bar"])
+      assert(tool.delegate_target.frozen?)
+      assert(tool.run_handler.frozen?)
+    end
+
+    it "does not retain the array passed by the caller" do
+      target = ["bar"]
+      tool.delegate_to(target)
+      target << "baz"
+      assert_equal(["bar"], tool.delegate_target)
+      assert_equal(["bar"], tool.run_handler)
+    end
+
     it "does not override an existing description" do
       tool.desc = "Existing description"
       tool.delegate_to(["bar"])
