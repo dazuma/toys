@@ -540,11 +540,9 @@ module Toys
         path: tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
-        context = build_context(tool, remaining,
-                                verbosity: verbosity,
-                                delegated_from: delegated_from)
-        run_handler = make_run_handler(tool)
-        execute_tool(tool, context, &run_handler)
+        Execution.new(self, tool, remaining,
+                      verbosity: verbosity,
+                      delegated_from: delegated_from).run
       end
     rescue ContextualError => e
       @error_handler.call(e).to_i
@@ -566,9 +564,8 @@ module Toys
     #
     def load_tool(*args)
       tool, remaining = @loader.lookup(args.flatten)
-      context = build_context(tool, remaining)
       result = nil
-      execute_tool(tool, context) do |ctx|
+      Execution.new(self, tool, remaining).run do |ctx|
         result = yield ctx
       end
       result
@@ -716,130 +713,6 @@ module Toys
       raise ::ArgumentError,
             "Cannot change #{key} while copying loader sources, because the setting is" \
             " captured in the copied sources."
-    end
-
-    def build_context(tool, args, verbosity: 0, delegated_from: nil)
-      default_data = {
-        Context::Key::VERBOSITY => verbosity,
-        Context::Key::DELEGATED_FROM => delegated_from,
-      }
-      arg_parser = ArgParser.new(self, tool,
-                                 default_data: default_data,
-                                 require_exact_flag_match: tool.exact_flag_match_required?)
-      arg_parser.parse(args).finish
-      tool.tool_class.new(arg_parser.data)
-    end
-
-    def make_run_handler(tool)
-      run_handler = tool.run_handler
-      case run_handler
-      when ::Symbol
-        proc do |context|
-          context.send(run_handler)
-        end
-      when ::Array
-        proc do |context|
-          run_delegation(context, run_handler)
-        end
-      else
-        proc do |context|
-          context.instance_exec(&run_handler)
-        end
-      end
-    end
-
-    # Runs the delegate target of a delegating tool. The tool's run handler is
-    # the full name of the target, and the current context is passed along as
-    # the delegating context.
-    def run_delegation(context, target)
-      path = [target.join(" ").inspect]
-      walk_context = context
-      until walk_context.nil?
-        name = walk_context[Context::Key::TOOL_NAME]
-        path << name.join(" ").inspect
-        if name == target
-          raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}"
-        end
-        walk_context = walk_context[Context::Key::DELEGATED_FROM]
-      end
-      cli = context[Context::Key::CLI]
-      cli.loader.load_for_prefix(target)
-      unless cli.loader.tool_defined?(target)
-        raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
-      end
-      # Uses Context.exit rather than context.exit because a tool is allowed to
-      # override the exit method, and this control flow must not be intercepted.
-      Context.exit(cli.run(target + context[Context::Key::ARGS], delegated_from: context))
-    end
-
-    def execute_tool(tool, context, &block)
-      tool.source_info&.apply_lib_paths
-      tool.run_initializers(context)
-      cur_logger = context[Context::Key::LOGGER]
-      if cur_logger
-        original_level = cur_logger.level
-        cur_logger.level = (base_level || original_level) - context[Context::Key::VERBOSITY].to_i
-      end
-      begin
-        executor = build_executor(tool, context, &block)
-        catch(:result) do
-          executor.call
-          0
-        end
-      ensure
-        cur_logger.level = original_level if cur_logger
-      end
-    end
-
-    def build_executor(tool, context)
-      executor = proc do
-        if !context[Context::Key::USAGE_ERRORS].empty?
-          handle_usage_errors(context, tool)
-        elsif !tool.runnable?
-          raise NotRunnableError, "No implementation for tool #{tool.display_name.inspect}"
-        else
-          yield context
-        end
-      rescue ::SignalException => e
-        handle_signal_by_tool(context, tool, e)
-      end
-      tool.built_middleware.reverse_each do |middleware|
-        executor = make_executor(middleware, context, executor)
-      end
-      executor
-    end
-
-    def handle_usage_errors(context, tool)
-      usage_errors = context[Context::Key::USAGE_ERRORS]
-      handler = tool.usage_error_handler
-      raise ArgParsingError, usage_errors if handler.nil?
-      call_handler(context, handler, usage_errors)
-    end
-
-    def handle_signal_by_tool(context, tool, exception)
-      handler = tool.signal_handler(exception.signo)
-      raise exception unless handler
-      call_handler(context, handler, exception)
-    rescue ::SignalException => e
-      raise e if e.equal?(exception)
-      handle_signal_by_tool(context, tool, e)
-    end
-
-    def call_handler(context, handler, argument)
-      handler = context.method(handler).to_proc if handler.is_a?(::Symbol)
-      if handler.arity.zero?
-        context.instance_exec(&handler)
-      else
-        context.instance_exec(argument, &handler)
-      end
-    end
-
-    def make_executor(middleware, context, next_executor)
-      if middleware.respond_to?(:run)
-        proc { middleware.run(context, &next_executor) }
-      else
-        next_executor
-      end
     end
   end
 end

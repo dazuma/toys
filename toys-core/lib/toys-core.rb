@@ -36,8 +36,8 @@
 # noted below, dependencies point downward.
 #
 # * **Execution** — carries out a single invocation. {Toys::CLI} is the main
-#   entrypoint, {Toys::ArgParser} parses the command line, and {Toys::Context}
-#   is the base class for tool runtime.
+#   entrypoint, {Toys::Execution} runs one tool, {Toys::ArgParser} parses the
+#   command line, and {Toys::Context} is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them.
@@ -151,6 +151,7 @@ require "toys/dsl/internal"
 require "toys/dsl/positional_arg"
 require "toys/dsl/tool"
 require "toys/errors"
+require "toys/execution"
 require "toys/flag"
 require "toys/flag_group"
 require "toys/input_file"
