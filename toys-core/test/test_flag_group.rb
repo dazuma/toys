@@ -12,18 +12,6 @@ describe Toys::FlagGroup do
     group << flag
   end
 
-  def assert_errors_include(expected, errors)
-    return if errors.any? do |err|
-      case expected
-      when ::String
-        err.message == expected
-      when ::Class
-        err.is_a?(expected)
-      end
-    end
-    flunk("Errors #{errors.inspect} did not include expected #{expected.inspect}")
-  end
-
   describe "create" do
     describe "type resolution" do
       it "defaults to Optional when type is omitted" do
@@ -136,8 +124,8 @@ describe Toys::FlagGroup do
     it "fails to validate with a flag missing" do
       group = Toys::FlagGroup::Required.new(nil, nil, nil)
       add_flags(group)
-      assert_errors_include('Flag "--flag2" is required.',
-                            group.validation_errors([:flag1, :flag3]))
+      assert_includes(group.validation_errors([:flag1, :flag3]),
+                      'Flag "--flag2" is required.')
     end
   end
 
@@ -165,20 +153,20 @@ describe Toys::FlagGroup do
     it "fails to validate with no flags set" do
       group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
-      assert_errors_include(
+      assert_includes(
+        group.validation_errors([]),
         'Exactly one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
-          " but none were provided.",
-        group.validation_errors([])
+          " but none were provided."
       )
     end
 
     it "fails to validate with two flags set" do
       group = Toys::FlagGroup::ExactlyOne.new(nil, nil, nil)
       add_flags(group)
-      assert_errors_include(
+      assert_includes(
+        group.validation_errors([:flag1, :flag3]),
         'Exactly one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
-          ' but 2 were provided: ["--flag1", "--flag3"].',
-        group.validation_errors([:flag1, :flag3])
+          ' but 2 were provided: ["--flag1", "--flag3"].'
       )
     end
   end
@@ -199,10 +187,10 @@ describe Toys::FlagGroup do
     it "fails to validate with two flags set" do
       group = Toys::FlagGroup::AtMostOne.new(nil, nil, nil)
       add_flags(group)
-      assert_errors_include(
+      assert_includes(
+        group.validation_errors([:flag1, :flag3]),
         'At most one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
-          ' but 2 were provided: ["--flag1", "--flag3"].',
-        group.validation_errors([:flag1, :flag3])
+          ' but 2 were provided: ["--flag1", "--flag3"].'
       )
     end
   end
@@ -217,10 +205,10 @@ describe Toys::FlagGroup do
     it "fails to validate with no flags set" do
       group = Toys::FlagGroup::AtLeastOne.new(nil, nil, nil)
       add_flags(group)
-      assert_errors_include(
+      assert_includes(
+        group.validation_errors([]),
         'At least one flag out of group ["--flag1", "--flag2", "--flag3"] is required,' \
-          " but none were provided.",
-        group.validation_errors([])
+          " but none were provided."
       )
     end
 

@@ -179,8 +179,9 @@ module Toys
       #
       # @param _seen [Array<Object>] A list of the keys of the flags actually
       #     passed to the invocation
-      # @return [Array<ArgParser::FlagGroupConstraintError>] A list of errors
-      #     to raise, or the empty array if no errors were found
+      # @return [Array<String>] A list of messages describing the constraints
+      #     that were not satisfied, or the empty array if all were satisfied.
+      #     The caller is responsible for converting these into errors.
       #
       def validation_errors(_seen)
         raise ::NotImplementedError
@@ -198,8 +199,7 @@ module Toys
         results = []
         flags.each do |flag|
           unless seen.include?(flag.key)
-            str = "Flag \"#{flag.display_name}\" is required."
-            results << ArgParser::FlagGroupConstraintError.new(str)
+            results << "Flag \"#{flag.display_name}\" is required."
           end
         end
         results
@@ -233,10 +233,10 @@ module Toys
         if seen_names.size > 1
           str = "Exactly one flag out of group #{summary} is required, but #{seen_names.size}" \
                 " were provided: #{seen_names.inspect}."
-          [ArgParser::FlagGroupConstraintError.new(str)]
+          [str]
         elsif seen_names.empty?
           str = "Exactly one flag out of group #{summary} is required, but none were provided."
-          [ArgParser::FlagGroupConstraintError.new(str)]
+          [str]
         else
           []
         end
@@ -258,7 +258,7 @@ module Toys
         if seen_names.size > 1
           str = "At most one flag out of group #{summary} is required, but #{seen_names.size}" \
                 " were provided: #{seen_names.inspect}."
-          [ArgParser::FlagGroupConstraintError.new(str)]
+          [str]
         else
           []
         end
@@ -275,7 +275,7 @@ module Toys
       def validation_errors(seen)
         return [] if flags.any? { |flag| seen.include?(flag.key) }
         str = "At least one flag out of group #{summary} is required, but none were provided."
-        [ArgParser::FlagGroupConstraintError.new(str)]
+        [str]
       end
     end
   end
