@@ -20,7 +20,7 @@ describe Toys::Execution do
 
   def make_execution(*args, **opts)
     tool, remaining = cli.loader.lookup(args.flatten)
-    Toys::Execution.new(cli, tool, remaining, **opts)
+    Toys::Execution.new(tool, remaining, cli.loader, **opts)
   end
 
   it "runs a tool and returns its exit code" do
@@ -98,7 +98,7 @@ describe Toys::Execution do
       end
     end
     tool, remaining = middleware_cli.loader.lookup(["foo"])
-    Toys::Execution.new(middleware_cli, tool, remaining).run do |_context|
+    Toys::Execution.new(tool, remaining, middleware_cli.loader).run do |_context|
       order << :block
     end
     assert_equal([:middleware, :block], order)

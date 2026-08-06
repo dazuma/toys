@@ -525,24 +525,19 @@ module Toys
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
     # @param verbosity [Integer] Initial verbosity. Default is 0.
-    # @param delegated_from [Toys::Context] The context from which this
-    #     execution is delegated. Optional. Should be set only if this is a
-    #     delegated execution.
     #
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
-    def run(*args, verbosity: 0, delegated_from: nil)
+    def run(*args, verbosity: 0)
       tool, remaining = ContextualError.capture(banner: "Error finding tool definition") do
-        @loader.lookup(args.flatten)
+        loader.lookup(args.flatten)
       end
       ContextualError.capture(
         banner: "Error during tool execution",
         path: tool.source_info&.source_path,
         tool_name: tool.full_name, tool_args: remaining
       ) do
-        Execution.new(self, tool, remaining,
-                      verbosity: verbosity,
-                      delegated_from: delegated_from).run
+        create_execution(tool, remaining, verbosity).run
       end
     rescue ContextualError => e
       @error_handler.call(e).to_i
@@ -556,16 +551,17 @@ module Toys
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
+    # @param verbosity [Integer] Initial verbosity. Default is 0.
     # @yieldparam context [Toys::Context] Yields the tool context.
     #
     # @return [Object] The value returned from the block. Returns nil if the
     #     block did not execute because of an error such as failure to parse
     #     arguments or load the requested tool.
     #
-    def load_tool(*args)
-      tool, remaining = @loader.lookup(args.flatten)
+    def load_tool(*args, verbosity: 0)
+      tool, remaining = loader.lookup(args.flatten)
       result = nil
-      Execution.new(self, tool, remaining).run do |ctx|
+      create_execution(tool, remaining, verbosity).run do |ctx|
         result = yield ctx
       end
       result
@@ -713,6 +709,17 @@ module Toys
       raise ::ArgumentError,
             "Cannot change #{key} while copying loader sources, because the setting is" \
             " captured in the copied sources."
+    end
+
+    def create_execution(tool, remaining, verbosity)
+      external_data = {
+        Context::Key::CLI => self,
+      }
+      Execution.new(tool, remaining, loader,
+                    external_data: external_data,
+                    logger: logger_factory.call(tool),
+                    base_logger_level: base_level,
+                    verbosity: verbosity)
     end
   end
 end

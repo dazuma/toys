@@ -121,7 +121,7 @@ module Toys
       #
       def arg_parser
         lookup_tool
-        @arg_parser ||= ArgParser.new(@cli, @tool).parse(@args)
+        @arg_parser ||= ArgParser.new(@tool, @cli.loader).parse(@args)
       end
 
       ##

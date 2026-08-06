@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "logger"
+
 module Toys
   ##
   # An execution of a single tool.
@@ -22,23 +24,40 @@ module Toys
     ##
     # Create an execution of the given tool.
     #
-    # @param cli [Toys::CLI] The CLI that is running the tool. It provides the
-    #     loader, logger factory, and base logger level for the execution, and
-    #     is made available to the tool at runtime.
     # @param tool [Toys::ToolDefinition] The tool to run.
     # @param args [Array<String>] The command line arguments to pass to the
     #     tool, not including the tool name itself.
+    # @param loader [Toys::Loader] The loader, used for delegating, getting
+    #     suggestions, and populating context.
+    # @param logger [Logger,nil] A logger to use. If not given, a default will
+    #     be created.
+    # @param base_logger_level [Integer,nil] The logger level that corresponds
+    #     to zero verbosity. If not provided, the current setting of the logger
+    #     is used (typically Logger::WARN).
     # @param verbosity [Integer] Initial verbosity. Default is 0.
     # @param delegated_from [Toys::Context,nil] The context from which this
     #     execution is delegated. Optional. Should be set only if this is a
     #     delegated execution.
+    # @param external_data [Hash] Additional data provided by the caller.
     #
-    def initialize(cli, tool, args, verbosity: 0, delegated_from: nil)
-      @cli = cli
+    def initialize(tool, args, loader,
+                   logger: nil,
+                   base_logger_level: nil,
+                   verbosity: 0,
+                   delegated_from: nil,
+                   external_data: {})
       @tool = tool
       @args = args
-      @verbosity = verbosity
+      @loader = loader
+      @logger = logger
+      unless @logger
+        @logger = ::Logger.new($stderr)
+        @logger.level = ::Logger::WARN
+      end
+      @base_logger_level = base_logger_level
+      @verbosity = verbosity.to_i
       @delegated_from = delegated_from
+      @external_data = external_data
     end
 
     ##
@@ -67,12 +86,18 @@ module Toys
     # argument errors are recorded in the context as usage errors, to be
     # handled later during execution.
     def build_context
-      default_data = {
-        Context::Key::VERBOSITY => @verbosity,
+      common_data = {
+        Context::Key::CONTEXT_DIRECTORY => @tool.context_directory,
         Context::Key::DELEGATED_FROM => @delegated_from,
+        Context::Key::LOGGER => @logger,
+        Context::Key::TOOL => @tool,
+        Context::Key::TOOL_NAME => @tool.full_name,
+        Context::Key::TOOL_SOURCE => @tool.source_info,
+        Context::Key::VERBOSITY => @verbosity,
       }
-      arg_parser = ArgParser.new(@cli, @tool,
-                                 default_data: default_data,
+      common_data.merge!(@external_data)
+      arg_parser = ArgParser.new(@tool, @loader,
+                                 common_data: common_data,
                                  require_exact_flag_match: @tool.exact_flag_match_required?)
       arg_parser.parse(@args).finish
       @tool.tool_class.new(arg_parser.data)
@@ -103,24 +128,27 @@ module Toys
     # the full name of the target, and the current context is passed along as
     # the delegating context.
     def run_delegation(context, target)
-      path = [target.join(" ").inspect]
+      target_str = target.join(" ").inspect
+      path = [target_str]
       walk_context = context
       until walk_context.nil?
         name = walk_context[Context::Key::TOOL_NAME]
         path << name.join(" ").inspect
-        if name == target
-          raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}"
-        end
+        raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}" if name == target
         walk_context = walk_context[Context::Key::DELEGATED_FROM]
       end
-      cli = context[Context::Key::CLI]
-      cli.loader.load_for_prefix(target)
-      unless cli.loader.tool_defined?(target)
-        raise ToolDefinitionError, "Delegate target not found: \"#{target.join(' ')}\""
-      end
-      # Uses Context.exit rather than context.exit because a tool is allowed to
-      # override the exit method, and this control flow must not be intercepted.
-      Context.exit(cli.run(target + context[Context::Key::ARGS], delegated_from: context))
+      # We recompute the tool/args split so that target can point to a namespace
+      # and we can load a tool under it.
+      @loader.load_for_prefix(target)
+      raise ToolDefinitionError, "Delegate target not found: #{target_str}" unless @loader.tool_defined?(target)
+      target_tool, target_args = @loader.lookup(target + @args)
+      subexec = Execution.new(target_tool, target_args, @loader,
+                              external_data: @external_data,
+                              logger: @logger,
+                              base_logger_level: @base_logger_level,
+                              verbosity: @verbosity,
+                              delegated_from: context)
+      Context.exit(subexec.run)
     end
 
     # Prepares the runtime environment for the tool, applying lib paths and
@@ -133,7 +161,7 @@ module Toys
       cur_logger = context[Context::Key::LOGGER]
       if cur_logger
         original_level = cur_logger.level
-        cur_logger.level = (@cli.base_level || original_level) - context[Context::Key::VERBOSITY].to_i
+        cur_logger.level = (@base_logger_level || original_level) - context[Context::Key::VERBOSITY].to_i
       end
       begin
         executor = build_executor(context, &block)

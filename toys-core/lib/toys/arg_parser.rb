@@ -288,17 +288,19 @@ module Toys
     ##
     # Create an argument parser for a particular tool.
     #
-    # @param cli [Toys::CLI] The CLI in effect.
     # @param tool [Toys::ToolDefinition] The tool defining the argument format.
-    # @param default_data [Hash] Additional initial data (such as verbosity).
+    # @param loader [Toys::Loader] The loader, used to generate suggestions
+    #     for unrecognized arguments.
+    # @param common_data [Hash] Additional initial data (such as verbosity).
     # @param require_exact_flag_match [boolean] Whether to require flag matches
     #     be exact (not partial). Default is false.
     #
-    def initialize(cli, tool, default_data: {}, require_exact_flag_match: false)
-      @require_exact_flag_match = require_exact_flag_match
-      @loader = cli.loader
-      @data = initial_data(cli, tool, default_data)
+    def initialize(tool, loader, common_data: {}, require_exact_flag_match: false)
       @tool = tool
+      @loader = loader
+      @data = common_data
+      @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
+      @require_exact_flag_match = require_exact_flag_match
       @seen_flag_keys = []
       @errors = []
       @unmatched_args = []
@@ -438,22 +440,6 @@ module Toys
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val) { val }
     private_constant :REMAINING_HANDLER, :ARG_HANDLER
-
-    def initial_data(cli, tool, default_data)
-      data = {
-        Context::Key::ARGS => nil,
-        Context::Key::CLI => cli,
-        Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
-        Context::Key::LOGGER => cli.logger_factory.call(tool),
-        Context::Key::TOOL => tool,
-        Context::Key::TOOL_SOURCE => tool.source_info,
-        Context::Key::TOOL_NAME => tool.full_name,
-        Context::Key::USAGE_ERRORS => [],
-      }
-      tool.default_data.each { |k, v| data[k] = v.clone }
-      default_data.each { |k, v| data[k] ||= v }
-      data
-    end
 
     def check_flag_value(arg)
       return false unless @active_flag_def

@@ -1154,7 +1154,7 @@ module Toys
         @flags << flag_def
         group << flag_def
       end
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 
@@ -1254,7 +1254,7 @@ module Toys
       arg_def = PositionalArg.new(key, :optional, accept, default, complete,
                                   desc, long_desc, display_name)
       @optional_args << arg_def
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 
@@ -1292,7 +1292,7 @@ module Toys
       arg_def = PositionalArg.new(key, :remaining, accept, default, complete,
                                   desc, long_desc, display_name)
       @remaining_arg = arg_def
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 

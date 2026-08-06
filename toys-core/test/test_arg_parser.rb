@@ -13,8 +13,8 @@ describe Toys::ArgParser do
   let(:tool_name) { "foo" }
   let(:root_tool) { loader.activate_tool([], 0) }
   let(:tool) { loader.activate_tool([tool_name], 0) }
-  let(:arg_parser) { Toys::ArgParser.new(cli, tool) }
-  let(:root_arg_parser) { Toys::ArgParser.new(cli, root_tool) }
+  let(:arg_parser) { Toys::ArgParser.new(tool, loader) }
+  let(:root_arg_parser) { Toys::ArgParser.new(root_tool, loader) }
 
   def assert_data_includes(expected, data)
     expected.each do |k, v|
@@ -661,7 +661,7 @@ describe Toys::ArgParser do
 
     it "does not match partially" do
       tool.add_flag(:abcde)
-      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser = Toys::ArgParser.new(tool, loader, require_exact_flag_match: true)
       arg_parser.parse(["--abcd"])
       arg_parser.finish
       assert_errors_include('Flag "--abcd" is not recognized.', arg_parser.errors)
@@ -771,7 +771,7 @@ describe Toys::ArgParser do
     it "treats an inexact match as positional when exact matches are required" do
       tool.add_flag(:abcde)
       tool.set_remaining_args(:r)
-      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser = Toys::ArgParser.new(tool, loader, require_exact_flag_match: true)
       arg_parser.parse(["--abcd"])
       arg_parser.finish
       assert_data_includes({abcde: nil, r: ["--abcd"]}, arg_parser.data)
