@@ -13,7 +13,7 @@ module Toys
   # A successfully built Execution can be invoked via {#run} to execute a tool.
   # This parses the remaining command line arguments into a {Toys::Context},
   # applies the tool's middleware, and then either runs the tool normally or
-  # executes a given block with the context. the latter is useful for testing.
+  # executes a given block with the context. The latter is useful for testing.
   #
   # Once constructed, an Execution can be invoked multiple times independently.
   #
@@ -49,7 +49,10 @@ module Toys
     #     execution is delegated. Optional. Should be set only if this is a
     #     delegated execution.
     # @param wrap_errors [boolean] If true (the default), wrap errors in
-    #     ContextualError. If false, propagate them as-is.
+    #     ContextualError, including errors during any tool loading that takes
+    #     place during this constructor, and errors during argument parsing and
+    #     tool execution during the {#run} method. If false, propagate errors
+    #     as-is and do not wrap them.
     # @param external_data [Hash] Additional data provided by the caller.
     #
     def initialize(tool, args, loader,
@@ -59,7 +62,6 @@ module Toys
                    delegated_from: nil,
                    wrap_errors: true,
                    external_data: {})
-      @wrap_errors = wrap_errors
       if tool
         @tool = tool
         @args = args
@@ -67,7 +69,7 @@ module Toys
         @tool, @args = ContextualError.capture(
           banner: "Error finding tool definition",
           final: true,
-          passthru: !@wrap_errors
+          passthru: !wrap_errors
         ) do
           loader.lookup(args)
         end
@@ -77,6 +79,7 @@ module Toys
       @base_logger_level = base_logger_level
       @verbosity = verbosity.to_i
       @delegated_from = delegated_from
+      @wrap_errors = wrap_errors
       @external_data = external_data
     end
 
@@ -86,12 +89,9 @@ module Toys
     # Parses the command line arguments, and builds the tool's context, and
     # invokes the tool within its middleware stack.
     #
-    # If a block is passed, the runtime context is simply yielded to it. Any
-    # errors raised are passed through directly. This is useful for testing
-    # parts of the tool runtime in isolation.
-    #
-    # If no block is passed, the tool is executed normally. Any errors raised
-    # are wrapped in ContextualError before being raised to the caller.
+    # If a block is passed, the runtime context is simply yielded to it. This
+    # is useful for testing parts of the tool runtime in isolation.
+    # If no block is passed, the tool is executed normally.
     #
     # @yieldparam context [Toys::Context] If a block is given, it is invoked in
     #     place of the tool's run handler, with the tool's middleware still
@@ -100,8 +100,6 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(&block)
-      context = build_context
-      block ||= make_run_handler
       ContextualError.capture(
         banner: "Error during tool execution",
         path: @tool.source_info&.source_path,
@@ -109,6 +107,8 @@ module Toys
         final: true,
         passthru: !@wrap_errors
       ) do
+        context = build_context
+        block ||= make_run_handler
         execute_tool(context, &block)
       end
     end
@@ -196,6 +196,7 @@ module Toys
                               logger_factory: @logger_factory,
                               base_logger_level: @base_logger_level,
                               verbosity: @verbosity,
+                              wrap_errors: @wrap_errors,
                               delegated_from: context)
       Context.exit(subexec.run)
     end
