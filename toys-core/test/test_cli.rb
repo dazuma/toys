@@ -689,12 +689,11 @@ describe Toys::CLI do
           end
         end
       end
-      err = assert_raises(Toys::ContextualError) do
+      assert_raises(Toys::ArgParsingError) do
         cli.load_tool("bar") do
           flunk("Did not expect the block to run")
         end
       end
-      assert_kind_of(Toys::ArgParsingError, err.cause)
     end
   end
 

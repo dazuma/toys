@@ -529,7 +529,7 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0)
-      create_execution(args, verbosity).run
+      create_execution(args, verbosity, true).run
     rescue ContextualError => e
       @error_handler.call(e).to_i
     end
@@ -551,7 +551,7 @@ module Toys
     #
     def load_tool(*args, verbosity: 0)
       result = nil
-      create_execution(args, verbosity).run do |ctx|
+      create_execution(args, verbosity, false).run do |ctx|
         result = yield ctx
       end
       result
@@ -622,7 +622,7 @@ module Toys
       #
       def default_error_handler
         proc do |error|
-          cause = error.cause
+          cause = error.root_cause
           # The explicit `cause: nil` suppresses only the *implicit* adoption of
           # `$!` (i.e. `error`) as the reraised exception's cause. It never
           # clears a cause the exception already carries, so the original cause
@@ -697,7 +697,7 @@ module Toys
             " captured in the copied sources."
     end
 
-    def create_execution(args, verbosity)
+    def create_execution(args, verbosity, wrap_errors)
       external_data = {
         Context::Key::CLI => self,
         Context::Key::EXECUTABLE_NAME => executable_name,
@@ -706,7 +706,8 @@ module Toys
                     external_data: external_data,
                     logger_factory: logger_factory,
                     base_logger_level: base_level,
-                    verbosity: verbosity)
+                    verbosity: verbosity,
+                    wrap_errors: wrap_errors)
     end
   end
 end

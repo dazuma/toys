@@ -169,12 +169,13 @@ module Toys
     ##
     # The currently running CLI.
     #
-    # This is a convenience getter for {Toys::Context::Key::CLI}.
+    # This is a convenience getter for {Toys::Context::Key::CLI}. Note the
+    # value could be nil if no CLI is present during the execution.
     #
     # If the `cli` method is overridden by the tool, you can still access it
     # using the name `__cli`.
     #
-    # @return [Toys::CLI]
+    # @return [Toys::CLI,nil]
     #
     def cli
       @__data[Key::CLI]

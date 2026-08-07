@@ -99,6 +99,20 @@ module Toys
     end
 
     ##
+    # Returns the root cause of this error, i.e. the first cause in the chain
+    # that is not itself a ContextualError.
+    #
+    # @return [Exception] The root cause.
+    #
+    def root_cause
+      current = cause
+      while current.is_a?(ContextualError)
+        current = current.cause
+      end
+      current
+    end
+
+    ##
     # @private
     #
     def update_fields!(path: nil, tool_name: nil, tool_args: nil, final: false)
@@ -111,7 +125,7 @@ module Toys
       end
       @tool_name = tool_name if @tool_name.nil? && !tool_name.nil?
       @tool_args = tool_args if @tool_args.nil? && !tool_args.nil?
-      @final = final
+      @final = true if final
     end
 
     private

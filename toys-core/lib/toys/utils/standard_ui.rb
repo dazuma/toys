@@ -111,7 +111,7 @@ module Toys
       # @return [Integer] The exit code
       #
       def handle_error(error)
-        cause = error.cause
+        cause = error.root_cause
         if cause.is_a?(::SignalException)
           display_signal_notice(cause)
         else
@@ -196,9 +196,18 @@ module Toys
       # @param error [Toys::ContextualError]
       #
       def display_error_notice(error)
+        stack = []
+        loop do
+          stack.push(error)
+          break unless error.is_a?(ContextualError)
+          error = error.cause
+        end
         @terminal.puts
-        @terminal.puts(cause_string(error.cause))
-        @terminal.puts(context_string(error), :bold)
+        @terminal.puts(cause_string(stack.pop))
+        @terminal.puts(context_string(stack.pop), :bold) unless stack.empty?
+        until stack.empty?
+          @terminal.puts(context_string(stack.pop))
+        end
       end
 
       ##
@@ -244,9 +253,10 @@ module Toys
       end
 
       def context_string(error)
+        orig_error = error.root_cause
         lines = [
           error.banner || "Unexpected error!",
-          "    #{error.cause.class}: #{error.cause.message}",
+          "    #{orig_error.class}: #{orig_error.message}",
         ]
         if error.config_path
           lines << "    in config file: #{error.config_path}:#{error.config_line}"

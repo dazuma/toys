@@ -15,8 +15,7 @@ module Toys
   # applies the tool's middleware, and then either runs the tool normally or
   # executes a given block with the context. the latter is useful for testing.
   #
-  # Once constructed, an Execution can be invoked multiple times, even
-  # concurrently, assuming the underlying tool itself can handle it.
+  # Once constructed, an Execution can be invoked multiple times independently.
   #
   # Most applications should not create executions directly, but should call
   # {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly configured
@@ -49,6 +48,8 @@ module Toys
     # @param delegated_from [Toys::Context,nil] The context from which this
     #     execution is delegated. Optional. Should be set only if this is a
     #     delegated execution.
+    # @param wrap_errors [boolean] If true (the default), wrap errors in
+    #     ContextualError. If false, propagate them as-is.
     # @param external_data [Hash] Additional data provided by the caller.
     #
     def initialize(tool, args, loader,
@@ -56,14 +57,17 @@ module Toys
                    base_logger_level: nil,
                    verbosity: 0,
                    delegated_from: nil,
+                   wrap_errors: true,
                    external_data: {})
+      @wrap_errors = wrap_errors
       if tool
         @tool = tool
         @args = args
       else
         @tool, @args = ContextualError.capture(
           banner: "Error finding tool definition",
-          final: true
+          final: true,
+          passthru: !@wrap_errors
         ) do
           loader.lookup(args)
         end
@@ -102,7 +106,8 @@ module Toys
         banner: "Error during tool execution",
         path: @tool.source_info&.source_path,
         tool_name: @tool.full_name, tool_args: @args,
-        final: true
+        final: true,
+        passthru: !@wrap_errors
       ) do
         execute_tool(context, &block)
       end
