@@ -78,6 +78,33 @@ describe Toys::CLI do
       cli.run("foo")
     end
 
+    it "passes the verbosity setting through the default middleware stack" do
+      test = self
+      verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
+      verbose_cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_equal(2, verbosity)
+            test.assert_equal(Logger::WARN - 2, logger.level)
+          end
+        end
+      end
+      assert_equal(0, verbose_cli.run("foo", verbosity: 2))
+    end
+
+    it "combines the verbosity setting with verbosity flags" do
+      test = self
+      verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
+      verbose_cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_equal(1, verbosity)
+          end
+        end
+      end
+      assert_equal(0, verbose_cli.run("foo", "-v", "-q", "-v", verbosity: 0))
+    end
+
     it "makes context fields available via convenience methods" do
       test = self
       cli.add_config_block do
@@ -291,6 +318,63 @@ describe Toys::CLI do
       end
       assert_includes(error.message, "Delegation loop: \"foo\" <- \"boo\" <- \"foo\"")
     end
+
+    it "attributes a delegate error to both the delegate and the delegating tool" do
+      cli.add_config_block do
+        tool "target" do
+          to_run do
+            raise "kaboom"
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("front")
+      end
+      assert_equal(["front"], error.tool_name)
+      assert_equal(["target"], error.cause.tool_name)
+      assert_equal("kaboom", error.root_cause.message)
+    end
+
+    it "reraises a signal raised by a delegate" do
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise SignalException, 4
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      error = assert_raises(SignalException) do
+        cli.run("front")
+      end
+      assert_equal(4, error.signo)
+    end
+
+    it "passes a delegate error to a custom error handler" do
+      my_handler = proc do |error|
+        assert_equal(["front"], error.tool_name)
+        assert_equal(["target"], error.cause.tool_name)
+        assert_kind_of(::RuntimeError, error.root_cause)
+        11
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "target" do
+          to_run do
+            raise "kaboom"
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(11, my_cli.run("front"))
+    end
   end
 
   describe "error handling" do
@@ -349,6 +433,24 @@ describe Toys::CLI do
       my_cli = cli.child(error_handler: my_handler)
       my_cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
       assert_equal(10, my_cli.run("runtime", "hello"))
+    end
+
+    it "passes an error raised during argument parsing to the error handler" do
+      my_handler = proc do |error|
+        assert_equal(["foo"], error.tool_name)
+        assert_equal("handler kaboom", error.root_cause.message)
+        13
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "foo" do
+          flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
+          def run
+            # Never reached
+          end
+        end
+      end
+      assert_equal(13, my_cli.run("foo", "--bar=x"))
     end
 
     it "supports a custom handler that receives signals" do
@@ -693,6 +795,53 @@ describe Toys::CLI do
         cli.load_tool("bar") do
           flunk("Did not expect the block to run")
         end
+      end
+    end
+
+    it "does not wrap an error raised by the block" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            # Never reached
+          end
+        end
+      end
+      error = assert_raises(::RuntimeError) do
+        cli.load_tool("foo") do
+          raise "from the block"
+        end
+      end
+      assert_equal("from the block", error.message)
+    end
+
+    it "does not wrap an error raised during argument parsing" do
+      cli.add_config_block do
+        tool "foo" do
+          flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
+          def run
+            # Never reached
+          end
+        end
+      end
+      error = assert_raises(::RuntimeError) do
+        cli.load_tool("foo", "--bar=x") do
+          flunk("Did not expect the block to run")
+        end
+      end
+      assert_equal("handler kaboom", error.message)
+    end
+
+    it "honors the verbosity setting" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            # Never reached
+          end
+        end
+      end
+      cli.load_tool("foo", verbosity: 2) do |tool|
+        test.assert_equal(2, tool[Toys::Context::Key::VERBOSITY])
       end
     end
   end

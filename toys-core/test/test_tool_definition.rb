@@ -203,6 +203,24 @@ describe Toys::ToolDefinition do
         assert_equal(2, tool.default_data[:a])
       end
 
+      it "does not clear an existing default when no default is given" do
+        tool.add_flag(:a, ["-a"], default: 2)
+        tool.add_flag(:a, ["-b"])
+        assert_equal(2, tool.default_data[:a])
+      end
+
+      it "does not clear a separately set value when no default is given" do
+        tool.default_data[:a] = "from-set"
+        tool.add_flag(:a, ["-a"])
+        assert_equal("from-set", tool.default_data[:a])
+      end
+
+      it "overwrites an existing default when a default is given" do
+        tool.default_data[:a] = "from-set"
+        tool.add_flag(:a, ["-a"], default: 2)
+        assert_equal(2, tool.default_data[:a])
+      end
+
       it "recognizes desc and long desc" do
         tool.add_flag(:a, ["-a"], desc: "I like Ruby",
                                   long_desc: ["hello", "world"])
@@ -660,6 +678,18 @@ describe Toys::ToolDefinition do
         assert_equal("hello", tool.default_data[:foo])
       end
 
+      it "does not clear a separately set value when no default is given" do
+        tool.default_data[:foo] = "from-set"
+        tool.add_optional_arg(:foo)
+        assert_equal("from-set", tool.default_data[:foo])
+      end
+
+      it "overwrites a separately set value when a default is given" do
+        tool.default_data[:foo] = "from-set"
+        tool.add_optional_arg(:foo, default: "hello")
+        assert_equal("hello", tool.default_data[:foo])
+      end
+
       it "recognizes desc and long_desc" do
         tool.add_optional_arg(:foo, desc: "short desc", long_desc: ["line one"])
         arg = tool.optional_args.first
@@ -720,6 +750,12 @@ describe Toys::ToolDefinition do
       it "populates default_data with a custom value" do
         tool.set_remaining_args(:rest, default: ["a", "b"])
         assert_equal(["a", "b"], tool.default_data[:rest])
+      end
+
+      it "does not clear a separately set value when the default is nil" do
+        tool.default_data[:rest] = ["from-set"]
+        tool.set_remaining_args(:rest, default: nil)
+        assert_equal(["from-set"], tool.default_data[:rest])
       end
 
       it "replaces a previously set remaining arg" do

@@ -85,6 +85,57 @@ describe Toys::Utils::StandardUI do
     end
   end
 
+  describe "handle_error with nested errors" do
+    def capture_nested_error(inner_banner: "inner banner", outer_banner: "outer banner", &block)
+      Toys::ContextualError.capture(banner: outer_banner, tool_name: ["front"], final: true) do
+        Toys::ContextualError.capture(banner: inner_banner, tool_name: ["target"],
+                                      tool_args: ["arg1"], final: true, &block)
+      end
+      flunk
+    rescue Toys::ContextualError => e
+      e
+    end
+
+    it "reports the original error rather than the intermediate error" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?)
+      assert_equal("RuntimeError: foobar", lines.first)
+      reported = lines.grep(/^ +\S+Error: /)
+      assert_equal(["    RuntimeError: foobar", "    RuntimeError: foobar"], reported)
+    end
+
+    it "displays a context block for each level, innermost first" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      inner_index = output_content.index("inner banner")
+      outer_index = output_content.index("outer banner")
+      refute_nil(inner_index)
+      refute_nil(outer_index)
+      assert(inner_index < outer_index, "expected the inner context block to be displayed first")
+      assert_includes(output_content, "target")
+      assert_includes(output_content, "front")
+      assert_includes(output_content, '["arg1"]')
+    end
+
+    it "returns the exit code for the original error" do
+      error = capture_nested_error { raise Toys::NotRunnableError }
+      assert_equal(126, default_ui.handle_error(error))
+    end
+
+    it "handles a nested Interrupt" do
+      error = capture_nested_error { raise Interrupt }
+      assert_equal(130, default_ui.handle_error(error))
+      assert_equal("\nINTERRUPTED\n", output_content)
+    end
+
+    it "handles a nested SignalException" do
+      error = capture_nested_error { raise SignalException, 15 }
+      assert_equal(143, default_ui.handle_error(error))
+      assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
+    end
+  end
+
   describe "create_logger" do
     it "makes a logger that outputs the expected format" do
       logger = default_ui.create_logger(nil)

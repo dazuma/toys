@@ -1023,4 +1023,44 @@ describe Toys::ArgParser do
       assert_errors_include(["bar"], arg_parser.errors) if supports_suggestions?
     end
   end
+
+  describe "common data" do
+    it "includes the given data in the parsed data" do
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "hello"}, parser.data)
+    end
+
+    it "is not overridden by a nil default from the tool" do
+      # This is what keeps a caller-provided verbosity from being wiped out by
+      # the verbosity flag added by AddVerbosityFlags, which has no default.
+      tool.add_flag(:a, ["-a"])
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "hello"}, parser.data)
+    end
+
+    it "is overridden by a non-nil default from the tool" do
+      tool.add_flag(:a, ["-a"], default: "from-tool")
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "from-tool"}, parser.data)
+    end
+
+    it "is overridden by a value parsed from the command line" do
+      tool.add_flag(:a, ["-a VALUE"])
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse(["-a", "from-cli"]).finish
+      assert_data_includes({a: "from-cli"}, parser.data)
+    end
+
+    it "does not modify the given hash" do
+      tool.add_flag(:a, ["-a VALUE"], default: "from-tool")
+      common_data = {b: "hello"}
+      parser = Toys::ArgParser.new(tool, loader, common_data: common_data)
+      parser.parse(["-a", "from-cli"]).finish
+      assert_equal({b: "hello"}, common_data)
+      assert_data_includes({a: "from-cli", b: "hello"}, parser.data)
+    end
+  end
 end

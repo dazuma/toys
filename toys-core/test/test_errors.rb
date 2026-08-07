@@ -267,4 +267,165 @@ describe Toys::ContextualError do
       assert_equal __FILE__, error.config_path
     end
   end
+
+  describe "final" do
+    it "is not final by default" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture { raise "oops" }
+      end
+      refute(error.final?)
+    end
+
+    it "is final when captured with final: true" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(final: true) { raise "oops" }
+      end
+      assert(error.final?)
+    end
+
+    it "merges a non-final error into the outer capture" do
+      inner_error = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"]) do
+          inner_error = assert_raises(Toys::ContextualError) do
+            Toys::ContextualError.capture(banner: "inner") { raise "oops" }
+          end
+          raise inner_error
+        end
+      end
+      assert_same(inner_error, error)
+      assert_equal("inner", error.banner)
+      assert_equal(["outer-tool"], error.tool_name)
+    end
+
+    it "finalizes a non-final error merged by a final capture" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", final: true) do
+          Toys::ContextualError.capture(banner: "inner") { raise "oops" }
+        end
+      end
+      assert(error.final?)
+      assert_equal("inner", error.banner)
+    end
+
+    it "does not clear the final flag of an error passing through a non-final capture" do
+      # Once finalized, an error must stay finalized, so a later non-final
+      # capture nests rather than merging into it.
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outermost") do
+          Toys::ContextualError.capture(banner: "outer", final: true) do
+            Toys::ContextualError.capture(banner: "inner") { raise "oops" }
+          end
+        end
+      end
+      assert_equal("outermost", error.banner)
+      refute(error.final?)
+      assert(error.cause.final?)
+      assert_equal("inner", error.cause.banner)
+    end
+
+    it "wraps a final error in a new error rather than merging" do
+      inner_error = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"]) do
+          inner_error = assert_raises(Toys::ContextualError) do
+            Toys::ContextualError.capture(banner: "inner", tool_name: ["inner-tool"], final: true) do
+              raise "oops"
+            end
+          end
+          raise inner_error
+        end
+      end
+      refute_same(inner_error, error)
+      assert_equal("outer", error.banner)
+      assert_equal(["outer-tool"], error.tool_name)
+      assert_same(inner_error, error.cause)
+      assert_equal("inner", error.cause.banner)
+      assert_equal(["inner-tool"], error.cause.tool_name)
+      assert_equal("oops", error.cause.cause.message)
+    end
+
+    it "propagates the final setting to a wrapping error" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", final: true) do
+          Toys::ContextualError.capture(banner: "inner", final: true) { raise "oops" }
+        end
+      end
+      assert(error.final?)
+      assert(error.cause.final?)
+    end
+  end
+
+  describe "passthru" do
+    it "propagates an ordinary error without wrapping" do
+      error = assert_raises(::RuntimeError) do
+        Toys::ContextualError.capture(banner: "my banner", passthru: true) { raise "oops" }
+      end
+      assert_equal("oops", error.message)
+    end
+
+    it "propagates a SignalException without wrapping" do
+      error = assert_raises(::SignalException) do
+        Toys::ContextualError.capture(passthru: true) { raise ::SignalException, 15 }
+      end
+      assert_equal(15, error.signo)
+    end
+
+    it "propagates an existing ContextualError unchanged" do
+      inner_error = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"], passthru: true) do
+          inner_error = assert_raises(Toys::ContextualError) do
+            Toys::ContextualError.capture(banner: "inner", final: true) { raise "oops" }
+          end
+          raise inner_error
+        end
+      end
+      assert_same(inner_error, error)
+      assert_equal("inner", error.banner)
+      assert_nil(error.tool_name)
+    end
+
+    it "returns the block value normally" do
+      assert_equal(42, Toys::ContextualError.capture(passthru: true) { 42 })
+    end
+  end
+
+  describe "root_cause" do
+    it "returns the original error for a single level" do
+      original = ::RuntimeError.new("the original")
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture { raise original }
+      end
+      assert_same(original, error.root_cause)
+    end
+
+    it "returns the original error through multiple nested levels" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outermost", final: true) do
+          Toys::ContextualError.capture(banner: "middle", final: true) do
+            Toys::ContextualError.capture(banner: "innermost", final: true) do
+              raise ::ArgumentError, "the original"
+            end
+          end
+        end
+      end
+      assert_kind_of(::ArgumentError, error.root_cause)
+      assert_equal("the original", error.root_cause.message)
+    end
+
+    it "stops at the first non-contextual error in the cause chain" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(final: true) do
+          raise ::ArgumentError, "underlying"
+        rescue ::ArgumentError
+          raise "outer error"
+        end
+      end
+      root = error.root_cause
+      assert_kind_of(::RuntimeError, root)
+      assert_equal("outer error", root.message)
+      assert_kind_of(::ArgumentError, root.cause)
+    end
+  end
 end
