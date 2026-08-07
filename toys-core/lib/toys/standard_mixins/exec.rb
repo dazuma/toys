@@ -794,6 +794,7 @@ module Toys
       # @private
       #
       def self._make_tool_caller(cmd, cli)
+        raise ::ArgumentError, "A CLI is required to use the :exec mixin" unless cli
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
         proc { ::Kernel.exit(cli.run(*cmd)) }
       end

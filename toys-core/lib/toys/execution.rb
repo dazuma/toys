@@ -4,33 +4,44 @@ require "logger"
 
 module Toys
   ##
-  # An execution of a single tool.
+  # An object that performs tool executions.
   #
-  # An execution ties together a {Toys::CLI} with a {Toys::ToolDefinition} that
-  # has already been looked up from the CLI's loader, along with the remaining
-  # command line arguments to pass to it. Calling {Toys::Execution#run} parses
-  # those arguments into a {Toys::Context}, applies the tool's middleware, and
-  # invokes the tool.
+  # An Execution ties together all the information needed to perform a tool
+  # execution. This includes which tool to execute and the arguments passed to
+  # it, and execution-related settings.
+  #
+  # A successfully built Execution can be invoked via {#run} to execute a tool.
+  # This parses the remaining command line arguments into a {Toys::Context},
+  # applies the tool's middleware, and then either runs the tool normally or
+  # executes a given block with the context. the latter is useful for testing.
+  #
+  # Once constructed, an Execution can be invoked multiple times, even
+  # concurrently, assuming the underlying tool itself can handle it.
   #
   # Most applications should not create executions directly, but should call
-  # {Toys::CLI#run}, which looks up the tool, creates the execution, and
-  # provides error handling. Create an execution directly if you have a tool
-  # definition in hand and want to run it without going through tool name
-  # lookup, or if you want to provide your own error handling.
-  #
-  # An execution does no work, and raises no errors, until {#run} is called.
+  # {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly configured
+  # tool executions and tests, along with error handling.
   #
   class Execution
     ##
-    # Create an execution of the given tool.
+    # Create a tool execution.
     #
-    # @param tool [Toys::ToolDefinition] The tool to run.
-    # @param args [Array<String>] The command line arguments to pass to the
-    #     tool, not including the tool name itself.
-    # @param loader [Toys::Loader] The loader, used for delegating, getting
-    #     suggestions, and populating context.
-    # @param logger [Logger,nil] A logger to use. If not given, a default will
-    #     be created.
+    # The tool can be specified explicitly by passing the {Toys::ToolDefinition}
+    # or implicitly by including the tool name as part of the arguments. If
+    # the tool definition is not explicitly provided, the given {Toys::Loader}
+    # is invoked in the constructor to lookup the tool (which can raise an
+    # error.)
+    #
+    # @param tool [Toys::ToolDefinition,nil] The tool to run, or nil to lookup
+    #     the tool name from the given args.
+    # @param args [Array<String>] The command line arguments. If a tool is
+    #     provided explicitly, this is just the args to pass to the tool, not
+    #     including the tool name itself. If a tool is not provided explicitly,
+    #     this should include the tool name to lookup.
+    # @param loader [Toys::Loader] The loader.
+    # @param logger_factory [Proc,nil] A proc that optionally takes a tool
+    #     definition and returns a logger. If not given, a default will be
+    #     provided.
     # @param base_logger_level [Integer,nil] The logger level that corresponds
     #     to zero verbosity. If not provided, the current setting of the logger
     #     is used (typically Logger::WARN).
@@ -41,19 +52,24 @@ module Toys
     # @param external_data [Hash] Additional data provided by the caller.
     #
     def initialize(tool, args, loader,
-                   logger: nil,
+                   logger_factory: nil,
                    base_logger_level: nil,
                    verbosity: 0,
                    delegated_from: nil,
                    external_data: {})
-      @tool = tool
-      @args = args
-      @loader = loader
-      @logger = logger
-      unless @logger
-        @logger = ::Logger.new($stderr)
-        @logger.level = ::Logger::WARN
+      if tool
+        @tool = tool
+        @args = args
+      else
+        @tool, @args = ContextualError.capture(
+          banner: "Error finding tool definition",
+          final: true
+        ) do
+          loader.lookup(args)
+        end
       end
+      @loader = loader
+      @logger_factory = logger_factory || Execution.default_logger_factory
       @base_logger_level = base_logger_level
       @verbosity = verbosity.to_i
       @delegated_from = delegated_from
@@ -61,11 +77,17 @@ module Toys
     end
 
     ##
-    # Run the tool.
+    # Perform the requested tool execution.
     #
-    # Parses the command line arguments, builds the tool's context, and invokes
-    # the tool within its middleware stack. Errors are not handled; they are
-    # raised to the caller.
+    # Parses the command line arguments, and builds the tool's context, and
+    # invokes the tool within its middleware stack.
+    #
+    # If a block is passed, the runtime context is simply yielded to it. Any
+    # errors raised are passed through directly. This is useful for testing
+    # parts of the tool runtime in isolation.
+    #
+    # If no block is passed, the tool is executed normally. Any errors raised
+    # are wrapped in ContextualError before being raised to the caller.
     #
     # @yieldparam context [Toys::Context] If a block is given, it is invoked in
     #     place of the tool's run handler, with the tool's middleware still
@@ -76,7 +98,28 @@ module Toys
     def run(&block)
       context = build_context
       block ||= make_run_handler
-      execute_tool(context, &block)
+      ContextualError.capture(
+        banner: "Error during tool execution",
+        path: @tool.source_info&.source_path,
+        tool_name: @tool.full_name, tool_args: @args,
+        final: true
+      ) do
+        execute_tool(context, &block)
+      end
+    end
+
+    ##
+    # Returns a default logger factory that generates simple loggers that
+    # write to STDERR.
+    #
+    # @return [Proc]
+    #
+    def self.default_logger_factory
+      proc do
+        logger = ::Logger.new($stderr)
+        logger.level = ::Logger::WARN
+        logger
+      end
     end
 
     private
@@ -89,13 +132,14 @@ module Toys
       common_data = {
         Context::Key::CONTEXT_DIRECTORY => @tool.context_directory,
         Context::Key::DELEGATED_FROM => @delegated_from,
-        Context::Key::LOGGER => @logger,
+        Context::Key::LOADER => @loader,
+        Context::Key::LOGGER => @logger_factory.call(@tool),
         Context::Key::TOOL => @tool,
         Context::Key::TOOL_NAME => @tool.full_name,
         Context::Key::TOOL_SOURCE => @tool.source_info,
         Context::Key::VERBOSITY => @verbosity,
       }
-      common_data.merge!(@external_data)
+      common_data = @external_data.merge(common_data)
       arg_parser = ArgParser.new(@tool, @loader,
                                  common_data: common_data,
                                  require_exact_flag_match: @tool.exact_flag_match_required?)
@@ -137,14 +181,14 @@ module Toys
         raise ToolDefinitionError, "Delegation loop: #{path.join(' <- ')}" if name == target
         walk_context = walk_context[Context::Key::DELEGATED_FROM]
       end
-      # We recompute the tool/args split so that target can point to a namespace
-      # and we can load a tool under it.
       @loader.load_for_prefix(target)
       raise ToolDefinitionError, "Delegate target not found: #{target_str}" unless @loader.tool_defined?(target)
-      target_tool, target_args = @loader.lookup(target + @args)
-      subexec = Execution.new(target_tool, target_args, @loader,
+      # We don't lookup_specific the target directly, but allow the Loader to
+      # re-lookup with the args, so that target can point to a namespace and
+      # we can load a tool under it.
+      subexec = Execution.new(nil, target + @args, @loader,
                               external_data: @external_data,
-                              logger: @logger,
+                              logger_factory: @logger_factory,
                               base_logger_level: @base_logger_level,
                               verbosity: @verbosity,
                               delegated_from: context)

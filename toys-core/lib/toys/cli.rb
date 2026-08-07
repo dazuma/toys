@@ -529,16 +529,7 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0)
-      tool, remaining = ContextualError.capture(banner: "Error finding tool definition") do
-        loader.lookup(args.flatten)
-      end
-      ContextualError.capture(
-        banner: "Error during tool execution",
-        path: tool.source_info&.source_path,
-        tool_name: tool.full_name, tool_args: remaining
-      ) do
-        create_execution(tool, remaining, verbosity).run
-      end
+      create_execution(args, verbosity).run
     rescue ContextualError => e
       @error_handler.call(e).to_i
     end
@@ -559,9 +550,8 @@ module Toys
     #     arguments or load the requested tool.
     #
     def load_tool(*args, verbosity: 0)
-      tool, remaining = loader.lookup(args.flatten)
       result = nil
-      create_execution(tool, remaining, verbosity).run do |ctx|
+      create_execution(args, verbosity).run do |ctx|
         result = yield ctx
       end
       result
@@ -654,11 +644,7 @@ module Toys
       # @return [Proc]
       #
       def default_logger_factory
-        proc do
-          logger = ::Logger.new($stderr)
-          logger.level = ::Logger::WARN
-          logger
-        end
+        Execution.default_logger_factory
       end
 
       ##
@@ -711,13 +697,14 @@ module Toys
             " captured in the copied sources."
     end
 
-    def create_execution(tool, remaining, verbosity)
+    def create_execution(args, verbosity)
       external_data = {
         Context::Key::CLI => self,
+        Context::Key::EXECUTABLE_NAME => executable_name,
       }
-      Execution.new(tool, remaining, loader,
+      Execution.new(nil, args.flatten, loader,
                     external_data: external_data,
-                    logger: logger_factory.call(tool),
+                    logger_factory: logger_factory,
                     base_logger_level: base_level,
                     verbosity: verbosity)
     end

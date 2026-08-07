@@ -56,6 +56,7 @@ module Toys
       ##
       # Context key for the currently running {Toys::CLI}. You can use the
       # value to run other tools from your tool by calling {Toys::CLI#run}.
+      # The value could be nil if a CLI is not present.
       # @return [Object]
       #
       CLI = ::Object.new.freeze
@@ -73,6 +74,19 @@ module Toys
       # @return [Object]
       #
       DELEGATED_FROM = ::Object.new.freeze
+
+      ##
+      # Context key for the executable name. The value is a String if present,
+      # otherwise it could be nil.
+      # @return [Object]
+      #
+      EXECUTABLE_NAME = ::Object.new.freeze
+
+      ##
+      # Context key for the active `Loader` object.
+      # @return [Object]
+      #
+      LOADER = ::Object.new.freeze
 
       ##
       # Context key for the active `Logger` object.

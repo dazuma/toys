@@ -44,8 +44,10 @@ module Toys
         while (cur = cur[Context::Key::DELEGATED_FROM])
           delegates << cur[Context::Key::TOOL]
         end
-        cli = context[Context::Key::CLI]
-        new(context[Context::Key::TOOL], cli.loader, cli.executable_name, delegates: delegates)
+        new(context[Context::Key::TOOL],
+            context[Context::Key::LOADER],
+            context[Context::Key::EXECUTABLE_NAME],
+            delegates: delegates)
       end
 
       ##
@@ -54,7 +56,7 @@ module Toys
       # @param tool [Toys::ToolDefinition] The tool to document.
       # @param loader [Toys::Loader] A loader that can provide subcommands.
       # @param executable_name [String] The name of the executable.
-      #     e.g. `"toys"`.
+      #     e.g. `"toys"`. If nil, defaults to a placeholder.
       # @param delegates [Array<Toys::ToolDefinition>] The delegation path to
       #     the tool.
       #
@@ -63,7 +65,7 @@ module Toys
       def initialize(tool, loader, executable_name, delegates: [])
         @tool = tool
         @loader = loader
-        @executable_name = executable_name
+        @executable_name = executable_name || "(binary-name)"
         @delegates = delegates
       end
 

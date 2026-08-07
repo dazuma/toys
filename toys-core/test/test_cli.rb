@@ -289,7 +289,7 @@ describe Toys::CLI do
       error = assert_raises(Toys::ContextualError) do
         cli.run("foo")
       end
-      assert_equal("Delegation loop: \"foo\" <- \"boo\" <- \"foo\"", error.cause.message)
+      assert_includes(error.message, "Delegation loop: \"foo\" <- \"boo\" <- \"foo\"")
     end
   end
 
@@ -689,11 +689,12 @@ describe Toys::CLI do
           end
         end
       end
-      assert_raises(Toys::ArgParsingError) do
+      err = assert_raises(Toys::ContextualError) do
         cli.load_tool("bar") do
           flunk("Did not expect the block to run")
         end
       end
+      assert_kind_of(Toys::ArgParsingError, err.cause)
     end
   end
 

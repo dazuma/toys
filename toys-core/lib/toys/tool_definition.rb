@@ -1086,7 +1086,9 @@ module Toys
     ##
     # Add a flag to the current tool. Each flag must specify a key which
     # the script may use to obtain the flag value from the context.
-    # You may then provide the flags themselves in `OptionParser` form.
+    # You may then provide the flags themselves in `OptionParser` form. If a
+    # flag is not present in the command line, the value is set to the given
+    # default, unless it was already set separately.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
@@ -1218,8 +1220,8 @@ module Toys
     ##
     # Add an optional positional argument to the current tool. You must specify
     # a key which the script may use to obtain the argument value from the
-    # context. If an optional argument is not given on the command line, the
-    # value is set to the given default.
+    # context. If an optional argument is not present in the command line, the
+    # value is set to the given default, unless it was already set separately.
     #
     # In general, arguments are parsed in the order they are added to the tool
     # definition. However, all required arguments are always parsed before
@@ -1261,7 +1263,9 @@ module Toys
     ##
     # Specify what should be done with unmatched positional arguments. You must
     # specify a key which the script may use to obtain the remaining args
-    # from the context.
+    # from the context. If no remaining arguments were present in the command
+    # line, the value is set to the given default (normally the empty array),
+    # unless it was already set separately.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.

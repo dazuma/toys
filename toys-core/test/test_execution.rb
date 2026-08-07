@@ -57,9 +57,10 @@ describe Toys::Execution do
       end
     end
     execution = make_execution("foo")
-    assert_raises(Toys::ArgParsingError) do
+    err = assert_raises(Toys::ContextualError) do
       execution.run
     end
+    assert_kind_of(Toys::ArgParsingError, err.cause)
   end
 
   it "runs a given block in place of the tool's run handler" do
@@ -136,8 +137,9 @@ describe Toys::Execution do
         # Empty tool
       end
     end
-    assert_raises(Toys::NotRunnableError) do
+    err = assert_raises(Toys::ContextualError) do
       make_execution("foo").run
     end
+    assert_kind_of(Toys::NotRunnableError, err.cause)
   end
 end

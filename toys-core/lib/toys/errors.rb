@@ -44,7 +44,7 @@ module Toys
     #
     # @private This interface is internal and subject to change without warning.
     #
-    def initialize(cause, banner, path, tool_name, tool_args)
+    def initialize(cause, banner, path, tool_name, tool_args, final)
       banner ||= "Unexpected error"
       super("#{banner}: #{cause.message} (#{cause.class})")
       set_backtrace(cause.backtrace)
@@ -57,6 +57,7 @@ module Toys
         @config_path = path
         @config_line = line
       end
+      @final = final
     end
 
     ##
@@ -90,9 +91,17 @@ module Toys
     attr_reader :tool_args
 
     ##
+    # Whether this error has been finalized
+    # @return [boolean]
+    #
+    def final?
+      @final
+    end
+
+    ##
     # @private
     #
-    def update_fields!(path: nil, tool_name: nil, tool_args: nil)
+    def update_fields!(path: nil, tool_name: nil, tool_args: nil, final: false)
       if @config_path.nil? && @config_line.nil?
         line = line_from_cause(path, cause)
         if line
@@ -102,6 +111,7 @@ module Toys
       end
       @tool_name = tool_name if @tool_name.nil? && !tool_name.nil?
       @tool_args = tool_args if @tool_args.nil? && !tool_args.nil?
+      @final = final
     end
 
     private
@@ -129,13 +139,19 @@ module Toys
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def capture(banner: nil, path: nil, tool_name: nil, tool_args: nil)
+      def capture(banner: nil, path: nil, tool_name: nil, tool_args: nil, final: false, passthru: false)
         yield
       rescue ContextualError => e
-        e.update_fields!(path: path, tool_name: tool_name, tool_args: tool_args)
-        raise e
+        raise e if passthru
+        if e.final?
+          raise ContextualError.new(e, banner, path, tool_name, tool_args, final)
+        else
+          e.update_fields!(path: path, tool_name: tool_name, tool_args: tool_args, final: final)
+          raise e
+        end
       rescue ::ScriptError, ::StandardError, ::SignalException => e
-        raise ContextualError.new(e, banner, path, tool_name, tool_args)
+        raise e if passthru
+        raise ContextualError.new(e, banner, path, tool_name, tool_args, final)
       end
     end
   end

@@ -298,7 +298,7 @@ module Toys
     def initialize(tool, loader, common_data: {}, require_exact_flag_match: false)
       @tool = tool
       @loader = loader
-      @data = common_data
+      @data = common_data.dup
       @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
       @require_exact_flag_match = require_exact_flag_match
       @seen_flag_keys = []

@@ -313,10 +313,9 @@ module Toys
         if use_extra_args && @allow_root_args && context[Context::Key::TOOL].root?
           tool_name = Array(context[Context::Key::UNMATCHED_POSITIONAL])
           unless tool_name.empty?
-            cli = context[Context::Key::CLI]
-            loader = cli.loader
+            loader = context[Context::Key::LOADER]
             tool, rest = loader.lookup(tool_name)
-            help_text = Utils::HelpText.new(tool, loader, cli.executable_name)
+            help_text = Utils::HelpText.new(tool, loader, context[Context::Key::EXECUTABLE_NAME])
             report_usage_error(help_text, loader, tool.full_name, rest.first) unless rest.empty?
             return help_text
           end
