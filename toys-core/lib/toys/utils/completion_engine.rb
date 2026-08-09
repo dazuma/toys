@@ -20,10 +20,13 @@ module Toys
         ##
         # Create a completion engine.
         #
-        # @param cli [Toys::CLI] The CLI.
+        # @param completion [Toys::Completion::Base] The shell tab completion
+        #     specifying how to generate completion candidates.
+        # @param loader [Toys::Loader] The tool loader.
         #
-        def initialize(cli)
-          @cli = cli
+        def initialize(completion, loader)
+          @completion = completion
+          @loader = loader
         end
 
         ##
@@ -72,10 +75,10 @@ module Toys
             last = match[2]
           end
           context = Completion::Context.new(
-            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
+            loader: @loader, previous_words: words, fragment_prefix: prefix, fragment: last,
             shell: shell_name, quote_type: quote_type
           )
-          [quote_type, @cli.completion.call(context).uniq.sort]
+          [quote_type, @completion.call(context).uniq.sort]
         end
 
         private
@@ -96,9 +99,11 @@ module Toys
         ##
         # Create a bash completion engine.
         #
-        # @param cli [Toys::CLI] The CLI.
+        # @param completion [Toys::Completion::Base] The shell tab completion
+        #     specifying how to generate completion candidates.
+        # @param loader [Toys::Loader] The tool loader.
         #
-        def initialize(cli)
+        def initialize(completion, loader)
           require "shellwords"
           super
         end

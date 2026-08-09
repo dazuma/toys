@@ -97,7 +97,7 @@ module Toys
         candidates += plain_flag_candidates(context)
         candidates += flag_value_candidates(context)
         if delegation_target
-          delegate_tool = context.cli.loader.lookup_specific(delegation_target)
+          delegate_tool = context.loader.lookup_specific(delegation_target)
           if delegate_tool
             context = context.with(previous_words: delegation_target)
             candidates += delegate_tool.completion.call(context)
@@ -148,10 +148,10 @@ module Toys
         return if !@complete_subtools || !context.args.empty?
         tool_name, prefix, fragment = analyze_subtool_fragment(context)
         return unless tool_name
-        subtools = context.cli.loader.list_subtools(tool_name,
-                                                    include_namespaces: true,
-                                                    include_hidden: @include_hidden_subtools,
-                                                    include_non_runnable: @include_hidden_subtools)
+        subtools = context.loader.list_subtools(tool_name,
+                                                include_namespaces: true,
+                                                include_hidden: @include_hidden_subtools,
+                                                include_non_runnable: @include_hidden_subtools)
         return if subtools.empty?
         candidates = []
         subtools.each do |subtool|
@@ -165,7 +165,7 @@ module Toys
         tool_name = context.tool.full_name
         prefix = ""
         fragment = context.fragment
-        delims = context.cli.extra_delimiters
+        delims = context.loader.extra_delimiters
         unless context.fragment_prefix.empty?
           if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
             return [nil, nil, nil]

@@ -1076,6 +1076,61 @@ describe Toys::ToolDefinition do
         assert(tool.completion.complete_args?)
       end
     end
+
+    describe "default completion using only a loader" do
+      def make_loader(extra_delimiters: ":")
+        loader = Toys::Loader.new(extra_delimiters: extra_delimiters)
+        loader.add_block do
+          tool "ns" do
+            tool "sub1" do
+              to_run do
+                # Does nothing
+              end
+            end
+            tool "sub2" do
+              to_run do
+                # Does nothing
+              end
+            end
+          end
+          tool "deleg", delegate_to: ["ns"]
+        end
+        loader
+      end
+
+      def candidate_strings(loader, previous_words: [], fragment: "", fragment_prefix: "")
+        context = Toys::Completion::Context.new(loader: loader, previous_words: previous_words,
+                                                fragment: fragment,
+                                                fragment_prefix: fragment_prefix)
+        context.tool.completion.call(context).map(&:string).sort
+      end
+
+      it "completes subtools" do
+        candidates = candidate_strings(make_loader, previous_words: ["ns"], fragment: "sub")
+        assert_equal(["sub1", "sub2"], candidates)
+      end
+
+      it "completes subtools across an extra delimiter in the fragment" do
+        candidates = candidate_strings(make_loader, fragment: "ns:sub")
+        assert_equal(["ns:sub1", "ns:sub2"], candidates)
+      end
+
+      it "completes subtools across an extra delimiter in the fragment prefix" do
+        candidates = candidate_strings(make_loader, fragment_prefix: "ns:", fragment: "sub")
+        assert_equal(["sub1", "sub2"], candidates)
+      end
+
+      it "does not complete subtools across a delimiter that is not configured" do
+        loader = make_loader(extra_delimiters: "")
+        candidates = candidate_strings(loader, fragment_prefix: "ns:", fragment: "sub")
+        assert_equal([], candidates)
+      end
+
+      it "completes the subtools of a delegate target" do
+        candidates = candidate_strings(make_loader, previous_words: ["deleg"], fragment: "sub")
+        assert_equal(["sub1", "sub2"], candidates)
+      end
+    end
   end
 
   describe "source info" do

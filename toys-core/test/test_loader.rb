@@ -331,6 +331,14 @@ describe Toys::Loader do
       assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)
     end
+
+    it "reports the configured delimiters" do
+      assert_equal(".:", delimiters_loader.extra_delimiters)
+    end
+
+    it "reports an empty string when no delimiters are configured" do
+      assert_equal("", Toys::Loader.new.extra_delimiters)
+    end
   end
 
   describe "priority between definitions" do

@@ -61,7 +61,7 @@ describe Toys::Utils::CompletionEngine do
   describe "for bash" do
     let(:completion) {
       @context = nil
-      Toys::Utils::CompletionEngine::Bash.new(cli)
+      Toys::Utils::CompletionEngine::Bash.new(cli.completion, cli.loader)
     }
 
     it "detects failure to find executable name" do
@@ -294,7 +294,7 @@ describe Toys::Utils::CompletionEngine do
   describe "for zsh" do
     let(:completion) {
       @context = nil
-      Toys::Utils::CompletionEngine::Zsh.new(cli)
+      Toys::Utils::CompletionEngine::Zsh.new(cli.completion, cli.loader)
     }
 
     it "detects failure to find executable name" do

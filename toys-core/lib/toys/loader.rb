@@ -75,11 +75,18 @@ module Toys
       @stop_priority = -999_999
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
+      @extra_delimiters = extra_delimiters
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       @git_cache = git_cache
       @gems_util = gems_util
       get_tool([], -999_999)
     end
+
+    ##
+    # The string of tool name delimiter characters (besides space).
+    # @return [String]
+    #
+    attr_reader :extra_delimiters
 
     ##
     # Add a configuration file/directory to the loader.

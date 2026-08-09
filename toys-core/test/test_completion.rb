@@ -4,7 +4,7 @@ require "helper"
 
 describe Toys::Completion do
   def context(str)
-    Toys::Completion::Context.new(cli: nil, fragment: str)
+    Toys::Completion::Context.new(loader: nil, fragment: str)
   end
 
   describe ".create" do
@@ -80,12 +80,59 @@ describe Toys::Completion do
   end
 end
 
+describe Toys::Completion::Context do
+  let(:loader) {
+    loader = Toys::Loader.new(extra_delimiters: ":")
+    loader.add_block do
+      tool "foo" do
+        flag :bar, "--bar VALUE"
+        optional_arg :arg1
+        def run; end
+      end
+    end
+    loader
+  }
+
+  def context(**params)
+    Toys::Completion::Context.new(loader: loader, **params)
+  end
+
+  it "provides the loader" do
+    assert_same(loader, context.loader)
+  end
+
+  it "includes the loader among the params" do
+    assert_same(loader, context[:loader])
+  end
+
+  it "propagates the loader through with" do
+    context2 = context(fragment: "hi").with(fragment: "ho")
+    assert_same(loader, context2.loader)
+    assert_equal("ho", context2.fragment)
+  end
+
+  it "does not provide a CLI" do
+    refute_respond_to(context, :cli)
+  end
+
+  it "looks up the tool and remaining args using the loader" do
+    ctx = context(previous_words: ["foo", "hi"])
+    assert_equal(["foo"], ctx.tool.full_name)
+    assert_equal(["hi"], ctx.args)
+  end
+
+  it "builds an arg parser using the loader" do
+    ctx = context(previous_words: ["foo", "--bar", "hi"])
+    assert_equal("hi", ctx.arg_parser.data[:bar])
+  end
+end
+
 describe Toys::Completion::FileSystem do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "test-data", "data1") }
   let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
 
   def context(str, **params)
-    Toys::Completion::Context.new(cli: nil, fragment: str, **params)
+    Toys::Completion::Context.new(loader: nil, fragment: str, **params)
   end
 
   it "returns objects when passed an empty string" do
@@ -182,7 +229,7 @@ end
 describe Toys::Completion::Enum do
   let(:completion) { Toys::Completion::Enum.new(["one", :two, ["three"]]) }
   def context(str, prefix: "")
-    Toys::Completion::Context.new(cli: nil, fragment: str, fragment_prefix: prefix)
+    Toys::Completion::Context.new(loader: nil, fragment: str, fragment_prefix: prefix)
   end
 
   it "returns all values when given an empty string" do

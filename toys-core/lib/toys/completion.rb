@@ -27,7 +27,8 @@ module Toys
       # * `disable_flags: true` causes tool completion to omit flag completions
       #   which is used by the `toys do` built-in tool
       #
-      # @param cli [Toys::CLI] The CLI being run. Required.
+      # @param loader [Toys::Loader] The loader providing the tools being
+      #     completed. Required.
       # @param previous_words [Array<String>] Array of complete strings that
       #     appeared prior to the fragment to complete.
       # @param fragment_prefix [String] A prefix in the fragment that does not
@@ -35,13 +36,13 @@ module Toys
       # @param fragment [String] The string fragment to complete.
       # @param params [Hash] Miscellaneous context data
       #
-      def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", **params)
-        @cli = cli
+      def initialize(loader:, previous_words: [], fragment_prefix: "", fragment: "", **params)
+        @loader = loader
         @previous_words = previous_words
         @fragment_prefix = fragment_prefix
         @fragment = fragment
         extra_params = {
-          cli: cli, previous_words: previous_words, fragment_prefix: fragment_prefix,
+          loader: loader, previous_words: previous_words, fragment_prefix: fragment_prefix,
           fragment: fragment
         }
         @params = params.merge(extra_params)
@@ -61,10 +62,10 @@ module Toys
       end
 
       ##
-      # The CLI being run.
-      # @return [Toys::CLI]
+      # The loader providing the tools being completed.
+      # @return [Toys::Loader]
       #
-      attr_reader :cli
+      attr_reader :loader
 
       ##
       # All previous words.
@@ -121,7 +122,7 @@ module Toys
       #
       def arg_parser
         lookup_tool
-        @arg_parser ||= ArgParser.new(@tool, @cli.loader).parse(@args)
+        @arg_parser ||= ArgParser.new(@tool, @loader).parse(@args)
       end
 
       ##
@@ -135,7 +136,7 @@ module Toys
       private
 
       def lookup_tool
-        @tool, @args = @cli.loader.lookup(@previous_words) unless @tool
+        @tool, @args = @loader.lookup(@previous_words) unless @tool
       end
     end
 
