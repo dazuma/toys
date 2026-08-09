@@ -115,21 +115,23 @@ $ ./greet.rb --whom=Ruby
 
 This section provides some detail on how a CLI executes your code.
 
-When you call {Toys::CLI#run}, the CLI runs through three phases:
+When you call {Toys::CLI#run}, the CLI resolves its configuration into a
+{Toys::Execution}, an object representing a single tool invocation, and asks it
+to run. The Execution carries out three phases:
 
- *  **Loading** in which the CLI identifies which tool to run, and loads the
-    tool from a tool **source**, which could be a block passed to the CLI, or a
+ *  **Loading** in which the Execution identifies which tool to run, and loads
+    the tool from a tool source, which could be a block passed to the CLI, a
     file loaded from the file system, git, or other location.
- *  **Context building**, in which the CLI parses the command-line arguments
-    according to the flags and arguments declared by the tool, instantiates the
-    tool, and populates the {Toys::Context} object (which is `self` when the
-    tool is executed)
+ *  **Context building**, in which the Execution parses the command-line
+    arguments according to the flags and arguments declared by the tool,
+    instantiates the tool, and populates the {Toys::Context} object (which is
+    `self` when the tool is executed)
  *  **Execution**, which involves running any initializers defined on the tool,
     applying middleware, running the tool's code, and handling errors.
 
 #### The Loader
 
-When the CLI needs the definition of a tool, it queries the {Toys::Loader}. The
+When Toys needs the definition of a tool, it queries the {Toys::Loader}. The
 loader object is configured with a set of tool _sources_ representing ways to
 define a tool. These sources may be blocks passed directly to the CLI, or
 directories and files loaded from the file system, from gems, or even from
@@ -174,7 +176,7 @@ We will discuss more about the features of the loader below in the section on
 
 #### Building context
 
-Once a tool is defined, the CLI prepares it for execution by building a
+Once a tool is defined, the Execution prepares it for execution by building a
 {Toys::Context} object. This object is `self` during tool runtime, and it
 includes:
 
@@ -190,6 +192,16 @@ constants under {Toys::Context::Key}.
 Argument parsing is directed by the {Toys::ArgParser} class. This class, for
 the most part, replicates the semantics of the standard Ruby OptionParser
 class, but it implements a few extra features and cleans up a few ambiguities.
+It is concerned only with the command line: it produces the parsed flag and
+argument values, along with any usage errors. The rest of the context data,
+such as the logger, the tool definition and its name and source, and the
+verbosity, is provided by the Execution.
+
+An Execution can also be given arbitrary additional data by its caller, which
+is merged into the context underneath the data the Execution provides itself.
+The `CLI` and `EXECUTABLE_NAME` context keys arrive this way, supplied by the
+CLI rather than by the Execution. A tool run through an Execution constructed
+directly will therefore see `nil` from {Toys::Context#cli}.
 
 #### Tool execution and error handling
 
@@ -203,9 +215,15 @@ The execution phase involves:
  *  Executing the tool itself by calling its `run` method (or any alternate
     entrypoint set by the tool).
 
-The CLI also implements error and signal handling, directing control either to
-the tool's callbacks or to fallback handlers that can be configured into the
-CLI itself. More on this later.
+Errors and signals are handled in two stages. If an exception reaches the
+Execution, whether from argument parsing, from the middleware, or from the tool
+itself, the Execution wraps it in a {Toys::ContextualError} tagged with the
+tool's name, its arguments, and the path to the file where it was defined. The
+CLI then rescues that wrapper and passes it to its error handler, which decides
+what to report and what result code to return. Tools themselves can also
+intercept errors that represent signals such as interrupts and handle them via
+the `on_interrupt` and `on_usage_error` handlers. See the section on
+[error handling](#handling-errors) for more details.
 
 #### Multiple runs
 
@@ -625,6 +643,13 @@ type provides various context fields such as an estimate of where in the tool
 source the error may have occurred. It also provides the original exception in
 the `cause` field.
 
+When one tool invokes another, whether through `delegate_to` or by calling
+{Toys::CLI#run} from within a tool, the wrappers nest, so that each level
+records the tool name, arguments, and source location for its own tool. In that
+case the `cause` field holds the next {Toys::ContextualError} in the chain
+rather than the original exception. Use {Toys::ContextualError#root_cause} to
+reach the original exception regardless of how deeply it is nested.
+
 Then, Toys-Core invokes the error handler, a Proc that you can set as a
 configuration argument when constructing a CLI. An error handler takes the
 {Toys::ContextualError} wrapper as an argument and should perform any desired
@@ -633,9 +658,10 @@ terminal, or reraising the exception. The handler should then return the
 desired result code for the execution.
 
 ```ruby
-my_error_handler = Proc.new |wrapped_error| do
+my_error_handler = Proc.new do |wrapped_error|
   # Propagate signals out and let the Ruby VM handle them.
-  raise wrapped_error.cause if wrapped_error.cause.is_a?(SignalException)
+  cause = wrapped_error.root_cause
+  raise cause if cause.is_a?(SignalException)
   # Handle any other exception types by printing a message.
   $stderr.puts "An error occurred. Please contact your administrator."
   # Return the result code
@@ -645,10 +671,10 @@ cli = Toys::CLI.new(error_handler: my_error_handler)
 ```
 
 If you do not set an error handler, the exception is raised out of the
-{Toys::CLI#run} call. In the case of signals, the *cause*, represented by a
-`SignalException`, is raised directly so that the Ruby VM can handle it
-normally. For other exceptions, however, the {Toys::ContextualError} wrapper
-will be raised so that a rescue block has access to the context information.
+{Toys::CLI#run} call. In the case of signals, the *root cause*, represented by
+a `SignalException`, is raised directly so that the Ruby VM can handle it
+normally. For other exceptions, however, the outermost {Toys::ContextualError}
+wrapper is raised so that a rescue block has access to the context information.
 
 #### StandardUI error handling
 
@@ -1136,13 +1162,19 @@ above under [the Loader](#the-loader).
 
 This section includes classes involved in tool execution
 
- *  {Toys::CLI} - The main execution entry point. It provides a general
-    configuration interface for all of the Toys features, owns a {Toys::Loader}
-    that it uses to load tool definitions, and then responds to command line
-    invocations.
- *  {Toys::ArgParser} - A service that parses command line argument lists,
+ *  {Toys::CLI} - The configuration and entry point for the framework. It
+    provides a general configuration interface for all of the Toys features,
+    owns a {Toys::Loader} that it uses to load tool definitions, and responds
+    to command line invocations by constructing and running a
+    {Toys::Execution}.
+ *  {Toys::Execution} - A single tool invocation. It parses the command line
+    arguments, builds the {Toys::Context}, applies the tool's middleware, runs
+    the tool, and wraps any resulting error in a {Toys::ContextualError}. Most
+    applications should use {Toys::CLI#run} rather than constructing a
+    {Toys::Execution} directly.
+ *  {Toys::ArgParser} - A service that parses command line argument lists and
     matches the given arguments against the tool's formal flags and arguments
-    definition, and populates the tool's execution context.
+    definition, producing the parsed values along with any usage errors.
  *  {Toys::Context} - This class is `self` during a tool's execution, and the
     tool's methods, including the entrypoint `run` method, are defined in a
     subclass of this class. This class also provides methods for retrieving
@@ -1169,7 +1201,9 @@ Exception classes are defined in `lib/errors.rb`.
 
  *  {Toys::ContextualError} - This is the error that is generally raised from
     {Toys::CLI#run}. It wraps an actual error, and provides source information
-    indicating where in the tool definition the error was raised.
+    indicating where in the tool definition the error was raised. When one tool
+    invokes another, these wrappers nest, one per tool; use
+    {Toys::ContextualError#root_cause} to reach the original error.
  *  {Toys::ArgParsingError} - Raised during argument parsing to indicate that
     parsing failed. If present, it will contain one or more individual
     {Toys::ArgParser::UsageError} exceptions.
