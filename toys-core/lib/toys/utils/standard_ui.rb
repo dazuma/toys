@@ -193,23 +193,24 @@ module Toys
       # backtrace, and contextual information regarding what tool was run and
       # where in its code the error occurred.
       #
+      # When one tool invokes another, the {Toys::ContextualError} wrappers
+      # nest, one per tool. Each is displayed as a block, innermost first, and
+      # information that would simply repeat the block within it is omitted.
+      #
       # This method is used by {#handle_error} and can be overridden to change
       # its behavior.
       #
       # @param error [Toys::ContextualError]
       #
       def display_error_notice(error)
-        stack = []
-        loop do
-          stack.push(error)
-          break unless error.is_a?(ContextualError)
-          error = error.cause
-        end
+        frames, origin = error_frames(error)
         @terminal.puts
-        @terminal.puts(cause_string(stack.pop))
-        @terminal.puts(context_string(stack.pop), :bold) unless stack.empty?
-        until stack.empty?
-          @terminal.puts(context_string(stack.pop))
+        @terminal.puts(cause_string(origin))
+        previous = nil
+        frames.each_with_index do |frame, index|
+          block = context_string(frame, previous)
+          @terminal.puts(block, *(index.zero? ? [:bold] : [])) unless block.empty?
+          previous = frame
         end
       end
 
@@ -255,18 +256,37 @@ module Toys
         lines.reverse.join("\n")
       end
 
-      def context_string(error)
-        orig_error = error.root_cause
-        lines = [
-          error.banner || "Unexpected error!",
-          "    #{orig_error.class}: #{orig_error.message}",
-        ]
+      # Walks the chain of nested ContextualErrors starting from the given
+      # error. Returns the frames ordered innermost first, along with the error
+      # at the bottom of the chain, which is the one that actually failed. A
+      # ContextualError constructed outside a rescue has no cause, in which
+      # case the innermost frame stands in as the origin.
+      def error_frames(error)
+        frames = []
+        current = error
+        while current.is_a?(ContextualError)
+          frames << current
+          current = current.cause
+        end
+        [frames.reverse, current || frames.last]
+      end
+
+      # Renders one frame of the error chain. The innermost frame, for which
+      # `previous` is nil, says where the error happened; each subsequent frame
+      # names the tool that invoked the frame before it. The banner and the
+      # arguments are omitted when they would merely repeat that frame, which
+      # they usually do for a delegation.
+      def context_string(error, previous = nil)
+        banner = error.banner || "Unexpected error!"
+        lines = []
+        lines << banner unless previous && banner == (previous.banner || "Unexpected error!")
         if error.config_path
           lines << "    in config file: #{error.config_path}:#{error.config_line}"
         end
         if error.tool_name
-          lines << "    while executing tool: #{error.tool_name.join(' ').inspect}"
-          if error.tool_args
+          verb = previous ? "called from tool" : "while executing tool"
+          lines << "    #{verb}: #{error.tool_name.join(' ').inspect}"
+          unless error.tool_args.nil? || (previous && error.tool_args == previous.tool_args)
             lines << "    with arguments: #{error.tool_args.inspect}"
           end
         end

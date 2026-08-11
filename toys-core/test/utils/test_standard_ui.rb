@@ -103,8 +103,97 @@ describe Toys::Utils::StandardUI do
       default_ui.handle_error(error)
       lines = output_content.lines.map(&:chomp).reject(&:empty?)
       assert_equal("RuntimeError: foobar", lines.first)
-      reported = lines.grep(/^ +\S+Error: /)
-      assert_equal(["    RuntimeError: foobar", "    RuntimeError: foobar"], reported)
+      assert_equal(1, output_content.scan("RuntimeError: foobar").length,
+                   "expected the original error to be named exactly once")
+    end
+
+    it "describes an outward frame as calling the frame within it" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      assert_includes(output_content, "    while executing tool: \"target\"")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "omits a banner that repeats from the frame within it" do
+      error = capture_nested_error(inner_banner: "same banner", outer_banner: "same banner") do
+        raise "foobar"
+      end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("same banner").length,
+                   "expected the repeated banner to be printed once")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "omits arguments that repeat from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", tool_name: ["front"],
+                                        tool_args: ["arg1"], final: true) do
+            Toys::ContextualError.capture(banner: "b", tool_name: ["target"],
+                                          tool_args: ["arg1"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("with arguments:").length,
+                   "expected the repeated arguments to be printed once")
+    end
+
+    it "displays arguments that differ from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", tool_name: ["front"],
+                                        tool_args: ["outer"], final: true) do
+            Toys::ContextualError.capture(banner: "b", tool_name: ["target"],
+                                          tool_args: ["inner"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_includes(output_content, "    with arguments: [\"inner\"]")
+      assert_includes(output_content, "    with arguments: [\"outer\"]")
+    end
+
+    it "handles frames that carry different fields" do
+      # Frames in a real chain do not all carry the same fields. Here the outer
+      # frame has a tool name but no arguments, and the banners differ.
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "Outer banner", tool_name: ["front"],
+                                        final: true) do
+            Toys::ContextualError.capture(banner: "Inner banner", tool_name: ["target"],
+                                          tool_args: ["arg1"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar",
+                    "Inner banner",
+                    "    while executing tool: \"target\"",
+                    "    with arguments: [\"arg1\"]",
+                    "Outer banner",
+                    "    called from tool: \"front\""],
+                   lines)
+    end
+
+    it "does not crash on a contextual error with no cause" do
+      error = Toys::ContextualError.new(::RuntimeError.new("foobar"), "b", nil, ["t"], nil, true)
+      assert_nil(error.root_cause)
+      assert_equal(1, default_ui.handle_error(error))
+      assert_includes(output_content, "while executing tool: \"t\"")
     end
 
     it "displays a context block for each level, innermost first" do
