@@ -50,7 +50,8 @@ module Toys
     #
     def initialize(cause, banner, path, tool_name, tool_args, final)
       banner ||= "Unexpected error"
-      super("#{banner}: #{cause.message} (#{cause.class})")
+      original = cause.is_a?(ContextualError) ? cause.root_cause || cause : cause
+      super("#{banner}: #{original.message} (#{original.class})")
       set_backtrace(cause.backtrace)
       @banner = banner
       @tool_name = tool_name

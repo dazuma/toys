@@ -316,7 +316,8 @@ describe Toys::CLI do
       error = assert_raises(Toys::ContextualError) do
         cli.run("foo")
       end
-      assert_includes(error.message, "Delegation loop: \"foo\" <- \"boo\" <- \"foo\"")
+      assert_kind_of(Toys::ToolDefinitionError, error.root_cause)
+      assert_equal("Delegation loop: \"foo\" <- \"boo\" <- \"foo\"", error.root_cause.message)
     end
 
     it "attributes a delegate error to both the delegate and the delegating tool" do

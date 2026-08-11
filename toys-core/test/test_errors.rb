@@ -118,6 +118,38 @@ describe Toys::ContextualError do
       assert_equal "My Banner: the message (RuntimeError)", error.message
     end
 
+    it "names the original error once in the message of a nested error" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "Outer", final: true) do
+          Toys::ContextualError.capture(banner: "Inner", final: true) { raise "the message" }
+        end
+      end
+      assert_equal "Outer: the message (RuntimeError)", error.message
+    end
+
+    it "names the original error once in the message of a doubly nested error" do
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "Outermost", final: true) do
+          Toys::ContextualError.capture(banner: "Middle", final: true) do
+            Toys::ContextualError.capture(banner: "Innermost", final: true) do
+              raise ::ArgumentError, "the message"
+            end
+          end
+        end
+      end
+      assert_equal "Outermost: the message (ArgumentError)", error.message
+    end
+
+    it "uses the immediate cause in the message when there is no root cause" do
+      # A ContextualError constructed outside a rescue has no cause at all, so
+      # there is no root cause to fall back on. The message must still be
+      # built rather than raising on nil.
+      inner = Toys::ContextualError.new(::RuntimeError.new("orig"), "Inner", nil, nil, nil, true)
+      assert_nil inner.root_cause
+      outer = Toys::ContextualError.new(inner, "Outer", nil, nil, nil, true)
+      assert_equal "Outer: Inner: orig (RuntimeError) (Toys::ContextualError)", outer.message
+    end
+
     it "sets tool_name from keyword argument" do
       error = assert_raises(Toys::ContextualError) do
         Toys::ContextualError.capture(tool_name: ["my", "tool"]) { raise "oops" }
