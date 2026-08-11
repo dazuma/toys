@@ -125,6 +125,28 @@ describe Toys::Completion::Context do
     ctx = context(previous_words: ["foo", "--bar", "hi"])
     assert_equal("hi", ctx.arg_parser.data[:bar])
   end
+
+  # Completion parses incrementally and never calls ArgParser#finish, so the
+  # special context keys have to be populated during parsing rather than at
+  # the end of it.
+  it "provides the special context keys on an unfinished arg parser" do
+    ctx = context(previous_words: ["foo", "--bar", "hi", "--nope"])
+    data = ctx.arg_parser.data
+    refute(ctx.arg_parser.finished?)
+    assert_equal(["--bar", "hi", "--nope"], data[Toys::Context::Key::ARGS])
+    assert_equal(["--nope"], data[Toys::Context::Key::UNMATCHED_ARGS])
+    assert_equal(["--nope"], data[Toys::Context::Key::UNMATCHED_FLAGS])
+    assert_equal([], data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+    errors = data[Toys::Context::Key::USAGE_ERRORS]
+    assert_equal(1, errors.size)
+    assert_kind_of(Toys::ArgParser::FlagUnrecognizedError, errors.first)
+  end
+
+  it "provides empty special context keys when nothing has been parsed" do
+    data = context(previous_words: ["foo"]).arg_parser.data
+    assert_equal([], data[Toys::Context::Key::ARGS])
+    assert_equal([], data[Toys::Context::Key::USAGE_ERRORS])
+  end
 end
 
 describe Toys::Completion::FileSystem do

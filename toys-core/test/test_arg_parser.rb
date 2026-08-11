@@ -1063,4 +1063,80 @@ describe Toys::ArgParser do
       assert_data_includes({a: "from-cli", b: "hello"}, parser.data)
     end
   end
+
+  describe "special data" do
+    let(:special_keys) {
+      [
+        Toys::Context::Key::USAGE_ERRORS,
+        Toys::Context::Key::ARGS,
+        Toys::Context::Key::UNMATCHED_ARGS,
+        Toys::Context::Key::UNMATCHED_POSITIONAL,
+        Toys::Context::Key::UNMATCHED_FLAGS,
+      ]
+    }
+
+    it "is present and empty before any parsing" do
+      special_keys.each do |key|
+        assert_equal(true, arg_parser.data.key?(key), "data does not include key #{key.inspect}")
+        assert_equal([], arg_parser.data[key])
+      end
+    end
+
+    # The data entries must be the parser's own arrays, not copies, because
+    # that aliasing is what keeps them current as parsing proceeds. Rebinding
+    # any of these ivars (for example with `+=` rather than an in-place
+    # append) would strand the data entry on a stale array, and this assertion
+    # is what catches that.
+    it "aliases the parser's own arrays" do
+      tool.add_flag(:a, ["-a"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-a", "--unknown", "extra"]).finish
+      assert_same(arg_parser.errors, arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+      assert_same(arg_parser.parsed_args, arg_parser.data[Toys::Context::Key::ARGS])
+      assert_same(arg_parser.unmatched_args, arg_parser.data[Toys::Context::Key::UNMATCHED_ARGS])
+      assert_same(arg_parser.unmatched_positional,
+                  arg_parser.data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+      assert_same(arg_parser.unmatched_flags,
+                  arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+    end
+
+    it "reflects parsed args without finish having been called" do
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["one", "two"])
+      assert_equal(["one", "two"], arg_parser.data[Toys::Context::Key::ARGS])
+    end
+
+    it "reflects errors detected during parsing without finish having been called" do
+      arg_parser.parse(["--unknown"])
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_equal(1, errors.size)
+      assert_kind_of(Toys::ArgParser::FlagUnrecognizedError, errors.first)
+    end
+
+    it "reflects unmatched args without finish having been called" do
+      arg_parser.parse(["--unknown", "extra"])
+      assert_equal(["--unknown", "extra"],
+                   arg_parser.data[Toys::Context::Key::UNMATCHED_ARGS])
+      assert_equal(["--unknown"], arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+      assert_equal(["extra"], arg_parser.data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+    end
+
+    # Flag group constraint errors are appended by finish_flag_groups, which is
+    # the one place that historically rebound @errors rather than appending in
+    # place. They must still reach the data hash.
+    it "includes flag group constraint errors added during finish" do
+      tool.add_flag_group(type: :required, name: :mygroup)
+      tool.add_flag(:a, ["-a"], group: :mygroup)
+      arg_parser.parse([]).finish
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_errors_include(Toys::ArgParser::FlagGroupConstraintError, errors)
+    end
+
+    it "includes errors added during finish for missing required args" do
+      tool.add_required_arg(:a)
+      arg_parser.parse([]).finish
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_errors_include(Toys::ArgParser::ArgMissingError, errors)
+    end
+  end
 end

@@ -298,15 +298,28 @@ module Toys
     def initialize(tool, loader, common_data: {}, require_exact_flag_match: false)
       @tool = tool
       @loader = loader
-      @data = common_data.dup
-      @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
       @require_exact_flag_match = require_exact_flag_match
-      @seen_flag_keys = []
-      @errors = []
-      @unmatched_args = []
-      @unmatched_positional = []
-      @unmatched_flags = []
+
       @parsed_args = []
+      @unmatched_args = []
+      @unmatched_flags = []
+      @unmatched_positional = []
+      @errors = []
+      @data = {
+        # These entries alias the arrays above, so that the data always reflects
+        # the current state of parsing. Those arrays must therefore be mutated in
+        # place for the life of this object, and never reassigned.
+        Context::Key::ARGS => @parsed_args,
+        Context::Key::UNMATCHED_ARGS => @unmatched_args,
+        Context::Key::UNMATCHED_FLAGS => @unmatched_flags,
+        Context::Key::UNMATCHED_POSITIONAL => @unmatched_positional,
+        Context::Key::USAGE_ERRORS => @errors,
+      }
+      # Injected common data and the tool's non-nil default data can override the above.
+      @data.merge!(common_data)
+      @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
+
+      @seen_flag_keys = []
       @active_flag_def = nil
       @active_flag_arg = nil
       @arg_defs = tool.positional_args
@@ -418,8 +431,8 @@ module Toys
     #  *  One or more extra arguments were provided.
     #  *  Restrictions defined in one or more flag groups were not fulfilled.
     #
-    # Any errors are added to the errors array. It also fills in final values
-    # for `Context::Key::USAGE_ERRORS` and `Context::Key::ARGS`.
+    # Any errors are added to the errors array, and are thus reflected in
+    # {#data} under `Context::Key::USAGE_ERRORS`.
     #
     # After this method is called, this object is locked down, and no
     # additional arguments may be parsed.
@@ -430,7 +443,6 @@ module Toys
       finish_active_flag
       finish_arg_defs
       finish_flag_groups
-      finish_special_data
       @finished = true
       self
     end
@@ -640,16 +652,8 @@ module Toys
     def finish_flag_groups
       @tool.flag_groups.each do |group|
         messages = Array(group.validation_errors(@seen_flag_keys))
-        @errors += messages.map { |message| FlagGroupConstraintError.new(message) }
+        @errors.concat(messages.map { |message| FlagGroupConstraintError.new(message) })
       end
-    end
-
-    def finish_special_data
-      @data[Context::Key::USAGE_ERRORS] = @errors
-      @data[Context::Key::ARGS] = @parsed_args
-      @data[Context::Key::UNMATCHED_ARGS] = @unmatched_args
-      @data[Context::Key::UNMATCHED_POSITIONAL] = @unmatched_positional
-      @data[Context::Key::UNMATCHED_FLAGS] = @unmatched_flags
     end
   end
 end
