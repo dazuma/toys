@@ -4211,6 +4211,13 @@ following takes place:
     signal handler will be called *again* for the new signal and passed the new
     exception. Any further signals will be handled similarly.
 
+If one tool invokes another, whether through `delegate_to` or by running a tool
+from within a tool, each tool in the chain gets a chance at the signal, working
+outward. The innermost tool's handler is called first; if it re-raises the
+`SignalException`, the next tool out gets its turn, and so on. If no handler
+takes responsibility, Toys displays `INTERRUPTED` or `SIGNAL RECEIVED` as
+usual.
+
 It is possible for a signal handler itself to receive signals. For example, if
 you have a long-running `CTRL`-`C` interrupt handler, it itself could get
 interrupted. You can tell how many signals have taken place by looking at the
