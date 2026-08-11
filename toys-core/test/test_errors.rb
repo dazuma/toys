@@ -35,10 +35,31 @@ describe Toys::ContextualError do
       end
     end
 
-    it "wraps a SignalException in a ContextualError" do
-      assert_raises(Toys::ContextualError) do
+    it "does not wrap a SignalException" do
+      # A signal must stay recognizable as a signal all the way up the stack,
+      # so that each tool can dispatch it to its own handler and the Ruby VM
+      # can ultimately handle it.
+      error = assert_raises(::SignalException) do
         Toys::ContextualError.capture { raise ::SignalException, "HUP" }
       end
+      assert_equal(::Signal.list["HUP"], error.signo)
+    end
+
+    it "does not wrap an Interrupt" do
+      assert_raises(::Interrupt) do
+        Toys::ContextualError.capture { raise ::Interrupt }
+      end
+    end
+
+    it "does not wrap a SignalException raised through nested captures" do
+      error = assert_raises(::SignalException) do
+        Toys::ContextualError.capture(banner: "outer", final: true) do
+          Toys::ContextualError.capture(banner: "inner", final: true) do
+            raise ::SignalException, 15
+          end
+        end
+      end
+      assert_equal(15, error.signo)
     end
 
     it "passes through an existing ContextualError without re-wrapping" do
@@ -365,6 +386,8 @@ describe Toys::ContextualError do
     end
 
     it "propagates a SignalException without wrapping" do
+      # Signals are never wrapped regardless of passthru; this pins that the
+      # passthru path agrees with the default path.
       error = assert_raises(::SignalException) do
         Toys::ContextualError.capture(passthru: true) { raise ::SignalException, 15 }
       end

@@ -97,8 +97,9 @@ module Toys
 
       ##
       # Implementation of an error handler. As dictated by the error handler
-      # specification in {Toys::CLI}, this must take a {Toys::ContextualError}
-      # as an argument, and return an exit code or raise an exception.
+      # specification in {Toys::CLI}, this takes either a
+      # {Toys::ContextualError} or a bare `SignalException` as an argument, and
+      # returns an exit code or raises an exception.
       #
       # The base implementation uses {#display_error_notice} and
       # {#display_signal_notice} to print an appropriate message to the UI's
@@ -107,17 +108,19 @@ module Toys
       # behavior, or this main implementation method can be overridden to
       # change the overall behavior.
       #
-      # @param error [Toys::ContextualError] The error received
+      # @param error [Toys::ContextualError,SignalException] The error
+      #     received. An unhandled signal arrives unwrapped; any other error
+      #     arrives as a {Toys::ContextualError} wrapper.
       # @return [Integer] The exit code
       #
       def handle_error(error)
-        cause = error.root_cause
-        if cause.is_a?(::SignalException)
-          display_signal_notice(cause)
+        if error.is_a?(::SignalException)
+          display_signal_notice(error)
+          exit_code_for(error)
         else
           display_error_notice(error)
+          exit_code_for(error.root_cause)
         end
-        exit_code_for(cause)
       end
 
       ##

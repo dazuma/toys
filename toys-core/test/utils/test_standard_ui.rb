@@ -62,12 +62,14 @@ describe Toys::Utils::StandardUI do
       assert_equal(126, result)
     end
 
+    # Signals are never wrapped in a ContextualError, so the error handler
+    # receives them bare. `capture` is used here only to give them a backtrace.
     it "handles Interrupted exceptions" do
       Toys::ContextualError.capture(banner: banner) do
         raise Interrupt
       end
       flunk
-    rescue Toys::ContextualError => e
+    rescue Interrupt => e
       result = default_ui.handle_error(e)
       assert_equal(130, result)
       assert_equal("\nINTERRUPTED\n", output_content)
@@ -78,7 +80,7 @@ describe Toys::Utils::StandardUI do
         raise SignalException, 15
       end
       flunk
-    rescue Toys::ContextualError => e
+    rescue SignalException => e
       result = default_ui.handle_error(e)
       assert_equal(143, result)
       assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
@@ -123,14 +125,20 @@ describe Toys::Utils::StandardUI do
       assert_equal(126, default_ui.handle_error(error))
     end
 
-    it "handles a nested Interrupt" do
-      error = capture_nested_error { raise Interrupt }
+    # A signal raised inside nested captures is not wrapped by any of them, so
+    # it reaches the handler bare no matter how deep the nesting.
+    it "passes an Interrupt through the nesting unwrapped" do
+      error = assert_raises(Interrupt) do
+        capture_nested_error { raise Interrupt }
+      end
       assert_equal(130, default_ui.handle_error(error))
       assert_equal("\nINTERRUPTED\n", output_content)
     end
 
-    it "handles a nested SignalException" do
-      error = capture_nested_error { raise SignalException, 15 }
+    it "passes a SignalException through the nesting unwrapped" do
+      error = assert_raises(SignalException) do
+        capture_nested_error { raise SignalException, 15 }
+      end
       assert_equal(143, default_ui.handle_error(error))
       assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
     end

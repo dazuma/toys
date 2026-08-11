@@ -37,6 +37,10 @@ module Toys
   # A wrapper exception used to provide user-oriented context for an error
   # thrown during tool execution.
   #
+  # Signals are not wrapped in this class. A `SignalException` raised by a tool
+  # propagates as itself, so that tools can intercept it and the Ruby VM can
+  # ultimately handle it. See {Toys::CLI#run} for how each is reported.
+  #
   class ContextualError < ::StandardError
     ##
     # Construct a ContextualError. This exception type is thrown by the CLI
@@ -148,8 +152,13 @@ module Toys
     class << self
       ##
       # Execute the given block, and wrap any exceptions thrown with a
-      # ContextualError. This is intended for loading a config file from the
-      # given path, and wraps any Ruby parsing errors.
+      # ContextualError. This is intended for errors caught during Ruby parsing
+      # or tool loading, or `StandardError`s caught during tool execution.
+      #
+      # Error types other than `StandardError` and `ScriptError` are *not*
+      # wrapped but passed through bare. In particular, a `SignalException`
+      # means the process is being asked to terminate, so it must stay
+      # recognizable as a signal all the way up the stack.
       #
       # @private This interface is internal and subject to change without warning.
       #
@@ -163,7 +172,7 @@ module Toys
           e.update_fields!(path: path, tool_name: tool_name, tool_args: tool_args, final: final)
           raise e
         end
-      rescue ::ScriptError, ::StandardError, ::SignalException => e
+      rescue ::ScriptError, ::StandardError => e
         raise e if passthru
         raise ContextualError.new(e, banner, path, tool_name, tool_args, final)
       end

@@ -355,6 +355,92 @@ describe Toys::CLI do
       assert_equal(4, error.signo)
     end
 
+    it "lets the delegating tool handle an interrupt raised by the delegate" do
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            exit(7)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(7, cli.run("front"))
+    end
+
+    it "lets the delegating tool handle a signal raised by the delegate" do
+      test = self
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise SignalException, 15
+          end
+        end
+        tool "front" do
+          on_signal(15) do |ex|
+            test.assert_equal(15, ex.signo)
+            exit(8)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(8, cli.run("front"))
+    end
+
+    it "offers the signal to each tool outward when the delegate reraises" do
+      order = []
+      cli.add_config_block do
+        tool "target" do
+          on_interrupt do |ex|
+            order << :target
+            raise ex
+          end
+
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            order << :front
+            exit(11)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(11, cli.run("front"))
+      assert_equal([:target, :front], order)
+    end
+
+    it "gives the delegate the first chance to handle a signal" do
+      order = []
+      cli.add_config_block do
+        tool "target" do
+          on_interrupt do
+            order << :target
+            exit(9)
+          end
+
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            order << :front
+            exit(10)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(9, cli.run("front"))
+      assert_equal([:target], order)
+    end
+
     it "passes a delegate error to a custom error handler" do
       my_handler = proc do |error|
         assert_equal(["front"], error.tool_name)
@@ -454,10 +540,11 @@ describe Toys::CLI do
     end
 
     it "supports a custom handler that receives signals" do
+      # A signal is never wrapped in a ContextualError, so the handler receives
+      # the SignalException itself rather than a wrapper.
       my_handler = proc do |error|
-        cause = error.cause
-        assert_kind_of(SignalException, cause)
-        assert_equal(4, cause.signo)
+        assert_kind_of(SignalException, error)
+        assert_equal(4, error.signo)
         12
       end
       my_cli = cli.child(error_handler: my_handler)
@@ -469,6 +556,25 @@ describe Toys::CLI do
         end
       end
       assert_equal(12, my_cli.run("foo"))
+    end
+
+    it "passes an unwrapped signal raised by a delegate to a custom handler" do
+      my_handler = proc do |error|
+        assert_kind_of(::Interrupt, error)
+        14
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "target" do
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(14, my_cli.run("front"))
     end
   end
 

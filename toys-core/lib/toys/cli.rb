@@ -85,15 +85,16 @@ module Toys
     #     Optional. If not provided, defaults to the current level of the
     #     logger (which is often `Logger::WARN`).
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
-    #     exception (a normal exception subclassing `StandardError`, an error
-    #     loading a toys config file subclassing `SyntaxError`, or an unhandled
-    #     signal subclassing `SignalException`) is detected. The proc should
-    #     take a {Toys::ContextualError}, whose cause is the unhandled
-    #     exception, as the sole argument, and report the error. It could
-    #     simply reraise the exception, or it could display an error message
-    #     and/or return an exit code (normally nonzero) appropriate to the
-    #     error. Optional. If not provided, {Toys::CLI.default_error_handler}
-    #     is called to get a basic default handler that reraises the exception.
+    #     exception is detected. The proc takes the error as its sole argument,
+    #     and should report it. It could simply reraise the exception, or it
+    #     could display an error message and/or return an exit code (normally
+    #     nonzero) appropriate to the error. The error will be either a
+    #     {Toys::ContextualError} (wrapping a `StandardError`, a `ScriptError`,
+    #     or a nested {Toys::ContextualError}) or a bare `SignalException`.
+    #     Any other error types propagate through and are not passed to the
+    #     error_handler. Optional. If not provided,
+    #     {Toys::CLI.default_error_handler} is called to get a basic default
+    #     handler that reraises the exception.
     # @param executable_name [String] The executable name displayed in help
     #     text. Optional. Defaults to the ruby program name.
     #
@@ -521,6 +522,12 @@ module Toys
     # Run the CLI with the given command line arguments.
     # Handles exceptions using the error handler.
     #
+    # Any error that is not handled by the tool itself is passed to this CLI's
+    # error handler. Ordinary errors arrive as a {Toys::ContextualError}
+    # wrapper, but a signal that no tool intercepted arrives as the
+    # `SignalException` itself, unwrapped. See the `error_handler` argument to
+    # {#initialize}.
+    #
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
@@ -530,7 +537,7 @@ module Toys
     #
     def run(*args, verbosity: 0)
       create_execution(args, verbosity, true).run
-    rescue ContextualError => e
+    rescue ContextualError, ::SignalException => e
       @error_handler.call(e).to_i
     end
 
@@ -611,29 +618,17 @@ module Toys
       end
 
       ##
-      # Returns a bare-bones error handler that takes simply reraises the
-      # error. If the original error (the cause of the {Toys::ContextualError})
-      # was a `SignalException` (or a subclass such as `Interrupted`), that
-      # `SignalException` itself is reraised so that the Ruby VM has a chance
-      # to handle it. Otherwise, for any other error, the
-      # {Toys::ContextualError} is reraised.
+      # Returns a bare-bones error handler that simply reraises the error it is
+      # given. A {Toys::ContextualError} is reraised as itself, so that a
+      # rescue block has access to the context information. An unhandled
+      # `SignalException` (or a subclass such as `Interrupt`) is also reraised
+      # as itself, so that the Ruby VM has a chance to handle it normally.
       #
       # @return [Proc]
       #
       def default_error_handler
         proc do |error|
-          cause = error.root_cause
-          # The explicit `cause: nil` suppresses only the *implicit* adoption of
-          # `$!` (i.e. `error`) as the reraised exception's cause. It never
-          # clears a cause the exception already carries, so the original cause
-          # chain is preserved in both branches below.
-          #
-          # It is needed because reraising the SignalException while `$!` is
-          # `error` (whose cause is that same SignalException) would be
-          # circular. MRI declines to set a circular cause silently, but JRuby
-          # 10.1.1.0 raises `ArgumentError: circular causes`. See
-          # https://github.com/jruby/jruby/issues/9551
-          raise((cause.is_a?(::SignalException) ? cause : error), cause: nil)
+          raise(error)
         end
       end
 

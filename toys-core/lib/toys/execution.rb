@@ -52,7 +52,8 @@ module Toys
     #     ContextualError, including errors during any tool loading that takes
     #     place during this constructor, and errors during argument parsing and
     #     tool execution during the {#run} method. If false, propagate errors
-    #     as-is and do not wrap them.
+    #     as-is and do not wrap them. A `SignalException` is never wrapped
+    #     regardless of this setting; see {#run}.
     # @param external_data [Hash] Additional data provided by the caller.
     #
     def initialize(tool, args, loader,
@@ -92,6 +93,12 @@ module Toys
     # If a block is passed, the runtime context is simply yielded to it. This
     # is useful for testing parts of the tool runtime in isolation.
     # If no block is passed, the tool is executed normally.
+    #
+    # If the tool raises a `SignalException` that it does not handle itself,
+    # that exception propagates out of this method unwrapped, even when
+    # `wrap_errors` is enabled. This lets each tool in a nested execution
+    # dispatch it to its own `on_interrupt` or `on_signal` handler, and lets
+    # the Ruby VM handle whatever is left.
     #
     # @yieldparam context [Toys::Context] If a block is given, it is invoked in
     #     place of the tool's run handler, with the tool's middleware still

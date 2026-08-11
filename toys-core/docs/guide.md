@@ -221,8 +221,13 @@ itself, the Execution wraps it in a {Toys::ContextualError} tagged with the
 tool's name, its arguments, and the path to the file where it was defined. The
 CLI then rescues that wrapper and passes it to its error handler, which decides
 what to report and what result code to return. Tools themselves can also
-intercept errors that represent signals such as interrupts and handle them via
-the `on_interrupt` and `on_usage_error` handlers. See the section on
+intercept errors and handle them via the `on_usage_error` handler.
+
+Signals are treated differently: they are never wrapped. A `SignalException`
+propagates as itself, so that each tool it passes through gets the chance to
+intercept it with an `on_interrupt` or `on_signal` handler, and so that any
+signal no tool handled reaches the error handler, and ultimately the Ruby VM,
+still recognizable as a signal. See the section on
 [error handling](#handling-errors) for more details.
 
 #### Multiple runs
@@ -636,12 +641,11 @@ formatting.
 ### Handling errors
 
 If an unhandled exception (specifically an exception represented by a subclass
-of `StandardError` or `ScriptError`) occurs, or a signal such as an interrupt
-(represented by a `SignalException`) is received, during tool execution,
-Toys-Core first wraps the exception in a {Toys::ContextualError}. This error
-type provides various context fields such as an estimate of where in the tool
-source the error may have occurred. It also provides the original exception in
-the `cause` field.
+of `StandardError` or `ScriptError`) occurs during tool execution, Toys-Core
+first wraps the exception in a {Toys::ContextualError}. This error type
+provides various context fields such as an estimate of where in the tool source
+the error may have occurred. It also provides the original exception in the
+`cause` field.
 
 When one tool invokes another, whether through `delegate_to` or by calling
 {Toys::CLI#run} from within a tool, the wrappers nest, so that each level
@@ -650,19 +654,30 @@ case the `cause` field holds the next {Toys::ContextualError} in the chain
 rather than the original exception. Use {Toys::ContextualError#root_cause} to
 reach the original exception regardless of how deeply it is nested.
 
+Signals are *not* wrapped. If a signal such as an interrupt (represented by a
+`SignalException`) is received during tool execution, and no tool intercepts it
+with an `on_interrupt` or `on_signal` handler, it propagates unwrapped. This
+means a tool that delegates to, or otherwise invokes, another tool can still
+intercept a signal raised while the inner tool was running.
+
 Then, Toys-Core invokes the error handler, a Proc that you can set as a
 configuration argument when constructing a CLI. An error handler takes the
-{Toys::ContextualError} wrapper as an argument and should perform any desired
-final handling of an unhandled exception, such as displaying the error to the
-terminal, or reraising the exception. The handler should then return the
-desired result code for the execution.
+error as its argument and should perform any desired final handling of an
+unhandled exception, such as displaying the error to the terminal, or reraising
+the exception. The handler should then return the desired result code for the
+execution.
+
+The argument is one of two types. An ordinary error arrives as the
+{Toys::ContextualError} wrapper. An unhandled signal arrives as the
+`SignalException` itself.
 
 ```ruby
-my_error_handler = Proc.new do |wrapped_error|
-  # Propagate signals out and let the Ruby VM handle them.
-  cause = wrapped_error.root_cause
-  raise cause if cause.is_a?(SignalException)
-  # Handle any other exception types by printing a message.
+my_error_handler = Proc.new do |error|
+  # Propagate signals out and let the Ruby VM handle them. Signals arrive
+  # unwrapped, so this is a direct type check on the argument.
+  raise error if error.is_a?(SignalException)
+  # Handle any other exception types by printing a message. Here `error` is a
+  # Toys::ContextualError; use root_cause to reach the original exception.
   $stderr.puts "An error occurred. Please contact your administrator."
   # Return the result code
   255
@@ -670,11 +685,11 @@ end
 cli = Toys::CLI.new(error_handler: my_error_handler)
 ```
 
-If you do not set an error handler, the exception is raised out of the
-{Toys::CLI#run} call. In the case of signals, the *root cause*, represented by
-a `SignalException`, is raised directly so that the Ruby VM can handle it
-normally. For other exceptions, however, the outermost {Toys::ContextualError}
-wrapper is raised so that a rescue block has access to the context information.
+If you do not set an error handler, the error is raised out of the
+{Toys::CLI#run} call as-is. Signals are raised directly so that the Ruby VM can
+handle them normally. For other exceptions, the outermost
+{Toys::ContextualError} wrapper is raised so that a rescue block has access to
+the context information.
 
 #### StandardUI error handling
 
@@ -707,7 +722,9 @@ alter how exit codes are generated by overriding
 Toys-Core error handling handles normal exceptions that are subclasses of
 `StandardError`, errors coming from Ruby file loading and parsing that are
 subclasses of `ScriptError`, and signals that are subclasses of
-`SignalException`.
+`SignalException`. The first two are wrapped in a {Toys::ContextualError}
+before being passed to the error handler; signals are passed through
+unwrapped.
 
 Other exceptions such as `NoMemoryError` or `SystemStackError` are not handled
 by Toys, and are raised directly out of the {Toys::CLI#run}.
