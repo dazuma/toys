@@ -114,6 +114,10 @@ module Toys
       # are no suitable completions. Returns nil if the context demands a
       # different form.
       #
+      # The flag name and equals sign are not part of what the flag's value
+      # completion knows how to complete, so they are stripped from the
+      # fragment and restored to each candidate.
+      #
       def valued_flag_candidates(context)
         return unless @complete_flag_values
         arg_parser = context.arg_parser
@@ -121,12 +125,15 @@ module Toys
         # Bail if the previous arg was a flag that requires a value, so that
         # the current argument must be that value (and thus cannot be a flag)
         return if arg_parser.active_flag_def&.value_type == :required
-        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
+        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment)
         return unless match
-        flag_value_context = context.with(fragment_prefix: match[2])
+        flag_value_context = context.with(fragment: match[2])
         flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag
         return [] unless flag_def
-        flag_def.value_completion.call(flag_value_context)
+        prefix = "#{match[1]}="
+        flag_def.value_completion.call(flag_value_context).map do |candidate|
+          candidate.with_prefix(prefix)
+        end
       end
 
       ##
@@ -147,7 +154,6 @@ module Toys
       def subtool_candidates(context)
         return if !@complete_subtools || !context.args.empty?
         tool_name, prefix, fragment = analyze_subtool_fragment(context)
-        return unless tool_name
         subtools = context.loader.list_subtools(tool_name,
                                                 include_namespaces: true,
                                                 include_hidden: @include_hidden_subtools,
@@ -169,28 +175,11 @@ module Toys
       # `tool_name` is the full name of the namespace whose subtools should be
       # listed, `fragment` is the partial subtool name that candidates must
       # start with, and `prefix` is a string to prepend to each candidate.
-      # Returns `[nil, nil, nil]` if the current word cannot be a subtool name
-      # at all, meaning no subtool candidates should be offered.
       #
-      # A tool path in the current word can reach us in two different forms,
-      # because the shell may already have split the word for us:
-      #
-      # *  The part of the word preceding a `:` or `=` arrives separately, as
-      #    the context's `fragment_prefix`. See
-      #    {Toys::Utils::CompletionEngine::Base#run_internal}, which performs
-      #    that split because bash's default `COMP_WORDBREAKS` breaks words at
-      #    those characters. The shell will replace only the text following the
-      #    break, so candidates must *not* repeat what came before it, and
-      #    `prefix` stays empty. A prefix ending in `=` is a flag value rather
-      #    than a tool path, and one ending in `:` is just a literal colon if
-      #    `:` is not a configured delimiter; neither yields subtools.
-      # *  Any delimiter still embedded in the fragment was not split out by
-      #    the shell, so the shell will replace the entire word. Everything
-      #    through the last delimiter is taken as a tool path and echoed back
-      #    in `prefix`, so that each candidate remains a whole word.
-      #
-      # Hence the same delimiter can be handled by either branch depending on
-      # the shell, and a tool path can be divided across the two.
+      # The current word is the whole word being completed, so a tool path in
+      # it arrives with its delimiters intact. Everything through the last
+      # delimiter is taken as a tool path, and echoed back in `prefix` so that
+      # each candidate remains a replacement for the whole word.
       #
       # A delimiter is recognized as a path separator only if at least one
       # other character precedes it, so a fragment that begins with a delimiter
@@ -202,12 +191,6 @@ module Toys
         prefix = ""
         fragment = context.fragment
         delims = context.loader.extra_delimiters
-        unless context.fragment_prefix.empty?
-          if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
-            return [nil, nil, nil]
-          end
-          tool_name += context.fragment_prefix.split(":")
-        end
         unless delims.empty?
           delims_regex = ::Regexp.escape(delims)
           if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
@@ -240,7 +223,7 @@ module Toys
         return [] unless arg_parser.flags_allowed?
         flag_def = arg_parser.active_flag_def
         return [] if flag_def && flag_def.value_type == :required
-        return [] if context.fragment =~ /\A[^-]/ || !context.fragment_prefix.empty?
+        return [] if context.fragment =~ /\A[^-]/
         context.tool.flags.flat_map do |flag|
           flag.flag_completion.call(context)
         end

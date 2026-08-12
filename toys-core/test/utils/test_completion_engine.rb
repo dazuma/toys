@@ -29,9 +29,7 @@ describe Toys::Utils::CompletionEngine do
         flag :world, "--world VALUE", "-wVALUE", complete_values: ["building", "news"]
         flag :ruby, "--ruby [VALUE]", complete_values: ["gems", "tuesday"]
         required_arg :foo, complete: ["lish", "sball"]
-        optional_arg :bar do
-          complete ["n", "k"], prefix_constraint: /\A([a-z]+=)?\z/
-        end
+        optional_arg :bar, complete: ["n", "k"]
         remaining_args :baz, complete: ["aar", "ooka"]
         def run; end
       end
@@ -54,6 +52,10 @@ describe Toys::Utils::CompletionEngine do
           def run; end
         end
       end
+      tool "seven" do
+        required_arg :spec, complete: ["a=1", "a=2", "b:1", "plain"]
+        def run; end
+      end
     end
     cli
   }
@@ -71,7 +73,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes empty input" do
       _qt, candidates = completion.run_internal("toys ")
-      assert_equal(["five", "one", "three", "two"], candidates.map(&:string))
+      assert_equal(["five", "one", "seven", "three", "two"], candidates.map(&:string))
     end
 
     it "completes t" do
@@ -95,8 +97,35 @@ describe Toys::Utils::CompletionEngine do
     end
 
     it "completes subtool with colon" do
+      # Bash breaks the word at the colon and replaces only what follows it,
+      # so the candidate must not repeat the part of the tool path before it.
       _qt, candidates = completion.run_internal("toys three:")
       assert_equal(["four"], candidates.map(&:string))
+    end
+
+    it "completes an arg value containing an equals sign" do
+      _qt, candidates = completion.run_internal("toys seven a=")
+      assert_equal(["1", "2"], candidates.map(&:string))
+    end
+
+    it "completes an arg value containing a colon" do
+      _qt, candidates = completion.run_internal("toys seven b:")
+      assert_equal(["1"], candidates.map(&:string))
+    end
+
+    it "does not break a word at a quoted word break character" do
+      _qt, candidates = completion.run_internal("toys seven 'a=")
+      assert_equal(["a=1", "a=2"], candidates.map(&:string))
+    end
+
+    it "breaks a word at its last unquoted word break character" do
+      _qt, candidates = completion.run_internal('toys one --world="bu')
+      assert_equal(["building"], candidates.map(&:string))
+    end
+
+    it "passes through a candidate that does not extend the word" do
+      _qt, candidates = completion.run_internal("toys two pre=")
+      assert_equal(["partial-hello"], candidates.map(&:string))
     end
 
     it "completes subtool with period" do
@@ -129,13 +158,8 @@ describe Toys::Utils::CompletionEngine do
       assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], candidates.map(&:string))
     end
 
-    it "completes flag names and second arg with a valid prefix" do
+    it "does not complete a second arg whose word does not match any value" do
       _qt, candidates = completion.run_internal("toys one x pre=")
-      assert_equal(["k", "n"], candidates.map(&:string))
-    end
-
-    it "completes flag names and second arg with an invalid prefix" do
-      _qt, candidates = completion.run_internal("toys one x PRE=")
       assert_equal([], candidates)
     end
 
@@ -304,7 +328,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes empty input" do
       _qt, candidates = completion.run_internal("toys ")
-      assert_equal(["five", "one", "three", "two"], candidates.map(&:string))
+      assert_equal(["five", "one", "seven", "three", "two"], candidates.map(&:string))
       assert(candidates.none?(&:partial?))
     end
 
@@ -330,22 +354,31 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes subtool with colon" do
       # Unlike bash, zsh does not break the word at a colon, and replaces the
-      # entire word. Candidates must therefore carry the part of the tool path
-      # that precedes the colon.
+      # entire word, so the candidate is left as the whole tool path.
       _qt, candidates = completion.run_internal("toys three:")
       assert_equal(["three:four"], candidates.map(&:string))
     end
 
     it "completes a flag value after an equals sign" do
       # As with a colon, zsh replaces the whole word, so the flag name and the
-      # equals sign must be carried in the candidate too.
+      # equals sign are carried in the candidate too.
       _qt, candidates = completion.run_internal("toys one --world=bui")
       assert_equal(["--world=building"], candidates.map(&:string))
     end
 
-    it "preserves partialness when restoring the word prefix" do
-      _qt, candidates = completion.run_internal("toys two pre=")
-      assert_equal(["pre=partial-hello"], candidates.map(&:string))
+    it "completes an arg value containing an equals sign" do
+      _qt, candidates = completion.run_internal("toys seven a=")
+      assert_equal(["a=1", "a=2"], candidates.map(&:string))
+    end
+
+    it "completes an arg value containing a colon" do
+      _qt, candidates = completion.run_internal("toys seven b:")
+      assert_equal(["b:1"], candidates.map(&:string))
+    end
+
+    it "preserves partialness" do
+      _qt, candidates = completion.run_internal("toys two par")
+      assert_equal(["partial-hello"], candidates.map(&:string))
       assert(candidates.all?(&:partial?))
     end
 
@@ -379,13 +412,8 @@ describe Toys::Utils::CompletionEngine do
       assert_equal(["--hello", "--ruby", "--world", "-w", "k", "n"], candidates.map(&:string))
     end
 
-    it "completes flag names and second arg with a valid prefix" do
+    it "does not complete a second arg whose word does not match any value" do
       _qt, candidates = completion.run_internal("toys one x pre=")
-      assert_equal(["pre=k", "pre=n"], candidates.map(&:string))
-    end
-
-    it "completes flag names and second arg with an invalid prefix" do
-      _qt, candidates = completion.run_internal("toys one x PRE=")
       assert_equal([], candidates)
     end
 

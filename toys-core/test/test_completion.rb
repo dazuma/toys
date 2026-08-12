@@ -48,15 +48,6 @@ describe Toys::Completion do
       assert_instance_of(Toys::Completion::Enum, completion)
       expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
       assert_equal(expected, completion.values)
-      assert_equal("", completion.prefix_constraint)
-    end
-
-    it "recognizes an array wiht options" do
-      completion = Toys::Completion.create(["one", :two, ["three"]], prefix_constraint: "hi")
-      assert_instance_of(Toys::Completion::Enum, completion)
-      expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
-      assert_equal(expected, completion.values)
-      assert_equal("hi", completion.prefix_constraint)
     end
 
     it "recognizes a proc" do
@@ -250,8 +241,8 @@ end
 
 describe Toys::Completion::Enum do
   let(:completion) { Toys::Completion::Enum.new(["one", :two, ["three"]]) }
-  def context(str, prefix: "")
-    Toys::Completion::Context.new(loader: nil, fragment: str, fragment_prefix: prefix)
+  def context(str)
+    Toys::Completion::Context.new(loader: nil, fragment: str)
   end
 
   it "returns all values when given an empty string" do
@@ -266,30 +257,15 @@ describe Toys::Completion::Enum do
     assert_equal(expected, candidates)
   end
 
-  it "returns nothing when given a fragment and a bad prefix" do
-    candidates = completion.call(context("t", prefix: "hi="))
-    assert_equal([], candidates)
-  end
-
   it "returns nothing when given an unfulfilled fragment" do
     candidates = completion.call(context("w"))
     assert_equal([], candidates)
   end
 
-  describe "with a prefix constraint" do
-    let(:completion) {
-      Toys::Completion::Enum.new(["one", :two, ["three"]], prefix_constraint: /^[a-z]+=$/)
-    }
-
-    it "returns nothing when given a nonconforming prefix" do
-      candidates = completion.call(context("t"))
-      assert_equal([], candidates)
-    end
-
-    it "returns values when given the right prefix" do
-      candidates = completion.call(context("t", prefix: "hello="))
-      expected = Toys::Completion::Candidate.new_multi(["three", "two"])
-      assert_equal(expected, candidates)
-    end
+  it "matches a fragment containing a shell word break character" do
+    completion = Toys::Completion::Enum.new(["hi=one", "hi=two", "ho=three"])
+    candidates = completion.call(context("hi="))
+    expected = Toys::Completion::Candidate.new_multi(["hi=one", "hi=two"])
+    assert_equal(expected, candidates)
   end
 end

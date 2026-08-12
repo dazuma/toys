@@ -992,11 +992,11 @@ describe Toys::ToolDefinition do
         assert_instance_of(Toys::Completion::Enum, tool.lookup_completion(completion_name))
       end
 
-      it "adds enum with an option" do
-        tool.add_completion(completion_name, ["one", "two", "three"], prefix_constraint: "hi=")
+      it "adds a completion with an option" do
+        tool.add_completion(completion_name, :file_system, omit_files: true)
         found_completion = tool.lookup_completion(completion_name)
-        assert_instance_of(Toys::Completion::Enum, found_completion)
-        assert_equal("hi=", found_completion.prefix_constraint)
+        assert_instance_of(Toys::Completion::FileSystem, found_completion)
+        refute(found_completion.include_files)
       end
 
       it "adds block" do
@@ -1098,10 +1098,9 @@ describe Toys::ToolDefinition do
         loader
       end
 
-      def candidate_strings(loader, previous_words: [], fragment: "", fragment_prefix: "")
+      def candidate_strings(loader, previous_words: [], fragment: "")
         context = Toys::Completion::Context.new(loader: loader, previous_words: previous_words,
-                                                fragment: fragment,
-                                                fragment_prefix: fragment_prefix)
+                                                fragment: fragment)
         context.tool.completion.call(context).map(&:string).sort
       end
 
@@ -1115,14 +1114,14 @@ describe Toys::ToolDefinition do
         assert_equal(["ns:sub1", "ns:sub2"], candidates)
       end
 
-      it "completes subtools across an extra delimiter in the fragment prefix" do
-        candidates = candidate_strings(make_loader, fragment_prefix: "ns:", fragment: "sub")
-        assert_equal(["sub1", "sub2"], candidates)
-      end
-
       it "does not complete subtools across a delimiter that is not configured" do
         loader = make_loader(extra_delimiters: "")
-        candidates = candidate_strings(loader, fragment_prefix: "ns:", fragment: "sub")
+        candidates = candidate_strings(loader, fragment: "ns:sub")
+        assert_equal([], candidates)
+      end
+
+      it "does not treat a leading delimiter as a path separator" do
+        candidates = candidate_strings(make_loader, fragment: ":sub")
         assert_equal([], candidates)
       end
 
