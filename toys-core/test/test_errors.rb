@@ -305,6 +305,42 @@ describe Toys::ContextualError do
       assert_nil error.config_line
     end
 
+    it "extracts line from a SyntaxError wrapped in a nested contextual error" do
+      # The outer capture wraps a finalized error, so it must look through to
+      # the original SyntaxError to find the path in its message. The wrapper's
+      # backtrace points at this test file rather than the config path, so the
+      # backtrace fallback cannot rescue this case.
+      path = "/fake/config/file.rb"
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(path: path) do
+          Toys::ContextualError.capture(banner: "inner", final: true) do
+            raise ::SyntaxError, "#{path}:42: unexpected keyword end"
+          end
+        end
+      end
+      assert_kind_of ::SyntaxError, error.root_cause
+      assert_equal path, error.config_path
+      assert_equal 42, error.config_line
+    end
+
+    it "extracts line from a SyntaxError when updating fields on a nested error" do
+      # Same as above, but the outer capture merges into the existing error via
+      # update_fields! rather than constructing a new wrapper.
+      path = "/fake/config/file.rb"
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(path: path) do
+          Toys::ContextualError.capture(banner: "middle") do
+            Toys::ContextualError.capture(banner: "inner", final: true) do
+              raise ::SyntaxError, "#{path}:42: unexpected keyword end"
+            end
+          end
+        end
+      end
+      assert_kind_of ::SyntaxError, error.root_cause
+      assert_equal path, error.config_path
+      assert_equal 42, error.config_line
+    end
+
     it "falls back to backtrace for SyntaxError when message does not contain path" do
       raise_line = nil
       error = assert_raises(Toys::ContextualError) do
