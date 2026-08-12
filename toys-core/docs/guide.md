@@ -1186,9 +1186,10 @@ This section includes classes involved in tool execution
     {Toys::Execution}.
  *  {Toys::Execution} - A single tool invocation. It parses the command line
     arguments, builds the {Toys::Context}, applies the tool's middleware, runs
-    the tool, and wraps any resulting error in a {Toys::ContextualError}. Most
-    applications should use {Toys::CLI#run} rather than constructing a
-    {Toys::Execution} directly.
+    the tool, and wraps any resulting error in a {Toys::ContextualError}. It is
+    created by the {Toys::Execution.for_tool} and {Toys::Execution.for_args}
+    factory methods, but most applications should use {Toys::CLI#run} rather
+    than creating a {Toys::Execution} directly.
  *  {Toys::ArgParser} - A service that parses command line argument lists and
     matches the given arguments against the tool's formal flags and arguments
     definition, producing the parsed values along with any usage errors.

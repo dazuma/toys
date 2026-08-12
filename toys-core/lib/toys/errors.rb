@@ -101,14 +101,6 @@ module Toys
     attr_reader :tool_args
 
     ##
-    # Whether this error has been finalized
-    # @return [boolean]
-    #
-    def final?
-      @final
-    end
-
-    ##
     # Returns the root cause of this error, i.e. the first cause in the chain
     # that is not itself a ContextualError.
     #
@@ -120,6 +112,13 @@ module Toys
         current = current.cause
       end
       current
+    end
+
+    ##
+    # @private
+    #
+    def final?
+      @final
     end
 
     ##
@@ -168,10 +167,9 @@ module Toys
       #
       # @private This interface is internal and subject to change without warning.
       #
-      def capture(banner: nil, path: nil, tool_name: nil, tool_args: nil, final: false, passthru: false)
+      def capture(banner: nil, path: nil, tool_name: nil, tool_args: nil, final: false)
         yield
       rescue ContextualError => e
-        raise e if passthru
         if e.final?
           raise ContextualError.new(e, banner, path, tool_name, tool_args, final)
         else
@@ -179,7 +177,6 @@ module Toys
           raise e
         end
       rescue ::ScriptError, ::StandardError => e
-        raise e if passthru
         raise ContextualError.new(e, banner, path, tool_name, tool_args, final)
       end
     end

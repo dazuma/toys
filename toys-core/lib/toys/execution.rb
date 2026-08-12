@@ -17,64 +17,138 @@ module Toys
   #
   # Once constructed, an Execution can be invoked multiple times independently.
   #
-  # Most applications should not create executions directly, but should call
-  # {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly configured
-  # tool executions and tests, along with error handling.
+  # Create executions using the {Execution.for_tool} or {Execution.for_args}
+  # factory methods. Most applications should not create executions at all, but
+  # should call {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly
+  # configured tool executions and tests, along with error handling.
   #
   class Execution
-    ##
-    # Create a tool execution.
-    #
-    # The tool can be specified explicitly by passing the {Toys::ToolDefinition}
-    # or implicitly by including the tool name as part of the arguments. If
-    # the tool definition is not explicitly provided, the given {Toys::Loader}
-    # is invoked in the constructor to lookup the tool (which can raise an
-    # error.)
-    #
-    # @param tool [Toys::ToolDefinition,nil] The tool to run, or nil to lookup
-    #     the tool name from the given args.
-    # @param args [Array<String>] The command line arguments. If a tool is
-    #     provided explicitly, this is just the args to pass to the tool, not
-    #     including the tool name itself. If a tool is not provided explicitly,
-    #     this should include the tool name to lookup.
-    # @param loader [Toys::Loader] The loader.
-    # @param logger_factory [Proc,nil] A proc that optionally takes a tool
-    #     definition and returns a logger. If not given, a default will be
-    #     provided.
-    # @param base_logger_level [Integer,nil] The logger level that corresponds
-    #     to zero verbosity. If not provided, the current setting of the logger
-    #     is used (typically Logger::WARN).
-    # @param verbosity [Integer] Initial verbosity. Default is 0.
-    # @param delegated_from [Toys::Context,nil] The context from which this
-    #     execution is delegated. Optional. Should be set only if this is a
-    #     delegated execution.
-    # @param wrap_errors [boolean] If true (the default), wrap errors in
-    #     ContextualError, including errors during any tool loading that takes
-    #     place during this constructor, and errors during argument parsing and
-    #     tool execution during the {#run} method. If false, propagate errors
-    #     as-is and do not wrap them. A `SignalException` is never wrapped
-    #     regardless of this setting; see {#run}.
-    # @param external_data [Hash] Additional data provided by the caller.
-    #
-    def initialize(tool, args, loader,
+    class << self
+      ##
+      # Create a tool execution for an already known tool.
+      #
+      # @param tool [Toys::ToolDefinition] The tool to run.
+      # @param args [Array<String>] The command line arguments to pass to the
+      #     tool, not including the tool name itself.
+      # @param loader [Toys::Loader] The loader.
+      # @param logger_factory [Proc,nil] A proc that optionally takes a tool
+      #     definition and returns a logger. If not given, a default will be
+      #     provided.
+      # @param base_logger_level [Integer,nil] The logger level that corresponds
+      #     to zero verbosity. If not provided, the current setting of the logger
+      #     is used (typically Logger::WARN).
+      # @param verbosity [Integer] Initial verbosity. Default is 0.
+      # @param delegated_from [Toys::Context,nil] The context from which this
+      #     execution is delegated. Optional. Should be set only if this is a
+      #     delegated execution.
+      # @param wrap_errors [boolean] If true (the default), wrap errors in
+      #     ContextualError, including errors during argument parsing and tool
+      #     execution during the {#run} method. If false, propagate errors as-is
+      #     and do not wrap them. A `SignalException` is never wrapped
+      #     regardless of this setting; see {#run}.
+      # @param external_data [Hash] Additional data provided by the caller.
+      # @return [Toys::Execution]
+      #
+      def for_tool(tool, args, loader,
                    logger_factory: nil,
                    base_logger_level: nil,
                    verbosity: 0,
                    delegated_from: nil,
                    wrap_errors: true,
                    external_data: {})
-      if tool
-        @tool = tool
-        @args = args
-      else
-        @tool, @args = ContextualError.capture(
-          banner: "Error finding tool definition",
-          final: true,
-          passthru: !wrap_errors
-        ) do
-          loader.lookup(args)
+        new(tool, args, loader,
+            logger_factory: logger_factory,
+            base_logger_level: base_logger_level,
+            verbosity: verbosity,
+            delegated_from: delegated_from,
+            wrap_errors: wrap_errors,
+            external_data: external_data)
+      end
+
+      ##
+      # Create a tool execution, determining the tool by looking up a tool name
+      # appearing at the beginning of the given arguments.
+      #
+      # The given {Toys::Loader} is invoked to perform the lookup, which can
+      # raise an error. If `wrap_errors` is enabled, such an error is wrapped in
+      # a finalized {Toys::ContextualError}.
+      #
+      # @param args [Array<String>] The command line arguments, including the
+      #     name of the tool to look up.
+      # @param loader [Toys::Loader] The loader.
+      # @param logger_factory [Proc,nil] A proc that optionally takes a tool
+      #     definition and returns a logger. If not given, a default will be
+      #     provided.
+      # @param base_logger_level [Integer,nil] The logger level that corresponds
+      #     to zero verbosity. If not provided, the current setting of the logger
+      #     is used (typically Logger::WARN).
+      # @param verbosity [Integer] Initial verbosity. Default is 0.
+      # @param delegated_from [Toys::Context,nil] The context from which this
+      #     execution is delegated. Optional. Should be set only if this is a
+      #     delegated execution.
+      # @param wrap_errors [boolean] If true (the default), wrap errors in
+      #     ContextualError, including errors during the tool lookup performed
+      #     by this method, and errors during argument parsing and tool
+      #     execution during the {#run} method. If false, propagate errors as-is
+      #     and do not wrap them. A `SignalException` is never wrapped
+      #     regardless of this setting; see {#run}.
+      # @param external_data [Hash] Additional data provided by the caller.
+      # @return [Toys::Execution]
+      #
+      def for_args(args, loader,
+                   logger_factory: nil,
+                   base_logger_level: nil,
+                   verbosity: 0,
+                   delegated_from: nil,
+                   wrap_errors: true,
+                   external_data: {})
+        tool, remaining =
+          if wrap_errors
+            ContextualError.capture(banner: "Error finding tool definition", final: true) do
+              loader.lookup(args)
+            end
+          else
+            loader.lookup(args)
+          end
+        new(tool, remaining, loader,
+            logger_factory: logger_factory,
+            base_logger_level: base_logger_level,
+            verbosity: verbosity,
+            delegated_from: delegated_from,
+            wrap_errors: wrap_errors,
+            external_data: external_data)
+      end
+
+      ##
+      # Returns a default logger factory that generates simple loggers that
+      # write to STDERR.
+      #
+      # @return [Proc]
+      #
+      def default_logger_factory
+        proc do
+          logger = ::Logger.new($stderr)
+          logger.level = ::Logger::WARN
+          logger
         end
       end
+    end
+
+    ##
+    # Create a tool execution. Use {Execution.for_tool} or {Execution.for_args}
+    # instead of calling this directly.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def initialize(tool, args, loader,
+                   logger_factory:,
+                   base_logger_level:,
+                   verbosity:,
+                   delegated_from:,
+                   wrap_errors:,
+                   external_data:)
+      @tool = tool
+      @args = args
       @loader = loader
       @logger_factory = logger_factory || Execution.default_logger_factory
       @base_logger_level = base_logger_level
@@ -83,6 +157,22 @@ module Toys
       @wrap_errors = wrap_errors
       @external_data = external_data
     end
+
+    ##
+    # The tool that this execution runs.
+    #
+    # @return [Toys::ToolDefinition]
+    #
+    attr_reader :tool
+
+    ##
+    # The command line arguments passed to the tool, not including the tool name
+    # itself. If this execution was created by {Execution.for_args}, these are
+    # the arguments remaining after the tool name was consumed by the lookup.
+    #
+    # @return [Array<String>]
+    #
+    attr_reader :args
 
     ##
     # Perform the requested tool execution.
@@ -107,34 +197,26 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(&block)
+      return run_internal(&block) unless @wrap_errors
       ContextualError.capture(
         banner: "Error during tool execution",
         path: @tool.source_info&.source_path,
         tool_name: @tool.full_name, tool_args: @args,
-        final: true,
-        passthru: !@wrap_errors
+        final: true
       ) do
-        context = build_context
-        block ||= make_run_handler
-        execute_tool(context, &block)
-      end
-    end
-
-    ##
-    # Returns a default logger factory that generates simple loggers that
-    # write to STDERR.
-    #
-    # @return [Proc]
-    #
-    def self.default_logger_factory
-      proc do
-        logger = ::Logger.new($stderr)
-        logger.level = ::Logger::WARN
-        logger
+        run_internal(&block)
       end
     end
 
     private
+
+    # Builds the context and runs the tool within it, without any error
+    # wrapping. See {#run}.
+    def run_internal(&block)
+      context = build_context
+      block ||= make_run_handler
+      execute_tool(context, &block)
+    end
 
     # Parses the command line arguments against the tool's flag and positional
     # definitions, and builds the tool's runtime context from the result. Any
@@ -198,13 +280,13 @@ module Toys
       # We don't lookup_specific the target directly, but allow the Loader to
       # re-lookup with the args, so that target can point to a namespace and
       # we can load a tool under it.
-      subexec = Execution.new(nil, target + @args, @loader,
-                              external_data: @external_data,
-                              logger_factory: @logger_factory,
-                              base_logger_level: @base_logger_level,
-                              verbosity: @verbosity,
-                              wrap_errors: @wrap_errors,
-                              delegated_from: context)
+      subexec = Execution.for_args(target + @args, @loader,
+                                   external_data: @external_data,
+                                   logger_factory: @logger_factory,
+                                   base_logger_level: @base_logger_level,
+                                   verbosity: @verbosity,
+                                   wrap_errors: @wrap_errors,
+                                   delegated_from: context)
       Context.exit(subexec.run)
     end
 

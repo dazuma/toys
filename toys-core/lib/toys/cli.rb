@@ -697,12 +697,12 @@ module Toys
         Context::Key::CLI => self,
         Context::Key::EXECUTABLE_NAME => executable_name,
       }
-      Execution.new(nil, args.flatten, loader,
-                    external_data: external_data,
-                    logger_factory: logger_factory,
-                    base_logger_level: base_level,
-                    verbosity: verbosity,
-                    wrap_errors: wrap_errors)
+      Execution.for_args(args.flatten, loader,
+                         external_data: external_data,
+                         logger_factory: logger_factory,
+                         base_logger_level: base_level,
+                         verbosity: verbosity,
+                         wrap_errors: wrap_errors)
     end
   end
 end

@@ -479,43 +479,6 @@ describe Toys::ContextualError do
     end
   end
 
-  describe "passthru" do
-    it "propagates an ordinary error without wrapping" do
-      error = assert_raises(::RuntimeError) do
-        Toys::ContextualError.capture(banner: "my banner", passthru: true) { raise "oops" }
-      end
-      assert_equal("oops", error.message)
-    end
-
-    it "propagates a SignalException without wrapping" do
-      # Signals are never wrapped regardless of passthru; this pins that the
-      # passthru path agrees with the default path.
-      error = assert_raises(::SignalException) do
-        Toys::ContextualError.capture(passthru: true) { raise ::SignalException, 15 }
-      end
-      assert_equal(15, error.signo)
-    end
-
-    it "propagates an existing ContextualError unchanged" do
-      inner_error = nil
-      error = assert_raises(Toys::ContextualError) do
-        Toys::ContextualError.capture(banner: "outer", tool_name: ["outer-tool"], passthru: true) do
-          inner_error = assert_raises(Toys::ContextualError) do
-            Toys::ContextualError.capture(banner: "inner", final: true) { raise "oops" }
-          end
-          raise inner_error
-        end
-      end
-      assert_same(inner_error, error)
-      assert_equal("inner", error.banner)
-      assert_nil(error.tool_name)
-    end
-
-    it "returns the block value normally" do
-      assert_equal(42, Toys::ContextualError.capture(passthru: true) { 42 })
-    end
-  end
-
   describe "root_cause" do
     it "returns the original error for a single level" do
       original = ::RuntimeError.new("the original")

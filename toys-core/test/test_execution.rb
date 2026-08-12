@@ -24,14 +24,14 @@ describe Toys::Execution do
 
   def make_execution(*args, **opts)
     tool, remaining = cli.loader.lookup(args.flatten)
-    Toys::Execution.new(tool, remaining, cli.loader, **opts)
+    Toys::Execution.for_tool(tool, remaining, cli.loader, **opts)
   end
 
   # Builds an execution that looks the tool up from the args, which is the form
   # used by Toys::CLI.
   def lookup_execution(*args, **opts)
     opts = {logger_factory: logger_factory}.merge(opts)
-    Toys::Execution.new(nil, args.flatten, cli.loader, **opts)
+    Toys::Execution.for_args(args.flatten, cli.loader, **opts)
   end
 
   def add_delegation_config(&target_body)
@@ -122,7 +122,7 @@ describe Toys::Execution do
       end
     end
     tool, remaining = middleware_cli.loader.lookup(["foo"])
-    Toys::Execution.new(tool, remaining, middleware_cli.loader).run do |_context|
+    Toys::Execution.for_tool(tool, remaining, middleware_cli.loader).run do |_context|
       order << :block
     end
     assert_equal([:middleware, :block], order)
@@ -164,6 +164,33 @@ describe Toys::Execution do
       make_execution("foo").run
     end
     assert_kind_of(Toys::NotRunnableError, err.cause)
+  end
+
+  describe "construction" do
+    it "exposes the tool and args given to for_tool" do
+      cli.add_config_block do
+        tool "foo" do
+          to_run { nil }
+        end
+      end
+      tool, remaining = cli.loader.lookup(["foo", "arg1"])
+      execution = Toys::Execution.for_tool(tool, remaining, cli.loader)
+      assert_same(tool, execution.tool)
+      assert_equal(["arg1"], execution.args)
+    end
+
+    it "exposes the tool and remaining args resolved by for_args" do
+      cli.add_config_block do
+        tool "foo" do
+          tool "bar" do
+            to_run { nil }
+          end
+        end
+      end
+      execution = Toys::Execution.for_args(["foo", "bar", "arg1"], cli.loader)
+      assert_equal(["foo", "bar"], execution.tool.full_name)
+      assert_equal(["arg1"], execution.args)
+    end
   end
 
   describe "tool lookup" do
@@ -246,7 +273,7 @@ describe Toys::Execution do
         end
       end
       tool, remaining = cli.loader.lookup(["foo"])
-      assert_equal(0, Toys::Execution.new(tool, remaining, cli.loader).run)
+      assert_equal(0, Toys::Execution.for_tool(tool, remaining, cli.loader).run)
     end
 
     it "honors base_logger_level" do
@@ -499,8 +526,8 @@ describe Toys::Execution do
     }
 
     it "displays help without a CLI in the context" do
-      execution = Toys::Execution.new(nil, ["foo", "--help"], help_cli.loader,
-                                      logger_factory: logger_factory)
+      execution = Toys::Execution.for_args(["foo", "--help"], help_cli.loader,
+                                           logger_factory: logger_factory)
       assert_equal(0, execution.run)
       assert_match(/SYNOPSIS/, help_io.string)
       assert_match(/\(binary-name\) foo/, help_io.string)
@@ -508,9 +535,9 @@ describe Toys::Execution do
 
     it "displays help using an executable name from external data" do
       external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      execution = Toys::Execution.new(nil, ["foo", "--help"], help_cli.loader,
-                                      logger_factory: logger_factory,
-                                      external_data: external_data)
+      execution = Toys::Execution.for_args(["foo", "--help"], help_cli.loader,
+                                           logger_factory: logger_factory,
+                                           external_data: external_data)
       assert_equal(0, execution.run)
       assert_match(/my-exe foo/, help_io.string)
     end
@@ -525,8 +552,8 @@ describe Toys::Execution do
           end
         end
       end
-      execution = Toys::Execution.new(nil, ["foo"], verbose_cli.loader,
-                                      logger_factory: logger_factory, verbosity: 2)
+      execution = Toys::Execution.for_args(["foo"], verbose_cli.loader,
+                                           logger_factory: logger_factory, verbosity: 2)
       assert_equal(0, execution.run)
     end
 
@@ -540,8 +567,8 @@ describe Toys::Execution do
           end
         end
       end
-      execution = Toys::Execution.new(nil, ["foo", "-v"], verbose_cli.loader,
-                                      logger_factory: logger_factory, verbosity: 2)
+      execution = Toys::Execution.for_args(["foo", "-v"], verbose_cli.loader,
+                                           logger_factory: logger_factory, verbosity: 2)
       assert_equal(0, execution.run)
     end
   end
