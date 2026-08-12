@@ -52,7 +52,12 @@ module Toys
       banner ||= "Unexpected error"
       original = cause.is_a?(ContextualError) ? cause.root_cause || cause : cause
       super("#{banner}: #{original.message} (#{original.class})")
-      set_backtrace(cause.backtrace)
+      # Prefer the locations, because they let an enclosing capture locate the
+      # config file line (see #line_from_cause). They are unavailable if the
+      # cause was never raised, or if it is itself a ContextualError on a Ruby
+      # too old to retain locations through set_backtrace, so fall back to the
+      # strings rather than leaving the backtrace unset.
+      Compat.set_backtrace(self, cause.backtrace_locations || cause.backtrace)
       @banner = banner
       @tool_name = tool_name
       @tool_args = tool_args

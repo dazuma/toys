@@ -97,6 +97,39 @@ describe Toys::ContextualError do
       assert_equal original.backtrace, error.backtrace
     end
 
+    it "adopts the original backtrace through nested wrappers" do
+      # Each wrapper takes its backtrace from its cause, so every level must
+      # continue to point at the code that actually failed. If a wrapper were
+      # left with no backtrace, Ruby would fill one in at raise time, which
+      # points into ContextualError.capture rather than the failing tool.
+      original = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outermost", final: true) do
+          Toys::ContextualError.capture(banner: "middle", final: true) do
+            Toys::ContextualError.capture(banner: "innermost", final: true) do
+              original = RuntimeError.new("oops")
+              raise original
+            end
+          end
+        end
+      end
+      assert_equal original.backtrace, error.backtrace
+      assert_equal original.backtrace, error.cause.backtrace
+      assert_equal original.backtrace, error.cause.cause.backtrace
+    end
+
+    it "adopts the cause's backtrace when the cause has no backtrace locations" do
+      # An exception that was built but never raised carries a string backtrace
+      # only. The wrapper must still adopt it.
+      original = RuntimeError.new("oops")
+      original.set_backtrace(["/fake/path.rb:12:in 'run'"])
+      assert_nil original.backtrace_locations
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture { raise original }
+      end
+      assert_equal ["/fake/path.rb:12:in 'run'"], error.backtrace
+    end
+
     it "sets banner from keyword argument" do
       error = assert_raises(Toys::ContextualError) do
         Toys::ContextualError.capture(banner: "My Banner") { raise "oops" }
@@ -206,6 +239,43 @@ describe Toys::ContextualError do
       end
       assert_equal __FILE__, error.config_path
       assert_equal raise_line, error.config_line
+    end
+
+    # A wrapper locates the config line by searching its cause's backtrace
+    # locations. Those survive from one wrapper to the next only on Rubies
+    # where Exception#set_backtrace accepts location objects, so on older
+    # Rubies only the innermost frame of a chain can resolve a config path.
+    it "sets config_path on an outer frame wrapping a finalized error" do
+      skip "Skipped test because Ruby is older than 3.4" if Toys::Compat::RUBY_VERSION_CODE < 30_400
+      raise_line = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", path: __FILE__, final: true) do
+          Toys::ContextualError.capture(banner: "inner", final: true) do
+            raise_line = __LINE__ + 1
+            raise "oops"
+          end
+        end
+      end
+      # The outer capture built a new wrapper around the finalized inner one.
+      assert_kind_of Toys::ContextualError, error.cause
+      assert_equal "outer", error.banner
+      assert_equal __FILE__, error.config_path
+      assert_equal raise_line, error.config_line
+    end
+
+    it "retains backtrace locations across a wrapper" do
+      skip "Skipped test because Ruby is older than 3.4" if Toys::Compat::RUBY_VERSION_CODE < 30_400
+      original = nil
+      error = assert_raises(Toys::ContextualError) do
+        Toys::ContextualError.capture(banner: "outer", final: true) do
+          Toys::ContextualError.capture(banner: "inner", final: true) do
+            original = RuntimeError.new("oops")
+            raise original
+          end
+        end
+      end
+      refute_nil error.backtrace_locations
+      assert_equal original.backtrace_locations.map(&:to_s), error.backtrace_locations.map(&:to_s)
     end
   end
 
