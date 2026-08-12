@@ -161,6 +161,42 @@ module Toys
         candidates
       end
 
+      ##
+      # Works out which namespace's subtools should be offered as candidates
+      # for the word currently being completed.
+      #
+      # Returns a three-element array `[tool_name, prefix, fragment]`, in which
+      # `tool_name` is the full name of the namespace whose subtools should be
+      # listed, `fragment` is the partial subtool name that candidates must
+      # start with, and `prefix` is a string to prepend to each candidate.
+      # Returns `[nil, nil, nil]` if the current word cannot be a subtool name
+      # at all, meaning no subtool candidates should be offered.
+      #
+      # A tool path in the current word can reach us in two different forms,
+      # because the shell may already have split the word for us:
+      #
+      # *  The part of the word preceding a `:` or `=` arrives separately, as
+      #    the context's `fragment_prefix`. See
+      #    {Toys::Utils::CompletionEngine::Base#run_internal}, which performs
+      #    that split because bash's default `COMP_WORDBREAKS` breaks words at
+      #    those characters. The shell will replace only the text following the
+      #    break, so candidates must *not* repeat what came before it, and
+      #    `prefix` stays empty. A prefix ending in `=` is a flag value rather
+      #    than a tool path, and one ending in `:` is just a literal colon if
+      #    `:` is not a configured delimiter; neither yields subtools.
+      # *  Any delimiter still embedded in the fragment was not split out by
+      #    the shell, so the shell will replace the entire word. Everything
+      #    through the last delimiter is taken as a tool path and echoed back
+      #    in `prefix`, so that each candidate remains a whole word.
+      #
+      # Hence the same delimiter can be handled by either branch depending on
+      # the shell, and a tool path can be divided across the two.
+      #
+      # A delimiter is recognized as a path separator only if at least one
+      # other character precedes it, so a fragment that begins with a delimiter
+      # is instead matched literally against the subtool names, and therefore
+      # matches nothing.
+      #
       def analyze_subtool_fragment(context)
         tool_name = context.tool.full_name
         prefix = ""
