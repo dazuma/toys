@@ -1138,5 +1138,35 @@ describe Toys::ArgParser do
       errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
       assert_errors_include(Toys::ArgParser::ArgMissingError, errors)
     end
+
+    # These keys are resolved like every other context key: injected common
+    # data, and then the tool's non-nil default data, take precedence over the
+    # parser's own arrays. Overriding them detaches the entry from the parser,
+    # so it no longer tracks parsing, which is the caller's choice to make.
+    describe "precedence" do
+      it "is overridden by injected common data" do
+        common_data = {Toys::Context::Key::ARGS => "from-common"}
+        parser = Toys::ArgParser.new(tool, loader, common_data: common_data)
+        tool.set_remaining_args(:r)
+        parser.parse(["one"]).finish
+        assert_equal("from-common", parser.data[Toys::Context::Key::ARGS])
+        assert_equal(["one"], parser.parsed_args)
+      end
+
+      it "is overridden by a non-nil default from the tool" do
+        tool.default_data[Toys::Context::Key::UNMATCHED_FLAGS] = ["from-tool"]
+        arg_parser.parse([]).finish
+        assert_equal(["from-tool"], arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+      end
+
+      it "is not overridden by a nil default from the tool" do
+        # A tool declaring a flag keyed on one of these gets a nil default,
+        # which must not detach the entry from the parser's array.
+        tool.add_flag(Toys::Context::Key::USAGE_ERRORS, ["-a"])
+        arg_parser.parse(["--unknown"]).finish
+        assert_same(arg_parser.errors, arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+        refute_empty(arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+      end
+    end
   end
 end
