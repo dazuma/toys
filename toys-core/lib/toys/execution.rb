@@ -23,6 +23,18 @@ module Toys
   # configured tool executions and tests, along with error handling.
   #
   class Execution
+    ##
+    # The singleton default logger_factory Proc, which simply returns a new
+    # logger writing to the current stderr.
+    #
+    # @return [Proc]
+    #
+    DEFAULT_LOGGER_FACTORY = proc {
+      logger = ::Logger.new($stderr)
+      logger.level = ::Logger::WARN
+      logger
+    }.freeze
+
     class << self
       ##
       # Create a tool execution for an already known tool.
@@ -118,20 +130,6 @@ module Toys
             wrap_errors: wrap_errors,
             external_data: external_data)
       end
-
-      ##
-      # Returns a default logger factory that generates simple loggers that
-      # write to STDERR.
-      #
-      # @return [Proc]
-      #
-      def default_logger_factory
-        proc do
-          logger = ::Logger.new($stderr)
-          logger.level = ::Logger::WARN
-          logger
-        end
-      end
     end
 
     ##
@@ -150,7 +148,7 @@ module Toys
       @tool = tool
       @args = args
       @loader = loader
-      @logger_factory = logger_factory || Execution.default_logger_factory
+      @logger_factory = logger_factory || DEFAULT_LOGGER_FACTORY
       @base_logger_level = base_logger_level
       @verbosity = verbosity.to_i
       @delegated_from = delegated_from

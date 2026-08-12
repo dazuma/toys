@@ -298,6 +298,30 @@ describe Toys::Execution do
       assert_equal(0, lookup_execution("foo", verbosity: 2).run)
       assert_equal(Logger::WARN, logger.level)
     end
+
+    describe "default factory" do
+      it "is the same proc returned by the CLI" do
+        assert_same(Toys::Execution::DEFAULT_LOGGER_FACTORY, Toys::CLI.default_logger_factory)
+      end
+
+      it "builds a new logger writing to the current stderr on each call" do
+        factory = Toys::Execution::DEFAULT_LOGGER_FACTORY
+        stringio = ::StringIO.new
+        logger1 = logger2 = nil
+        begin
+          original_stderr = $stderr
+          $stderr = stringio
+          logger1 = factory.call
+          logger2 = factory.call
+        ensure
+          $stderr = original_stderr
+        end
+        refute_same(logger1, logger2)
+        assert_equal(Logger::WARN, logger1.level)
+        logger1.warn("hello from the factory")
+        assert_match(/hello from the factory/, stringio.string)
+      end
+    end
   end
 
   describe "context data" do
@@ -307,6 +331,35 @@ describe Toys::Execution do
         tool "foo" do
           to_run do
             test.assert_same(test.cli.loader, self[Toys::Context::Key::LOADER])
+          end
+        end
+      end
+      assert_equal(0, lookup_execution("foo").run)
+    end
+
+    it "provides the loader via the context getter" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(test.cli.loader, loader)
+          end
+        end
+      end
+      assert_equal(0, lookup_execution("foo").run)
+    end
+
+    it "provides the loader via __loader when the tool overrides loader" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          def loader
+            "shadowed"
+          end
+
+          to_run do
+            test.assert_equal("shadowed", loader)
+            test.assert_same(test.cli.loader, __loader)
           end
         end
       end

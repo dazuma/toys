@@ -51,9 +51,20 @@
 #   {Toys::ModuleLookup}, as well as {Toys::WrappableString} and the error
 #   classes.
 #
-# There is one deliberate upward dependency: the definition layer builds each
-# tool class as a subclass of {Toys::Context}, so that a tool's implementation
-# inherits the runtime methods defined there.
+# The deliberate upward dependencies are:
+#
+# * The definition layer builds each tool class as a subclass of
+#   {Toys::Context}, so that a tool's implementation inherits the runtime
+#   methods defined there.
+# * Completion is computed against a partially parsed command line, so the
+#   completion classes in the definition layer reach upward for the machinery
+#   to do it. {Toys::Completion::Context} holds a {Toys::Loader} and builds a
+#   {Toys::ArgParser}, and a tool's default completion uses that loader to
+#   enumerate subtools and to resolve delegation targets.
+# * {Toys::ToolDefinition} retains the {Toys::SourceInfo} describing where it
+#   was defined.
+# * The context key constants under {Toys::Context::Key} act as shared
+#   vocabulary, and are referenced from any layer.
 #
 module Toys
   ##

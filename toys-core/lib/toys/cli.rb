@@ -634,12 +634,12 @@ module Toys
 
       ##
       # Returns a default logger factory that generates simple loggers that
-      # write to STDERR.
+      # write to the current stderr.
       #
       # @return [Proc]
       #
       def default_logger_factory
-        Execution.default_logger_factory
+        Execution::DEFAULT_LOGGER_FACTORY
       end
 
       ##

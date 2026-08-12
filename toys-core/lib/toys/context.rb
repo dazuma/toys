@@ -202,6 +202,22 @@ module Toys
     alias __context_directory context_directory
 
     ##
+    # The loader that loaded the tool being executed. It can be used to look up
+    # and load other tools.
+    #
+    # This is a convenience getter for {Toys::Context::Key::LOADER}.
+    #
+    # If the `loader` method is overridden by the tool, you can still access it
+    # using the name `__loader`.
+    #
+    # @return [Toys::Loader]
+    #
+    def loader
+      @__data[Key::LOADER]
+    end
+    alias __loader loader
+
+    ##
     # The logger for this execution.
     #
     # This is a convenience getter for {Toys::Context::Key::LOGGER}.
