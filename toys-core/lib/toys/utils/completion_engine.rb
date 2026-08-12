@@ -78,10 +78,25 @@ module Toys
             loader: @loader, previous_words: words, fragment_prefix: prefix, fragment: last,
             shell: shell_name, quote_type: quote_type
           )
-          [quote_type, @completion.call(context).uniq.sort]
+          candidates = fit_candidates_to_word(@completion.call(context), prefix)
+          [quote_type, candidates.uniq.sort]
         end
 
         private
+
+        ##
+        # Adjusts candidates to the span of the command line that this shell
+        # will replace with the completion.
+        #
+        # {#run_internal} splits the word being completed at `=` and `:`,
+        # keeping only the text after the split as the fragment to complete.
+        # That matches a shell that breaks words at those characters, and so
+        # replaces only the text following the break. The base implementation
+        # therefore returns the candidates unchanged.
+        #
+        def fit_candidates_to_word(candidates, _fragment_prefix)
+          candidates
+        end
 
         def shell_name
           raise ::NotImplementedError
@@ -144,6 +159,20 @@ module Toys
       #
       class Zsh < Base
         private
+
+        ##
+        # Zsh does not break words at `=` or `:`, and replaces the entire word
+        # being completed. Restore the prefix that {#run_internal} split off,
+        # so that each candidate is a whole word. Otherwise zsh would replace
+        # the text preceding the split rather than keeping it.
+        #
+        def fit_candidates_to_word(candidates, fragment_prefix)
+          return candidates if fragment_prefix.empty?
+          candidates.map do |candidate|
+            partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
+            Completion::Candidate.new("#{fragment_prefix}#{candidate}", partial: partial)
+          end
+        end
 
         def shell_name
           :zsh

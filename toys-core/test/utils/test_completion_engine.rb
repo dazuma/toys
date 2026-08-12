@@ -329,8 +329,24 @@ describe Toys::Utils::CompletionEngine do
     end
 
     it "completes subtool with colon" do
+      # Unlike bash, zsh does not break the word at a colon, and replaces the
+      # entire word. Candidates must therefore carry the part of the tool path
+      # that precedes the colon.
       _qt, candidates = completion.run_internal("toys three:")
-      assert_equal(["four"], candidates.map(&:string))
+      assert_equal(["three:four"], candidates.map(&:string))
+    end
+
+    it "completes a flag value after an equals sign" do
+      # As with a colon, zsh replaces the whole word, so the flag name and the
+      # equals sign must be carried in the candidate too.
+      _qt, candidates = completion.run_internal("toys one --world=bui")
+      assert_equal(["--world=building"], candidates.map(&:string))
+    end
+
+    it "preserves partialness when restoring the word prefix" do
+      _qt, candidates = completion.run_internal("toys two pre=")
+      assert_equal(["pre=partial-hello"], candidates.map(&:string))
+      assert(candidates.all?(&:partial?))
     end
 
     it "completes subtool with period" do
@@ -365,7 +381,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes flag names and second arg with a valid prefix" do
       _qt, candidates = completion.run_internal("toys one x pre=")
-      assert_equal(["k", "n"], candidates.map(&:string))
+      assert_equal(["pre=k", "pre=n"], candidates.map(&:string))
     end
 
     it "completes flag names and second arg with an invalid prefix" do
@@ -390,7 +406,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes empty string after flag with required argument and =" do
       _qt, candidates = completion.run_internal("toys one --world=")
-      assert_equal(["building", "news"], candidates.map(&:string))
+      assert_equal(["--world=building", "--world=news"], candidates.map(&:string))
     end
 
     it "completes empty string after flag with required argument and = with prefixed value" do
@@ -405,7 +421,7 @@ describe Toys::Utils::CompletionEngine do
 
     it "completes empty string after flag with optional argument and =" do
       _qt, candidates = completion.run_internal("toys one --ruby=")
-      assert_equal(["gems", "tuesday"], candidates.map(&:string))
+      assert_equal(["--ruby=gems", "--ruby=tuesday"], candidates.map(&:string))
     end
 
     it "completes apparent flag after flag with optional argument" do
