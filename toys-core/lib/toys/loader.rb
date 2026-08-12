@@ -75,18 +75,11 @@ module Toys
       @stop_priority = -999_999
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
-      @extra_delimiters = extra_delimiters
       @delimiter_handler = DelimiterHandler.new(extra_delimiters)
       @git_cache = git_cache
       @gems_util = gems_util
       get_tool([], -999_999)
     end
-
-    ##
-    # The string of tool name delimiter characters (besides space).
-    # @return [String]
-    #
-    attr_reader :extra_delimiters
 
     ##
     # Add a configuration file/directory to the loader.
@@ -365,6 +358,26 @@ module Toys
     def split_path(str)
       return str.map(&:to_s) if str.is_a?(::Array)
       @delimiter_handler.split_path(str.to_s)
+    end
+
+    ##
+    # Splits a partially typed path, such as a fragment being completed, into
+    # the portion that names a path and the trailing partial word, using the
+    # delimiters configured in this Loader.
+    #
+    # Returns a two-element array. The first element is the leading portion of
+    # the string through its final delimiter, or the empty string if there is
+    # none; pass it to {#split_path} to get the path words. The second element
+    # is the text following that delimiter.
+    #
+    # A delimiter is recognized as a separator only if at least one character
+    # precedes it, so a string that begins with a delimiter is not split.
+    #
+    # @param str [String] The partial path to split.
+    # @return [Array(String,String)]
+    #
+    def split_partial_path(str)
+      @delimiter_handler.split_partial_path(str)
     end
 
     #### INTERNAL METHODS ####
@@ -717,6 +730,7 @@ module Toys
         end
         chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
         @delimiters = ::Regexp.new("[[:space:]#{chars}]")
+        @trailing_word = ::Regexp.new("\\A(.+#{@delimiters})(.*)\\z", ::Regexp::MULTILINE)
       end
 
       ##
@@ -724,6 +738,14 @@ module Toys
       #
       def split_path(str)
         str.split(@delimiters)
+      end
+
+      ##
+      # @private
+      #
+      def split_partial_path(str)
+        match = @trailing_word.match(str)
+        match ? [match[1], match[2]] : ["", str]
       end
 
       ##

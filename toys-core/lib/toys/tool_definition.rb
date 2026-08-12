@@ -177,29 +177,15 @@ module Toys
       # start with, and `prefix` is a string to prepend to each candidate.
       #
       # The current word is the whole word being completed, so a tool path in
-      # it arrives with its delimiters intact. Everything through the last
-      # delimiter is taken as a tool path, and echoed back in `prefix` so that
-      # each candidate remains a replacement for the whole word.
-      #
-      # A delimiter is recognized as a path separator only if at least one
-      # other character precedes it, so a fragment that begins with a delimiter
-      # is instead matched literally against the subtool names, and therefore
-      # matches nothing.
+      # it arrives with its delimiters intact. The loader decides where that
+      # path ends, per {Toys::Loader#split_partial_path}, and the path is
+      # echoed back in `prefix` so that each candidate remains a replacement
+      # for the whole word.
       #
       def analyze_subtool_fragment(context)
-        tool_name = context.tool.full_name
-        prefix = ""
-        fragment = context.fragment
-        delims = context.loader.extra_delimiters
-        unless delims.empty?
-          delims_regex = ::Regexp.escape(delims)
-          if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
-            fragment = match[3]
-            tool_name += match[2].split(/[#{delims_regex}]/)
-            prefix = match[1]
-          end
-        end
-        [tool_name, prefix, fragment]
+        loader = context.loader
+        prefix, fragment = loader.split_partial_path(context.fragment)
+        [context.tool.full_name + loader.split_path(prefix), prefix, fragment]
       end
 
       ##

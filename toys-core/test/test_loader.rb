@@ -332,12 +332,45 @@ describe Toys::Loader do
       assert_equal([], remaining)
     end
 
-    it "reports the configured delimiters" do
-      assert_equal(".:", delimiters_loader.extra_delimiters)
-    end
+    describe "#split_partial_path" do
+      it "splits at the final delimiter" do
+        assert_equal(["namespace-1.", "tool"],
+                     delimiters_loader.split_partial_path("namespace-1.tool"))
+      end
 
-    it "reports an empty string when no delimiters are configured" do
-      assert_equal("", Toys::Loader.new.extra_delimiters)
+      it "splits at the final of several delimiters" do
+        assert_equal(["one.two:", "three"], delimiters_loader.split_partial_path("one.two:three"))
+      end
+
+      it "returns an empty trailing word when the string ends with a delimiter" do
+        assert_equal(["namespace-1.", ""],
+                     delimiters_loader.split_partial_path("namespace-1."))
+      end
+
+      it "returns an empty prefix when there is no delimiter" do
+        assert_equal(["", "tool"], delimiters_loader.split_partial_path("tool"))
+      end
+
+      it "does not treat a leading delimiter as a separator" do
+        assert_equal(["", ".tool"], delimiters_loader.split_partial_path(".tool"))
+      end
+
+      it "splits at whitespace" do
+        assert_equal(["namespace-1 ", "tool"],
+                     delimiters_loader.split_partial_path("namespace-1 tool"))
+      end
+
+      it "does not split at a delimiter that is not configured" do
+        assert_equal(["", "one.two"], Toys::Loader.new.split_partial_path("one.two"))
+      end
+
+      it "splits at whitespace when no extra delimiters are configured" do
+        assert_equal(["one ", "two"], Toys::Loader.new.split_partial_path("one two"))
+      end
+
+      it "returns an empty prefix for an empty string" do
+        assert_equal(["", ""], delimiters_loader.split_partial_path(""))
+      end
     end
   end
 

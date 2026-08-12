@@ -1125,6 +1125,11 @@ describe Toys::ToolDefinition do
         assert_equal([], candidates)
       end
 
+      it "completes subtools across whitespace in the fragment" do
+        candidates = candidate_strings(make_loader, fragment: "ns sub")
+        assert_equal(["ns sub1", "ns sub2"], candidates)
+      end
+
       it "completes the subtools of a delegate target" do
         candidates = candidate_strings(make_loader, previous_words: ["deleg"], fragment: "sub")
         assert_equal(["sub1", "sub2"], candidates)
