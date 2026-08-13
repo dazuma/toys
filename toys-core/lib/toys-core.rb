@@ -35,9 +35,10 @@
 # but fall into four layers, listed here from the outside in. Except where
 # noted below, dependencies point downward.
 #
-# * **Execution** — carries out a single invocation. {Toys::CLI} is the main
-#   entrypoint, {Toys::Runner} runs one tool, {Toys::ArgParser} parses the
-#   command line, and {Toys::Context} is the base class for tool runtime.
+# * **Execution** — runs tools. {Toys::CLI} is the main entrypoint and owns
+#   the configuration, {Toys::Runner} holds the environment tools run in and
+#   carries out each run, {Toys::ArgParser} parses the command line, and
+#   {Toys::Context} is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them.

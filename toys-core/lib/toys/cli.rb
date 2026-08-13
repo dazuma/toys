@@ -549,7 +549,11 @@ module Toys
     ##
     # Prepare a tool to be run, but just execute the given block rather than
     # performing a full run of the tool. This is intended for testing tools.
-    # Unlike {#run}, this does not catch errors and perform error handling.
+    #
+    # Unlike {#run}, this neither wraps errors nor passes them to the error
+    # handler. An error such as a failure to parse arguments or to load the
+    # requested tool is raised out of this method as-is, so the block does not
+    # execute and this method does not return.
     #
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
@@ -557,9 +561,7 @@ module Toys
     # @param verbosity [Integer] Initial verbosity. Default is 0.
     # @yieldparam context [Toys::Context] Yields the tool context.
     #
-    # @return [Object] The value returned from the block. Returns nil if the
-    #     block did not execute because of an error such as failure to parse
-    #     arguments or load the requested tool.
+    # @return [Object] The value returned from the block.
     #
     def load_tool(*args, verbosity: 0)
       result = nil

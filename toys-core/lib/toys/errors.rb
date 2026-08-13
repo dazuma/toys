@@ -39,7 +39,8 @@ module Toys
   #
   # Signals are not wrapped in this class. A `SignalException` raised by a tool
   # propagates as itself, so that tools can intercept it and the Ruby VM can
-  # ultimately handle it. See {Toys::CLI#run} for how each is reported.
+  # ultimately handle it. See the `error_handler` argument to
+  # {Toys::Runner#initialize} for how each is reported.
   #
   class ContextualError < ::StandardError
     ##
