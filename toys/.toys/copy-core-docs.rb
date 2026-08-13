@@ -40,10 +40,10 @@ def copy_files
 end
 
 def remove_private_docs(content)
-  content.gsub!(/^(?<in> *)  ##\n(?:\k<in>  #[^\n]*\n)*\k<in>  # @private\n(?:\k<in>  #[^\n]*\n)*\k<in>  [A-Z_]+ =[^\n]*\n(?:\k<in>  [^#\n][^\n]*\n)*(?<end>\k<in>end\n|\n)/, "\\k<end>")
-  content.gsub!(/^(?<in> *)##\n(?:\k<in>#[^\n]*\n)*\k<in># @private\n(?:\k<in>#[^\n]*\n)*\k<in>attr_\w+ :\w+\n/, "")
+  content.gsub!(/^(?<in> *)  ##\n(?:\k<in>  #[^\n]*\n)*\k<in>  # @private(?: [^\n]*)?\n(?:\k<in>  #[^\n]*\n)*\k<in>  [A-Z_]+ =[^\n]*\n(?:\k<in>  [^#\n][^\n]*\n)*(?<end>\k<in>end\n|\n)/, "\\k<end>")
+  content.gsub!(/^(?<in> *)(?:##\n(?:\k<in>#[^\n]*\n)*\k<in>)?# @private(?: [^\n]*)?\n(?:\k<in>#[^\n]*\n)*\k<in>attr_\w+ :\w+\n/, "")
   loop do
-    break unless content.gsub!(/^(?<in> *)##\n(?:\k<in>#[^\n]*\n)*\k<in># @private\n(?:\k<in>#[^\n]*\n)*\k<in>(?:class|module|def) [^\n]+\n+(?:\k<in>  [^\n]+\n+|\k<in>(?:rescue|ensure)[^\n]*\n+)*\k<in>end\n/, "")
+    break unless content.gsub!(/^(?<in> *)(?:##\n(?:\k<in>#[^\n]*\n)*\k<in>)?# @private(?: [^\n]*)?\n(?:\k<in>#[^\n]*\n)*\k<in>(?:class|module|def) [^\n]+\n+(?:\k<in>  [^\n]+\n+|\k<in>(?:rescue|ensure)[^\n]*\n+)*\k<in>end\n/, "")
   end
 end
 
