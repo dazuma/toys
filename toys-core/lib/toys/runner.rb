@@ -21,6 +21,10 @@ module Toys
   # or a shared logger. See the `logger` parameter of {Toys::CLI#initialize}
   # for one such caveat.
   #
+  # The Runner that is running a tool is available to that tool as
+  # {Toys::Context#runner}, so a tool can use it to run a sibling tool in the
+  # same process.
+  #
   # Most applications should not create a Runner directly, but should call
   # {Toys::CLI#run} or {Toys::CLI#load_tool}, which run tools using a properly
   # configured Runner.
@@ -140,7 +144,8 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(args, verbosity: 0, wrap_errors: true, handle_errors: true, &block)
-      Invocation.new(loader: @loader,
+      Invocation.new(runner: self,
+                     loader: @loader,
                      logger_factory: @logger_factory,
                      base_logger_level: @base_logger_level,
                      error_handler: @error_handler,
@@ -169,7 +174,8 @@ module Toys
       #
       # @private
       #
-      def initialize(loader:,
+      def initialize(runner:,
+                     loader:,
                      logger_factory:,
                      base_logger_level:,
                      error_handler:,
@@ -181,6 +187,7 @@ module Toys
                      handle_errors:,
                      delegated_from:,
                      block:)
+        @runner = runner
         @loader = loader
         @logger_factory = logger_factory
         @base_logger_level = base_logger_level
@@ -266,6 +273,7 @@ module Toys
           Context::Key::EXECUTABLE_NAME => @executable_name,
           Context::Key::LOADER => @loader,
           Context::Key::LOGGER => @logger_factory.call(@tool),
+          Context::Key::RUNNER => @runner,
           Context::Key::TOOL => @tool,
           Context::Key::TOOL_NAME => @tool.full_name,
           Context::Key::TOOL_SOURCE => @tool.source_info,
@@ -327,7 +335,8 @@ module Toys
       # disabled for the delegate, so that the error handler fires once, at the
       # outermost run only.
       def delegated_invocation(args, context)
-        Invocation.new(loader: @loader,
+        Invocation.new(runner: @runner,
+                       loader: @loader,
                        logger_factory: @logger_factory,
                        base_logger_level: @base_logger_level,
                        error_handler: @error_handler,

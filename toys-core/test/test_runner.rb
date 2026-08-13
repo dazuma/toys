@@ -379,6 +379,38 @@ describe Toys::Runner do
       assert_equal(0, make_runner.run(["foo"]))
     end
 
+    it "provides the runner in the context" do
+      test = self
+      runner = make_runner
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(runner, self[Toys::Context::Key::RUNNER])
+            test.assert_same(runner, self.runner)
+          end
+        end
+      end
+      assert_equal(0, runner.run(["foo"]))
+    end
+
+    it "runs a sibling tool from within a tool" do
+      test = self
+      cli.add_config_block do
+        tool "sibling" do
+          to_run do
+            test.assert_equal(["sibling"], tool_name)
+            exit(4)
+          end
+        end
+        tool "foo" do
+          to_run do
+            test.assert_equal(4, runner.run(["sibling"]))
+          end
+        end
+      end
+      assert_equal(0, make_runner.run(["foo"]))
+    end
+
     it "leaves the CLI key unset when no CLI is provided" do
       test = self
       cli.add_config_block do
@@ -393,21 +425,23 @@ describe Toys::Runner do
 
     it "does not let external data override runtime-owned keys" do
       test = self
+      external_data = {
+        Toys::Context::Key::TOOL_NAME => ["hijacked"],
+        Toys::Context::Key::VERBOSITY => 99,
+        Toys::Context::Key::EXECUTABLE_NAME => "hijacked-exe",
+        Toys::Context::Key::RUNNER => "hijacked-runner",
+      }
+      runner = make_runner(external_data: external_data, executable_name: "my-exe")
       cli.add_config_block do
         tool "foo" do
           to_run do
             test.assert_equal(["foo"], self[Toys::Context::Key::TOOL_NAME])
             test.assert_equal(2, self[Toys::Context::Key::VERBOSITY])
             test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
+            test.assert_same(runner, self[Toys::Context::Key::RUNNER])
           end
         end
       end
-      external_data = {
-        Toys::Context::Key::TOOL_NAME => ["hijacked"],
-        Toys::Context::Key::VERBOSITY => 99,
-        Toys::Context::Key::EXECUTABLE_NAME => "hijacked-exe",
-      }
-      runner = make_runner(external_data: external_data, executable_name: "my-exe")
       assert_equal(0, runner.run(["foo"], verbosity: 2))
     end
 
