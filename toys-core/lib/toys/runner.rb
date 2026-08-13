@@ -36,7 +36,7 @@ module Toys
     #
     # @return [Proc]
     #
-    DEFAULT_LOGGER_FACTORY = proc {
+    DEFAULT_LOGGER_FACTORY = proc { |_tool|
       logger = ::Logger.new($stderr)
       logger.level = ::Logger::WARN
       logger
@@ -62,8 +62,9 @@ module Toys
     # run only when {#run} is called.
     #
     # @param loader [Toys::Loader] The loader used to look up tools.
-    # @param logger_factory [Proc,nil] A proc that optionally takes a tool
-    #     definition and returns a logger. If not given,
+    # @param logger_factory [Proc,nil] A proc that takes a
+    #     {Toys::ToolDefinition} as an argument, and returns a logger to use
+    #     when running that tool. If not given,
     #     {Toys::Runner::DEFAULT_LOGGER_FACTORY} is used.
     # @param base_level [Integer,nil] The logger level that corresponds to zero
     #     verbosity. If not provided, the level the logger has before a run

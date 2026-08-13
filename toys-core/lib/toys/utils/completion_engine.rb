@@ -127,16 +127,8 @@ module Toys
           candidates.map do |candidate|
             string = candidate.to_s
             next candidate unless string.start_with?(prefix)
-            Completion::Candidate.new(string[prefix.length..],
-                                      partial: candidate_partial?(candidate))
+            Completion::Candidate.new(string[prefix.length..], partial: candidate.partial?)
           end
-        end
-
-        ##
-        # Whether the given candidate is a partial completion.
-        #
-        def candidate_partial?(candidate)
-          candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
         end
 
         def shell_name
@@ -170,8 +162,8 @@ module Toys
         #
         def format_candidate(candidate, quote_type)
           str = candidate.to_s
-          partial = candidate_partial?(candidate)
-          quote_type = nil if candidate.string.include?("'") && quote_type == :single
+          partial = candidate.partial?
+          quote_type = nil if str.include?("'") && quote_type == :single
           case quote_type
           when :single
             partial ? "'#{str}" : "'#{str}' "

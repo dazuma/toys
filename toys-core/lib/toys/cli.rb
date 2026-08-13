@@ -206,7 +206,7 @@ module Toys
       @completion = completion || CLI.default_completion
       @logger = logger
       @param_logger_factory = logger_factory
-      @logger_factory = logger ? proc { logger } : logger_factory || CLI.default_logger_factory
+      @logger_factory = logger ? proc { |_tool| logger } : logger_factory || CLI.default_logger_factory
       @base_level = base_level
       @extra_delimiters = extra_delimiters
       @config_dir_name = config_dir_name
