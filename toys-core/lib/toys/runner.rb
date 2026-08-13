@@ -65,9 +65,9 @@ module Toys
     # @param logger_factory [Proc,nil] A proc that optionally takes a tool
     #     definition and returns a logger. If not given,
     #     {Toys::Runner::DEFAULT_LOGGER_FACTORY} is used.
-    # @param base_logger_level [Integer,nil] The logger level that corresponds
-    #     to zero verbosity. If not provided, the level the logger has before a
-    #     run adjusts it is used (typically Logger::WARN). A run nested inside
+    # @param base_level [Integer,nil] The logger level that corresponds to zero
+    #     verbosity. If not provided, the level the logger has before a run
+    #     adjusts it is used (typically Logger::WARN). A run nested inside
     #     another run that shares the same logger uses the base level already
     #     in effect for that logger, so that verbosity does not compound.
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
@@ -93,13 +93,13 @@ module Toys
     #
     def initialize(loader,
                    logger_factory: nil,
-                   base_logger_level: nil,
+                   base_level: nil,
                    error_handler: nil,
                    executable_name: nil,
                    external_data: {})
       @loader = loader
       @logger_factory = logger_factory || DEFAULT_LOGGER_FACTORY
-      @base_logger_level = base_logger_level
+      @base_level = base_level
       @error_handler = error_handler || DEFAULT_ERROR_HANDLER
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @external_data = external_data
@@ -149,7 +149,7 @@ module Toys
       Invocation.new(runner: self,
                      loader: @loader,
                      logger_factory: @logger_factory,
-                     base_logger_level: @base_logger_level,
+                     base_level: @base_level,
                      error_handler: @error_handler,
                      executable_name: @executable_name,
                      external_data: @external_data,
@@ -179,7 +179,7 @@ module Toys
       def initialize(runner:,
                      loader:,
                      logger_factory:,
-                     base_logger_level:,
+                     base_level:,
                      error_handler:,
                      executable_name:,
                      external_data:,
@@ -192,7 +192,7 @@ module Toys
         @runner = runner
         @loader = loader
         @logger_factory = logger_factory
-        @base_logger_level = base_logger_level
+        @base_level = base_level
         @error_handler = error_handler
         @executable_name = executable_name
         @external_data = external_data
@@ -340,7 +340,7 @@ module Toys
         Invocation.new(runner: @runner,
                        loader: @loader,
                        logger_factory: @logger_factory,
-                       base_logger_level: @base_logger_level,
+                       base_level: @base_level,
                        error_handler: @error_handler,
                        executable_name: @executable_name,
                        external_data: @external_data,
@@ -363,8 +363,8 @@ module Toys
         cur_logger = context[Context::Key::LOGGER]
         if cur_logger
           original_level = cur_logger.level
-          base_level = @base_logger_level || base_logger_levels[cur_logger] || original_level
-          saved_base_level = set_base_logger_level(cur_logger, base_level)
+          base_level = @base_level || base_levels[cur_logger] || original_level
+          saved_base_level = set_base_level(cur_logger, base_level)
           cur_logger.level = base_level - context[Context::Key::VERBOSITY].to_i
         end
         begin
@@ -375,30 +375,30 @@ module Toys
           end
         ensure
           if cur_logger
-            set_base_logger_level(cur_logger, saved_base_level)
+            set_base_level(cur_logger, saved_base_level)
             cur_logger.level = original_level
           end
         end
       end
 
-      # The base logger levels currently in effect on this thread, keyed by
-      # logger identity. A run that adjusts a logger's level records the base
+      # The base levels currently in effect on this thread, keyed by logger
+      # identity. A run that adjusts a logger's level records the base
       # level it used, for the extent of that run, because a nested run cannot
       # recover it from a shared logger: the level it would find there is the
       # enclosing run's already adjusted level, which would make verbosity
       # compound. The record is per-thread because it describes the loggers this
       # thread is actively adjusting.
-      def base_logger_levels
+      def base_levels
         thread = ::Thread.current
-        thread.thread_variable_get(:toys_base_logger_levels) ||
-          thread.thread_variable_set(:toys_base_logger_levels, {}.compare_by_identity)
+        thread.thread_variable_get(:toys_base_levels) ||
+          thread.thread_variable_set(:toys_base_levels, {}.compare_by_identity)
       end
 
       # Records the base level in effect for the given logger, or clears it if
       # the level is nil, and returns the level previously in effect. The caller
       # must restore that previous level when its run finishes.
-      def set_base_logger_level(logger, level)
-        levels = base_logger_levels
+      def set_base_level(logger, level)
+        levels = base_levels
         previous = levels[logger]
         if level
           levels[logger] = level

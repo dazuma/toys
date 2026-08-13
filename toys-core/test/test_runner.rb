@@ -251,7 +251,7 @@ describe Toys::Runner do
       assert_equal(0, Toys::Runner.new(cli.loader).run(["foo"]))
     end
 
-    it "honors base_logger_level" do
+    it "honors base_level" do
       test = self
       cli.add_config_block do
         tool "foo" do
@@ -260,7 +260,7 @@ describe Toys::Runner do
           end
         end
       end
-      runner = make_runner(base_logger_level: Logger::INFO)
+      runner = make_runner(base_level: Logger::INFO)
       assert_equal(0, runner.run(["foo"], verbosity: 1))
     end
 
@@ -349,10 +349,10 @@ describe Toys::Runner do
         assert_equal(Logger::ERROR, logger.level)
       end
 
-      it "honors an explicit base_logger_level in an inner run" do
+      it "honors an explicit base_level in an inner run" do
         test = self
         outer_runner = make_runner
-        inner_runner = make_runner(base_logger_level: Logger::ERROR)
+        inner_runner = make_runner(base_level: Logger::ERROR)
         cli.add_config_block do
           tool "inner" do
             to_run do
@@ -370,9 +370,9 @@ describe Toys::Runner do
         assert_equal(0, outer_runner.run(["outer"], verbosity: 1))
       end
 
-      it "uses the enclosing base_logger_level in an inner run that has none" do
+      it "uses the enclosing base_level in an inner run that has none" do
         test = self
-        outer_runner = make_runner(base_logger_level: Logger::ERROR)
+        outer_runner = make_runner(base_level: Logger::ERROR)
         inner_runner = make_runner
         cli.add_config_block do
           tool "inner" do

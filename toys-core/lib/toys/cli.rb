@@ -89,8 +89,8 @@ module Toys
     #     to zero verbosity.
     #     Optional. If not provided, defaults to the level the logger has
     #     before a run adjusts it (which is often `Logger::WARN`). See the
-    #     `base_logger_level` argument to {Toys::Runner#initialize} for how
-    #     this interacts with nested runs.
+    #     same argument to {Toys::Runner#initialize} for how this interacts
+    #     with nested runs.
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
     #     exception is detected. See the `error_handler` argument to
     #     {Toys::Runner#initialize} for the handler's contract. Because a CLI
@@ -230,7 +230,7 @@ module Toys
       )
       @runner = Runner.new(@loader,
                            logger_factory: @logger_factory,
-                           base_logger_level: @base_level,
+                           base_level: @base_level,
                            error_handler: @error_handler,
                            executable_name: @executable_name,
                            external_data: {Context::Key::CLI => self})
