@@ -1078,6 +1078,23 @@ describe Toys::CLI do
       assert_same(logger, child.logger_factory.call)
     end
 
+    it "recognizes every constructor keyword" do
+      keywords = Toys::CLI.instance_method(:initialize).parameters
+                          .filter_map { |type, name| name if [:key, :keyreq].include?(type) }
+      assert_equal(keywords.sort, cli.send(:current_settings).keys.sort,
+                   "Every CLI#initialize keyword must appear in CLI#current_settings," \
+                   " otherwise CLI#child silently drops it")
+    end
+
+    it "copies every setting so that it survives the copy" do
+      parent_settings = cli.send(:current_settings)
+      child_settings = cli.child.send(:current_settings)
+      mismatched = parent_settings.keys.reject { |key| parent_settings[key] == child_settings[key] }
+      assert_empty(mismatched,
+                   "Settings that did not survive CLI#child, likely because" \
+                   " CLI#current_settings reports a derived value rather than the one passed in")
+    end
+
     it "overrides parameters" do
       assert_same(logger, cli.logger_factory.call)
       child = cli.child(logger: logger2)
