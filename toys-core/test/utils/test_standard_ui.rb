@@ -98,6 +98,14 @@ describe Toys::Utils::StandardUI do
       e
     end
 
+    # Raises from a synthetic file, so that a capture given that path resolves
+    # a config location pointing into it rather than into this test file. The
+    # fabricated backtrace location is the whole point here, which is why the
+    # eval does not use __FILE__ as the cop would otherwise want.
+    def raise_from(path, line)
+      eval("raise 'foobar'", binding, path, line) # rubocop:disable Style/EvalWithLocation
+    end
+
     it "reports the original error rather than the intermediate error" do
       error = capture_nested_error { raise "foobar" }
       default_ui.handle_error(error)
@@ -122,6 +130,73 @@ describe Toys::Utils::StandardUI do
       assert_equal(1, output_content.scan("same banner").length,
                    "expected the repeated banner to be printed once")
       assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "omits a config location that repeats from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                        tool_name: ["front"], final: true) do
+            Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                          tool_name: ["target"], final: true) do
+              raise_from("/fake/inner.rb", 7)
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("in config file: /fake/inner.rb:7").length,
+                   "expected the repeated config location to be printed once")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "displays a config location that differs from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: __FILE__,
+                                        tool_name: ["front"], final: true) do
+            Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                          tool_name: ["target"], final: true) do
+              raise_from("/fake/inner.rb", 7)
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_includes(output_content, "      in config file: /fake/inner.rb:7")
+      assert_includes(output_content, "      in config file: #{__FILE__}:")
+    end
+
+    it "keeps a frame's lines indented under the line naming its tool" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar",
+                    "inner banner",
+                    "    while executing tool: \"target\"",
+                    "      with arguments: [\"arg1\"]",
+                    "outer banner",
+                    "    called from tool: \"front\""],
+                   lines)
+    end
+
+    it "leaves a frame with no tool name at the outer indent" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb", final: true) do
+            raise_from("/fake/inner.rb", 7)
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar", "b", "    in config file: /fake/inner.rb:7"], lines)
     end
 
     it "omits arguments that repeat from the frame within it" do
@@ -158,8 +233,8 @@ describe Toys::Utils::StandardUI do
           e
         end
       default_ui.handle_error(error)
-      assert_includes(output_content, "    with arguments: [\"inner\"]")
-      assert_includes(output_content, "    with arguments: [\"outer\"]")
+      assert_includes(output_content, "      with arguments: [\"inner\"]")
+      assert_includes(output_content, "      with arguments: [\"outer\"]")
     end
 
     it "handles frames that carry different fields" do
@@ -183,7 +258,7 @@ describe Toys::Utils::StandardUI do
       assert_equal(["RuntimeError: foobar",
                     "Inner banner",
                     "    while executing tool: \"target\"",
-                    "    with arguments: [\"arg1\"]",
+                    "      with arguments: [\"arg1\"]",
                     "Outer banner",
                     "    called from tool: \"front\""],
                    lines)

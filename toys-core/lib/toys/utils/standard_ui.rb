@@ -198,8 +198,10 @@ module Toys
       # where in its code the error occurred.
       #
       # When one tool invokes another, the {Toys::ContextualError} wrappers
-      # nest, one per tool. Each is displayed as a block, innermost first, and
-      # information that would simply repeat the block within it is omitted.
+      # nest, one per tool. Each is displayed as a block, innermost first, led
+      # by the line naming its tool with the rest of its lines indented under
+      # that. Information that would simply repeat the block within it is
+      # omitted.
       #
       # This method is used by {#handle_error} and can be overridden to change
       # its behavior.
@@ -279,24 +281,43 @@ module Toys
 
       # Renders one frame of the error chain. The innermost frame, for which
       # `previous` is nil, says where the error happened; each subsequent frame
-      # names the tool that invoked the frame before it. The banner and the
-      # arguments are omitted when they would merely repeat that frame, which
-      # they usually do for a delegation.
+      # names the tool that invoked the frame before it. The banner, the config
+      # location, and the arguments are omitted when they would merely repeat
+      # that frame, which they usually do for a delegation.
+      #
+      # A frame leads with the line naming its tool, and indents the rest of
+      # its lines under that, so that the frames stay visually separable even
+      # though the omissions above mean a frame has no fixed set of lines. A
+      # frame with no tool to name has nothing to lead with, so its lines stay
+      # at the outer indent.
       def context_string(error, previous = nil)
         banner = error.banner || "Unexpected error!"
         lines = []
         lines << banner unless previous && banner == (previous.banner || "Unexpected error!")
-        if error.config_path
-          lines << "    in config file: #{error.config_path}:#{error.config_line}"
-        end
+        indent = "    "
         if error.tool_name
           verb = previous ? "called from tool" : "while executing tool"
-          lines << "    #{verb}: #{error.tool_name.join(' ').inspect}"
+          lines << "#{indent}#{verb}: #{error.tool_name.join(' ').inspect}"
+          indent = "      "
           unless error.tool_args.nil? || (previous && error.tool_args == previous.tool_args)
-            lines << "    with arguments: #{error.tool_args.inspect}"
+            lines << "#{indent}with arguments: #{error.tool_args.inspect}"
           end
         end
+        if show_config_location?(error, previous)
+          lines << "#{indent}in config file: #{error.config_path}:#{error.config_line}"
+        end
         lines.join("\n")
+      end
+
+      # Returns whether a frame's config location should be shown. It is
+      # suppressed when it points at the same place as the frame within it,
+      # which happens whenever both tools are defined in the same file, because
+      # every frame resolves its location from the original error's backtrace
+      # and so lands on the innermost tool's line.
+      def show_config_location?(error, previous)
+        return false if error.config_path.nil?
+        return true if previous.nil?
+        error.config_path != previous.config_path || error.config_line != previous.config_line
       end
     end
   end
