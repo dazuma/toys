@@ -199,7 +199,7 @@ describe Toys::Runner do
       cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
       runner = make_runner
       err = assert_raises(Toys::ContextualError) do
-        runner.run(["definition"], wrap_errors: false)
+        runner.run(["definition"], wrap_errors: false, handle_errors: false)
       end
       refute(err.final?)
       assert_kind_of(::NameError, err.root_cause)
@@ -346,12 +346,37 @@ describe Toys::Runner do
       cli.add_config_block do
         tool "foo" do
           to_run do
+            test.assert_equal("hello", self[:custom_data])
+          end
+        end
+      end
+      external_data = {custom_data: "hello"}
+      assert_equal(0, make_runner(external_data: external_data).run(["foo"]))
+    end
+
+    it "provides the executable name in the context" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
             test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
           end
         end
       end
-      external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      assert_equal(0, make_runner(external_data: external_data).run(["foo"]))
+      assert_equal(0, make_runner(executable_name: "my-exe").run(["foo"]))
+    end
+
+    it "defaults the executable name to the ruby program name" do
+      test = self
+      expected = ::File.basename($PROGRAM_NAME)
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_equal(expected, self[Toys::Context::Key::EXECUTABLE_NAME])
+          end
+        end
+      end
+      assert_equal(0, make_runner.run(["foo"]))
     end
 
     it "leaves the CLI key unset when no CLI is provided" do
@@ -373,14 +398,17 @@ describe Toys::Runner do
           to_run do
             test.assert_equal(["foo"], self[Toys::Context::Key::TOOL_NAME])
             test.assert_equal(2, self[Toys::Context::Key::VERBOSITY])
+            test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
           end
         end
       end
       external_data = {
         Toys::Context::Key::TOOL_NAME => ["hijacked"],
         Toys::Context::Key::VERBOSITY => 99,
+        Toys::Context::Key::EXECUTABLE_NAME => "hijacked-exe",
       }
-      assert_equal(0, make_runner(external_data: external_data).run(["foo"], verbosity: 2))
+      runner = make_runner(external_data: external_data, executable_name: "my-exe")
+      assert_equal(0, runner.run(["foo"], verbosity: 2))
     end
 
     it "does not modify the external data hash" do
@@ -390,9 +418,9 @@ describe Toys::Runner do
           to_run { nil }
         end
       end
-      external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
+      external_data = {custom_data: "hello"}
       assert_equal(0, make_runner(external_data: external_data).run(["foo", "--bar=x"]))
-      assert_equal({Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}, external_data)
+      assert_equal({custom_data: "hello"}, external_data)
     end
   end
 
@@ -448,7 +476,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(::RuntimeError) do
-        make_runner.run(["foo"], wrap_errors: false)
+        make_runner.run(["foo"], wrap_errors: false, handle_errors: false)
       end
       assert_equal("kaboom", err.message)
     end
@@ -461,7 +489,7 @@ describe Toys::Runner do
         end
       end
       assert_raises(Toys::ArgParsingError) do
-        make_runner.run(["foo"], wrap_errors: false)
+        make_runner.run(["foo"], wrap_errors: false, handle_errors: false)
       end
     end
 
@@ -472,9 +500,132 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(::RuntimeError) do
-        make_runner.run(["foo"], wrap_errors: false) { raise "from the block" }
+        make_runner.run(["foo"], wrap_errors: false, handle_errors: false) do
+          raise "from the block"
+        end
       end
       assert_equal("from the block", err.message)
+    end
+  end
+
+  describe "error handling" do
+    it "reraises a wrapped error by default" do
+      cli.add_config_block do
+        tool "foo" do
+          to_run { raise "kaboom" }
+        end
+      end
+      err = assert_raises(Toys::ContextualError) do
+        make_runner.run(["foo"])
+      end
+      assert_equal("kaboom", err.root_cause.message)
+    end
+
+    it "passes a wrapped error to a custom handler and returns its code" do
+      seen = nil
+      handler = proc do |error|
+        seen = error
+        7
+      end
+      cli.add_config_block do
+        tool "foo" do
+          to_run { raise "kaboom" }
+        end
+      end
+      assert_equal(7, make_runner(error_handler: handler).run(["foo"]))
+      assert_kind_of(Toys::ContextualError, seen)
+      assert_equal("kaboom", seen.root_cause.message)
+    end
+
+    it "passes a bare error to a custom handler when wrap_errors is false" do
+      seen = nil
+      handler = proc do |error|
+        seen = error
+        7
+      end
+      cli.add_config_block do
+        tool "foo" do
+          to_run { raise "kaboom" }
+        end
+      end
+      runner = make_runner(error_handler: handler)
+      assert_equal(7, runner.run(["foo"], wrap_errors: false))
+      assert_instance_of(::RuntimeError, seen)
+      assert_equal("kaboom", seen.message)
+    end
+
+    it "passes a bare signal to a custom handler" do
+      seen = nil
+      handler = proc do |error|
+        seen = error
+        7
+      end
+      cli.add_config_block do
+        tool "foo" do
+          to_run { raise ::Interrupt }
+        end
+      end
+      assert_equal(7, make_runner(error_handler: handler).run(["foo"]))
+      assert_instance_of(::Interrupt, seen)
+    end
+
+    it "propagates a wrapped error when handle_errors is false" do
+      handler = proc { |_error| flunk("Should not have called the error handler") }
+      cli.add_config_block do
+        tool "foo" do
+          to_run { raise "kaboom" }
+        end
+      end
+      runner = make_runner(error_handler: handler)
+      err = assert_raises(Toys::ContextualError) do
+        runner.run(["foo"], handle_errors: false)
+      end
+      assert(err.final?)
+      assert_equal("kaboom", err.root_cause.message)
+    end
+
+    it "does not pass SystemExit to the handler" do
+      handler = proc { |_error| flunk("Should not have called the error handler") }
+      cli.add_config_block do
+        tool "foo" do
+          to_run { ::Kernel.exit(5) }
+        end
+      end
+      err = assert_raises(::SystemExit) do
+        make_runner(error_handler: handler).run(["foo"])
+      end
+      assert_equal(5, err.status)
+    end
+
+    it "calls the handler exactly once for a delegation chain" do
+      count = 0
+      handler = proc do |_error|
+        count += 1
+        7
+      end
+      cli.add_config_block do
+        tool "target" do
+          to_run { raise "kaboom" }
+        end
+        tool "mid" do
+          delegate_to ["target"]
+        end
+        tool "front" do
+          delegate_to ["mid"]
+        end
+      end
+      assert_equal(7, make_runner(error_handler: handler).run(["front"]))
+      assert_equal(1, count)
+    end
+
+    describe "default handler" do
+      it "is the same proc returned by the CLI" do
+        assert_same(Toys::Runner::DEFAULT_ERROR_HANDLER, Toys::CLI.default_error_handler)
+      end
+
+      it "is frozen" do
+        assert(Toys::Runner::DEFAULT_ERROR_HANDLER.frozen?)
+      end
     end
   end
 
@@ -515,16 +666,16 @@ describe Toys::Runner do
     it "passes external data to the delegate" do
       test = self
       add_delegation_config do
-        test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
+        test.assert_equal("hello", self[:custom_data])
       end
-      external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
+      external_data = {custom_data: "hello"}
       assert_equal(0, make_runner(external_data: external_data).run(["front"]))
     end
 
     it "passes wrap_errors to the delegate" do
       add_delegation_config { raise "kaboom" }
       err = assert_raises(::RuntimeError) do
-        make_runner.run(["front"], wrap_errors: false)
+        make_runner.run(["front"], wrap_errors: false, handle_errors: false)
       end
       assert_equal("kaboom", err.message)
     end
@@ -554,18 +705,11 @@ describe Toys::Runner do
     }
 
     it "displays help without a CLI in the context" do
-      runner = Toys::Runner.new(help_cli.loader, logger_factory: logger_factory)
-      assert_equal(0, runner.run(["foo", "--help"]))
-      assert_match(/SYNOPSIS/, help_io.string)
-      assert_match(/\(binary-name\) foo/, help_io.string)
-    end
-
-    it "displays help using an executable name from external data" do
-      external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
       runner = Toys::Runner.new(help_cli.loader,
                                 logger_factory: logger_factory,
-                                external_data: external_data)
+                                executable_name: "my-exe")
       assert_equal(0, runner.run(["foo", "--help"]))
+      assert_match(/SYNOPSIS/, help_io.string)
       assert_match(/my-exe foo/, help_io.string)
     end
 

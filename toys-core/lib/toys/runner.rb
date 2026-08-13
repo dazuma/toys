@@ -8,16 +8,22 @@ module Toys
   #
   # A Runner holds the environment in which tools run. This includes the
   # {Toys::Loader} that resolves a tool name to a tool definition, along with
-  # settings such as how to obtain a logger for a tool. This environment is
-  # fixed when the Runner is constructed.
+  # run policy such as how to obtain a logger for a tool and what to do with an
+  # error the tool did not handle. This environment is fixed when the Runner is
+  # constructed.
   #
-  # Everything specific to a single invocation—which tool to run, the arguments
-  # to pass to it, and how to treat errors—is passed to {#run}. A Runner thus
-  # holds no per-run state, and one Runner can run any number of tools.
+  # Everything specific to a single invocation, such as which tool to run and
+  # the arguments to pass to it, is passed to {#run}. A Runner is thus itself
+  # immutable and holds no per-run state, so one Runner can run any number of
+  # tools and is safe to share. This says nothing about the tools it runs,
+  # however; running two tools at the same time is safe only if the tools
+  # themselves are, since a tool can modify global state such as the load path
+  # or a shared logger. See the `logger` parameter of {Toys::CLI#initialize}
+  # for one such caveat.
   #
   # Most applications should not create a Runner directly, but should call
   # {Toys::CLI#run} or {Toys::CLI#load_tool}, which run tools using a properly
-  # configured Runner, along with error handling.
+  # configured Runner.
   #
   class Runner
     ##
@@ -33,6 +39,19 @@ module Toys
     }.freeze
 
     ##
+    # The singleton default error_handler Proc, which simply reraises the error
+    # it is given. A {Toys::ContextualError} is reraised as itself, so that a
+    # rescue block has access to the context information. An unhandled
+    # `SignalException` (or a subclass such as `Interrupt`) is also reraised as
+    # itself, so that the Ruby VM has a chance to handle it normally.
+    #
+    # @return [Proc]
+    #
+    DEFAULT_ERROR_HANDLER = proc { |error|
+      raise(error)
+    }.freeze
+
+    ##
     # Create a Runner.
     #
     # This performs no I/O and raises nothing. Tools are looked up, loaded, and
@@ -45,6 +64,23 @@ module Toys
     # @param base_logger_level [Integer,nil] The logger level that corresponds
     #     to zero verbosity. If not provided, the current setting of the logger
     #     is used (typically Logger::WARN).
+    # @param error_handler [Proc,nil] A proc that is called when an unhandled
+    #     exception is detected during a run that has error handling enabled.
+    #     The proc takes the error as its sole argument, and should report it.
+    #     It could simply reraise the exception, or it could display an error
+    #     message and/or return an exit code (normally nonzero) appropriate to
+    #     the error. The error is one of the following:
+    #
+    #     *  a {Toys::ContextualError}, wrapping a `StandardError`, a
+    #        `ScriptError`, or a nested {Toys::ContextualError}
+    #     *  a bare `StandardError` or `ScriptError`, if the run disabled error
+    #        wrapping
+    #     *  a bare `SignalException`, which is never wrapped
+    #
+    #     Optional. If not given, {Toys::Runner::DEFAULT_ERROR_HANDLER} is
+    #     used.
+    # @param executable_name [String,nil] The executable name displayed in help
+    #     text. Optional. Defaults to the ruby program name.
     # @param external_data [Hash] Additional context data provided by the
     #     caller. It is merged underneath the data the Runner provides itself,
     #     so it cannot override runtime-owned keys.
@@ -52,10 +88,14 @@ module Toys
     def initialize(loader,
                    logger_factory: nil,
                    base_logger_level: nil,
+                   error_handler: nil,
+                   executable_name: nil,
                    external_data: {})
       @loader = loader
       @logger_factory = logger_factory || DEFAULT_LOGGER_FACTORY
       @base_logger_level = base_logger_level
+      @error_handler = error_handler || DEFAULT_ERROR_HANDLER
+      @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @external_data = external_data
     end
 
@@ -72,10 +112,10 @@ module Toys
     # isolation.
     #
     # If the tool raises a `SignalException` that it does not handle itself,
-    # that exception propagates out of this method unwrapped, even when
-    # `wrap_errors` is enabled. This lets each tool in a nested execution
-    # dispatch it to its own `on_interrupt` or `on_signal` handler, and lets
-    # the Ruby VM handle whatever is left.
+    # that exception propagates unwrapped, even when `wrap_errors` is enabled.
+    # This lets each tool in a nested execution dispatch it to its own
+    # `on_interrupt` or `on_signal` handler, and lets the error handler, and
+    # ultimately the Ruby VM, recognize it as a signal.
     #
     # @param args [Array<String>] The command line arguments, including the
     #     name of the tool to look up. This must be an array of strings; it is
@@ -86,6 +126,12 @@ module Toys
     #     argument parsing, and tool execution. If false, propagate errors
     #     as-is and do not wrap them. A `SignalException` is never wrapped
     #     regardless of this setting; see above.
+    # @param handle_errors [boolean] If true (the default), pass any error
+    #     that reaches the end of the run to this Runner's error handler, and
+    #     return the exit code it produces. If false, let the error propagate
+    #     out of this method. A `SystemExit` is never passed to the error
+    #     handler regardless of this setting, so `Kernel.exit` in a tool still
+    #     exits the process.
     #
     # @yieldparam context [Toys::Context] If a block is given, it is invoked in
     #     place of the tool's run handler, with the tool's middleware still
@@ -93,14 +139,17 @@ module Toys
     #
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
-    def run(args, verbosity: 0, wrap_errors: true, &block)
+    def run(args, verbosity: 0, wrap_errors: true, handle_errors: true, &block)
       Invocation.new(loader: @loader,
                      logger_factory: @logger_factory,
                      base_logger_level: @base_logger_level,
+                     error_handler: @error_handler,
+                     executable_name: @executable_name,
                      external_data: @external_data,
                      args: args,
                      verbosity: verbosity,
                      wrap_errors: wrap_errors,
+                     handle_errors: handle_errors,
                      delegated_from: nil,
                      block: block).run
     end
@@ -123,19 +172,25 @@ module Toys
       def initialize(loader:,
                      logger_factory:,
                      base_logger_level:,
+                     error_handler:,
+                     executable_name:,
                      external_data:,
                      args:,
                      verbosity:,
                      wrap_errors:,
+                     handle_errors:,
                      delegated_from:,
                      block:)
         @loader = loader
         @logger_factory = logger_factory
         @base_logger_level = base_logger_level
+        @error_handler = error_handler
+        @executable_name = executable_name
         @external_data = external_data
         @args = args
         @verbosity = verbosity.to_i
         @wrap_errors = wrap_errors
+        @handle_errors = handle_errors
         @delegated_from = delegated_from
         @block = block
       end
@@ -143,16 +198,27 @@ module Toys
       ##
       # Perform the invocation, and return the resulting process status code.
       # This looks up the tool, builds its context, and invokes it within its
-      # middleware stack, wrapping errors from each phase if requested.
+      # middleware stack, wrapping errors from each phase and dispatching any
+      # error that reaches the end to the error handler, if requested.
       #
       # @private
       #
       def run
-        lookup_tool
-        execute
+        return run_tool unless @handle_errors
+        begin
+          run_tool
+        rescue ::StandardError, ::ScriptError, ::SignalException => e
+          @error_handler.call(e).to_i
+        end
       end
 
       private
+
+      # Looks up the tool and runs it, without any error handling.
+      def run_tool
+        lookup_tool
+        execute
+      end
 
       # Looks up the tool named at the beginning of the arguments, and records
       # it along with the arguments remaining after the name was consumed.
@@ -197,6 +263,7 @@ module Toys
         common_data = {
           Context::Key::CONTEXT_DIRECTORY => @tool.context_directory,
           Context::Key::DELEGATED_FROM => @delegated_from,
+          Context::Key::EXECUTABLE_NAME => @executable_name,
           Context::Key::LOADER => @loader,
           Context::Key::LOGGER => @logger_factory.call(@tool),
           Context::Key::TOOL => @tool,
@@ -256,15 +323,20 @@ module Toys
       end
 
       # Builds the invocation that runs a delegate target, copying this
-      # invocation's environment and settings.
+      # invocation's environment and settings. Error handling is always
+      # disabled for the delegate, so that the error handler fires once, at the
+      # outermost run only.
       def delegated_invocation(args, context)
         Invocation.new(loader: @loader,
                        logger_factory: @logger_factory,
                        base_logger_level: @base_logger_level,
+                       error_handler: @error_handler,
+                       executable_name: @executable_name,
                        external_data: @external_data,
                        args: args,
                        verbosity: @verbosity,
                        wrap_errors: @wrap_errors,
+                       handle_errors: false,
                        delegated_from: context,
                        block: nil)
       end

@@ -76,8 +76,8 @@ module Toys
       DELEGATED_FROM = ::Object.new.freeze
 
       ##
-      # Context key for the executable name. The value is a String if present,
-      # otherwise it could be nil.
+      # Context key for the executable name displayed in help text. The value
+      # is a String, provided by the {Toys::Runner}.
       # @return [Object]
       #
       EXECUTABLE_NAME = ::Object.new.freeze

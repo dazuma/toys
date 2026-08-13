@@ -6,10 +6,15 @@ module Toys
   ##
   # A Toys-based CLI.
   #
-  # This is the entry point for command line execution. It includes the set of
-  # tool definitions (and/or information on how to load them from the file
-  # system), configuration parameters such as logging and error handling, and a
-  # method to call to invoke a command.
+  # This is the entry point for command line execution, and the stable public
+  # interface to the framework. A CLI owns the configuration: it gathers all
+  # the settings in one place, constructs the {Toys::Loader} that finds and
+  # loads tool definitions, and constructs the {Toys::Runner} that runs them.
+  # It also provides {#child}, which clones the configuration so a tool can be
+  # run under modified settings.
+  #
+  # Running a tool is delegated to the Runner; {#run} and {#load_tool} are thin
+  # wrappers around it that supply the CLI's configuration.
   #
   # This is the class to instantiate to create a Toys-based command line
   # executable. For example:
@@ -85,16 +90,12 @@ module Toys
     #     Optional. If not provided, defaults to the current level of the
     #     logger (which is often `Logger::WARN`).
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
-    #     exception is detected. The proc takes the error as its sole argument,
-    #     and should report it. It could simply reraise the exception, or it
-    #     could display an error message and/or return an exit code (normally
-    #     nonzero) appropriate to the error. The error will be either a
-    #     {Toys::ContextualError} (wrapping a `StandardError`, a `ScriptError`,
-    #     or a nested {Toys::ContextualError}) or a bare `SignalException`.
-    #     Any other error types propagate through and are not passed to the
-    #     error_handler. Optional. If not provided,
-    #     {Toys::CLI.default_error_handler} is called to get a basic default
-    #     handler that reraises the exception.
+    #     exception is detected. See the `error_handler` argument to
+    #     {Toys::Runner#initialize} for the handler's contract. Because a CLI
+    #     always wraps errors, a handler installed here sees only a
+    #     {Toys::ContextualError} or a bare `SignalException`.
+    #     Optional. If not provided, {Toys::CLI.default_error_handler} is
+    #     called to get a basic default handler that reraises the exception.
     # @param executable_name [String] The executable name displayed in help
     #     text. Optional. Defaults to the ruby program name.
     #
@@ -228,10 +229,9 @@ module Toys
       @runner = Runner.new(@loader,
                            logger_factory: @logger_factory,
                            base_logger_level: @base_level,
-                           external_data: {
-                             Context::Key::CLI => self,
-                             Context::Key::EXECUTABLE_NAME => @executable_name,
-                           })
+                           error_handler: @error_handler,
+                           executable_name: @executable_name,
+                           external_data: {Context::Key::CLI => self})
     end
 
     ##
@@ -530,10 +530,10 @@ module Toys
     # Handles exceptions using the error handler.
     #
     # Any error that is not handled by the tool itself is passed to this CLI's
-    # error handler. Ordinary errors arrive as a {Toys::ContextualError}
-    # wrapper, but a signal that no tool intercepted arrives as the
-    # `SignalException` itself, unwrapped. See the `error_handler` argument to
-    # {#initialize}.
+    # error handler, and this method returns the exit code that the handler
+    # produces. Ordinary errors arrive as a {Toys::ContextualError} wrapper,
+    # but a signal that no tool intercepted arrives as the `SignalException`
+    # itself, unwrapped. See the `error_handler` argument to {#initialize}.
     #
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
@@ -544,8 +544,6 @@ module Toys
     #
     def run(*args, verbosity: 0)
       @runner.run(args.flatten, verbosity: verbosity)
-    rescue ContextualError, ::SignalException => e
-      @error_handler.call(e).to_i
     end
 
     ##
@@ -565,7 +563,8 @@ module Toys
     #
     def load_tool(*args, verbosity: 0)
       result = nil
-      @runner.run(args.flatten, verbosity: verbosity, wrap_errors: false) do |ctx|
+      @runner.run(args.flatten, verbosity: verbosity,
+                  wrap_errors: false, handle_errors: false) do |ctx|
         result = yield ctx
       end
       result
@@ -634,9 +633,7 @@ module Toys
       # @return [Proc]
       #
       def default_error_handler
-        proc do |error|
-          raise(error)
-        end
+        Runner::DEFAULT_ERROR_HANDLER
       end
 
       ##
