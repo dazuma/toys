@@ -231,6 +231,19 @@ describe Toys::Utils::StandardUI do
       assert_equal(143, default_ui.handle_error(error))
       assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
     end
+
+    # A run with error wrapping disabled delivers the error to the handler
+    # without a ContextualError wrapper.
+    it "handles a bare error" do
+      error = assert_raises(::RuntimeError) { raise "foobar" }
+      assert_equal(1, default_ui.handle_error(error))
+      assert_includes(output_content, "RuntimeError: foobar")
+    end
+
+    it "returns the exit code for a bare error" do
+      error = assert_raises(Toys::NotRunnableError) { raise Toys::NotRunnableError }
+      assert_equal(126, default_ui.handle_error(error))
+    end
   end
 
   describe "create_logger" do

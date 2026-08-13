@@ -97,9 +97,8 @@ module Toys
 
       ##
       # Implementation of an error handler. As dictated by the error handler
-      # specification in {Toys::CLI}, this takes either a
-      # {Toys::ContextualError} or a bare `SignalException` as an argument, and
-      # returns an exit code or raises an exception.
+      # specification in {Toys::Runner}, this takes the error as its argument,
+      # and returns an exit code or raises an exception.
       #
       # The base implementation uses {#display_error_notice} and
       # {#display_signal_notice} to print an appropriate message to the UI's
@@ -108,24 +107,29 @@ module Toys
       # behavior, or this main implementation method can be overridden to
       # change the overall behavior.
       #
-      # @param error [Toys::ContextualError,SignalException] The error
-      #     received. An unhandled signal arrives unwrapped; any other error
-      #     arrives as a {Toys::ContextualError} wrapper.
+      # @param error [Toys::ContextualError,SignalException,StandardError,ScriptError]
+      #     The error received. An unhandled signal arrives unwrapped. Any
+      #     other error normally arrives as a {Toys::ContextualError} wrapper,
+      #     but arrives unwrapped if the run disabled error wrapping.
       # @return [Integer] The exit code
       #
       def handle_error(error)
-        if error.is_a?(::SignalException)
+        case error
+        when ::SignalException
           display_signal_notice(error)
           exit_code_for(error)
-        else
+        when ContextualError
           display_error_notice(error)
           exit_code_for(error.root_cause)
+        else
+          display_error_notice(error)
+          exit_code_for(error)
         end
       end
 
       ##
       # Implementation of a logger factory. As dictated by the logger factory
-      # specification in {Toys::CLI}, this must take a {Toys::ToolDefinition}
+      # specification in {Toys::Runner}, this must take a {Toys::ToolDefinition}
       # as an argument, and return a `Logger`.
       #
       # The base implementation returns a logger that writes to the UI's
@@ -200,7 +204,9 @@ module Toys
       # This method is used by {#handle_error} and can be overridden to change
       # its behavior.
       #
-      # @param error [Toys::ContextualError]
+      # @param error [Toys::ContextualError,StandardError,ScriptError] The
+      #     error to display. An error that is not a {Toys::ContextualError}
+      #     is displayed by itself, with no context blocks.
       #
       def display_error_notice(error)
         frames, origin = error_frames(error)
