@@ -133,8 +133,7 @@ module Toys
         end
 
         ##
-        # Whether the given candidate is a partial completion. Tolerates a
-        # completion that returned plain strings rather than candidates.
+        # Whether the given candidate is a partial completion.
         #
         def candidate_partial?(candidate)
           candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
