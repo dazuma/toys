@@ -246,6 +246,12 @@ tool can modify global state such as the Ruby load path, the process
 environment, or a logger shared with other tools. See the `logger` argument to
 {Toys::CLI#initialize} for one such caveat.
 
+A CLI's Runner is available as {Toys::CLI#runner}. Use it when you need run
+options that {Toys::CLI#run} does not expose, such as `wrap_errors` and
+`handle_errors`; it carries the CLI's configuration, so a tool run through it
+still sees the CLI. Note that {Toys::CLI#child} builds a new CLI with a runner
+of its own.
+
 ### Configuring the CLI
 
 Generally, you control CLI features by passing arguments to its constructor.
@@ -690,7 +696,8 @@ The argument is one of the following:
  *  A {Toys::ContextualError} wrapper. This is how an ordinary error arrives.
  *  A bare `StandardError` or `ScriptError`, if the run disabled error
     wrapping. {Toys::CLI#run} always wraps, so this happens only if you call
-    {Toys::Runner#run} yourself with `wrap_errors: false`.
+    {Toys::Runner#run} yourself with `wrap_errors: false`, on a Runner you
+    constructed or on the CLI's own {Toys::CLI#runner}.
  *  A bare `SignalException`, which is never wrapped.
 
 ```ruby

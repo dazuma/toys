@@ -1009,6 +1009,43 @@ describe Toys::CLI do
     end
   end
 
+  describe "runner" do
+    it "is the runner that runs the CLI's tools" do
+      test = self
+      cli_runner = cli.runner
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(cli_runner, self[Toys::Context::Key::RUNNER])
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+    end
+
+    it "returns the same runner on every call" do
+      assert_same(cli.runner, cli.runner)
+    end
+
+    it "runs a tool with the CLI's configuration" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(test.cli, self[Toys::Context::Key::CLI])
+            test.assert_equal("toys", self[Toys::Context::Key::EXECUTABLE_NAME])
+            exit(3)
+          end
+        end
+      end
+      assert_equal(3, cli.runner.run(["foo"]))
+    end
+
+    it "gives a child CLI its own runner" do
+      refute_same(cli.runner, cli.child.runner)
+    end
+  end
+
   describe "child" do
     let(:logger2) {
       Logger.new(logger_io).tap do |lgr|

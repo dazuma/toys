@@ -286,6 +286,15 @@ module Toys
     attr_reader :loader
 
     ##
+    # The runner this CLI uses to run tools, configured with this CLI's
+    # settings. Use it directly when you need more control over a single run
+    # than {#run} provides, such as turning off error handling. Note that
+    # {#child} builds a new CLI with a runner of its own.
+    # @return [Toys::Runner]
+    #
+    attr_reader :runner
+
+    ##
     # The effective executable name used for usage text in this CLI.
     # @return [String]
     #
