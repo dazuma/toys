@@ -48,6 +48,12 @@ describe Toys::Testing do
       assert_includes(err, "Tool not found: \"bye\"")
       assert_nil(result)
     end
+
+    it "honors the verbosity setting" do
+      configured_testing.toys_load_tool(["verbosity"], verbosity: 2) do |tool|
+        assert_equal(2, tool.verbosity)
+      end
+    end
   end
 
   describe "#toys_run_tool" do
@@ -63,6 +69,35 @@ describe Toys::Testing do
       end
       assert_includes(err, "Tool not found: \"bye\"")
       assert_equal(2, result_code)
+    end
+
+    it "honors the verbosity setting" do
+      result_code = configured_testing.toys_run_tool(["verbosity"], verbosity: 2)
+      assert_equal(2, result_code)
+    end
+
+    it "reports an error from the tool by default" do
+      result_code = nil
+      _out, err = capture_io do
+        result_code = configured_testing.toys_run_tool(["error"])
+      end
+      assert_includes(err, "kaboom")
+      assert_equal(1, result_code)
+    end
+
+    it "raises a wrapped error when handle_errors is false" do
+      err = assert_raises(Toys::ContextualError) do
+        configured_testing.toys_run_tool(["error"], handle_errors: false)
+      end
+      assert_equal(["error"], err.tool_name)
+      assert_equal("kaboom", err.root_cause.message)
+    end
+
+    it "raises the original error when wrapping is also disabled" do
+      err = assert_raises(::RuntimeError) do
+        configured_testing.toys_run_tool(["error"], wrap_errors: false, handle_errors: false)
+      end
+      assert_equal("kaboom", err.message)
     end
   end
 

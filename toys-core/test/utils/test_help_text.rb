@@ -93,6 +93,13 @@ describe Toys::Utils::HelpText do
         assert_equal("", help_array[2])
       end
 
+      it "renders a placeholder when the executable name is nil" do
+        help = Toys::Utils::HelpText.new(normal_tool, single_loader, nil)
+        help_array = help.help_string(styled: false).split("\n")
+        assert_equal("NAME", help_array[0])
+        assert_equal("    (binary-name) foo bar", help_array[1])
+      end
+
       it "renders with a description" do
         normal_tool.desc = "Hello world"
         help = Toys::Utils::HelpText.new(normal_tool, single_loader, executable_name)

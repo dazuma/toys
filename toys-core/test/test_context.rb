@@ -4,6 +4,8 @@ require "helper"
 
 describe Toys::Context do
   let(:fake_cli) { Object.new }
+  let(:fake_loader) { Object.new }
+  let(:fake_runner) { Object.new }
   let(:fake_tool) { Object.new }
   let(:usage_errors) { [] }
   let(:logger) { Logger.new(nil) }
@@ -13,7 +15,9 @@ describe Toys::Context do
       Toys::Context::Key::CLI => fake_cli,
       Toys::Context::Key::CONTEXT_DIRECTORY => "/some/dir",
       Toys::Context::Key::DELEGATED_FROM => nil,
+      Toys::Context::Key::LOADER => fake_loader,
       Toys::Context::Key::LOGGER => logger,
+      Toys::Context::Key::RUNNER => fake_runner,
       Toys::Context::Key::TOOL => fake_tool,
       Toys::Context::Key::TOOL_NAME => ["my-tool"],
       Toys::Context::Key::TOOL_SOURCE => nil,
@@ -36,6 +40,14 @@ describe Toys::Context do
 
     it "returns context_directory" do
       assert_equal("/some/dir", context.context_directory)
+    end
+
+    it "returns loader" do
+      assert_same(fake_loader, context.loader)
+    end
+
+    it "returns runner" do
+      assert_same(fake_runner, context.runner)
     end
 
     it "returns logger" do
@@ -74,6 +86,14 @@ describe Toys::Context do
 
     it "__context_directory returns context_directory" do
       assert_equal("/some/dir", context.__context_directory)
+    end
+
+    it "__loader returns loader" do
+      assert_same(fake_loader, context.__loader)
+    end
+
+    it "__runner returns runner" do
+      assert_same(fake_runner, context.__runner)
     end
 
     it "__logger returns logger" do

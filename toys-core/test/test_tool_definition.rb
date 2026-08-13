@@ -203,6 +203,24 @@ describe Toys::ToolDefinition do
         assert_equal(2, tool.default_data[:a])
       end
 
+      it "does not clear an existing default when no default is given" do
+        tool.add_flag(:a, ["-a"], default: 2)
+        tool.add_flag(:a, ["-b"])
+        assert_equal(2, tool.default_data[:a])
+      end
+
+      it "does not clear a separately set value when no default is given" do
+        tool.default_data[:a] = "from-set"
+        tool.add_flag(:a, ["-a"])
+        assert_equal("from-set", tool.default_data[:a])
+      end
+
+      it "overwrites an existing default when a default is given" do
+        tool.default_data[:a] = "from-set"
+        tool.add_flag(:a, ["-a"], default: 2)
+        assert_equal(2, tool.default_data[:a])
+      end
+
       it "recognizes desc and long desc" do
         tool.add_flag(:a, ["-a"], desc: "I like Ruby",
                                   long_desc: ["hello", "world"])
@@ -660,6 +678,18 @@ describe Toys::ToolDefinition do
         assert_equal("hello", tool.default_data[:foo])
       end
 
+      it "does not clear a separately set value when no default is given" do
+        tool.default_data[:foo] = "from-set"
+        tool.add_optional_arg(:foo)
+        assert_equal("from-set", tool.default_data[:foo])
+      end
+
+      it "overwrites a separately set value when a default is given" do
+        tool.default_data[:foo] = "from-set"
+        tool.add_optional_arg(:foo, default: "hello")
+        assert_equal("hello", tool.default_data[:foo])
+      end
+
       it "recognizes desc and long_desc" do
         tool.add_optional_arg(:foo, desc: "short desc", long_desc: ["line one"])
         arg = tool.optional_args.first
@@ -720,6 +750,12 @@ describe Toys::ToolDefinition do
       it "populates default_data with a custom value" do
         tool.set_remaining_args(:rest, default: ["a", "b"])
         assert_equal(["a", "b"], tool.default_data[:rest])
+      end
+
+      it "does not clear a separately set value when the default is nil" do
+        tool.default_data[:rest] = ["from-set"]
+        tool.set_remaining_args(:rest, default: nil)
+        assert_equal(["from-set"], tool.default_data[:rest])
       end
 
       it "replaces a previously set remaining arg" do
@@ -956,11 +992,11 @@ describe Toys::ToolDefinition do
         assert_instance_of(Toys::Completion::Enum, tool.lookup_completion(completion_name))
       end
 
-      it "adds enum with an option" do
-        tool.add_completion(completion_name, ["one", "two", "three"], prefix_constraint: "hi=")
+      it "adds a completion with an option" do
+        tool.add_completion(completion_name, :file_system, omit_files: true)
         found_completion = tool.lookup_completion(completion_name)
-        assert_instance_of(Toys::Completion::Enum, found_completion)
-        assert_equal("hi=", found_completion.prefix_constraint)
+        assert_instance_of(Toys::Completion::FileSystem, found_completion)
+        refute(found_completion.include_files)
       end
 
       it "adds block" do
@@ -1038,6 +1074,65 @@ describe Toys::ToolDefinition do
         tool.completion = completion_name
         refute(tool.completion.complete_subtools?)
         assert(tool.completion.complete_args?)
+      end
+    end
+
+    describe "default completion using only a loader" do
+      def make_loader(extra_delimiters: ":")
+        loader = Toys::Loader.new(extra_delimiters: extra_delimiters)
+        loader.add_block do
+          tool "ns" do
+            tool "sub1" do
+              to_run do
+                # Does nothing
+              end
+            end
+            tool "sub2" do
+              to_run do
+                # Does nothing
+              end
+            end
+          end
+          tool "deleg", delegate_to: ["ns"]
+        end
+        loader
+      end
+
+      def candidate_strings(loader, previous_words: [], fragment: "")
+        context = Toys::Completion::Context.new(loader: loader, previous_words: previous_words,
+                                                fragment: fragment)
+        context.tool.completion.call(context).map(&:string).sort
+      end
+
+      it "completes subtools" do
+        candidates = candidate_strings(make_loader, previous_words: ["ns"], fragment: "sub")
+        assert_equal(["sub1", "sub2"], candidates)
+      end
+
+      it "completes subtools across an extra delimiter in the fragment" do
+        candidates = candidate_strings(make_loader, fragment: "ns:sub")
+        assert_equal(["ns:sub1", "ns:sub2"], candidates)
+      end
+
+      it "does not complete subtools across a delimiter that is not configured" do
+        loader = make_loader(extra_delimiters: "")
+        candidates = candidate_strings(loader, fragment: "ns:sub")
+        assert_equal([], candidates)
+      end
+
+      it "does not treat a leading delimiter as a path separator" do
+        candidates = candidate_strings(make_loader, fragment: ":sub")
+        assert_equal([], candidates)
+      end
+
+      it "completes subtools across whitespace in the fragment" do
+        candidates = candidate_strings(make_loader, fragment: "ns sub")
+        assert_equal(["ns sub1", "ns sub2"], candidates)
+      end
+
+      it "completes the subtools of a delegate target" do
+        candidates = candidate_strings(make_loader, previous_words: ["deleg"], fragment: "sub")
+        assert_equal(["sub1", "sub2"], candidates)
       end
     end
   end

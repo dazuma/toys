@@ -78,6 +78,33 @@ describe Toys::CLI do
       cli.run("foo")
     end
 
+    it "passes the verbosity setting through the default middleware stack" do
+      test = self
+      verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
+      verbose_cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_equal(2, verbosity)
+            test.assert_equal(Logger::WARN - 2, logger.level)
+          end
+        end
+      end
+      assert_equal(0, verbose_cli.run("foo", verbosity: 2))
+    end
+
+    it "combines the verbosity setting with verbosity flags" do
+      test = self
+      verbose_cli = Toys::CLI.new(executable_name: executable_name, logger: logger)
+      verbose_cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_equal(1, verbosity)
+          end
+        end
+      end
+      assert_equal(0, verbose_cli.run("foo", "-v", "-q", "-v", verbosity: 0))
+    end
+
     it "makes context fields available via convenience methods" do
       test = self
       cli.add_config_block do
@@ -289,7 +316,151 @@ describe Toys::CLI do
       error = assert_raises(Toys::ContextualError) do
         cli.run("foo")
       end
-      assert_equal("Delegation loop: \"foo\" <- \"boo\" <- \"foo\"", error.cause.message)
+      assert_kind_of(Toys::ToolDefinitionError, error.root_cause)
+      assert_equal("Delegation loop: \"foo\" <- \"boo\" <- \"foo\"", error.root_cause.message)
+    end
+
+    it "attributes a delegate error to both the delegate and the delegating tool" do
+      cli.add_config_block do
+        tool "target" do
+          to_run do
+            raise "kaboom"
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      error = assert_raises(Toys::ContextualError) do
+        cli.run("front")
+      end
+      assert_equal(["front"], error.tool_name)
+      assert_equal(["target"], error.cause.tool_name)
+      assert_equal("kaboom", error.root_cause.message)
+    end
+
+    it "reraises a signal raised by a delegate" do
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise SignalException, 4
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      error = assert_raises(SignalException) do
+        cli.run("front")
+      end
+      assert_equal(4, error.signo)
+    end
+
+    it "lets the delegating tool handle an interrupt raised by the delegate" do
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            exit(7)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(7, cli.run("front"))
+    end
+
+    it "lets the delegating tool handle a signal raised by the delegate" do
+      test = self
+      cli.add_config_block do
+        tool "target" do
+          def run
+            raise SignalException, 15
+          end
+        end
+        tool "front" do
+          on_signal(15) do |ex|
+            test.assert_equal(15, ex.signo)
+            exit(8)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(8, cli.run("front"))
+    end
+
+    it "offers the signal to each tool outward when the delegate reraises" do
+      order = []
+      cli.add_config_block do
+        tool "target" do
+          on_interrupt do |ex|
+            order << :target
+            raise ex
+          end
+
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            order << :front
+            exit(11)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(11, cli.run("front"))
+      assert_equal([:target, :front], order)
+    end
+
+    it "gives the delegate the first chance to handle a signal" do
+      order = []
+      cli.add_config_block do
+        tool "target" do
+          on_interrupt do
+            order << :target
+            exit(9)
+          end
+
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          on_interrupt do
+            order << :front
+            exit(10)
+          end
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(9, cli.run("front"))
+      assert_equal([:target], order)
+    end
+
+    it "passes a delegate error to a custom error handler" do
+      my_handler = proc do |error|
+        assert_equal(["front"], error.tool_name)
+        assert_equal(["target"], error.cause.tool_name)
+        assert_kind_of(::RuntimeError, error.root_cause)
+        11
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "target" do
+          to_run do
+            raise "kaboom"
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(11, my_cli.run("front"))
     end
   end
 
@@ -351,11 +522,30 @@ describe Toys::CLI do
       assert_equal(10, my_cli.run("runtime", "hello"))
     end
 
-    it "supports a custom handler that receives signals" do
+    it "passes an error raised during argument parsing to the error handler" do
       my_handler = proc do |error|
-        cause = error.cause
-        assert_kind_of(SignalException, cause)
-        assert_equal(4, cause.signo)
+        assert_equal(["foo"], error.tool_name)
+        assert_equal("handler kaboom", error.root_cause.message)
+        13
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "foo" do
+          flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
+          def run
+            # Never reached
+          end
+        end
+      end
+      assert_equal(13, my_cli.run("foo", "--bar=x"))
+    end
+
+    it "supports a custom handler that receives signals" do
+      # A signal is never wrapped in a ContextualError, so the handler receives
+      # the SignalException itself rather than a wrapper.
+      my_handler = proc do |error|
+        assert_kind_of(SignalException, error)
+        assert_equal(4, error.signo)
         12
       end
       my_cli = cli.child(error_handler: my_handler)
@@ -367,6 +557,25 @@ describe Toys::CLI do
         end
       end
       assert_equal(12, my_cli.run("foo"))
+    end
+
+    it "passes an unwrapped signal raised by a delegate to a custom handler" do
+      my_handler = proc do |error|
+        assert_kind_of(::Interrupt, error)
+        14
+      end
+      my_cli = cli.child(error_handler: my_handler)
+      my_cli.add_config_block do
+        tool "target" do
+          def run
+            raise ::Interrupt
+          end
+        end
+        tool "front" do
+          delegate_to ["target"]
+        end
+      end
+      assert_equal(14, my_cli.run("front"))
     end
   end
 
@@ -695,6 +904,53 @@ describe Toys::CLI do
         end
       end
     end
+
+    it "does not wrap an error raised by the block" do
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            # Never reached
+          end
+        end
+      end
+      error = assert_raises(::RuntimeError) do
+        cli.load_tool("foo") do
+          raise "from the block"
+        end
+      end
+      assert_equal("from the block", error.message)
+    end
+
+    it "does not wrap an error raised during argument parsing" do
+      cli.add_config_block do
+        tool "foo" do
+          flag :bar, "--bar=VAL", handler: proc { |_val, _prev| raise "handler kaboom" }
+          def run
+            # Never reached
+          end
+        end
+      end
+      error = assert_raises(::RuntimeError) do
+        cli.load_tool("foo", "--bar=x") do
+          flunk("Did not expect the block to run")
+        end
+      end
+      assert_equal("handler kaboom", error.message)
+    end
+
+    it "honors the verbosity setting" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          def run
+            # Never reached
+          end
+        end
+      end
+      cli.load_tool("foo", verbosity: 2) do |tool|
+        test.assert_equal(2, tool[Toys::Context::Key::VERBOSITY])
+      end
+    end
   end
 
   describe "add_config_gem" do
@@ -753,6 +1009,43 @@ describe Toys::CLI do
     end
   end
 
+  describe "runner" do
+    it "is the runner that runs the CLI's tools" do
+      test = self
+      cli_runner = cli.runner
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(cli_runner, self[Toys::Context::Key::RUNNER])
+          end
+        end
+      end
+      assert_equal(0, cli.run("foo"))
+    end
+
+    it "returns the same runner on every call" do
+      assert_same(cli.runner, cli.runner)
+    end
+
+    it "runs a tool with the CLI's configuration" do
+      test = self
+      cli.add_config_block do
+        tool "foo" do
+          to_run do
+            test.assert_same(test.cli, self[Toys::Context::Key::CLI])
+            test.assert_equal("toys", self[Toys::Context::Key::EXECUTABLE_NAME])
+            exit(3)
+          end
+        end
+      end
+      assert_equal(3, cli.runner.run(["foo"]))
+    end
+
+    it "gives a child CLI its own runner" do
+      refute_same(cli.runner, cli.child.runner)
+    end
+  end
+
   describe "child" do
     let(:logger2) {
       Logger.new(logger_io).tap do |lgr|
@@ -783,6 +1076,23 @@ describe Toys::CLI do
       assert_same(logger, cli.logger_factory.call)
       child = cli.child
       assert_same(logger, child.logger_factory.call)
+    end
+
+    it "recognizes every constructor keyword" do
+      keywords = Toys::CLI.instance_method(:initialize).parameters
+                          .filter_map { |type, name| name if [:key, :keyreq].include?(type) }
+      assert_equal(keywords.sort, cli.send(:current_settings).keys.sort,
+                   "Every CLI#initialize keyword must appear in CLI#current_settings," \
+                   " otherwise CLI#child silently drops it")
+    end
+
+    it "copies every setting so that it survives the copy" do
+      parent_settings = cli.send(:current_settings)
+      child_settings = cli.child.send(:current_settings)
+      mismatched = parent_settings.keys.reject { |key| parent_settings[key] == child_settings[key] }
+      assert_empty(mismatched,
+                   "Settings that did not survive CLI#child, likely because" \
+                   " CLI#current_settings reports a derived value rather than the one passed in")
     end
 
     it "overrides parameters" do

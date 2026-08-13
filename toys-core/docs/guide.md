@@ -115,21 +115,23 @@ $ ./greet.rb --whom=Ruby
 
 This section provides some detail on how a CLI executes your code.
 
-When you call {Toys::CLI#run}, the CLI runs through three phases:
+A CLI resolves its configuration into a {Toys::Runner}, the object that
+actually runs tools. When you call {Toys::CLI#run}, it passes the command line
+to that Runner, which carries out three phases:
 
- *  **Loading** in which the CLI identifies which tool to run, and loads the
-    tool from a tool **source**, which could be a block passed to the CLI, or a
+ *  **Loading** in which the Runner identifies which tool to run, and loads
+    the tool from a tool source, which could be a block passed to the CLI, a
     file loaded from the file system, git, or other location.
- *  **Context building**, in which the CLI parses the command-line arguments
-    according to the flags and arguments declared by the tool, instantiates the
-    tool, and populates the {Toys::Context} object (which is `self` when the
-    tool is executed)
- *  **Execution**, which involves running any initializers defined on the tool,
+ *  **Context building**, in which the Runner parses the command-line
+    arguments according to the flags and arguments declared by the tool,
+    instantiates the tool, and populates the {Toys::Context} object (which is
+    `self` when the tool is executed)
+ *  **Running**, which involves running any initializers defined on the tool,
     applying middleware, running the tool's code, and handling errors.
 
 #### The Loader
 
-When the CLI needs the definition of a tool, it queries the {Toys::Loader}. The
+When Toys needs the definition of a tool, it queries the {Toys::Loader}. The
 loader object is configured with a set of tool _sources_ representing ways to
 define a tool. These sources may be blocks passed directly to the CLI, or
 directories and files loaded from the file system, from gems, or even from
@@ -174,7 +176,7 @@ We will discuss more about the features of the loader below in the section on
 
 #### Building context
 
-Once a tool is defined, the CLI prepares it for execution by building a
+Once a tool is defined, the Runner prepares it for execution by building a
 {Toys::Context} object. This object is `self` during tool runtime, and it
 includes:
 
@@ -190,10 +192,21 @@ constants under {Toys::Context::Key}.
 Argument parsing is directed by the {Toys::ArgParser} class. This class, for
 the most part, replicates the semantics of the standard Ruby OptionParser
 class, but it implements a few extra features and cleans up a few ambiguities.
+It is concerned only with the command line: it produces the parsed flag and
+argument values, along with any usage errors. The rest of the context data,
+such as the logger, the tool definition and its name and source, and the
+verbosity, is provided by the Runner.
 
-#### Tool execution and error handling
+A Runner can also be given arbitrary additional data by its caller, which
+is merged into the context underneath the data the Runner provides itself, so
+it cannot override a runtime-owned key. The `CLI` context key arrives this way,
+supplied by the CLI itself. A tool run through a Runner constructed directly
+will therefore see `nil` from {Toys::Context#cli}, but it always sees a Runner
+from {Toys::Context#runner}.
 
-The execution phase involves:
+#### Running the tool and error handling
+
+The running phase involves:
 
  *  Running the tool's initializers (if any) in order.
  *  Running the tool's middleware. Each middleware "wraps" the execution of
@@ -203,17 +216,41 @@ The execution phase involves:
  *  Executing the tool itself by calling its `run` method (or any alternate
     entrypoint set by the tool).
 
-The CLI also implements error and signal handling, directing control either to
-the tool's callbacks or to fallback handlers that can be configured into the
-CLI itself. More on this later.
+Errors and signals are handled in two stages. If an exception reaches the
+Runner, whether from argument parsing, from the middleware, or from the tool
+itself, the Runner wraps it in a {Toys::ContextualError} tagged with the
+tool's name, its arguments, and the path to the file where it was defined. The
+Runner then passes that wrapper to its error handler, which decides what to
+report and what result code to return. Tools themselves can also intercept
+errors and handle them via the `on_usage_error` handler.
+
+Signals are treated differently: they are never wrapped. A `SignalException`
+propagates as itself, so that each tool it passes through gets the chance to
+intercept it with an `on_interrupt` or `on_signal` handler, and so that any
+signal no tool handled reaches the error handler, and ultimately the Ruby VM,
+still recognizable as a signal. This holds within a single run, including
+across delegation; a tool that starts a *separate* nested run is a different
+matter. See the section on [error handling](#handling-errors) for more details.
 
 #### Multiple runs
 
-The {Toys::CLI} object can be reused to run multiple tools. This may save on
-loading overhead, as the tools can be loaded just once and their definitions
-reused for multiple executions. It can even perform multiple executions
-concurrently in separate threads, assuming the tool implementations themselves
-are thread-safe.
+A {Toys::Runner} can be reused to run multiple tools. It holds no state
+specific to a single run, so every run gets its own {Toys::Context}, and the
+{Toys::CLI} that owns the Runner can be reused in the same way. This may save
+on loading overhead, as the tools can be loaded just once and their definitions
+reused for multiple runs.
+
+Reuse is safe as far as the Runner itself is concerned. Whether you can run two
+tools at the same time, in separate threads, depends entirely on the tools: a
+tool can modify global state such as the Ruby load path, the process
+environment, or a logger shared with other tools. See the `logger` argument to
+{Toys::CLI#initialize} for one such caveat.
+
+A CLI's Runner is available as {Toys::CLI#runner}. Use it when you need run
+options that {Toys::CLI#run} does not expose, such as `wrap_errors` and
+`handle_errors`; it carries the CLI's configuration, so a tool run through it
+still sees the CLI. Note that {Toys::CLI#child} builds a new CLI with a runner
+of its own.
 
 ### Configuring the CLI
 
@@ -568,6 +605,13 @@ to map to `Logger::INFO` rather than `Logger::WARN`.
 cli = Toys::CLI.new(base_level: Logger::INFO)
 ```
 
+If you do not pass a `base_level`, verbosity 0 maps to whatever level the
+logger has before a run adjusts it. A [nested run](#nested-runs) that shares the
+same logger with the run that called it uses that same base level rather than
+the level the caller adjusted it to, so verbosity does not compound: if a tool
+running at verbosity 1 calls another tool at verbosity 1, both log at
+`Logger::INFO`.
+
 #### Customizing the logger
 
 Toys-Core configures its default logger with the default logging formatter, and
@@ -618,25 +662,52 @@ formatting.
 ### Handling errors
 
 If an unhandled exception (specifically an exception represented by a subclass
-of `StandardError` or `ScriptError`) occurs, or a signal such as an interrupt
-(represented by a `SignalException`) is received, during tool execution,
-Toys-Core first wraps the exception in a {Toys::ContextualError}. This error
-type provides various context fields such as an estimate of where in the tool
-source the error may have occurred. It also provides the original exception in
-the `cause` field.
+of `StandardError` or `ScriptError`) occurs during tool execution, Toys-Core
+first wraps the exception in a {Toys::ContextualError}. This error type
+provides various context fields such as an estimate of where in the tool source
+the error may have occurred. It also provides the original exception in the
+`cause` field.
 
-Then, Toys-Core invokes the error handler, a Proc that you can set as a
-configuration argument when constructing a CLI. An error handler takes the
-{Toys::ContextualError} wrapper as an argument and should perform any desired
-final handling of an unhandled exception, such as displaying the error to the
-terminal, or reraising the exception. The handler should then return the
-desired result code for the execution.
+When one tool invokes another, whether through `delegate_to` or by calling
+{Toys::Runner#run} or {Toys::CLI#run} from within a tool, the wrappers nest, so
+that each level records the tool name, arguments, and source location for its
+own tool. In that case the `cause` field holds the next
+{Toys::ContextualError} in the chain rather than the original exception. Use
+{Toys::ContextualError#root_cause} to reach the original exception regardless
+of how deeply it is nested.
+
+Signals are *not* wrapped. If a signal such as an interrupt (represented by a
+`SignalException`) is received during tool execution, and no tool intercepts it
+with an `on_interrupt` or `on_signal` handler, it propagates unwrapped. This
+means a tool that delegates to another tool can still intercept a signal raised
+while the inner tool was running. That is not true of a tool that *invokes*
+another tool by calling {Toys::Runner#run} itself; see
+[nested runs](#nested-runs) below.
+
+Then, Toys-Core invokes the error handler, a Proc held by the {Toys::Runner}.
+You normally set it as a configuration argument when constructing a CLI, which
+passes it along to the Runner it creates. An error handler takes the error as
+its argument and should perform any desired final handling of an unhandled
+exception, such as displaying the error to the terminal, or reraising the
+exception. The handler should then return the desired result code for the run.
+
+The argument is one of the following:
+
+ *  A {Toys::ContextualError} wrapper. This is how an ordinary error arrives.
+ *  A bare `StandardError` or `ScriptError`, if the run disabled error
+    wrapping. {Toys::CLI#run} always wraps, so this happens only if you call
+    {Toys::Runner#run} yourself with `wrap_errors: false`, on a Runner you
+    constructed or on the CLI's own {Toys::CLI#runner}.
+ *  A bare `SignalException`, which is never wrapped.
 
 ```ruby
-my_error_handler = Proc.new |wrapped_error| do
-  # Propagate signals out and let the Ruby VM handle them.
-  raise wrapped_error.cause if wrapped_error.cause.is_a?(SignalException)
-  # Handle any other exception types by printing a message.
+my_error_handler = Proc.new do |error|
+  # Propagate signals out and let the Ruby VM handle them. Signals arrive
+  # unwrapped, so this is a direct type check on the argument.
+  raise error if error.is_a?(SignalException)
+  # Handle any other exception types by printing a message. Here `error` is
+  # normally a Toys::ContextualError; use root_cause to reach the original
+  # exception.
   $stderr.puts "An error occurred. Please contact your administrator."
   # Return the result code
   255
@@ -644,11 +715,39 @@ end
 cli = Toys::CLI.new(error_handler: my_error_handler)
 ```
 
-If you do not set an error handler, the exception is raised out of the
-{Toys::CLI#run} call. In the case of signals, the *cause*, represented by a
-`SignalException`, is raised directly so that the Ruby VM can handle it
-normally. For other exceptions, however, the {Toys::ContextualError} wrapper
-will be raised so that a rescue block has access to the context information.
+If you do not set an error handler, the error is raised out of the
+{Toys::CLI#run} call as-is. Signals are raised directly so that the Ruby VM can
+handle them normally. For other exceptions, the outermost
+{Toys::ContextualError} wrapper is raised so that a rescue block has access to
+the context information.
+
+#### Nested runs
+
+A tool can run another tool in the same process by calling {Toys::Runner#run}
+on its {Toys::Context#runner}. Such a nested run performs its own error
+handling by default, exactly as the outer run does, so an error raised by the
+inner tool is routed to the configured error handler *before* the calling tool
+sees anything. What happens next depends on the handler:
+
+ *  With the default handler, the error is reraised, so it propagates into the
+    calling tool and that tool does not continue past the call.
+ *  With a reporting handler such as the one from {Toys::Utils::StandardUI},
+    the error is printed and a result code is returned from the nested
+    {Toys::Runner#run} call. The calling tool continues, and must check that
+    result code itself.
+
+This also applies to signals, and is the exception to the rule above that a
+signal propagates as itself through every tool it passes through. With a
+reporting handler, an interrupt raised by the inner tool is caught by the
+nested run's error handling, printed, and converted to result code 130, so the
+calling tool's `on_interrupt` handler never fires.
+
+Delegation behaves differently: a delegated tool is part of the same run, so
+its errors are not handled separately. The error handler fires once, at the
+outermost run.
+
+If you want a nested run to leave errors to the caller, pass
+`handle_errors: false` to {Toys::Runner#run}.
 
 #### StandardUI error handling
 
@@ -681,7 +780,9 @@ alter how exit codes are generated by overriding
 Toys-Core error handling handles normal exceptions that are subclasses of
 `StandardError`, errors coming from Ruby file loading and parsing that are
 subclasses of `ScriptError`, and signals that are subclasses of
-`SignalException`.
+`SignalException`. The first two are wrapped in a {Toys::ContextualError}
+before being passed to the error handler; signals are passed through
+unwrapped.
 
 Other exceptions such as `NoMemoryError` or `SystemStackError` are not handled
 by Toys, and are raised directly out of the {Toys::CLI#run}.
@@ -1136,13 +1237,18 @@ above under [the Loader](#the-loader).
 
 This section includes classes involved in tool execution
 
- *  {Toys::CLI} - The main execution entry point. It provides a general
-    configuration interface for all of the Toys features, owns a {Toys::Loader}
-    that it uses to load tool definitions, and then responds to command line
-    invocations.
- *  {Toys::ArgParser} - A service that parses command line argument lists,
+ *  {Toys::CLI} - The configuration and entry point for the framework. It
+    provides a general configuration interface for all of the Toys features,
+    owns a {Toys::Loader} that it uses to load tool definitions, and owns a
+    {Toys::Runner} that it uses to respond to command line invocations.
+ *  {Toys::Runner} - The environment in which tools run. Given a command line,
+    it looks up the tool, parses the arguments, builds the {Toys::Context},
+    applies the tool's middleware, runs the tool, and wraps any resulting
+    error in a {Toys::ContextualError}. Most applications should use
+    {Toys::CLI#run} rather than creating a {Toys::Runner} directly.
+ *  {Toys::ArgParser} - A service that parses command line argument lists and
     matches the given arguments against the tool's formal flags and arguments
-    definition, and populates the tool's execution context.
+    definition, producing the parsed values along with any usage errors.
  *  {Toys::Context} - This class is `self` during a tool's execution, and the
     tool's methods, including the entrypoint `run` method, are defined in a
     subclass of this class. This class also provides methods for retrieving
@@ -1169,7 +1275,9 @@ Exception classes are defined in `lib/errors.rb`.
 
  *  {Toys::ContextualError} - This is the error that is generally raised from
     {Toys::CLI#run}. It wraps an actual error, and provides source information
-    indicating where in the tool definition the error was raised.
+    indicating where in the tool definition the error was raised. When one tool
+    invokes another, these wrappers nest, one per tool; use
+    {Toys::ContextualError#root_cause} to reach the original error.
  *  {Toys::ArgParsingError} - Raised during argument parsing to indicate that
     parsing failed. If present, it will contain one or more individual
     {Toys::ArgParser::UsageError} exceptions.

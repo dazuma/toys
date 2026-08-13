@@ -10,20 +10,39 @@ module Toys
     #
     module CompletionEngine
       ##
+      # @private
+      #
+      # Stands in for a character that was quoted or backslash-escaped, in the
+      # `bare_field` returned by {CompletionEngine.split}. Chosen so that it
+      # can never be mistaken for a shell's word break character.
+      #
+      QUOTED_CHAR = "\0"
+
+      ##
       # Base class for shell completion engines that use a
       # `COMP_LINE` / `COMP_POINT` protocol.
       #
+      # Completion candidates are always computed as whole words: the entire
+      # word under the cursor is presented to the completion as the fragment,
+      # and each candidate is a replacement for that entire word. A shell that
+      # replaces less than the whole word, because it breaks words at certain
+      # characters, declares those characters in the private method
+      # `#word_break_chars`, and the candidates are trimmed to match.
+      #
       # Subclasses must implement the private methods `#shell_name` and
-      # `#output_completions`.
+      # `#output_completions`, and may override `#word_break_chars`.
       #
       class Base
         ##
         # Create a completion engine.
         #
-        # @param cli [Toys::CLI] The CLI.
+        # @param completion [Toys::Completion::Base] The shell tab completion
+        #     specifying how to generate completion candidates.
+        # @param loader [Toys::Loader] The tool loader.
         #
-        def initialize(cli)
-          @cli = cli
+        def initialize(completion, loader)
+          @completion = completion
+          @loader = loader
         end
 
         ##
@@ -63,22 +82,54 @@ module Toys
         #
         def run_internal(line)
           words = CompletionEngine.split(line)
-          quote_type, last = words.pop
+          quote_type, last, bare_last = words.pop
           return nil unless words.shift
           words.map! { |_type, word| word }
-          prefix = ""
-          if (match = /\A(.*[=:])(.*)\z/.match(last))
-            prefix = match[1]
-            last = match[2]
-          end
           context = Completion::Context.new(
-            cli: @cli, previous_words: words, fragment_prefix: prefix, fragment: last,
+            loader: @loader, previous_words: words, fragment: last,
             shell: shell_name, quote_type: quote_type
           )
-          [quote_type, @cli.completion.call(context).uniq.sort]
+          candidates = fit_candidates_to_word(@completion.call(context), last, bare_last)
+          [quote_type, candidates.uniq.sort]
         end
 
         private
+
+        ##
+        # The characters at which this shell breaks the word being completed.
+        # A shell that breaks words replaces only the text following the final
+        # break, so candidates are trimmed accordingly. The base implementation
+        # returns the empty string, meaning the shell replaces the whole word.
+        #
+        def word_break_chars
+          ""
+        end
+
+        ##
+        # Adjusts candidates to the span of the command line that this shell
+        # will replace with the completion.
+        #
+        # Completions produce whole words. If this shell breaks words, drop the
+        # part of each candidate that the shell will leave in place, i.e. the
+        # text through the final break character in the word.
+        #
+        # The break is located in `bare_word`, which is `word` with its quoted
+        # and backslash-escaped characters masked out, because a shell does not
+        # break a word at a character that was quoted. A candidate that does not
+        # extend the word cannot be trimmed, and is passed through unchanged.
+        #
+        def fit_candidates_to_word(candidates, word, bare_word)
+          chars = word_break_chars
+          return candidates if chars.empty?
+          index = bare_word.rindex(/[#{::Regexp.escape(chars)}]/)
+          return candidates if index.nil?
+          prefix = word[0, index + 1]
+          candidates.map do |candidate|
+            string = candidate.to_s
+            next candidate unless string.start_with?(prefix)
+            Completion::Candidate.new(string[prefix.length..], partial: candidate.partial?)
+          end
+        end
 
         def shell_name
           raise ::NotImplementedError
@@ -96,9 +147,11 @@ module Toys
         ##
         # Create a bash completion engine.
         #
-        # @param cli [Toys::CLI] The CLI.
+        # @param completion [Toys::Completion::Base] The shell tab completion
+        #     specifying how to generate completion candidates.
+        # @param loader [Toys::Loader] The tool loader.
         #
-        def initialize(cli)
+        def initialize(completion, loader)
           require "shellwords"
           super
         end
@@ -109,8 +162,8 @@ module Toys
         #
         def format_candidate(candidate, quote_type)
           str = candidate.to_s
-          partial = candidate.is_a?(Completion::Candidate) ? candidate.partial? : false
-          quote_type = nil if candidate.string.include?("'") && quote_type == :single
+          partial = candidate.partial?
+          quote_type = nil if str.include?("'") && quote_type == :single
           case quote_type
           when :single
             partial ? "'#{str}" : "'#{str}' "
@@ -124,6 +177,14 @@ module Toys
         end
 
         private
+
+        ##
+        # Bash's default `COMP_WORDBREAKS` includes an equals sign and a colon,
+        # and it replaces only the text following the final break.
+        #
+        def word_break_chars
+          "=:"
+        end
 
         def shell_name
           :bash
@@ -156,21 +217,35 @@ module Toys
         ##
         # @private
         #
+        # Splits a command line into words. Returns an array of triples
+        # `[quote_type, field, bare_field]`, where `field` is the word with its
+        # quoting and escaping removed, and `bare_field` is `field` with every
+        # character that was quoted or backslash-escaped replaced by
+        # {QUOTED_CHAR}. The two are always the same length, so an index into
+        # one is an index into the other.
+        #
         def split(line)
           words = []
           field = ::String.new
+          bare_field = ::String.new
           quote_type = nil
           line.scan(split_regex) do |word, sqw, dqw, esc, garbage, sep|
             raise ArgumentError, "Didn't expect garbage: #{line.inspect}" if garbage
-            field << field_str(word, sqw, dqw, esc)
+            str = field_str(word, sqw, dqw, esc)
+            field << str
+            bare_field << (word ? str : QUOTED_CHAR * str.length)
             quote_type = update_quote_type(quote_type, sqw, dqw)
-            if sep
-              words << [quote_type, field]
-              quote_type = nil
-              field = sep.empty? ? nil : ::String.new
+            next unless sep
+            words << [quote_type, field, bare_field]
+            quote_type = nil
+            if sep.empty?
+              field = bare_field = nil
+            else
+              field = ::String.new
+              bare_field = ::String.new
             end
           end
-          words << [quote_type, field] if field
+          words << [quote_type, field, bare_field] if field
           words
         end
 

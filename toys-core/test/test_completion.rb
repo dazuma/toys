@@ -4,7 +4,7 @@ require "helper"
 
 describe Toys::Completion do
   def context(str)
-    Toys::Completion::Context.new(cli: nil, fragment: str)
+    Toys::Completion::Context.new(loader: nil, fragment: str)
   end
 
   describe ".create" do
@@ -48,15 +48,6 @@ describe Toys::Completion do
       assert_instance_of(Toys::Completion::Enum, completion)
       expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
       assert_equal(expected, completion.values)
-      assert_equal("", completion.prefix_constraint)
-    end
-
-    it "recognizes an array wiht options" do
-      completion = Toys::Completion.create(["one", :two, ["three"]], prefix_constraint: "hi")
-      assert_instance_of(Toys::Completion::Enum, completion)
-      expected = Toys::Completion::Candidate.new_multi(["one", "three", "two"])
-      assert_equal(expected, completion.values)
-      assert_equal("hi", completion.prefix_constraint)
     end
 
     it "recognizes a proc" do
@@ -80,12 +71,81 @@ describe Toys::Completion do
   end
 end
 
+describe Toys::Completion::Context do
+  let(:loader) {
+    loader = Toys::Loader.new(extra_delimiters: ":")
+    loader.add_block do
+      tool "foo" do
+        flag :bar, "--bar VALUE"
+        optional_arg :arg1
+        def run; end
+      end
+    end
+    loader
+  }
+
+  def context(**params)
+    Toys::Completion::Context.new(loader: loader, **params)
+  end
+
+  it "provides the loader" do
+    assert_same(loader, context.loader)
+  end
+
+  it "includes the loader among the params" do
+    assert_same(loader, context[:loader])
+  end
+
+  it "propagates the loader through with" do
+    context2 = context(fragment: "hi").with(fragment: "ho")
+    assert_same(loader, context2.loader)
+    assert_equal("ho", context2.fragment)
+  end
+
+  it "does not provide a CLI" do
+    refute_respond_to(context, :cli)
+  end
+
+  it "looks up the tool and remaining args using the loader" do
+    ctx = context(previous_words: ["foo", "hi"])
+    assert_equal(["foo"], ctx.tool.full_name)
+    assert_equal(["hi"], ctx.args)
+  end
+
+  it "builds an arg parser using the loader" do
+    ctx = context(previous_words: ["foo", "--bar", "hi"])
+    assert_equal("hi", ctx.arg_parser.data[:bar])
+  end
+
+  # Completion parses incrementally and never calls ArgParser#finish, so the
+  # special context keys have to be populated during parsing rather than at
+  # the end of it.
+  it "provides the special context keys on an unfinished arg parser" do
+    ctx = context(previous_words: ["foo", "--bar", "hi", "--nope"])
+    data = ctx.arg_parser.data
+    refute(ctx.arg_parser.finished?)
+    assert_equal(["--bar", "hi", "--nope"], data[Toys::Context::Key::ARGS])
+    assert_equal(["--nope"], data[Toys::Context::Key::UNMATCHED_ARGS])
+    assert_equal(["--nope"], data[Toys::Context::Key::UNMATCHED_FLAGS])
+    assert_equal([], data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+    errors = data[Toys::Context::Key::USAGE_ERRORS]
+    assert_equal(1, errors.size)
+    assert_kind_of(Toys::ArgParser::FlagUnrecognizedError, errors.first)
+  end
+
+  it "provides empty special context keys when nothing has been parsed" do
+    data = context(previous_words: ["foo"]).arg_parser.data
+    assert_equal([], data[Toys::Context::Key::ARGS])
+    assert_equal([], data[Toys::Context::Key::USAGE_ERRORS])
+  end
+end
+
 describe Toys::Completion::FileSystem do
   let(:data_dir) { ::File.join(::File.dirname(__dir__), "test-data", "data1") }
   let(:completion) { Toys::Completion::FileSystem.new(cwd: data_dir) }
 
   def context(str, **params)
-    Toys::Completion::Context.new(cli: nil, fragment: str, **params)
+    Toys::Completion::Context.new(loader: nil, fragment: str, **params)
   end
 
   it "returns objects when passed an empty string" do
@@ -181,8 +241,8 @@ end
 
 describe Toys::Completion::Enum do
   let(:completion) { Toys::Completion::Enum.new(["one", :two, ["three"]]) }
-  def context(str, prefix: "")
-    Toys::Completion::Context.new(cli: nil, fragment: str, fragment_prefix: prefix)
+  def context(str)
+    Toys::Completion::Context.new(loader: nil, fragment: str)
   end
 
   it "returns all values when given an empty string" do
@@ -197,30 +257,15 @@ describe Toys::Completion::Enum do
     assert_equal(expected, candidates)
   end
 
-  it "returns nothing when given a fragment and a bad prefix" do
-    candidates = completion.call(context("t", prefix: "hi="))
-    assert_equal([], candidates)
-  end
-
   it "returns nothing when given an unfulfilled fragment" do
     candidates = completion.call(context("w"))
     assert_equal([], candidates)
   end
 
-  describe "with a prefix constraint" do
-    let(:completion) {
-      Toys::Completion::Enum.new(["one", :two, ["three"]], prefix_constraint: /^[a-z]+=$/)
-    }
-
-    it "returns nothing when given a nonconforming prefix" do
-      candidates = completion.call(context("t"))
-      assert_equal([], candidates)
-    end
-
-    it "returns values when given the right prefix" do
-      candidates = completion.call(context("t", prefix: "hello="))
-      expected = Toys::Completion::Candidate.new_multi(["three", "two"])
-      assert_equal(expected, candidates)
-    end
+  it "matches a fragment containing a shell word break character" do
+    completion = Toys::Completion::Enum.new(["hi=one", "hi=two", "ho=three"])
+    candidates = completion.call(context("hi="))
+    expected = Toys::Completion::Candidate.new_multi(["hi=one", "hi=two"])
+    assert_equal(expected, candidates)
   end
 end

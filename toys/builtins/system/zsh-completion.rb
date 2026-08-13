@@ -32,7 +32,7 @@ tool "eval" do
 
   def run
     require "toys/utils/completion_engine"
-    result = ::Toys::Utils::CompletionEngine::Zsh.new(cli).run
+    result = ::Toys::Utils::CompletionEngine::Zsh.new(cli.completion, cli.loader).run
     if result > 1
       logger.fatal("This tool must be invoked as a zsh completion command.")
     end

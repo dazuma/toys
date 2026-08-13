@@ -62,12 +62,14 @@ describe Toys::Utils::StandardUI do
       assert_equal(126, result)
     end
 
+    # Signals are never wrapped in a ContextualError, so the error handler
+    # receives them bare. `capture` is used here only to give them a backtrace.
     it "handles Interrupted exceptions" do
       Toys::ContextualError.capture(banner: banner) do
         raise Interrupt
       end
       flunk
-    rescue Toys::ContextualError => e
+    rescue Interrupt => e
       result = default_ui.handle_error(e)
       assert_equal(130, result)
       assert_equal("\nINTERRUPTED\n", output_content)
@@ -78,10 +80,244 @@ describe Toys::Utils::StandardUI do
         raise SignalException, 15
       end
       flunk
-    rescue Toys::ContextualError => e
+    rescue SignalException => e
       result = default_ui.handle_error(e)
       assert_equal(143, result)
       assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
+    end
+  end
+
+  describe "handle_error with nested errors" do
+    def capture_nested_error(inner_banner: "inner banner", outer_banner: "outer banner", &block)
+      Toys::ContextualError.capture(banner: outer_banner, tool_name: ["front"], final: true) do
+        Toys::ContextualError.capture(banner: inner_banner, tool_name: ["target"],
+                                      tool_args: ["arg1"], final: true, &block)
+      end
+      flunk
+    rescue Toys::ContextualError => e
+      e
+    end
+
+    # Raises from a synthetic file, so that a capture given that path resolves
+    # a config location pointing into it rather than into this test file. The
+    # fabricated backtrace location is the whole point here, which is why the
+    # eval does not use __FILE__ as the cop would otherwise want.
+    def raise_from(path, line)
+      eval("raise 'foobar'", binding, path, line) # rubocop:disable Style/EvalWithLocation
+    end
+
+    it "reports the original error rather than the intermediate error" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?)
+      assert_equal("RuntimeError: foobar", lines.first)
+      assert_equal(1, output_content.scan("RuntimeError: foobar").length,
+                   "expected the original error to be named exactly once")
+    end
+
+    it "describes an outward frame as calling the frame within it" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      assert_includes(output_content, "    while executing tool: \"target\"")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "omits a banner that repeats from the frame within it" do
+      error = capture_nested_error(inner_banner: "same banner", outer_banner: "same banner") do
+        raise "foobar"
+      end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("same banner").length,
+                   "expected the repeated banner to be printed once")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "omits a config location that repeats from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                        tool_name: ["front"], final: true) do
+            Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                          tool_name: ["target"], final: true) do
+              raise_from("/fake/inner.rb", 7)
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("in config file: /fake/inner.rb:7").length,
+                   "expected the repeated config location to be printed once")
+      assert_includes(output_content, "    called from tool: \"front\"")
+    end
+
+    it "displays a config location that differs from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: __FILE__,
+                                        tool_name: ["front"], final: true) do
+            Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb",
+                                          tool_name: ["target"], final: true) do
+              raise_from("/fake/inner.rb", 7)
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_includes(output_content, "      in config file: /fake/inner.rb:7")
+      assert_includes(output_content, "      in config file: #{__FILE__}:")
+    end
+
+    it "keeps a frame's lines indented under the line naming its tool" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar",
+                    "inner banner",
+                    "    while executing tool: \"target\"",
+                    "      with arguments: [\"arg1\"]",
+                    "outer banner",
+                    "    called from tool: \"front\""],
+                   lines)
+    end
+
+    it "leaves a frame with no tool name at the outer indent" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", path: "/fake/inner.rb", final: true) do
+            raise_from("/fake/inner.rb", 7)
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar", "b", "    in config file: /fake/inner.rb:7"], lines)
+    end
+
+    it "omits arguments that repeat from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", tool_name: ["front"],
+                                        tool_args: ["arg1"], final: true) do
+            Toys::ContextualError.capture(banner: "b", tool_name: ["target"],
+                                          tool_args: ["arg1"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_equal(1, output_content.scan("with arguments:").length,
+                   "expected the repeated arguments to be printed once")
+    end
+
+    it "displays arguments that differ from the frame within it" do
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "b", tool_name: ["front"],
+                                        tool_args: ["outer"], final: true) do
+            Toys::ContextualError.capture(banner: "b", tool_name: ["target"],
+                                          tool_args: ["inner"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      assert_includes(output_content, "      with arguments: [\"inner\"]")
+      assert_includes(output_content, "      with arguments: [\"outer\"]")
+    end
+
+    it "handles frames that carry different fields" do
+      # Frames in a real chain do not all carry the same fields. Here the outer
+      # frame has a tool name but no arguments, and the banners differ.
+      error =
+        begin
+          Toys::ContextualError.capture(banner: "Outer banner", tool_name: ["front"],
+                                        final: true) do
+            Toys::ContextualError.capture(banner: "Inner banner", tool_name: ["target"],
+                                          tool_args: ["arg1"], final: true) do
+              raise "foobar"
+            end
+          end
+          flunk
+        rescue Toys::ContextualError => e
+          e
+        end
+      default_ui.handle_error(error)
+      lines = output_content.lines.map(&:chomp).reject(&:empty?).grep_v(/^ +\d+: /)
+      assert_equal(["RuntimeError: foobar",
+                    "Inner banner",
+                    "    while executing tool: \"target\"",
+                    "      with arguments: [\"arg1\"]",
+                    "Outer banner",
+                    "    called from tool: \"front\""],
+                   lines)
+    end
+
+    it "does not crash on a contextual error with no cause" do
+      error = Toys::ContextualError.new(::RuntimeError.new("foobar"), "b", nil, ["t"], nil, true)
+      assert_nil(error.root_cause)
+      assert_equal(1, default_ui.handle_error(error))
+      assert_includes(output_content, "while executing tool: \"t\"")
+    end
+
+    it "displays a context block for each level, innermost first" do
+      error = capture_nested_error { raise "foobar" }
+      default_ui.handle_error(error)
+      inner_index = output_content.index("inner banner")
+      outer_index = output_content.index("outer banner")
+      refute_nil(inner_index)
+      refute_nil(outer_index)
+      assert(inner_index < outer_index, "expected the inner context block to be displayed first")
+      assert_includes(output_content, "target")
+      assert_includes(output_content, "front")
+      assert_includes(output_content, '["arg1"]')
+    end
+
+    it "returns the exit code for the original error" do
+      error = capture_nested_error { raise Toys::NotRunnableError }
+      assert_equal(126, default_ui.handle_error(error))
+    end
+
+    # A signal raised inside nested captures is not wrapped by any of them, so
+    # it reaches the handler bare no matter how deep the nesting.
+    it "passes an Interrupt through the nesting unwrapped" do
+      error = assert_raises(Interrupt) do
+        capture_nested_error { raise Interrupt }
+      end
+      assert_equal(130, default_ui.handle_error(error))
+      assert_equal("\nINTERRUPTED\n", output_content)
+    end
+
+    it "passes a SignalException through the nesting unwrapped" do
+      error = assert_raises(SignalException) do
+        capture_nested_error { raise SignalException, 15 }
+      end
+      assert_equal(143, default_ui.handle_error(error))
+      assert_equal("\nSIGNAL RECEIVED: SIGTERM\n", output_content)
+    end
+
+    # A run with error wrapping disabled delivers the error to the handler
+    # without a ContextualError wrapper.
+    it "handles a bare error" do
+      error = assert_raises(::RuntimeError) { raise "foobar" }
+      assert_equal(1, default_ui.handle_error(error))
+      assert_includes(output_content, "RuntimeError: foobar")
+    end
+
+    it "returns the exit code for a bare error" do
+      error = assert_raises(Toys::NotRunnableError) { raise Toys::NotRunnableError }
+      assert_equal(126, default_ui.handle_error(error))
     end
   end
 

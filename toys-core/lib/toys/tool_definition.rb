@@ -97,7 +97,7 @@ module Toys
         candidates += plain_flag_candidates(context)
         candidates += flag_value_candidates(context)
         if delegation_target
-          delegate_tool = context.cli.loader.lookup_specific(delegation_target)
+          delegate_tool = context.loader.lookup_specific(delegation_target)
           if delegate_tool
             context = context.with(previous_words: delegation_target)
             candidates += delegate_tool.completion.call(context)
@@ -114,6 +114,10 @@ module Toys
       # are no suitable completions. Returns nil if the context demands a
       # different form.
       #
+      # The flag name and equals sign are not part of what the flag's value
+      # completion knows how to complete, so they are stripped from the
+      # fragment and restored to each candidate.
+      #
       def valued_flag_candidates(context)
         return unless @complete_flag_values
         arg_parser = context.arg_parser
@@ -121,12 +125,15 @@ module Toys
         # Bail if the previous arg was a flag that requires a value, so that
         # the current argument must be that value (and thus cannot be a flag)
         return if arg_parser.active_flag_def&.value_type == :required
-        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment_prefix)
+        match = /\A(--\w[?\w-]*)=(.*)\z/.match(context.fragment)
         return unless match
-        flag_value_context = context.with(fragment_prefix: match[2])
+        flag_value_context = context.with(fragment: match[2])
         flag_def = flag_value_context.tool.resolve_flag(match[1]).unique_flag
         return [] unless flag_def
-        flag_def.value_completion.call(flag_value_context)
+        prefix = "#{match[1]}="
+        flag_def.value_completion.call(flag_value_context).map do |candidate|
+          candidate.with_prefix(prefix)
+        end
       end
 
       ##
@@ -147,11 +154,10 @@ module Toys
       def subtool_candidates(context)
         return if !@complete_subtools || !context.args.empty?
         tool_name, prefix, fragment = analyze_subtool_fragment(context)
-        return unless tool_name
-        subtools = context.cli.loader.list_subtools(tool_name,
-                                                    include_namespaces: true,
-                                                    include_hidden: @include_hidden_subtools,
-                                                    include_non_runnable: @include_hidden_subtools)
+        subtools = context.loader.list_subtools(tool_name,
+                                                include_namespaces: true,
+                                                include_hidden: @include_hidden_subtools,
+                                                include_non_runnable: @include_hidden_subtools)
         return if subtools.empty?
         candidates = []
         subtools.each do |subtool|
@@ -161,26 +167,25 @@ module Toys
         candidates
       end
 
+      ##
+      # Works out which namespace's subtools should be offered as candidates
+      # for the word currently being completed.
+      #
+      # Returns a three-element array `[tool_name, prefix, fragment]`, in which
+      # `tool_name` is the full name of the namespace whose subtools should be
+      # listed, `fragment` is the partial subtool name that candidates must
+      # start with, and `prefix` is a string to prepend to each candidate.
+      #
+      # The current word is the whole word being completed, so a tool path in
+      # it arrives with its delimiters intact. The loader decides where that
+      # path ends, per {Toys::Loader#split_partial_path}, and the path is
+      # echoed back in `prefix` so that each candidate remains a replacement
+      # for the whole word.
+      #
       def analyze_subtool_fragment(context)
-        tool_name = context.tool.full_name
-        prefix = ""
-        fragment = context.fragment
-        delims = context.cli.extra_delimiters
-        unless context.fragment_prefix.empty?
-          if !context.fragment_prefix.end_with?(":") || !delims.include?(":")
-            return [nil, nil, nil]
-          end
-          tool_name += context.fragment_prefix.split(":")
-        end
-        unless delims.empty?
-          delims_regex = ::Regexp.escape(delims)
-          if (match = /\A((.+)[#{delims_regex}])(.*)\z/.match(fragment))
-            fragment = match[3]
-            tool_name += match[2].split(/[#{delims_regex}]/)
-            prefix = match[1]
-          end
-        end
-        [tool_name, prefix, fragment]
+        loader = context.loader
+        prefix, fragment = loader.split_partial_path(context.fragment)
+        [context.tool.full_name + loader.split_path(prefix), prefix, fragment]
       end
 
       ##
@@ -204,7 +209,7 @@ module Toys
         return [] unless arg_parser.flags_allowed?
         flag_def = arg_parser.active_flag_def
         return [] if flag_def && flag_def.value_type == :required
-        return [] if context.fragment =~ /\A[^-]/ || !context.fragment_prefix.empty?
+        return [] if context.fragment =~ /\A[^-]/
         context.tool.flags.flat_map do |flag|
           flag.flag_completion.call(context)
         end
@@ -1086,7 +1091,9 @@ module Toys
     ##
     # Add a flag to the current tool. Each flag must specify a key which
     # the script may use to obtain the flag value from the context.
-    # You may then provide the flags themselves in `OptionParser` form.
+    # You may then provide the flags themselves in `OptionParser` form. If a
+    # flag is not present in the command line, the value is set to the given
+    # default, unless it was already set separately.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
@@ -1154,7 +1161,7 @@ module Toys
         @flags << flag_def
         group << flag_def
       end
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 
@@ -1218,8 +1225,8 @@ module Toys
     ##
     # Add an optional positional argument to the current tool. You must specify
     # a key which the script may use to obtain the argument value from the
-    # context. If an optional argument is not given on the command line, the
-    # value is set to the given default.
+    # context. If an optional argument is not present in the command line, the
+    # value is set to the given default, unless it was already set separately.
     #
     # In general, arguments are parsed in the order they are added to the tool
     # definition. However, all required arguments are always parsed before
@@ -1254,14 +1261,16 @@ module Toys
       arg_def = PositionalArg.new(key, :optional, accept, default, complete,
                                   desc, long_desc, display_name)
       @optional_args << arg_def
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 
     ##
     # Specify what should be done with unmatched positional arguments. You must
     # specify a key which the script may use to obtain the remaining args
-    # from the context.
+    # from the context. If no remaining arguments were present in the command
+    # line, the value is set to the given default (normally the empty array),
+    # unless it was already set separately.
     #
     # @param key [String,Symbol] The key to use to retrieve the value from
     #     the execution context.
@@ -1292,7 +1301,7 @@ module Toys
       arg_def = PositionalArg.new(key, :remaining, accept, default, complete,
                                   desc, long_desc, display_name)
       @remaining_arg = arg_def
-      @default_data[key] = default
+      @default_data[key] = default unless default.nil? && @default_data.key?(key)
       self
     end
 

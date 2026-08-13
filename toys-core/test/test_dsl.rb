@@ -515,16 +515,6 @@ describe Toys::DSL::Tool do
       assert_kind_of(Toys::Completion::Enum, comp)
     end
 
-    it "creates an enum completion with options" do
-      loader.add_block do
-        completion("comp1", ["one", "two", "three"], prefix_constraint: /^hi=$/)
-      end
-      tool, _remaining = loader.lookup([])
-      comp = tool.lookup_completion("comp1")
-      assert_kind_of(Toys::Completion::Enum, comp)
-      assert_equal(/^hi=$/, comp.prefix_constraint)
-    end
-
     it "creates a file system completion" do
       loader.add_block do
         completion("comp1", :file_system)
@@ -536,12 +526,12 @@ describe Toys::DSL::Tool do
 
     it "creates a file system completion with options" do
       loader.add_block do
-        completion("comp1", :file_system, prefix_constraint: /^hi=$/)
+        completion("comp1", :file_system, omit_files: true)
       end
       tool, _remaining = loader.lookup([])
       comp = tool.lookup_completion("comp1")
       assert_kind_of(Toys::Completion::FileSystem, comp)
-      assert_equal(/^hi=$/, comp.prefix_constraint)
+      refute(comp.include_files)
     end
 
     it "creates a completion from a block" do
@@ -940,7 +930,7 @@ describe Toys::DSL::Tool do
         flag(:foo) do
           flags "--bar VALUE"
           accept Integer
-          complete_values ["1", "2", "3"], prefix_constraint: "hi="
+          complete_values ["1", "2", "3"]
           complete_flags include_negative: false
           default(-1)
           handler do |s|
@@ -958,7 +948,6 @@ describe Toys::DSL::Tool do
       assert_equal("--bar VALUE", flag.flag_syntax[0].canonical_str)
       assert_equal(Integer, flag.acceptor.well_known_spec)
       assert_instance_of(Toys::Completion::Enum, flag.value_completion)
-      assert_equal("hi=", flag.value_completion.prefix_constraint)
       assert_equal(false, flag.flag_completion.include_negative?)
       assert_equal(-1, flag.default)
       assert_equal("short description", flag.desc.to_s)
@@ -1326,7 +1315,7 @@ describe Toys::DSL::Tool do
       loader.add_block do
         required(:foo) do
           accept Integer
-          complete ["1", "2", "3"], prefix_constraint: "hi="
+          complete ["1", "2", "3"]
           display_name "FOOOO"
           desc "short description"
           long_desc "long description", "in two lines"
@@ -1340,7 +1329,6 @@ describe Toys::DSL::Tool do
       assert_equal(:required, arg.type)
       assert_equal(Integer, arg.acceptor.well_known_spec)
       assert_instance_of(Toys::Completion::Enum, arg.completion)
-      assert_equal("hi=", arg.completion.prefix_constraint)
       assert_equal("short description", arg.desc.to_s)
       assert_equal("and another line", arg.long_desc[2].to_s)
       assert_equal("FOOOO", arg.display_name)

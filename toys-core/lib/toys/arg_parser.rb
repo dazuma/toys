@@ -288,23 +288,38 @@ module Toys
     ##
     # Create an argument parser for a particular tool.
     #
-    # @param cli [Toys::CLI] The CLI in effect.
     # @param tool [Toys::ToolDefinition] The tool defining the argument format.
-    # @param default_data [Hash] Additional initial data (such as verbosity).
+    # @param loader [Toys::Loader] The loader, used to generate suggestions
+    #     for unrecognized arguments.
+    # @param common_data [Hash] Additional initial data (such as verbosity).
     # @param require_exact_flag_match [boolean] Whether to require flag matches
     #     be exact (not partial). Default is false.
     #
-    def initialize(cli, tool, default_data: {}, require_exact_flag_match: false)
-      @require_exact_flag_match = require_exact_flag_match
-      @loader = cli.loader
-      @data = initial_data(cli, tool, default_data)
+    def initialize(tool, loader, common_data: {}, require_exact_flag_match: false)
       @tool = tool
-      @seen_flag_keys = []
-      @errors = []
-      @unmatched_args = []
-      @unmatched_positional = []
-      @unmatched_flags = []
+      @loader = loader
+      @require_exact_flag_match = require_exact_flag_match
+
       @parsed_args = []
+      @unmatched_args = []
+      @unmatched_flags = []
+      @unmatched_positional = []
+      @errors = []
+      @data = {
+        # These entries alias the arrays above, so that the data always reflects
+        # the current state of parsing. Those arrays must therefore be mutated in
+        # place for the life of this object, and never reassigned.
+        Context::Key::ARGS => @parsed_args,
+        Context::Key::UNMATCHED_ARGS => @unmatched_args,
+        Context::Key::UNMATCHED_FLAGS => @unmatched_flags,
+        Context::Key::UNMATCHED_POSITIONAL => @unmatched_positional,
+        Context::Key::USAGE_ERRORS => @errors,
+      }
+      # Injected common data and the tool's non-nil default data can override the above.
+      @data.merge!(common_data)
+      @tool.default_data.each { |k, v| @data[k] = v.clone unless v.nil? && @data.key?(k) }
+
+      @seen_flag_keys = []
       @active_flag_def = nil
       @active_flag_arg = nil
       @arg_defs = tool.positional_args
@@ -416,8 +431,8 @@ module Toys
     #  *  One or more extra arguments were provided.
     #  *  Restrictions defined in one or more flag groups were not fulfilled.
     #
-    # Any errors are added to the errors array. It also fills in final values
-    # for `Context::Key::USAGE_ERRORS` and `Context::Key::ARGS`.
+    # Any errors are added to the errors array, and are thus reflected in
+    # {#data} under `Context::Key::USAGE_ERRORS`.
     #
     # After this method is called, this object is locked down, and no
     # additional arguments may be parsed.
@@ -428,7 +443,6 @@ module Toys
       finish_active_flag
       finish_arg_defs
       finish_flag_groups
-      finish_special_data
       @finished = true
       self
     end
@@ -438,22 +452,6 @@ module Toys
     REMAINING_HANDLER = ->(val, prev) { prev.is_a?(::Array) ? prev << val : [val] }
     ARG_HANDLER = ->(val) { val }
     private_constant :REMAINING_HANDLER, :ARG_HANDLER
-
-    def initial_data(cli, tool, default_data)
-      data = {
-        Context::Key::ARGS => nil,
-        Context::Key::CLI => cli,
-        Context::Key::CONTEXT_DIRECTORY => tool.context_directory,
-        Context::Key::LOGGER => cli.logger_factory.call(tool),
-        Context::Key::TOOL => tool,
-        Context::Key::TOOL_SOURCE => tool.source_info,
-        Context::Key::TOOL_NAME => tool.full_name,
-        Context::Key::USAGE_ERRORS => [],
-      }
-      tool.default_data.each { |k, v| data[k] = v.clone }
-      default_data.each { |k, v| data[k] ||= v }
-      data
-    end
 
     def check_flag_value(arg)
       return false unless @active_flag_def
@@ -654,16 +652,8 @@ module Toys
     def finish_flag_groups
       @tool.flag_groups.each do |group|
         messages = Array(group.validation_errors(@seen_flag_keys))
-        @errors += messages.map { |message| FlagGroupConstraintError.new(message) }
+        @errors.concat(messages.map { |message| FlagGroupConstraintError.new(message) })
       end
-    end
-
-    def finish_special_data
-      @data[Context::Key::USAGE_ERRORS] = @errors
-      @data[Context::Key::ARGS] = @parsed_args
-      @data[Context::Key::UNMATCHED_ARGS] = @unmatched_args
-      @data[Context::Key::UNMATCHED_POSITIONAL] = @unmatched_positional
-      @data[Context::Key::UNMATCHED_FLAGS] = @unmatched_flags
     end
   end
 end

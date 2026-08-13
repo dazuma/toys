@@ -94,6 +94,27 @@ describe Toys::StandardMixins::Exec do
     assert_equal(1, cli.run("foo"))
   end
 
+  it "executes a toys tool in a fork with no CLI in the context" do
+    skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
+    runner = Toys::Runner.new(cli.loader, logger_factory: proc { logger })
+    cli.add_config_block do
+      tool "bar" do
+        def run
+          puts "hello" if defined?(::Minitest)
+        end
+      end
+      tool "foo" do
+        include :exec
+        def run
+          raise "Expected no CLI in the context" unless self[Toys::Context::Key::CLI].nil?
+          result = exec_tool(["bar"], out: :capture)
+          exit(result.captured_out == "hello\n" ? 1 : 2)
+        end
+      end
+    end
+    assert_equal(1, runner.run(["foo"]))
+  end
+
   it "executes a toys tool in a spawned process" do
     cli.add_config_block do
       tool "foo" do

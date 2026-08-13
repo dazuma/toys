@@ -35,9 +35,10 @@
 # but fall into four layers, listed here from the outside in. Except where
 # noted below, dependencies point downward.
 #
-# * **Execution** — carries out a single invocation. {Toys::CLI} is the main
-#   entrypoint, {Toys::ArgParser} parses the command line, and {Toys::Context}
-#   is the base class for tool runtime.
+# * **Execution** — runs tools. {Toys::CLI} is the main entrypoint and owns
+#   the configuration, {Toys::Runner} holds the environment tools run in and
+#   carries out each run, {Toys::ArgParser} parses the command line, and
+#   {Toys::Context} is the base class for tool runtime.
 # * **Loading** — resolves a tool name to a definition. {Toys::Loader}
 #   discovers and loads Toys files, {Toys::SourceInfo} tracks their
 #   provenance, and {Toys::InputFile} evaluates them.
@@ -51,9 +52,20 @@
 #   {Toys::ModuleLookup}, as well as {Toys::WrappableString} and the error
 #   classes.
 #
-# There is one deliberate upward dependency: the definition layer builds each
-# tool class as a subclass of {Toys::Context}, so that a tool's implementation
-# inherits the runtime methods defined there.
+# The deliberate upward dependencies are:
+#
+# * The definition layer builds each tool class as a subclass of
+#   {Toys::Context}, so that a tool's implementation inherits the runtime
+#   methods defined there.
+# * Completion is computed against a partially parsed command line, so the
+#   completion classes in the definition layer reach upward for the machinery
+#   to do it. {Toys::Completion::Context} holds a {Toys::Loader} and builds a
+#   {Toys::ArgParser}, and a tool's default completion uses that loader to
+#   enumerate subtools and to resolve delegation targets.
+# * {Toys::ToolDefinition} retains the {Toys::SourceInfo} describing where it
+#   was defined.
+# * The context key constants under {Toys::Context::Key} act as shared
+#   vocabulary, and are referenced from any layer.
 #
 module Toys
   ##
@@ -159,6 +171,7 @@ require "toys/middleware"
 require "toys/mixin"
 require "toys/module_lookup"
 require "toys/positional_arg"
+require "toys/runner"
 require "toys/source_info"
 require "toys/template"
 require "toys/tool_definition"

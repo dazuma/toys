@@ -6,6 +6,7 @@
 /*/doc/
 /*/pkg/
 /**/tmp/
+/devdocs/
 Gemfile.lock
 gems.locked
 .gems.rb.lock

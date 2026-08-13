@@ -30,7 +30,7 @@ tool "eval" do
 
   def run
     require "toys/utils/completion_engine"
-    result = ::Toys::Utils::CompletionEngine::Bash.new(cli).run
+    result = ::Toys::Utils::CompletionEngine::Bash.new(cli.completion, cli.loader).run
     if result > 1
       logger.fatal("This tool must be invoked as a bash completion command.")
     end

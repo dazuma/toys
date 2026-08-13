@@ -13,8 +13,8 @@ describe Toys::ArgParser do
   let(:tool_name) { "foo" }
   let(:root_tool) { loader.activate_tool([], 0) }
   let(:tool) { loader.activate_tool([tool_name], 0) }
-  let(:arg_parser) { Toys::ArgParser.new(cli, tool) }
-  let(:root_arg_parser) { Toys::ArgParser.new(cli, root_tool) }
+  let(:arg_parser) { Toys::ArgParser.new(tool, loader) }
+  let(:root_arg_parser) { Toys::ArgParser.new(root_tool, loader) }
 
   def assert_data_includes(expected, data)
     expected.each do |k, v|
@@ -661,7 +661,7 @@ describe Toys::ArgParser do
 
     it "does not match partially" do
       tool.add_flag(:abcde)
-      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser = Toys::ArgParser.new(tool, loader, require_exact_flag_match: true)
       arg_parser.parse(["--abcd"])
       arg_parser.finish
       assert_errors_include('Flag "--abcd" is not recognized.', arg_parser.errors)
@@ -771,7 +771,7 @@ describe Toys::ArgParser do
     it "treats an inexact match as positional when exact matches are required" do
       tool.add_flag(:abcde)
       tool.set_remaining_args(:r)
-      arg_parser = Toys::ArgParser.new(cli, tool, require_exact_flag_match: true)
+      arg_parser = Toys::ArgParser.new(tool, loader, require_exact_flag_match: true)
       arg_parser.parse(["--abcd"])
       arg_parser.finish
       assert_data_includes({abcde: nil, r: ["--abcd"]}, arg_parser.data)
@@ -1021,6 +1021,152 @@ describe Toys::ArgParser do
       assert_errors_include('Unacceptable value "baz" for positional argument "A".',
                             arg_parser.errors)
       assert_errors_include(["bar"], arg_parser.errors) if supports_suggestions?
+    end
+  end
+
+  describe "common data" do
+    it "includes the given data in the parsed data" do
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "hello"}, parser.data)
+    end
+
+    it "is not overridden by a nil default from the tool" do
+      # This is what keeps a caller-provided verbosity from being wiped out by
+      # the verbosity flag added by AddVerbosityFlags, which has no default.
+      tool.add_flag(:a, ["-a"])
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "hello"}, parser.data)
+    end
+
+    it "is overridden by a non-nil default from the tool" do
+      tool.add_flag(:a, ["-a"], default: "from-tool")
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse([]).finish
+      assert_data_includes({a: "from-tool"}, parser.data)
+    end
+
+    it "is overridden by a value parsed from the command line" do
+      tool.add_flag(:a, ["-a VALUE"])
+      parser = Toys::ArgParser.new(tool, loader, common_data: {a: "hello"})
+      parser.parse(["-a", "from-cli"]).finish
+      assert_data_includes({a: "from-cli"}, parser.data)
+    end
+
+    it "does not modify the given hash" do
+      tool.add_flag(:a, ["-a VALUE"], default: "from-tool")
+      common_data = {b: "hello"}
+      parser = Toys::ArgParser.new(tool, loader, common_data: common_data)
+      parser.parse(["-a", "from-cli"]).finish
+      assert_equal({b: "hello"}, common_data)
+      assert_data_includes({a: "from-cli", b: "hello"}, parser.data)
+    end
+  end
+
+  describe "special data" do
+    let(:special_keys) {
+      [
+        Toys::Context::Key::USAGE_ERRORS,
+        Toys::Context::Key::ARGS,
+        Toys::Context::Key::UNMATCHED_ARGS,
+        Toys::Context::Key::UNMATCHED_POSITIONAL,
+        Toys::Context::Key::UNMATCHED_FLAGS,
+      ]
+    }
+
+    it "is present and empty before any parsing" do
+      special_keys.each do |key|
+        assert_equal(true, arg_parser.data.key?(key), "data does not include key #{key.inspect}")
+        assert_equal([], arg_parser.data[key])
+      end
+    end
+
+    # The data entries must be the parser's own arrays, not copies, because
+    # that aliasing is what keeps them current as parsing proceeds. Rebinding
+    # any of these ivars (for example with `+=` rather than an in-place
+    # append) would strand the data entry on a stale array, and this assertion
+    # is what catches that.
+    it "aliases the parser's own arrays" do
+      tool.add_flag(:a, ["-a"])
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["-a", "--unknown", "extra"]).finish
+      assert_same(arg_parser.errors, arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+      assert_same(arg_parser.parsed_args, arg_parser.data[Toys::Context::Key::ARGS])
+      assert_same(arg_parser.unmatched_args, arg_parser.data[Toys::Context::Key::UNMATCHED_ARGS])
+      assert_same(arg_parser.unmatched_positional,
+                  arg_parser.data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+      assert_same(arg_parser.unmatched_flags,
+                  arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+    end
+
+    it "reflects parsed args without finish having been called" do
+      tool.set_remaining_args(:r)
+      arg_parser.parse(["one", "two"])
+      assert_equal(["one", "two"], arg_parser.data[Toys::Context::Key::ARGS])
+    end
+
+    it "reflects errors detected during parsing without finish having been called" do
+      arg_parser.parse(["--unknown"])
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_equal(1, errors.size)
+      assert_kind_of(Toys::ArgParser::FlagUnrecognizedError, errors.first)
+    end
+
+    it "reflects unmatched args without finish having been called" do
+      arg_parser.parse(["--unknown", "extra"])
+      assert_equal(["--unknown", "extra"],
+                   arg_parser.data[Toys::Context::Key::UNMATCHED_ARGS])
+      assert_equal(["--unknown"], arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+      assert_equal(["extra"], arg_parser.data[Toys::Context::Key::UNMATCHED_POSITIONAL])
+    end
+
+    # Flag group constraint errors are appended by finish_flag_groups, which is
+    # the one place that historically rebound @errors rather than appending in
+    # place. They must still reach the data hash.
+    it "includes flag group constraint errors added during finish" do
+      tool.add_flag_group(type: :required, name: :mygroup)
+      tool.add_flag(:a, ["-a"], group: :mygroup)
+      arg_parser.parse([]).finish
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_errors_include(Toys::ArgParser::FlagGroupConstraintError, errors)
+    end
+
+    it "includes errors added during finish for missing required args" do
+      tool.add_required_arg(:a)
+      arg_parser.parse([]).finish
+      errors = arg_parser.data[Toys::Context::Key::USAGE_ERRORS]
+      assert_errors_include(Toys::ArgParser::ArgMissingError, errors)
+    end
+
+    # These keys are resolved like every other context key: injected common
+    # data, and then the tool's non-nil default data, take precedence over the
+    # parser's own arrays. Overriding them detaches the entry from the parser,
+    # so it no longer tracks parsing, which is the caller's choice to make.
+    describe "precedence" do
+      it "is overridden by injected common data" do
+        common_data = {Toys::Context::Key::ARGS => "from-common"}
+        parser = Toys::ArgParser.new(tool, loader, common_data: common_data)
+        tool.set_remaining_args(:r)
+        parser.parse(["one"]).finish
+        assert_equal("from-common", parser.data[Toys::Context::Key::ARGS])
+        assert_equal(["one"], parser.parsed_args)
+      end
+
+      it "is overridden by a non-nil default from the tool" do
+        tool.default_data[Toys::Context::Key::UNMATCHED_FLAGS] = ["from-tool"]
+        arg_parser.parse([]).finish
+        assert_equal(["from-tool"], arg_parser.data[Toys::Context::Key::UNMATCHED_FLAGS])
+      end
+
+      it "is not overridden by a nil default from the tool" do
+        # A tool declaring a flag keyed on one of these gets a nil default,
+        # which must not detach the entry from the parser's array.
+        tool.add_flag(Toys::Context::Key::USAGE_ERRORS, ["-a"])
+        arg_parser.parse(["--unknown"]).finish
+        assert_same(arg_parser.errors, arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+        refute_empty(arg_parser.data[Toys::Context::Key::USAGE_ERRORS])
+      end
     end
   end
 end

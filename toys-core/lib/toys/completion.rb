@@ -15,6 +15,12 @@ module Toys
     ##
     # The context in which to determine completion candidates.
     #
+    # The {#fragment} is the entire word being completed, and each candidate
+    # returned for it must be a replacement for that entire word. If the shell
+    # replaces less than the whole word, because it breaks words at certain
+    # characters, the completion engine trims the candidates to match; that is
+    # not the concern of a completion.
+    #
     class Context
       ##
       # Create a completion context.
@@ -27,22 +33,19 @@ module Toys
       # * `disable_flags: true` causes tool completion to omit flag completions
       #   which is used by the `toys do` built-in tool
       #
-      # @param cli [Toys::CLI] The CLI being run. Required.
+      # @param loader [Toys::Loader] The loader providing the tools being
+      #     completed. Required.
       # @param previous_words [Array<String>] Array of complete strings that
       #     appeared prior to the fragment to complete.
-      # @param fragment_prefix [String] A prefix in the fragment that does not
-      #     participate in completion. (e.g. "key=")
       # @param fragment [String] The string fragment to complete.
       # @param params [Hash] Miscellaneous context data
       #
-      def initialize(cli:, previous_words: [], fragment_prefix: "", fragment: "", **params)
-        @cli = cli
+      def initialize(loader:, previous_words: [], fragment: "", **params)
+        @loader = loader
         @previous_words = previous_words
-        @fragment_prefix = fragment_prefix
         @fragment = fragment
         extra_params = {
-          cli: cli, previous_words: previous_words, fragment_prefix: fragment_prefix,
-          fragment: fragment
+          loader: loader, previous_words: previous_words, fragment: fragment
         }
         @params = params.merge(extra_params)
         @tool = nil
@@ -61,10 +64,10 @@ module Toys
       end
 
       ##
-      # The CLI being run.
-      # @return [Toys::CLI]
+      # The loader providing the tools being completed.
+      # @return [Toys::Loader]
       #
-      attr_reader :cli
+      attr_reader :loader
 
       ##
       # All previous words.
@@ -73,13 +76,8 @@ module Toys
       attr_reader :previous_words
 
       ##
-      # A non-completed prefix for the current fragment.
-      # @return [String]
-      #
-      attr_reader :fragment_prefix
-
-      ##
-      # The current string fragment to complete
+      # The current string fragment to complete. This is the entire word under
+      # the cursor, and candidates must replace all of it.
       # @return [String]
       #
       attr_reader :fragment
@@ -121,7 +119,7 @@ module Toys
       #
       def arg_parser
         lookup_tool
-        @arg_parser ||= ArgParser.new(@cli, @tool).parse(@args)
+        @arg_parser ||= ArgParser.new(@tool, @loader).parse(@args)
       end
 
       ##
@@ -129,13 +127,13 @@ module Toys
       #
       def inspect
         "<Toys::Completion::Context previous=#{previous_words.inspect}" \
-          " prefix=#{fragment_prefix.inspect} fragment=#{fragment.inspect}>"
+          " fragment=#{fragment.inspect}>"
       end
 
       private
 
       def lookup_tool
-        @tool, @args = @cli.loader.lookup(@previous_words) unless @tool
+        @tool, @args = @loader.lookup(@previous_words) unless @tool
       end
     end
 
@@ -183,6 +181,19 @@ module Toys
       #
       def final?
         !@partial
+      end
+
+      ##
+      # Returns a copy of this candidate with the given string prepended.
+      # Use this when a completion handles only the tail of the word being
+      # completed, and must restore the head to each candidate so that the
+      # candidate remains a replacement for the whole word.
+      #
+      # @param prefix [String] The string to prepend
+      # @return [Toys::Completion::Candidate]
+      #
+      def with_prefix(prefix)
+        Candidate.new("#{prefix}#{@string}", partial: @partial)
       end
 
       ##
@@ -248,15 +259,12 @@ module Toys
       # @param cwd [String] Working directory (defaults to the current dir).
       # @param omit_files [boolean] Omit files from candidates
       # @param omit_directories [boolean] Omit directories from candidates
-      # @param prefix_constraint [String,Regexp] Constraint on the fragment
-      #     prefix. Defaults to requiring the prefix be empty.
       #
-      def initialize(cwd: nil, omit_files: false, omit_directories: false, prefix_constraint: "")
+      def initialize(cwd: nil, omit_files: false, omit_directories: false)
         super()
         @cwd = cwd || ::Dir.pwd
         @include_files = !omit_files
         @include_directories = !omit_directories
-        @prefix_constraint = prefix_constraint
       end
 
       ##
@@ -272,12 +280,6 @@ module Toys
       attr_reader :include_directories
 
       ##
-      # Constraint on the fragment prefix.
-      # @return [String,Regexp]
-      #
-      attr_reader :prefix_constraint
-
-      ##
       # Path to the starting directory.
       # @return [String]
       #
@@ -291,7 +293,6 @@ module Toys
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
       def call(context)
-        return [] unless @prefix_constraint === context.fragment_prefix
         substring = context.fragment
         prefix, name =
           if substring.empty? || substring.end_with?("/")
@@ -344,13 +345,10 @@ module Toys
       # Create a completion from a list of values.
       #
       # @param values [Array<String>]
-      # @param prefix_constraint [String,Regexp] Constraint on the fragment
-      #     prefix. Defaults to requiring the prefix be empty.
       #
-      def initialize(values, prefix_constraint: "")
+      def initialize(values)
         super()
         @values = values.flatten.uniq.map { |v| Candidate.new(v) }.sort
-        @prefix_constraint = prefix_constraint
       end
 
       ##
@@ -360,12 +358,6 @@ module Toys
       attr_reader :values
 
       ##
-      # Constraint on the fragment prefix.
-      # @return [String,Regexp]
-      #
-      attr_reader :prefix_constraint
-
-      ##
       # Returns candidates for the current completion.
       #
       # @param context [Toys::Completion::Context] the current completion
@@ -373,7 +365,6 @@ module Toys
       # @return [Array<Toys::Completion::Candidate>] an array of candidates
       #
       def call(context)
-        return [] unless @prefix_constraint === context.fragment_prefix
         fragment = context.fragment
         @values.find_all { |val| val.string.start_with?(fragment) }
       end
@@ -401,8 +392,8 @@ module Toys
     #     block is ignored.
     #
     #  *  An **Array** of strings. Returns a completion that uses those values
-    #     as candidates. You may also pass any of the options recognized by
-    #     {Toys::Completion::Enum#initialize}. The block is ignored.
+    #     as candidates. {Toys::Completion::Enum#initialize} recognizes no
+    #     options, so none may be passed. The block is ignored.
     #
     #  *  A **function**, either passed as a Proc (where the block is ignored)
     #     or as a block (if the spec is nil). The function must behave as a

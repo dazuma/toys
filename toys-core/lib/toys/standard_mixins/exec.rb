@@ -446,7 +446,7 @@ module Toys
       end
 
       ##
-      # Execute a tool in the current CLI in a forked process.
+      # Execute a sibling tool in a forked process.
       #
       # The command can be given as a single string or an array of strings,
       # representing the tool to run and the arguments to pass.
@@ -477,7 +477,7 @@ module Toys
       #     the foreground.
       #
       def exec_tool(cmd, **opts, &block)
-        func = Exec._make_tool_caller(cmd, self[Context::Key::CLI])
+        func = Exec._make_tool_caller(cmd, self[Context::Key::RUNNER])
         opts = Exec._setup_exec_opts(opts, self)
         opts = {log_cmd: "exec tool: #{cmd.inspect}"}.merge(opts)
         self[KEY].exec_proc(func, **opts, &block)
@@ -632,7 +632,7 @@ module Toys
       end
 
       ##
-      # Execute a tool in the current CLI in a forked process.
+      # Execute a sibling tool in a forked process.
       #
       # Captures standard out and returns it as a string.
       # Cannot be run in the background.
@@ -664,7 +664,7 @@ module Toys
       # @return [String] What was written to standard out.
       #
       def capture_tool(cmd, **opts, &block)
-        func = Exec._make_tool_caller(cmd, self[Context::Key::CLI])
+        func = Exec._make_tool_caller(cmd, self[Context::Key::RUNNER])
         opts = Exec._setup_exec_opts(opts, self)
         self[KEY].capture_proc(func, **opts, &block)
       end
@@ -793,9 +793,9 @@ module Toys
       ##
       # @private
       #
-      def self._make_tool_caller(cmd, cli)
+      def self._make_tool_caller(cmd, runner)
         cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-        proc { ::Kernel.exit(cli.run(*cmd)) }
+        proc { ::Kernel.exit(runner.run(cmd)) }
       end
 
       ##

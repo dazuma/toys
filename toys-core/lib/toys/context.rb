@@ -55,7 +55,10 @@ module Toys
 
       ##
       # Context key for the currently running {Toys::CLI}. You can use the
-      # value to run other tools from your tool by calling {Toys::CLI#run}.
+      # value to reconfigure the framework, for example by calling
+      # {Toys::CLI#child} to run a tool under modified settings. To run a
+      # sibling tool without reconfiguring anything, you can also use
+      # {Key::RUNNER} instead. The value could be nil if a CLI is not present.
       # @return [Object]
       #
       CLI = ::Object.new.freeze
@@ -75,10 +78,31 @@ module Toys
       DELEGATED_FROM = ::Object.new.freeze
 
       ##
+      # Context key for the executable name displayed in help text. The value
+      # is a String, provided by the {Toys::Runner}.
+      # @return [Object]
+      #
+      EXECUTABLE_NAME = ::Object.new.freeze
+
+      ##
+      # Context key for the active `Loader` object.
+      # @return [Object]
+      #
+      LOADER = ::Object.new.freeze
+
+      ##
       # Context key for the active `Logger` object.
       # @return [Object]
       #
       LOGGER = ::Object.new.freeze
+
+      ##
+      # Context key for the {Toys::Runner} that is running the current tool.
+      # You can use the value to run other tools from your tool by calling
+      # {Toys::Runner#run}.
+      # @return [Object]
+      #
+      RUNNER = ::Object.new.freeze
 
       ##
       # Context key for the {Toys::ToolDefinition} object being executed.
@@ -155,12 +179,13 @@ module Toys
     ##
     # The currently running CLI.
     #
-    # This is a convenience getter for {Toys::Context::Key::CLI}.
+    # This is a convenience getter for {Toys::Context::Key::CLI}. Note the
+    # value could be nil if no CLI is present during the execution.
     #
     # If the `cli` method is overridden by the tool, you can still access it
     # using the name `__cli`.
     #
-    # @return [Toys::CLI]
+    # @return [Toys::CLI,nil]
     #
     def cli
       @__data[Key::CLI]
@@ -187,6 +212,22 @@ module Toys
     alias __context_directory context_directory
 
     ##
+    # The loader that loaded the tool being executed. It can be used to look up
+    # and load other tools.
+    #
+    # This is a convenience getter for {Toys::Context::Key::LOADER}.
+    #
+    # If the `loader` method is overridden by the tool, you can still access it
+    # using the name `__loader`.
+    #
+    # @return [Toys::Loader]
+    #
+    def loader
+      @__data[Key::LOADER]
+    end
+    alias __loader loader
+
+    ##
     # The logger for this execution.
     #
     # This is a convenience getter for {Toys::Context::Key::LOGGER}.
@@ -200,6 +241,22 @@ module Toys
       @__data[Key::LOGGER]
     end
     alias __logger logger
+
+    ##
+    # The runner that is running the tool. It can be used to run other tools
+    # in the same process.
+    #
+    # This is a convenience getter for {Toys::Context::Key::RUNNER}.
+    #
+    # If the `runner` method is overridden by the tool, you can still access it
+    # using the name `__runner`.
+    #
+    # @return [Toys::Runner]
+    #
+    def runner
+      @__data[Key::RUNNER]
+    end
+    alias __runner runner
 
     ##
     # The full name of the tool being executed, as an array of strings.

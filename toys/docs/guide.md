@@ -2801,6 +2801,34 @@ class GreetTest < Minitest::Test
 end
 ```
 
+By default, if the tool raises an error, `toys_run_tool` reports it the way the
+`toys` executable would: the error is written to the standard error stream, and
+the method returns a nonzero exit code. That is what you want when you are
+testing how a failure is *reported*, but it makes an unexpected failure awkward
+to diagnose, because your test fails on the exit code assertion rather than on
+the error itself. Passing `handle_errors: false` raises the error out of
+`toys_run_tool` instead. Suppose `greet` raised an error when given an empty
+name:
+
+```ruby
+class GreetTest < Minitest::Test
+  include Toys::Testing
+
+  def test_greet_with_an_empty_name
+    error = assert_raises(Toys::ContextualError) do
+      toys_run_tool(["greet", ""], handle_errors: false)
+    end
+    assert_equal(["greet"], error.tool_name)
+    assert_equal("Cannot greet an empty name", error.root_cause.message)
+  end
+end
+```
+
+The error arrives wrapped in a {Toys::ContextualError} that identifies the tool
+and the arguments it was given, with the exception the tool actually raised
+available from `root_cause`. If you would rather assert against that original
+exception directly, pass `wrap_errors: false` as well.
+
 It is important to note that `toys_run_tool` executes the tool *in-process* in
 your tests. This may be appropriate for simple tools, but may not work for
 other cases such as tools that replace the current process using
@@ -4210,6 +4238,21 @@ following takes place:
     `SignalException` (again calling any `ensure` blocks). Then, any matching
     signal handler will be called *again* for the new signal and passed the new
     exception. Any further signals will be handled similarly.
+
+If one tool delegates to another using `delegate_to`, each tool in the chain
+gets a chance at the signal, working outward. The innermost tool's handler is
+called first; if it re-raises the `SignalException`, the next tool out gets its
+turn, and so on. If no handler takes responsibility, Toys displays
+`INTERRUPTED` or `SIGNAL RECEIVED` as usual.
+
+This does *not* apply when a tool
+[calls another tool](#running-tools-from-tools) itself, because that starts a
+separate run that does its own signal reporting. If the inner tool does not
+handle the signal, Toys displays `INTERRUPTED` or `SIGNAL RECEIVED` at that
+point and the call returns the corresponding exit code (130 for an interrupt).
+The calling tool keeps running, and its own `on_interrupt` or `on_signal`
+handler is not called. Check the returned exit code if you need the calling
+tool to stop as well.
 
 It is possible for a signal handler itself to receive signals. For example, if
 you have a long-running `CTRL`-`C` interrupt handler, it itself could get
