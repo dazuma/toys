@@ -6,23 +6,23 @@ module Toys
   ##
   # An object that performs tool executions.
   #
-  # An Execution ties together all the information needed to perform a tool
+  # A Runner ties together all the information needed to perform a tool
   # execution. This includes which tool to execute and the arguments passed to
   # it, and execution-related settings.
   #
-  # A successfully built Execution can be invoked via {#run} to execute a tool.
+  # A successfully built Runner can be invoked via {#run} to execute a tool.
   # This parses the remaining command line arguments into a {Toys::Context},
   # applies the tool's middleware, and then either runs the tool normally or
   # executes a given block with the context. The latter is useful for testing.
   #
-  # Once constructed, an Execution can be invoked multiple times independently.
+  # Once constructed, a Runner can be invoked multiple times independently.
   #
-  # Create executions using the {Execution.for_tool} or {Execution.for_args}
-  # factory methods. Most applications should not create executions at all, but
-  # should call {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly
+  # Create runners using the {Runner.for_tool} or {Runner.for_args} factory
+  # methods. Most applications should not create runners at all, but should
+  # call {Toys::CLI#run} or {Toys::CLI#load_tool}, which perform properly
   # configured tool executions and tests, along with error handling.
   #
-  class Execution
+  class Runner
     ##
     # The singleton default logger_factory Proc, which simply returns a new
     # logger writing to the current stderr.
@@ -59,7 +59,7 @@ module Toys
       #     and do not wrap them. A `SignalException` is never wrapped
       #     regardless of this setting; see {#run}.
       # @param external_data [Hash] Additional data provided by the caller.
-      # @return [Toys::Execution]
+      # @return [Toys::Runner]
       #
       def for_tool(tool, args, loader,
                    logger_factory: nil,
@@ -105,7 +105,7 @@ module Toys
       #     and do not wrap them. A `SignalException` is never wrapped
       #     regardless of this setting; see {#run}.
       # @param external_data [Hash] Additional data provided by the caller.
-      # @return [Toys::Execution]
+      # @return [Toys::Runner]
       #
       def for_args(args, loader,
                    logger_factory: nil,
@@ -133,7 +133,7 @@ module Toys
     end
 
     ##
-    # Create a tool execution. Use {Execution.for_tool} or {Execution.for_args}
+    # Create a tool execution. Use {Runner.for_tool} or {Runner.for_args}
     # instead of calling this directly.
     #
     # @private This interface is internal and subject to change without warning.
@@ -165,7 +165,7 @@ module Toys
 
     ##
     # The command line arguments passed to the tool, not including the tool name
-    # itself. If this execution was created by {Execution.for_args}, these are
+    # itself. If this execution was created by {Runner.for_args}, these are
     # the arguments remaining after the tool name was consumed by the lookup.
     #
     # @return [Array<String>]
@@ -278,13 +278,13 @@ module Toys
       # We don't lookup_specific the target directly, but allow the Loader to
       # re-lookup with the args, so that target can point to a namespace and
       # we can load a tool under it.
-      subexec = Execution.for_args(target + @args, @loader,
-                                   external_data: @external_data,
-                                   logger_factory: @logger_factory,
-                                   base_logger_level: @base_logger_level,
-                                   verbosity: @verbosity,
-                                   wrap_errors: @wrap_errors,
-                                   delegated_from: context)
+      subexec = Runner.for_args(target + @args, @loader,
+                                external_data: @external_data,
+                                logger_factory: @logger_factory,
+                                base_logger_level: @base_logger_level,
+                                verbosity: @verbosity,
+                                wrap_errors: @wrap_errors,
+                                delegated_from: context)
       Context.exit(subexec.run)
     end
 

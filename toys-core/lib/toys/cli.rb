@@ -639,7 +639,7 @@ module Toys
       # @return [Proc]
       #
       def default_logger_factory
-        Execution::DEFAULT_LOGGER_FACTORY
+        Runner::DEFAULT_LOGGER_FACTORY
       end
 
       ##
@@ -697,12 +697,12 @@ module Toys
         Context::Key::CLI => self,
         Context::Key::EXECUTABLE_NAME => executable_name,
       }
-      Execution.for_args(args.flatten, loader,
-                         external_data: external_data,
-                         logger_factory: logger_factory,
-                         base_logger_level: base_level,
-                         verbosity: verbosity,
-                         wrap_errors: wrap_errors)
+      Runner.for_args(args.flatten, loader,
+                      external_data: external_data,
+                      logger_factory: logger_factory,
+                      base_logger_level: base_level,
+                      verbosity: verbosity,
+                      wrap_errors: wrap_errors)
     end
   end
 end

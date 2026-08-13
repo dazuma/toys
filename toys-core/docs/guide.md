@@ -116,13 +116,13 @@ $ ./greet.rb --whom=Ruby
 This section provides some detail on how a CLI executes your code.
 
 When you call {Toys::CLI#run}, the CLI resolves its configuration into a
-{Toys::Execution}, an object representing a single tool invocation, and asks it
-to run. The Execution carries out three phases:
+{Toys::Runner}, an object representing a single tool invocation, and asks it
+to run. The Runner carries out three phases:
 
- *  **Loading** in which the Execution identifies which tool to run, and loads
+ *  **Loading** in which the Runner identifies which tool to run, and loads
     the tool from a tool source, which could be a block passed to the CLI, a
     file loaded from the file system, git, or other location.
- *  **Context building**, in which the Execution parses the command-line
+ *  **Context building**, in which the Runner parses the command-line
     arguments according to the flags and arguments declared by the tool,
     instantiates the tool, and populates the {Toys::Context} object (which is
     `self` when the tool is executed)
@@ -176,7 +176,7 @@ We will discuss more about the features of the loader below in the section on
 
 #### Building context
 
-Once a tool is defined, the Execution prepares it for execution by building a
+Once a tool is defined, the Runner prepares it for execution by building a
 {Toys::Context} object. This object is `self` during tool runtime, and it
 includes:
 
@@ -195,12 +195,12 @@ class, but it implements a few extra features and cleans up a few ambiguities.
 It is concerned only with the command line: it produces the parsed flag and
 argument values, along with any usage errors. The rest of the context data,
 such as the logger, the tool definition and its name and source, and the
-verbosity, is provided by the Execution.
+verbosity, is provided by the Runner.
 
-An Execution can also be given arbitrary additional data by its caller, which
-is merged into the context underneath the data the Execution provides itself.
+A Runner can also be given arbitrary additional data by its caller, which
+is merged into the context underneath the data the Runner provides itself.
 The `CLI` and `EXECUTABLE_NAME` context keys arrive this way, supplied by the
-CLI rather than by the Execution. A tool run through an Execution constructed
+CLI rather than by the Runner. A tool run through a Runner constructed
 directly will therefore see `nil` from {Toys::Context#cli}.
 
 #### Tool execution and error handling
@@ -216,8 +216,8 @@ The execution phase involves:
     entrypoint set by the tool).
 
 Errors and signals are handled in two stages. If an exception reaches the
-Execution, whether from argument parsing, from the middleware, or from the tool
-itself, the Execution wraps it in a {Toys::ContextualError} tagged with the
+Runner, whether from argument parsing, from the middleware, or from the tool
+itself, the Runner wraps it in a {Toys::ContextualError} tagged with the
 tool's name, its arguments, and the path to the file where it was defined. The
 CLI then rescues that wrapper and passes it to its error handler, which decides
 what to report and what result code to return. Tools themselves can also
@@ -1183,13 +1183,13 @@ This section includes classes involved in tool execution
     provides a general configuration interface for all of the Toys features,
     owns a {Toys::Loader} that it uses to load tool definitions, and responds
     to command line invocations by constructing and running a
-    {Toys::Execution}.
- *  {Toys::Execution} - A single tool invocation. It parses the command line
+    {Toys::Runner}.
+ *  {Toys::Runner} - A single tool invocation. It parses the command line
     arguments, builds the {Toys::Context}, applies the tool's middleware, runs
     the tool, and wraps any resulting error in a {Toys::ContextualError}. It is
-    created by the {Toys::Execution.for_tool} and {Toys::Execution.for_args}
+    created by the {Toys::Runner.for_tool} and {Toys::Runner.for_args}
     factory methods, but most applications should use {Toys::CLI#run} rather
-    than creating a {Toys::Execution} directly.
+    than creating a {Toys::Runner} directly.
  *  {Toys::ArgParser} - A service that parses command line argument lists and
     matches the given arguments against the tool's formal flags and arguments
     definition, producing the parsed values along with any usage errors.
