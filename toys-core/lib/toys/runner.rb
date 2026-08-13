@@ -370,6 +370,9 @@ module Toys
         # We don't lookup_specific the target directly, but allow the Loader to
         # re-lookup with the args, so that target can point to a namespace and
         # we can load a tool under it.
+        #
+        # Uses Context.exit rather than context.exit because a tool is allowed to
+        # override the exit method, and this control flow must not be intercepted.
         Context.exit(delegated_invocation(target + @tool_args, context).run)
       end
 
