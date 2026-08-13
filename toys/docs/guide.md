@@ -2801,6 +2801,34 @@ class GreetTest < Minitest::Test
 end
 ```
 
+By default, if the tool raises an error, `toys_run_tool` reports it the way the
+`toys` executable would: the error is written to the standard error stream, and
+the method returns a nonzero exit code. That is what you want when you are
+testing how a failure is *reported*, but it makes an unexpected failure awkward
+to diagnose, because your test fails on the exit code assertion rather than on
+the error itself. Passing `handle_errors: false` raises the error out of
+`toys_run_tool` instead. Suppose `greet` raised an error when given an empty
+name:
+
+```ruby
+class GreetTest < Minitest::Test
+  include Toys::Testing
+
+  def test_greet_with_an_empty_name
+    error = assert_raises(Toys::ContextualError) do
+      toys_run_tool(["greet", ""], handle_errors: false)
+    end
+    assert_equal(["greet"], error.tool_name)
+    assert_equal("Cannot greet an empty name", error.root_cause.message)
+  end
+end
+```
+
+The error arrives wrapped in a {Toys::ContextualError} that identifies the tool
+and the arguments it was given, with the exception the tool actually raised
+available from `root_cause`. If you would rather assert against that original
+exception directly, pass `wrap_errors: false` as well.
+
 It is important to note that `toys_run_tool` executes the tool *in-process* in
 your tests. This may be appropriate for simple tools, but may not work for
 other cases such as tools that replace the current process using

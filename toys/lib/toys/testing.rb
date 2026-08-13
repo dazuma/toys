@@ -37,6 +37,8 @@ module Toys
     # [capture_subprocess_io](https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io).
     #
     # @param cmd [String,Array<String>] The command to execute.
+    # @param cli [Toys::CLI] The CLI to load the tool from. Optional.
+    # @param verbosity [Integer] Initial verbosity. Default is 0.
     # @yieldparam tool [Toys::Context] The tool context.
     # @return [Object] The value returned from the block.
     #
@@ -69,10 +71,10 @@ module Toys
     #     end
     #   end
     #
-    def toys_load_tool(cmd, cli: nil, &block)
+    def toys_load_tool(cmd, cli: nil, verbosity: 0, &block)
       cli ||= toys_cli
       cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-      cli.load_tool(*cmd, &block)
+      cli.load_tool(*cmd, verbosity: verbosity, &block)
     end
 
     ##
@@ -91,7 +93,21 @@ module Toys
     # standard streams when calling this method, for example by using
     # [capture_subprocess_io](https://docs.seattlerb.org/minitest/Minitest/Assertions.html#method-i-capture_subprocess_io).
     #
+    # By default, an error raised by the tool is reported the way the `toys`
+    # executable would report it, and this method returns a nonzero result
+    # code. Pass `handle_errors: false` to have the error raised out of this
+    # method instead, so your test can assert on it.
+    #
     # @param cmd [String,Array<String>] The command to execute.
+    # @param cli [Toys::CLI] The CLI to run the tool under. Optional.
+    # @param verbosity [Integer] Initial verbosity. Default is 0.
+    # @param wrap_errors [boolean] Whether to wrap an error raised by the tool
+    #     in a {Toys::ContextualError} that identifies the tool. Default is
+    #     true. Pass false to work with the original exception.
+    # @param handle_errors [boolean] Whether to pass an error raised by the
+    #     tool to the error handler, which reports it and returns a result
+    #     code. Default is true. Pass false to raise it out of this method
+    #     instead. See {Toys::Runner#run} for the full contract.
     # @return [Integer] The integer result code (i.e. 0 for success).
     #
     # @example
@@ -125,10 +141,13 @@ module Toys
     #     end
     #   end
     #
-    def toys_run_tool(cmd, cli: nil)
+    def toys_run_tool(cmd, cli: nil, verbosity: 0, wrap_errors: true, handle_errors: true)
       cli ||= toys_cli
       cmd = ::Shellwords.split(cmd) if cmd.is_a?(::String)
-      cli.run(*cmd)
+      cli.runner.run(cmd,
+                     verbosity: verbosity,
+                     wrap_errors: wrap_errors,
+                     handle_errors: handle_errors)
     end
 
     ##
@@ -203,7 +222,7 @@ module Toys
           }.merge(opts)
         end
       cli.loader.lookup(cmd)
-      tool_caller = proc { ::Kernel.exit(cli.run(*cmd)) }
+      tool_caller = proc { ::Kernel.exit(cli.runner.run(cmd)) }
       self.class.toys_exec.exec_proc(tool_caller, **opts, &block)
     end
     alias exec_tool toys_exec_tool
