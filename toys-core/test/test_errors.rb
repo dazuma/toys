@@ -36,6 +36,7 @@ describe Toys::ContextualError do
     end
 
     it "does not wrap a SignalException" do
+      skip "Skipped test on Windows" if Toys::Compat.windows?
       # A signal must stay recognizable as a signal all the way up the stack,
       # so that each tool can dispatch it to its own handler and the Ruby VM
       # can ultimately handle it.

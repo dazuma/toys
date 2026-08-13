@@ -168,6 +168,14 @@ describe Toys::Runner do
   end
 
   describe "tool lookup" do
+    it "raises an ArgumentError when the args are not an array" do
+      runner = make_runner
+      err = assert_raises(::ArgumentError) do
+        runner.run("foo")
+      end
+      assert_includes(err.message, "array of strings")
+    end
+
     it "looks up the tool from the args" do
       test = self
       cli.add_config_block do
@@ -388,6 +396,28 @@ describe Toys::Runner do
           end
         end
         assert_equal(0, outer_runner.run(["outer"], verbosity: 1))
+      end
+
+      it "does not record a base level for a run that failed to apply one" do
+        levels = []
+        cli.add_config_block do
+          tool "foo" do
+            to_run { nil }
+          end
+          tool "bar" do
+            to_run { levels << logger.level }
+          end
+        end
+        # A base level that cannot be combined with the verbosity fails while
+        # the logger level is being set. That run must leave no base level
+        # recorded behind it, or it would poison every later run of this thread
+        # that shares the logger.
+        assert_raises(::NoMethodError) do
+          make_runner(base_level: :bogus).run(["foo"], wrap_errors: false, handle_errors: false)
+        end
+        assert_equal(Logger::WARN, logger.level)
+        assert_equal(0, make_runner.run(["bar"], verbosity: 1))
+        assert_equal([Logger::WARN - 1], levels)
       end
 
       it "leaves nested runs using different loggers alone" do

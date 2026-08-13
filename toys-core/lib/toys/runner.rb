@@ -144,15 +144,14 @@ module Toys
     #     applied. This is intended for testing tools.
     #
     # @return [Integer] The resulting process status code (i.e. 0 for success).
+    # @raise [ArgumentError] if `args` is not an array. Note that
+    #     {Toys::CLI#run}, unlike this method, takes its arguments as a splat.
     #
     def run(args, verbosity: 0, wrap_errors: true, handle_errors: true, &block)
+      unless args.is_a?(::Array)
+        raise ::ArgumentError, "Tool arguments must be an array of strings: #{args.inspect}"
+      end
       Invocation.new(runner: self,
-                     loader: @loader,
-                     logger_factory: @logger_factory,
-                     base_level: @base_level,
-                     error_handler: @error_handler,
-                     executable_name: @executable_name,
-                     external_data: @external_data,
                      args: args,
                      verbosity: verbosity,
                      wrap_errors: wrap_errors,
@@ -160,6 +159,51 @@ module Toys
                      delegated_from: nil,
                      block: block).run
     end
+
+    #### INTERNAL METHODS ####
+
+    ##
+    # The loader used to look up tools.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :loader
+
+    ##
+    # The proc that provides a logger for a tool.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :logger_factory
+
+    ##
+    # The logger level corresponding to zero verbosity, or nil to use the level
+    # already in effect.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :base_level
+
+    ##
+    # The proc that reports an unhandled error.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :error_handler
+
+    ##
+    # The executable name displayed in help text.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :executable_name
+
+    ##
+    # Additional context data provided by the caller.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    attr_reader :external_data
 
     ##
     # A single invocation of a tool by a {Toys::Runner}. It holds the values
@@ -171,18 +215,14 @@ module Toys
     #
     class Invocation
       ##
-      # Create an invocation. The first group of arguments is the environment
-      # taken from the Runner, and the second is specific to this one run.
+      # Create an invocation. The environment is copied from the given Runner,
+      # and the remaining arguments are specific to this one run. Copying the
+      # environment here, rather than at each call site, keeps a delegated
+      # invocation from silently diverging from the Runner that produced it.
       #
       # @private
       #
       def initialize(runner:,
-                     loader:,
-                     logger_factory:,
-                     base_level:,
-                     error_handler:,
-                     executable_name:,
-                     external_data:,
                      args:,
                      verbosity:,
                      wrap_errors:,
@@ -190,12 +230,12 @@ module Toys
                      delegated_from:,
                      block:)
         @runner = runner
-        @loader = loader
-        @logger_factory = logger_factory
-        @base_level = base_level
-        @error_handler = error_handler
-        @executable_name = executable_name
-        @external_data = external_data
+        @loader = runner.loader
+        @logger_factory = runner.logger_factory
+        @base_level = runner.base_level
+        @error_handler = runner.error_handler
+        @executable_name = runner.executable_name
+        @external_data = runner.external_data
         @args = args
         @verbosity = verbosity.to_i
         @wrap_errors = wrap_errors
@@ -332,18 +372,12 @@ module Toys
         Context.exit(delegated_invocation(target + @tool_args, context).run)
       end
 
-      # Builds the invocation that runs a delegate target, copying this
-      # invocation's environment and settings. Error handling is always
-      # disabled for the delegate, so that the error handler fires once, at the
-      # outermost run only.
+      # Builds the invocation that runs a delegate target. It takes its
+      # environment from the same Runner, and copies this invocation's
+      # settings. Error handling is always disabled for the delegate, so that
+      # the error handler fires once, at the outermost run only.
       def delegated_invocation(args, context)
         Invocation.new(runner: @runner,
-                       loader: @loader,
-                       logger_factory: @logger_factory,
-                       base_level: @base_level,
-                       error_handler: @error_handler,
-                       executable_name: @executable_name,
-                       external_data: @external_data,
                        args: args,
                        verbosity: @verbosity,
                        wrap_errors: @wrap_errors,
@@ -353,31 +387,40 @@ module Toys
       end
 
       # Prepares the runtime environment for the tool, applying lib paths and
-      # initializers and setting the logger level implied by the verbosity, and
-      # then calls the tool within its middleware stack, returning the resulting
-      # exit code. The logger level, and the base level in effect for it, are
-      # restored when the tool finishes.
+      # initializers, and then calls the tool within its middleware stack and
+      # within the logger level implied by the verbosity, returning the
+      # resulting exit code.
       def execute_tool(context, &block)
         @tool.source_info&.apply_lib_paths
         @tool.run_initializers(context)
-        cur_logger = context[Context::Key::LOGGER]
-        if cur_logger
-          original_level = cur_logger.level
-          base_level = @base_level || base_levels[cur_logger] || original_level
-          saved_base_level = set_base_level(cur_logger, base_level)
-          cur_logger.level = base_level - context[Context::Key::VERBOSITY].to_i
-        end
-        begin
+        with_logger_level(context) do
           executor = build_executor(context, &block)
           catch(:result) do
             executor.call
             0
           end
+        end
+      end
+
+      # Sets the logger level implied by the verbosity for the duration of the
+      # block, and restores it, along with the base level in effect for it,
+      # afterward. The restoration must cover the level assignment itself,
+      # because a base level that cannot be combined with the verbosity fails
+      # there, and a base level left recorded behind a failed run would be
+      # picked up by later runs sharing the logger. Yields directly if the tool
+      # has no logger.
+      def with_logger_level(context)
+        cur_logger = context[Context::Key::LOGGER]
+        return yield unless cur_logger
+        original_level = cur_logger.level
+        base_level = @base_level || base_levels[cur_logger] || original_level
+        saved_base_level = set_base_level(cur_logger, base_level)
+        begin
+          cur_logger.level = base_level - context[Context::Key::VERBOSITY].to_i
+          yield
         ensure
-          if cur_logger
-            set_base_level(cur_logger, saved_base_level)
-            cur_logger.level = original_level
-          end
+          set_base_level(cur_logger, saved_base_level)
+          cur_logger.level = original_level
         end
       end
 

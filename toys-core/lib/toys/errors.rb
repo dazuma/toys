@@ -106,6 +106,8 @@ module Toys
     # that is not itself a ContextualError.
     #
     # @return [Exception] The root cause.
+    # @return [nil] if this error has no cause, which happens only if it was
+    #     constructed outside a rescue.
     #
     def root_cause
       current = cause
