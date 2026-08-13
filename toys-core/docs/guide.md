@@ -599,6 +599,13 @@ to map to `Logger::INFO` rather than `Logger::WARN`.
 cli = Toys::CLI.new(base_level: Logger::INFO)
 ```
 
+If you do not pass a `base_level`, verbosity 0 maps to whatever level the
+logger has before a run adjusts it. A [nested run](#nested-runs) that shares the
+same logger with the run that called it uses that same base level rather than
+the level the caller adjusted it to, so verbosity does not compound: if a tool
+running at verbosity 1 calls another tool at verbosity 1, both log at
+`Logger::INFO`.
+
 #### Customizing the logger
 
 Toys-Core configures its default logger with the default logging formatter, and

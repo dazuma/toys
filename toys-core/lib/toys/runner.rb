@@ -66,8 +66,10 @@ module Toys
     #     definition and returns a logger. If not given,
     #     {Toys::Runner::DEFAULT_LOGGER_FACTORY} is used.
     # @param base_logger_level [Integer,nil] The logger level that corresponds
-    #     to zero verbosity. If not provided, the current setting of the logger
-    #     is used (typically Logger::WARN).
+    #     to zero verbosity. If not provided, the level the logger has before a
+    #     run adjusts it is used (typically Logger::WARN). A run nested inside
+    #     another run that shares the same logger uses the base level already
+    #     in effect for that logger, so that verbosity does not compound.
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
     #     exception is detected during a run that has error handling enabled.
     #     The proc takes the error as its sole argument, and should report it.
@@ -353,14 +355,17 @@ module Toys
       # Prepares the runtime environment for the tool, applying lib paths and
       # initializers and setting the logger level implied by the verbosity, and
       # then calls the tool within its middleware stack, returning the resulting
-      # exit code. The logger level is restored when the tool finishes.
+      # exit code. The logger level, and the base level in effect for it, are
+      # restored when the tool finishes.
       def execute_tool(context, &block)
         @tool.source_info&.apply_lib_paths
         @tool.run_initializers(context)
         cur_logger = context[Context::Key::LOGGER]
         if cur_logger
           original_level = cur_logger.level
-          cur_logger.level = (@base_logger_level || original_level) - context[Context::Key::VERBOSITY].to_i
+          base_level = @base_logger_level || base_logger_levels[cur_logger] || original_level
+          saved_base_level = set_base_logger_level(cur_logger, base_level)
+          cur_logger.level = base_level - context[Context::Key::VERBOSITY].to_i
         end
         begin
           executor = build_executor(context, &block)
@@ -369,8 +374,38 @@ module Toys
             0
           end
         ensure
-          cur_logger.level = original_level if cur_logger
+          if cur_logger
+            set_base_logger_level(cur_logger, saved_base_level)
+            cur_logger.level = original_level
+          end
         end
+      end
+
+      # The base logger levels currently in effect on this thread, keyed by
+      # logger identity. A run that adjusts a logger's level records the base
+      # level it used, for the extent of that run, because a nested run cannot
+      # recover it from a shared logger: the level it would find there is the
+      # enclosing run's already adjusted level, which would make verbosity
+      # compound. The record is per-thread because it describes the loggers this
+      # thread is actively adjusting.
+      def base_logger_levels
+        thread = ::Thread.current
+        thread.thread_variable_get(:toys_base_logger_levels) ||
+          thread.thread_variable_set(:toys_base_logger_levels, {}.compare_by_identity)
+      end
+
+      # Records the base level in effect for the given logger, or clears it if
+      # the level is nil, and returns the level previously in effect. The caller
+      # must restore that previous level when its run finishes.
+      def set_base_logger_level(logger, level)
+        levels = base_logger_levels
+        previous = levels[logger]
+        if level
+          levels[logger] = level
+        else
+          levels.delete(logger)
+        end
+        previous
       end
 
       # Builds the callable that runs the tool. The innermost proc checks for

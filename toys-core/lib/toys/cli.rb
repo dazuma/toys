@@ -77,7 +77,7 @@ module Toys
     #
     # @param logger [Logger] A global logger to use for all tools. This can be
     #     set if the CLI will call at most one tool at a time. However, it will
-    #     behave incorrectly if CLI might run multiple tools at the same time
+    #     behave incorrectly if the CLI might run multiple tools concurrently
     #     with different verbosity settings (since the logger cannot have
     #     multiple level settings simultaneously). In that case, do not set a
     #     global logger, but use the `logger_factory` parameter instead.
@@ -87,8 +87,10 @@ module Toys
     #     {Toys::CLI.default_logger_factory} is called to get a basic default.
     # @param base_level [Integer] The logger level that should correspond
     #     to zero verbosity.
-    #     Optional. If not provided, defaults to the current level of the
-    #     logger (which is often `Logger::WARN`).
+    #     Optional. If not provided, defaults to the level the logger has
+    #     before a run adjusts it (which is often `Logger::WARN`). See the
+    #     `base_logger_level` argument to {Toys::Runner#initialize} for how
+    #     this interacts with nested runs.
     # @param error_handler [Proc,nil] A proc that is called when an unhandled
     #     exception is detected. See the `error_handler` argument to
     #     {Toys::Runner#initialize} for the handler's contract. Because a CLI

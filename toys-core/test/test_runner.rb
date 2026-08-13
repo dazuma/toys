@@ -274,6 +274,150 @@ describe Toys::Runner do
       assert_equal(Logger::WARN, logger.level)
     end
 
+    # The logger factory used by these tests returns the same logger for every
+    # run, so nested runs all adjust the level of one logger object.
+    describe "nested runs sharing a logger" do
+      it "does not compound the verbosity of an inner run" do
+        test = self
+        runner = make_runner
+        cli.add_config_block do
+          tool "inner" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+            end
+          end
+          tool "outer" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+              test.assert_equal(0, runner.run(["inner"], verbosity: 1))
+              test.assert_equal(Logger::WARN - 1, logger.level)
+            end
+          end
+        end
+        assert_equal(0, runner.run(["outer"], verbosity: 1))
+      end
+
+      it "does not compound the verbosity across three levels of nesting" do
+        test = self
+        runner = make_runner
+        cli.add_config_block do
+          tool "level3" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+            end
+          end
+          tool "level2" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+              test.assert_equal(0, runner.run(["level3"], verbosity: 1))
+            end
+          end
+          tool "level1" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+              test.assert_equal(0, runner.run(["level2"], verbosity: 1))
+            end
+          end
+        end
+        assert_equal(0, runner.run(["level1"], verbosity: 1))
+      end
+
+      it "does not compound the verbosity of a delegated run" do
+        test = self
+        add_delegation_config do
+          test.assert_equal(Logger::WARN - 2, logger.level)
+        end
+        assert_equal(0, make_runner.run(["front"], verbosity: 2))
+      end
+
+      it "resamples the base level in a later independent run" do
+        levels = []
+        runner = make_runner
+        cli.add_config_block do
+          tool "inner" do
+            to_run { levels << logger.level }
+          end
+          tool "outer" do
+            to_run { runner.run(["inner"], verbosity: 1) }
+          end
+        end
+        assert_equal(0, runner.run(["outer"], verbosity: 1))
+        assert_equal(Logger::WARN, logger.level)
+        logger.level = Logger::ERROR
+        assert_equal(0, runner.run(["inner"], verbosity: 1))
+        assert_equal([Logger::WARN - 1, Logger::ERROR - 1], levels)
+        assert_equal(Logger::ERROR, logger.level)
+      end
+
+      it "honors an explicit base_logger_level in an inner run" do
+        test = self
+        outer_runner = make_runner
+        inner_runner = make_runner(base_logger_level: Logger::ERROR)
+        cli.add_config_block do
+          tool "inner" do
+            to_run do
+              test.assert_equal(Logger::ERROR - 1, logger.level)
+            end
+          end
+          tool "outer" do
+            to_run do
+              test.assert_equal(Logger::WARN - 1, logger.level)
+              test.assert_equal(0, inner_runner.run(["inner"], verbosity: 1))
+              test.assert_equal(Logger::WARN - 1, logger.level)
+            end
+          end
+        end
+        assert_equal(0, outer_runner.run(["outer"], verbosity: 1))
+      end
+
+      it "uses the enclosing base_logger_level in an inner run that has none" do
+        test = self
+        outer_runner = make_runner(base_logger_level: Logger::ERROR)
+        inner_runner = make_runner
+        cli.add_config_block do
+          tool "inner" do
+            to_run do
+              test.assert_equal(Logger::ERROR - 1, logger.level)
+            end
+          end
+          tool "outer" do
+            to_run do
+              test.assert_equal(Logger::ERROR - 1, logger.level)
+              test.assert_equal(0, inner_runner.run(["inner"], verbosity: 1))
+            end
+          end
+        end
+        assert_equal(0, outer_runner.run(["outer"], verbosity: 1))
+      end
+
+      it "leaves nested runs using different loggers alone" do
+        levels = []
+        loggers = []
+        factory = proc do
+          Logger.new(::StringIO.new).tap { |lgr| lgr.level = Logger::WARN }
+        end
+        runner = make_runner(logger_factory: factory)
+        cli.add_config_block do
+          tool "inner" do
+            to_run do
+              levels << logger.level
+              loggers << logger
+            end
+          end
+          tool "outer" do
+            to_run do
+              levels << logger.level
+              loggers << logger
+              runner.run(["inner"], verbosity: 1)
+            end
+          end
+        end
+        assert_equal(0, runner.run(["outer"], verbosity: 1))
+        assert_equal([Logger::WARN - 1, Logger::WARN - 1], levels)
+        refute_same(loggers[0], loggers[1])
+      end
+    end
+
     describe "default factory" do
       it "is the same proc returned by the CLI" do
         assert_same(Toys::Runner::DEFAULT_LOGGER_FACTORY, Toys::CLI.default_logger_factory)
