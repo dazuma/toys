@@ -225,6 +225,13 @@ module Toys
         template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup
       )
+      @runner = Runner.new(@loader,
+                           logger_factory: @logger_factory,
+                           base_logger_level: @base_level,
+                           external_data: {
+                             Context::Key::CLI => self,
+                             Context::Key::EXECUTABLE_NAME => @executable_name,
+                           })
     end
 
     ##
@@ -536,7 +543,7 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0)
-      create_execution(args, verbosity, true).run
+      @runner.run(args.flatten, verbosity: verbosity)
     rescue ContextualError, ::SignalException => e
       @error_handler.call(e).to_i
     end
@@ -558,7 +565,7 @@ module Toys
     #
     def load_tool(*args, verbosity: 0)
       result = nil
-      create_execution(args, verbosity, false).run do |ctx|
+      @runner.run(args.flatten, verbosity: verbosity, wrap_errors: false) do |ctx|
         result = yield ctx
       end
       result
@@ -690,19 +697,6 @@ module Toys
       raise ::ArgumentError,
             "Cannot change #{key} while copying loader sources, because the setting is" \
             " captured in the copied sources."
-    end
-
-    def create_execution(args, verbosity, wrap_errors)
-      external_data = {
-        Context::Key::CLI => self,
-        Context::Key::EXECUTABLE_NAME => executable_name,
-      }
-      Runner.for_args(args.flatten, loader,
-                      external_data: external_data,
-                      logger_factory: logger_factory,
-                      base_logger_level: base_level,
-                      verbosity: verbosity,
-                      wrap_errors: wrap_errors)
     end
   end
 end

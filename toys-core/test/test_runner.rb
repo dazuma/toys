@@ -22,16 +22,11 @@ describe Toys::Runner do
   }
   let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
 
-  def make_execution(*args, **opts)
-    tool, remaining = cli.loader.lookup(args.flatten)
-    Toys::Runner.for_tool(tool, remaining, cli.loader, **opts)
-  end
-
-  # Builds an execution that looks the tool up from the args, which is the form
-  # used by Toys::CLI.
-  def lookup_execution(*args, **opts)
+  # Builds a runner against the default CLI's loader. Any keyword arguments are
+  # passed to the constructor; per-run settings go to Runner#run instead.
+  def make_runner(**opts)
     opts = {logger_factory: logger_factory}.merge(opts)
-    Toys::Runner.for_args(args.flatten, cli.loader, **opts)
+    Toys::Runner.new(cli.loader, **opts)
   end
 
   def add_delegation_config(&target_body)
@@ -54,7 +49,7 @@ describe Toys::Runner do
         end
       end
     end
-    assert_equal(3, make_execution("foo").run)
+    assert_equal(3, make_runner.run(["foo"]))
   end
 
   it "returns 0 when the tool completes normally" do
@@ -67,23 +62,7 @@ describe Toys::Runner do
         end
       end
     end
-    assert_equal(0, make_execution("foo", "hello").run)
-  end
-
-  it "defers argument parsing until run is called" do
-    cli.add_config_block do
-      tool "foo" do
-        required_arg :bar
-        def run
-          # Never reached
-        end
-      end
-    end
-    execution = make_execution("foo")
-    err = assert_raises(Toys::ContextualError) do
-      execution.run
-    end
-    assert_kind_of(Toys::ArgParsingError, err.cause)
+    assert_equal(0, make_runner.run(["foo", "hello"]))
   end
 
   it "runs a given block in place of the tool's run handler" do
@@ -97,7 +76,7 @@ describe Toys::Runner do
       end
     end
     called = false
-    result = make_execution("foo", "hello").run do |context|
+    result = make_runner.run(["foo", "hello"]) do |context|
       called = true
       assert_equal("hello", context[:bar])
     end
@@ -121,8 +100,7 @@ describe Toys::Runner do
         end
       end
     end
-    tool, remaining = middleware_cli.loader.lookup(["foo"])
-    Toys::Runner.for_tool(tool, remaining, middleware_cli.loader).run do |_context|
+    Toys::Runner.new(middleware_cli.loader).run(["foo"]) do |_context|
       order << :block
     end
     assert_equal([:middleware, :block], order)
@@ -138,20 +116,7 @@ describe Toys::Runner do
         end
       end
     end
-    assert_equal(0, make_execution("foo", verbosity: 2).run)
-  end
-
-  it "honors the delegated_from setting" do
-    delegator = ::Object.new
-    test = self
-    cli.add_config_block do
-      tool "foo" do
-        to_run do
-          test.assert_same(delegator, self[Toys::Context::Key::DELEGATED_FROM])
-        end
-      end
-    end
-    assert_equal(0, make_execution("foo", delegated_from: delegator).run)
+    assert_equal(0, make_runner.run(["foo"], verbosity: 2))
   end
 
   it "raises when the tool is not runnable" do
@@ -161,40 +126,49 @@ describe Toys::Runner do
       end
     end
     err = assert_raises(Toys::ContextualError) do
-      make_execution("foo").run
+      make_runner.run(["foo"])
     end
     assert_kind_of(Toys::NotRunnableError, err.cause)
   end
 
-  describe "construction" do
-    it "exposes the tool and args given to for_tool" do
+  describe "reuse" do
+    it "runs different tools from one runner with independent contexts" do
+      test = self
       cli.add_config_block do
         tool "foo" do
-          to_run { nil }
+          to_run do
+            test.assert_nil(self[:shared])
+            set(:shared, "from foo")
+            exit(1)
+          end
         end
-      end
-      tool, remaining = cli.loader.lookup(["foo", "arg1"])
-      execution = Toys::Runner.for_tool(tool, remaining, cli.loader)
-      assert_same(tool, execution.tool)
-      assert_equal(["arg1"], execution.args)
-    end
-
-    it "exposes the tool and remaining args resolved by for_args" do
-      cli.add_config_block do
-        tool "foo" do
-          tool "bar" do
-            to_run { nil }
+        tool "bar" do
+          to_run do
+            test.assert_nil(self[:shared])
+            exit(2)
           end
         end
       end
-      execution = Toys::Runner.for_args(["foo", "bar", "arg1"], cli.loader)
-      assert_equal(["foo", "bar"], execution.tool.full_name)
-      assert_equal(["arg1"], execution.args)
+      runner = make_runner
+      assert_equal(1, runner.run(["foo"]))
+      assert_equal(2, runner.run(["bar"]))
+    end
+
+    it "does not modify the arguments given to run" do
+      cli.add_config_block do
+        tool "foo" do
+          remaining_args :rest
+          to_run { nil }
+        end
+      end
+      args = ["foo", "arg1"]
+      assert_equal(0, make_runner.run(args))
+      assert_equal(["foo", "arg1"], args)
     end
   end
 
   describe "tool lookup" do
-    it "looks up the tool from the args when no tool is given" do
+    it "looks up the tool from the args" do
       test = self
       cli.add_config_block do
         tool "foo" do
@@ -207,13 +181,14 @@ describe Toys::Runner do
           end
         end
       end
-      assert_equal(0, lookup_execution("foo", "bar", "hello").run)
+      assert_equal(0, make_runner.run(["foo", "bar", "hello"]))
     end
 
     it "raises a finalized contextual error for a tool definition error" do
       cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
+      runner = make_runner
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("definition")
+        runner.run(["definition"])
       end
       assert(err.final?)
       assert_kind_of(::NameError, err.root_cause)
@@ -222,8 +197,9 @@ describe Toys::Runner do
 
     it "does not finalize a tool definition error when wrap_errors is false" do
       cli.loader.add_path(File.join(lookup_cases_dir, "errors"))
+      runner = make_runner
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("definition", wrap_errors: false)
+        runner.run(["definition"], wrap_errors: false)
       end
       refute(err.final?)
       assert_kind_of(::NameError, err.root_cause)
@@ -242,7 +218,7 @@ describe Toys::Runner do
           to_run { nil }
         end
       end
-      assert_equal(0, lookup_execution("foo", logger_factory: factory).run)
+      assert_equal(0, make_runner(logger_factory: factory).run(["foo"]))
       assert_equal([["foo"]], seen)
     end
 
@@ -257,9 +233,9 @@ describe Toys::Runner do
           to_run { nil }
         end
       end
-      execution = lookup_execution("foo", logger_factory: factory)
-      execution.run
-      execution.run
+      runner = make_runner(logger_factory: factory)
+      runner.run(["foo"])
+      runner.run(["foo"])
       assert_equal(2, count)
     end
 
@@ -272,8 +248,7 @@ describe Toys::Runner do
           end
         end
       end
-      tool, remaining = cli.loader.lookup(["foo"])
-      assert_equal(0, Toys::Runner.for_tool(tool, remaining, cli.loader).run)
+      assert_equal(0, Toys::Runner.new(cli.loader).run(["foo"]))
     end
 
     it "honors base_logger_level" do
@@ -285,8 +260,8 @@ describe Toys::Runner do
           end
         end
       end
-      execution = lookup_execution("foo", base_logger_level: Logger::INFO, verbosity: 1)
-      assert_equal(0, execution.run)
+      runner = make_runner(base_logger_level: Logger::INFO)
+      assert_equal(0, runner.run(["foo"], verbosity: 1))
     end
 
     it "restores the logger level after running" do
@@ -295,7 +270,7 @@ describe Toys::Runner do
           to_run { nil }
         end
       end
-      assert_equal(0, lookup_execution("foo", verbosity: 2).run)
+      assert_equal(0, make_runner.run(["foo"], verbosity: 2))
       assert_equal(Logger::WARN, logger.level)
     end
 
@@ -334,7 +309,7 @@ describe Toys::Runner do
           end
         end
       end
-      assert_equal(0, lookup_execution("foo").run)
+      assert_equal(0, make_runner.run(["foo"]))
     end
 
     it "provides the loader via the context getter" do
@@ -346,7 +321,7 @@ describe Toys::Runner do
           end
         end
       end
-      assert_equal(0, lookup_execution("foo").run)
+      assert_equal(0, make_runner.run(["foo"]))
     end
 
     it "provides the loader via __loader when the tool overrides loader" do
@@ -363,7 +338,7 @@ describe Toys::Runner do
           end
         end
       end
-      assert_equal(0, lookup_execution("foo").run)
+      assert_equal(0, make_runner.run(["foo"]))
     end
 
     it "provides external data in the context" do
@@ -376,7 +351,7 @@ describe Toys::Runner do
         end
       end
       external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      assert_equal(0, lookup_execution("foo", external_data: external_data).run)
+      assert_equal(0, make_runner(external_data: external_data).run(["foo"]))
     end
 
     it "leaves the CLI key unset when no CLI is provided" do
@@ -388,10 +363,10 @@ describe Toys::Runner do
           end
         end
       end
-      assert_equal(0, lookup_execution("foo").run)
+      assert_equal(0, make_runner.run(["foo"]))
     end
 
-    it "does not let external data override execution-owned keys" do
+    it "does not let external data override runtime-owned keys" do
       test = self
       cli.add_config_block do
         tool "foo" do
@@ -405,7 +380,7 @@ describe Toys::Runner do
         Toys::Context::Key::TOOL_NAME => ["hijacked"],
         Toys::Context::Key::VERBOSITY => 99,
       }
-      assert_equal(0, lookup_execution("foo", verbosity: 2, external_data: external_data).run)
+      assert_equal(0, make_runner(external_data: external_data).run(["foo"], verbosity: 2))
     end
 
     it "does not modify the external data hash" do
@@ -416,7 +391,7 @@ describe Toys::Runner do
         end
       end
       external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      assert_equal(0, lookup_execution("foo", "--bar=x", external_data: external_data).run)
+      assert_equal(0, make_runner(external_data: external_data).run(["foo", "--bar=x"]))
       assert_equal({Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}, external_data)
     end
   end
@@ -430,7 +405,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("foo", "--bar=x").run
+        make_runner.run(["foo", "--bar=x"])
       end
       assert_equal(["foo"], err.tool_name)
       assert_equal(["--bar=x"], err.tool_args)
@@ -445,7 +420,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("foo", "arg1").run
+        make_runner.run(["foo", "arg1"])
       end
       assert(err.final?)
       assert_equal("Error during tool execution", err.banner)
@@ -461,7 +436,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("foo").run { raise "from the block" }
+        make_runner.run(["foo"]) { raise "from the block" }
       end
       assert_equal("from the block", err.root_cause.message)
     end
@@ -473,7 +448,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(::RuntimeError) do
-        lookup_execution("foo", wrap_errors: false).run
+        make_runner.run(["foo"], wrap_errors: false)
       end
       assert_equal("kaboom", err.message)
     end
@@ -486,7 +461,7 @@ describe Toys::Runner do
         end
       end
       assert_raises(Toys::ArgParsingError) do
-        lookup_execution("foo", wrap_errors: false).run
+        make_runner.run(["foo"], wrap_errors: false)
       end
     end
 
@@ -497,7 +472,7 @@ describe Toys::Runner do
         end
       end
       err = assert_raises(::RuntimeError) do
-        lookup_execution("foo", wrap_errors: false).run { raise "from the block" }
+        make_runner.run(["foo"], wrap_errors: false) { raise "from the block" }
       end
       assert_equal("from the block", err.message)
     end
@@ -507,7 +482,7 @@ describe Toys::Runner do
     it "attributes an error to the delegate and the delegating tool" do
       add_delegation_config { raise "kaboom" }
       err = assert_raises(Toys::ContextualError) do
-        lookup_execution("front", "arg1").run
+        make_runner.run(["front", "arg1"])
       end
       assert_equal(["front"], err.tool_name)
       inner = err.cause
@@ -525,7 +500,7 @@ describe Toys::Runner do
         logger
       end
       add_delegation_config { nil }
-      assert_equal(0, lookup_execution("front", logger_factory: factory).run)
+      assert_equal(0, make_runner(logger_factory: factory).run(["front"]))
       assert_equal([["front"], ["target"]], seen)
     end
 
@@ -534,7 +509,7 @@ describe Toys::Runner do
       add_delegation_config do
         test.assert_equal(2, verbosity)
       end
-      assert_equal(0, lookup_execution("front", verbosity: 2).run)
+      assert_equal(0, make_runner.run(["front"], verbosity: 2))
     end
 
     it "passes external data to the delegate" do
@@ -543,13 +518,13 @@ describe Toys::Runner do
         test.assert_equal("my-exe", self[Toys::Context::Key::EXECUTABLE_NAME])
       end
       external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      assert_equal(0, lookup_execution("front", external_data: external_data).run)
+      assert_equal(0, make_runner(external_data: external_data).run(["front"]))
     end
 
     it "passes wrap_errors to the delegate" do
       add_delegation_config { raise "kaboom" }
       err = assert_raises(::RuntimeError) do
-        lookup_execution("front", wrap_errors: false).run
+        make_runner.run(["front"], wrap_errors: false)
       end
       assert_equal("kaboom", err.message)
     end
@@ -561,7 +536,7 @@ describe Toys::Runner do
         test.refute_nil(delegator)
         test.assert_equal(["front"], delegator[Toys::Context::Key::TOOL_NAME])
       end
-      assert_equal(0, lookup_execution("front").run)
+      assert_equal(0, make_runner.run(["front"]))
     end
   end
 
@@ -579,19 +554,18 @@ describe Toys::Runner do
     }
 
     it "displays help without a CLI in the context" do
-      execution = Toys::Runner.for_args(["foo", "--help"], help_cli.loader,
-                                        logger_factory: logger_factory)
-      assert_equal(0, execution.run)
+      runner = Toys::Runner.new(help_cli.loader, logger_factory: logger_factory)
+      assert_equal(0, runner.run(["foo", "--help"]))
       assert_match(/SYNOPSIS/, help_io.string)
       assert_match(/\(binary-name\) foo/, help_io.string)
     end
 
     it "displays help using an executable name from external data" do
       external_data = {Toys::Context::Key::EXECUTABLE_NAME => "my-exe"}
-      execution = Toys::Runner.for_args(["foo", "--help"], help_cli.loader,
-                                        logger_factory: logger_factory,
-                                        external_data: external_data)
-      assert_equal(0, execution.run)
+      runner = Toys::Runner.new(help_cli.loader,
+                                logger_factory: logger_factory,
+                                external_data: external_data)
+      assert_equal(0, runner.run(["foo", "--help"]))
       assert_match(/my-exe foo/, help_io.string)
     end
 
@@ -605,9 +579,8 @@ describe Toys::Runner do
           end
         end
       end
-      execution = Toys::Runner.for_args(["foo"], verbose_cli.loader,
-                                        logger_factory: logger_factory, verbosity: 2)
-      assert_equal(0, execution.run)
+      runner = Toys::Runner.new(verbose_cli.loader, logger_factory: logger_factory)
+      assert_equal(0, runner.run(["foo"], verbosity: 2))
     end
 
     it "adds verbosity flags to the initial verbosity setting" do
@@ -620,9 +593,8 @@ describe Toys::Runner do
           end
         end
       end
-      execution = Toys::Runner.for_args(["foo", "-v"], verbose_cli.loader,
-                                        logger_factory: logger_factory, verbosity: 2)
-      assert_equal(0, execution.run)
+      runner = Toys::Runner.new(verbose_cli.loader, logger_factory: logger_factory)
+      assert_equal(0, runner.run(["foo", "-v"], verbosity: 2))
     end
   end
 end

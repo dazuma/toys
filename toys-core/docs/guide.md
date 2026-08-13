@@ -1181,15 +1181,13 @@ This section includes classes involved in tool execution
 
  *  {Toys::CLI} - The configuration and entry point for the framework. It
     provides a general configuration interface for all of the Toys features,
-    owns a {Toys::Loader} that it uses to load tool definitions, and responds
-    to command line invocations by constructing and running a
-    {Toys::Runner}.
- *  {Toys::Runner} - A single tool invocation. It parses the command line
-    arguments, builds the {Toys::Context}, applies the tool's middleware, runs
-    the tool, and wraps any resulting error in a {Toys::ContextualError}. It is
-    created by the {Toys::Runner.for_tool} and {Toys::Runner.for_args}
-    factory methods, but most applications should use {Toys::CLI#run} rather
-    than creating a {Toys::Runner} directly.
+    owns a {Toys::Loader} that it uses to load tool definitions, and owns a
+    {Toys::Runner} that it uses to respond to command line invocations.
+ *  {Toys::Runner} - The environment in which tools run. Given a command line,
+    it looks up the tool, parses the arguments, builds the {Toys::Context},
+    applies the tool's middleware, runs the tool, and wraps any resulting
+    error in a {Toys::ContextualError}. Most applications should use
+    {Toys::CLI#run} rather than creating a {Toys::Runner} directly.
  *  {Toys::ArgParser} - A service that parses command line argument lists and
     matches the given arguments against the tool's formal flags and arguments
     definition, producing the parsed values along with any usage errors.
