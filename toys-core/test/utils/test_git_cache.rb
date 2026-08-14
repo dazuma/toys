@@ -5,6 +5,7 @@ require "toys/utils/exec"
 require "toys/utils/git_cache"
 require "digest"
 require "fileutils"
+require "tmpdir"
 
 # This is just a token set of smoke tests to ensure the library vendored
 # correctly from its source in the git_cache gem. The full test suite is
@@ -31,9 +32,12 @@ describe Toys::Utils::GitCache do
 
   describe "with local git" do
     let(:exec_tool) { Toys::Utils::Exec.new }
-    let(:git_repo_dir) { File.join(Dir.tmpdir, "toys_git_cache_test3") }
+    # Each test gets its own temp directory, so no test can see cache or repo
+    # state left behind by another, whether in this suite or elsewhere.
+    let(:tmp_dir) { Dir.mktmpdir("toys_git_cache_test") }
+    let(:git_repo_dir) { File.join(tmp_dir, "repo") }
     let(:local_remote) { File.join(git_repo_dir, ".git") }
-    let(:cache_dir) { File.join(Dir.tmpdir, "toys_git_cache_test") }
+    let(:cache_dir) { File.join(tmp_dir, "cache") }
     let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: cache_dir) }
 
     def exec_git(*args)
@@ -53,12 +57,23 @@ describe Toys::Utils::GitCache do
     end
 
     before do
-      FileUtils.chmod_R("u+w", cache_dir, force: true)
-      FileUtils.rm_rf(cache_dir)
-      FileUtils.rm_rf(git_repo_dir)
       FileUtils.mkdir_p(git_repo_dir)
       Dir.chdir(git_repo_dir) do
         exec_git("init")
+      end
+    end
+
+    after do
+      # Cached sources are made read-only, so restore write access before
+      # removing the temp directory. Removal also races with the maintenance
+      # process that git spawns detached after a fetch: it can write new pack
+      # files into a directory that rm_rf has already emptied, which leaves
+      # the tree in place without raising anything. So retry until it is gone.
+      5.times do
+        FileUtils.chmod_R("u+w", tmp_dir, force: true)
+        FileUtils.rm_rf(tmp_dir)
+        break unless File.exist?(tmp_dir)
+        sleep(0.1)
       end
     end
 
