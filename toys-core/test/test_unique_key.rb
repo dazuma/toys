@@ -15,6 +15,30 @@ describe Toys::UniqueKey do
     assert_equal("hello", obj1.inspect)
   end
 
+  it "constructs a name from the object ID when no name is given" do
+    obj1 = Toys::UniqueKey.new
+    assert_includes(obj1.to_s, obj1.object_id.to_s)
+    assert_equal(obj1.to_s, obj1.inspect)
+  end
+
+  it "constructs a distinct name for each object when no name is given" do
+    obj1 = Toys::UniqueKey.new
+    obj2 = Toys::UniqueKey.new
+    refute_equal(obj1.to_s, obj2.to_s)
+  end
+
+  it "freezes the name" do
+    assert(Toys::UniqueKey.new("hello").to_s.frozen?)
+    assert(Toys::UniqueKey.new.to_s.frozen?)
+  end
+
+  it "does not alias a name string that is later modified" do
+    str = +"hello"
+    obj1 = Toys::UniqueKey.new(str)
+    str << " there"
+    assert_equal("hello", obj1.to_s)
+  end
+
   describe "toys-core constants" do
     # The number of unique keys currently defined in toys-core. This is a lower
     # bound guarding against the check below silently walking nothing, as would
