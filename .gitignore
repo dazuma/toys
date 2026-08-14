@@ -13,3 +13,4 @@ gems.locked
 .gems.rb.lock
 .DS_Store
 .claude/
+CLAUDE.local.md
