@@ -5,7 +5,7 @@
 # include this.
 ::Kernel.exec(::File.join(context_directory, "toys-dev"), *::ARGV) unless ::ENV["TOYS_DEV"]
 
-expand :clean, paths: :gitignore, preserve: [".claude/", ".scratch/"]
+expand :clean, paths: :gitignore, preserve: [".claude/", "docs/"]
 
 expand :rubocop do |t|
   t.name = "rubocop-root"
