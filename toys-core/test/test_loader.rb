@@ -2,10 +2,14 @@
 
 require "helper"
 require "fileutils"
+require "tmpdir"
 require "toys/utils/git_cache"
 
 describe Toys::Loader do
-  let(:git_cache_dir) { File.join(Dir.tmpdir, "toys_loader_git_cache_test") }
+  # Each test gets its own temp directory, so no test can see git cache state
+  # left behind by another.
+  let(:tmp_dir) { Dir.mktmpdir("toys_loader_git_cache_test") }
+  let(:git_cache_dir) { File.join(tmp_dir, "cache") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: git_cache_dir) }
   let(:loader) {
     Toys::Loader.new(index_file_name: ".toys.rb",
@@ -20,8 +24,18 @@ describe Toys::Loader do
     Toys::WrappableString.new(str)
   end
 
-  before do
-    FileUtils.rm_rf(git_cache_dir)
+  after do
+    # Cached sources are made read-only, so restore write access before
+    # removing the temp directory. Removal also races with the maintenance
+    # process that git spawns detached after a fetch: it can write new pack
+    # files into a directory that rm_rf has already emptied, which leaves the
+    # tree in place without raising anything. So retry until it is gone.
+    5.times do
+      FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      FileUtils.rm_rf(tmp_dir)
+      break unless File.exist?(tmp_dir)
+      sleep(0.1)
+    end
   end
 
   describe "empty" do
