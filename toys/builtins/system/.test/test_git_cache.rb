@@ -1,6 +1,7 @@
 require "fileutils"
 require "json"
 require "psych"
+require "tmpdir"
 require "toys/utils/exec"
 require "toys/utils/git_cache"
 
@@ -10,9 +11,13 @@ describe "toys system git-cache" do
   toys_custom_paths(File.dirname(File.dirname(__dir__)))
   toys_include_builtins(false)
 
-  let(:cache_dir) { File.join(Dir.tmpdir, "toys_git_cache_test") }
+  # Each test gets its own temp directory, so no test can see cache or repo
+  # state left behind by another. (Sharing a fixed directory made this suite
+  # sensitive to cleanup that silently failed to complete.)
+  let(:tmp_dir) { Dir.mktmpdir("toys_git_cache_test") }
+  let(:cache_dir) { File.join(tmp_dir, "cache") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: cache_dir) }
-  let(:git_repo_dir) { File.join(Dir.tmpdir, "toys_git_cache_test2") }
+  let(:git_repo_dir) { File.join(tmp_dir, "repo") }
   let(:exec_util) { Toys::Utils::Exec.new }
   let(:local_remote) { File.join(git_repo_dir, ".git") }
   let(:timestamp1) { 123456789 }
@@ -68,12 +73,23 @@ describe "toys system git-cache" do
 
   before do
     skip "Skipped test because fork is not available" unless Toys::Compat.allow_fork?
-    FileUtils.chmod_R("u+w", cache_dir, force: true)
-    FileUtils.rm_rf(cache_dir)
-    FileUtils.rm_rf(git_repo_dir)
     FileUtils.mkdir_p(git_repo_dir)
     Dir.chdir(git_repo_dir) do
       exec_git("init")
+    end
+  end
+
+  after do
+    # Cached sources are made read-only, so restore write access before
+    # removing the temp directory. Removal also races with the maintenance
+    # process that git spawns detached after a fetch: it can write new pack
+    # files into a directory that rm_rf has already emptied, which leaves the
+    # tree in place without raising anything. So retry until it is really gone.
+    5.times do
+      FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      FileUtils.rm_rf(tmp_dir)
+      break unless File.exist?(tmp_dir)
+      sleep(0.1)
     end
   end
 
