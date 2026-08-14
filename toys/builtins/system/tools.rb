@@ -73,7 +73,7 @@ tool "list" do
   def run
     loader = choose_loader(local, from_dir)
     words = namespace
-    words = loader.split_path(words.first) if words.size == 1
+    words = loader.tool_name_splitter.split(words.first) if words.size == 1
     tool_list = loader.list_subtools(words,
                                      recursive: recursive,
                                      include_hidden: show_all,
@@ -128,7 +128,7 @@ tool "show" do
   def run
     loader = choose_loader(local, from_dir)
     words = name
-    words = loader.split_path(words.first) if words.size == 1
+    words = loader.tool_name_splitter.split(words.first) if words.size == 1
     tool = loader.lookup_specific(words)
     output =
       if tool.nil?

@@ -1079,7 +1079,7 @@ describe Toys::ToolDefinition do
 
     describe "default completion using only a loader" do
       def make_loader(extra_delimiters: ":")
-        loader = Toys::Loader.new(extra_delimiters: extra_delimiters)
+        loader = Toys::Loader.new(tool_name_splitter: Toys::ToolNameSplitter.new(extra_delimiters))
         loader.add_block do
           tool "ns" do
             tool "sub1" do

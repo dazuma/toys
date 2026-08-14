@@ -26,6 +26,36 @@ describe Toys::CLI do
   }
   let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
 
+  describe "tool name splitter" do
+    it "reflects the extra delimiters" do
+      assert_equal(":", cli.tool_name_splitter.extra_delimiters)
+      assert_equal(["foo", "bar"], cli.tool_name_splitter.split("foo:bar"))
+    end
+
+    it "is shared with the loader" do
+      assert_same(cli.tool_name_splitter, cli.loader.tool_name_splitter)
+    end
+
+    it "defaults to recognizing only whitespace" do
+      cli = Toys::CLI.new(logger: logger, middleware_stack: [])
+      assert_equal(Toys::ToolNameSplitter::DEFAULT.extra_delimiters,
+                   cli.tool_name_splitter.extra_delimiters)
+      assert_equal(["foo:bar"], cli.tool_name_splitter.split("foo:bar"))
+    end
+
+    it "raises if the extra delimiters are illegal" do
+      error = assert_raises(::ArgumentError) do
+        Toys::CLI.new(logger: logger, middleware_stack: [], extra_delimiters: ",")
+      end
+      assert_includes(error.message, "Illegal delimiters")
+    end
+
+    it "is passed on to a child CLI" do
+      child = cli.child
+      assert_equal(":", child.tool_name_splitter.extra_delimiters)
+    end
+  end
+
   describe "execution" do
     it "returns the exit value" do
       cli.add_config_block do

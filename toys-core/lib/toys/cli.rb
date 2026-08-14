@@ -209,6 +209,7 @@ module Toys
       @logger_factory = logger ? proc { |_tool| logger } : logger_factory || CLI.default_logger_factory
       @base_level = base_level
       @extra_delimiters = extra_delimiters
+      @tool_name_splitter = ToolNameSplitter.new(extra_delimiters)
       @config_dir_name = config_dir_name
       @config_file_name = config_file_name
       @index_file_name = index_file_name
@@ -223,7 +224,7 @@ module Toys
         data_dir_name: @data_dir_name,
         lib_dir_name: @lib_dir_name,
         middleware_stack: @middleware_stack,
-        extra_delimiters: @extra_delimiters,
+        tool_name_splitter: @tool_name_splitter,
         mixin_lookup: @mixin_lookup,
         template_lookup: @template_lookup,
         middleware_lookup: @middleware_lookup
@@ -305,6 +306,13 @@ module Toys
     # @return [String]
     #
     attr_reader :extra_delimiters
+
+    ##
+    # The splitter that interprets delimiters in tool names, reflecting this
+    # CLI's {#extra_delimiters}.
+    # @return [Toys::ToolNameSplitter]
+    #
+    attr_reader :tool_name_splitter
 
     ##
     # The global logger, if any.

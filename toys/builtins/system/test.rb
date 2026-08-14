@@ -208,7 +208,7 @@ end
 
 def tool_dir
   @tool_dir ||= begin
-    words = cli.loader.split_path(tool)
+    words = cli.tool_name_splitter.split(tool)
     dir = base_dir
     unless words.empty?
       dir = ::File.join(dir, *words)

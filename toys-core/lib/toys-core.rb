@@ -49,8 +49,9 @@
 # * **Support** — shared vocabulary used by all of the above. This includes
 #   the pluggable extension types {Toys::Mixin}, {Toys::Template}, and
 #   {Toys::Middleware}, which are resolved by name through
-#   {Toys::ModuleLookup}, as well as {Toys::WrappableString}, the named
-#   sentinel {Toys::UniqueKey}, and the error classes.
+#   {Toys::ModuleLookup}, as well as {Toys::WrappableString},
+#   {Toys::ToolNameSplitter} which interprets delimiters in tool names, the
+#   named sentinel {Toys::UniqueKey}, and the error classes.
 #
 # The deliberate upward dependencies are:
 #
@@ -177,4 +178,5 @@ require "toys/runner"
 require "toys/source_info"
 require "toys/template"
 require "toys/tool_definition"
+require "toys/tool_name_splitter"
 require "toys/wrappable_string"

@@ -325,7 +325,7 @@ module Toys
           end
         end
         if delegate_to || delegate_relative
-          delegate_to2 = @__words + @__loader.split_path(delegate_relative) if delegate_relative
+          delegate_to2 = @__words + @__loader.tool_name_splitter.split(delegate_relative) if delegate_relative
           orig_block = block
           block = proc do
             self.delegate_to(delegate_to) if delegate_to
@@ -401,7 +401,7 @@ module Toys
       def delegate_to(target)
         cur_tool = DSL::Internal.current_tool(self, true)
         return self if cur_tool.nil?
-        cur_tool.delegate_to(@__loader.split_path(target))
+        cur_tool.delegate_to(@__loader.tool_name_splitter.split(target))
         self
       end
 
