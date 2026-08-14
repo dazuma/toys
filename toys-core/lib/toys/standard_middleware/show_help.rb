@@ -53,37 +53,37 @@ module Toys
       # Key set when the show help flag is present
       # @return [Object]
       #
-      SHOW_HELP_KEY = ::Object.new.freeze
+      SHOW_HELP_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::SHOW_HELP_KEY")
 
       ##
       # Key set when the show usage flag is present
       # @return [Object]
       #
-      SHOW_USAGE_KEY = ::Object.new.freeze
+      SHOW_USAGE_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::SHOW_USAGE_KEY")
 
       ##
       # Key set when the show subtool list flag is present
       # @return [Object]
       #
-      SHOW_LIST_KEY = ::Object.new.freeze
+      SHOW_LIST_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::SHOW_LIST_KEY")
 
       ##
       # Key for the recursive setting
       # @return [Object]
       #
-      RECURSIVE_SUBTOOLS_KEY = ::Object.new.freeze
+      RECURSIVE_SUBTOOLS_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::RECURSIVE_SUBTOOLS_KEY")
 
       ##
       # Key for the search string
       # @return [Object]
       #
-      SEARCH_STRING_KEY = ::Object.new.freeze
+      SEARCH_STRING_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::SEARCH_STRING_KEY")
 
       ##
       # Key for the show-all-subtools setting
       # @return [Object]
       #
-      SHOW_ALL_SUBTOOLS_KEY = ::Object.new.freeze
+      SHOW_ALL_SUBTOOLS_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowHelp::SHOW_ALL_SUBTOOLS_KEY")
 
       ##
       # Create a ShowHelp middleware.

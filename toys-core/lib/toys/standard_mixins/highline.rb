@@ -34,7 +34,7 @@ module Toys
       # Context key for the highline object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Highline::KEY")
 
       ##
       # A tool-wide [HighLine](https://www.rubydoc.info/gems/highline/HighLine)

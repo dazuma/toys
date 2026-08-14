@@ -900,9 +900,9 @@ execute.
 ```ruby
 class TimingMiddleware
   # This is a context key that will be used to store the "--show-timing"
-  # flag state. We can use `Object.new` to ensure that the key is unique
-  # across other middlewares and tool definitions.
-  KEY = Object.new.freeze
+  # flag state. {Toys::UniqueKey} is a convenient way to create a unique key,
+  # with a useful name, but you can also simply use `Object.new`.
+  KEY = Toys::UniqueKey.new("TimingMiddleware::KEY")
 
   # This method intercepts tool configuration. We use it to add a flag that
   # enables timing display.

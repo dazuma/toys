@@ -54,7 +54,7 @@ module Toys
       # Context key for the tool-wide {Toys::Utils::Gems} object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Gems::KEY")
 
       ##
       # Returns a tool-wide instance of {Toys::Utils::Gems}.

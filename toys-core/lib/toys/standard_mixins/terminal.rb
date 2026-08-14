@@ -33,7 +33,7 @@ module Toys
       # Context key for the terminal object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Terminal::KEY")
 
       ##
       # A tool-wide terminal instance
