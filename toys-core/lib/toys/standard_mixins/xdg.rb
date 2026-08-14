@@ -29,7 +29,7 @@ module Toys
       # Context key for the XDG object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::XDG::KEY")
 
       ##
       # Access XDG utility methods.

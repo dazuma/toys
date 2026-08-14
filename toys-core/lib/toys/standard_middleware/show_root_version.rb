@@ -23,7 +23,7 @@ module Toys
       # Key set when the version flag is present
       # @return [Object]
       #
-      SHOW_VERSION_KEY = ::Object.new.freeze
+      SHOW_VERSION_KEY = ::Toys::UniqueKey.new("Toys::StandardMiddleware::ShowRootVersion::SHOW_VERSION_KEY")
 
       ##
       # Create a ShowVersion middleware

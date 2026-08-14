@@ -51,7 +51,7 @@ module Toys
       # an array of strings.
       # @return [Object]
       #
-      ARGS = ::Object.new.freeze
+      ARGS = ::Toys::UniqueKey.new("Toys::Context::Key::ARGS")
 
       ##
       # Context key for the currently running {Toys::CLI}. You can use the
@@ -61,13 +61,13 @@ module Toys
       # {Key::RUNNER} instead. The value could be nil if a CLI is not present.
       # @return [Object]
       #
-      CLI = ::Object.new.freeze
+      CLI = ::Toys::UniqueKey.new("Toys::Context::Key::CLI")
 
       ##
       # Context key for the context directory path. The value is a string
       # @return [Object]
       #
-      CONTEXT_DIRECTORY = ::Object.new.freeze
+      CONTEXT_DIRECTORY = ::Toys::UniqueKey.new("Toys::Context::Key::CONTEXT_DIRECTORY")
 
       ##
       # Context key for the context from which the current call was delegated.
@@ -75,26 +75,26 @@ module Toys
       # call is not delegated.
       # @return [Object]
       #
-      DELEGATED_FROM = ::Object.new.freeze
+      DELEGATED_FROM = ::Toys::UniqueKey.new("Toys::Context::Key::DELEGATED_FROM")
 
       ##
       # Context key for the executable name displayed in help text. The value
       # is a String, provided by the {Toys::Runner}.
       # @return [Object]
       #
-      EXECUTABLE_NAME = ::Object.new.freeze
+      EXECUTABLE_NAME = ::Toys::UniqueKey.new("Toys::Context::Key::EXECUTABLE_NAME")
 
       ##
       # Context key for the active `Loader` object.
       # @return [Object]
       #
-      LOADER = ::Object.new.freeze
+      LOADER = ::Toys::UniqueKey.new("Toys::Context::Key::LOADER")
 
       ##
       # Context key for the active `Logger` object.
       # @return [Object]
       #
-      LOGGER = ::Object.new.freeze
+      LOGGER = ::Toys::UniqueKey.new("Toys::Context::Key::LOGGER")
 
       ##
       # Context key for the {Toys::Runner} that is running the current tool.
@@ -102,54 +102,54 @@ module Toys
       # {Toys::Runner#run}.
       # @return [Object]
       #
-      RUNNER = ::Object.new.freeze
+      RUNNER = ::Toys::UniqueKey.new("Toys::Context::Key::RUNNER")
 
       ##
       # Context key for the {Toys::ToolDefinition} object being executed.
       # @return [Object]
       #
-      TOOL = ::Object.new.freeze
+      TOOL = ::Toys::UniqueKey.new("Toys::Context::Key::TOOL")
 
       ##
       # Context key for the full name of the tool being executed. Value is an
       # array of strings.
       # @return [Object]
       #
-      TOOL_NAME = ::Object.new.freeze
+      TOOL_NAME = ::Toys::UniqueKey.new("Toys::Context::Key::TOOL_NAME")
 
       ##
       # Context key for the {Toys::SourceInfo} describing the source of this
       # tool.
       # @return [Object]
       #
-      TOOL_SOURCE = ::Object.new.freeze
+      TOOL_SOURCE = ::Toys::UniqueKey.new("Toys::Context::Key::TOOL_SOURCE")
 
       ##
       # Context key for all unmatched args in order. The value is an array of
       # strings.
       # @return [Object]
       #
-      UNMATCHED_ARGS = ::Object.new.freeze
+      UNMATCHED_ARGS = ::Toys::UniqueKey.new("Toys::Context::Key::UNMATCHED_ARGS")
 
       ##
       # Context key for unmatched flags. The value is an array of strings.
       # @return [Object]
       #
-      UNMATCHED_FLAGS = ::Object.new.freeze
+      UNMATCHED_FLAGS = ::Toys::UniqueKey.new("Toys::Context::Key::UNMATCHED_FLAGS")
 
       ##
       # Context key for unmatched positional args. The value is an array of
       # strings.
       # @return [Object]
       #
-      UNMATCHED_POSITIONAL = ::Object.new.freeze
+      UNMATCHED_POSITIONAL = ::Toys::UniqueKey.new("Toys::Context::Key::UNMATCHED_POSITIONAL")
 
       ##
       # Context key for the list of usage errors raised. The value is an array
       # of {Toys::ArgParser::UsageError}.
       # @return [Object]
       #
-      USAGE_ERRORS = ::Object.new.freeze
+      USAGE_ERRORS = ::Toys::UniqueKey.new("Toys::Context::Key::USAGE_ERRORS")
 
       ##
       # Context key for the verbosity value. The value is an integer defaulting
@@ -157,7 +157,7 @@ module Toys
       # quiet.
       # @return [Object]
       #
-      VERBOSITY = ::Object.new.freeze
+      VERBOSITY = ::Toys::UniqueKey.new("Toys::Context::Key::VERBOSITY")
     end
 
     ##

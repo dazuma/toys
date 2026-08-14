@@ -26,7 +26,7 @@ module Toys
       # Context key for the GitCache object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::GitCache::KEY")
 
       ##
       # Access the builtin GitCache.

@@ -49,8 +49,8 @@
 # * **Support** — shared vocabulary used by all of the above. This includes
 #   the pluggable extension types {Toys::Mixin}, {Toys::Template}, and
 #   {Toys::Middleware}, which are resolved by name through
-#   {Toys::ModuleLookup}, as well as {Toys::WrappableString} and the error
-#   classes.
+#   {Toys::ModuleLookup}, as well as {Toys::WrappableString}, the named
+#   sentinel {Toys::UniqueKey}, and the error classes.
 #
 # The deliberate upward dependencies are:
 #
@@ -64,8 +64,9 @@
 #   enumerate subtools and to resolve delegation targets.
 # * {Toys::ToolDefinition} retains the {Toys::SourceInfo} describing where it
 #   was defined.
-# * The context key constants under {Toys::Context::Key} act as shared
-#   vocabulary, and are referenced from any layer.
+# * The context key constants under {Toys::Context::Key}, which are
+#   {Toys::UniqueKey} instances, act as shared vocabulary, and are referenced
+#   from any layer.
 #
 module Toys
   ##
@@ -149,6 +150,7 @@ module Toys
 end
 
 require "toys/compat"
+require "toys/unique_key"
 
 require "toys/acceptor"
 require "toys/arg_parser"

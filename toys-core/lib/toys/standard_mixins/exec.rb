@@ -323,7 +323,7 @@ module Toys
       # Context key for the executor object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Exec::KEY")
 
       ##
       # Set default configuration options.

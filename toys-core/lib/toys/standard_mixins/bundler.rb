@@ -115,7 +115,7 @@ module Toys
       # will be a hash of parameters if the bundle has not been set up yet, or
       # nil if the bundle has already been set up.
       #
-      SETUP_PARAMS_KEY = ::Object.new.freeze
+      SETUP_PARAMS_KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Bundler::SETUP_PARAMS_KEY")
 
       ##
       # @private

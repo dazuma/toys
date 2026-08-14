@@ -29,7 +29,7 @@ module Toys
       # Context key for the Pager object.
       # @return [Object]
       #
-      KEY = ::Object.new.freeze
+      KEY = ::Toys::UniqueKey.new("Toys::StandardMixins::Pager::KEY")
 
       ##
       # Access the Pager.

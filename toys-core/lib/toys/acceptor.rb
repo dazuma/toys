@@ -22,7 +22,7 @@ module Toys
     # indicate invalid input.
     # @return [Object]
     #
-    REJECT = ::Object.new.freeze
+    REJECT = ::Toys::UniqueKey.new("Toys::Acceptor::REJECT")
 
     ##
     # The default type description.
