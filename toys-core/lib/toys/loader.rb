@@ -29,9 +29,9 @@ module Toys
     # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
     #     middleware that will be used by default for all tools loaded by this
     #     loader.
-    # @param extra_delimiters [String] A string containing characters that can
-    #     function as delimiters in a tool name. Defaults to empty. Allowed
-    #     characters are period, colon, and slash.
+    # @param tool_name_splitter [Toys::ToolNameSplitter] The splitter that
+    #     interprets delimiters in tool names. Defaults to
+    #     {Toys::ToolNameSplitter::DEFAULT}, which recognizes only whitespace.
     # @param mixin_lookup [Toys::ModuleLookup] A lookup for well-known
     #     mixin modules. Defaults to an empty lookup.
     # @param middleware_lookup [Toys::ModuleLookup] A lookup for
@@ -45,7 +45,7 @@ module Toys
                    data_dir_name: nil,
                    lib_dir_name: nil,
                    middleware_stack: [],
-                   extra_delimiters: "",
+                   tool_name_splitter: nil,
                    mixin_lookup: nil,
                    middleware_lookup: nil,
                    template_lookup: nil,
@@ -75,11 +75,19 @@ module Toys
       @stop_priority = -999_999
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
-      @delimiter_handler = DelimiterHandler.new(extra_delimiters)
+      @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
       @git_cache = git_cache
       @gems_util = gems_util
       get_tool([], -999_999)
     end
+
+    ##
+    # The splitter that interprets delimiters in the tool names handled by this
+    # loader. Use it to convert a delimited name into words.
+    #
+    # @return [Toys::ToolNameSplitter]
+    #
+    attr_reader :tool_name_splitter
 
     ##
     # Add a configuration file/directory to the loader.
@@ -265,7 +273,7 @@ module Toys
     # @return [Array(Toys::ToolDefinition,Array<String>)]
     #
     def lookup(args)
-      orig_prefix, args = @delimiter_handler.find_orig_prefix(args)
+      orig_prefix, args = find_orig_prefix(args)
       # Start looking for a tool with the entire prefix, and continue to
       # shorten it until a tool is found. Because the root tool always exists,
       # the final fallback of the empty prefix will always succeed.
@@ -290,7 +298,7 @@ module Toys
     # @return [nil] if no such tool exists
     #
     def lookup_specific(words)
-      words = @delimiter_handler.split_path(words.first) if words.size == 1
+      words = @tool_name_splitter.split(words.first) if words.size == 1
       load_for_prefix(words)
       tool = @mutex.synchronize { get_tool_data(words, false)&.cur_definition }
       finish_definitions_in_tree(words) if tool
@@ -345,39 +353,6 @@ module Toys
         name = tool.full_name
         name.length > len && name.slice(0, len) == words
       end
-    end
-
-    ##
-    # Splits the given path using the delimiters configured in this Loader.
-    # You may pass in either an array of strings, or a single string possibly
-    # delimited by path separators. Always returns an array of strings.
-    #
-    # @param str [String,Symbol,Array<String,Symbol>] The path to split.
-    # @return [Array<String>]
-    #
-    def split_path(str)
-      return str.map(&:to_s) if str.is_a?(::Array)
-      @delimiter_handler.split_path(str.to_s)
-    end
-
-    ##
-    # Splits a partially typed path, such as a fragment being completed, into
-    # the portion that names a path and the trailing partial word, using the
-    # delimiters configured in this Loader.
-    #
-    # Returns a two-element array. The first element is the leading portion of
-    # the string through its final delimiter, or the empty string if there is
-    # none; pass it to {#split_path} to get the path words. The second element
-    # is the text following that delimiter.
-    #
-    # A delimiter is recognized as a separator only if at least one character
-    # precedes it, so a string that begins with a delimiter is not split.
-    #
-    # @param str [String] The partial path to split.
-    # @return [Array(String,String)]
-    #
-    def split_partial_path(str)
-      @delimiter_handler.split_partial_path(str)
     end
 
     #### INTERNAL METHODS ####
@@ -715,54 +690,26 @@ module Toys
       end
     end
 
-    ##
-    # An object that handles name delimiting.
-    #
-    # @private
-    #
-    class DelimiterHandler
-      ##
-      # @private
-      #
-      def initialize(extra_delimiters)
-        unless %r{^[[:space:]./:]*$}.match?(extra_delimiters)
-          raise ::ArgumentError, "Illegal delimiters in #{extra_delimiters.inspect}"
-        end
-        chars = ::Regexp.escape(extra_delimiters.chars.uniq.join)
-        @delimiters = ::Regexp.new("[[:space:]#{chars}]")
-        @trailing_word = ::Regexp.new("\\A(.+#{@delimiters})(.*)\\z", ::Regexp::MULTILINE)
-      end
-
-      ##
-      # @private
-      #
-      def split_path(str)
-        str.split(@delimiters)
-      end
-
-      ##
-      # @private
-      #
-      def split_partial_path(str)
-        match = @trailing_word.match(str)
-        match ? [match[1], match[2]] : ["", str]
-      end
-
-      ##
-      # @private
-      #
-      def find_orig_prefix(args)
-        first_split = (args.first || "").split(@delimiters)
-        if first_split.size > 1
-          args = first_split + args.slice(1..-1)
-          return [first_split, args]
-        end
-        orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
-        [orig_prefix, args]
-      end
-    end
-
     private
+
+    ##
+    # Determine the longest prefix of the given command line arguments that
+    # could name a tool, along with the arguments to search it in.
+    #
+    # If the first argument spells a multi-word name using delimiters, that
+    # name is the prefix, and its words replace that argument in the returned
+    # arguments. Otherwise the prefix is the leading arguments that do not look
+    # like flags, and the arguments are returned unchanged.
+    #
+    def find_orig_prefix(args)
+      first_split = @tool_name_splitter.split(args.first || "")
+      if first_split.size > 1
+        args = first_split + args.slice(1..-1)
+        return [first_split, args]
+      end
+      orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
+      [orig_prefix, args]
+    end
 
     ##
     # Record and install a source root. The given root source should have been

@@ -73,7 +73,7 @@ end
 
 describe Toys::Completion::Context do
   let(:loader) {
-    loader = Toys::Loader.new(extra_delimiters: ":")
+    loader = Toys::Loader.new(tool_name_splitter: Toys::ToolNameSplitter.new(":"))
     loader.add_block do
       tool "foo" do
         flag :bar, "--bar VALUE"

@@ -86,7 +86,7 @@ module Toys
           loader = tool_class.instance_variable_get(:@__loader)
           subtool_words = tool_class.instance_variable_get(:@__words).dup
           next_remaining = tool_class.instance_variable_get(:@__remaining_words)
-          loader.split_path(words).each do |word|
+          loader.tool_name_splitter.split(words).each do |word|
             word = word.to_s
             subtool_words << word
             next_remaining = Loader.next_remaining_words(next_remaining, word)
@@ -171,7 +171,7 @@ module Toys
           class_name = mod_names.pop
           parent = parent_from_mod_name_segments(mod_names)
           loader = parent.instance_variable_get(:@__loader)
-          name = given_name ? loader.split_path(given_name) : class_name_to_tool_name(class_name)
+          name = given_name ? loader.tool_name_splitter.split(given_name) : class_name_to_tool_name(class_name)
 
           priority = parent.instance_variable_get(:@__priority)
           words = parent.instance_variable_get(:@__words) + name

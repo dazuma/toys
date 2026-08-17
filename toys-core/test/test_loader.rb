@@ -13,7 +13,7 @@ describe Toys::Loader do
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: git_cache_dir) }
   let(:loader) {
     Toys::Loader.new(index_file_name: ".toys.rb",
-                     extra_delimiters: ":",
+                     tool_name_splitter: Toys::ToolNameSplitter.new(":"),
                      git_cache: git_cache)
   }
   let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
@@ -27,11 +27,19 @@ describe Toys::Loader do
   after do
     # Cached sources are made read-only, so restore write access before
     # removing the temp directory. Removal also races with the maintenance
-    # process that git spawns detached after a fetch: it can write new pack
-    # files into a directory that rm_rf has already emptied, which leaves the
-    # tree in place without raising anything. So retry until it is gone.
+    # process that git spawns detached after a fetch, in two ways. It can
+    # write new pack files into a directory that rm_rf has already emptied,
+    # which leaves the tree in place without raising anything. It can also
+    # delete an objects directory between the moment chmod_R lists it and the
+    # moment it descends into it, which raises out of the traversal because
+    # `force` covers only the chmod of each entry, not the walk. So swallow
+    # the walk errors, and retry until the tree is really gone.
     5.times do
-      FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      begin
+        FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      rescue SystemCallError
+        # Fall through to the removal attempt, then try again.
+      end
       FileUtils.rm_rf(tmp_dir)
       break unless File.exist?(tmp_dir)
       sleep(0.1)
@@ -304,7 +312,8 @@ describe Toys::Loader do
 
   describe "extra delimiters" do
     let(:delimiters_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb", extra_delimiters: ".:")
+      Toys::Loader.new(index_file_name: ".toys.rb",
+                       tool_name_splitter: Toys::ToolNameSplitter.new(".:"))
     }
 
     before do
@@ -344,47 +353,6 @@ describe Toys::Loader do
       assert_equal("normal tool-1-3 short description", tool.desc.to_s)
       assert_equal(["namespace-1", "tool-1-3"], tool.full_name)
       assert_equal([], remaining)
-    end
-
-    describe "#split_partial_path" do
-      it "splits at the final delimiter" do
-        assert_equal(["namespace-1.", "tool"],
-                     delimiters_loader.split_partial_path("namespace-1.tool"))
-      end
-
-      it "splits at the final of several delimiters" do
-        assert_equal(["one.two:", "three"], delimiters_loader.split_partial_path("one.two:three"))
-      end
-
-      it "returns an empty trailing word when the string ends with a delimiter" do
-        assert_equal(["namespace-1.", ""],
-                     delimiters_loader.split_partial_path("namespace-1."))
-      end
-
-      it "returns an empty prefix when there is no delimiter" do
-        assert_equal(["", "tool"], delimiters_loader.split_partial_path("tool"))
-      end
-
-      it "does not treat a leading delimiter as a separator" do
-        assert_equal(["", ".tool"], delimiters_loader.split_partial_path(".tool"))
-      end
-
-      it "splits at whitespace" do
-        assert_equal(["namespace-1 ", "tool"],
-                     delimiters_loader.split_partial_path("namespace-1 tool"))
-      end
-
-      it "does not split at a delimiter that is not configured" do
-        assert_equal(["", "one.two"], Toys::Loader.new.split_partial_path("one.two"))
-      end
-
-      it "splits at whitespace when no extra delimiters are configured" do
-        assert_equal(["one ", "two"], Toys::Loader.new.split_partial_path("one two"))
-      end
-
-      it "returns an empty prefix for an empty string" do
-        assert_equal(["", ""], delimiters_loader.split_partial_path(""))
-      end
     end
   end
 
@@ -937,7 +905,7 @@ describe Toys::Loader do
     }
     let(:copy_loader) {
       Toys::Loader.new(index_file_name: ".toys.rb",
-                       extra_delimiters: ":",
+                       tool_name_splitter: Toys::ToolNameSplitter.new(":"),
                        git_cache: unusable_git_cache,
                        gems_util: unusable_gems_util)
     }
