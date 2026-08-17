@@ -82,11 +82,19 @@ describe "toys system git-cache" do
   after do
     # Cached sources are made read-only, so restore write access before
     # removing the temp directory. Removal also races with the maintenance
-    # process that git spawns detached after a fetch: it can write new pack
-    # files into a directory that rm_rf has already emptied, which leaves the
-    # tree in place without raising anything. So retry until it is really gone.
+    # process that git spawns detached after a fetch, in two ways. It can
+    # write new pack files into a directory that rm_rf has already emptied,
+    # which leaves the tree in place without raising anything. It can also
+    # delete an objects directory between the moment chmod_R lists it and the
+    # moment it descends into it, which raises out of the traversal because
+    # `force` covers only the chmod of each entry, not the walk. So swallow
+    # the walk errors, and retry until the tree is really gone.
     5.times do
-      FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      begin
+        FileUtils.chmod_R("u+w", tmp_dir, force: true)
+      rescue SystemCallError
+        # Fall through to the removal attempt, then try again.
+      end
       FileUtils.rm_rf(tmp_dir)
       break unless File.exist?(tmp_dir)
       sleep(0.1)
