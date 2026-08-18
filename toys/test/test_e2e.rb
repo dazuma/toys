@@ -23,7 +23,7 @@ describe "toys e2e" do
       result = run_toys("boom", chdir: "#{e2e_cases_dir}/exception", out: :capture, err: :capture)
       refute(result.success?)
       assert_includes(result.captured_err, "RuntimeError: something went wrong")
-      assert_includes(result.captured_err, "in config file: #{toys_rb}:5")
+      assert_includes(result.captured_err, "in tool file: #{toys_rb}:5")
     end
 
     it "reports tool not found with exit code 2" do

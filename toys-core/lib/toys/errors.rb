@@ -63,7 +63,7 @@ module Toys
       original = original_of(wrapped)
       super("#{banner}: #{original.message} (#{original.class})")
       # Prefer the locations, because they let an enclosing capture locate the
-      # config file line (see #line_from_original). They are unavailable if the
+      # tool file line (see #line_from_original). They are unavailable if the
       # wrapped error was never raised, or if it is itself a ContextualError on
       # a Ruby too old to retain locations through set_backtrace, so fall back
       # to the strings rather than leaving the backtrace unset.
@@ -71,11 +71,11 @@ module Toys
       @banner = banner
       @tool_name = tool_name
       @tool_args = tool_args
-      @config_path = @config_line = nil
+      @tool_file_path = @tool_file_line = nil
       line = line_from_original(path, original)
       if line
-        @config_path = path
-        @config_line = line
+        @tool_file_path = path
+        @tool_file_line = line
       end
       @final = final
     end
@@ -87,25 +87,35 @@ module Toys
     attr_reader :banner
 
     ##
-    # The path to the toys config file in which the error was detected
-    # @return [String]
+    # The path to the toys tool file in which the error was detected.
     #
-    attr_reader :config_path
+    # @return [String] if a tool file is found in the backtrace.
+    # @return [nil] if no backtrace is available or no toys tool file could be
+    #     found in it.
+    #
+    attr_reader :tool_file_path
+    alias config_path tool_file_path
 
     ##
-    # The line number in the toys config file in which the error was detected
-    # @return [Integer]
+    # The line number in the toys tool file in which the error was detected.
     #
-    attr_reader :config_line
+    # @return [Integer] if a tool file is found in the backtrace.
+    # @return [nil] if no backtrace is available or no toys tool file could be
+    #     found in it.
+    #
+    attr_reader :tool_file_line
+    alias config_line tool_file_line
 
     ##
-    # The full name of the tool that was running when the error occurred
+    # The full name of the tool that was running when the error occurred.
+    #
     # @return [Array<String>]
     #
     attr_reader :tool_name
 
     ##
-    # The arguments passed to the tool that was running when the error occurred
+    # The arguments passed to the tool that was running when the error occurred.
+    #
     # @return [Array<String>]
     #
     attr_reader :tool_args
@@ -137,11 +147,11 @@ module Toys
     # @private
     #
     def update_fields!(path: nil, tool_name: nil, tool_args: nil, final: false)
-      if @config_path.nil? && @config_line.nil?
+      if @tool_file_path.nil? && @tool_file_line.nil?
         line = line_from_original(path, original_of(cause))
         if line
-          @config_path = path
-          @config_line = line
+          @tool_file_path = path
+          @tool_file_line = line
         end
       end
       @tool_name = tool_name if @tool_name.nil? && !tool_name.nil?

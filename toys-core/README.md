@@ -109,9 +109,9 @@ $ ./mycmd --help
 ```
 
 Notice that we did not create a `tool` block, but instead set up description,
-flags, and functionality directly in the configuration block. This configures
-the "root tool", i.e. what happens when you run the executable without passing
-a tool name to it. (In fact, it's technically legal to do this in Toys as well,
+flags, and functionality directly in the source block. This configures the
+"root tool", i.e. what happens when you run the executable without passing a
+tool name to it. (In fact, it's technically legal to do this in Toys as well,
 by setting functionality at the "top level" of a `.toys.rb` file without any
 `tool` block, although you probably won't actually want to do so.)
 
@@ -119,7 +119,8 @@ by setting functionality at the "top level" of a `.toys.rb` file without any
 
 But perhaps you want your executable to have multiple "tools", similar to other
 familiar executables like git or kubectl. You can define tools, including
-nested tools, by writing `tool` blocks in your config. Here's an example:
+nested tools, by writing `tool` sub-blocks within your source block. Here's an
+example:
 
 ```ruby
 #!/usr/bin/env ruby
@@ -128,7 +129,7 @@ require "toys-core"
 
 cli = Toys::CLI.new
 
-#### Change the config block as follows ...
+#### Change the source block as follows ...
 cli.add_source_block do
   # Things outside any tool block still apply to the root
   desc "My first executable with several tools"
@@ -162,7 +163,7 @@ available tools.
 $ ./mycmd
 ```
 
-Notice that the description set at the "root" of the config block (outside the
+Notice that the description set at the "root" of the source block (outside the
 tool blocks) shows up here.
 
 ### Configuring the CLI
@@ -189,7 +190,7 @@ cli = Toys::CLI.new(
   }
 )
 
-#### Change the config block as follows ...
+#### Change the source block as follows ...
 cli.add_source_block do
   tool "example" do
     tool "greet" do
@@ -238,7 +239,7 @@ middlewares = [
 ]
 cli = Toys::CLI.new middleware_stack: middlewares
 
-#### Use this config block ...
+#### Use this source block ...
 cli.add_source_block do
   tool "greet" do
     def run

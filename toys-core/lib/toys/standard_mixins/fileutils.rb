@@ -7,7 +7,7 @@ module Toys
     #
     # You may make the methods in the `FileUtils` standard library module
     # available to your tool by including the following directive in your tool
-    # configuration:
+    # definition:
     #
     #     include :fileutils
     #

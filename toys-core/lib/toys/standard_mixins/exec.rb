@@ -9,7 +9,7 @@ module Toys
     # provides an interface for controlling a spawned process's streams.
     #
     # You can make these methods available to your tool by including the
-    # following directive in your tool configuration:
+    # following directive in your tool definition:
     #
     #     include :exec
     #

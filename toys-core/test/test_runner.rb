@@ -199,7 +199,7 @@ describe Toys::Runner do
       end
       assert(err.final?)
       assert_kind_of(::NameError, err.root_cause)
-      assert_includes(err.config_path, "/errors/definition.rb")
+      assert_includes(err.tool_file_path, "/errors/definition.rb")
     end
 
     it "does not finalize a tool definition error when wrap_errors is false" do

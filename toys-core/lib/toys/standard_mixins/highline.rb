@@ -9,7 +9,7 @@ module Toys
     # attempt to install the gem if it is not available.
     #
     # You may make these methods available to your tool by including the
-    # following directive in your tool configuration:
+    # following directive in your tool definition:
     #
     #     include :highline
     #

@@ -4,11 +4,11 @@ module Toys
   ##
   # A template definition. Template classes should include this module.
   #
-  # A template is a configurable set of DSL code that can be run in a toys
-  # configuration to automate tool defintion. For example, toys provides a
-  # "minitest" template that generates a "test" tool that invokes minitest.
-  # Templates will often support configuration; for example the minitest
-  # template lets you configure the paths to the test files.
+  # A template is a configurable set of DSL code that can be invoked to
+  # automate tool definition. For example, Toys provides a "minitest" template
+  # that generates a "test" tool that invokes minitest. Templates will often
+  # support configuration; for example the minitest template lets you configure
+  # the paths to the test files.
   #
   # ### Usage
   #
@@ -20,10 +20,11 @@ module Toys
   # template object is passed to any block given to {Toys::DSL::Tool#expand}.
   #
   # Next, in your template class, call the `on_expand` method, which is defined
-  # in {Toys::Template::ClassMethods#on_expand}. Pass this a block which
+  # in {Toys::Template::ClassMethods#on_expand}, and pass in a block which
   # defines the implementation of the template. Effectively, the contents of
-  # this block are "inserted" into the user's configuration. The template
-  # object is passed to the block so you have access to the template options.
+  # this block are "inserted" into the tool definition wherever the template is
+  # invoked. The template object is passed to the block so you have access to
+  # the template options.
   #
   # Note that a template performs two functions: a public interface for the
   # user of the template to _write_ configuration data, and code generation
@@ -36,8 +37,7 @@ module Toys
   #
   # This is a simple template that generates a "hello" tool. The tool simply
   # prints a `"Hello, #{name}!"` greeting. The name is set as a template
-  # option; it is defined when the template is expanded in a toys
-  # configuration.
+  # option; it is defined when the template is expanded in a tool definition.
   #
   #     # Define a template by creating a class that includes Toys::Template.
   #     class MyHelloTemplate
