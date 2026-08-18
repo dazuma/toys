@@ -232,7 +232,7 @@ def base_dir
     else
       dir = ::File.realpath(::Dir.getwd)
       loop do
-        candidate = ::File.join(dir, ::Toys::StandardCLI::CONFIG_DIR_NAME)
+        candidate = ::File.join(dir, ::Toys::StandardCLI::TOPLEVEL_TOOL_DIR_NAME)
         break candidate if ::File.directory?(candidate)
         parent = ::File.dirname(dir)
         if parent == dir

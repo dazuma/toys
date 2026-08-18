@@ -236,13 +236,12 @@ describe "yardoc template" do
 
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
-    let(:loader) { cli.loader }
 
     it "runs yardoc" do
       input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
-      loader.add_block do
+      cli.add_source_block do
         set_context_directory input_dir
         expand :yardoc, output_dir: output_dir
       end
@@ -256,7 +255,7 @@ describe "yardoc template" do
       input_dir = File.join(File.dirname(__dir__), "test-data", "doc-case")
       output_dir = File.join(File.dirname(__dir__), "tmp")
       FileUtils.rm_rf(output_dir)
-      loader.add_block do
+      cli.add_source_block do
         expand :yardoc, output_dir: output_dir, context_directory: input_dir
       end
       capture_subprocess_io do

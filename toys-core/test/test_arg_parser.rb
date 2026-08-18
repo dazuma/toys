@@ -6,8 +6,7 @@ describe Toys::ArgParser do
   let(:supports_suggestions?) { ::Toys::Compat.supports_suggestions? }
   let(:executable_name) { "toys" }
   let(:cli) {
-    Toys::CLI.new(executable_name: executable_name, middleware_stack: [],
-                  index_file_name: ".toys.rb", data_dir_name: ".data")
+    Toys::CLI.new(executable_name: executable_name, middleware_stack: [])
   }
   let(:loader) { cli.loader }
   let(:tool_name) { "foo" }

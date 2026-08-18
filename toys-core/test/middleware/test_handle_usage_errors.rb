@@ -18,7 +18,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
   }
 
   it "does not intercept valid usage" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(1)
@@ -30,7 +30,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
   end
 
   it "reports an invalid tool" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(1)
@@ -42,7 +42,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
   end
 
   it "reports an invalid option" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(1)
@@ -54,7 +54,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
   end
 
   it "reports an extra arg" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(1)
@@ -66,7 +66,7 @@ describe Toys::StandardMiddleware::HandleUsageErrors do
   end
 
   it "reports an unsatisfied required arg" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         required :arg1
         def run

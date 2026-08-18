@@ -15,7 +15,7 @@ describe Toys::StandardMixins::XDG do
   }
 
   it "accesses xdg" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         include :xdg
         def run

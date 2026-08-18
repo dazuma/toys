@@ -2,30 +2,17 @@
 
 module Toys
   ##
-  # The Loader service loads tools from configuration files, and finds the
+  # The Loader service loads tools from tool sources, and finds the
   # appropriate tool given a set of command line arguments.
   #
   class Loader
     ##
     # Create a Loader
     #
-    # @param index_file_name [String,nil] A file with this name that appears
-    #     in any configuration directory (not just a toplevel directory) is
-    #     loaded first as a standalone configuration file. If not provided,
-    #     standalone configuration files are disabled.
-    # @param preload_file_name [String,nil] A file with this name that appears
-    #     in any configuration directory is preloaded before any tools in that
-    #     configuration directory are defined.
-    # @param preload_dir_name [String,nil] A directory with this name that
-    #     appears in any configuration directory is searched for Ruby files,
-    #     which are preloaded before any tools in that configuration directory
-    #     are defined.
-    # @param data_dir_name [String,nil] A directory with this name that appears
-    #     in any configuration directory is added to the data directory search
-    #     path for any tool file in that directory.
-    # @param lib_dir_name [String,nil] A directory with this name that appears
-    #     in any configuration directory is added to the Ruby load path for any
-    #     tool file in that directory.
+    # @param starting_sources [Array<Toys::SourceInfo>] An array of starting
+    #     point sources. Required. Generally this should come from a
+    #     {Toys::SourceListBuilder} which will construct the needed
+    #     SourceInfo objects and set priorities properly.
     # @param middleware_stack [Array<Toys::Middleware::Spec>] An array of
     #     middleware that will be used by default for all tools loaded by this
     #     loader.
@@ -38,12 +25,12 @@ module Toys
     #     well-known middleware classes. Defaults to an empty lookup.
     # @param template_lookup [Toys::ModuleLookup] A lookup for
     #     well-known template classes. Defaults to an empty lookup.
+    # @param git_cache [Toys::Utils::GitCache] A custom GitCache instance to
+    #     use to resolve git sources. Optional.
+    # @param gems_util [Toys::Utils::Gems] A custom Gems utility instance to
+    #     use to resolve gem sources. Optional.
     #
-    def initialize(index_file_name: nil, # rubocop:disable Metrics/MethodLength
-                   preload_dir_name: nil,
-                   preload_file_name: nil,
-                   data_dir_name: nil,
-                   lib_dir_name: nil,
+    def initialize(starting_sources,
                    middleware_stack: [],
                    tool_name_splitter: nil,
                    mixin_lookup: nil,
@@ -51,9 +38,6 @@ module Toys
                    template_lookup: nil,
                    git_cache: nil,
                    gems_util: nil)
-      if index_file_name && ::File.extname(index_file_name) != ".rb"
-        raise ::ArgumentError, "Illegal index file name #{index_file_name.inspect}"
-      end
       require "monitor"
       # This mutex serializes all loading. It could be held for arbitrary
       # amounts of time because it surrounds the loading of tools files.
@@ -61,23 +45,14 @@ module Toys
       @mixin_lookup = mixin_lookup || ModuleLookup.new
       @template_lookup = template_lookup || ModuleLookup.new
       @middleware_lookup = middleware_lookup || ModuleLookup.new
-      @index_file_name = index_file_name
-      @preload_file_name = preload_file_name
-      @preload_dir_name = preload_dir_name
-      @data_dir_name = data_dir_name
-      @lib_dir_name = lib_dir_name
-      @loading_started = false
-      @worklist = []
-      @source_root_records = []
       @tool_data = {}
-      @roots_by_priority = {}
-      @max_priority = @min_priority = 0
       @stop_priority = -999_999
       @min_loaded_priority = 999_999
       @middleware_stack = Middleware.stack(middleware_stack)
       @tool_name_splitter = tool_name_splitter || ToolNameSplitter::DEFAULT
       @git_cache = git_cache
       @gems_util = gems_util
+      populate_starting_sources(starting_sources)
       get_tool([], -999_999)
     end
 
@@ -90,180 +65,10 @@ module Toys
     attr_reader :tool_name_splitter
 
     ##
-    # Add a configuration file/directory to the loader.
-    #
-    # @param path [String] A single path to add.
-    # @param high_priority [boolean] If true, add this path at the top of the
-    #     priority list. Defaults to false, indicating the new path should be
-    #     at the bottom of the priority list.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools loaded from this source. If omitted, a
-    #     default unique string will be generated.
-    # @param context_directory [String,nil,:path,:parent] The context directory
-    #     for tools loaded from this path. You can pass a directory path as a
-    #     string, `:path` to denote the given path, `:parent` to denote the
-    #     given path's parent directory, or `nil` to denote no context.
-    #     Defaults to `:parent`.
-    # @return [self]
-    #
-    def add_path(path,
-                 high_priority: false,
-                 source_name: nil,
-                 context_directory: :parent)
-      source = SourceInfo.create_path_root(path, 0,
-                                           context_directory: context_directory,
-                                           data_dir_name: @data_dir_name,
-                                           lib_dir_name: @lib_dir_name,
-                                           source_name: source_name)
-      add_source_root(source, nil, high_priority, "path")
-    end
-
-    ##
-    # Add a set of configuration files/directories from a common directory to
-    # the loader. The set of paths will be added at the same priority level and
-    # will share a root.
-    #
-    # @param root_path [String] A root path to be seen as the root source. This
-    #     should generally be a directory containing the paths to add.
-    # @param relative_paths [String,Array<String>] One or more paths to add, as
-    #     relative paths from the common root.
-    # @param high_priority [boolean] If true, add the paths at the top of the
-    #     priority list. Defaults to false, indicating the new paths should be
-    #     at the bottom of the priority list.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools loaded from these sources. (Specifically,
-    #     sets the name of the synthetic root source.) If omitted, a default
-    #     unique string will be generated.
-    # @param context_directory [String,nil,:path,:parent] The context directory
-    #     for tools loaded from this path. You can pass a directory path as a
-    #     string, `:path` to denote the given root path, `:parent` to denote
-    #     the given root path's parent directory, or `nil` to denote no context.
-    #     Defaults to `:path`.
-    # @return [self]
-    # @raise [ArgumentError] if the root path is not a directory.
-    # @raise [Toys::ToolDefinitionError] if any relative path does not point at
-    #     a readable Ruby file or directory.
-    #
-    def add_path_set(root_path, relative_paths,
-                     high_priority: false,
-                     source_name: nil,
-                     context_directory: :path)
-      relative_paths = Array(relative_paths)
-      root_source = SourceInfo.create_path_root(root_path, 0,
-                                                context_directory: context_directory,
-                                                data_dir_name: @data_dir_name,
-                                                lib_dir_name: @lib_dir_name,
-                                                source_name: source_name)
-      unless root_source.source_type == :directory
-        raise ::ArgumentError, "Root path #{root_path.inspect} for add_path_set was not a directory"
-      end
-      add_source_root(root_source, relative_paths, high_priority, "path")
-    end
-
-    ##
-    # Add a configuration block to the loader.
-    #
-    # @param high_priority [boolean] If true, add this block at the top of the
-    #     priority list. Defaults to false, indicating the block should be at
-    #     the bottom of the priority list.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools loaded from this source. If omitted, a
-    #     default unique string will be generated.
-    # @param block [Proc] The block of configuration, executed in the context
-    #     of the tool DSL {Toys::DSL::Tool}.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this block. You can pass a directory path as a string, or
-    #     `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
-    #
-    def add_block(high_priority: false,
-                  source_name: nil,
-                  context_directory: nil,
-                  &block)
-      source = SourceInfo.create_proc_root(block, 0,
-                                           context_directory: context_directory,
-                                           source_name: source_name,
-                                           data_dir_name: @data_dir_name,
-                                           lib_dir_name: @lib_dir_name)
-      add_source_root(source, nil, high_priority, "block")
-    end
-
-    ##
-    # Add a configuration git source to the loader.
-    #
-    # @param git_remote [String] The git repo URL
-    # @param git_path [String] The path to the relevant file or directory in
-    #     the repo. Specify the empty string to use the entire repo.
-    # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name)
-    # @param high_priority [boolean] If true, add this path at the top of the
-    #     priority list. Defaults to false, indicating the new path should be
-    #     at the bottom of the priority list.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools loaded from this source. If omitted, a
-    #     default unique string will be generated.
-    # @param update [boolean] If the commit is not a SHA, pulls any updates
-    #     from the remote. Defaults to false, which uses a local cache and does
-    #     not update if the commit has been fetched previously.
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this source. You can pass a directory path as a string,
-    #     or `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
-    #
-    def add_git(git_remote, git_path, git_commit,
-                high_priority: false,
-                source_name: nil,
-                update: false,
-                context_directory: nil)
-      path = resolve_git_path(git_remote, git_path, git_commit, update)
-      source = SourceInfo.create_git_root(git_remote, git_path, git_commit, path, 0,
-                                          context_directory: context_directory,
-                                          source_name: source_name,
-                                          data_dir_name: @data_dir_name,
-                                          lib_dir_name: @lib_dir_name)
-      add_source_root(source, nil, high_priority, "git source")
-    end
-
-    ##
-    # Add a configuration gem source to the loader.
-    #
-    # @param gem_name [String] The name of the gem
-    # @param gem_version [String,Array<String>] The version requirements
-    # @param gem_path [String] The path from the gem's toys directory to the
-    #     relevant file or directory. Specify the empty string to use the
-    #     entire toys directory.
-    # @param high_priority [boolean] If true, add this path at the top of the
-    #     priority list. Defaults to false, indicating the new path should be
-    #     at the bottom of the priority list.
-    # @param source_name [String] The source name that will be shown in
-    #     documentation for tools loaded from this source. If omitted, a
-    #     default unique string will be generated.
-    # @param gem_toys_dir [String] The name of the toys directory. Optional.
-    #     Defaults to the directory specified in the gem's metadata, or the
-    #     value "toys".
-    # @param context_directory [String,nil] The context directory for tools
-    #     loaded from this source. You can pass a directory path as a string,
-    #     or `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
-    #
-    def add_gem(gem_name, gem_version, gem_path,
-                high_priority: false,
-                source_name: nil,
-                gem_toys_dir: nil,
-                context_directory: nil)
-      gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
-      source = SourceInfo.create_gem_root(gem_name, gem_version, gem_path, path, 0,
-                                          context_directory: context_directory,
-                                          source_name: source_name,
-                                          data_dir_name: @data_dir_name,
-                                          lib_dir_name: @lib_dir_name)
-      add_source_root(source, nil, high_priority, "gem source")
-    end
-
-    ##
     # Given a list of command line arguments, find the appropriate tool to
-    # handle the command, loading it from the configuration if necessary.
+    # handle the command, loading it from its source if necessary.
     # This always returns a tool. If the specific tool path is not defined and
-    # cannot be found in any configuration, it finds the nearest namespace that
+    # cannot be found in any source, it finds the nearest namespace that
     # *would* contain that tool, up to the root tool.
     #
     # Returns a tuple of the found tool, and the array of remaining arguments
@@ -286,8 +91,8 @@ module Toys
     end
 
     ##
-    # Given a tool name, looks up the specific tool, loading it from the
-    # configuration if necessary.
+    # Given a tool name, looks up the specific tool, loading it from its source
+    # if necessary.
     #
     # If there is an active tool, returns it; otherwise, returns the highest
     # priority tool that has been defined. If no tool has been defined with
@@ -306,8 +111,8 @@ module Toys
     end
 
     ##
-    # Returns a list of subtools for the given path, loading from the
-    # configuration if necessary. The list will be sorted by name.
+    # Returns a list of subtools for the given path, loading from their sources
+    # if necessary. The list will be sorted by name.
     #
     # @param words [Array<String>] The name of the parent tool
     # @param recursive [boolean] If true, return all subtools recursively
@@ -341,7 +146,7 @@ module Toys
 
     ##
     # Returns true if the given path has at least one subtool, even if they are
-    # hidden or non-runnable. Loads from the configuration if necessary.
+    # hidden or non-runnable. Loads from the sources if necessary.
     #
     # @param words [Array<String>] The name of the parent tool
     # @return [boolean]
@@ -356,37 +161,6 @@ module Toys
     end
 
     #### INTERNAL METHODS ####
-
-    ##
-    # Return a recording of the source roots that have been added to this
-    # loader, in the order they were added. The recording can be played back
-    # on another loader using {#add_source_root_records}.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def source_root_records
-      @mutex.synchronize { @source_root_records.dup }
-    end
-
-    ##
-    # Add the source roots from the given recording, which should have been
-    # obtained from {#source_root_records}. The sources are added in the order
-    # they were originally added, and are assigned fresh priorities in this
-    # loader. Sources are not reresolved; in particular, gems are not
-    # reactivated and git repos are not refetched.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def add_source_root_records(records)
-      @mutex.synchronize do
-        raise "Cannot add sources after tool loading has started" if @loading_started
-        records.each do |root_source, relative_paths, high_priority|
-          install_source_root(root_source, relative_paths, high_priority)
-          @source_root_records << [root_source, relative_paths, high_priority]
-        end
-      end
-      self
-    end
 
     ##
     # Get or create the tool definition for the given name and priority.
@@ -458,7 +232,6 @@ module Toys
     #
     def load_for_prefix(prefix)
       @mutex.synchronize do
-        @loading_started = true
         cur_worklist = @worklist
         @worklist = []
         cur_worklist.each do |source, words, priority|
@@ -493,8 +266,8 @@ module Toys
     end
 
     ##
-    # Load configuration from the given path. This is called from the `load`
-    # directive in the DSL.
+    # Load tools from the given path. This is called from the `load` directive
+    # in the DSL.
     #
     # @private This interface is internal and subject to change without warning.
     #
@@ -509,30 +282,36 @@ module Toys
     end
 
     ##
-    # Load configuration from the given git remote. This is called from the
-    # `load_git` directive in the DSL.
+    # Load tools from the given git remote. This is called from the `load_git`
+    # directive in the DSL.
     #
     # @private This interface is internal and subject to change without warning.
     #
     def load_git(parent_source, git_remote, git_path, git_commit, update,
                  words, remaining_words, priority)
-      path = resolve_git_path(git_remote, git_path, git_commit, update)
-      source = parent_source.git_child(git_remote, git_path, git_commit, path)
+      source = parent_source.git_child(git_remote,
+                                       child_git_path: git_path,
+                                       child_git_commit: git_commit,
+                                       git_cache: @git_cache,
+                                       update: update)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
     end
 
     ##
-    # Load configuration from the given gem. This is called from the `load_gem`
+    # Load tools from the given gem. This is called from the `load_gem`
     # directive in the DSL.
     #
     # @private This interface is internal and subject to change without warning.
     #
     def load_gem(parent_source, gem_name, gem_version, gem_toys_dir, gem_path,
                  words, remaining_words, priority)
-      gem_version, gem_path, path = resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
-      source = parent_source.gem_child(gem_name, gem_version, gem_path, path)
+      source = parent_source.gem_child(gem_name,
+                                       child_gem_version: gem_version,
+                                       child_gem_path: gem_path,
+                                       gem_toys_dir: gem_toys_dir,
+                                       gems_util: @gems_util)
       @mutex.synchronize do
         load_validated_path(source, words, remaining_words, priority)
       end
@@ -547,38 +326,6 @@ module Toys
       source = parent_source.proc_child(block)
       @mutex.synchronize do
         load_proc(source, words, remaining_words, priority)
-      end
-    end
-
-    @utils_creation_mutex = ::Mutex.new
-    @default_git_cache = nil
-    @default_gems_util = nil
-
-    ##
-    # Get a global default GitCache.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.default_git_cache
-      @utils_creation_mutex.synchronize do
-        @default_git_cache ||= begin
-          require "toys/utils/git_cache"
-          Utils::GitCache.new
-        end
-      end
-    end
-
-    ##
-    # Get a global default Gems utility.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.default_gems_util
-      @utils_creation_mutex.synchronize do
-        @default_gems_util ||= begin
-          require "toys/utils/gems"
-          Utils::Gems.new
-        end
       end
     end
 
@@ -693,6 +440,24 @@ module Toys
     private
 
     ##
+    # Populate the worklist and roots given a list of starting sources.
+    # Validates that source roots don't collide on the same priority.
+    #
+    def populate_starting_sources(starting_sources)
+      @worklist = []
+      @roots_by_priority = {}
+      starting_sources.each do |source|
+        @worklist << [source, [], source.priority]
+        root = source.root
+        if @roots_by_priority.key?(source.priority)
+          raise ::ArgumentError, "Source root collision" unless @roots_by_priority[source.priority].equal?(root)
+        else
+          @roots_by_priority[source.priority] = root
+        end
+      end
+    end
+
+    ##
     # Determine the longest prefix of the given command line arguments that
     # could name a tool, along with the arguments to search it in.
     #
@@ -709,81 +474,6 @@ module Toys
       end
       orig_prefix = args.take_while { |arg| !arg.start_with?("-") }
       [orig_prefix, args]
-    end
-
-    ##
-    # Record and install a source root. The given root source should have been
-    # created with a placeholder priority; the real priority is assigned here.
-    # The relative_paths argument is a list of paths relative to the root that
-    # should be loaded instead of the root itself, or nil to load the root.
-    # The noun is used in the error message if loading has already started.
-    #
-    # The record retains relative_paths for the lifetime of this loader, so we
-    # take a frozen copy rather than aliasing an array the caller could mutate
-    # later. Freezing the copy also keeps it safe to share with loaders that
-    # subsequently copy these records.
-    #
-    def add_source_root(root_source, relative_paths, high_priority, noun)
-      relative_paths = relative_paths&.dup&.freeze
-      @mutex.synchronize do
-        raise "Cannot add a #{noun} after tool loading has started" if @loading_started
-        # Record only after a successful install, so a source that fails to
-        # resolve does not leave a record that would fail again every time
-        # these records are replayed into another loader.
-        install_source_root(root_source, relative_paths, high_priority)
-        @source_root_records << [root_source, relative_paths, high_priority]
-      end
-      self
-    end
-
-    ##
-    # Assign a priority to the given root source and add it and its worklist
-    # entries to this loader.
-    # Caller must own the mutex.
-    #
-    def install_source_root(root_source, relative_paths, high_priority)
-      priority = high_priority ? @max_priority + 1 : @min_priority - 1
-      root_source = root_source.with_priority(priority)
-      # Resolve strictly, so a path that is missing or is not a config raises
-      # here, naming the offending path, rather than putting a nil on the
-      # worklist that fails confusingly at lookup time. Resolve every member
-      # before mutating any loader state, so a failure partway through a set
-      # leaves this loader untouched rather than half-installed.
-      entries =
-        if relative_paths
-          relative_paths.map { |path| [root_source.relative_child(path, lenient: false), [], priority] }
-        else
-          [[root_source, [], priority]]
-        end
-      if high_priority
-        @max_priority = priority
-      else
-        @min_priority = priority
-      end
-      @roots_by_priority[priority] = root_source
-      @worklist.concat(entries)
-    end
-
-    ##
-    # Resolve the file system path to the given object in the git cache
-    #
-    def resolve_git_path(git_remote, git_path, git_commit, update)
-      git_cache = @git_cache || Loader.default_git_cache
-      git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
-    end
-
-    ##
-    # Resolve information for a gem source.
-    #
-    def resolve_gem_info(gem_name, gem_version, gem_toys_dir, gem_path)
-      gems_util = @gems_util || Loader.default_gems_util
-      gems_util.activate(gem_name, *Array(gem_version))
-      gem_spec = ::Gem.loaded_specs[gem_name]
-      raise ToolDefinitionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
-      gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
-      gem_path = gem_path ? ::File.join(gem_toys_dir, gem_path) : gem_toys_dir
-      path = ::File.join(gem_spec.gem_dir, gem_path)
-      [gem_spec.version, gem_path, path]
     end
 
     ##
@@ -865,7 +555,9 @@ module Toys
         tool_class = get_tool(words, priority).tool_class
         InputFile.evaluate(tool_class, words, priority, remaining_words, source, self)
       else
-        do_preload(source.source_path)
+        source.find_preload_files.each do |file|
+          require file
+        end
         load_index_in(source, words, remaining_words, priority)
         ::Dir.entries(source.source_path).each do |child|
           load_child_in(source, child, words, remaining_words, priority)
@@ -878,8 +570,7 @@ module Toys
     # Caller must own the mutex.
     #
     def load_index_in(source, words, remaining_words, priority)
-      return unless @index_file_name
-      index_source = source.relative_child(@index_file_name)
+      index_source = source.index_child
       load_relevant_path(index_source, words, remaining_words, priority) if index_source
     end
 
@@ -888,9 +579,9 @@ module Toys
     # Caller must own the mutex.
     #
     def load_child_in(source, child, words, remaining_words, priority)
-      return if child.start_with?(".") || child == @index_file_name ||
-                child == @preload_file_name || child == @preload_dir_name ||
-                child == @data_dir_name || child == @lib_dir_name
+      return if child.start_with?(".")
+      # Reminder: Also bail if in the future any special files/directories do
+      # not begin with a dot.
       child_source = source.relative_child(child)
       return unless child_source
       child_word = ::File.basename(child, ".rb")
@@ -905,36 +596,6 @@ module Toys
     #
     def update_min_loaded_priority(priority)
       @min_loaded_priority = priority if @min_loaded_priority > priority
-    end
-
-    ##
-    # Look for and require any preloads.
-    #
-    def do_preload(path)
-      if @preload_file_name
-        preload_file = ::File.join(path, @preload_file_name)
-        if ::File.file?(preload_file) && ::File.readable?(preload_file)
-          require preload_file
-        end
-      end
-      if @preload_dir_name
-        preload_dir = ::File.join(path, @preload_dir_name)
-        if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
-          require_dir_contents(preload_dir)
-        end
-      end
-    end
-
-    ##
-    # Require the contents of the given directory.
-    #
-    def require_dir_contents(preload_dir)
-      ::Dir.entries(preload_dir).sort.each do |child|
-        next unless ::File.extname(child) == ".rb"
-        preload_file = ::File.join(preload_dir, child)
-        next if !::File.file?(preload_file) || !::File.readable?(preload_file)
-        require preload_file
-      end
     end
 
     ##

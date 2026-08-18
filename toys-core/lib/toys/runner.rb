@@ -395,7 +395,9 @@ module Toys
       # within the logger level implied by the verbosity, returning the
       # resulting exit code.
       def execute_tool(context, &block)
-        @tool.source_info&.apply_lib_paths
+        @tool.source_info&.find_lib_paths&.reverse_each do |path|
+          $LOAD_PATH.unshift(path) unless $LOAD_PATH.include?(path)
+        end
         @tool.run_initializers(context)
         with_logger_level(context) do
           executor = build_executor(context, &block)

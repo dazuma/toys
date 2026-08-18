@@ -14,12 +14,12 @@ describe Toys::Utils::HelpText do
   let(:runnable) { proc {} }
 
   let(:single_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0).run_handler = runnable
     loader
   }
   let(:namespace_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0)
     loader.activate_tool(subtool_one_name, 0).run_handler = runnable
     loader.activate_tool(subtool_two_name, 0).run_handler = runnable
@@ -27,14 +27,14 @@ describe Toys::Utils::HelpText do
     loader
   }
   let(:runnable_namespace_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0).run_handler = runnable
     loader.activate_tool(subtool_one_name, 0).run_handler = runnable
     loader.activate_tool(subtool_two_name, 0).run_handler = runnable
     loader
   }
   let(:recursive_namespace_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0)
     loader.activate_tool(subtool_one_name, 0)
     loader.activate_tool(subtool_one_name + ["a"], 0).run_handler = runnable
@@ -43,13 +43,13 @@ describe Toys::Utils::HelpText do
     loader
   }
   let(:long_namespace_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0)
     loader.activate_tool(tool_name + [long_tool_name], 0).run_handler = runnable
     loader
   }
   let(:delegation_loader) {
-    loader = Toys::Loader.new
+    loader = Toys::Loader.new([])
     loader.activate_tool(tool_name, 0).run_handler = runnable
     loader.activate_tool(tool2_name, 0).delegate_to(tool_name)
     loader
@@ -635,8 +635,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "shows separate sources when requested" do
-        loader = Toys::Loader.new
-        loader.add_block(source_name: "block 1") do
+        builder = Toys::SourceListBuilder.new
+        builder.add_block(source_name: "block 1") do
           tool "foo bar" do
             tool "one" do
               desc "one description"
@@ -644,7 +644,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
-        loader.add_block(source_name: "block 2") do
+        builder.add_block(source_name: "block 2") do
           tool "foo bar" do
             tool "two" do
               desc "two description"
@@ -652,6 +652,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
+        loader = Toys::Loader.new(builder.sources)
         base_tool, _remaining = loader.lookup(["foo", "bar"])
         help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
         help_array = help.help_string(styled: false, separate_sources: true).split("\n")
@@ -670,12 +671,13 @@ describe Toys::Utils::HelpText do
 
     describe "source section" do
       let(:source_loader) {
-        loader = Toys::Loader.new
-        loader.add_block(source_name: "myfile.rb") do
+        builder = Toys::SourceListBuilder.new
+        builder.add_block(source_name: "myfile.rb") do
           tool "foo" do
             def run; end
           end
         end
+        loader = Toys::Loader.new(builder.sources)
         loader
       }
       let(:source_tool) {
@@ -704,17 +706,18 @@ describe Toys::Utils::HelpText do
       end
 
       it "shows the delegation source path" do
-        loader = Toys::Loader.new
-        loader.add_block(source_name: "target.rb") do
+        builder = Toys::SourceListBuilder.new
+        builder.add_block(source_name: "target.rb") do
           tool "foo" do
             def run; end
           end
         end
-        loader.add_block(source_name: "delegator.rb") do
+        builder.add_block(source_name: "delegator.rb") do
           tool "bar" do
             def run; end
           end
         end
+        loader = Toys::Loader.new(builder.sources)
         target_tool, = loader.lookup(["foo"])
         delegator_tool, = loader.lookup(["bar"])
         help = Toys::Utils::HelpText.new(target_tool, loader, executable_name,
@@ -823,8 +826,8 @@ describe Toys::Utils::HelpText do
     end
 
     it "shows separate sources when requested" do
-      loader = Toys::Loader.new
-      loader.add_block(source_name: "block 1") do
+      builder = Toys::SourceListBuilder.new
+      builder.add_block(source_name: "block 1") do
         tool "foo bar" do
           tool "one" do
             desc "one description"
@@ -832,7 +835,7 @@ describe Toys::Utils::HelpText do
           end
         end
       end
-      loader.add_block(source_name: "block 2") do
+      builder.add_block(source_name: "block 2") do
         tool "foo bar" do
           tool "two" do
             desc "two description"
@@ -840,6 +843,7 @@ describe Toys::Utils::HelpText do
           end
         end
       end
+      loader = Toys::Loader.new(builder.sources)
       base_tool, _remaining = loader.lookup(["foo", "bar"])
       help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
       list_array = help.list_string(styled: false, separate_sources: true).split("\n")
@@ -1012,8 +1016,8 @@ describe Toys::Utils::HelpText do
       end
 
       it "show subtools separated by source" do
-        loader = Toys::Loader.new
-        loader.add_block(source_name: "block 1") do
+        builder = Toys::SourceListBuilder.new
+        builder.add_block(source_name: "block 1") do
           tool "foo bar" do
             tool "one" do
               desc "one description"
@@ -1025,7 +1029,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
-        loader.add_block(source_name: "block 2") do
+        builder.add_block(source_name: "block 2") do
           tool "foo bar" do
             tool "three" do
               desc "three description"
@@ -1033,6 +1037,7 @@ describe Toys::Utils::HelpText do
             end
           end
         end
+        loader = Toys::Loader.new(builder.sources)
         base_tool, _remaining = loader.lookup(["foo", "bar"])
         help = Toys::Utils::HelpText.new(base_tool, loader, executable_name)
         usage_array = help.usage_string(separate_sources: true).split("\n")

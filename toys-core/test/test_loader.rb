@@ -11,8 +11,9 @@ describe Toys::Loader do
   let(:tmp_dir) { Dir.mktmpdir("toys_loader_git_cache_test") }
   let(:git_cache_dir) { File.join(tmp_dir, "cache") }
   let(:git_cache) { Toys::Utils::GitCache.new(cache_dir: git_cache_dir) }
+  let(:builder) { Toys::SourceListBuilder.new(git_cache: git_cache) }
   let(:loader) {
-    Toys::Loader.new(index_file_name: ".toys.rb",
+    Toys::Loader.new(builder.sources,
                      tool_name_splitter: Toys::ToolNameSplitter.new(":"),
                      git_cache: git_cache)
   }
@@ -53,9 +54,29 @@ describe Toys::Loader do
     end
   end
 
+  describe "starting sources" do
+    it "allows multiple starting sources sharing a priority via a common root" do
+      builder.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
+      # Both members share the synthetic root source created by add_path_set,
+      # so the roots-by-priority collision check does not raise.
+      tool1, _remaining = loader.lookup(["tool-1"])
+      assert_equal("file tool-1 short description", tool1.desc.to_s)
+      tool2, _remaining = loader.lookup(["tool-2"])
+      assert_equal("directory tool-2 short description", tool2.desc.to_s)
+    end
+
+    it "raises if two unrelated starting sources collide on priority" do
+      source1 = Toys::SourceInfo.create_proc_root(proc {}, 0, source_name: "one")
+      source2 = Toys::SourceInfo.create_proc_root(proc {}, 0, source_name: "two")
+      assert_raises(::ArgumentError) do
+        Toys::Loader.new([source1, source2])
+      end
+    end
+  end
+
   describe "configuration block" do
     it "loads tools" do
-      loader.add_block(source_name: "test block") do
+      builder.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "block tool-1 description"
         end
@@ -68,12 +89,12 @@ describe Toys::Loader do
     end
 
     it "loads multiple blocks" do
-      loader.add_block(source_name: "test block 1") do
+      builder.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
       end
-      loader.add_block(source_name: "test block 2") do
+      builder.add_block(source_name: "test block 2") do
         tool "tool-1" do
           desc "block 2 tool-1 description"
         end
@@ -96,7 +117,7 @@ describe Toys::Loader do
 
   describe "tool names" do
     it "raises if there's an asterisk in the name when defining a tool" do
-      loader.add_block(source_name: "test block 1") do
+      builder.add_block(source_name: "test block 1") do
         tool "tool*1" do
           desc "whoops"
         end
@@ -110,7 +131,7 @@ describe Toys::Loader do
     end
 
     it "doesn't raise if looking up a name with an asterisk" do
-      loader.add_block(source_name: "test block 1") do
+      builder.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
@@ -123,8 +144,8 @@ describe Toys::Loader do
 
   describe "path with config items" do
     before do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      builder.add_path(File.join(cases_dir, "config-items", ".toys"))
+      builder.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
     end
 
     it "finds a tool directly defined in a config file" do
@@ -172,8 +193,12 @@ describe Toys::Loader do
   describe "config from git sources" do
     before do
       skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
-      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys", git_commit)
-      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
+      builder.add_git(git_remote,
+                      git_path: "toys-core/test-data/lookup-cases/config-items/.toys",
+                      git_commit: git_commit)
+      builder.add_git(git_remote,
+                      git_path: "toys-core/test-data/lookup-cases/config-items/.toys.rb",
+                      git_commit: git_commit)
     end
 
     it "finds a tool directly defined in a config file" do
@@ -211,8 +236,8 @@ describe Toys::Loader do
       # Using directories in the local toys-core source in git, which is
       # referenced as a gem in the bundle.
       # These directories aren't part of the released gem.
-      loader.add_gem("toys-core", [], ".toys", gem_toys_dir: gem_toys_dir)
-      loader.add_gem("toys-core", [], ".toys.rb", gem_toys_dir: gem_toys_dir)
+      builder.add_gem("toys-core", gem_path: ".toys", gem_toys_dir: gem_toys_dir)
+      builder.add_gem("toys-core", gem_path: ".toys.rb", gem_toys_dir: gem_toys_dir)
     end
 
     it "finds a tool directly defined in a config file" do
@@ -253,7 +278,7 @@ describe Toys::Loader do
 
   describe "config path with some hierarchical files" do
     before do
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      builder.add_path(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
     it "finds a tool directly defined" do
@@ -312,12 +337,12 @@ describe Toys::Loader do
 
   describe "extra delimiters" do
     let(:delimiters_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb",
+      Toys::Loader.new(builder.sources,
                        tool_name_splitter: Toys::ToolNameSplitter.new(".:"))
     }
 
     before do
-      delimiters_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      builder.add_path(File.join(cases_dir, "normal-file-hierarchy"))
     end
 
     it "recognizes only specified delimiters" do
@@ -358,9 +383,9 @@ describe Toys::Loader do
 
   describe "priority between definitions" do
     it "chooses from the earlier path" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      builder.add_path(File.join(cases_dir, "config-items", ".toys"))
+      builder.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      builder.add_path(File.join(cases_dir, "normal-file-hierarchy"))
 
       tool, _remaining = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool.desc.to_s)
@@ -368,9 +393,9 @@ describe Toys::Loader do
     end
 
     it "honors the high-priority flag" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
+      builder.add_path(File.join(cases_dir, "config-items", ".toys"))
+      builder.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
+      builder.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
 
       tool, _remaining = loader.lookup(["tool-1"])
       assert_equal("normal tool-1 short description", tool.desc.to_s)
@@ -378,7 +403,7 @@ describe Toys::Loader do
     end
 
     it "loads a set at the same priority" do
-      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
+      builder.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
 
       tool1, _remaining = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool1.desc.to_s)
@@ -390,7 +415,7 @@ describe Toys::Loader do
     end
 
     it "loads a set at high priority" do
-      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"], high_priority: true)
+      builder.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"], high_priority: true)
 
       tool1, _remaining = loader.lookup(["tool-1"])
       assert_equal("file tool-1 short description", tool1.desc.to_s)
@@ -404,7 +429,7 @@ describe Toys::Loader do
     it "raises immediately if a member of a set does not exist" do
       root_path = File.join(cases_dir, "config-items")
       error = assert_raises(Toys::ToolDefinitionError) do
-        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+        builder.add_path_set(root_path, [".toys", ".nonexistent"])
       end
       assert_equal("Cannot read: #{File.join(root_path, '.nonexistent')}", error.message)
     end
@@ -412,7 +437,7 @@ describe Toys::Loader do
     it "raises immediately if a member of a set is not a ruby file" do
       root_path = File.join(cases_dir, "normal-file-hierarchy")
       error = assert_raises(Toys::ToolDefinitionError) do
-        loader.add_path_set(root_path, ["hello.txt"])
+        builder.add_path_set(root_path, ["hello.txt"])
       end
       assert_equal("File is not a ruby file: #{File.join(root_path, 'hello.txt')}", error.message)
     end
@@ -420,34 +445,23 @@ describe Toys::Loader do
     it "leaves the loader unmodified if a member of a set is bad" do
       root_path = File.join(cases_dir, "config-items")
       assert_raises(Toys::ToolDefinitionError) do
-        loader.add_path_set(root_path, [".toys", ".nonexistent"])
+        builder.add_path_set(root_path, [".toys", ".nonexistent"])
       end
-      assert_empty(loader.source_root_records)
+      assert_empty(builder.sources)
 
       _tool, remaining = loader.lookup(["tool-2"])
       assert_equal(["tool-2"], remaining)
-    end
-
-    it "does not consume a priority if a member of a set is bad" do
-      root_path = File.join(cases_dir, "config-items")
-      assert_raises(Toys::ToolDefinitionError) do
-        loader.add_path_set(root_path, [".toys", ".nonexistent"])
-      end
-      loader.add_path_set(root_path, [".toys", ".toys.rb"])
-
-      tool1, _remaining = loader.lookup(["tool-1"])
-      assert_equal(-1, tool1.priority)
     end
   end
 
   describe "stop_loading_at_priority" do
     it "cuts off lower priorities" do
-      loader.add_block(source_name: "test block 1") do
+      builder.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
       end
-      loader.add_block(source_name: "test block 2") do
+      builder.add_block(source_name: "test block 2") do
         tool "tool-2" do
           desc "block 2 tool-2 description"
         end
@@ -462,12 +476,12 @@ describe Toys::Loader do
     end
 
     it "returns false if a lower priority has already been loaded" do
-      loader.add_block(source_name: "test block 1") do
+      builder.add_block(source_name: "test block 1") do
         tool "tool-1" do
           desc "block 1 tool-1 description"
         end
       end
-      loader.add_block(source_name: "test block 2") do
+      builder.add_block(source_name: "test block 2") do
         tool "tool-2" do
           desc "block 2 tool-2 description"
         end
@@ -483,7 +497,7 @@ describe Toys::Loader do
     let(:includes_cases_dir) { File.join(cases_dir, "items-with-includes") }
 
     before do
-      loader.add_path(File.join(includes_cases_dir, "absolutes.rb"))
+      builder.add_path(File.join(includes_cases_dir, "absolutes.rb"))
     end
 
     it "gets an item from a root-level directory include" do
@@ -523,7 +537,7 @@ describe Toys::Loader do
 
     before do
       skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
-      loader.add_path(File.join(includes_cases_dir, "github.rb"))
+      builder.add_path(File.join(includes_cases_dir, "github.rb"))
     end
 
     it "gets an item from a root-level directory include" do
@@ -559,25 +573,17 @@ describe Toys::Loader do
   end
 
   describe "preloads" do
-    let(:preloading_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb",
-                       preload_file_name: ".preload.rb",
-                       preload_dir_name: ".preload")
-    }
-
     before do
       $toys_preload_ns1 = nil
       $toys_preload_ns2 = nil
-      $toys_preload_ns3 = nil
       $toys_preload_ns1a_preloaded1 = nil
       $toys_preload_ns1a_preloaded2 = nil
-      loader.add_path(File.join(cases_dir, "preloads"))
-      preloading_loader.add_path(File.join(cases_dir, "preloads"))
+      builder.add_path(File.join(cases_dir, "preloads"))
     end
 
     it "finds a simple preload file" do
       assert_nil($toys_preload_ns2)
-      preloading_loader.lookup(["ns-2", "foo"])
+      loader.lookup(["ns-2", "foo"])
       assert_equal(:hi, $toys_preload_ns2)
     end
 
@@ -585,50 +591,36 @@ describe Toys::Loader do
       assert_nil($toys_preload_ns1)
       assert_nil($toys_preload_ns1a_preloaded1)
       assert_nil($toys_preload_ns1a_preloaded2)
-      preloading_loader.lookup(["ns-1", "ns-1a", "foo"])
+      loader.lookup(["ns-1", "ns-1a", "foo"])
       assert_equal(:hi, $toys_preload_ns1)
       assert_equal(:hi, $toys_preload_ns1a_preloaded1)
       assert_equal(:hi, $toys_preload_ns1a_preloaded2)
     end
-
-    it "ignores preloads if not configured" do
-      loader.lookup(["ns-3", "foo"])
-      assert_nil($toys_preload_ns3)
-    end
   end
 
   describe "with data directory" do
-    let(:finding_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb", data_dir_name: ".data")
-    }
-
     before do
-      loader.add_path(File.join(cases_dir, "data-finder"))
-      finding_loader.add_path(File.join(cases_dir, "data-finder"))
+      builder.add_path(File.join(cases_dir, "data-finder"))
     end
 
     it "finds data during loading" do
-      finding_loader.lookup(["ns-1", "foo"])
+      loader.lookup(["ns-1", "foo"])
     end
 
     it "overrides data during loading" do
-      finding_loader.lookup(["ns-1", "ns-1a", "foo"])
+      loader.lookup(["ns-1", "ns-1a", "foo"])
     end
 
     it "finds parent data during loading" do
-      finding_loader.lookup(["ns-1", "ns-1b", "foo"])
+      loader.lookup(["ns-1", "ns-1b", "foo"])
     end
 
     it "finds root data during loading" do
-      finding_loader.lookup(["ns-4", "foo"])
+      loader.lookup(["ns-4", "foo"])
     end
 
     it "reports lack of data during loading" do
-      finding_loader.lookup(["ns-3", "foo"])
-    end
-
-    it "ignores data during loading if not configured" do
-      loader.lookup(["ns-2", "foo"])
+      loader.lookup(["ns-3", "foo"])
     end
   end
 
@@ -637,7 +629,7 @@ describe Toys::Loader do
 
     it "can be set" do
       dir = custom_dir
-      loader.add_block(source_name: "test block") do
+      builder.add_block(source_name: "test block") do
         desc "a description"
         tool "ns1" do
           set_context_directory(dir)
@@ -661,7 +653,7 @@ describe Toys::Loader do
 
   describe "subtool list" do
     let(:subtools_loader) {
-      loader.add_block(source_name: "test block") do
+      builder.add_block(source_name: "test block") do
         tool "ns3" do
           tool "tool1" do
             def run; end
@@ -689,6 +681,7 @@ describe Toys::Loader do
           def run; end
         end
       end
+      loader
     }
 
     it "loads a list" do
@@ -750,7 +743,7 @@ describe Toys::Loader do
 
   describe "has_subtools?" do
     it "returns true when runnable subtools exist" do
-      loader.add_block do
+      builder.add_block do
         tool "ns1" do
           tool "child" do
             def run; end
@@ -761,7 +754,7 @@ describe Toys::Loader do
     end
 
     it "returns true when only non-runnable subtools exist" do
-      loader.add_block do
+      builder.add_block do
         tool "ns1" do
           tool "child" do
             desc "not runnable"
@@ -772,7 +765,7 @@ describe Toys::Loader do
     end
 
     it "returns true when only hidden subtools exist" do
-      loader.add_block do
+      builder.add_block do
         tool "ns1" do
           tool "_hidden" do
             def run; end
@@ -783,7 +776,7 @@ describe Toys::Loader do
     end
 
     it "returns false when no subtools exist" do
-      loader.add_block do
+      builder.add_block do
         tool "ns1" do
           tool "child" do
             def run; end
@@ -798,7 +791,7 @@ describe Toys::Loader do
     end
 
     it "triggers lazy loading from a path source" do
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"))
+      builder.add_path(File.join(cases_dir, "normal-file-hierarchy"))
       refute(loader.tool_defined?(["namespace-1", "tool-1-1"]))
       assert(loader.has_subtools?(["namespace-1"]))
       assert(loader.tool_defined?(["namespace-1", "tool-1-1"]))
@@ -807,39 +800,27 @@ describe Toys::Loader do
 
   describe "concurrency" do
     it "serializes loading" do
-      loader.add_block(source_name: "test block") do
+      builder.add_block(source_name: "test block") do
         sleep(0.1)
         tool "tool-1" do
           desc "block tool-1 description"
         end
       end
+      # Construct the loader on this thread. Minitest memoizes `let` values
+      # without synchronization, so if the threads below were the first to
+      # reference it, they could race and end up with two separate loaders.
+      test_loader = loader
       tool1 = tool2 = nil
       thread1 = Thread.new do
-        tool1, _remaining = loader.lookup(["tool-1"])
+        tool1, _remaining = test_loader.lookup(["tool-1"])
       end
       thread2 = Thread.new do
-        tool2, _remaining = loader.lookup(["tool-1"])
+        tool2, _remaining = test_loader.lookup(["tool-1"])
       end
       thread1.join
       thread2.join
       assert_equal("block tool-1 description", tool1.desc.to_s)
       assert_same(tool2, tool1)
-    end
-
-    it "prevents adding sources after loading has started" do
-      loader.add_block(source_name: "test block") do
-        tool "tool-1" do
-          desc "block tool-1 description"
-        end
-      end
-      loader.lookup(["tool-1"])
-      assert_raises("Cannot add a path after tool loading has started") do
-        loader.add_block(source_name: "test block 2") do
-          tool "tool-2" do
-            desc "block tool-2 description"
-          end
-        end
-      end
     end
   end
 
@@ -851,12 +832,15 @@ describe Toys::Loader do
       ]
     }
     let(:middleware_lookup) { Toys::ModuleLookup.new.add_path("toys/standard_middleware") }
+    let(:middleware_builder) { Toys::SourceListBuilder.new }
     let(:middleware_loader) {
-      Toys::Loader.new(middleware_lookup: middleware_lookup, middleware_stack: default_middleware)
+      Toys::Loader.new(middleware_builder.sources,
+                       middleware_lookup: middleware_lookup,
+                       middleware_stack: default_middleware)
     }
 
     it "builds default middleware" do
-      middleware_loader.add_block(source_name: "test block") do
+      middleware_builder.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "hello"
         end
@@ -869,7 +853,7 @@ describe Toys::Loader do
     end
 
     it "gets middleware stack from parent" do
-      middleware_loader.add_block(source_name: "test block") do
+      middleware_builder.add_block(source_name: "test block") do
         tool "tool-1" do
           desc "hello"
           current_tool.subtool_middleware_stack.add(:add_verbosity_flags)
@@ -884,157 +868,6 @@ describe Toys::Loader do
       assert_instance_of(Toys::StandardMiddleware::AddVerbosityFlags, built_middleware[0])
       assert_instance_of(Toys::StandardMiddleware::SetDefaultDescriptions, built_middleware[1])
       assert_instance_of(Toys::StandardMiddleware::ShowHelp, built_middleware[2])
-    end
-  end
-
-  describe "source root records" do
-    let(:gem_toys_dir) { "test-data/lookup-cases/config-items" }
-    let(:unusable_gems_util) {
-      gems_util = Object.new
-      def gems_util.activate(*_args)
-        raise "gems_util should not have been called"
-      end
-      gems_util
-    }
-    let(:unusable_git_cache) {
-      git_cache = Object.new
-      def git_cache.get(*_args, **_opts)
-        raise "git_cache should not have been called"
-      end
-      git_cache
-    }
-    let(:copy_loader) {
-      Toys::Loader.new(index_file_name: ".toys.rb",
-                       tool_name_splitter: Toys::ToolNameSplitter.new(":"),
-                       git_cache: unusable_git_cache,
-                       gems_util: unusable_gems_util)
-    }
-
-    it "copies path sources" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool1, remaining1 = copy_loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool1.desc.to_s)
-      assert_equal([], remaining1)
-      tool2, _remaining2 = copy_loader.lookup(["tool-2"])
-      assert_equal("directory tool-2 short description", tool2.desc.to_s)
-    end
-
-    it "copies block sources" do
-      loader.add_block(source_name: "test block") do
-        tool "tool-1" do
-          desc "block tool-1 description"
-        end
-      end
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool, _remaining = copy_loader.lookup(["tool-1"])
-      assert_equal("block tool-1 description", tool.desc.to_s)
-      assert_equal("test block", tool.source_info.source_name)
-    end
-
-    it "copies path set sources" do
-      loader.add_path_set(File.join(cases_dir, "config-items"), [".toys", ".toys.rb"])
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool1, _remaining1 = copy_loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool1.desc.to_s)
-      assert_equal(-1, tool1.priority)
-      tool2, _remaining2 = copy_loader.lookup(["tool-2"])
-      assert_equal("directory tool-2 short description", tool2.desc.to_s)
-      assert_equal(-1, tool2.priority)
-    end
-
-    it "raises when copying a path set whose member has since been deleted" do
-      Dir.mktmpdir do |root_path|
-        FileUtils.mkdir(File.join(root_path, ".toys"))
-        loader.add_path_set(root_path, [".toys"])
-        FileUtils.rm_rf(File.join(root_path, ".toys"))
-        error = assert_raises(Toys::ToolDefinitionError) do
-          copy_loader.add_source_root_records(loader.source_root_records)
-        end
-        assert_equal("Cannot read: #{File.join(root_path, '.toys')}", error.message)
-      end
-    end
-
-    it "is unaffected by later mutation of the array passed to add_path_set" do
-      relative_paths = [".toys.rb"]
-      loader.add_path_set(File.join(cases_dir, "config-items"), relative_paths)
-      relative_paths << ".toys"
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      assert_equal([["tool-1"]], copy_loader.list_subtools([]).map(&:full_name))
-    end
-
-    it "copies gem sources without reresolving the gem" do
-      loader.add_gem("toys-core", [], ".toys.rb", gem_toys_dir: gem_toys_dir)
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool, _remaining = copy_loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_match(%r{^gem\(name=toys-core version=\S+ path=#{gem_toys_dir}/\.toys\.rb\)},
-                   tool.source_info.source_name)
-    end
-
-    it "copies git sources without refetching the repo" do
-      skip "Skipped integration test" unless ENV["TOYS_TEST_INTEGRATION"]
-      loader.add_git(git_remote, "toys-core/test-data/lookup-cases/config-items/.toys.rb", git_commit)
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool, _remaining = copy_loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-    end
-
-    it "preserves priority order" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys"))
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
-      copy_loader.add_source_root_records(loader.source_root_records)
-
-      tool, _remaining = copy_loader.lookup(["tool-1"])
-      assert_equal("normal tool-1 short description", tool.desc.to_s)
-      assert_equal(1, tool.priority)
-    end
-
-    it "lets a source added after the copy take high priority" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      copy_loader.add_source_root_records(loader.source_root_records)
-      copy_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
-
-      tool, _remaining = copy_loader.lookup(["tool-1"])
-      assert_equal("normal tool-1 short description", tool.desc.to_s)
-      assert_equal(1, tool.priority)
-    end
-
-    it "records copied sources so they can be copied again" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      copy_loader.add_source_root_records(loader.source_root_records)
-      grandchild_loader = Toys::Loader.new(index_file_name: ".toys.rb")
-      grandchild_loader.add_source_root_records(copy_loader.source_root_records)
-
-      tool, _remaining = grandchild_loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-    end
-
-    it "does not modify the source loader" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      copy_loader.add_source_root_records(loader.source_root_records)
-      copy_loader.add_path(File.join(cases_dir, "normal-file-hierarchy"), high_priority: true)
-
-      tool, _remaining = loader.lookup(["tool-1"])
-      assert_equal("file tool-1 short description", tool.desc.to_s)
-      assert_equal(-1, tool.priority)
-    end
-
-    it "raises if the receiving loader has already started loading" do
-      loader.add_path(File.join(cases_dir, "config-items", ".toys.rb"))
-      records = loader.source_root_records
-      copy_loader.lookup(["tool-1"])
-      assert_raises(RuntimeError) do
-        copy_loader.add_source_root_records(records)
-      end
     end
   end
 end

@@ -14,15 +14,14 @@ describe Toys::DSL::Tool do
   let(:extra_delimiters) { ":" }
   let(:cli) {
     Toys::CLI.new(executable_name: executable_name, logger: logger,
-                  middleware_stack: [], extra_delimiters: extra_delimiters,
-                  index_file_name: ".toys.rb", data_dir_name: ".data")
+                  middleware_stack: [], extra_delimiters: extra_delimiters)
   }
   let(:loader) { cli.loader }
   let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
 
   describe "tool directive" do
     it "creates a tool" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # Empty tool
         end
@@ -33,7 +32,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates nested tools" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           tool "bar" do
             # Empty tool
@@ -46,7 +45,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports arrays" do
-      loader.add_block do
+      cli.add_source_block do
         tool ["foo", "bar"] do
           # Empty tool
         end
@@ -57,7 +56,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports delimiters" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo:bar" do
           # Empty tool
         end
@@ -68,7 +67,7 @@ describe Toys::DSL::Tool do
     end
 
     it "combines tool information" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           long_desc "hello", "world"
         end
@@ -86,7 +85,7 @@ describe Toys::DSL::Tool do
     end
 
     it "resets on redefinition" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           long_desc "hello", "world"
         end
@@ -102,7 +101,7 @@ describe Toys::DSL::Tool do
     end
 
     it "ignores on redefinition" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           long_desc "hello", "world"
         end
@@ -118,7 +117,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes delegate_to" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo", delegate_to: "bar"
         tool "bar" do
           def run
@@ -132,7 +131,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes delegate_relative" do
-      loader.add_block do
+      cli.add_source_block do
         tool "namespace" do
           tool "foo", delegate_relative: "bar"
           tool "bar" do
@@ -148,7 +147,7 @@ describe Toys::DSL::Tool do
     end
 
     it "allows delegate_to, delegate_relative, and a block together" do
-      loader.add_block do
+      cli.add_source_block do
         tool "namespace" do
           tool "foo", delegate_relative: "bar", delegate_to: "namespace:bar" do
             desc "this is foo"
@@ -168,7 +167,7 @@ describe Toys::DSL::Tool do
 
     it "doesn't execute the block if not needed" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           long_desc "hello", "world"
         end
@@ -184,7 +183,7 @@ describe Toys::DSL::Tool do
 
   describe "method definition" do
     it "defaults a tool to not runnable" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # Empty tool
         end
@@ -194,7 +193,7 @@ describe Toys::DSL::Tool do
     end
 
     it "makes a tool runnable when the run method is defined" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           def run; end
         end
@@ -204,7 +203,7 @@ describe Toys::DSL::Tool do
     end
 
     it "changes the run method name" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           to_run :run2
           def run2; end
@@ -215,7 +214,7 @@ describe Toys::DSL::Tool do
     end
 
     it "causes a tool to be non-runnable when to_run is set to nil" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           to_run nil
           def run; end
@@ -226,7 +225,7 @@ describe Toys::DSL::Tool do
     end
 
     it "allows other methods to be defined but not make the tool runnable" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           def execute; end
         end
@@ -236,7 +235,7 @@ describe Toys::DSL::Tool do
     end
 
     it "makes a tool runnable when the to_run directive is given" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           to_run do
             # Do nothing
@@ -248,7 +247,7 @@ describe Toys::DSL::Tool do
     end
 
     it "makes callable methods" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           def foo
             exit(2)
@@ -265,7 +264,7 @@ describe Toys::DSL::Tool do
 
   describe "on_interrupt directive" do
     it "defaults to no interrupt handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # no on_interrupt
         end
@@ -276,7 +275,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a block as the interrupt handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_interrupt { :noop }
         end
@@ -287,7 +286,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a method symbol as the interrupt handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_interrupt :my_handler
         end
@@ -299,7 +298,7 @@ describe Toys::DSL::Tool do
 
     it "registers a Proc object as the interrupt handler" do
       my_proc = proc { :noop }
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_interrupt my_proc
         end
@@ -309,7 +308,7 @@ describe Toys::DSL::Tool do
     end
 
     it "clears the handler when nil is given" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_interrupt { :noop }
           on_interrupt nil
@@ -321,7 +320,7 @@ describe Toys::DSL::Tool do
     end
 
     it "is stored as signal_handler(2)" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_interrupt :my_handler
         end
@@ -336,7 +335,7 @@ describe Toys::DSL::Tool do
 
   describe "on_signal directive" do
     it "defaults to no signal handlers" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # no on_signal
         end
@@ -347,7 +346,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a block handler for an integer signal number" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(15) { :noop }
         end
@@ -358,7 +357,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a method symbol handler for a signal" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(15, :my_handler)
         end
@@ -368,7 +367,7 @@ describe Toys::DSL::Tool do
     end
 
     it "accepts a string signal name without SIG prefix" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal("TERM") { :noop }
         end
@@ -380,7 +379,7 @@ describe Toys::DSL::Tool do
     end
 
     it "accepts a string signal name with SIG prefix" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal("SIGTERM") { :noop }
         end
@@ -390,7 +389,7 @@ describe Toys::DSL::Tool do
     end
 
     it "accepts a symbol signal name" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(:TERM) { :noop }
         end
@@ -400,7 +399,7 @@ describe Toys::DSL::Tool do
     end
 
     it "stores separate handlers for different signals" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(15, :term_handler)
           on_signal(4, :other_handler)
@@ -413,7 +412,7 @@ describe Toys::DSL::Tool do
     end
 
     it "clears a handler when nil is given" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(15) { :noop }
           on_signal(15, nil)
@@ -425,7 +424,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets the interrupt handler when signal number is 2" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_signal(2, :my_handler)
         end
@@ -436,7 +435,7 @@ describe Toys::DSL::Tool do
 
     it "raises ArgumentError for an unknown signal number" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           t.assert_raises(ArgumentError) do
             on_signal(999) { :noop }
@@ -449,7 +448,7 @@ describe Toys::DSL::Tool do
 
   describe "on_usage_error directive" do
     it "defaults to no usage error handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # no on_usage_error
         end
@@ -460,7 +459,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a block as the usage error handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_usage_error { :noop }
         end
@@ -471,7 +470,7 @@ describe Toys::DSL::Tool do
     end
 
     it "registers a method symbol as the usage error handler" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_usage_error :my_handler
         end
@@ -483,7 +482,7 @@ describe Toys::DSL::Tool do
 
     it "registers a Proc object as the usage error handler" do
       my_proc = proc { :noop }
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_usage_error my_proc
         end
@@ -493,7 +492,7 @@ describe Toys::DSL::Tool do
     end
 
     it "clears the handler when nil is given" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           on_usage_error { :noop }
           on_usage_error nil
@@ -507,7 +506,7 @@ describe Toys::DSL::Tool do
 
   describe "completion directive" do
     it "creates an enum completion" do
-      loader.add_block do
+      cli.add_source_block do
         completion("comp1", ["one", "two", "three"])
       end
       tool, _remaining = loader.lookup([])
@@ -516,7 +515,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates a file system completion" do
-      loader.add_block do
+      cli.add_source_block do
         completion("comp1", :file_system)
       end
       tool, _remaining = loader.lookup([])
@@ -525,7 +524,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates a file system completion with options" do
-      loader.add_block do
+      cli.add_source_block do
         completion("comp1", :file_system, omit_files: true)
       end
       tool, _remaining = loader.lookup([])
@@ -535,7 +534,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates a completion from a block" do
-      loader.add_block do
+      cli.add_source_block do
         completion("comp1") do
           ["one", "two", "three"]
         end
@@ -546,7 +545,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be looked up in a subtool" do
-      loader.add_block do
+      cli.add_source_block do
         completion("comp1", :file_system)
         tool "foo" do
           # Empty tool
@@ -560,7 +559,7 @@ describe Toys::DSL::Tool do
 
   describe "acceptor directive" do
     it "creates a pattern acceptor" do
-      loader.add_block do
+      cli.add_source_block do
         acceptor("acc1", /^\d$/, &:to_i)
       end
       tool, _remaining = loader.lookup([])
@@ -570,7 +569,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates an enum acceptor" do
-      loader.add_block do
+      cli.add_source_block do
         acceptor("acc1", [1, 2, 3])
       end
       tool, _remaining = loader.lookup([])
@@ -580,7 +579,7 @@ describe Toys::DSL::Tool do
     end
 
     it "creates a simple acceptor from a block" do
-      loader.add_block do
+      cli.add_source_block do
         acceptor("acc1", &:upcase)
       end
       tool, _remaining = loader.lookup([])
@@ -590,7 +589,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be looked up in a subtool" do
-      loader.add_block do
+      cli.add_source_block do
         acceptor("acc1", &:upcase)
         tool "foo" do
           # Empty tool
@@ -602,12 +601,12 @@ describe Toys::DSL::Tool do
     end
 
     it "works even when the hosting tool is not active" do
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "the one"
         end
       end
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "not the one"
           acceptor("acc1", &:upcase)
@@ -627,7 +626,7 @@ describe Toys::DSL::Tool do
   describe "include directive" do
     it "supports normal modules" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         include ::FileUtils
         t.assert_equal(true, include?(::FileUtils))
       end
@@ -637,7 +636,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports builtin mixins" do
-      loader.add_block do
+      cli.add_source_block do
         include :exec
       end
       tool, _remaining = loader.lookup([])
@@ -647,7 +646,7 @@ describe Toys::DSL::Tool do
 
     it "does not allow multiple inclusion of the same module" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         include :terminal, styled: true
         t.assert_raises(Toys::ToolDefinitionError) do
           include :terminal, styled: false
@@ -666,7 +665,7 @@ describe Toys::DSL::Tool do
 
   describe "mixin directive" do
     it "creates a simple mixin" do
-      loader.add_block do
+      cli.add_source_block do
         mixin("mixin1") do
           on_initialize do
             set(:foo, 1)
@@ -690,7 +689,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be looked up in a subtool" do
-      loader.add_block do
+      cli.add_source_block do
         mixin("mixin1") do
           on_initialize do
             set(:foo, 1)
@@ -717,7 +716,7 @@ describe Toys::DSL::Tool do
     end
 
     it "cannot be looked up if defined in a different tool" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           mixin("mixin1") do
             on_initialize do
@@ -737,12 +736,12 @@ describe Toys::DSL::Tool do
     end
 
     it "works even when the hosting tool is not active" do
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "the one"
         end
       end
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "not the one"
           mixin("mixin1") do
@@ -766,7 +765,7 @@ describe Toys::DSL::Tool do
 
   describe "template directive" do
     it "creates a simple template" do
-      loader.add_block do
+      cli.add_source_block do
         template("t1") do
           def initialize(name)
             @name = name
@@ -788,7 +787,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be looked up in a subtool" do
-      loader.add_block do
+      cli.add_source_block do
         template("t1") do
           def initialize(name)
             @name = name
@@ -812,12 +811,12 @@ describe Toys::DSL::Tool do
     end
 
     it "works even when the hosting tool is not active" do
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "the one"
         end
       end
-      loader.add_block do
+      cli.add_source_block do
         tool "host" do
           desc "not the one"
           template("t1") do
@@ -845,7 +844,7 @@ describe Toys::DSL::Tool do
 
   describe "desc directive" do
     it "sets the desc" do
-      loader.add_block do
+      cli.add_source_block do
         desc "this is a desc"
       end
       tool, _remaining = loader.lookup([])
@@ -855,7 +854,7 @@ describe Toys::DSL::Tool do
 
   describe "long_desc directive" do
     it "sets the long desc" do
-      loader.add_block do
+      cli.add_source_block do
         long_desc "this is a desc", "with multiple lines"
       end
       tool, _remaining = loader.lookup([])
@@ -866,7 +865,7 @@ describe Toys::DSL::Tool do
     end
 
     it "appends to the long desc" do
-      loader.add_block do
+      cli.add_source_block do
         long_desc "this is a desc", "with multiple lines"
         long_desc "and an append"
       end
@@ -879,7 +878,7 @@ describe Toys::DSL::Tool do
     end
 
     it "reads from a file" do
-      loader.add_path(File.join(cases_dir, "long-desc-files"))
+      cli.add_source_path(File.join(cases_dir, "long-desc-files"))
       tool, _remaining = loader.lookup(["foo"])
       ld = tool.long_desc
       assert_equal(2, ld.size)
@@ -888,7 +887,7 @@ describe Toys::DSL::Tool do
     end
 
     it "reads from data" do
-      loader.add_path(File.join(cases_dir, "long-desc-files"))
+      cli.add_source_path(File.join(cases_dir, "long-desc-files"))
       tool, _remaining = loader.lookup(["bar"])
       ld = tool.long_desc
       assert_equal(2, ld.size)
@@ -899,7 +898,7 @@ describe Toys::DSL::Tool do
 
   describe "flag directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:foo, "--bar VALUE",
              accept: Integer,
              complete_values: ["1", "2", "3"],
@@ -926,7 +925,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes block configuration" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:foo) do
           flags "--bar VALUE"
           accept Integer
@@ -958,7 +957,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:abc_2def?)
       end
       tool, _remaining = loader.lookup([])
@@ -969,7 +968,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name begins with underscore" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
@@ -978,7 +977,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a single capital letter symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:A)
       end
       tool, _remaining = loader.lookup([])
@@ -989,7 +988,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter that overrides a method in Context" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:options)
       end
       tool, _remaining = loader.lookup([])
@@ -1001,7 +1000,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a string key" do
-      loader.add_block do
+      cli.add_source_block do
         flag("abc_def1?")
       end
       tool, _remaining = loader.lookup([])
@@ -1010,7 +1009,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a symbol representing an invalid method name" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:"1abc")
       end
       tool, _remaining = loader.lookup([])
@@ -1019,7 +1018,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name collides with an Object method" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:display)
       end
       tool, _remaining = loader.lookup([])
@@ -1028,7 +1027,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the run method" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:run)
       end
       tool, _remaining = loader.lookup([])
@@ -1037,7 +1036,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the initialize method" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:initialize)
       end
       tool, _remaining = loader.lookup([])
@@ -1046,7 +1045,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1058,7 +1057,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if a private method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1071,7 +1070,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:display, add_method: true)
       end
       tool, _remaining = loader.lookup([])
@@ -1080,7 +1079,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces not defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         flag(:abc_2def?, add_method: false)
       end
       tool, _remaining = loader.lookup([])
@@ -1089,7 +1088,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes require_exact_flag_match" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           require_exact_flag_match
         end
@@ -1106,7 +1105,7 @@ describe Toys::DSL::Tool do
 
   describe "flag_group directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         flag_group(type: :required, desc: "short description",
                    long_desc: ["long description", "in two lines"],
                    name: :my_group, report_collisions: false, prepend: true)
@@ -1122,7 +1121,7 @@ describe Toys::DSL::Tool do
     end
 
     it "provides a block that defines flags" do
-      loader.add_block do
+      cli.add_source_block do
         flag_group(name: :my_group) do
           flag(:inside_group)
           desc "short description"
@@ -1146,7 +1145,7 @@ describe Toys::DSL::Tool do
 
   describe "all_required directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         all_required(desc: "short description",
                      long_desc: ["long description", "in two lines"],
                      name: :my_group, report_collisions: false, prepend: true)
@@ -1162,7 +1161,7 @@ describe Toys::DSL::Tool do
     end
 
     it "provides a block that defines flags" do
-      loader.add_block do
+      cli.add_source_block do
         all_required(name: :my_group) do
           desc "short description"
           long_desc "long description", "in two lines"
@@ -1186,7 +1185,7 @@ describe Toys::DSL::Tool do
 
   describe "at_most_one_required directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         at_most_one_required(desc: "short description",
                              long_desc: ["long description", "in two lines"],
                              name: :my_group, report_collisions: false, prepend: true)
@@ -1202,7 +1201,7 @@ describe Toys::DSL::Tool do
     end
 
     it "provides a block that defines flags" do
-      loader.add_block do
+      cli.add_source_block do
         at_most_one_required(name: :my_group) do
           flag(:inside_group)
         end
@@ -1221,7 +1220,7 @@ describe Toys::DSL::Tool do
 
   describe "at_least_one_required directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         at_least_one_required(desc: "short description",
                               long_desc: ["long description", "in two lines"],
                               name: :my_group, report_collisions: false, prepend: true)
@@ -1237,7 +1236,7 @@ describe Toys::DSL::Tool do
     end
 
     it "provides a block that defines flags" do
-      loader.add_block do
+      cli.add_source_block do
         at_least_one_required(name: :my_group) do
           flag(:inside_group)
         end
@@ -1256,7 +1255,7 @@ describe Toys::DSL::Tool do
 
   describe "exactly_one_required directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         exactly_one_required(desc: "short description",
                              long_desc: ["long description", "in two lines"],
                              name: :my_group, report_collisions: false, prepend: true)
@@ -1272,7 +1271,7 @@ describe Toys::DSL::Tool do
     end
 
     it "provides a block that defines flags" do
-      loader.add_block do
+      cli.add_source_block do
         exactly_one_required(name: :my_group) do
           flag(:inside_group)
         end
@@ -1291,7 +1290,7 @@ describe Toys::DSL::Tool do
 
   describe "required_arg directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         required(:foo,
                  accept: Integer,
                  complete: ["1", "2", "3"],
@@ -1312,7 +1311,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes block configuration" do
-      loader.add_block do
+      cli.add_source_block do
         required(:foo) do
           accept Integer
           complete ["1", "2", "3"]
@@ -1335,7 +1334,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         required(:abc_2def?)
       end
       tool, _remaining = loader.lookup([])
@@ -1344,7 +1343,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name begins with underscore" do
-      loader.add_block do
+      cli.add_source_block do
         required(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
@@ -1353,7 +1352,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a string key" do
-      loader.add_block do
+      cli.add_source_block do
         required("abc_def1?")
       end
       tool, _remaining = loader.lookup([])
@@ -1362,7 +1361,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a symbol representing an invalid method name" do
-      loader.add_block do
+      cli.add_source_block do
         required(:"1abc")
       end
       tool, _remaining = loader.lookup([])
@@ -1371,7 +1370,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name collides with an Object method" do
-      loader.add_block do
+      cli.add_source_block do
         required(:display)
       end
       tool, _remaining = loader.lookup([])
@@ -1380,7 +1379,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the run method" do
-      loader.add_block do
+      cli.add_source_block do
         required(:run)
       end
       tool, _remaining = loader.lookup([])
@@ -1389,7 +1388,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the initialize method" do
-      loader.add_block do
+      cli.add_source_block do
         required(:initialize)
       end
       tool, _remaining = loader.lookup([])
@@ -1398,7 +1397,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1410,7 +1409,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if a private method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1423,7 +1422,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         required(:display, add_method: true)
       end
       tool, _remaining = loader.lookup([])
@@ -1432,7 +1431,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces not defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         required(:abc_2def?, add_method: false)
       end
       tool, _remaining = loader.lookup([])
@@ -1443,7 +1442,7 @@ describe Toys::DSL::Tool do
 
   describe "optional_arg directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:foo,
                  default: -1, accept: Integer,
                  display_name: "FOOOO",
@@ -1463,7 +1462,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes block configuration" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:foo) do
           default(-1)
           accept Integer
@@ -1485,7 +1484,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:abc_2def?)
       end
       tool, _remaining = loader.lookup([])
@@ -1494,7 +1493,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name begins with underscore" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
@@ -1503,7 +1502,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a string key" do
-      loader.add_block do
+      cli.add_source_block do
         optional("abc_def1?")
       end
       tool, _remaining = loader.lookup([])
@@ -1512,7 +1511,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a symbol representing an invalid method name" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:"1abc")
       end
       tool, _remaining = loader.lookup([])
@@ -1521,7 +1520,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name collides with an Object method" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:display)
       end
       tool, _remaining = loader.lookup([])
@@ -1530,7 +1529,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the run method" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:run)
       end
       tool, _remaining = loader.lookup([])
@@ -1539,7 +1538,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the initialize method" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:initialize)
       end
       tool, _remaining = loader.lookup([])
@@ -1548,7 +1547,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1560,7 +1559,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if a private method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1573,7 +1572,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:display, add_method: true)
       end
       tool, _remaining = loader.lookup([])
@@ -1582,7 +1581,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces not defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         optional(:abc_2def?, add_method: false)
       end
       tool, _remaining = loader.lookup([])
@@ -1593,7 +1592,7 @@ describe Toys::DSL::Tool do
 
   describe "remaining_args directive" do
     it "recognizes keyword arguments" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:foo,
                   default: [-1], accept: Integer,
                   display_name: "FOOOO",
@@ -1613,7 +1612,7 @@ describe Toys::DSL::Tool do
     end
 
     it "recognizes block configuration" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:foo) do
           default([-1])
           accept Integer
@@ -1635,7 +1634,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:abc_2def?)
       end
       tool, _remaining = loader.lookup([])
@@ -1644,7 +1643,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name begins with underscore" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:_abc_2def!)
       end
       tool, _remaining = loader.lookup([])
@@ -1653,7 +1652,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a string key" do
-      loader.add_block do
+      cli.add_source_block do
         remaining("abc_def1?")
       end
       tool, _remaining = loader.lookup([])
@@ -1662,7 +1661,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a symbol representing an invalid method name" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:"1abc")
       end
       tool, _remaining = loader.lookup([])
@@ -1671,7 +1670,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the name collides with an Object method" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:display)
       end
       tool, _remaining = loader.lookup([])
@@ -1680,7 +1679,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the run method" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:run)
       end
       tool, _remaining = loader.lookup([])
@@ -1689,7 +1688,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for the initialize method" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:initialize)
       end
       tool, _remaining = loader.lookup([])
@@ -1698,7 +1697,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1710,7 +1709,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if a private method already exists" do
-      loader.add_block do
+      cli.add_source_block do
         def hello
           20
         end
@@ -1723,7 +1722,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:display, add_method: true)
       end
       tool, _remaining = loader.lookup([])
@@ -1732,7 +1731,7 @@ describe Toys::DSL::Tool do
     end
 
     it "forces not defining a getter" do
-      loader.add_block do
+      cli.add_source_block do
         remaining(:abc_2def?, add_method: false)
       end
       tool, _remaining = loader.lookup([])
@@ -1743,7 +1742,7 @@ describe Toys::DSL::Tool do
 
   describe "set directive" do
     it "sets a single key" do
-      loader.add_block do
+      cli.add_source_block do
         set(:foo, "bar")
       end
       tool, _remaining = loader.lookup([])
@@ -1751,7 +1750,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets multiple keys" do
-      loader.add_block do
+      cli.add_source_block do
         set(foo: "bar", hello: "world", one: 2)
       end
       tool, _remaining = loader.lookup([])
@@ -1761,7 +1760,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         set(:hello, "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1772,7 +1771,7 @@ describe Toys::DSL::Tool do
 
   describe "static directive" do
     it "sets a single key" do
-      loader.add_block do
+      cli.add_source_block do
         static(:foo, "bar")
       end
       tool, _remaining = loader.lookup([])
@@ -1780,7 +1779,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets multiple keys" do
-      loader.add_block do
+      cli.add_source_block do
         static(foo: "bar", hello: "world", one: 2)
       end
       tool, _remaining = loader.lookup([])
@@ -1790,7 +1789,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defines a getter for a valid symbol key" do
-      loader.add_block do
+      cli.add_source_block do
         static(:abc_2def?, "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1799,7 +1798,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the key starts with an underscore" do
-      loader.add_block do
+      cli.add_source_block do
         static(:_abc_2def!, "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1808,7 +1807,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter if the key collides with an Object method" do
-      loader.add_block do
+      cli.add_source_block do
         static(:display, "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1818,7 +1817,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a string key" do
-      loader.add_block do
+      cli.add_source_block do
         static("abc_def1?", "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1827,7 +1826,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not define a getter for a symbol representing an invalid method name" do
-      loader.add_block do
+      cli.add_source_block do
         static(:"1abc", "hi")
       end
       tool, _remaining = loader.lookup([])
@@ -1838,7 +1837,7 @@ describe Toys::DSL::Tool do
 
   describe "complete_tool_args directive" do
     it "sets a named completion" do
-      loader.add_block do
+      cli.add_source_block do
         completion "mycomp", ["one", "two"]
         complete_tool_args "mycomp"
       end
@@ -1847,7 +1846,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets a completion from an options hash" do
-      loader.add_block do
+      cli.add_source_block do
         complete_tool_args include_hidden_subtools: true
       end
       tool, _remaining = loader.lookup([])
@@ -1855,7 +1854,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets a completion from a standard spec" do
-      loader.add_block do
+      cli.add_source_block do
         complete_tool_args ["one", "two"]
       end
       tool, _remaining = loader.lookup([])
@@ -1865,7 +1864,7 @@ describe Toys::DSL::Tool do
 
   describe "disable_argument_parsing directive" do
     it "disables argument parsing" do
-      loader.add_block do
+      cli.add_source_block do
         disable_argument_parsing
       end
       tool, _remaining = loader.lookup([])
@@ -1874,7 +1873,7 @@ describe Toys::DSL::Tool do
 
     it "prevents invoking flag and arg directives" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         disable_argument_parsing
         t.assert_raises(Toys::ToolDefinitionError) do
           flag :hello
@@ -1894,7 +1893,7 @@ describe Toys::DSL::Tool do
 
     it "cannot be invoked if a flag already exists" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         flag :hello
         t.assert_raises(Toys::ToolDefinitionError) do
           disable_argument_parsing
@@ -1905,7 +1904,7 @@ describe Toys::DSL::Tool do
 
     it "cannot be invoked if an arg already exists" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         required_arg :hello
         t.assert_raises(Toys::ToolDefinitionError) do
           disable_argument_parsing
@@ -1917,7 +1916,7 @@ describe Toys::DSL::Tool do
 
   describe "enforce_flags_before_args directive" do
     it "modifies the setting on the tool" do
-      loader.add_block do
+      cli.add_source_block do
         enforce_flags_before_args
       end
       tool, _remaining = loader.lookup([])
@@ -1926,7 +1925,7 @@ describe Toys::DSL::Tool do
 
     it "cannot be invoked if argument parsing is disabled" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         disable_argument_parsing
         t.assert_raises(Toys::ToolDefinitionError) do
           enforce_flags_before_args
@@ -1938,7 +1937,7 @@ describe Toys::DSL::Tool do
 
   describe "treat_unknown_flags_as_args directive" do
     it "modifies the setting on the tool" do
-      loader.add_block do
+      cli.add_source_block do
         treat_unknown_flags_as_args
       end
       tool, _remaining = loader.lookup([])
@@ -1946,7 +1945,7 @@ describe Toys::DSL::Tool do
     end
 
     it "defaults to disabled" do
-      loader.add_block do
+      cli.add_source_block do
         # Empty tool
       end
       tool, _remaining = loader.lookup([])
@@ -1954,7 +1953,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be disabled explicitly" do
-      loader.add_block do
+      cli.add_source_block do
         treat_unknown_flags_as_args
         treat_unknown_flags_as_args false
       end
@@ -1964,7 +1963,7 @@ describe Toys::DSL::Tool do
 
     it "cannot be invoked if argument parsing is disabled" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         disable_argument_parsing
         t.assert_raises(Toys::ToolDefinitionError) do
           treat_unknown_flags_as_args
@@ -1976,7 +1975,7 @@ describe Toys::DSL::Tool do
 
   describe "disable_flag directive" do
     it "adds a flag to the used list" do
-      loader.add_block do
+      cli.add_source_block do
         disable_flag "-a", "--bb"
       end
       tool, _remaining = loader.lookup([])
@@ -1984,7 +1983,7 @@ describe Toys::DSL::Tool do
     end
 
     it "prevents flags from being defined" do
-      loader.add_block do
+      cli.add_source_block do
         disable_flag "-a", "--bb"
         flag :foo, "-a", report_collisions: false
         flag :bar, "--bb", "--baa", report_collisions: false
@@ -1998,7 +1997,7 @@ describe Toys::DSL::Tool do
 
     it "cannot disable already-defined flags" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         flag :foo, "-a"
         flag :bar, "--bb", "--baa"
         t.assert_raises(Toys::ToolDefinitionError) do
@@ -2017,7 +2016,7 @@ describe Toys::DSL::Tool do
 
   describe "delegate_to directive" do
     it "supports delimited string paths" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           delegate_to "bar:baz"
         end
@@ -2027,7 +2026,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports array of strings paths" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           delegate_to ["bar", "baz"]
         end
@@ -2037,7 +2036,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports simple symbols paths" do
-      loader.add_block do
+      cli.add_source_block do
         tool :foo do
           delegate_to :bar
         end
@@ -2047,7 +2046,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports complex symbols paths" do
-      loader.add_block do
+      cli.add_source_block do
         tool :foo do
           delegate_to :"bar:baz"
         end
@@ -2060,7 +2059,7 @@ describe Toys::DSL::Tool do
       let(:extra_delimiters) { "" }
 
       it "supports simple symbols paths" do
-        loader.add_block do
+        cli.add_source_block do
           tool :foo do
             delegate_to :bar
           end
@@ -2071,7 +2070,7 @@ describe Toys::DSL::Tool do
     end
 
     it "supports array of symbols paths" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           delegate_to [:bar, :baz]
         end
@@ -2081,7 +2080,7 @@ describe Toys::DSL::Tool do
     end
 
     it "executes the delegate" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           delegate_to "bar"
         end
@@ -2097,7 +2096,7 @@ describe Toys::DSL::Tool do
 
   describe "alias_tool directive" do
     it "delegates using a relative path" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           tool "bar" do
             def run
@@ -2111,7 +2110,7 @@ describe Toys::DSL::Tool do
     end
 
     it "delegates using a symbol" do
-      loader.add_block do
+      cli.add_source_block do
         tool :foo do
           tool :bar do
             def run
@@ -2127,7 +2126,7 @@ describe Toys::DSL::Tool do
 
   describe "subtool_apply directive" do
     it "applies recursively to subtools" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           subtool_apply do
             desc "hello"
@@ -2151,7 +2150,7 @@ describe Toys::DSL::Tool do
     end
 
     it "applies multiple blocks" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           subtool_apply do
             desc "hello"
@@ -2172,7 +2171,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not affect the current tool" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           subtool_apply do
             desc "hello"
@@ -2185,7 +2184,7 @@ describe Toys::DSL::Tool do
 
     it "sets the source info within the block" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           parent_source = source_info
           subtool_apply do
@@ -2204,10 +2203,10 @@ describe Toys::DSL::Tool do
   describe "truncate_load_path! directive" do
     it "removes lower-priority load paths" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         truncate_load_path!
       end
-      loader.add_block do
+      cli.add_source_block do
         t.flunk("Search was not stopped!")
       end
 
@@ -2215,12 +2214,12 @@ describe Toys::DSL::Tool do
     end
 
     it "fails if a lower-priority tool is already loaded" do
-      loader.add_block do
+      cli.add_source_block do
         tool "tool-2" do
           truncate_load_path!
         end
       end
-      loader.add_block do
+      cli.add_source_block do
         tool "tool-1" do
           desc "hello"
         end
@@ -2238,7 +2237,7 @@ describe Toys::DSL::Tool do
 
     it "loads a file into the current namespace" do
       file_to_load = File.join(config_items_dir, ".toys.rb")
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load(file_to_load)
         end
@@ -2250,7 +2249,7 @@ describe Toys::DSL::Tool do
 
     it "loads a directory into the current namespace" do
       dir_to_load = File.join(config_items_dir, ".toys")
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load(dir_to_load)
         end
@@ -2262,7 +2261,7 @@ describe Toys::DSL::Tool do
 
     it "loads a file as a name" do
       file_to_load = File.join(config_items_dir, ".toys.rb")
-      loader.add_block do
+      cli.add_source_block do
         load(file_to_load, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
@@ -2272,7 +2271,7 @@ describe Toys::DSL::Tool do
 
     it "loads a directory as a name" do
       dir_to_load = File.join(config_items_dir, ".toys")
-      loader.add_block do
+      cli.add_source_block do
         load(dir_to_load, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
@@ -2293,7 +2292,7 @@ describe Toys::DSL::Tool do
     it "loads a file into the current namespace" do
       remote = git_remote
       path = git_file_path
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load_git(remote: remote, path: path, update: true)
         end
@@ -2307,7 +2306,7 @@ describe Toys::DSL::Tool do
     it "loads a directory into the current namespace" do
       remote = git_remote
       path = git_dir_path
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load_git(remote: remote, path: path, update: true)
         end
@@ -2321,7 +2320,7 @@ describe Toys::DSL::Tool do
     it "loads a file as a name" do
       remote = git_remote
       path = git_file_path
-      loader.add_block do
+      cli.add_source_block do
         load_git(remote: remote, path: path, update: true, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
@@ -2333,7 +2332,7 @@ describe Toys::DSL::Tool do
     it "loads a directory as a name" do
       remote = git_remote
       path = git_dir_path
-      loader.add_block do
+      cli.add_source_block do
         load_git(remote: remote, path: path, update: true, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
@@ -2348,7 +2347,7 @@ describe Toys::DSL::Tool do
 
     it "loads a file into the current namespace" do
       toys_dir = gem_toys_dir
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir)
         end
@@ -2362,7 +2361,7 @@ describe Toys::DSL::Tool do
 
     it "loads a directory into the current namespace" do
       toys_dir = gem_toys_dir
-      loader.add_block do
+      cli.add_source_block do
         tool "ns-1" do
           load_gem("toys-core", path: ".toys", toys_dir: toys_dir)
         end
@@ -2376,7 +2375,7 @@ describe Toys::DSL::Tool do
 
     it "loads a file as a name" do
       toys_dir = gem_toys_dir
-      loader.add_block do
+      cli.add_source_block do
         load_gem("toys-core", path: ".toys.rb", toys_dir: toys_dir, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-1", "hello"])
@@ -2388,7 +2387,7 @@ describe Toys::DSL::Tool do
 
     it "loads a directory as a name" do
       toys_dir = gem_toys_dir
-      loader.add_block do
+      cli.add_source_block do
         load_gem("toys-core", path: ".toys", toys_dir: toys_dir, as: "ns1 ns2")
       end
       tool, remaining = loader.lookup(["ns1", "ns2", "tool-2", "hello"])
@@ -2401,7 +2400,7 @@ describe Toys::DSL::Tool do
 
   describe "inheritable_helper_methods directive" do
     it "defaults the setting to false if not present" do
-      loader.add_block do
+      cli.add_source_block do
         desc "hello"
       end
       tool, _remaining = loader.lookup([])
@@ -2409,7 +2408,7 @@ describe Toys::DSL::Tool do
     end
 
     it "modifies the setting on the tool" do
-      loader.add_block do
+      cli.add_source_block do
         inheritable_helper_methods true
       end
       tool, _remaining = loader.lookup([])
@@ -2420,7 +2419,7 @@ describe Toys::DSL::Tool do
   describe "context_directory directive" do
     it "returns nil when no context directory exists" do
       captured = nil
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           captured = context_directory
         end
@@ -2431,7 +2430,7 @@ describe Toys::DSL::Tool do
 
     it "returns the source context directory when no custom one is set" do
       captured = nil
-      loader.add_block(context_directory: "/source/dir") do
+      cli.add_source_block(context_directory: "/source/dir") do
         tool "foo" do
           captured = context_directory
         end
@@ -2442,7 +2441,7 @@ describe Toys::DSL::Tool do
 
     it "returns the custom directory after set_context_directory" do
       captured = nil
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           set_context_directory "/custom/dir"
           captured = context_directory
@@ -2454,7 +2453,7 @@ describe Toys::DSL::Tool do
 
     it "returns the custom directory over the source context directory" do
       captured = nil
-      loader.add_block(context_directory: "/source/dir") do
+      cli.add_source_block(context_directory: "/source/dir") do
         tool "foo" do
           set_context_directory "/custom/dir"
           captured = context_directory
@@ -2467,7 +2466,7 @@ describe Toys::DSL::Tool do
 
   describe "set_context_directory directive" do
     it "sets custom_context_directory on the tool definition" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           set_context_directory "/custom/dir"
         end
@@ -2477,7 +2476,7 @@ describe Toys::DSL::Tool do
     end
 
     it "does not set custom_context_directory if not called" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           # no set_context_directory
         end
@@ -2487,7 +2486,7 @@ describe Toys::DSL::Tool do
     end
 
     it "sets the effective context_directory on the tool definition" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           set_context_directory "/custom/dir"
         end
@@ -2497,7 +2496,7 @@ describe Toys::DSL::Tool do
     end
 
     it "overrides the source context directory" do
-      loader.add_block(context_directory: "/source/dir") do
+      cli.add_source_block(context_directory: "/source/dir") do
         tool "foo" do
           set_context_directory "/custom/dir"
         end
@@ -2509,7 +2508,7 @@ describe Toys::DSL::Tool do
     it "nil clears a previously set custom directory and reverts to source" do
       captured_after_set = nil
       captured_after_clear = nil
-      loader.add_block(context_directory: "/source/dir") do
+      cli.add_source_block(context_directory: "/source/dir") do
         tool "foo" do
           set_context_directory "/custom/dir"
           captured_after_set = context_directory
@@ -2524,7 +2523,7 @@ describe Toys::DSL::Tool do
     end
 
     it "is inherited by subtools that have no custom directory" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           set_context_directory "/custom/dir"
           tool "bar" do
@@ -2538,7 +2537,7 @@ describe Toys::DSL::Tool do
     end
 
     it "can be overridden in a subtool" do
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           set_context_directory "/parent/dir"
           tool "bar" do
@@ -2558,7 +2557,7 @@ describe Toys::DSL::Tool do
 
     it "returns nil from an inline block source" do
       captured = :unset
-      loader.add_block do
+      cli.add_source_block do
         tool "foo" do
           captured = find_data("foo/bar.txt")
         end
@@ -2568,32 +2567,32 @@ describe Toys::DSL::Tool do
     end
 
     it "returns path when file found in current data directory" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-1", "foo"))
     end
 
     it "falls back to parent data directory" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-1", "ns-1b", "foo"))
     end
 
     it "falls back to root data directory" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-4", "foo"))
     end
 
     it "returns nil when file not found in any ancestor data directory" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-3", "foo"))
     end
 
     it "filters by type: :file" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-1", "type_file"))
     end
 
     it "filters by type: :directory" do
-      cli.loader.add_path(find_data_dir)
+      cli.add_source_path(find_data_dir)
       assert_equal(0, cli.run("ns-1", "type_dir"))
     end
   end
@@ -2601,7 +2600,7 @@ describe Toys::DSL::Tool do
   describe "toys_version directives" do
     it "checks versions" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         t.assert(toys_version?("> 0.9", "< 100.0"))
         t.refute(toys_version?("< 0.9"))
       end
@@ -2610,7 +2609,7 @@ describe Toys::DSL::Tool do
 
     it "asserts versions" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         toys_version!("> 0.9", "< 100.0")
         ex = t.assert_raises(Toys::ToolDefinitionError) do
           toys_version!("< 0.9")
@@ -2624,58 +2623,58 @@ describe Toys::DSL::Tool do
 
   describe "Toys::Tool subclassing" do
     it "creates a tool" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo"])
       assert_equal("description of foo", tool.desc.to_s)
     end
 
     it "creates a tool with a hyphenated name" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar"])
       assert_equal("description of foo-bar", tool.desc.to_s)
     end
 
     it "creates a nested tool using a nested class" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar", "baz"])
       assert_equal("description of foo-bar baz", tool.desc.to_s)
     end
 
     it "creates a nested tool using a block" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-bar", "qux"])
       assert_equal("description of foo-bar qux", tool.desc.to_s)
     end
 
     it "creates a tool with a custom name" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["qu_ux"])
       assert_equal("description of qu_ux", tool.desc.to_s)
     end
 
     it "creates a tool subclassing an existing tool" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo-child1"])
       assert_equal("description of foo-child1", tool.desc.to_s)
       assert_equal(9, cli.run(["foo-child1"]))
     end
 
     it "creates a custom-named tool subclassing an existing tool" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["foo_child2"])
       assert_equal("description of foo_child2", tool.desc.to_s)
       assert_equal(9, cli.run(["foo_child2"]))
     end
 
     it "creates a tool subclassing an existing custom-named tool" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["quux-child1"])
       assert_equal("description of quux-child1", tool.desc.to_s)
       assert_equal(8, cli.run(["quux-child1"]))
     end
 
     it "creates a custom-named tool subclassing an existing custom-named tool" do
-      loader.add_path(File.join(cases_dir, "tool-subclasses"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclasses"))
       tool, _remaining = loader.lookup(["quux_child2"])
       assert_equal("description of quux_child2", tool.desc.to_s)
       assert_equal(8, cli.run(["quux_child2"]))
@@ -2690,7 +2689,7 @@ describe Toys::DSL::Tool do
 
     it "is not allowed from a block" do
       t = self
-      loader.add_block do
+      cli.add_source_block do
         ex = t.assert_raises(Toys::ToolDefinitionError) do
           class Hello1 < Toys::Tool; end
         end
@@ -2699,7 +2698,7 @@ describe Toys::DSL::Tool do
     end
 
     it "is not allowed from a tool block" do
-      loader.add_path(File.join(cases_dir, "tool-subclass-under-block"))
+      cli.add_source_path(File.join(cases_dir, "tool-subclass-under-block"))
       ex = assert_raises(Toys::ContextualError) do
         loader.lookup(["foo"])
       end

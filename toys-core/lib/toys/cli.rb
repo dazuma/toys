@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "logger"
+require "monitor"
 
 module Toys
   ##
@@ -22,7 +23,7 @@ module Toys
   #     #!/usr/bin/env ruby
   #     require "toys-core"
   #     cli = Toys::CLI.new
-  #     cli.add_config_block do
+  #     cli.add_source_block do
   #       def run
   #         puts "Hello, world!"
   #       end
@@ -67,13 +68,12 @@ module Toys
     #      *  `mixin_lookup`: Where to find well-known mixins
     #      *  `middleware_lookup`: Where to find well-known middleware
     #      *  `template_lookup`: Where to find well-known templates
-    #  *  Options affecting tool files and directories
-    #      *  `config_dir_name`: Directory name containing tool files
-    #      *  `config_file_name`: File name for tools
-    #      *  `index_file_name`: Name of index files in tool directories
-    #      *  `preload_file_name`: Name of preload files in tool directories
-    #      *  `preload_dir_name`: Name of preload directories in tool directories
-    #      *  `data_dir_name`: Name of data directories in tool directories
+    #  *  Options affecting tool sources
+    #      *  `toplevel_tool_dir_name`: Directory name containing tool files
+    #      *  `toplevel_tool_file_name`: File name for tools
+    #      *  `git_cache`: Custom GitCache to use for git sources
+    #      *  `gems_util`: Custom Gems utility to use for gem sources
+    #      *  `sources`: Initial sources to populate
     #
     # @param logger [Logger] A global logger to use for all tools. This can be
     #     set if the CLI will call at most one tool at a time. However, it will
@@ -134,61 +134,29 @@ module Toys
     #     {Toys::CLI.default_template_lookup}. If you explicitly want no
     #     standard templates, pass an empty instance of {Toys::ModuleLookup}.
     #
-    # @param config_dir_name [String] A directory with this name that appears
-    #     in the loader path, is treated as a configuration directory whose
-    #     contents are loaded into the toys configuration.
-    #     Optional. If not provided, toplevel configuration directories are
-    #     disabled.
-    #     Note: the standard toys executable sets this to `".toys"`.
-    # @param config_file_name [String] A file with this name that appears in
-    #     the loader path, is treated as a toplevel configuration file whose
-    #     contents are loaded into the toys configuration. This does not
-    #     include "index" configuration files located within a configuration
-    #     directory.
-    #     Optional. If not provided, toplevel configuration files are disabled.
-    #     Note: the standard toys executable sets this to `".toys.rb"`.
-    # @param index_file_name [String] A file with this name that appears in any
-    #     configuration directory is loaded first as a standalone configuration
-    #     file. This does not include "toplevel" configuration files outside
-    #     configuration directories.
-    #     Optional. If not provided, index configuration files are disabled.
-    #     Note: the standard toys executable sets this to `".toys.rb"`.
-    # @param preload_file_name [String] A file with this name that appears
-    #     in any configuration directory is preloaded using `require` before
-    #     any tools in that configuration directory are defined. A preload file
-    #     includes normal Ruby code, rather than Toys DSL definitions. The
-    #     preload file is loaded before any files in a preload directory.
-    #     Optional. If not provided, preload files are disabled.
-    #     Note: the standard toys executable sets this to `".preload.rb"`.
-    # @param preload_dir_name [String] A directory with this name that appears
-    #     in any configuration directory is searched for Ruby files, which are
-    #     preloaded using `require` before any tools in that configuration
-    #     directory are defined. Files in a preload directory include normal
-    #     Ruby code, rather than Toys DSL definitions. Files in a preload
-    #     directory are loaded after any standalone preload file.
-    #     Optional. If not provided, preload directories are disabled.
-    #     Note: the standard toys executable sets this to `".preload"`.
-    # @param data_dir_name [String] A directory with this name that appears in
-    #     any configuration directory is added to the data directory search
-    #     path for any tool file in that directory.
-    #     Optional. If not provided, data directories are disabled.
-    #     Note: the standard toys executable sets this to `".data"`.
-    # @param lib_dir_name [String] A directory with this name that appears in
-    #     any configuration directory is added to the Ruby load path when
-    #     executing any tool file in that directory.
-    #     Optional. If not provided, lib directories are disabled.
-    #     Note: the standard toys executable sets this to `".lib"`.
+    # @param toplevel_tool_dir_name [String] Tools are loaded from directories
+    #     of this name that appear in a search path.
+    #     Optional. If not provided, search paths do not load tool directories.
+    #     The standard toys executable sets this to `".toys"`.
+    # @param toplevel_tool_file_name [String] Tools are loaded from files of
+    #     this name that appear in a search path.
+    #     Optional. If not provided, search paths do not load tool files.
+    #     The standard toys executable sets this to `".toys.rb"`.
+    #     Note: This setting does not affect the name of "index" toys files,
+    #     which is fixed at `".toys.rb"`.
+    # @param git_cache [Toys::Utils::GitCache] A custom GitCache instance to
+    #     use to resolve git sources. Optional.
+    # @param gems_util [Toys::Utils::Gems] A custom Gems utility instance to
+    #     use to resolve gem sources. Optional.
+    # @param sources [Array<Toys::SourceInfo>] An optional list of sources to
+    #     populate into the source list. Most callers, however, should make
+    #     calls to the `add_*` methods instead.
     #
-    def initialize(executable_name: nil, # rubocop:disable Metrics/MethodLength
+    def initialize(executable_name: nil,
                    middleware_stack: nil,
                    extra_delimiters: "",
-                   config_dir_name: nil,
-                   config_file_name: nil,
-                   index_file_name: nil,
-                   preload_file_name: nil,
-                   preload_dir_name: nil,
-                   data_dir_name: nil,
-                   lib_dir_name: nil,
+                   toplevel_tool_dir_name: nil,
+                   toplevel_tool_file_name: nil,
                    mixin_lookup: nil,
                    middleware_lookup: nil,
                    template_lookup: nil,
@@ -196,7 +164,10 @@ module Toys
                    logger: nil,
                    base_level: nil,
                    error_handler: nil,
-                   completion: nil)
+                   completion: nil,
+                   git_cache: nil,
+                   gems_util: nil,
+                   sources: nil)
       @executable_name = executable_name || ::File.basename($PROGRAM_NAME)
       @middleware_stack = middleware_stack || CLI.default_middleware_stack
       @mixin_lookup = mixin_lookup || CLI.default_mixin_lookup
@@ -210,90 +181,70 @@ module Toys
       @base_level = base_level
       @extra_delimiters = extra_delimiters
       @tool_name_splitter = ToolNameSplitter.new(extra_delimiters)
-      @config_dir_name = config_dir_name
-      @config_file_name = config_file_name
-      @index_file_name = index_file_name
-      @preload_file_name = preload_file_name
-      @preload_dir_name = preload_dir_name
-      @data_dir_name = data_dir_name
-      @lib_dir_name = lib_dir_name
-      @loader = Loader.new(
-        index_file_name: @index_file_name,
-        preload_dir_name: @preload_dir_name,
-        preload_file_name: @preload_file_name,
-        data_dir_name: @data_dir_name,
-        lib_dir_name: @lib_dir_name,
-        middleware_stack: @middleware_stack,
-        tool_name_splitter: @tool_name_splitter,
-        mixin_lookup: @mixin_lookup,
-        template_lookup: @template_lookup,
-        middleware_lookup: @middleware_lookup
-      )
-      @runner = Runner.new(@loader,
-                           logger_factory: @logger_factory,
-                           base_level: @base_level,
-                           error_handler: @error_handler,
-                           executable_name: @executable_name,
-                           external_data: {Context::Key::CLI => self})
+      @toplevel_tool_dir_name = toplevel_tool_dir_name
+      @toplevel_tool_file_name = toplevel_tool_file_name
+      @git_cache = git_cache
+      @gems_util = gems_util
+      @source_list_builder = SourceListBuilder.new(git_cache: git_cache, gems_util: gems_util, sources: sources)
+      @loader = @runner = nil
+      @source_definition_mutex = ::Monitor.new
     end
 
     ##
-    # Make a clone with the same settings. By default, the new CLI has no
-    # config blocks and no paths in its loader, which is sometimes useful for
-    # calling another tool that has to be loaded from a different
-    # configuration. Alternately, you can pass `copy_loader_sources: true` to
-    # start with the same sources as the original. This is useful if you need
-    # to run a tool with an additional source, because sources cannot be added
-    # to a loader once it has started loading tools.
+    # Make a clone of this CLI with the same settings.
     #
-    # Sources are copied before the block (if any) is called, so any sources
-    # the block adds at high priority will take priority over the copies.
+    # By default, the new CLI has no tool sources, which is sometimes useful
+    # for calling another tool that has to be loaded from a different source
+    # configuration. Alternately, you can pass `copy_sources: true` to start
+    # with the same sources as the original (to which you can add additional
+    # sources before starting to load tools). Sources are copied before the
+    # block (if any) is called, so any sources the block adds at high priority
+    # will take priority over the originals.
     #
-    # @param copy_loader_sources [boolean] If true, the new CLI's loader is
-    #     populated with the same sources as the original CLI's loader. The
-    #     sources are not reresolved; in particular, gems are not reactivated
-    #     and git repos are not refetched. Defaults to false.
-    #
-    #     Note that the `data_dir_name` and `lib_dir_name` settings are
-    #     captured by each source when it is added, so a copied source retains
-    #     the values from the original CLI. Rather than apply such a change
-    #     inconsistently, this method raises if you try to modify either
-    #     setting while also copying sources. This is a current limitation and
-    #     may be lifted in the future.
+    # @param copy_sources [boolean] If true, the new CLI is populated with the
+    #     same sources as the original.
     # @param opts [keywords] Any configuration arguments that should be
     #     modified from the original. See {#initialize} for a list of
     #     recognized keywords.
     # @return [Toys::CLI]
-    # @raise [ArgumentError] if `copy_loader_sources` is true and either
-    #     `data_dir_name` or `lib_dir_name` is modified.
     # @yieldparam cli [Toys::CLI] If you pass a block, the new CLI is yielded
     #     to it so you can add paths and make other modifications.
     #
-    def child(copy_loader_sources: false, **opts)
-      if copy_loader_sources
-        check_source_copy_conflict(opts, :data_dir_name, @data_dir_name)
-        check_source_copy_conflict(opts, :lib_dir_name, @lib_dir_name)
-      end
-      cli = CLI.new(**current_settings, **opts)
-      cli.loader.add_source_root_records(@loader.source_root_records) if copy_loader_sources
+    def child(copy_sources: false, **opts)
+      cli = CLI.new(**current_settings(copy_sources), **opts)
       yield cli if block_given?
       cli
     end
 
     ##
     # The current loader for this CLI.
+    #
+    # Note that calling this finalizes this CLI's source list if not already
+    # finalized. Any subsequent attempt to add a source raises
+    # {Toys::SourceListFinalizedError}.
+    #
     # @return [Toys::Loader]
     #
-    attr_reader :loader
+    def loader
+      finalize_sources!
+      @loader
+    end
 
     ##
     # The runner this CLI uses to run tools, configured with this CLI's
     # settings. Use it directly when you need more control over a single run
-    # than {#run} provides, such as turning off error handling. Note that
-    # {#child} builds a new CLI with a runner of its own.
+    # than {#run} provides, such as turning off error handling.
+    #
+    # Note that calling this finalizes this CLI's source list if not already
+    # finalized. Any subsequent attempt to add a source raises
+    # {Toys::SourceListFinalizedError}.
+    #
     # @return [Toys::Runner]
     #
-    attr_reader :runner
+    def runner
+      finalize_sources!
+      @runner
+    end
 
     ##
     # The effective executable name used for usage text in this CLI.
@@ -340,7 +291,7 @@ module Toys
     attr_reader :completion
 
     ##
-    # Add a specific configuration file or directory to the loader.
+    # Add a specific tool file or directory to the source list.
     #
     # This is generally used to load a static or "built-in" set of tools,
     # either for a standalone command line executable based on Toys, or to
@@ -348,9 +299,9 @@ module Toys
     # the main Toys executable uses this to load the builtin tools from its
     # "builtins" directory.
     #
-    # @param path [String] A path to add. May reference a single Toys file or
-    #     a Toys directory.
-    # @param high_priority [boolean] Add the config at the head of the priority
+    # @param path [String] A path to add. May reference a single tool file or a
+    #     tool directory.
+    # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
     # @param source_name [String] A custom name for the root source. Optional.
     # @param context_directory [String,nil,:path,:parent] The context directory
@@ -358,50 +309,64 @@ module Toys
     #     string, `:path` to denote the given path, `:parent` to denote the
     #     given path's parent directory, or `nil` to denote no context.
     #     Defaults to `:parent`.
-    # @return [self]
     #
-    def add_config_path(path,
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    # @raise [Toys::ToolDefinitionError] if the given path does not point at
+    #     a readable Ruby file or directory.
+    #
+    def add_source_path(path,
                         high_priority: false,
                         source_name: nil,
                         context_directory: :parent)
-      @loader.add_path(path,
-                       high_priority: high_priority,
-                       source_name: source_name,
-                       context_directory: context_directory)
+      ensure_open_source_list do
+        @source_list_builder.add_path(path,
+                                      high_priority: high_priority,
+                                      source_name: source_name,
+                                      context_directory: context_directory)
+      end
       self
     end
+    alias add_config_path add_source_path
 
     ##
-    # Add a configuration block to the loader.
+    # Add a block to the source list.
     #
     # This is used to create tools "inline", and is useful for simple command
     # line executables based on Toys.
     #
-    # @param high_priority [boolean] Add the config at the head of the priority
+    # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
     # @param source_name [String] The source name that will be shown in
     #     documentation for tools defined in this block. If omitted, a default
     #     unique string will be generated.
-    # @param block [Proc] The block of configuration, executed in the context
-    #     of the tool DSL {Toys::DSL::Tool}.
+    # @param block [Proc] The source block, executed in the context of the tool
+    #     DSL {Toys::DSL::Tool}.
     # @param context_directory [String,nil] The context directory for tools
     #     loaded from this block. You can pass a directory path as a string, or
     #     `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
     #
-    def add_config_block(high_priority: false,
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_source_block(high_priority: false,
                          source_name: nil,
                          context_directory: nil,
                          &block)
-      @loader.add_block(high_priority: high_priority,
-                        source_name: source_name,
-                        context_directory: context_directory,
-                        &block)
+      ensure_open_source_list do
+        @source_list_builder.add_block(high_priority: high_priority,
+                                       source_name: source_name,
+                                       context_directory: context_directory,
+                                       &block)
+      end
       self
     end
+    alias add_config_block add_source_block
 
     ##
-    # Add the tools from a gem to the loader.
+    # Add the tools from a gem to the source list.
     #
     # The gem is activated, installing it if necessary, and tools are loaded
     # from the gem's toys directory (or a file or subdirectory within it).
@@ -412,34 +377,44 @@ module Toys
     # @param gem_path [String,nil] The path from the gem's toys directory to
     #     the relevant file or directory. Optional. If not provided, the entire
     #     toys directory is used.
-    # @param high_priority [boolean] Add the config at the head of the priority
-    #     list rather than the tail.
-    # @param source_name [String] A custom name for the root source. Optional.
     # @param gem_toys_dir [String] The name of the gem's toys directory.
     #     Optional. Defaults to the directory specified in the gem's metadata,
     #     or the value "toys".
+    # @param high_priority [boolean] Add the source at the head of the priority
+    #     list rather than the tail.
+    # @param source_name [String] A custom name for the root source. Optional.
     # @param context_directory [String,nil] The context directory for tools
     #     loaded from this source. You can pass a directory path as a string,
     #     or `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
     #
-    def add_config_gem(gem_name,
-                       gem_version: [],
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    # @raise [Toys::ToolDefinitionError] if the specified gem could not be
+    #     activated or did not contain valid toys files/directories.
+    #
+    def add_source_gem(gem_name,
+                       gem_version: nil,
                        gem_path: nil,
+                       gem_toys_dir: nil,
                        high_priority: false,
                        source_name: nil,
-                       gem_toys_dir: nil,
                        context_directory: nil)
-      @loader.add_gem(gem_name, gem_version, gem_path,
-                      high_priority: high_priority,
-                      source_name: source_name,
-                      gem_toys_dir: gem_toys_dir,
-                      context_directory: context_directory)
+      ensure_open_source_list do
+        @source_list_builder.add_gem(gem_name,
+                                     gem_version: gem_version,
+                                     gem_path: gem_path,
+                                     gem_toys_dir: gem_toys_dir,
+                                     high_priority: high_priority,
+                                     source_name: source_name,
+                                     context_directory: context_directory)
+      end
       self
     end
+    alias add_config_gem add_source_gem
 
     ##
-    # Add the tools from a git repository to the loader.
+    # Add the tools from a git repository to the source list.
     #
     # The repository is fetched into a local cache, and tools are loaded from
     # it (or from a file or subdirectory within it).
@@ -449,70 +424,88 @@ module Toys
     #     the repo. Optional. Defaults to the entire repo.
     # @param git_commit [String] The git ref (i.e. SHA, tag, or branch name).
     #     Optional. Defaults to `"HEAD"`.
-    # @param high_priority [boolean] Add the config at the head of the priority
+    # @param update [boolean,Integer] Whether to update non-SHA commit
+    #     references if they were previously loaded. This is useful, for
+    #     example, if the commit is `HEAD` or a branch name. Pass `true` or
+    #     `false` to specify whether to update, or an integer to update if
+    #     last update was done at least that many seconds ago. Default is
+    #     `false`.
+    # @param high_priority [boolean] Add the source at the head of the priority
     #     list rather than the tail.
     # @param source_name [String] A custom name for the root source. Optional.
-    # @param update [boolean] If the commit is not a SHA, pulls any updates
-    #     from the remote. Defaults to false, which uses a local cache and does
-    #     not update if the commit has been fetched previously.
     # @param context_directory [String,nil] The context directory for tools
     #     loaded from this source. You can pass a directory path as a string,
     #     or `nil` to denote no context. Defaults to `nil`.
-    # @return [self]
     #
-    def add_config_git(git_remote,
-                       git_path: "",
-                       git_commit: "HEAD",
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    # @raise [Toys::ToolDefinitionError] if the specified git repo could not be
+    #     accessed or did not contain valid toys files/directories.
+    #
+    def add_source_git(git_remote,
+                       git_path: nil,
+                       git_commit: nil,
+                       update: false,
                        high_priority: false,
                        source_name: nil,
-                       update: false,
                        context_directory: nil)
-      @loader.add_git(git_remote, git_path, git_commit,
-                      high_priority: high_priority,
-                      source_name: source_name,
-                      update: update,
-                      context_directory: context_directory)
+      ensure_open_source_list do
+        @source_list_builder.add_git(git_remote,
+                                     git_path: git_path,
+                                     git_commit: git_commit,
+                                     high_priority: high_priority,
+                                     source_name: source_name,
+                                     update: update,
+                                     context_directory: context_directory)
+      end
       self
     end
+    alias add_config_git add_source_git
 
     ##
-    # Checks the given directory path. If it contains a config file and/or
-    # config directory, those are added to the loader.
+    # Checks the given directory path. If it contains a tool file and/or
+    # tool directory, those are added to the source list.
     #
     # The main Toys executable uses this method to load tools from directories
     # in the `TOYS_PATH`.
     #
-    # @param search_path [String] A path to search for configs.
-    # @param high_priority [boolean] Add the configs at the head of the
+    # @param search_path [String] A path to search for sources.
+    # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
     # @param context_directory [String,nil,:path,:parent] The context directory
     #     for tools loaded from this path. You can pass a directory path as a
     #     string, `:path` to denote the given path, `:parent` to denote the
     #     given path's parent directory, or `nil` to denote no context.
     #     Defaults to `:path`.
+    #
     # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
     #
     def add_search_path(search_path,
                         high_priority: false,
                         context_directory: :path)
-      paths = []
-      if @config_file_name
-        file_path = ::File.join(search_path, @config_file_name)
-        paths << @config_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
+      ensure_open_source_list do
+        paths = []
+        if @toplevel_tool_file_name
+          file_path = ::File.join(search_path, @toplevel_tool_file_name)
+          paths << @toplevel_tool_file_name if !::File.directory?(file_path) && ::File.readable?(file_path)
+        end
+        if @toplevel_tool_dir_name
+          dir_path = ::File.join(search_path, @toplevel_tool_dir_name)
+          paths << @toplevel_tool_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
+        end
+        @source_list_builder.add_path_set(search_path, paths,
+                                          high_priority: high_priority,
+                                          context_directory: context_directory)
       end
-      if @config_dir_name
-        dir_path = ::File.join(search_path, @config_dir_name)
-        paths << @config_dir_name if ::File.directory?(dir_path) && ::File.readable?(dir_path)
-      end
-      @loader.add_path_set(search_path, paths,
-                           high_priority: high_priority,
-                           context_directory: context_directory)
       self
     end
 
     ##
-    # Walk up the directory hierarchy from the given start location, and add to
-    # the loader any config files and directories found.
+    # Walk up the directory hierarchy from the given start location, and add
+    # any tool files and directories found.
     #
     # The main Toys executable uses this method to load tools from the current
     # directory and its ancestors.
@@ -523,23 +516,30 @@ module Toys
     #     terminate the search. If the walk up the directory tree encounters
     #     one of these directories, the search is halted without checking the
     #     terminating directory.
-    # @param high_priority [boolean] Add the configs at the head of the
+    # @param high_priority [boolean] Add the sources at the head of the
     #     priority list rather than the tail.
-    # @return [self]
     #
-    def add_search_path_hierarchy(start: nil, terminate: [], high_priority: false)
-      path = start || ::Dir.pwd
-      paths = []
-      loop do
-        break if terminate.include?(path)
-        paths << path
-        next_path = ::File.dirname(path)
-        break if next_path == path
-        path = next_path
-      end
-      paths.reverse! if high_priority
-      paths.each do |p|
-        add_search_path(p, high_priority: high_priority)
+    # @return [self]
+    # @raise [Toys::SourceListFinalizedError] if the source list has already
+    #     been finalized.
+    #
+    def add_search_path_hierarchy(start: nil,
+                                  terminate: [],
+                                  high_priority: false)
+      ensure_open_source_list do
+        path = start || ::Dir.pwd
+        paths = []
+        loop do
+          break if terminate.include?(path)
+          paths << path
+          next_path = ::File.dirname(path)
+          break if next_path == path
+          path = next_path
+        end
+        paths.reverse! if high_priority
+        paths.each do |p|
+          add_search_path(p, high_priority: high_priority)
+        end
       end
       self
     end
@@ -554,6 +554,10 @@ module Toys
     # but a signal that no tool intercepted arrives as the `SignalException`
     # itself, unwrapped. See the `error_handler` argument to {#initialize}.
     #
+    # Note that calling this finalizes this CLI's source list if not already
+    # finalized. Any subsequent attempt to add a source raises
+    # {Toys::SourceListFinalizedError}.
+    #
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
@@ -562,7 +566,7 @@ module Toys
     # @return [Integer] The resulting process status code (i.e. 0 for success).
     #
     def run(*args, verbosity: 0)
-      @runner.run(args.flatten, verbosity: verbosity)
+      runner.run(args.flatten, verbosity: verbosity)
     end
 
     ##
@@ -574,6 +578,10 @@ module Toys
     # requested tool is raised out of this method as-is, so the block does not
     # execute and this method does not return.
     #
+    # Note that calling this finalizes this CLI's source list if not already
+    # finalized. Any subsequent attempt to add a source raises
+    # {Toys::SourceListFinalizedError}.
+    #
     # @param args [String...] Command line arguments specifying which tool to
     #     run and what arguments to pass to it. You may pass either a single
     #     array of strings, or a series of string arguments.
@@ -584,11 +592,41 @@ module Toys
     #
     def load_tool(*args, verbosity: 0)
       result = nil
-      @runner.run(args.flatten, verbosity: verbosity,
-                  wrap_errors: false, handle_errors: false) do |ctx|
+      runner.run(args.flatten, verbosity: verbosity,
+                 wrap_errors: false, handle_errors: false) do |ctx|
         result = yield ctx
       end
       result
+    end
+
+    ##
+    # Finalize the source list. Any subsequent attempt to add a source will
+    # raise {Toys::SourceListFinalizedError}.
+    #
+    # @return [self]
+    #
+    def finalize_sources!
+      @source_definition_mutex.synchronize do
+        unless @loader
+          loader = Loader.new(@source_list_builder.sources,
+                              git_cache: @git_cache,
+                              gems_util: @gems_util,
+                              middleware_stack: @middleware_stack,
+                              tool_name_splitter: @tool_name_splitter,
+                              mixin_lookup: @mixin_lookup,
+                              template_lookup: @template_lookup,
+                              middleware_lookup: @middleware_lookup)
+          runner = Runner.new(loader,
+                              logger_factory: @logger_factory,
+                              base_level: @base_level,
+                              error_handler: @error_handler,
+                              executable_name: @executable_name,
+                              external_data: {Context::Key::CLI => self})
+          @loader = loader
+          @runner = runner
+        end
+      end
+      self
     end
 
     class << self
@@ -680,19 +718,30 @@ module Toys
     private
 
     ##
+    # Synchronize access to the source list. Ensures that the source list is
+    # still open for additions, and serializes the given block.
+    #
+    # @raise [Toys::SourceListFinalizedError] if the source list is finalized.
+    #
+    def ensure_open_source_list
+      @source_definition_mutex.synchronize do
+        if @loader
+          raise SourceListFinalizedError,
+                "Cannot add a source because this CLI's source list has already been finalized"
+        end
+        yield
+      end
+    end
+
+    ##
     # The configuration settings of this CLI, as a hash of constructor
     # arguments suitable for creating a copy.
     #
-    def current_settings
-      {
+    def current_settings(copy_sources)
+      result = {
         executable_name: @executable_name,
-        config_dir_name: @config_dir_name,
-        config_file_name: @config_file_name,
-        index_file_name: @index_file_name,
-        preload_dir_name: @preload_dir_name,
-        preload_file_name: @preload_file_name,
-        data_dir_name: @data_dir_name,
-        lib_dir_name: @lib_dir_name,
+        toplevel_tool_dir_name: @toplevel_tool_dir_name,
+        toplevel_tool_file_name: @toplevel_tool_file_name,
         middleware_stack: @middleware_stack,
         extra_delimiters: @extra_delimiters,
         mixin_lookup: @mixin_lookup,
@@ -703,18 +752,11 @@ module Toys
         base_level: @base_level,
         error_handler: @error_handler,
         completion: @completion,
+        git_cache: @git_cache,
+        gems_util: @gems_util,
       }
-    end
-
-    ##
-    # Raise if the given options would modify a setting that is captured by the
-    # sources being copied, and thus could not be applied to them.
-    #
-    def check_source_copy_conflict(opts, key, current_value)
-      return unless opts.key?(key) && opts[key] != current_value
-      raise ::ArgumentError,
-            "Cannot change #{key} while copying loader sources, because the setting is" \
-            " captured in the copied sources."
+      result[:sources] = @source_definition_mutex.synchronize { @source_list_builder.sources } if copy_sources
+      result
     end
   end
 end

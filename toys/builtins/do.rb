@@ -74,8 +74,8 @@ end
 
 # Returns the CLI used to run the requested tools. Normally this is simply the
 # current CLI, but if gems were requested, we need a new CLI because sources
-# cannot be added to a loader that has already started loading tools. The new
-# CLI copies the current sources and adds the gems on top of them. The gems are
+# cannot be added to a CLI that has already started loading tools. The new CLI
+# copies the current sources and adds the gems on top of them. The gems are
 # added in reverse order so that the first gem on the command line ends up with
 # the highest priority.
 #
@@ -87,7 +87,7 @@ def build_cli
   gem_requests = gems.map { |gem_request| parse_gem_request(gem_request) }
   return cli if gem_requests.empty?
   require "toys/utils/gems"
-  cli.child(copy_loader_sources: true) do |child_cli|
+  cli.child(copy_sources: true) do |child_cli|
     gem_requests.reverse_each do |gem_name, gem_version|
       add_gem(child_cli, gem_name, gem_version)
     end
@@ -115,8 +115,8 @@ end
 # Adds a single gem to the given CLI, reporting a failure to activate the gem
 # or to find its tools as an error message rather than a stack trace.
 def add_gem(child_cli, gem_name, gem_version)
-  child_cli.add_config_gem(gem_name, gem_version: gem_version, high_priority: true)
-rescue ::Toys::ToolDefinitionError, ::Toys::Utils::Gems::ActivationFailedError => e
+  child_cli.add_source_gem(gem_name, gem_version: gem_version, high_priority: true)
+rescue ::Toys::ToolDefinitionError => e
   logger.fatal("Cannot load tools from gem #{gem_name.inspect}: #{e.message}")
   exit(1)
 end
