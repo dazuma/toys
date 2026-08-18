@@ -17,7 +17,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "recognizes short verbose flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -29,7 +29,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "recognizes long verbose flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -41,7 +41,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "recognizes short quiet flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -53,7 +53,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "recognizes long quiet flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -65,7 +65,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "allows multiple flags" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -77,7 +77,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "supports custom verbose flag" do
     cli = make_cli(verbose_flags: ["--abc"])
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -89,7 +89,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "supports custom quiet flag" do
     cli = make_cli(quiet_flags: ["--abc"])
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         def run
           exit(10 + verbosity)
@@ -101,7 +101,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "allows disabling of verbose flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         disable_flag "--verbose"
         on_usage_error :run
@@ -116,7 +116,7 @@ describe Toys::StandardMiddleware::AddVerbosityFlags do
 
   it "allows disabling of quiet flag" do
     cli = make_cli
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         disable_flag "--quiet"
         on_usage_error :run

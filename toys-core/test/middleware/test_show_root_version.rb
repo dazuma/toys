@@ -20,7 +20,7 @@ describe Toys::StandardMiddleware::ShowRootVersion do
   }
 
   it "displays a version string for the root" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         # Empty tool
       end
@@ -30,7 +30,7 @@ describe Toys::StandardMiddleware::ShowRootVersion do
   end
 
   it "does not alter non-root" do
-    cli.add_config_block do
+    cli.add_source_block do
       tool "foo" do
         on_usage_error :run
         def run

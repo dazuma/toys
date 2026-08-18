@@ -14,6 +14,15 @@ module Toys
   end
 
   ##
+  # An exception indicating that a source was added to a {Toys::CLI} after its
+  # source list was already finalized. The source list is finalized the first
+  # time the CLI's loader is needed, i.e. when {Toys::CLI#loader} or
+  # {Toys::CLI#runner} is called, or when a tool is run.
+  #
+  class SourceListFinalizedError < ::StandardError
+  end
+
+  ##
   # An exception indicating problems parsing arguments.
   #
   class ArgParsingError < ::StandardError

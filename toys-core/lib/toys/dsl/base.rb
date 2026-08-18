@@ -59,10 +59,10 @@ module Toys
   # This base class provides an alternative to the {Toys::DSL::Tool#tool}
   # directive for defining tools in the Toys DSL. Creating a subclass of
   # `Toys::Tool` will create a tool whose name is the "kebab-case" of the class
-  # name. Subclasses can be created only in the context of a tool configuration
-  # DSL. Furthermore, a class-defined tool can be created only at the top level
-  # of a configuration file, or within another class-defined tool. It cannot
-  # be a subtool of a tool block.
+  # name. Subclasses can be created only in the context of a tool DSL.
+  # Furthermore, a class-defined tool can be created only at the top level of a
+  # tool source, or within another class-defined tool. It cannot be a subtool
+  # of a tool block.
   #
   # ### Example
   #

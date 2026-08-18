@@ -194,13 +194,12 @@ describe "rspec template" do
 
   describe "integration functionality" do
     let(:cli) { Toys::CLI.new(middleware_stack: [], template_lookup: template_lookup) }
-    let(:loader) { cli.loader }
     let(:cases_dir) { File.join(File.dirname(__dir__), "test-data", "rspec-cases") }
     let(:exec_service) { Toys::Utils::Exec.new }
 
     it "executes a successful spec" do
       dir = cases_dir
-      loader.add_block do
+      cli.add_source_block do
         set_context_directory dir
         expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb"
       end
@@ -212,7 +211,7 @@ describe "rspec template" do
 
     it "executes an unsuccessful spec" do
       dir = cases_dir
-      loader.add_block do
+      cli.add_source_block do
         set_context_directory dir
         expand :rspec, libs: "lib2", pattern: "spec/*_spec.rb"
       end
@@ -224,7 +223,7 @@ describe "rspec template" do
 
     it "honors the context_directory setting" do
       dir = cases_dir
-      loader.add_block do
+      cli.add_source_block do
         expand :rspec, libs: "lib1", pattern: "spec/*_spec.rb", context_directory: dir
       end
       out, _err = capture_subprocess_io do

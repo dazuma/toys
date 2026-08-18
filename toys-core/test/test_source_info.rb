@@ -5,6 +5,9 @@ require "helper"
 describe Toys::SourceInfo do
   let(:lookup_cases_dir) { File.join(File.dirname(__dir__), "test-data", "lookup-cases") }
   let(:directory_path) { File.join(lookup_cases_dir, "config-items") }
+  let(:config_items_dir) { directory_path }
+  let(:lib_dirs_path) { File.join(lookup_cases_dir, "lib-dirs") }
+  let(:preloads_path) { File.join(lookup_cases_dir, "preloads") }
   let(:file_path) { File.join(directory_path, ".toys.rb") }
   let(:path_with_data) { File.join(lookup_cases_dir, "data-finder") }
   let(:bad_path) { File.join(lookup_cases_dir, "doesnotexist") }
@@ -13,24 +16,43 @@ describe Toys::SourceInfo do
   let(:git_directory_path) { "toys-core/test-data/lookup-cases/config-items" }
   let(:git_file_path) { "toys-core/test-data/lookup-cases/config-items/.toys.rb" }
   let(:git_path_with_data) { "toys-core/test-data/lookup-cases/data-finder" }
-  let(:gem_name) { "my-gem" }
-  let(:gem_version) { Gem::Version.new("1.2.3") }
-  let(:gem_directory_path) { "toys/config-items" }
-  let(:gem_file_path) { "toys/config-items/.toys.rb" }
-  let(:gem_path_with_data) { "toys/data-finder" }
+
+  # Stands in for a GitCache holding a checkout of this repo, so that paths
+  # within the repo resolve without touching the network.
+  let(:git_cache) {
+    repo_root = File.dirname(File.dirname(__dir__))
+    cache = Object.new
+    cache.define_singleton_method(:get) do |_remote, path:, **_opts|
+      File.join(repo_root, path)
+    end
+    cache
+  }
+
+  # The gem fixtures use toys-core itself, whose gem directory is this
+  # source tree, so that gem paths resolve to real files. Activation is
+  # stubbed out because the gem is already loaded.
+  let(:gem_name) { "toys-core" }
+  let(:gem_version) { Gem.loaded_specs["toys-core"].version }
+  let(:gem_toys_dir) { "test-data/lookup-cases" }
+  let(:gem_directory_path) { "test-data/lookup-cases/config-items" }
+  let(:gem_file_path) { "test-data/lookup-cases/config-items/.toys.rb" }
+  let(:gem_path_with_data) { "test-data/lookup-cases/data-finder" }
+  let(:gems_util) {
+    util = Object.new
+    util.define_singleton_method(:activate) { |*_args| nil }
+    util
+  }
+
   let(:my_proc) { proc { :a } }
   let(:my_proc2) { proc { :b } }
   let(:data_dir_name) { ".data" }
-  let(:lib_dir_name) { ".lib" }
   let(:custom_source_name) { "mysource" }
   let(:priority) { -1 }
 
   describe "creation" do
     it "creates a file system root pointing to a directory" do
       si = Toys::SourceInfo.create_path_root(directory_path, priority,
-                                             context_directory: :path,
-                                             data_dir_name: data_dir_name,
-                                             lib_dir_name: lib_dir_name)
+                                             context_directory: :path)
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -50,9 +72,7 @@ describe Toys::SourceInfo do
 
     it "creates a file system root pointing to a file" do
       si = Toys::SourceInfo.create_path_root(file_path, priority,
-                                             context_directory: :parent,
-                                             data_dir_name: data_dir_name,
-                                             lib_dir_name: lib_dir_name)
+                                             context_directory: :parent)
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -72,9 +92,7 @@ describe Toys::SourceInfo do
 
     it "creates a proc root" do
       si = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                             source_name: custom_source_name,
-                                             data_dir_name: data_dir_name,
-                                             lib_dir_name: lib_dir_name)
+                                             source_name: custom_source_name)
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -93,10 +111,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a git root pointing to a directory" do
-      si = Toys::SourceInfo.create_git_root(git_remote, git_directory_path, git_commit,
-                                            directory_path, priority,
-                                            data_dir_name: data_dir_name,
-                                            lib_dir_name: lib_dir_name)
+      si = Toys::SourceInfo.create_git_root(git_remote, priority,
+                                            git_path: git_directory_path,
+                                            git_commit: git_commit,
+                                            git_cache: git_cache)
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -116,10 +134,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a gem root pointing to a directory" do
-      si = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_directory_path,
-                                            directory_path, priority,
-                                            data_dir_name: data_dir_name,
-                                            lib_dir_name: lib_dir_name)
+      si = Toys::SourceInfo.create_gem_root(gem_name, priority,
+                                            gem_path: "config-items",
+                                            gem_toys_dir: gem_toys_dir,
+                                            gems_util: gems_util)
       assert_nil(si.parent)
       assert_equal(si, si.root)
       assert_equal(priority, si.priority)
@@ -140,9 +158,7 @@ describe Toys::SourceInfo do
 
     it "errors when attempting to create a file system root with a nonexistent path" do
       assert_raises(Toys::ToolDefinitionError) do
-        Toys::SourceInfo.create_path_root(bad_path, priority,
-                                          data_dir_name: data_dir_name,
-                                          lib_dir_name: lib_dir_name)
+        Toys::SourceInfo.create_path_root(bad_path, priority)
       end
     end
   end
@@ -150,9 +166,7 @@ describe Toys::SourceInfo do
   describe "#relative_child" do
     it "creates a relative child of a file system root" do
       parent = Toys::SourceInfo.create_path_root(directory_path, priority,
-                                                 context_directory: :parent,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 context_directory: :parent)
       si = parent.relative_child(".toys.rb")
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -172,10 +186,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a relative child of a git root" do
-      parent = Toys::SourceInfo.create_git_root(git_remote, git_directory_path, git_commit,
-                                                directory_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
+      parent = Toys::SourceInfo.create_git_root(git_remote, priority,
+                                                git_path: git_directory_path,
+                                                git_commit: git_commit,
+                                                git_cache: git_cache)
       si = parent.relative_child(".toys.rb")
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -196,10 +210,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a relative child of a gem root" do
-      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_directory_path,
-                                                directory_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
+      parent = Toys::SourceInfo.create_gem_root(gem_name, priority,
+                                                gem_path: "config-items",
+                                                gem_toys_dir: gem_toys_dir,
+                                                gems_util: gems_util)
       si = parent.relative_child(".toys.rb")
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -220,9 +234,7 @@ describe Toys::SourceInfo do
     end
 
     it "errors when attempting to create a relative child of a file" do
-      parent = Toys::SourceInfo.create_path_root(file_path, priority,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+      parent = Toys::SourceInfo.create_path_root(file_path, priority)
       assert_raises(::ArgumentError) do
         parent.relative_child(".toys.rb")
       end
@@ -230,9 +242,7 @@ describe Toys::SourceInfo do
 
     it "errors when attempting to create a relative child of a proc" do
       parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                                 source_name: custom_source_name,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 source_name: custom_source_name)
       assert_raises(::ArgumentError) do
         parent.relative_child(".toys.rb")
       end
@@ -242,9 +252,7 @@ describe Toys::SourceInfo do
   describe "#absolute_child" do
     it "creates an absolute child of a file system root" do
       parent = Toys::SourceInfo.create_path_root(path_with_data, priority,
-                                                 context_directory: lookup_cases_dir,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 context_directory: lookup_cases_dir)
       si = parent.absolute_child(file_path)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -265,9 +273,7 @@ describe Toys::SourceInfo do
 
     it "creates an absolute child of a proc root" do
       parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                                 source_name: custom_source_name,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 source_name: custom_source_name)
       si = parent.absolute_child(file_path)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -290,10 +296,11 @@ describe Toys::SourceInfo do
   describe "#git_child" do
     it "creates a git child of a file system root" do
       parent = Toys::SourceInfo.create_path_root(path_with_data, priority,
-                                                 context_directory: lookup_cases_dir,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
-      si = parent.git_child(git_remote, git_directory_path, git_commit, directory_path)
+                                                 context_directory: lookup_cases_dir)
+      si = parent.git_child(git_remote,
+                            child_git_path: git_directory_path,
+                            child_git_commit: git_commit,
+                            git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -313,11 +320,14 @@ describe Toys::SourceInfo do
     end
 
     it "creates a git child of a git root" do
-      parent = Toys::SourceInfo.create_git_root(git_remote, git_path_with_data, git_commit,
-                                                path_with_data, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
-      si = parent.git_child(git_remote, git_directory_path, git_commit, directory_path)
+      parent = Toys::SourceInfo.create_git_root(git_remote, priority,
+                                                git_path: git_path_with_data,
+                                                git_commit: git_commit,
+                                                git_cache: git_cache)
+      si = parent.git_child(git_remote,
+                            child_git_path: git_directory_path,
+                            child_git_commit: git_commit,
+                            git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -337,11 +347,14 @@ describe Toys::SourceInfo do
     end
 
     it "creates a git child of a gem root" do
-      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_path_with_data,
-                                                directory_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
-      si = parent.git_child(git_remote, git_directory_path, git_commit, directory_path)
+      parent = Toys::SourceInfo.create_gem_root(gem_name, priority,
+                                                gem_path: "data-finder",
+                                                gem_toys_dir: gem_toys_dir,
+                                                gems_util: gems_util)
+      si = parent.git_child(git_remote,
+                            child_git_path: git_directory_path,
+                            child_git_commit: git_commit,
+                            git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -362,10 +375,11 @@ describe Toys::SourceInfo do
 
     it "creates a git child of a proc root" do
       parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                                 source_name: custom_source_name,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
-      si = parent.git_child(git_remote, git_directory_path, git_commit, directory_path)
+                                                 source_name: custom_source_name)
+      si = parent.git_child(git_remote,
+                            child_git_path: git_directory_path,
+                            child_git_commit: git_commit,
+                            git_cache: git_cache)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -388,10 +402,11 @@ describe Toys::SourceInfo do
   describe "#gem_child" do
     it "creates a gem child of a file system root" do
       parent = Toys::SourceInfo.create_path_root(path_with_data, priority,
-                                                 context_directory: lookup_cases_dir,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
-      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+                                                 context_directory: lookup_cases_dir)
+      si = parent.gem_child(gem_name,
+                            child_gem_path: "config-items",
+                            gem_toys_dir: gem_toys_dir,
+                            gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -411,11 +426,14 @@ describe Toys::SourceInfo do
     end
 
     it "creates a gem child of a git root" do
-      parent = Toys::SourceInfo.create_git_root(git_remote, git_path_with_data, git_commit,
-                                                path_with_data, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
-      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      parent = Toys::SourceInfo.create_git_root(git_remote, priority,
+                                                git_path: git_path_with_data,
+                                                git_commit: git_commit,
+                                                git_cache: git_cache)
+      si = parent.gem_child(gem_name,
+                            child_gem_path: "config-items",
+                            gem_toys_dir: gem_toys_dir,
+                            gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -435,11 +453,14 @@ describe Toys::SourceInfo do
     end
 
     it "creates a gem child of a gem root" do
-      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_path_with_data,
-                                                directory_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
-      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+      parent = Toys::SourceInfo.create_gem_root(gem_name, priority,
+                                                gem_path: "data-finder",
+                                                gem_toys_dir: gem_toys_dir,
+                                                gems_util: gems_util)
+      si = parent.gem_child(gem_name,
+                            child_gem_path: "config-items",
+                            gem_toys_dir: gem_toys_dir,
+                            gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -460,10 +481,11 @@ describe Toys::SourceInfo do
 
     it "creates a gem child of a proc root" do
       parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                                 source_name: custom_source_name,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
-      si = parent.gem_child(gem_name, gem_version, gem_directory_path, directory_path)
+                                                 source_name: custom_source_name)
+      si = parent.gem_child(gem_name,
+                            child_gem_path: "config-items",
+                            gem_toys_dir: gem_toys_dir,
+                            gems_util: gems_util)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
       assert_equal(priority, si.priority)
@@ -486,9 +508,7 @@ describe Toys::SourceInfo do
   describe "#proc_child" do
     it "creates a proc child of a file system root" do
       parent = Toys::SourceInfo.create_path_root(file_path, priority,
-                                                 context_directory: :parent,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 context_directory: :parent)
       si = parent.proc_child(my_proc)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -508,10 +528,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a proc child of a git root" do
-      parent = Toys::SourceInfo.create_git_root(git_remote, git_file_path, git_commit,
-                                                file_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
+      parent = Toys::SourceInfo.create_git_root(git_remote, priority,
+                                                git_path: git_file_path,
+                                                git_commit: git_commit,
+                                                git_cache: git_cache)
       si = parent.proc_child(my_proc)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -532,10 +552,10 @@ describe Toys::SourceInfo do
     end
 
     it "creates a proc child of a gem root" do
-      parent = Toys::SourceInfo.create_gem_root(gem_name, gem_version, gem_file_path,
-                                                file_path, priority,
-                                                data_dir_name: data_dir_name,
-                                                lib_dir_name: lib_dir_name)
+      parent = Toys::SourceInfo.create_gem_root(gem_name, priority,
+                                                gem_path: "config-items/.toys.rb",
+                                                gem_toys_dir: gem_toys_dir,
+                                                gems_util: gems_util)
       si = parent.proc_child(my_proc)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -557,9 +577,7 @@ describe Toys::SourceInfo do
 
     it "creates a proc child of a proc root" do
       parent = Toys::SourceInfo.create_proc_root(my_proc, priority,
-                                                 source_name: custom_source_name,
-                                                 data_dir_name: data_dir_name,
-                                                 lib_dir_name: lib_dir_name)
+                                                 source_name: custom_source_name)
       si = parent.proc_child(my_proc2)
       assert_equal(parent, si.parent)
       assert_equal(parent, si.root)
@@ -580,10 +598,82 @@ describe Toys::SourceInfo do
   end
 
   it "looks up data from a root" do
-    si = Toys::SourceInfo.create_path_root(path_with_data, priority,
-                                           data_dir_name: data_dir_name,
-                                           lib_dir_name: lib_dir_name)
+    si = Toys::SourceInfo.create_path_root(path_with_data, priority)
     path = si.find_data("foo/root.txt")
     assert_equal(File.join(path_with_data, data_dir_name, "foo", "root.txt"), path)
+  end
+
+  describe "#index_child" do
+    it "finds the index file in a directory" do
+      si = Toys::SourceInfo.create_path_root(config_items_dir, priority)
+      child = si.index_child
+      assert_equal(File.join(config_items_dir, ".toys.rb"), child.source_path)
+      assert_equal(:file, child.source_type)
+    end
+
+    it "returns nil when the directory has no index file" do
+      si = Toys::SourceInfo.create_path_root(File.join(lib_dirs_path, "ns"), priority)
+      assert_nil(si.index_child)
+    end
+
+    it "errors on a source that is not a directory" do
+      si = Toys::SourceInfo.create_path_root(file_path, priority)
+      assert_raises(::ArgumentError) do
+        si.index_child
+      end
+    end
+  end
+
+  describe "#find_lib_paths" do
+    it "returns nothing for a directory with no lib directory" do
+      si = Toys::SourceInfo.create_path_root(config_items_dir, priority)
+      assert_empty(si.find_lib_paths)
+    end
+
+    it "returns nothing for a file source" do
+      si = Toys::SourceInfo.create_path_root(file_path, priority)
+      assert_empty(si.find_lib_paths)
+    end
+
+    it "finds the lib directory of a directory source" do
+      si = Toys::SourceInfo.create_path_root(lib_dirs_path, priority)
+      assert_equal([File.join(lib_dirs_path, ".lib")], si.find_lib_paths)
+    end
+
+    it "orders a source ahead of its ancestors" do
+      si = Toys::SourceInfo.create_path_root(lib_dirs_path, priority).relative_child("ns")
+      assert_equal([File.join(lib_dirs_path, "ns", ".lib"), File.join(lib_dirs_path, ".lib")],
+                   si.find_lib_paths)
+    end
+  end
+
+  describe "#find_preload_files" do
+    it "returns nothing for a directory with no preloads" do
+      si = Toys::SourceInfo.create_path_root(config_items_dir, priority)
+      assert_empty(si.find_preload_files)
+    end
+
+    it "returns nothing for a file source" do
+      si = Toys::SourceInfo.create_path_root(file_path, priority)
+      assert_empty(si.find_preload_files)
+    end
+
+    it "finds a standalone preload file" do
+      si = Toys::SourceInfo.create_path_root(File.join(preloads_path, "ns-2"), priority)
+      assert_equal([File.join(preloads_path, "ns-2", ".preload.rb")], si.find_preload_files)
+    end
+
+    it "finds sorted ruby files in a preload directory" do
+      si = Toys::SourceInfo.create_path_root(File.join(preloads_path, "ns-1", "ns-1a"), priority)
+      preload_dir = File.join(preloads_path, "ns-1", "ns-1a", ".preload")
+      assert_equal([File.join(preload_dir, "preloaded1.rb"), File.join(preload_dir, "preloaded2.rb")],
+                   si.find_preload_files)
+    end
+
+    it "does not include preloads from ancestors" do
+      si = Toys::SourceInfo.create_path_root(File.join(preloads_path, "ns-1"), priority)
+                           .relative_child("ns-1a")
+      refute_includes(si.find_preload_files, File.join(preloads_path, "ns-1", ".preload.rb"))
+    end
   end
 end

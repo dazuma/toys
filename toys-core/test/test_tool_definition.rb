@@ -1079,8 +1079,8 @@ describe Toys::ToolDefinition do
 
     describe "default completion using only a loader" do
       def make_loader(extra_delimiters: ":")
-        loader = Toys::Loader.new(tool_name_splitter: Toys::ToolNameSplitter.new(extra_delimiters))
-        loader.add_block do
+        builder = Toys::SourceListBuilder.new
+        builder.add_block do
           tool "ns" do
             tool "sub1" do
               to_run do
@@ -1095,7 +1095,8 @@ describe Toys::ToolDefinition do
           end
           tool "deleg", delegate_to: ["ns"]
         end
-        loader
+        Toys::Loader.new(builder.sources,
+                         tool_name_splitter: Toys::ToolNameSplitter.new(extra_delimiters))
       end
 
       def candidate_strings(loader, previous_words: [], fragment: "")

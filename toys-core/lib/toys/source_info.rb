@@ -12,7 +12,7 @@ module Toys
   # * A single toys file
   # * A file or directory loaded from git
   # * A file or directory loaded from a gem
-  # * A config block passed directly to the CLI
+  # * A block passed directly to the CLI
   # * A tool block within a toys file
   #
   # The SourceInfo provides information such as the tool's context directory,
@@ -34,10 +34,27 @@ module Toys
   #
   # SourceInfo objects can be obtained in the DSL from
   # {Toys::DSL::Tool#source_info} or at runtime by getting the
-  # {Toys::Context::Key::TOOL_SOURCE} key. However, they are created internally
-  # by the Loader and should not be created manually.
+  # {Toys::Context::Key::TOOL_SOURCE} key. They are created internally during
+  # CLI configuration and during loading.
   #
   class SourceInfo
+    # @private
+    DATA_DIR_NAME = ".data"
+
+    # @private
+    LIB_DIR_NAME = ".lib"
+
+    # @private
+    PRELOAD_DIR_NAME = ".preload"
+
+    # @private
+    PRELOAD_FILE_NAME = ".preload.rb"
+
+    # @private
+    INDEX_FILE_NAME = ".toys.rb"
+
+    #### PUBLIC INTERFACE ####
+
     ##
     # The parent of this SourceInfo.
     #
@@ -188,30 +205,228 @@ module Toys
     # @return [nil] if the data was not found.
     #
     def find_data(path, type: nil)
-      if @data_dir
-        full_path = ::File.join(@data_dir, path)
-        case type
-        when :file
-          return full_path if ::File.file?(full_path)
-        when :directory
-          return full_path if ::File.directory?(full_path)
-        else
-          return full_path if ::File.readable?(full_path)
+      if @source_type == :directory
+        data_dir = ::File.join(@source_path, DATA_DIR_NAME)
+        if ::File.directory?(data_dir) && ::File.readable?(data_dir)
+          full_path = ::File.join(data_dir, path)
+          case type
+          when :file
+            return full_path if ::File.file?(full_path)
+          when :directory
+            return full_path if ::File.directory?(full_path)
+          else
+            return full_path if ::File.readable?(full_path)
+          end
         end
       end
       parent&.find_data(path, type: type)
     end
 
     ##
-    # Apply all lib paths in order from high to low priority
+    # Find lib paths in this source and all ancestors, in order from most to
+    # least significant.
     #
-    # @return [self]
+    # @return [Array<String>] Directory paths in order
     #
-    def apply_lib_paths
-      parent&.apply_lib_paths
-      $LOAD_PATH.unshift(@lib_dir) if @lib_dir && !$LOAD_PATH.include?(@lib_dir)
-      self
+    def find_lib_paths
+      results = []
+      if @source_type == :directory
+        lib_dir = ::File.join(@source_path, LIB_DIR_NAME)
+        results << lib_dir if ::File.directory?(lib_dir) && ::File.readable?(lib_dir)
+      end
+      results += parent.find_lib_paths if parent
+      results
     end
+
+    ##
+    # Find all files to preload in this source only, not including ancestors.
+    #
+    # @return [Array<String>] File paths in order
+    #
+    def find_preload_files
+      results = []
+      if @source_type == :directory
+        preload_file = ::File.join(@source_path, PRELOAD_FILE_NAME)
+        results << preload_file if ::File.file?(preload_file) && ::File.readable?(preload_file)
+        preload_dir = ::File.join(@source_path, PRELOAD_DIR_NAME)
+        if ::File.directory?(preload_dir) && ::File.readable?(preload_dir)
+          ::Dir.entries(preload_dir).sort.each do |child|
+            next unless ::File.extname(child) == ".rb"
+            preload_file = ::File.join(preload_dir, child)
+            results << preload_file if ::File.file?(preload_file) && ::File.readable?(preload_file)
+          end
+        end
+      end
+      results
+    end
+
+    #### ROOT SOURCE FACTORY METHODS ####
+
+    class << self
+      ##
+      # Create a root source info for a file path.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def create_path_root(source_path, priority,
+                           context_directory: nil,
+                           source_name: nil)
+        source_path, type = check_path(source_path, false)
+        case context_directory
+        when :parent
+          context_directory = ::File.dirname(source_path)
+        when :path
+          context_directory = source_path
+        end
+        new(nil, priority, context_directory, type, source_path, nil,
+            nil, nil, nil, nil, nil, nil,
+            source_name)
+      end
+
+      ##
+      # Create a root source info for a cached git repo.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def create_git_root(git_remote, priority,
+                          git_path: nil,
+                          git_commit: nil,
+                          git_cache: nil,
+                          update: false,
+                          context_directory: nil,
+                          source_name: nil)
+        git_commit, git_path, source_path = resolve_git_info(git_cache, git_remote, git_path, git_commit, update)
+        source_path, type = check_path(source_path, false)
+        new(nil, priority, context_directory, type, source_path, nil,
+            git_remote, git_path, git_commit, nil, nil, nil,
+            source_name)
+      end
+
+      ##
+      # Create a root source info for a loaded gem.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def create_gem_root(gem_name, priority,
+                          gem_version: nil,
+                          gem_path: nil,
+                          gem_toys_dir: nil,
+                          gems_util: nil,
+                          context_directory: nil,
+                          source_name: nil)
+        gem_version, gem_path, source_path = resolve_gem_info(gems_util, gem_name, gem_version, gem_path, gem_toys_dir)
+        source_path, type = check_path(source_path, false)
+        new(nil, priority, context_directory, type, source_path, nil,
+            nil, nil, nil, gem_name, gem_version, gem_path,
+            source_name)
+      end
+
+      ##
+      # Create a root source info for a proc.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def create_proc_root(source_proc, priority,
+                           context_directory: nil,
+                           source_name: nil)
+        new(nil, priority, context_directory, :proc, nil, source_proc,
+            nil, nil, nil, nil, nil, nil,
+            source_name)
+      end
+    end
+
+    #### CHILD OBJECT CREATORS ####
+
+    ##
+    # Create a child SourceInfo relative to the parent path.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def relative_child(filename, source_name: nil, lenient: true)
+      raise ::ArgumentError, "relative_child is valid only on a directory source" unless source_type == :directory
+      child_path, type = SourceInfo.check_path(::File.join(source_path, filename), lenient)
+      return nil unless child_path
+      child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
+      child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
+                     git_remote, child_git_path, git_commit, gem_name, gem_version, child_gem_path,
+                     source_name)
+    end
+
+    ##
+    # Create a child SourceInfo for an index tool file, or nil if not found or
+    # not applicable.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def index_child(source_name: nil)
+      raise ::ArgumentError, "index_child is valid only on a directory source" unless source_type == :directory
+      relative_child(INDEX_FILE_NAME, source_name: source_name)
+    end
+
+    ##
+    # Create a child SourceInfo with an absolute path.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def absolute_child(child_path, source_name: nil)
+      child_path, type = SourceInfo.check_path(child_path, false)
+      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
+                     nil, nil, nil, nil, nil, nil,
+                     source_name)
+    end
+
+    ##
+    # Create a child SourceInfo with a git source.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def git_child(child_git_remote,
+                  child_git_path: nil,
+                  child_git_commit: nil,
+                  git_cache: nil,
+                  update: false,
+                  source_name: nil)
+      child_git_commit, child_git_path, source_path =
+        SourceInfo.resolve_git_info(git_cache, child_git_remote, child_git_path, child_git_commit, update)
+      source_path, type = SourceInfo.check_path(source_path, false)
+      SourceInfo.new(self, priority, context_directory, type, source_path, nil,
+                     child_git_remote, child_git_path, child_git_commit, nil, nil, nil,
+                     source_name)
+    end
+
+    ##
+    # Create a child SourceInfo with a gem source.
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def gem_child(child_gem_name,
+                  child_gem_version: nil,
+                  child_gem_path: nil,
+                  gem_toys_dir: nil,
+                  gems_util: nil,
+                  source_name: nil)
+      child_gem_version, child_gem_path, source_path =
+        SourceInfo.resolve_gem_info(gems_util, child_gem_name, child_gem_version, child_gem_path, gem_toys_dir)
+      source_path, type = SourceInfo.check_path(source_path, false)
+      SourceInfo.new(self, priority, context_directory, type, source_path, nil,
+                     nil, nil, nil, child_gem_name, child_gem_version, child_gem_path,
+                     source_name)
+    end
+
+    ##
+    # Create a proc child SourceInfo
+    #
+    # @private This interface is internal and subject to change without warning.
+    #
+    def proc_child(child_proc, source_name: nil)
+      source_name ||= self.source_name
+      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc,
+                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
+                     source_name)
+    end
+
+    #### INTERNAL CONSTRUCTOR ####
 
     ##
     # Create a SourceInfo.
@@ -224,7 +439,7 @@ module Toys
     def initialize(parent, priority, context_directory,
                    source_type, source_path, source_proc,
                    git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
-                   source_name, data_dir_name, lib_dir_name)
+                   source_name)
       @parent = parent
       @root = parent&.root || self
       @priority = priority
@@ -240,182 +455,97 @@ module Toys
       @gem_version = gem_version
       @gem_path = gem_path
       @source_name = source_name || default_source_name
-      @data_dir_name = data_dir_name
-      @lib_dir_name = lib_dir_name
-      @data_dir = find_special_dir(data_dir_name)
-      @lib_dir = find_special_dir(lib_dir_name)
     end
 
-    ##
-    # Create a child SourceInfo relative to the parent path.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def relative_child(filename, source_name: nil, lenient: true)
-      raise ::ArgumentError, "relative_child is valid only on a directory source" unless source_type == :directory
-      child_path, type = SourceInfo.check_path(::File.join(source_path, filename), lenient)
-      return nil unless child_path
-      child_git_path = git_path.empty? ? filename : ::File.join(git_path, filename) if git_path
-      child_gem_path = gem_path.empty? ? filename : ::File.join(gem_path, filename) if gem_path
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     git_remote, child_git_path, git_commit, gem_name, gem_version, child_gem_path,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
+    #### INTERNAL HELPERS ####
 
-    ##
-    # Create a child SourceInfo with an absolute path.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def absolute_child(child_path, source_name: nil)
-      child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     nil, nil, nil, nil, nil, nil,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
+    @utils_creation_mutex = ::Mutex.new
+    @default_git_cache = nil
+    @default_gems_util = nil
 
-    ##
-    # Create a child SourceInfo with a git source.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def git_child(child_git_remote, child_git_path, child_git_commit, child_path, source_name: nil)
-      child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     child_git_remote, child_git_path, child_git_commit, nil, nil, nil,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
-
-    ##
-    # Create a child SourceInfo with a gem source.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def gem_child(child_gem_name, child_gem_version, child_gem_path, child_path, source_name: nil)
-      child_path, type = SourceInfo.check_path(child_path, false)
-      SourceInfo.new(self, priority, context_directory, type, child_path, nil,
-                     nil, nil, nil, child_gem_name, child_gem_version, child_gem_path,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
-
-    ##
-    # Create a proc child SourceInfo
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def proc_child(child_proc, source_name: nil)
-      source_name ||= self.source_name
-      SourceInfo.new(self, priority, context_directory, :proc, source_path, child_proc,
-                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
-
-    ##
-    # Create a copy of this root SourceInfo with a different priority. All
-    # other state, including the already-resolved source path and context
-    # directory, is preserved. This is used when copying the sources of one
-    # loader into another loader that assigns different priority values.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def with_priority(priority)
-      raise ::ArgumentError, "with_priority is valid only on a root source" if parent
-      SourceInfo.new(nil, priority, context_directory, source_type, source_path, source_proc,
-                     git_remote, git_path, git_commit, gem_name, gem_version, gem_path,
-                     source_name, @data_dir_name, @lib_dir_name)
-    end
-
-    ##
-    # Create a root source info for a file path.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.create_path_root(source_path, priority,
-                              context_directory: nil,
-                              data_dir_name: nil,
-                              lib_dir_name: nil,
-                              source_name: nil)
-      source_path, type = check_path(source_path, false)
-      case context_directory
-      when :parent
-        context_directory = ::File.dirname(source_path)
-      when :path
-        context_directory = source_path
-      end
-      new(nil, priority, context_directory, type, source_path, nil,
-          nil, nil, nil, nil, nil, nil,
-          source_name, data_dir_name, lib_dir_name)
-    end
-
-    ##
-    # Create a root source info for a cached git repo.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.create_git_root(git_remote, git_path, git_commit, source_path, priority,
-                             context_directory: nil,
-                             data_dir_name: nil,
-                             lib_dir_name: nil,
-                             source_name: nil)
-      source_path, type = check_path(source_path, false)
-      new(nil, priority, context_directory, type, source_path, nil,
-          git_remote, git_path, git_commit, nil, nil, nil,
-          source_name, data_dir_name, lib_dir_name)
-    end
-
-    ##
-    # Create a root source info for a loaded gem.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.create_gem_root(gem_name, gem_version, gem_path, source_path, priority,
-                             context_directory: nil,
-                             data_dir_name: nil,
-                             lib_dir_name: nil,
-                             source_name: nil)
-      source_path, type = check_path(source_path, false)
-      new(nil, priority, context_directory, type, source_path, nil,
-          nil, nil, nil, gem_name, gem_version, gem_path,
-          source_name, data_dir_name, lib_dir_name)
-    end
-
-    ##
-    # Create a root source info for a proc.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.create_proc_root(source_proc, priority,
-                              context_directory: nil,
-                              data_dir_name: nil,
-                              lib_dir_name: nil,
-                              source_name: nil)
-      new(nil, priority, context_directory, :proc, nil, source_proc,
-          nil, nil, nil, nil, nil, nil,
-          source_name, data_dir_name, lib_dir_name)
-    end
-
-    ##
-    # Check a path and determine the canonical path and type.
-    #
-    # @private This interface is internal and subject to change without warning.
-    #
-    def self.check_path(path, lenient)
-      path = ::File.expand_path(path)
-      unless ::File.readable?(path)
-        raise ToolDefinitionError, "Cannot read: #{path}" unless lenient
-        return [nil, nil]
-      end
-      if ::File.file?(path)
-        unless ::File.extname(path) == ".rb"
-          raise ToolDefinitionError, "File is not a ruby file: #{path}" unless lenient
+    class << self
+      ##
+      # Check a path and determine the canonical path and type.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def check_path(path, lenient)
+        path = ::File.expand_path(path)
+        unless ::File.readable?(path)
+          raise ToolDefinitionError, "Cannot read: #{path}" unless lenient
           return [nil, nil]
         end
-        [path, :file]
-      elsif ::File.directory?(path)
-        [path, :directory]
-      else
-        raise ToolDefinitionError, "Not a ruby file or directory: #{path}" unless lenient
-        [nil, nil]
+        if ::File.file?(path)
+          unless ::File.extname(path) == ".rb"
+            raise ToolDefinitionError, "File is not a ruby file: #{path}" unless lenient
+            return [nil, nil]
+          end
+          [path, :file]
+        elsif ::File.directory?(path)
+          [path, :directory]
+        else
+          raise ToolDefinitionError, "Not a ruby file or directory: #{path}" unless lenient
+          [nil, nil]
+        end
+      end
+
+      ##
+      # Resolve a gem and version constraints and get the install directory.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def resolve_gem_info(gems_util, gem_name, gem_version, gem_path, gem_toys_dir)
+        require "toys/utils/gems"
+        begin
+          gem_versions = Array(gem_version)
+          (gems_util || default_gems_util).activate(gem_name, *gem_versions)
+        rescue ::Toys::Utils::Gems::ActivationFailedError => e
+          raise ToolDefinitionError, e.message
+        end
+        gem_spec = ::Gem.loaded_specs[gem_name]
+        raise ToolDefinitionError, "Unable to find gem #{gem_name}" unless gem_spec&.gem_dir
+        gem_toys_dir ||= gem_spec.metadata["toys_dir"] || "toys"
+        gem_path = gem_path.to_s.empty? ? gem_toys_dir : ::File.join(gem_toys_dir, gem_path)
+        source_path = ::File.join(gem_spec.gem_dir, gem_path)
+        [gem_spec.version, gem_path, source_path]
+      end
+
+      ##
+      # Resolve contents from the git cache and get the directory.
+      #
+      # @private This interface is internal and subject to change without warning.
+      #
+      def resolve_git_info(git_cache, git_remote, git_path, git_commit, update)
+        require "toys/utils/git_cache"
+        git_commit ||= "HEAD"
+        git_path ||= ""
+        git_cache ||= default_git_cache
+        source_path = begin
+          git_cache.get(git_remote, path: git_path, commit: git_commit, update: update)
+        rescue ::Toys::Utils::GitCache::Error => e
+          raise ToolDefinitionError, "Unable to access git repo #{git_remote}: #{e.message}"
+        end
+        [git_commit, git_path, source_path]
+      end
+
+      private
+
+      def default_git_cache
+        @utils_creation_mutex.synchronize do
+          @default_git_cache ||= begin
+            require "toys/utils/git_cache"
+            Utils::GitCache.new
+          end
+        end
+      end
+
+      def default_gems_util
+        @utils_creation_mutex.synchronize do
+          @default_gems_util ||= begin
+            require "toys/utils/gems"
+            Utils::Gems.new
+          end
+        end
       end
     end
 
@@ -431,12 +561,6 @@ module Toys
       else
         @source_path
       end
-    end
-
-    def find_special_dir(dir_name)
-      return nil if @source_type != :directory || dir_name.nil?
-      dir = ::File.join(@source_path, dir_name)
-      dir if ::File.directory?(dir) && ::File.readable?(dir)
     end
   end
 end

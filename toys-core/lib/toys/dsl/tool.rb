@@ -3,12 +3,12 @@
 module Toys
   module DSL
     ##
-    # This module defines the DSL for a Toys configuration file.
+    # This module defines the DSL for a Toys source.
     #
-    # A Toys configuration defines one or more named tools. It provides syntax
-    # for setting the description, defining flags and arguments, specifying
-    # how to execute the tool, and requesting mixin modules and other services.
-    # It also lets you define subtools, nested arbitrarily deep, using blocks.
+    # A Toys source defines one or more named tools. It provides syntax for
+    # setting the description, defining flags and arguments, specifying how to
+    # execute the tool, and requesting mixin modules and other services. It
+    # also lets you define subtools, nested arbitrarily deep, using blocks.
     #
     # ### Simple example
     #
@@ -411,7 +411,7 @@ module Toys
       #
       # @param path [String] The file or directory to load.
       # @param as [String] Load into the given tool/namespace. If omitted,
-      #     configuration will be loaded into the current namespace.
+      #     tools will be loaded into the current namespace.
       #
       # @return [self]
       #
@@ -427,8 +427,8 @@ module Toys
       end
 
       ##
-      # Load configuration from a public git repository, as if its contents
-      # were inserted at the current location.
+      # Load tools from a public git repository, as if its contents were
+      # inserted at the current location.
       #
       # @param remote [String] The URL of the git repository. Defaults to the
       #     current repository if already loading from git.
@@ -437,7 +437,7 @@ module Toys
       # @param commit [String] The commit branch, tag, or sha. Defaults to the
       #     current commit if already loading from git, or to `HEAD`.
       # @param as [String] Load into the given tool/namespace. If omitted,
-      #     configuration will be loaded into the current namespace.
+      #     tools will be loaded into the current namespace.
       # @param update [boolean,Integer] Whether and when to force-fetch from
       #     the remote (unless the commit is a SHA). Force-fetching will ensure
       #     that symbolic commits, such as branch names or HEAD, are up to date.
@@ -464,8 +464,8 @@ module Toys
       end
 
       ##
-      # Load configuration from a gem, as if its contents were inserted at the
-      # current location.
+      # Load tools from a gem, as if its contents were inserted at the current
+      # location.
       #
       # @param name [String] Name of the gem
       # @param versions [Array<String>] Version requirements for the gem.
@@ -477,7 +477,7 @@ module Toys
       #     directory name. If not specified, the default specified by the gem
       #     will be used.
       # @param as [String] Load into the given tool/namespace. If omitted,
-      #     configuration will be loaded into the current namespace.
+      #     tools will be loaded into the current namespace.
       #
       # @return [self]
       #

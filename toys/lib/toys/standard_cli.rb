@@ -19,46 +19,16 @@ module Toys
   #
   class StandardCLI < CLI
     ##
-    # Standard toys configuration directory name.
+    # Standard toys tool directory name.
     # @return [String]
     #
-    CONFIG_DIR_NAME = ".toys"
+    TOPLEVEL_TOOL_DIR_NAME = ".toys"
 
     ##
-    # Standard toys configuration file name.
+    # Standard toys tool file name.
     # @return [String]
     #
-    CONFIG_FILE_NAME = ".toys.rb"
-
-    ##
-    # Standard index file name in a toys configuration.
-    # @return [String]
-    #
-    INDEX_FILE_NAME = ".toys.rb"
-
-    ##
-    # Standard preload directory name in a toys configuration.
-    # @return [String]
-    #
-    PRELOAD_DIR_NAME = ".preload"
-
-    ##
-    # Standard preload file name in a toys configuration.
-    # @return [String]
-    #
-    PRELOAD_FILE_NAME = ".preload.rb"
-
-    ##
-    # Standard data directory name in a toys configuration.
-    # @return [String]
-    #
-    DATA_DIR_NAME = ".data"
-
-    ##
-    # Standard lib directory name in a toys configuration.
-    # @return [String]
-    #
-    LIB_DIR_NAME = ".lib"
+    TOPLEVEL_TOOL_FILE_NAME = ".toys.rb"
 
     ##
     # Name of the standard toys executable.
@@ -109,7 +79,7 @@ module Toys
     #     the CLI uses only the given paths. If not, the CLI will search for
     #     paths from the current directory and global paths.
     # @param include_builtins [boolean] Add the builtin tools. Default is true.
-    # @param cur_dir [String,nil] Starting search directory for configs.
+    # @param cur_dir [String,nil] Starting search directory for sources.
     #     Defaults to the current working directory.
     #
     def initialize(custom_paths: nil,
@@ -119,20 +89,15 @@ module Toys
       ui = Toys::Utils::StandardUI.new
       super(
         executable_name: EXECUTABLE_NAME,
-        config_dir_name: CONFIG_DIR_NAME,
-        config_file_name: CONFIG_FILE_NAME,
-        index_file_name: INDEX_FILE_NAME,
-        preload_file_name: PRELOAD_FILE_NAME,
-        preload_dir_name: PRELOAD_DIR_NAME,
-        data_dir_name: DATA_DIR_NAME,
-        lib_dir_name: LIB_DIR_NAME,
+        toplevel_tool_dir_name: TOPLEVEL_TOOL_DIR_NAME,
+        toplevel_tool_file_name: TOPLEVEL_TOOL_FILE_NAME,
         extra_delimiters: EXTRA_DELIMITERS,
         middleware_stack: default_middleware_stack,
         template_lookup: default_template_lookup,
         **ui.cli_args
       )
       if custom_paths
-        Array(custom_paths).each { |path| add_config_path(path) }
+        Array(custom_paths).each { |path| add_source_path(path) }
       else
         add_current_directory_paths(cur_dir)
       end
@@ -146,7 +111,7 @@ module Toys
     #
     def add_builtins
       builtins_path = ::File.join(::File.dirname(::File.dirname(__dir__)), "builtins")
-      add_config_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
+      add_source_path(builtins_path, source_name: "(builtin tools)", context_directory: nil)
       self
     end
 
@@ -159,7 +124,7 @@ module Toys
     # @return [self]
     #
     def add_current_directory_paths(cur_dir)
-      cur_dir = skip_toys_dir(cur_dir || ::Dir.pwd, CONFIG_DIR_NAME)
+      cur_dir = skip_toys_dir(cur_dir || ::Dir.pwd, TOPLEVEL_TOOL_DIR_NAME)
       global_dirs = default_global_dirs
       add_search_path_hierarchy(start: cur_dir, terminate: global_dirs)
       global_dirs.each { |path| add_search_path(path) }
@@ -187,7 +152,7 @@ module Toys
     end
 
     ##
-    # Returns the default set of global config directories.
+    # Returns the default set of global source directories.
     #
     # @return [Array<String>]
     #
